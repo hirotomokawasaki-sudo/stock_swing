@@ -13,15 +13,16 @@ if [ ! -d "../venv" ]; then
     exit 1
 fi
 
-# Activate venv
+# Activate venv and use it explicitly
 source ../venv/bin/activate
 
 # Check dependencies
-if ! python3 -c "import yaml" 2>/dev/null; then
+if ! python -c "import yaml" 2>/dev/null; then
     echo "⚠️  Missing dependencies. Installing..."
     pip install -q PyYAML
 fi
 
-# Start server
+# Start server using venv python
 echo "✅ Starting console server..."
-python3 app.py
+echo "   Using Python: $(which python)"
+python app.py
