@@ -26,11 +26,22 @@ git push origin main
 
 ## 📋 現在のCron Jobs
 
-### stock_swing_data_collection
+詳細は `CURRENT_JOBS.md` を参照。
+
+### 1. stock_swing_data_collection
 - **ID**: `4d76bf16-bd96-4ff3-b5db-a735f62c2d35`
 - **スケジュール**: 2時間ごとの40分 (`40 */2 * * *`)
 - **タイムゾーン**: Asia/Tokyo
+- **頻度**: 12回/日
 - **機能**: データ収集（Finnhub, FRED, SEC, Broker）
+- **対象シンボル**: AAPL, MSFT, GOOGL, AMZN, TSLA
+
+### 2. stock_swing_data_analysis
+- **ID**: `630f2a52-6d11-4635-9066-776d63901859`
+- **スケジュール**: 4時間ごと (`0 0,4,8,12,16,20 * * *`)
+- **タイムゾーン**: Asia/Tokyo
+- **頻度**: 6回/日
+- **機能**: 完全分析パイプライン（正規化→特徴抽出→シグナル→決定→レポート）
 - **対象シンボル**: AAPL, MSFT, GOOGL, AMZN, TSLA
 
 ## 🔧 リストア方法
