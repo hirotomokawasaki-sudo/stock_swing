@@ -1,0 +1,6 @@
+enabled: true
+name: event_swing_v1
+max_hold_days: 3
+use_macro_filter: true
+use_filing_signal: true
+use_insider_signal: true

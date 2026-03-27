@@ -1,0 +1,5 @@
+enabled: true
+base_url: https://api.stlouisfed.org/fred
+timeout_seconds: 15
+retry_attempts: 3
+raw_partition: fred

@@ -1,0 +1,5 @@
+enabled: true
+name: breakout_momentum_v1
+max_hold_days: 2
+require_volume_confirmation: true
+require_market_regime_confirmation: true

@@ -1,0 +1,5 @@
+enabled: true
+base_url: ${BROKER_BASE_URL}
+timeout_seconds: 10
+retry_attempts: 2
+raw_partition: broker
