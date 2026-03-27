@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Swing Console</title>
+    <link rel="stylesheet" href="/ui/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 Stock Swing Console</h1>
+            <div id="status-bar">
+                <span id="system-status">Loading...</span>
+                <span id="last-update"></span>
+            </div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab active" data-tab="overview">Overview</button>
+            <button class="tab" data-tab="cron">Cron Jobs</button>
+            <button class="tab" data-tab="data">Data Status</button>
+            <button class="tab" data-tab="logs">Logs</button>
+        </nav>
+
+        <main id="content">
+            <!-- Dynamic content loaded here -->
+        </main>
+    </div>
+
+    <script src="/ui/app.js"></script>
+</body>
+</html>

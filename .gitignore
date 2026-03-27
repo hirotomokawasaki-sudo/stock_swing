@@ -65,3 +65,7 @@ dmypy.json
 
 # Logs
 logs/*.log
+
+# Console state
+console/state/
+console/*.log
