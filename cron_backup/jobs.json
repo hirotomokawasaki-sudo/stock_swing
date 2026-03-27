@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "jobs": [
+    {
+      "id": "4d76bf16-bd96-4ff3-b5db-a735f62c2d35",
+      "agentId": "main",
+      "sessionKey": "agent:main:main",
+      "name": "stock_swing_data_collection",
+      "enabled": true,
+      "createdAtMs": 1774599856124,
+      "updatedAtMs": 1774599856124,
+      "schedule": {
+        "kind": "cron",
+        "expr": "40 */2 * * *",
+        "tz": "Asia/Tokyo"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Execute stock_swing data collection:\n\nRun this command in the project directory:\ncd ~/stock_swing && source venv/bin/activate && python -m stock_swing.cli.collect_data --symbols AAPL,MSFT,GOOGL,AMZN,TSLA\n\nThis will collect data from all sources (Finnhub, FRED, SEC, Broker).\n\nAfter completion, report the summary.",
+        "timeoutSeconds": 600
+      },
+      "delivery": {
+        "mode": "announce"
+      },
+      "state": {
+        "nextRunAtMs": 1774604400000
+      }
+    }
+  ]
+}
