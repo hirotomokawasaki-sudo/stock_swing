@@ -43,9 +43,10 @@ scripts/
 
 その他の便利スクリプト。
 
-- `export_reports.sh` - レポート出力
-- `validate_data.sh` - データ検証
-- `test_connections.sh` - API接続テスト
+- `backup_cron_jobs.sh` - ✅ Cron Jobsバックアップ
+- `export_reports.sh` - レポート出力（計画中）
+- `validate_data.sh` - データ検証（計画中）
+- `test_connections.sh` - API接続テスト（計画中）
 
 ## Python CLI vs Shell Scripts
 
