@@ -108,6 +108,27 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                 return self._json(data)
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
+
+        if p == "/api/trading":
+            try:
+                data = dashboard.get_trading()
+                return self._json(data)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+
+        if p == "/api/positions":
+            try:
+                data = dashboard.get_positions()
+                return self._json(data)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+
+        if p == "/api/logs":
+            try:
+                data = dashboard.get_logs()
+                return self._json(data)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
         
         # 404
         return self._json({"error": "not found"}, status=404)
