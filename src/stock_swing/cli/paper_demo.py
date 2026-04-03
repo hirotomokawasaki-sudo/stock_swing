@@ -55,12 +55,32 @@ from stock_swing.strategy_engine.breakout_momentum_strategy import BreakoutMomen
 from stock_swing.strategy_engine.event_swing_strategy import EventSwingStrategy
 from stock_swing.utils.market_calendar import MarketCalendar
 
-DEFAULT_SYMBOLS = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"]
+# US Tech / IT universe (default for paper demo)
+# Large-cap core
+# AAPL  Apple          MSFT  Microsoft      GOOGL Google        META  Meta
+# AMZN  Amazon         NVDA  Nvidia         TSLA  Tesla
+# Mid/growth
+# AMD   AMD            AVGO  Broadcom       CRM   Salesforce
+# SNOW  Snowflake      PLTR  Palantir       HOOD  Robinhood
+# ETF (sector proxy)
+# QQQ   Nasdaq-100 ETF
+DEFAULT_SYMBOLS = [
+    "AAPL", "MSFT", "NVDA", "GOOGL", "META",
+    "AMZN", "TSLA", "AMD",  "AVGO", "CRM",
+]
+
+# Full expanded watchlist (use with --universe full)
+TECH_UNIVERSE_FULL = DEFAULT_SYMBOLS + [
+    "SNOW", "PLTR", "HOOD", "QQQ",
+]
 
 
 def main() -> int:  # noqa: C901
     parser = argparse.ArgumentParser(description="stock_swing paper trading demo")
-    parser.add_argument("--symbols", type=str, default=",".join(DEFAULT_SYMBOLS))
+    parser.add_argument("--symbols", type=str, default=",".join(DEFAULT_SYMBOLS),
+                        help="Comma-separated symbols (overrides --universe)")
+    parser.add_argument("--universe", type=str, choices=["default", "full"], default="default",
+                        help="Predefined symbol universe: default (10 tech) / full (14 tech+ETF)")
     parser.add_argument("--timeframe", type=str, default="1Day")
     parser.add_argument("--bar-limit", type=int, default=20)
     parser.add_argument("--min-momentum", type=float, default=0.03)
@@ -69,7 +89,14 @@ def main() -> int:  # noqa: C901
     parser.add_argument("--allow-outside-hours", action="store_true")
     args = parser.parse_args()
 
-    symbols = [s.strip().upper() for s in args.symbols.split(",") if s.strip()]
+    # Resolve symbol universe (--symbols overrides --universe)
+    if args.symbols != ",".join(DEFAULT_SYMBOLS):
+        # User explicitly passed --symbols
+        symbols = [s.strip().upper() for s in args.symbols.split(",") if s.strip()]
+    elif args.universe == "full":
+        symbols = TECH_UNIVERSE_FULL
+    else:
+        symbols = DEFAULT_SYMBOLS
 
     _banner("stock_swing Paper Trading Demo")
     print(f"  Symbols   : {', '.join(symbols)}")
