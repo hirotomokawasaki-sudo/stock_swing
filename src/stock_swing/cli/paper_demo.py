@@ -53,6 +53,7 @@ from stock_swing.sources.broker_client import BrokerClient
 from stock_swing.storage.stage_store import StageStore
 from stock_swing.strategy_engine.breakout_momentum_strategy import BreakoutMomentumStrategy
 from stock_swing.strategy_engine.event_swing_strategy import EventSwingStrategy
+from stock_swing.tracking.pnl_tracker import PnLTracker
 from stock_swing.utils.market_calendar import MarketCalendar
 
 # US Tech / IT universe (default for paper demo)
@@ -289,6 +290,7 @@ def main() -> int:  # noqa: C901
 
     executor = PaperExecutor(runtime_mode=runtime_mode, broker_client=broker)
     reconciler = Reconciler(broker_client=broker)
+    pnl_tracker = PnLTracker(project_root)
     submissions: list[OrderSubmission] = []
 
     for decision in actionable:
@@ -299,6 +301,24 @@ def main() -> int:  # noqa: C901
             submissions.append(sub)
             if sub.status == "submitted":
                 print(f"OK broker_id={sub.broker_order_id}")
+                # Fetch current price for P&L tracking entry
+                try:
+                    q = broker.fetch_latest_quote(o.symbol).payload
+                    quote = q.get("quote", q)
+                    bid = float(quote.get("bp", 0) or 0)
+                    ask = float(quote.get("ap", 0) or 0)
+                    entry_price = round((bid + ask) / 2, 4) if bid and ask else 0.0
+                except Exception:
+                    entry_price = 0.0
+                pnl_tracker.record_submission(
+                    symbol=o.symbol,
+                    strategy_id=decision.strategy_id,
+                    side=o.side,
+                    qty=o.qty,
+                    price=entry_price,
+                    broker_order_id=sub.broker_order_id,
+                    decision_id=decision.decision_id,
+                )
             else:
                 print(f"WARN {sub.status}: {sub.reject_reason}")
             audit_log.log_submission(sub.submission_id, sub.decision_id, sub.symbol, sub.side, sub.qty, sub.status, sub.broker_order_id)
@@ -323,6 +343,18 @@ def main() -> int:  # noqa: C901
                 print(f"  WARN: {sub.symbol} reconcile failed: {exc}")
 
     audit_log.log_system_event("paper_demo_complete", details=f"decisions={len(decisions)} submitted={len(submissions)}")
+
+    # Record daily P&L snapshot
+    try:
+        if not args.dry_run:
+            pnl_tracker.record_daily_snapshot(
+                equity=equity,
+                signals_generated=len(all_signals),
+                orders_submitted=len([s for s in submissions if s.status == "submitted"]),
+            )
+    except Exception:
+        pass
+
     _print_summary(decisions, submissions, equity, args.dry_run)
     return 0
 
