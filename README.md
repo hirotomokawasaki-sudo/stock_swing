@@ -26,11 +26,12 @@ Structured trading support and execution-control system for U.S. stocks and ETFs
 ## Quick start
 1. Copy `.env.example` to `.env`
 2. Fill API keys
-3. Set `config/runtime/current_mode.yaml` to `research`
+3. Set `config/runtime/current_mode.yaml` to `research` or `paper` depending on intended mode
 4. Create virtual environment: `python3 -m venv venv`
 5. Activate: `source venv/bin/activate`
 6. Install dependencies: `pip install -e .`
 7. Run tests: `pytest tests/`
+8. For demo trading readiness, run: `./scripts/maintenance/broker_health_check.sh`
 
 ## Development workflow
 **🚨 CRITICAL: Always commit & push after changes!**

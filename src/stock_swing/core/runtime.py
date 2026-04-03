@@ -39,7 +39,7 @@ class RuntimeModeError(RuntimeError):
     pass
 
 
-def read_runtime_mode(project_root: Path) -> str:
+def read_runtime_mode(project_root: Path | None = None) -> str:
     """Read and validate runtime mode from config/runtime/current_mode.yaml.
     
     Args:
@@ -57,6 +57,9 @@ def read_runtime_mode(project_root: Path) -> str:
         - Invalid mode value → fail closed with RuntimeModeError
         - Missing config file → fail closed with FileNotFoundError
     """
+    if project_root is None:
+        project_root = Path(__file__).parents[3]
+
     config = ConfigLoader(project_root).load_yaml("config/runtime/current_mode.yaml")
     mode = config.get("mode")
     if mode not in ALLOWED_RUNTIME_MODES:

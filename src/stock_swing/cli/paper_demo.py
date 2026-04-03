@@ -1,0 +1,363 @@
+#!/usr/bin/env python3
+"""End-to-end paper trading demo.
+
+Full pipeline:
+  broker bars -> normalize -> momentum features -> strategy signals
+  -> risk validation -> decision engine -> paper order submission
+  -> reconciliation -> audit log -> summary report
+
+Usage:
+    python -m stock_swing.cli.paper_demo --dry-run
+    python -m stock_swing.cli.paper_demo --allow-outside-hours
+    python -m stock_swing.cli.paper_demo --symbols AAPL,MSFT --min-momentum 0.02
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+project_root = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(project_root / "src"))
+
+
+def _load_env(env_path: Path) -> None:
+    if not env_path.exists():
+        return
+    for line in env_path.read_text(encoding="utf-8").splitlines():
+        s = line.strip()
+        if not s or s.startswith("#") or "=" not in s:
+            continue
+        k, v = s.split("=", 1)
+        os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
+
+_load_env(project_root / ".env")
+
+from stock_swing.core.path_manager import PathManager
+from stock_swing.core.runtime import RuntimeMode, RuntimeModeError, read_runtime_mode
+from stock_swing.core.types import CanonicalRecord
+from stock_swing.decision_engine.decision_engine import DecisionEngine, DecisionRecord
+from stock_swing.decision_engine.risk_validator import RiskValidator
+from stock_swing.execution.paper_executor import OrderSubmission, PaperExecutor
+from stock_swing.execution.reconciler import Reconciler
+from stock_swing.feature_engine.macro_regime_feature import MacroRegimeFeature
+from stock_swing.feature_engine.price_momentum_feature import PriceMomentumFeature
+from stock_swing.normalization.broker_normalizer import BrokerNormalizer
+from stock_swing.safety.audit_logger import AuditLevel, AuditLogger
+from stock_swing.safety.kill_switch import KillSwitch
+from stock_swing.sources.broker_client import BrokerClient
+from stock_swing.storage.stage_store import StageStore
+from stock_swing.strategy_engine.breakout_momentum_strategy import BreakoutMomentumStrategy
+from stock_swing.strategy_engine.event_swing_strategy import EventSwingStrategy
+from stock_swing.utils.market_calendar import MarketCalendar
+
+DEFAULT_SYMBOLS = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"]
+
+
+def main() -> int:  # noqa: C901
+    parser = argparse.ArgumentParser(description="stock_swing paper trading demo")
+    parser.add_argument("--symbols", type=str, default=",".join(DEFAULT_SYMBOLS))
+    parser.add_argument("--timeframe", type=str, default="1Day")
+    parser.add_argument("--bar-limit", type=int, default=20)
+    parser.add_argument("--min-momentum", type=float, default=0.03)
+    parser.add_argument("--min-signal-strength", type=float, default=0.55)
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--allow-outside-hours", action="store_true")
+    args = parser.parse_args()
+
+    symbols = [s.strip().upper() for s in args.symbols.split(",") if s.strip()]
+
+    _banner("stock_swing Paper Trading Demo")
+    print(f"  Symbols   : {', '.join(symbols)}")
+    print(f"  Timeframe : {args.timeframe} x {args.bar_limit} bars")
+    print(f"  Dry run   : {args.dry_run}")
+    print()
+
+    # 1. Runtime mode
+    _section("1. Runtime Mode")
+    try:
+        runtime_mode_str = read_runtime_mode(project_root)
+    except (FileNotFoundError, RuntimeModeError) as exc:
+        print(f"  ERROR: {exc}")
+        return 1
+
+    if runtime_mode_str != "paper":
+        print(f"  ERROR: Must be 'paper', got '{runtime_mode_str}'")
+        return 1
+
+    runtime_mode = RuntimeMode.PAPER
+    print(f"  OK: runtime_mode={runtime_mode_str}")
+
+    # 2. Kill switch
+    _section("2. Kill Switch")
+    ks_file = project_root / "data" / "audits" / "kill_switch.txt"
+    kill_switch = KillSwitch(state_file=ks_file)
+    try:
+        kill_switch.check()
+        print("  OK: Kill switch ACTIVE (execution allowed)")
+    except RuntimeError as exc:
+        print(f"  ERROR: {exc}")
+        return 1
+
+    # 3. Market hours
+    _section("3. Market Hours")
+    now_local = datetime.now()
+    is_open, market_status = MarketCalendar.is_market_open(now_local)
+    print(f"  {'OK' if is_open else 'WARN'}: {market_status}")
+    if not is_open and not args.allow_outside_hours and not args.dry_run:
+        print("  Use --allow-outside-hours to queue orders, or --dry-run to preview")
+
+    # 4. Broker connectivity
+    _section("4. Broker")
+    required_env = ["BROKER_API_KEY", "BROKER_API_SECRET", "BROKER_BASE_URL"]
+    missing_env = [v for v in required_env if not os.getenv(v)]
+    if missing_env:
+        print(f"  ERROR: Missing env vars: {', '.join(missing_env)}")
+        return 1
+
+    broker = BrokerClient(
+        api_key=os.environ["BROKER_API_KEY"],
+        api_secret=os.environ["BROKER_API_SECRET"],
+        paper_mode=True,
+        base_url=os.environ["BROKER_BASE_URL"],
+    )
+    print(f"  URL: {broker.base_url}")
+
+    try:
+        account_env = broker.fetch_account()
+        acct = account_env.payload
+        equity = float(acct.get("equity", 100_000))
+        buying_power = float(acct.get("buying_power", 100_000))
+        print(f"  OK: status={acct.get('status')} equity=${equity:,.2f} bp=${buying_power:,.2f}")
+    except Exception as exc:
+        print(f"  ERROR: Account fetch failed: {exc}")
+        return 1
+
+    # Infrastructure
+    paths = PathManager(project_root)
+    store = StageStore(paths, allow_raw_overwrite=True)
+    ts_tag = datetime.now().strftime("%Y%m%d_%H%M%S")
+    audit_log = AuditLogger(
+        log_file=project_root / "data" / "audits" / f"paper_demo_{datetime.now().strftime('%Y%m%d')}.log",
+        min_level=AuditLevel.INFO,
+    )
+    audit_log.log_system_event("paper_demo_start", details=f"symbols={symbols} dry_run={args.dry_run}")
+
+    # 5. Data collection
+    _section("5. Data Collection (Broker Bars)")
+    normalizer = BrokerNormalizer()
+    all_records: list[CanonicalRecord] = []
+
+    for symbol in symbols:
+        try:
+            raw = broker.fetch_bars(symbol, timeframe=args.timeframe, limit=args.bar_limit)
+            bar_count = len(raw.payload.get("bars", []))
+            records = normalizer.normalize(raw)
+            all_records.extend(records)
+            print(f"  OK: {symbol:<6} {bar_count:3d} bars -> {len(records):3d} records")
+        except Exception as exc:
+            print(f"  WARN: {symbol:<6} fetch failed: {exc}")
+
+    if not all_records:
+        print("\n  ERROR: No data fetched. Cannot proceed.")
+        return 1
+    print(f"\n  Total records: {len(all_records)}")
+
+    # 6. Features
+    _section("6. Feature Computation")
+    momentum_feat = PriceMomentumFeature(period_days=args.bar_limit)
+    macro_feat = MacroRegimeFeature()
+    momentum_results = momentum_feat.compute(all_records)
+    macro_results = macro_feat.compute([])
+    all_features = momentum_results + macro_results
+
+    print(f"  Macro regime: {macro_results[0].values.get('regime', 'unknown') if macro_results else 'unknown'}")
+    print()
+    print(f"  {'Symbol':<6}  {'Momentum':>10}  {'Trend':<10}  {'Bars':>5}")
+    print(f"  {'------':<6}  {'--------':>10}  {'----':>10}  {'----':>5}")
+    for f in sorted(momentum_results, key=lambda x: x.values.get("momentum", 0), reverse=True):
+        m = f.values.get("momentum", 0)
+        t = f.values.get("trend", "?")
+        b = f.values.get("bars_used", 0)
+        print(f"  {f.symbol:<6}  {m:>+10.2%}  {t:<10}  {b:>5}")
+
+    # 7. Strategy signals
+    _section("7. Strategy Signals")
+    breakout_strat = BreakoutMomentumStrategy(
+        min_momentum=args.min_momentum,
+        min_signal_strength=args.min_signal_strength,
+    )
+    event_strat = EventSwingStrategy()
+    breakout_signals = breakout_strat.generate(all_features)
+    event_signals = event_strat.generate(all_features)
+    all_signals = breakout_signals + event_signals
+
+    print(f"  BreakoutMomentum: {len(breakout_signals)} signal(s)")
+    print(f"  EventSwing:       {len(event_signals)} signal(s)")
+    for sig in all_signals:
+        print(f"  -> [{sig.strategy_id}] {sig.symbol}: {sig.action.upper()} strength={sig.signal_strength:.2f}")
+        print(f"     {sig.reasoning}")
+
+    if not all_signals:
+        print(f"\n  No signals. Try --min-momentum 0.01 to lower threshold.")
+        _print_summary([], [], equity, args.dry_run)
+        return 0
+
+    # 8. Decisions
+    _section("8. Decision Engine")
+    current_positions: dict[str, int] = {}
+    try:
+        pos_env = broker.fetch_positions()
+        pos_data = pos_env.payload
+        if isinstance(pos_data, list):
+            for pos in pos_data:
+                sym = pos.get("symbol")
+                qty = int(float(pos.get("qty", 0)))
+                if sym:
+                    current_positions[sym] = qty
+        print(f"  Current positions: {current_positions if current_positions else '(none)'}")
+    except Exception as exc:
+        print(f"  WARN: Could not fetch positions: {exc}")
+
+    risk_validator = RiskValidator(
+        min_signal_strength=args.min_signal_strength,
+        min_confidence=0.40,
+        max_position_size=50,
+    )
+    decision_engine = DecisionEngine(runtime_mode=runtime_mode, risk_validator=risk_validator)
+    decisions: list[DecisionRecord] = []
+
+    for signal in all_signals:
+        decision = decision_engine.process(signal, current_positions=current_positions)
+        decisions.append(decision)
+        status = "PASS" if decision.action in {"buy", "sell"} and decision.risk_state == "pass" else "SKIP"
+        print(f"  [{status}] {decision.symbol}: action={decision.action} risk={decision.risk_state} conf={decision.confidence:.2f}")
+        for r in decision.deny_reasons[:2]:
+            print(f"       deny: {r}")
+        audit_log.log_decision(decision.decision_id, decision.action, decision.strategy_id, decision.symbol, decision.risk_state, decision.mode)
+
+    _save_decisions(decisions, store, ts_tag)
+
+    # 9. Paper execution
+    actionable = [d for d in decisions if d.action in {"buy", "sell"} and d.risk_state == "pass" and d.proposed_order is not None]
+    _section("9. Paper Order Submission")
+    print(f"  Actionable: {len(actionable)}  Denied/held: {len(decisions) - len(actionable)}")
+
+    if not actionable:
+        print("\n  No actionable decisions.")
+        _print_summary(decisions, [], equity, args.dry_run)
+        return 0
+
+    if args.dry_run:
+        print("\n  DRY RUN - would submit:")
+        for d in actionable:
+            o = d.proposed_order
+            print(f"    {o.side.upper()} {o.qty} {o.symbol} type={o.order_type} tif={o.time_in_force}")
+        _print_summary(decisions, [], equity, args.dry_run)
+        return 0
+
+    executor = PaperExecutor(runtime_mode=runtime_mode, broker_client=broker)
+    reconciler = Reconciler(broker_client=broker)
+    submissions: list[OrderSubmission] = []
+
+    for decision in actionable:
+        o = decision.proposed_order
+        print(f"\n  Submitting {o.side.upper()} {o.qty} {o.symbol} ({o.order_type}) ... ", end="", flush=True)
+        try:
+            sub = executor.submit(decision)
+            submissions.append(sub)
+            if sub.status == "submitted":
+                print(f"OK broker_id={sub.broker_order_id}")
+            else:
+                print(f"WARN {sub.status}: {sub.reject_reason}")
+            audit_log.log_submission(sub.submission_id, sub.decision_id, sub.symbol, sub.side, sub.qty, sub.status, sub.broker_order_id)
+        except Exception as exc:
+            print(f"ERROR: {exc}")
+            audit_log.log_system_event("submission_error", AuditLevel.ERROR, details=f"{decision.symbol}: {exc}")
+
+    # 10. Reconciliation
+    submitted = [s for s in submissions if s.broker_order_id]
+    if submitted:
+        _section("10. Reconciliation")
+        for sub in submitted:
+            try:
+                result = reconciler.reconcile(sub)
+                ok_statuses = {"submitted", "accepted", "new", "pending_new", "filled", "partially_filled"}
+                ok = result.broker_status in ok_statuses
+                print(f"  {'OK' if ok else 'WARN'}: {sub.symbol} broker_status={result.broker_status} discrepancies={len(result.discrepancies)}")
+                for disc in result.discrepancies:
+                    print(f"    {disc}")
+                audit_log.log_reconciliation(sub.submission_id, sub.broker_order_id, result.status_matched, result.discrepancies)
+            except Exception as exc:
+                print(f"  WARN: {sub.symbol} reconcile failed: {exc}")
+
+    audit_log.log_system_event("paper_demo_complete", details=f"decisions={len(decisions)} submitted={len(submissions)}")
+    _print_summary(decisions, submissions, equity, args.dry_run)
+    return 0
+
+
+def _save_decisions(decisions: list[DecisionRecord], store: StageStore, ts_tag: str) -> None:
+    for d in decisions:
+        try:
+            doc = {
+                "decision_id": d.decision_id,
+                "schema_version": d.schema_version,
+                "generated_at": d.generated_at.isoformat(),
+                "mode": d.mode,
+                "strategy_id": d.strategy_id,
+                "symbol": d.symbol,
+                "action": d.action,
+                "confidence": d.confidence,
+                "signal_strength": d.signal_strength,
+                "risk_state": d.risk_state,
+                "deny_reasons": d.deny_reasons,
+                "requires_operator_approval": d.requires_operator_approval,
+                "time_horizon": d.time_horizon,
+                "evidence": d.evidence,
+                "proposed_order": {
+                    "symbol": d.proposed_order.symbol,
+                    "side": d.proposed_order.side,
+                    "order_type": d.proposed_order.order_type,
+                    "qty": d.proposed_order.qty,
+                    "time_in_force": d.proposed_order.time_in_force,
+                    "limit_price": d.proposed_order.limit_price,
+                } if d.proposed_order else None,
+            }
+            store.write_decisions(f"decision_{d.symbol}_{ts_tag}.json", doc)
+        except Exception:
+            pass
+
+
+def _banner(title: str) -> None:
+    print("=" * 60)
+    print(f"  {title}")
+    print(f"  {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}")
+    print("=" * 60)
+
+
+def _section(title: str) -> None:
+    print(f"\n-- {title} " + "-" * (55 - len(title)))
+
+
+def _print_summary(decisions: list[DecisionRecord], submissions: list[OrderSubmission], equity: float, dry_run: bool) -> None:
+    _banner("SUMMARY" + (" [DRY RUN]" if dry_run else ""))
+    actionable = [d for d in decisions if d.action in {"buy", "sell"} and d.risk_state == "pass"]
+    denied = [d for d in decisions if d.action == "deny"]
+    held = [d for d in decisions if d.action in {"hold", "review"}]
+    print(f"  Decisions : {len(decisions)}  Actionable: {len(actionable)}  Denied: {len(denied)}  Held: {len(held)}")
+    if submissions:
+        sub_ok = [s for s in submissions if s.status == "submitted"]
+        print(f"  Orders    : {len(sub_ok)}/{len(submissions)} submitted")
+        for s in submissions:
+            print(f"    {'OK' if s.status == 'submitted' else 'NG'} {s.side.upper()} {s.qty:>4} {s.symbol}" + (f" [{s.broker_order_id}]" if s.broker_order_id else "") + (f" reason={s.reject_reason}" if s.reject_reason else ""))
+    print(f"  Equity    : ${equity:,.2f}")
+    print(f"  Decisions saved to data/decisions/")
+    print("=" * 60)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

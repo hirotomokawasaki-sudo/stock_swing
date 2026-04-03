@@ -30,6 +30,7 @@ scripts/
 - `backup_data.sh` - データバックアップ
 - `clean_old_data.sh` - 古いデータの削除
 - `health_check.sh` - システムヘルスチェック
+- `broker_health_check.sh` - デモトレード用ブローカー接続チェック
 
 ### 🚀 setup/ - セットアップ用
 

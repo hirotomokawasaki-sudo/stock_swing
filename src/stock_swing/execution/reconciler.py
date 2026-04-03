@@ -154,7 +154,7 @@ class Reconciler:
         """
         try:
             response = self.broker_client.get_order(broker_order_id)
-            return response.get("payload", {})
+            return response.payload
         except Exception:
             return None
     

@@ -11,6 +11,7 @@ See EXECUTION_POLICY.md for execution constraints and requirements.
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 try:
@@ -64,6 +65,7 @@ class BrokerClient(SourceClient):
         api_secret: str,
         paper_mode: bool = True,
         retry_config: RetryConfig | None = None,
+        base_url: str | None = None,
     ) -> None:
         """Initialize Broker client.
         
@@ -73,6 +75,9 @@ class BrokerClient(SourceClient):
             paper_mode: If True, use paper trading endpoints (default: True).
                 SAFETY: Live mode endpoints are blocked in this implementation.
             retry_config: Custom retry configuration.
+            base_url: Optional broker API base URL override. If omitted, resolves from
+                BROKER_BASE_URL environment variable, then falls back to the default
+                paper endpoint.
             
         Raises:
             ValueError: If api_key or api_secret is empty, or if paper_mode is False.
@@ -106,7 +111,8 @@ class BrokerClient(SourceClient):
         self.api_key = api_key
         self.api_secret = api_secret
         self.paper_mode = paper_mode
-        self.base_url = self.base_url_paper if paper_mode else self.base_url_live
+        resolved_base_url = (base_url or os.getenv("BROKER_BASE_URL") or self.base_url_paper).strip()
+        self.base_url = resolved_base_url.rstrip("/")
 
     def fetch(self, **kwargs: Any) -> RawEnvelope:
         """Fetch data from broker API.
@@ -163,19 +169,76 @@ class BrokerClient(SourceClient):
         Returns:
             RawEnvelope with bar data (OHLCV).
         """
-        params: dict[str, Any] = {
-            "endpoint": f"v2/stocks/{symbol}/bars",
+        from datetime import datetime, timedelta, timezone
+
+        request_params: dict[str, Any] = {
+            "symbol": symbol,
             "timeframe": timeframe,
         }
-        
-        if start:
-            params["start"] = start
-        if end:
-            params["end"] = end
+        api_params: dict[str, Any] = {
+            "timeframe": timeframe,
+            "feed": "iex",
+            "adjustment": "raw",
+        }
+
+        if end is None:
+            end = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        request_params["end"] = end
+        api_params["end"] = end
+
+        if start is None:
+            lookback_days = max((limit or 20) * 3, 30)
+            start = (datetime.now(timezone.utc) - timedelta(days=lookback_days)).isoformat().replace("+00:00", "Z")
+        request_params["start"] = start
+        api_params["start"] = start
+
         if limit:
-            params["limit"] = limit
-        
-        return self.fetch(**params)
+            request_params["limit"] = limit
+            api_params["limit"] = limit
+
+        data_url = f"https://data.alpaca.markets/v2/stocks/{symbol}/bars"
+        headers = {
+            "APCA-API-KEY-ID": self.api_key,
+            "APCA-API-SECRET-KEY": self.api_secret,
+        }
+
+        def fetch_func() -> dict[str, Any]:
+            try:
+                with httpx.Client(timeout=self.retry_config.timeout) as client:
+                    response = client.get(data_url, headers=headers, params=api_params)
+            except Exception as e:
+                raise SourceConnectionError(self.name, f"failed to fetch bars: {e}", original_error=e)
+
+            if response.status_code == 401:
+                raise SourceAuthenticationError(self.name, "invalid API credentials")
+            if response.status_code == 403:
+                raise SourceAuthenticationError(self.name, "API key does not have permission for this operation")
+            if response.status_code == 404:
+                raise SourceNotFoundError(self.name, f"resource not found: v2/stocks/{symbol}/bars")
+            if response.status_code == 422:
+                try:
+                    error_data = response.json()
+                    error_message = error_data.get("message", "validation error")
+                except Exception:
+                    error_message = "validation error"
+                raise SourceValidationError(self.name, error_message)
+            if response.status_code == 429:
+                retry_after = response.headers.get("Retry-After")
+                retry_after_int = int(retry_after) if retry_after else None
+                raise SourceRateLimitError(self.name, "rate limit exceeded", retry_after=retry_after_int)
+            if response.status_code >= 500:
+                raise SourceServerError(self.name, f"server error: {response.status_code}")
+            if response.status_code not in (200, 201, 204):
+                raise SourceResponseError(self.name, f"unexpected status code: {response.status_code}")
+            if response.status_code == 204:
+                return {}
+            try:
+                return response.json()
+            except Exception as e:
+                raise SourceResponseError(self.name, f"failed to parse JSON response: {e}", original_error=e)
+
+        payload = self._fetch_with_retry(fetch_func)
+        return self._build_envelope(f"v2/stocks/{symbol}/bars", request_params, payload)
 
     def fetch_latest_quote(self, symbol: str) -> RawEnvelope:
         """Fetch latest quote for a symbol.
@@ -305,7 +368,7 @@ class BrokerClient(SourceClient):
         
         # Submit via POST
         envelope = self.fetch(endpoint="v2/orders", method="POST", **order_payload)
-        return envelope.get("payload", {})
+        return envelope.payload
 
     def _fetch_endpoint(
         self,
@@ -326,7 +389,11 @@ class BrokerClient(SourceClient):
         Raises:
             SourceError: On any error (normalized).
         """
-        url = f"{self.base_url}/{endpoint}"
+        base_url = self.base_url.rstrip("/")
+        endpoint_path = endpoint.lstrip("/")
+        if base_url.endswith("/v2") and endpoint_path.startswith("v2/"):
+            endpoint_path = endpoint_path[3:]
+        url = f"{base_url}/{endpoint_path}"
         
         # Broker-specific auth headers (Alpaca format)
         headers = {

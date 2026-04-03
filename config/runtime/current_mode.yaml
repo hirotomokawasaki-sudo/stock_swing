@@ -1,3 +1,3 @@
-mode: research
-execution_enabled: false
+mode: paper
+execution_enabled: true
 operator_approval_required: false
