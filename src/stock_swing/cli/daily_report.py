@@ -47,6 +47,17 @@ def main() -> int:
     parser.add_argument("--telegram", action="store_true", help="Send report to Telegram")
     parser.add_argument("--silent", action="store_true", help="Send Telegram notification silently")
     args = parser.parse_args()
+    
+    try:
+        return _main_impl(args)
+    except Exception as exc:
+        # Send error notification
+        if args.telegram:
+            _send_error_notification(exc)
+        raise
+
+
+def _main_impl(args) -> int:
 
     tracker = PnLTracker(project_root)
     summary = tracker.get_summary()
@@ -250,6 +261,49 @@ def _format_for_telegram(lines: list[str]) -> str:
         else:
             html_lines.append(line)
     return "\n".join(html_lines)
+
+
+def _send_error_notification(exc: Exception) -> None:
+    """Send error notification to Telegram."""
+    try:
+        from stock_swing.utils.telegram_notifier import send_notification
+        import traceback
+        
+        jst = timezone(timedelta(hours=9))
+        jst_time = datetime.now(timezone.utc).astimezone(jst).strftime('%Y-%m-%d %H:%M JST')
+        
+        error_msg = str(exc)
+        if len(error_msg) > 200:
+            error_msg = error_msg[:200] + "..."
+        
+        # Get short traceback
+        tb = traceback.format_exc()
+        tb_lines = tb.split('\n')
+        if len(tb_lines) > 8:
+            tb_short = '\n'.join(tb_lines[:3] + ['...'] + tb_lines[-4:])
+        else:
+            tb_short = tb
+        
+        if len(tb_short) > 400:
+            tb_short = tb_short[:400] + "..."
+        
+        message = f"""<b>🚨 Daily Report エラー</b>
+🗓 {jst_time}
+
+<b>エラー内容:</b>
+<code>{error_msg}</code>
+
+<b>トレースバック:</b>
+<code>{tb_short}</code>
+
+<b>対応:</b>
+• ログを確認
+• ブローカーAPI接続を確認
+• 手動で再実行"""
+        
+        send_notification(message)
+    except Exception as e:
+        print(f"[ERROR] Failed to send error notification: {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":
