@@ -52,17 +52,17 @@ class Console {
         if (this.data.system) {
             const status = this.data.system.status || 'unknown';
             const mode = this.data.system.runtime_mode || '?';
-            systemStatus.innerHTML = `${fmt.badge(status.toUpperCase(), status)} <span style="color:#9ca3af;font-size:13px">mode: ${mode}</span>`;
+            systemStatus.innerHTML = `${fmt.badge(status.toUpperCase(), status)} <span style="color:#9ca3af;font-size:13px">モード: ${mode}</span>`;
         }
         if (this.data.time) {
-            lastUpdate.textContent = `Updated: ${fmt.dt(this.data.time)}`;
+            lastUpdate.textContent = `更新: ${fmt.dt(this.data.time)}`;
         }
     }
 
     render() {
         const content = document.getElementById('content');
-        if (!this.data) { content.innerHTML = '<p class="muted">Loading...</p>'; return; }
-        if (this.data.error) { content.innerHTML = `<div class="card"><p class="danger">Error: ${this.data.error}</p></div>`; return; }
+        if (!this.data) { content.innerHTML = '<p class="muted">読み込み中...</p>'; return; }
+        if (this.data.error) { content.innerHTML = `<div class="card"><p class="danger">エラー: ${this.data.error}</p></div>`; return; }
         switch (this.currentTab) {
             case 'overview':   content.innerHTML = this.renderOverview(); break;
             case 'trading':    content.innerHTML = this.renderTrading(); break;
@@ -85,36 +85,36 @@ class Console {
         return `
         <div class="grid">
             <div class="card">
-                <h3>System</h3>
-                <div class="metric"><span class="label">Health</span><span>${fmt.badge((sys.status||'unknown').toUpperCase(), sys.status||'unknown')}</span></div>
-                <div class="metric"><span class="label">Score</span><span class="value">${sys.score||0}/100</span></div>
-                <div class="metric"><span class="label">Runtime Mode</span><span class="value">${sys.runtime_mode||'?'}</span></div>
-                <div class="metric"><span class="label">API Keys</span><span>${sys.api_keys_configured ? '✅ OK' : '❌ Missing'}</span></div>
+                <h3>システム</h3>
+                <div class="metric"><span class="label">状態</span><span>${fmt.badge((sys.status||'unknown').toUpperCase(), sys.status||'unknown')}</span></div>
+                <div class="metric"><span class="label">スコア</span><span class="value">${sys.score||0}/100</span></div>
+                <div class="metric"><span class="label">実行モード</span><span class="value">${sys.runtime_mode||'?'}</span></div>
+                <div class="metric"><span class="label">APIキー</span><span>${sys.api_keys_configured ? '✅ OK' : '❌ 未設定'}</span></div>
             </div>
 
             <div class="card">
-                <h3>Trading Summary</h3>
-                <div class="metric"><span class="label">Closed Trades</span><span class="value">${ts.closed_trades ?? '—'}</span></div>
-                <div class="metric"><span class="label">Win Rate</span><span class="value ${wr_color}">${winRate != null ? fmt.pct(winRate) : '—'}</span></div>
-                <div class="metric"><span class="label">Cumul. P&amp;L</span><span class="value ${ts.cumulative_realized_pnl >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(ts.cumulative_realized_pnl)}</span></div>
-                <div class="metric"><span class="label">Max Drawdown</span><span class="value ${ts.max_drawdown_pct > 0.05 ? 'danger' : ''}">${ts.max_drawdown_pct != null ? fmt.pct(ts.max_drawdown_pct) : '—'}</span></div>
+                <h3>取引サマリー</h3>
+                <div class="metric"><span class="label">決済取引数</span><span class="value">${ts.closed_trades ?? '—'}</span></div>
+                <div class="metric"><span class="label">勝率</span><span class="value ${wr_color}">${winRate != null ? fmt.pct(winRate) : '—'}</span></div>
+                <div class="metric"><span class="label">累積損益</span><span class="value ${ts.cumulative_realized_pnl >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(ts.cumulative_realized_pnl)}</span></div>
+                <div class="metric"><span class="label">最大DD</span><span class="value ${ts.max_drawdown_pct > 0.05 ? 'danger' : ''}">${ts.max_drawdown_pct != null ? fmt.pct(ts.max_drawdown_pct) : '—'}</span></div>
             </div>
 
             <div class="card">
-                <h3>Cron Jobs</h3>
-                <div class="metric"><span class="label">Active</span><span class="value success">${ov.cron_jobs_active||0}</span></div>
-                <div class="metric"><span class="label">Total</span><span class="value">${ov.cron_jobs_total||0}</span></div>
+                <h3>定期実行</h3>
+                <div class="metric"><span class="label">有効</span><span class="value success">${ov.cron_jobs_active||0}</span></div>
+                <div class="metric"><span class="label">合計</span><span class="value">${ov.cron_jobs_total||0}</span></div>
             </div>
 
             <div class="card">
-                <h3>Data Files</h3>
+                <h3>データファイル</h3>
                 ${this.renderDataCountsCompact(ov.data_counts)}
             </div>
         </div>`;
     }
 
     renderDataCountsCompact(counts) {
-        if (!counts) return '<p class="muted">No data</p>';
+        if (!counts) return '<p class="muted">データなし</p>';
         return Object.entries(counts).map(([stage, count]) =>
             `<div class="metric"><span class="label">${stage}</span><span class="value ${count > 0 ? '' : 'muted'}">${count}</span></div>`
         ).join('');
@@ -124,7 +124,7 @@ class Console {
     renderTrading() {
         const td = this.data.trading || {};
         if (!td.available) {
-            return `<div class="card"><p class="muted">Trading data unavailable. ${td.error||''}</p></div>`;
+            return `<div class="card"><p class="muted">取引データが利用できません。${td.error||''}</p></div>`;
         }
         const s = td.summary || {};
         const recent = td.recent_trades || [];
@@ -136,25 +136,25 @@ class Console {
         return `
         <div class="grid">
             <div class="card">
-                <h3>Performance</h3>
-                <div class="metric"><span class="label">Closed Trades</span><span class="value">${s.closed_trades||0}</span></div>
-                <div class="metric"><span class="label">Open Trades</span><span class="value">${s.open_trades||0}</span></div>
-                <div class="metric"><span class="label">Win / Loss</span><span class="value">${s.winning_trades||0} / ${s.losing_trades||0}</span></div>
-                <div class="metric"><span class="label">Win Rate</span><span class="value ${wr_cls}">${fmt.pct(winRate)}</span></div>
-                <div class="metric"><span class="label">Avg Return/Trade</span><span class="value ${s.avg_return_per_trade >= 0 ? 'success':'danger'}">${fmt.pctSigned(s.avg_return_per_trade)}</span></div>
-                <div class="metric"><span class="label">Avg P&amp;L/Trade</span><span class="value ${s.avg_pnl_per_trade >= 0 ? 'success':'danger'}">${fmt.usdSigned(s.avg_pnl_per_trade)}</span></div>
-                <div class="metric"><span class="label">Cumul. Realized P&amp;L</span><span class="value ${s.cumulative_realized_pnl >= 0 ? 'success':'danger'} big">${fmt.usdSigned(s.cumulative_realized_pnl)}</span></div>
-                <div class="metric"><span class="label">Max Drawdown</span><span class="value ${s.max_drawdown_pct > 0.05 ? 'danger':''}">${fmt.pct(s.max_drawdown_pct)}</span></div>
-                <div class="metric"><span class="label">Peak Equity</span><span class="value">${fmt.usd(s.peak_equity)}</span></div>
-                <div class="metric"><span class="label">Trading Days</span><span class="value">${s.trading_days||0}</span></div>
+                <h3>パフォーマンス</h3>
+                <div class="metric"><span class="label">決済取引数</span><span class="value">${s.closed_trades||0}</span></div>
+                <div class="metric"><span class="label">保有取引数</span><span class="value">${s.open_trades||0}</span></div>
+                <div class="metric"><span class="label">勝 / 負</span><span class="value">${s.winning_trades||0} / ${s.losing_trades||0}</span></div>
+                <div class="metric"><span class="label">勝率</span><span class="value ${wr_cls}">${fmt.pct(winRate)}</span></div>
+                <div class="metric"><span class="label">平均リターン</span><span class="value ${s.avg_return_per_trade >= 0 ? 'success':'danger'}">${fmt.pctSigned(s.avg_return_per_trade)}</span></div>
+                <div class="metric"><span class="label">平均損益</span><span class="value ${s.avg_pnl_per_trade >= 0 ? 'success':'danger'}">${fmt.usdSigned(s.avg_pnl_per_trade)}</span></div>
+                <div class="metric"><span class="label">累積実現損益</span><span class="value ${s.cumulative_realized_pnl >= 0 ? 'success':'danger'} big">${fmt.usdSigned(s.cumulative_realized_pnl)}</span></div>
+                <div class="metric"><span class="label">最大DD</span><span class="value ${s.max_drawdown_pct > 0.05 ? 'danger':''}">${fmt.pct(s.max_drawdown_pct)}</span></div>
+                <div class="metric"><span class="label">ピーク資産</span><span class="value">${fmt.usd(s.peak_equity)}</span></div>
+                <div class="metric"><span class="label">取引日数</span><span class="value">${s.trading_days||0}</span></div>
             </div>
 
             <div class="card">
-                <h3>Daily Snapshots (last ${snaps.length})</h3>
+                <h3>日次スナップショット (直近${snaps.length}件)</h3>
                 ${snaps.length === 0
-                    ? '<p class="muted">No snapshots yet. Will populate after first paper demo run.</p>'
+                    ? '<p class="muted">スナップショットなし。Paper Demo実行後に表示されます。</p>'
                     : `<table>
-                        <thead><tr><th>Date</th><th>Equity</th><th>Realized P&amp;L</th><th>Trades</th><th>Win</th><th>Signals</th></tr></thead>
+                        <thead><tr><th>日付</th><th>資産</th><th>実現損益</th><th>取引数</th><th>勝利</th><th>シグナル</th></tr></thead>
                         <tbody>${[...snaps].reverse().map(d => `
                             <tr>
                                 <td>${d.date}</td>
@@ -170,11 +170,11 @@ class Console {
         </div>
 
         <div class="card" style="margin-top:16px">
-            <h3>Recent Closed Trades (last ${recent.length})</h3>
+            <h3>最近の決済取引 (直近${recent.length}件)</h3>
             ${recent.length === 0
-                ? '<p class="muted">No closed trades yet.</p>'
+                ? '<p class="muted">決済取引なし。</p>'
                 : `<table>
-                    <thead><tr><th>Symbol</th><th>Side</th><th>Qty</th><th>Entry</th><th>Exit</th><th>P&amp;L</th><th>Return</th><th>Strategy</th><th>Time</th></tr></thead>
+                    <thead><tr><th>銘柄</th><th>売買</th><th>数量</th><th>取得価格</th><th>決済価格</th><th>損益</th><th>リターン</th><th>戦略</th><th>時刻</th></tr></thead>
                     <tbody>${[...recent].reverse().map(t => `
                         <tr>
                             <td><strong>${t.symbol}</strong></td>
@@ -199,11 +199,11 @@ class Console {
 
         return `
         <div class="card">
-            <h3>Open Positions (${positions.length})</h3>
+            <h3>保有ポジション (${positions.length}件)</h3>
             ${positions.length === 0
-                ? '<p class="muted">No open positions. Orders will appear here after paper demo execution.</p>'
+                ? '<p class="muted">保有ポジションなし。Paper Demo実行後に表示されます。</p>'
                 : `<table>
-                    <thead><tr><th>Symbol</th><th>Side</th><th>Qty</th><th>Entry Price</th><th>Strategy</th><th>Entry Time</th><th>Broker Order</th></tr></thead>
+                    <thead><tr><th>銘柄</th><th>売買</th><th>数量</th><th>取得価格</th><th>戦略</th><th>取得時刻</th><th>注文ID</th></tr></thead>
                     <tbody>${positions.map(p => `
                         <tr>
                             <td><strong>${p.symbol}</strong></td>
@@ -223,19 +223,19 @@ class Console {
     renderCronJobs() {
         const cronData = this.data.cron_jobs || {};
         const jobs = cronData.jobs || [];
-        if (jobs.length === 0) return '<div class="card"><p class="muted">No cron jobs found</p></div>';
+        if (jobs.length === 0) return '<div class="card"><p class="muted">定期実行ジョブが見つかりません</p></div>';
 
         return `
         <div class="card">
-            <h3>Cron Jobs (${cronData.total||0} total / ${cronData.active||0} active)</h3>
+            <h3>定期実行ジョブ (合計${cronData.total||0}件 / 有効${cronData.active||0}件)</h3>
             <table>
-                <thead><tr><th>Name</th><th>Schedule</th><th>Next Run</th><th>Status</th></tr></thead>
+                <thead><tr><th>名前</th><th>スケジュール</th><th>次回実行</th><th>状態</th></tr></thead>
                 <tbody>${jobs.map(job => `
                     <tr>
                         <td>${job.name||'Unknown'}</td>
                         <td><code>${job.schedule_display||'N/A'}</code></td>
                         <td class="muted small">${job.next_run ? fmt.dt(job.next_run) : '—'}</td>
-                        <td>${job.enabled ? '<span class="badge badge-success">ENABLED</span>' : '<span class="badge badge-danger">DISABLED</span>'}</td>
+                        <td>${job.enabled ? '<span class="badge badge-success">有効</span>' : '<span class="badge badge-danger">無効</span>'}</td>
                     </tr>`).join('')}
                 </tbody>
             </table>
@@ -251,13 +251,13 @@ class Console {
         return `
         <div class="grid">
             <div class="card">
-                <h3>Data Files by Stage</h3>
+                <h3>ステージ別データファイル</h3>
                 ${Object.entries(counts).map(([stage, count]) =>
-                    `<div class="metric"><span class="label">${stage}</span><span class="value ${count > 0 ? '':'muted'}">${count} files</span></div>`
+                    `<div class="metric"><span class="label">${stage}</span><span class="value ${count > 0 ? '':'muted'}">${count}件</span></div>`
                 ).join('')}
             </div>
             <div class="card">
-                <h3>Data Freshness</h3>
+                <h3>データ鮮度</h3>
                 ${Object.entries(freshness).map(([stage, info]) =>
                     `<div class="metric">
                         <span class="label">${stage}</span>
@@ -276,17 +276,17 @@ class Console {
 
         return `
         <div class="card" style="margin-bottom:16px">
-            <h3>Today's Daily Report</h3>
+            <h3>本日の日次レポート</h3>
             ${report
                 ? `<pre class="log-box">${this.escapeHtml(report)}</pre>`
-                : '<p class="muted">No daily report yet for today.</p>'
+                : '<p class="muted">本日のレポートはまだありません。</p>'
             }
         </div>
         <div class="card">
-            <h3>Audit Log — today (${lines.length} lines)</h3>
-            <p class="muted small" style="margin-bottom:8px">File: ${ld.log_file||'—'}</p>
+            <h3>監査ログ — 本日 (${lines.length}行)</h3>
+            <p class="muted small" style="margin-bottom:8px">ファイル: ${ld.log_file||'—'}</p>
             ${lines.length === 0
-                ? '<p class="muted">No log entries yet. Run paper demo first.</p>'
+                ? '<p class="muted">ログエントリなし。まずPaper Demoを実行してください。</p>'
                 : `<pre class="log-box">${lines.map(l => this.escapeHtml(l)).join('\n')}</pre>`
             }
         </div>`;
