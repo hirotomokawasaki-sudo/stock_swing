@@ -88,6 +88,8 @@ def main() -> int:  # noqa: C901
     parser.add_argument("--min-signal-strength", type=float, default=0.55)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--allow-outside-hours", action="store_true")
+    parser.add_argument("--telegram", action="store_true", help="Send summary to Telegram")
+    parser.add_argument("--silent", action="store_true", help="Send Telegram notification silently")
     args = parser.parse_args()
 
     # Resolve symbol universe (--symbols overrides --universe)
@@ -356,6 +358,18 @@ def main() -> int:  # noqa: C901
         pass
 
     _print_summary(decisions, submissions, equity, args.dry_run)
+    
+    # Send Telegram notification if requested
+    if args.telegram:
+        _send_telegram_summary(
+            symbols=symbols,
+            decisions=decisions,
+            submissions=submissions,
+            equity=equity,
+            dry_run=args.dry_run,
+            silent=args.silent,
+        )
+    
     return 0
 
 
@@ -400,6 +414,61 @@ def _banner(title: str) -> None:
 
 def _section(title: str) -> None:
     print(f"\n-- {title} " + "-" * (55 - len(title)))
+
+
+def _send_telegram_summary(
+    symbols: list[str],
+    decisions: list[DecisionRecord],
+    submissions: list[OrderSubmission],
+    equity: float,
+    dry_run: bool,
+    silent: bool,
+) -> None:
+    """Send paper demo summary to Telegram."""
+    from stock_swing.utils.telegram_notifier import send_notification
+    
+    actionable = [d for d in decisions if d.action in {"buy", "sell"} and d.risk_state == "pass"]
+    denied = [d for d in decisions if d.action == "deny"]
+    held = [d for d in decisions if d.action in {"hold", "review"}]
+    submitted_orders = [s for s in submissions if s.status == "submitted"]
+    
+    # Build summary message
+    mode_tag = "🧪 DRY RUN" if dry_run else "📊 PAPER"
+    lines = [
+        f"<b>{mode_tag} - Stock Swing Demo</b>",
+        f"🗓 {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}",
+        "",
+        f"<b>📈 Analysis</b>",
+        f"<code>Symbols      : {len(symbols)}</code>",
+        f"<code>Decisions    : {len(decisions)}</code>",
+        f"<code>  Actionable : {len(actionable)}</code>",
+        f"<code>  Denied     : {len(denied)}</code>",
+        f"<code>  Held       : {len(held)}</code>",
+        "",
+    ]
+    
+    if submissions:
+        lines.append(f"<b>📝 Orders</b>")
+        lines.append(f"<code>Submitted    : {len(submitted_orders)}/{len(submissions)}</code>")
+        for s in submitted_orders[:5]:  # Show first 5
+            lines.append(f"<code>  {s.side.upper()} {s.qty:>4} {s.symbol}</code>")
+        if len(submitted_orders) > 5:
+            lines.append(f"<code>  ... and {len(submitted_orders) - 5} more</code>")
+        lines.append("")
+    
+    lines.append(f"<b>💰 Account</b>")
+    lines.append(f"<code>Equity       : ${equity:,.2f}</code>")
+    
+    if denied:
+        lines.append("")
+        lines.append(f"⚠️ <b>{len(denied)} denied signal(s)</b>")
+    
+    message = "\n".join(lines)
+    success = send_notification(message, silent=silent)
+    if success:
+        print("\n✅ Sent to Telegram")
+    else:
+        print("\n⚠️  Telegram send failed")
 
 
 def _print_summary(decisions: list[DecisionRecord], submissions: list[OrderSubmission], equity: float, dry_run: bool) -> None:

@@ -44,6 +44,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Daily P&L report")
     parser.add_argument("--json", action="store_true", help="Output raw JSON")
     parser.add_argument("--save", action="store_true", help="Save report to data/audits/")
+    parser.add_argument("--telegram", action="store_true", help="Send report to Telegram")
+    parser.add_argument("--silent", action="store_true", help="Send Telegram notification silently")
     args = parser.parse_args()
 
     tracker = PnLTracker(project_root)
@@ -137,6 +139,16 @@ def main() -> int:
         report_path.write_text(report_text, encoding="utf-8")
         print(f"\nSaved: {report_path}")
 
+    if args.telegram:
+        from stock_swing.utils.telegram_notifier import send_notification
+        # Convert to HTML format for Telegram
+        telegram_text = _format_for_telegram(lines)
+        success = send_notification(telegram_text, silent=args.silent)
+        if success:
+            print("\n✅ Sent to Telegram")
+        else:
+            print("\n⚠️  Telegram send failed")
+
     return 0
 
 
@@ -219,6 +231,24 @@ def _build_report(
     lines.append("─" * 40)
     lines.append(f"Next run: JST 22:30 (US pre-market)")
     return lines
+
+
+def _format_for_telegram(lines: list[str]) -> str:
+    """Convert plain text report to HTML-formatted Telegram message."""
+    html_lines = []
+    for line in lines:
+        # Skip separator lines
+        if line.startswith("─"):
+            continue
+        # Bold headers (lines with emoji)
+        if any(emoji in line for emoji in ["📈", "💰", "📊", "📂", "🔄"]):
+            html_lines.append(f"<b>{line}</b>")
+        # Monospace for data lines (indented)
+        elif line.startswith("  "):
+            html_lines.append(f"<code>{line}</code>")
+        else:
+            html_lines.append(line)
+    return "\n".join(html_lines)
 
 
 if __name__ == "__main__":
