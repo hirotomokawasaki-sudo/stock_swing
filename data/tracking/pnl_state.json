@@ -1,10 +1,70 @@
 {
   "created_at": "2026-04-03T10:39:59.492341+00:00",
-  "last_updated": "2026-04-03T10:39:59.991820+00:00",
+  "last_updated": "2026-04-06T06:39:57.348217+00:00",
   "trades": [],
   "daily_snapshots": [
     {
       "date": "2026-04-03",
+      "equity": 100000.0,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 0,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-03",
+      "equity": 100000.0,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 0,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-03",
+      "equity": 100000.0,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 0,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-06",
+      "equity": 100000.0,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 0,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-06",
+      "equity": 100000.0,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 0,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-06",
       "equity": 100000.0,
       "realized_pnl": 0,
       "unrealized_pnl": 0.0,

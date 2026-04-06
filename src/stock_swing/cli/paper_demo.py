@@ -432,43 +432,48 @@ def _send_telegram_summary(
     held = [d for d in decisions if d.action in {"hold", "review"}]
     submitted_orders = [s for s in submissions if s.status == "submitted"]
     
-    # Build summary message
-    mode_tag = "🧪 DRY RUN" if dry_run else "📊 PAPER"
+    # Build summary message in Japanese
+    mode_tag = "🧪 テスト実行" if dry_run else "📊 ペーパー取引"
+    from datetime import datetime, timezone, timedelta
+    jst = timezone(timedelta(hours=9))
+    jst_time = datetime.now(timezone.utc).astimezone(jst).strftime('%Y-%m-%d %H:%M JST')
+    
     lines = [
-        f"<b>{mode_tag} - Stock Swing Demo</b>",
-        f"🗓 {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}",
+        f"<b>{mode_tag} - Stock Swing</b>",
+        f"🗓 {jst_time}",
         "",
-        f"<b>📈 Analysis</b>",
-        f"<code>Symbols      : {len(symbols)}</code>",
-        f"<code>Decisions    : {len(decisions)}</code>",
-        f"<code>  Actionable : {len(actionable)}</code>",
-        f"<code>  Denied     : {len(denied)}</code>",
-        f"<code>  Held       : {len(held)}</code>",
+        f"<b>📈 分析結果</b>",
+        f"<code>銘柄数        : {len(symbols)}</code>",
+        f"<code>判断数        : {len(decisions)}</code>",
+        f"<code>  実行可能    : {len(actionable)}</code>",
+        f"<code>  拒否        : {len(denied)}</code>",
+        f"<code>  保留        : {len(held)}</code>",
         "",
     ]
     
     if submissions:
-        lines.append(f"<b>📝 Orders</b>")
-        lines.append(f"<code>Submitted    : {len(submitted_orders)}/{len(submissions)}</code>")
+        lines.append(f"<b>📝 注文</b>")
+        lines.append(f"<code>送信済み      : {len(submitted_orders)}/{len(submissions)}</code>")
         for s in submitted_orders[:5]:  # Show first 5
-            lines.append(f"<code>  {s.side.upper()} {s.qty:>4} {s.symbol}</code>")
+            side_ja = "買い" if s.side.upper() == "BUY" else "売り"
+            lines.append(f"<code>  {side_ja:4} {s.qty:>4}株 {s.symbol}</code>")
         if len(submitted_orders) > 5:
-            lines.append(f"<code>  ... and {len(submitted_orders) - 5} more</code>")
+            lines.append(f"<code>  ... 他{len(submitted_orders) - 5}件</code>")
         lines.append("")
     
-    lines.append(f"<b>💰 Account</b>")
-    lines.append(f"<code>Equity       : ${equity:,.2f}</code>")
+    lines.append(f"<b>💰 口座</b>")
+    lines.append(f"<code>資産総額      : ${equity:,.2f}</code>")
     
     if denied:
         lines.append("")
-        lines.append(f"⚠️ <b>{len(denied)} denied signal(s)</b>")
+        lines.append(f"⚠️ <b>{len(denied)}件のシグナルを拒否</b>")
     
     message = "\n".join(lines)
     success = send_notification(message, silent=silent)
     if success:
-        print("\n✅ Sent to Telegram")
+        print("\n✅ Telegramに送信しました")
     else:
-        print("\n⚠️  Telegram send failed")
+        print("\n⚠️  Telegram送信失敗")
 
 
 def _print_summary(decisions: list[DecisionRecord], submissions: list[OrderSubmission], equity: float, dry_run: bool) -> None:

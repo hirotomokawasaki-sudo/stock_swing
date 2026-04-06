@@ -164,33 +164,33 @@ def _build_report(
     current_prices: dict,
 ) -> list[str]:
     lines = []
-    lines.append("📈 stock_swing Daily Report")
-    lines.append(f"🗓  {today}  |  mode: {runtime_mode}")
+    lines.append("📈 stock_swing 日次レポート")
+    lines.append(f"🗓  {today}  |  モード: {runtime_mode}")
     lines.append("")
 
     # Account
-    lines.append("💰 Account (Paper)")
-    lines.append(f"  Status      : {account_status}")
-    lines.append(f"  Equity      : ${equity:>12,.2f}")
-    lines.append(f"  Buying power: ${buying_power:>12,.2f}")
-    lines.append(f"  Cumul. P&L  : ${summary['cumulative_realized_pnl']:>+12,.2f}")
+    lines.append("💰 口座情報 (ペーパー)")
+    lines.append(f"  ステータス    : {account_status}")
+    lines.append(f"  資産総額      : ${equity:>12,.2f}")
+    lines.append(f"  買付余力      : ${buying_power:>12,.2f}")
+    lines.append(f"  累積損益      : ${summary['cumulative_realized_pnl']:>+12,.2f}")
     lines.append("")
 
     # Performance
-    lines.append("📊 Performance (since start)")
-    lines.append(f"  Closed trades : {summary['closed_trades']}")
-    lines.append(f"  Win / Loss    : {summary['winning_trades']} / {summary['losing_trades']}")
+    lines.append("📊 パフォーマンス (運用開始以降)")
+    lines.append(f"  決済取引数    : {summary['closed_trades']}")
+    lines.append(f"  勝 / 負       : {summary['winning_trades']} / {summary['losing_trades']}")
     wr = summary['win_rate']
-    lines.append(f"  Win rate      : {wr:.1%}" + (" 🔥" if wr >= 0.6 else (" ⚠️" if wr < 0.4 else "")))
-    lines.append(f"  Avg return    : {summary['avg_return_per_trade']:>+.2%}")
-    lines.append(f"  Avg P&L/trade : ${summary['avg_pnl_per_trade']:>+,.2f}")
-    lines.append(f"  Max drawdown  : {summary['max_drawdown_pct']:.2%}")
-    lines.append(f"  Trading days  : {summary['trading_days']}")
+    lines.append(f"  勝率          : {wr:.1%}" + (" 🔥" if wr >= 0.6 else (" ⚠️" if wr < 0.4 else "")))
+    lines.append(f"  平均リターン  : {summary['avg_return_per_trade']:>+.2%}")
+    lines.append(f"  平均損益/取引 : ${summary['avg_pnl_per_trade']:>+,.2f}")
+    lines.append(f"  最大DD        : {summary['max_drawdown_pct']:.2%}")
+    lines.append(f"  取引日数      : {summary['trading_days']}")
     lines.append("")
 
     # Open positions
     if open_pos:
-        lines.append(f"📂 Open Positions ({len(open_pos)})")
+        lines.append(f"📂 保有ポジション ({len(open_pos)}件)")
         for pos in open_pos:
             sym = pos["symbol"]
             entry = pos["entry_price"]
@@ -200,36 +200,37 @@ def _build_report(
                 unreal = (curr - entry) * qty
                 unreal_pct = (curr - entry) / entry
                 lines.append(
-                    f"  {sym:<6} {qty:>4}sh  entry=${entry:,.2f}"
-                    f"  now=${curr:,.2f}"
-                    f"  unreal={unreal_pct:>+.1%} (${unreal:>+,.0f})"
+                    f"  {sym:<6} {qty:>4}株  取得=${entry:,.2f}"
+                    f"  現在=${curr:,.2f}"
+                    f"  含損益={unreal_pct:>+.1%} (${unreal:>+,.0f})"
                 )
             else:
-                lines.append(f"  {sym:<6} {qty:>4}sh  entry=${entry:,.2f}")
+                lines.append(f"  {sym:<6} {qty:>4}株  取得=${entry:,.2f}")
         lines.append("")
     else:
-        lines.append("📂 Open Positions: (none)")
+        lines.append("📂 保有ポジション: なし")
         lines.append("")
 
     # Recent trades
     if recent:
-        lines.append(f"🔄 Recent Closed Trades (last {len(recent)})")
+        lines.append(f"🔄 最近の決済取引 (直近{len(recent)}件)")
         for t in reversed(recent):
             pnl = t.get("pnl") or 0
             ret = t.get("return_pct") or 0
             icon = "✅" if pnl >= 0 else "❌"
+            side_ja = "買い" if t['side'].upper() == "BUY" else "売り"
             lines.append(
-                f"  {icon} {t['symbol']:<6} {t['side'].upper()}"
-                f"  P&L: ${pnl:>+,.2f} ({ret:>+.1%})"
+                f"  {icon} {t['symbol']:<6} {side_ja}"
+                f"  損益: ${pnl:>+,.2f} ({ret:>+.1%})"
                 f"  [{t['strategy_id']}]"
             )
         lines.append("")
     else:
-        lines.append("🔄 No closed trades yet")
+        lines.append("🔄 決済取引なし")
         lines.append("")
 
     lines.append("─" * 40)
-    lines.append(f"Next run: JST 22:30 (US pre-market)")
+    lines.append(f"次回実行: 日本時間 22:30 (米国プレマーケット)")
     return lines
 
 
