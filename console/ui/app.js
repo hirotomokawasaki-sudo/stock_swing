@@ -203,7 +203,7 @@ class Console {
             ${positions.length === 0
                 ? '<p class="muted">保有ポジションなし。Paper Demo実行後に表示されます。</p>'
                 : `<table>
-                    <thead><tr><th>銘柄</th><th>売買</th><th>数量</th><th>取得価格</th><th>戦略</th><th>取得時刻</th><th>注文ID</th></tr></thead>
+                    <thead><tr><th>銘柄</th><th>売買</th><th>数量</th><th>取得価格</th><th>戦略</th><th>サイズ根拠</th><th>取得時刻</th><th>注文ID</th></tr></thead>
                     <tbody>${positions.map(p => `
                         <tr>
                             <td><strong>${p.symbol}</strong></td>
@@ -211,6 +211,7 @@ class Console {
                             <td>${p.qty}</td>
                             <td>${fmt.usd(p.entry_price)}</td>
                             <td><span class="tag">${p.strategy_id}</span></td>
+                            <td class="muted small">${p.sizing_details ? `採用=${p.sizing_details.final_shares||'—'} / risk=${p.sizing_details.shares_by_risk||'—'} / notional=${p.sizing_details.shares_by_notional||'—'} / exposure=${p.sizing_details.shares_by_exposure||'—'} / regime=${p.sizing_details.regime_used||'—'}` : '—'}</td>
                             <td class="muted small">${fmt.dt(p.entry_time)}</td>
                             <td class="muted small">${p.broker_order_id||'—'}</td>
                         </tr>`).join('')}
