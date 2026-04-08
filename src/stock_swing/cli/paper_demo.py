@@ -458,7 +458,25 @@ def _save_decisions(decisions: list[DecisionRecord], store: StageStore, ts_tag: 
                     "time_in_force": d.proposed_order.time_in_force,
                     "limit_price": d.proposed_order.limit_price,
                 } if d.proposed_order else None,
-                "sizing": d.evidence.get("sizing") if isinstance(d.evidence, dict) else None,
+                "sizing": {
+                    "final_shares": d.sizing.final_shares,
+                    "shares_by_risk": d.sizing.shares_by_risk,
+                    "shares_by_notional": d.sizing.shares_by_notional,
+                    "shares_by_exposure": d.sizing.shares_by_exposure,
+                    "regime_used": d.sizing.regime_used,
+                    "risk_per_share": d.sizing.risk_per_share,
+                    "stop_price": d.sizing.stop_price,
+                    "latest_close": d.sizing.latest_close,
+                    "atr": d.sizing.atr,
+                    "max_loss_usd": d.sizing.max_loss_usd,
+                    "max_position_notional_usd": d.sizing.max_position_notional_usd,
+                    "remaining_exposure_capacity_usd": d.sizing.remaining_exposure_capacity_usd,
+                    "account_equity": d.sizing.account_equity,
+                    "current_price": d.sizing.current_price,
+                    "current_total_exposure": d.sizing.current_total_exposure,
+                    "applied_constraint": d.sizing.applied_constraint,
+                    "skip_reason": d.sizing.skip_reason,
+                },
             }
             store.write_decisions(f"decision_{d.symbol}_{ts_tag}.json", doc)
         except Exception:

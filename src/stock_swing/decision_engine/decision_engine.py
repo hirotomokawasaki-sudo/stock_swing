@@ -44,6 +44,29 @@ class ProposedOrder:
 
 
 @dataclass
+class PositionSizingSnapshot:
+    """Structured sizing snapshot attached to a decision."""
+
+    final_shares: int | None = None
+    shares_by_risk: int | None = None
+    shares_by_notional: int | None = None
+    shares_by_exposure: int | None = None
+    regime_used: str | None = None
+    risk_per_share: float | None = None
+    stop_price: float | None = None
+    latest_close: float | None = None
+    atr: float | None = None
+    max_loss_usd: float | None = None
+    max_position_notional_usd: float | None = None
+    remaining_exposure_capacity_usd: float | None = None
+    account_equity: float | None = None
+    current_price: float | None = None
+    current_total_exposure: float | None = None
+    applied_constraint: str | None = None
+    skip_reason: str | None = None
+
+
+@dataclass
 class DecisionRecord:
     """Final decision record (DECISION_SCHEMA.md compliant).
     
@@ -83,6 +106,7 @@ class DecisionRecord:
     time_horizon: str
     evidence: dict[str, Any]
     proposed_order: ProposedOrder | None
+    sizing: PositionSizingSnapshot = field(default_factory=PositionSizingSnapshot)
 
 
 class DecisionEngine:
@@ -167,15 +191,20 @@ class DecisionEngine:
             "raw_refs": [],
             "notes": [candidate.reasoning],
         }
+        sizing = PositionSizingSnapshot()
         if isinstance(candidate.metadata, dict):
             if candidate.metadata.get("risk_per_share") is not None:
                 evidence["risk_per_share"] = candidate.metadata.get("risk_per_share")
+                sizing.risk_per_share = candidate.metadata.get("risk_per_share")
             if candidate.metadata.get("stop_price") is not None:
                 evidence["stop_price"] = candidate.metadata.get("stop_price")
+                sizing.stop_price = candidate.metadata.get("stop_price")
             if candidate.metadata.get("latest_close") is not None:
                 evidence["latest_close"] = candidate.metadata.get("latest_close")
+                sizing.latest_close = candidate.metadata.get("latest_close")
             if candidate.metadata.get("atr") is not None:
                 evidence["atr"] = candidate.metadata.get("atr")
+                sizing.atr = candidate.metadata.get("atr")
         if risk_result.deny_reasons:
             evidence["notes"].extend(risk_result.deny_reasons)
         
@@ -196,6 +225,7 @@ class DecisionEngine:
             time_horizon=candidate.time_horizon,
             evidence=evidence,
             proposed_order=proposed_order,
+            sizing=sizing,
         )
         
         return decision

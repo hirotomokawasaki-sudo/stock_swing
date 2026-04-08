@@ -280,7 +280,8 @@ def _build_report(
                 f"[risk={sizing.get('shares_by_risk')} / notional={sizing.get('shares_by_notional')} / exposure={sizing.get('shares_by_exposure')}]"
             )
             lines.append(
-                f"         資産=${sizing.get('account_equity')} 株価=${sizing.get('current_price')} 最大損失=${sizing.get('max_loss_usd')} 最大投入=${sizing.get('max_position_notional_usd')}"
+                f"         採用制約={sizing.get('applied_constraint') or '—'} 相場regime={sizing.get('regime_used') or '—'} "
+                f"資産=${sizing.get('account_equity')} 株価=${sizing.get('current_price')} 最大許容損失=${sizing.get('max_loss_usd')} 最大投入額=${sizing.get('max_position_notional_usd')}"
             )
             count += 1
             if count >= 5:

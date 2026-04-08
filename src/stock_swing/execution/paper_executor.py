@@ -320,6 +320,13 @@ class PaperExecutor:
             market_regime=market_regime or "neutral",
             risk_per_share=explicit_risk_per_share,
         ))
+        values = {
+            "risk": result.shares_by_risk,
+            "notional": result.shares_by_notional,
+            "exposure": result.shares_by_exposure,
+        }
+        positive = {k: v for k, v in values.items() if isinstance(v, int) and v > 0}
+        applied_constraint = min(positive, key=positive.get) if positive else None
         details = {
             "account_equity": round(equity, 2),
             "current_price": round(current_price, 4),
@@ -332,10 +339,28 @@ class PaperExecutor:
             "max_position_notional_usd": result.max_position_notional_usd,
             "max_total_exposure_usd": result.max_total_exposure_usd,
             "remaining_exposure_capacity_usd": result.remaining_exposure_capacity_usd,
-            "risk_per_share_used": result.risk_per_share_used,
+            "risk_per_share": result.risk_per_share_used,
             "regime_used": result.regime_used,
+            "applied_constraint": applied_constraint,
             "skip_reason": result.skip_reason,
         }
+        if isinstance(decision.evidence, dict):
+            decision.evidence["sizing"] = details
+            if getattr(decision, "sizing", None) is not None:
+                decision.sizing.final_shares = result.final_shares
+                decision.sizing.shares_by_risk = result.shares_by_risk
+                decision.sizing.shares_by_notional = result.shares_by_notional
+                decision.sizing.shares_by_exposure = result.shares_by_exposure
+                decision.sizing.regime_used = result.regime_used
+                decision.sizing.max_loss_usd = result.max_loss_usd
+                decision.sizing.max_position_notional_usd = result.max_position_notional_usd
+                decision.sizing.remaining_exposure_capacity_usd = result.remaining_exposure_capacity_usd
+                decision.sizing.account_equity = round(equity, 2)
+                decision.sizing.current_price = round(current_price, 4)
+                decision.sizing.current_total_exposure = round(current_total_exposure, 2)
+                decision.sizing.risk_per_share = result.risk_per_share_used
+                decision.sizing.applied_constraint = applied_constraint
+                decision.sizing.skip_reason = result.skip_reason
         return result.final_shares, details
 
     def _generate_submission_id(self, decision: DecisionRecord) -> str:
