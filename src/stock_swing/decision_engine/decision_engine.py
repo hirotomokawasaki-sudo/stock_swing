@@ -52,6 +52,7 @@ class PositionSizingSnapshot:
     shares_by_notional: int | None = None
     shares_by_exposure: int | None = None
     regime_used: str | None = None
+    asset_class_used: str | None = None
     risk_per_share: float | None = None
     stop_price: float | None = None
     latest_close: float | None = None
@@ -62,6 +63,11 @@ class PositionSizingSnapshot:
     account_equity: float | None = None
     current_price: float | None = None
     current_total_exposure: float | None = None
+    current_sector_exposure: float | None = None
+    sector_used: str | None = None
+    max_sector_exposure_usd: float | None = None
+    remaining_sector_capacity_usd: float | None = None
+    confidence: float | None = None
     applied_constraint: str | None = None
     skip_reason: str | None = None
 

@@ -281,13 +281,20 @@ class PaperExecutor:
         positions_env = self.broker_client.fetch_positions()
         positions_resp = positions_env.payload if hasattr(positions_env, 'payload') else positions_env
         current_total_exposure = 0.0
+        current_sector_exposure = 0.0
         try:
+            from stock_swing.risk.position_sizing import SYMBOL_SECTORS
+            current_sector = SYMBOL_SECTORS.get(proposed.symbol.upper())
             for pos in positions_resp:
                 qty = float(pos.get("qty", 0) or 0)
                 price = float(pos.get("current_price", pos.get("avg_entry_price", 0)) or 0)
-                current_total_exposure += abs(qty * price)
+                notional = abs(qty * price)
+                current_total_exposure += notional
+                if current_sector and SYMBOL_SECTORS.get(str(pos.get("symbol", "")).upper()) == current_sector:
+                    current_sector_exposure += notional
         except Exception:
             current_total_exposure = 0.0
+            current_sector_exposure = 0.0
 
         current_price = None
         try:
@@ -317,8 +324,11 @@ class PaperExecutor:
             account_equity=equity,
             current_price=current_price,
             current_total_exposure=current_total_exposure,
+            current_sector_exposure=current_sector_exposure,
             market_regime=market_regime or "neutral",
+            symbol=proposed.symbol,
             risk_per_share=explicit_risk_per_share,
+            confidence=decision.confidence,
         ))
         values = {
             "risk": result.shares_by_risk,
@@ -331,6 +341,7 @@ class PaperExecutor:
             "account_equity": round(equity, 2),
             "current_price": round(current_price, 4),
             "current_total_exposure": round(current_total_exposure, 2),
+            "current_sector_exposure": round(current_sector_exposure, 2),
             "shares_by_risk": result.shares_by_risk,
             "shares_by_notional": result.shares_by_notional,
             "shares_by_exposure": result.shares_by_exposure,
@@ -341,6 +352,11 @@ class PaperExecutor:
             "remaining_exposure_capacity_usd": result.remaining_exposure_capacity_usd,
             "risk_per_share": result.risk_per_share_used,
             "regime_used": result.regime_used,
+            "asset_class_used": result.asset_class_used,
+            "sector_used": result.sector_used,
+            "max_sector_exposure_usd": result.max_sector_exposure_usd,
+            "remaining_sector_capacity_usd": result.remaining_sector_capacity_usd,
+            "confidence": decision.confidence,
             "applied_constraint": applied_constraint,
             "skip_reason": result.skip_reason,
         }
@@ -352,13 +368,19 @@ class PaperExecutor:
                 decision.sizing.shares_by_notional = result.shares_by_notional
                 decision.sizing.shares_by_exposure = result.shares_by_exposure
                 decision.sizing.regime_used = result.regime_used
+                decision.sizing.asset_class_used = result.asset_class_used
                 decision.sizing.max_loss_usd = result.max_loss_usd
                 decision.sizing.max_position_notional_usd = result.max_position_notional_usd
                 decision.sizing.remaining_exposure_capacity_usd = result.remaining_exposure_capacity_usd
                 decision.sizing.account_equity = round(equity, 2)
                 decision.sizing.current_price = round(current_price, 4)
                 decision.sizing.current_total_exposure = round(current_total_exposure, 2)
+                decision.sizing.current_sector_exposure = round(current_sector_exposure, 2)
+                decision.sizing.sector_used = result.sector_used
+                decision.sizing.max_sector_exposure_usd = result.max_sector_exposure_usd
+                decision.sizing.remaining_sector_capacity_usd = result.remaining_sector_capacity_usd
                 decision.sizing.risk_per_share = result.risk_per_share_used
+                decision.sizing.confidence = decision.confidence
                 decision.sizing.applied_constraint = applied_constraint
                 decision.sizing.skip_reason = result.skip_reason
         return result.final_shares, details
