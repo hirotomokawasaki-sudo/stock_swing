@@ -167,6 +167,15 @@ class DecisionEngine:
             "raw_refs": [],
             "notes": [candidate.reasoning],
         }
+        if isinstance(candidate.metadata, dict):
+            if candidate.metadata.get("risk_per_share") is not None:
+                evidence["risk_per_share"] = candidate.metadata.get("risk_per_share")
+            if candidate.metadata.get("stop_price") is not None:
+                evidence["stop_price"] = candidate.metadata.get("stop_price")
+            if candidate.metadata.get("latest_close") is not None:
+                evidence["latest_close"] = candidate.metadata.get("latest_close")
+            if candidate.metadata.get("atr") is not None:
+                evidence["atr"] = candidate.metadata.get("atr")
         if risk_result.deny_reasons:
             evidence["notes"].extend(risk_result.deny_reasons)
         

@@ -98,7 +98,7 @@ class Reconciler:
         
         # Extract broker state
         broker_status = self._normalize_broker_status(broker_order.get("status", "unknown"))
-        broker_filled_qty = broker_order.get("filled_qty", 0)
+        broker_filled_qty = self._to_number(broker_order.get("filled_qty", 0))
         
         # Compare statuses
         status_matched = self._statuses_match(submission.status, broker_status)
@@ -127,7 +127,8 @@ class Reconciler:
             )
         
         # Check quantity match
-        if broker_order.get("qty") != submission.qty:
+        broker_qty = self._to_number(broker_order.get("qty"))
+        if broker_qty != submission.qty:
             discrepancies.append(
                 f"qty_mismatch: internal={submission.qty}, broker={broker_order.get('qty')}"
             )
@@ -158,6 +159,24 @@ class Reconciler:
         except Exception:
             return None
     
+    def _to_number(self, value: Any) -> int | float:
+        """Convert broker numeric fields that may arrive as strings.
+
+        Alpaca/paper APIs often serialize qty fields as strings like "10" or "0".
+        Reconciliation should compare numerically, not lexically.
+        """
+        if value is None or value == "":
+            return 0
+        if isinstance(value, (int, float)):
+            return value
+        text = str(value).strip()
+        try:
+            if "." in text:
+                return float(text)
+            return int(text)
+        except Exception:
+            return 0
+
     def _normalize_broker_status(self, status: str) -> str:
         """Normalize broker status to internal status.
         

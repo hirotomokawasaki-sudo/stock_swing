@@ -81,9 +81,13 @@ class PriceMomentumFeature(BaseFeature):
             earliest_close = sorted_records[0].payload.get("close")
             latest_close = sorted_records[-1].payload.get("close")
             
+            atr = None
+            risk_per_share = None
+            stop_price = None
+
             if earliest_close and latest_close and earliest_close > 0:
                 momentum = (latest_close - earliest_close) / earliest_close
-                
+
                 # Classify trend
                 if momentum > 0.02:
                     trend = "bullish"
@@ -91,10 +95,30 @@ class PriceMomentumFeature(BaseFeature):
                     trend = "bearish"
                 else:
                     trend = "neutral"
+
+                # Simple ATR approximation from available OHLC bars
+                true_ranges = []
+                prev_close = None
+                for rec in sorted_records:
+                    high = rec.payload.get("high")
+                    low = rec.payload.get("low")
+                    close = rec.payload.get("close")
+                    if high is None or low is None or close is None:
+                        continue
+                    if prev_close is None:
+                        tr = high - low
+                    else:
+                        tr = max(high - low, abs(high - prev_close), abs(low - prev_close))
+                    true_ranges.append(tr)
+                    prev_close = close
+                if true_ranges:
+                    atr = sum(true_ranges) / len(true_ranges)
+                    risk_per_share = atr * 2
+                    stop_price = latest_close - risk_per_share
             else:
                 momentum = 0.0
                 trend = "unknown"
-            
+
             result = FeatureResult(
                 feature_name="price_momentum",
                 symbol=symbol,
@@ -103,6 +127,10 @@ class PriceMomentumFeature(BaseFeature):
                     "momentum": momentum,
                     "trend": trend,
                     "bars_used": len(sorted_records),
+                    "atr": atr,
+                    "risk_per_share": risk_per_share,
+                    "stop_price": stop_price,
+                    "latest_close": latest_close,
                 },
                 metadata={
                     "earliest_time": sorted_records[0].event_time.isoformat(),

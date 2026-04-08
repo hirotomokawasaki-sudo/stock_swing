@@ -9,11 +9,13 @@ from __future__ import annotations
 import hashlib
 import uuid
 from dataclasses import dataclass, field
+import math
 from datetime import datetime, timezone
 from typing import Any
 
 from stock_swing.core.runtime import RuntimeMode
 from stock_swing.decision_engine.decision_engine import DecisionRecord
+from stock_swing.risk.position_sizing import PositionSizingInputs, PositionSizingPolicy
 from stock_swing.sources.broker_client import BrokerClient
 
 
@@ -50,6 +52,7 @@ class OrderSubmission:
     status: str  # pending, submitted, filled, cancelled, rejected
     broker_status: str | None = None
     reject_reason: str | None = None
+    sizing_details: dict[str, Any] | None = None
 
 
 @dataclass
@@ -112,6 +115,7 @@ class PaperExecutor:
         
         self.runtime_mode = runtime_mode
         self.broker_client = broker_client
+        self.position_sizing = PositionSizingPolicy()
         
         # Track submissions (in-memory for now, would be persisted in production)
         self.submissions: dict[str, OrderSubmission] = {}
@@ -144,22 +148,31 @@ class PaperExecutor:
         proposed = decision.proposed_order
         if not proposed:
             raise ValueError(f"Decision {decision.decision_id} has no proposed_order")
-        
+
         # Generate submission ID
         submission_id = self._generate_submission_id(decision)
-        
+
+        # Recalculate quantity using hybrid position sizing
+        market_regime = None
+        if isinstance(decision.evidence, dict):
+            market_regime = decision.evidence.get("market_regime")
+        sized_qty, sizing_details = self._calculate_position_size(decision, market_regime=market_regime or "neutral")
+        if sized_qty < 1:
+            reason = sizing_details.get("skip_reason") if sizing_details else "final_shares_below_1"
+            raise ValueError(f"Decision {decision.decision_id} sized below 1 share, skipping ({reason})")
+
         # Submit to broker
         broker_order_id = None
         status = "pending"
         reject_reason = None
-        
+
         try:
             # Submit order (paper mode)
             broker_response = self.broker_client.submit_order(
                 symbol=proposed.symbol,
                 side=proposed.side,
                 order_type=proposed.order_type,
-                qty=proposed.qty,
+                qty=sized_qty,
                 time_in_force=proposed.time_in_force,
                 limit_price=proposed.limit_price,
             )
@@ -178,12 +191,13 @@ class PaperExecutor:
             symbol=proposed.symbol,
             side=proposed.side,
             order_type=proposed.order_type,
-            qty=proposed.qty,
+            qty=sized_qty,
             time_in_force=proposed.time_in_force,
             limit_price=proposed.limit_price,
             submitted_at=datetime.now(timezone.utc),
             status=status,
             reject_reason=reject_reason,
+            sizing_details=sizing_details,
         )
         
         # Track submission
@@ -246,6 +260,84 @@ class PaperExecutor:
         if decision.proposed_order is None:
             raise ValueError(f"Decision {decision.decision_id} has no proposed_order")
     
+    def _calculate_position_size(
+        self,
+        decision: DecisionRecord,
+        market_regime: str = "neutral",
+    ) -> tuple[int, dict[str, Any]]:
+        """Calculate hybrid position size using account equity and current exposure.
+
+        Initial implementation uses a default 5% stop-based risk-per-share and
+        treats unknown regime as neutral.
+        """
+        proposed = decision.proposed_order
+        if not proposed:
+            return 0, {"skip_reason": "missing_proposed_order"}
+
+        account_env = self.broker_client.fetch_account()
+        account = account_env.payload if hasattr(account_env, 'payload') else account_env
+        equity = float(account.get("equity", 0) or 0)
+
+        positions_env = self.broker_client.fetch_positions()
+        positions_resp = positions_env.payload if hasattr(positions_env, 'payload') else positions_env
+        current_total_exposure = 0.0
+        try:
+            for pos in positions_resp:
+                qty = float(pos.get("qty", 0) or 0)
+                price = float(pos.get("current_price", pos.get("avg_entry_price", 0)) or 0)
+                current_total_exposure += abs(qty * price)
+        except Exception:
+            current_total_exposure = 0.0
+
+        current_price = None
+        try:
+            latest_env = self.broker_client.fetch_bars(proposed.symbol, timeframe="1Day", limit=1)
+            latest = latest_env.payload if hasattr(latest_env, 'payload') else latest_env
+            bars = latest.get("bars", []) if isinstance(latest, dict) else latest
+            if bars:
+                bar = bars[-1]
+                current_price = float(bar.get("c") or bar.get("close") or 0)
+        except Exception:
+            current_price = None
+
+        if not current_price or current_price <= 0:
+            current_price = float(proposed.limit_price or 0)
+        if not current_price or current_price <= 0:
+            return proposed.qty, {
+                "fallback": True,
+                "reason": "missing_current_price",
+                "final_shares": proposed.qty,
+            }
+
+        explicit_risk_per_share = None
+        if isinstance(decision.evidence, dict):
+            explicit_risk_per_share = decision.evidence.get("risk_per_share")
+
+        result = self.position_sizing.size(PositionSizingInputs(
+            account_equity=equity,
+            current_price=current_price,
+            current_total_exposure=current_total_exposure,
+            market_regime=market_regime or "neutral",
+            risk_per_share=explicit_risk_per_share,
+        ))
+        details = {
+            "account_equity": round(equity, 2),
+            "current_price": round(current_price, 4),
+            "current_total_exposure": round(current_total_exposure, 2),
+            "shares_by_risk": result.shares_by_risk,
+            "shares_by_notional": result.shares_by_notional,
+            "shares_by_exposure": result.shares_by_exposure,
+            "final_shares": result.final_shares,
+            "max_loss_usd": result.max_loss_usd,
+            "max_position_notional_usd": result.max_position_notional_usd,
+            "max_total_exposure_usd": result.max_total_exposure_usd,
+            "remaining_exposure_capacity_usd": result.remaining_exposure_capacity_usd,
+            "risk_per_share_used": result.risk_per_share_used,
+            "regime_used": result.regime_used,
+            "skip_reason": result.skip_reason,
+        }
+        return result.final_shares, details
+
     def _generate_submission_id(self, decision: DecisionRecord) -> str:
         """Generate deterministic submission ID.
         

@@ -102,6 +102,10 @@ class BreakoutMomentumStrategy(BaseStrategy):
                             "trend": trend,
                             "bars_used": bars_used,
                             "macro_regime": macro_regime,
+                            "risk_per_share": momentum_feature.values.get("risk_per_share"),
+                            "stop_price": momentum_feature.values.get("stop_price"),
+                            "latest_close": momentum_feature.values.get("latest_close"),
+                            "atr": momentum_feature.values.get("atr"),
                         },
                     )
                     signals.append(signal)

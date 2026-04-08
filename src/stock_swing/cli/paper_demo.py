@@ -56,6 +56,28 @@ from stock_swing.strategy_engine.event_swing_strategy import EventSwingStrategy
 from stock_swing.tracking.pnl_tracker import PnLTracker
 from stock_swing.utils.market_calendar import MarketCalendar
 
+
+def _infer_price_based_regime(momentum_results: list) -> str:
+    """Infer a simple market regime from current price momentum breadth.
+
+    Uses the monitored universe itself as a lightweight fallback when macro data is
+    unavailable. This is intentionally simple and conservative.
+    """
+    if not momentum_results:
+        return "neutral"
+
+    momenta = [float(f.values.get("momentum", 0) or 0) for f in momentum_results]
+    bullish = sum(1 for m in momenta if m > 0.02)
+    bearish = sum(1 for m in momenta if m < -0.02)
+    total = len(momenta)
+    avg_momentum = sum(momenta) / total if total else 0.0
+
+    if total and bullish / total >= 0.6 and avg_momentum > 0.01:
+        return "bullish"
+    if total and bearish / total >= 0.5 and avg_momentum < -0.01:
+        return "cautious"
+    return "neutral"
+
 # US Tech / IT universe (default for paper demo)
 # Large-cap core
 # AAPL  Apple          MSFT  Microsoft      GOOGL Google        META  Meta
@@ -203,9 +225,15 @@ def main() -> int:  # noqa: C901
     macro_feat = MacroRegimeFeature()
     momentum_results = momentum_feat.compute(all_records)
     macro_results = macro_feat.compute([])
+    detected_regime = macro_results[0].values.get('regime', 'unknown') if macro_results else 'unknown'
+    macro_based_regime = 'bullish' if detected_regime == 'expansion' else ('cautious' if detected_regime in {'recession', 'high_volatility'} else 'neutral')
+    price_based_regime = _infer_price_based_regime(momentum_results)
+    regime_for_sizing = price_based_regime if detected_regime == 'unknown' else macro_based_regime
     all_features = momentum_results + macro_results
 
-    print(f"  Macro regime: {macro_results[0].values.get('regime', 'unknown') if macro_results else 'unknown'}")
+    print(f"  Macro regime: {detected_regime}")
+    print(f"  Price regime: {price_based_regime}")
+    print(f"  Sizing regime: {regime_for_sizing}")
     print()
     print(f"  {'Symbol':<6}  {'Momentum':>10}  {'Trend':<10}  {'Bars':>5}")
     print(f"  {'------':<6}  {'--------':>10}  {'----':>10}  {'----':>5}")
@@ -263,14 +291,16 @@ def main() -> int:  # noqa: C901
 
     for signal in all_signals:
         decision = decision_engine.process(signal, current_positions=current_positions)
+        if isinstance(decision.evidence, dict):
+            decision.evidence["market_regime"] = regime_for_sizing
+            decision.evidence["macro_regime_raw"] = detected_regime
+            decision.evidence["price_regime_raw"] = price_based_regime
         decisions.append(decision)
         status = "PASS" if decision.action in {"buy", "sell"} and decision.risk_state == "pass" else "SKIP"
         print(f"  [{status}] {decision.symbol}: action={decision.action} risk={decision.risk_state} conf={decision.confidence:.2f}")
         for r in decision.deny_reasons[:2]:
             print(f"       deny: {r}")
         audit_log.log_decision(decision.decision_id, decision.action, decision.strategy_id, decision.symbol, decision.risk_state, decision.mode)
-
-    _save_decisions(decisions, store, ts_tag)
 
     # 9. Paper execution
     actionable = [d for d in decisions if d.action in {"buy", "sell"} and d.risk_state == "pass" and d.proposed_order is not None]
@@ -297,12 +327,31 @@ def main() -> int:  # noqa: C901
 
     for decision in actionable:
         o = decision.proposed_order
-        print(f"\n  Submitting {o.side.upper()} {o.qty} {o.symbol} ({o.order_type}) ... ", end="", flush=True)
         try:
+            preview_qty, preview_sizing = executor._calculate_position_size(
+                decision,
+                market_regime=(decision.evidence.get("market_regime") if isinstance(decision.evidence, dict) else "neutral") or "neutral",
+            )
+            preview_basis = ""
+            if preview_sizing:
+                preview_basis = (
+                    f" [risk={preview_sizing.get('shares_by_risk')} "
+                    f"notional={preview_sizing.get('shares_by_notional')} "
+                    f"exposure={preview_sizing.get('shares_by_exposure')}]"
+                )
+            print(f"\n  Submitting {o.side.upper()} {preview_qty} {o.symbol} ({o.order_type}){preview_basis} ... ", end="", flush=True)
             sub = executor.submit(decision)
             submissions.append(sub)
             if sub.status == "submitted":
-                print(f"OK broker_id={sub.broker_order_id}")
+                sizing = sub.sizing_details or {}
+                if sizing:
+                    decision.evidence["sizing"] = sizing
+                    print(
+                        f"OK broker_id={sub.broker_order_id} qty={sub.qty} "
+                        f"[risk={sizing.get('shares_by_risk')} notional={sizing.get('shares_by_notional')} exposure={sizing.get('shares_by_exposure')}]"
+                    )
+                else:
+                    print(f"OK broker_id={sub.broker_order_id} qty={sub.qty}")
                 # Fetch current price for P&L tracking entry
                 try:
                     q = broker.fetch_latest_quote(o.symbol).payload
@@ -316,7 +365,7 @@ def main() -> int:  # noqa: C901
                     symbol=o.symbol,
                     strategy_id=decision.strategy_id,
                     side=o.side,
-                    qty=o.qty,
+                    qty=sub.qty,
                     price=entry_price,
                     broker_order_id=sub.broker_order_id,
                     decision_id=decision.decision_id,
@@ -324,9 +373,19 @@ def main() -> int:  # noqa: C901
             else:
                 print(f"WARN {sub.status}: {sub.reject_reason}")
             audit_log.log_submission(sub.submission_id, sub.decision_id, sub.symbol, sub.side, sub.qty, sub.status, sub.broker_order_id)
+            if sub.sizing_details:
+                print(
+                    f"    sizing: equity=${sub.sizing_details.get('account_equity')} "
+                    f"price=${sub.sizing_details.get('current_price')} "
+                    f"max_loss=${sub.sizing_details.get('max_loss_usd')} "
+                    f"max_notional=${sub.sizing_details.get('max_position_notional_usd')} "
+                    f"remaining_exposure=${sub.sizing_details.get('remaining_exposure_capacity_usd')}"
+                )
         except Exception as exc:
             print(f"ERROR: {exc}")
             audit_log.log_system_event("submission_error", AuditLevel.ERROR, details=f"{decision.symbol}: {exc}")
+
+    _save_decisions(decisions, store, ts_tag)
 
     # 10. Reconciliation
     submitted = [s for s in submissions if s.broker_order_id]
@@ -399,6 +458,7 @@ def _save_decisions(decisions: list[DecisionRecord], store: StageStore, ts_tag: 
                     "time_in_force": d.proposed_order.time_in_force,
                     "limit_price": d.proposed_order.limit_price,
                 } if d.proposed_order else None,
+                "sizing": d.evidence.get("sizing") if isinstance(d.evidence, dict) else None,
             }
             store.write_decisions(f"decision_{d.symbol}_{ts_tag}.json", doc)
         except Exception:

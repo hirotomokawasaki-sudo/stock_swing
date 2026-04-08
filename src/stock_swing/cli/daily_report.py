@@ -40,6 +40,26 @@ from stock_swing.sources.broker_client import BrokerClient
 from stock_swing.tracking.pnl_tracker import PnLTracker
 
 
+def _load_latest_decision_sizing() -> list[dict]:
+    decisions_dir = project_root / "data" / "decisions"
+    if not decisions_dir.exists():
+        return []
+    items = []
+    for p in sorted(decisions_dir.glob("decision_*.json"), key=lambda x: x.stat().st_mtime, reverse=True)[:50]:
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+            sizing = data.get("sizing") or ((data.get("evidence") or {}).get("sizing") if isinstance(data.get("evidence"), dict) else None)
+            if sizing:
+                items.append({
+                    "symbol": data.get("symbol"),
+                    "action": data.get("action"),
+                    "sizing": sizing,
+                })
+        except Exception:
+            pass
+    return items
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Daily P&L report")
     parser.add_argument("--json", action="store_true", help="Output raw JSON")
@@ -113,6 +133,8 @@ def _main_impl(args) -> int:
     except Exception:
         pass
 
+    latest_sizing = _load_latest_decision_sizing()
+
     if args.json:
         out = {
             "report_date": today,
@@ -125,6 +147,7 @@ def _main_impl(args) -> int:
             "performance": summary,
             "open_positions": open_pos,
             "recent_trades": recent,
+            "latest_sizing": latest_sizing,
         }
         print(json.dumps(out, indent=2, ensure_ascii=False))
         return 0
@@ -140,6 +163,7 @@ def _main_impl(args) -> int:
         open_pos=open_pos,
         recent=recent,
         current_prices=current_prices,
+        latest_sizing=latest_sizing,
     )
     report_text = "\n".join(lines)
     print(report_text)
@@ -173,6 +197,7 @@ def _build_report(
     open_pos: list,
     recent: list,
     current_prices: dict,
+    latest_sizing: list,
 ) -> list[str]:
     lines = []
     lines.append("📈 stock_swing 日次レポート")
@@ -238,6 +263,28 @@ def _build_report(
         lines.append("")
     else:
         lines.append("🔄 決済取引なし")
+        lines.append("")
+
+    if latest_sizing:
+        lines.append(f"📏 最新のポジションサイズ根拠 (直近{min(len(latest_sizing), 5)}件)")
+        seen = set()
+        count = 0
+        for item in latest_sizing:
+            sym = item.get("symbol")
+            if not sym or sym in seen:
+                continue
+            seen.add(sym)
+            sizing = item.get("sizing") or {}
+            lines.append(
+                f"  {sym:<6} 採用={sizing.get('final_shares')}株 "
+                f"[risk={sizing.get('shares_by_risk')} / notional={sizing.get('shares_by_notional')} / exposure={sizing.get('shares_by_exposure')}]"
+            )
+            lines.append(
+                f"         資産=${sizing.get('account_equity')} 株価=${sizing.get('current_price')} 最大損失=${sizing.get('max_loss_usd')} 最大投入=${sizing.get('max_position_notional_usd')}"
+            )
+            count += 1
+            if count >= 5:
+                break
         lines.append("")
 
     lines.append("─" * 40)
