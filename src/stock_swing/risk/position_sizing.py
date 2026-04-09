@@ -14,10 +14,10 @@ from math import floor
 
 
 REGIME_LIMITS = {
-    "bullish": 0.70,
-    "neutral": 0.50,
-    "cautious": 0.30,
-    "unknown": 0.50,
+    "bullish": 0.85,
+    "neutral": 0.70,
+    "cautious": 0.50,
+    "unknown": 0.70,
 }
 
 ETF_SYMBOLS = {
