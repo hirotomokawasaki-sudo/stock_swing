@@ -53,6 +53,7 @@ from stock_swing.sources.broker_client import BrokerClient
 from stock_swing.storage.stage_store import StageStore
 from stock_swing.strategy_engine.breakout_momentum_strategy import BreakoutMomentumStrategy
 from stock_swing.strategy_engine.event_swing_strategy import EventSwingStrategy
+from stock_swing.strategy_engine.simple_exit_strategy import SimpleExitStrategy
 from stock_swing.tracking.pnl_tracker import PnLTracker
 from stock_swing.utils.market_calendar import MarketCalendar
 
@@ -245,6 +246,24 @@ def main() -> int:  # noqa: C901
 
     # 7. Strategy signals
     _section("7. Strategy Signals")
+    
+    # First, get current positions for exit strategy
+    current_positions_full: dict[str, dict] = {}
+    current_positions: dict[str, int] = {}
+    try:
+        pos_env = broker.fetch_positions()
+        pos_data = pos_env.payload
+        if isinstance(pos_data, list):
+            for pos in pos_data:
+                sym = pos.get("symbol")
+                qty = int(float(pos.get("qty", 0)))
+                if sym and qty > 0:
+                    current_positions[sym] = qty
+                    current_positions_full[sym] = pos
+    except Exception as exc:
+        print(f"  WARN: Could not fetch positions for exit strategy: {exc}")
+    
+    # Entry strategies
     breakout_strat = BreakoutMomentumStrategy(
         min_momentum=args.min_momentum,
         min_signal_strength=args.min_signal_strength,
@@ -252,10 +271,20 @@ def main() -> int:  # noqa: C901
     event_strat = EventSwingStrategy()
     breakout_signals = breakout_strat.generate(all_features)
     event_signals = event_strat.generate(all_features)
-    all_signals = breakout_signals + event_signals
+    
+    # Exit strategy for current positions
+    exit_strat = SimpleExitStrategy(
+        stop_loss_pct=-0.07,  # -7% stop loss
+        take_profit_pct=0.10,  # +10% take profit
+        max_hold_days=5,
+    )
+    exit_signals = exit_strat.generate(all_features, current_positions_full)
+    
+    all_signals = breakout_signals + event_signals + exit_signals
 
     print(f"  BreakoutMomentum: {len(breakout_signals)} signal(s)")
     print(f"  EventSwing:       {len(event_signals)} signal(s)")
+    print(f"  SimpleExit:       {len(exit_signals)} signal(s)")
     for sig in all_signals:
         print(f"  -> [{sig.strategy_id}] {sig.symbol}: {sig.action.upper()} strength={sig.signal_strength:.2f}")
         print(f"     {sig.reasoning}")
@@ -267,7 +296,6 @@ def main() -> int:  # noqa: C901
 
     # 8. Decisions
     _section("8. Decision Engine")
-    current_positions: dict[str, int] = {}
     try:
         pos_env = broker.fetch_positions()
         pos_data = pos_env.payload

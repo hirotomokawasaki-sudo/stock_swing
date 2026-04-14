@@ -1,6 +1,6 @@
 {
   "created_at": "2026-04-03T10:39:59.492341+00:00",
-  "last_updated": "2026-04-09T00:01:44.755960+00:00",
+  "last_updated": "2026-04-14T00:03:19.324276+00:00",
   "trades": [
     {
       "trade_id": "CRM-d8aad4ae",
@@ -790,6 +790,21 @@
       "return_pct": null,
       "status": "open",
       "broker_order_id": "99899f74-b605-481e-92b8-0359809f52f0"
+    },
+    {
+      "trade_id": "MU-4881219e",
+      "symbol": "MU",
+      "strategy_id": "breakout_momentum_v1",
+      "side": "buy",
+      "qty": 7,
+      "entry_price": 0.0,
+      "exit_price": null,
+      "entry_time": "2026-04-10T14:51:40.010934+00:00",
+      "exit_time": null,
+      "pnl": null,
+      "return_pct": null,
+      "status": "open",
+      "broker_order_id": "c9e254d3-2108-4045-9bbf-661b00be887a"
     }
   ],
   "daily_snapshots": [
@@ -1224,12 +1239,216 @@
       "loss_count": 0,
       "signals_generated": 0,
       "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-09",
+      "equity": 97038.49,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 10,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-09",
+      "equity": 96955.44,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 10,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-09",
+      "equity": 96306.84,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 10,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-09",
+      "equity": 96588.82,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 10,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-09",
+      "equity": 96553.61,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 0,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-10",
+      "equity": 97774.54,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 0,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-10",
+      "equity": 95675.14,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 8,
+      "orders_submitted": 1
+    },
+    {
+      "date": "2026-04-10",
+      "equity": 95776.62,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 8,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-10",
+      "equity": 95954.9,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 8,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-10",
+      "equity": 95953.59,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 8,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-11",
+      "equity": 96015.0,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 0,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-12",
+      "equity": 95930.63,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 0,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-13",
+      "equity": 97113.73,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 7,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-13",
+      "equity": 97192.43,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 7,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-13",
+      "equity": 97778.76,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 7,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-13",
+      "equity": 97860.41,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 7,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-14",
+      "equity": 96241.48,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 0,
+      "orders_submitted": 0
     }
   ],
   "cumulative_realized_pnl": 0.0,
-  "total_trades": 50,
+  "total_trades": 51,
   "winning_trades": 0,
   "losing_trades": 0,
   "peak_equity": 100019.24,
-  "max_drawdown_pct": 0.0164
+  "max_drawdown_pct": 0.0434
 }
