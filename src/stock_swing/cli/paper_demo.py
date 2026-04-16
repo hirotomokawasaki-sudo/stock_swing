@@ -56,6 +56,7 @@ from stock_swing.strategy_engine.event_swing_strategy import EventSwingStrategy
 from stock_swing.strategy_engine.simple_exit_strategy import SimpleExitStrategy
 from stock_swing.tracking.pnl_tracker import PnLTracker
 from stock_swing.utils.market_calendar import MarketCalendar
+from stock_swing.utils.signal_prioritization import prioritize_buy_signals
 
 
 def _infer_price_based_regime(momentum_results: list) -> str:
@@ -280,11 +281,15 @@ def main() -> int:  # noqa: C901
     )
     exit_signals = exit_strat.generate(all_features, current_positions_full)
     
-    all_signals = breakout_signals + event_signals + exit_signals
+    # Prioritize buy signals for sector diversification
+    entry_signals = breakout_signals + event_signals
+    prioritized_entry = prioritize_buy_signals(entry_signals, current_positions_full)
+    all_signals = prioritized_entry + exit_signals
 
     print(f"  BreakoutMomentum: {len(breakout_signals)} signal(s)")
     print(f"  EventSwing:       {len(event_signals)} signal(s)")
     print(f"  SimpleExit:       {len(exit_signals)} signal(s)")
+    print(f"  (Buy signals prioritized for sector diversification)")
     for sig in all_signals:
         print(f"  -> [{sig.strategy_id}] {sig.symbol}: {sig.action.upper()} strength={sig.signal_strength:.2f}")
         print(f"     {sig.reasoning}")

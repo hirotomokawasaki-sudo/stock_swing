@@ -157,6 +157,32 @@ class PaperExecutor:
         if isinstance(decision.evidence, dict):
             market_regime = decision.evidence.get("market_regime")
         sized_qty, sizing_details = self._calculate_position_size(decision, market_regime=market_regime or "neutral")
+        
+        # For SELL orders, cap quantity at current position size
+        if proposed.side == "sell":
+            try:
+                positions_env = self.broker_client.fetch_positions()
+                positions = positions_env.payload if hasattr(positions_env, 'payload') else positions_env
+                current_qty = 0
+                if isinstance(positions, list):
+                    for pos in positions:
+                        if pos.get("symbol") == proposed.symbol:
+                            current_qty = abs(int(float(pos.get("qty", 0))))
+                            break
+                
+                if current_qty <= 0:
+                    raise ValueError(f"No position to sell for {proposed.symbol}")
+                
+                # Cap sell quantity at current position
+                if sized_qty > current_qty:
+                    sizing_details["original_qty"] = sized_qty
+                    sizing_details["capped_to_position"] = current_qty
+                    sized_qty = current_qty
+            except Exception as e:
+                if "No position to sell" in str(e):
+                    raise
+                # If position fetch fails, proceed with calculated qty (will fail at broker if invalid)
+        
         if sized_qty < 1:
             reason = sizing_details.get("skip_reason") if sizing_details else "final_shares_below_1"
             raise ValueError(f"Decision {decision.decision_id} sized below 1 share, skipping ({reason})")
