@@ -8,6 +8,7 @@ Supported endpoints (approved initial scope):
 - /calendar/earnings - Earnings calendar
 - /stock/insider-transactions - Insider transactions
 - /stock/filings-sentiment - Filing sentiment
+- /company-news - Company news
 
 API Documentation: https://finnhub.io/docs/api
 """
@@ -196,11 +197,33 @@ class FinnhubClient(SourceClient):
             accessNumber=access_number,
         )
 
+    def fetch_company_news(
+        self,
+        symbol: str,
+        from_date: str,
+        to_date: str,
+    ) -> RawEnvelope:
+        """Fetch company news for a symbol.
+
+        Args:
+            symbol: Stock symbol.
+            from_date: Start date (YYYY-MM-DD).
+            to_date: End date (YYYY-MM-DD).
+
+        Returns:
+            RawEnvelope with company news data.
+        """
+        return self.fetch(
+            endpoint="company-news",
+            symbol=symbol,
+            **{"from": from_date, "to": to_date},
+        )
+
     def _fetch_endpoint(
         self,
         endpoint: str,
         params: dict[str, Any],
-    ) -> dict[str, Any]:
+    ) -> Any:
         """Fetch data from a Finnhub endpoint.
         
         Args:

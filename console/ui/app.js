@@ -13,6 +13,13 @@ class Console {
     constructor() {
         this.currentTab = 'overview';
         this.data = null;
+        this.selectedNewsId = null;
+        this.newsFilterUsed = localStorage.getItem('newsFilterUsed') === 'true';
+        this.newsFilterTrackedOnly = localStorage.getItem('newsFilterTrackedOnly') !== 'false';
+        this.newsFilterSentiment = localStorage.getItem('newsFilterSentiment') || 'all';
+        this.newsFilterImpact = localStorage.getItem('newsFilterImpact') || 'all';
+        this.newsFilterSymbol = localStorage.getItem('newsFilterSymbol') || '';
+        this.newsSort = localStorage.getItem('newsSort') || 'published_at';
         this.init();
     }
 
@@ -70,6 +77,7 @@ class Console {
             case 'cron':       content.innerHTML = this.renderCronJobs(); break;
             case 'data':       content.innerHTML = this.renderDataStatus(); break;
             case 'logs':       content.innerHTML = this.renderLogs(); break;
+            case 'news':       content.innerHTML = this.renderNews(); break;
         }
     }
 
@@ -488,6 +496,331 @@ class Console {
         </div>`;
     }
 
+    renderNews() {
+        return `
+        ${this.renderNewsSummary()}
+        <div class="card" style="margin-top:16px">
+            <h3>News Coverage Status</h3>
+            ${this.renderNewsCoverageStatus()}
+        </div>
+        <div class="card" style="margin-top:16px">
+            <h3>Filters</h3>
+            ${this.renderNewsFilters()}
+        </div>
+        <div class="grid" style="margin-top:16px">
+            <div class="card">
+                <h3>News Feed</h3>
+                ${this.renderNewsTable()}
+            </div>
+            <div class="card">
+                <h3>集計</h3>
+                ${this.renderNewsAggregates()}
+                <div style="margin-top:16px">
+                  <h4 style="margin-bottom:8px">Timeline</h4>
+                  ${this.renderNewsTimeline()}
+                </div>
+            </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+            <h3>News Detail</h3>
+            ${this.renderNewsDetail()}
+        </div>
+        <div class="card" style="margin-top:16px">
+            <h3>Source Reliability Report</h3>
+            ${this.renderSourceReliabilityTable()}
+        </div>
+        <div class="card" style="margin-top:16px">
+            <h3>News Diagnostics</h3>
+            ${this.renderNewsDiagnostics()}
+        </div>`;
+    }
+
+    renderNewsSummary() {
+        const s = this.data?.news?.summary || {};
+        const sr = this.data?.source_reliability?.summary || {};
+        return `
+        <div class="grid">
+          <div class="card"><h3>News 24h</h3><div class="metric"><span class="label">件数</span><span class="value">${s.total_24h ?? 0}</span></div></div>
+          <div class="card"><h3>Sentiment</h3><div class="metric"><span class="label">ポジティブ</span><span class="value success">${s.positive ?? 0}</span></div><div class="metric"><span class="label">ネガティブ</span><span class="value danger">${s.negative ?? 0}</span></div><div class="metric"><span class="label">中立</span><span class="value">${s.neutral ?? 0}</span></div></div>
+          <div class="card"><h3>Impact</h3><div class="metric"><span class="label">高</span><span class="value warn">${s.high_impact ?? 0}</span></div><div class="metric"><span class="label">重大</span><span class="value danger">${s.critical_impact ?? 0}</span></div></div>
+          <div class="card"><h3>Decision Link</h3><div class="metric"><span class="label">採用件数</span><span class="value">${s.decision_referenced ?? 0}</span></div><div class="metric"><span class="label">対象銘柄</span><span class="value">${s.symbols_covered ?? 0}</span></div></div>
+          <div class="card"><h3>Source Reliability</h3><div class="metric"><span class="label">sources</span><span class="value">${sr.sources ?? 0}</span></div><div class="metric"><span class="label">+delta</span><span class="value success">${sr.with_positive_delta ?? 0}</span></div><div class="metric"><span class="label">-delta</span><span class="value danger">${sr.with_negative_delta ?? 0}</span></div></div>
+        </div>`;
+    }
+
+    getFilteredNewsItems() {
+        let items = this.data?.news?.items || [];
+        if (this.newsFilterTrackedOnly) items = items.filter(n => n.is_tracked_symbol !== false);
+        if (this.newsFilterUsed) items = items.filter(n => n.used_in_decision);
+        if (this.newsFilterSentiment && this.newsFilterSentiment !== 'all') items = items.filter(n => n.sentiment_label === this.newsFilterSentiment);
+        if (this.newsFilterImpact && this.newsFilterImpact !== 'all') items = items.filter(n => n.impact_label === this.newsFilterImpact);
+        if (this.newsFilterSymbol) items = items.filter(n => (n.symbol || '').toUpperCase() === this.newsFilterSymbol.toUpperCase());
+        const sortKey = this.newsSort || 'published_at';
+        items = [...items].sort((a, b) => {
+            if (sortKey === 'impact') return Number(b.impact_score || 0) - Number(a.impact_score || 0);
+            if (sortKey === 'influence') return Number(b.influence_score || 0) - Number(a.influence_score || 0);
+            if (sortKey === 'sentiment') return Math.abs(Number(b.sentiment_score || 0)) - Math.abs(Number(a.sentiment_score || 0));
+            return String(b.published_at || '').localeCompare(String(a.published_at || ''));
+        });
+        return items;
+    }
+
+    renderNewsCoverageStatus() {
+        const alerts = (this.data?.alerts || []).filter(a => a.code === 'no_news_for_tracked_symbols' || a.code === 'stale_news_symbols');
+        const ingestion = this.data?.news_ingestion || {};
+        return `
+          <div class="grid">
+            <div class="card"><h3>Latest External News</h3><div class="metric"><span class="label">時刻</span><span class="small muted">${ingestion.latest_news_time ? fmt.dt(ingestion.latest_news_time) : '—'}</span></div><div class="metric"><span class="label">鮮度</span><span class="value ${(ingestion.status || 'ok') === 'stale' ? 'danger' : (ingestion.status || 'ok') === 'partial' ? 'warn' : 'success'}">${ingestion.freshness_hours != null ? ingestion.freshness_hours + 'h' : '—'}</span></div><div class="metric"><span class="label">items</span><span class="value">${ingestion.total_items ?? 0}</span></div><div class="metric"><span class="label">raw/tracked-display/requested</span><span class="value">${ingestion.raw_symbols_collected ?? 0}/${ingestion.displayed_tracked_symbols_collected ?? 0}/${ingestion.symbols_requested ?? 0}</span></div>${(ingestion.displayed_non_tracked_symbols || []).length ? `<div class="small muted">non-tracked: ${this.escapeHtml((ingestion.displayed_non_tracked_symbols || []).join(', '))}</div>` : ''}<div class="metric"><span class="label">last success</span><span class="small muted">${ingestion.last_success ? fmt.dt(ingestion.last_success) : '—'}</span></div><div class="metric"><span class="label">last failure</span><span class="small muted">${ingestion.last_failure ? fmt.dt(ingestion.last_failure) : '—'}</span></div></div>
+            <div class="card"><h3>Source Coverage</h3>${(ingestion.source_counts || []).slice(0,5).map(r => `<div class="metric"><span class="label">${this.escapeHtml(r.source)}</span><span class="value">${r.count}</span></div>`).join('') || '<p class="muted">source data なし</p>'}<div style="margin-top:8px">${(ingestion.source_failures || []).map(r => `<div class="metric"><span class="label">${this.escapeHtml(r.source)}</span><span class="value danger">${r.count}</span></div>`).join('')}</div><div style="margin-top:8px">${(ingestion.failure_reason_counts || []).map(r => `<div class="metric"><span class="label">${this.escapeHtml(r.reason)}</span><span class="value">${r.count}</span></div>`).join('')}</div></div>
+            <div class="card"><h3>Coverage Alerts</h3>${alerts.length ? alerts.map(a => `<div class="alert alert-${a.severity}" style="margin-bottom:8px"><div class="alert-head">${this.renderSeverityBadge(a.severity)} <strong>${this.escapeHtml(a.title || a.code)}</strong></div><div>${this.escapeHtml(a.message || '')}</div></div>`).join('') : '<p class="muted">tracked symbols のニュース鮮度に大きな問題はありません。</p>'}<div style="margin-top:8px">${(ingestion.missing_symbol_reasons || []).length ? `<table><thead><tr><th>symbol</th><th>reason</th><th>fallback</th></tr></thead><tbody>${(ingestion.missing_symbol_reasons || []).map(r => `<tr><td><strong>${this.escapeHtml(r.symbol)}</strong></td><td>${this.escapeHtml(r.reason)}</td><td>${r.used_fallback ? 'yes' : 'no'}</td></tr>`).join('')}</tbody></table>` : ((ingestion.missing_symbols || []).length ? `<div class="small muted">missing: ${this.escapeHtml((ingestion.missing_symbols || []).join(', '))}</div>` : '')}</div></div>
+          </div>`;
+    }
+
+    renderNewsFilters() {
+        return `
+          <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
+            <label><input type="checkbox" ${this.newsFilterUsed ? 'checked' : ''} onchange="window.app.setNewsUsedFilter(this.checked)"> 採用のみ</label>
+            <label><input type="checkbox" ${this.newsFilterTrackedOnly ? 'checked' : ''} onchange="window.app.setNewsTrackedOnlyFilter(this.checked)"> trackedのみ</label>
+            <label>symbol
+              <input type="text" value="${this.escapeHtml(this.newsFilterSymbol || '')}" placeholder="例: MRVL" oninput="window.app.setNewsSymbolFilter(this.value)">
+            </label>
+            <label>感情
+              <select onchange="window.app.setNewsSentimentFilter(this.value)">
+                <option value="all" ${!this.newsFilterSentiment || this.newsFilterSentiment==='all' ? 'selected' : ''}>すべて</option>
+                <option value="positive" ${this.newsFilterSentiment==='positive' ? 'selected' : ''}>ポジティブ</option>
+                <option value="negative" ${this.newsFilterSentiment==='negative' ? 'selected' : ''}>ネガティブ</option>
+                <option value="neutral" ${this.newsFilterSentiment==='neutral' ? 'selected' : ''}>中立</option>
+              </select>
+            </label>
+            <label>重要度
+              <select onchange="window.app.setNewsImpactFilter(this.value)">
+                <option value="all" ${!this.newsFilterImpact || this.newsFilterImpact==='all' ? 'selected' : ''}>すべて</option>
+                <option value="high" ${this.newsFilterImpact==='high' ? 'selected' : ''}>高</option>
+                <option value="critical" ${this.newsFilterImpact==='critical' ? 'selected' : ''}>重大</option>
+                <option value="medium" ${this.newsFilterImpact==='medium' ? 'selected' : ''}>中</option>
+              </select>
+            </label>
+            <label>並び替え
+              <select onchange="window.app.setNewsSort(this.value)">
+                <option value="published_at" ${this.newsSort==='published_at' ? 'selected' : ''}>新着順</option>
+                <option value="impact" ${this.newsSort==='impact' ? 'selected' : ''}>影響度順</option>
+                <option value="influence" ${this.newsSort==='influence' ? 'selected' : ''}>参考度順</option>
+                <option value="sentiment" ${this.newsSort==='sentiment' ? 'selected' : ''}>感情強度順</option>
+              </select>
+            </label>
+          </div>`;
+    }
+
+    renderNewsTable() {
+        const items = this.getFilteredNewsItems();
+        if (!items.length) return '<p class="muted">ニュースはありません</p>';
+        return `<table><thead><tr><th>時刻</th><th>銘柄</th><th>見出し</th><th>感情</th><th>重要度</th><th>影響度</th><th>採用</th></tr></thead><tbody>${items.map(n => `
+          <tr class="clickable-row ${this.selectedNewsId === n.id ? 'selected-row' : ''}" onclick="window.app.selectNews('${this.escapeHtml(n.id)}')">
+            <td class="small muted">${fmt.dt(n.published_at)}</td>
+            <td><strong>${this.escapeHtml(n.symbol || '—')}</strong>${n.is_tracked_symbol === false ? ' <span class="badge badge-muted">non-tracked</span>' : ' <span class="badge badge-success">tracked</span>'}</td>
+            <td><div>${n.url ? `<a href="${this.escapeHtml(n.url)}" target="_blank" rel="noopener noreferrer">${this.escapeHtml(n.headline_ja || n.headline || '—')}</a>` : this.escapeHtml(n.headline_ja || n.headline || '—')}</div><div class="small muted">${this.escapeHtml(n.summary_ja || '')}</div></td>
+            <td>${this.renderSentimentBadge(n.sentiment_label, n.sentiment_score)}</td>
+            <td>${this.renderImpactBadge(n.impact_label)}</td>
+            <td>${this.renderInfluenceBar(n.influence_score)}</td>
+            <td>${n.used_in_decision ? '<span class="badge badge-success">採用</span>' : '<span class="badge badge-muted">未採用</span>'}</td>
+          </tr>`).join('')}</tbody></table>`;
+    }
+
+    renderNewsAggregates() {
+        const bySymbol = this.data?.news?.by_symbol || [];
+        const bySource = this.data?.news?.by_source || [];
+        const byEventType = this.data?.news?.by_event_type || [];
+        return `
+          <h4 style="margin-bottom:8px">銘柄別</h4>
+          ${bySymbol.length ? `<table><thead><tr><th>銘柄</th><th>tracked</th><th>件数</th><th>平均感情</th><th>平均重要度</th><th>採用</th><th>submitted</th><th>open</th><th>conv</th><th>最新見出し</th></tr></thead><tbody>${bySymbol.map(r => `
+            <tr><td><strong>${this.escapeHtml(r.symbol)}</strong></td><td>${r.is_tracked_symbol === false ? '<span class="badge badge-muted">non-tracked</span>' : '<span class="badge badge-success">tracked</span>'}</td><td>${r.news_count}</td><td>${Number(r.avg_sentiment ?? 0).toFixed(2)}</td><td>${Number(r.avg_impact ?? 0).toFixed(2)}</td><td>${r.decision_referenced ?? 0}</td><td>${r.submitted ?? 0}</td><td>${r.open_position ? '✅' : '—'}</td><td>${fmt.pct(r.conversion_rate ?? 0)}</td><td class="small muted">${this.escapeHtml(r.latest_headline_ja || '')}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">銘柄別集計なし</p>'}
+          <h4 style="margin:16px 0 8px">Symbol Overview 連携</h4>
+          ${bySymbol.length ? `<table><thead><tr><th>symbol</th><th>avg sentiment</th><th>avg impact</th><th>submitted</th><th>open</th><th>conv</th></tr></thead><tbody>${bySymbol.map(r => `
+            <tr><td><strong>${this.escapeHtml(r.symbol)}</strong></td><td>${Number(r.avg_sentiment ?? 0).toFixed(2)}</td><td>${Number(r.avg_impact ?? 0).toFixed(2)}</td><td>${r.submitted ?? 0}</td><td>${r.open_position ? '✅' : '—'}</td><td>${fmt.pct(r.conversion_rate ?? 0)}</td></tr>`).join('')}</tbody></table>` : ''}
+          <h4 style="margin:16px 0 8px">ソース別</h4>
+          ${bySource.length ? `<table><thead><tr><th>source</th><th>count</th><th>pos</th><th>neg</th><th>neutral</th></tr></thead><tbody>${bySource.map(r => `
+            <tr><td>${this.escapeHtml(r.source)}</td><td>${r.count}</td><td>${r.positive}</td><td>${r.negative}</td><td>${r.neutral}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">ソース別集計なし</p>'}
+          <h4 style="margin:16px 0 8px">イベント種別</h4>
+          ${byEventType.length ? `<table><thead><tr><th>event_type</th><th>count</th><th>pos</th><th>neg</th><th>neutral</th></tr></thead><tbody>${byEventType.map(r => `
+            <tr><td>${this.renderEventTypeBadge(r.event_type)}</td><td>${r.count}</td><td>${r.positive}</td><td>${r.negative}</td><td>${r.neutral}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">イベント種別集計なし</p>'}`;
+    }
+
+    renderNewsDetail() {
+        const items = this.data?.news?.items || [];
+        const n = items.find(x => x.id === this.selectedNewsId) || this.data?.news?.selected;
+        if (!n) return '<p class="muted">詳細表示対象のニュースはありません</p>';
+        return `
+          <div class="metric"><span class="label">銘柄</span><span class="value">${this.escapeHtml(n.symbol || '—')} ${n.is_tracked_symbol === false ? '<span class="badge badge-muted">non-tracked</span>' : '<span class="badge badge-success">tracked</span>'}</span></div>
+          <div class="metric"><span class="label">時刻</span><span class="small muted">${fmt.dt(n.published_at)}</span></div>
+          <div class="metric"><span class="label">ソース</span><span>${this.escapeHtml(n.source || '—')}</span></div>
+          <div class="metric"><span class="label">Source reliability</span><span>${Number(n.source_reliability ?? 0).toFixed(2)}</span></div>
+          <div class="metric"><span class="label">イベント種別</span><span>${this.renderEventTypeBadge(n.event_type)}</span></div>
+          <div class="metric"><span class="label">見出し</span><span>${this.escapeHtml(n.headline_ja || n.headline || '—')}</span></div>
+          <div class="metric"><span class="label">要約</span><span>${this.escapeHtml(n.summary_ja || n.snippet || '—')}</span></div>
+          <div class="metric"><span class="label">感情</span><span>${this.renderSentimentBadge(n.sentiment_label, n.sentiment_score)}</span></div>
+          <div class="metric"><span class="label">重要度</span><span>${this.renderImpactBadge(n.impact_label)}</span></div>
+          <div class="metric"><span class="label">影響度</span><span>${this.renderInfluenceBar(n.influence_score)}</span></div>
+          <div class="metric"><span class="label">戦略</span><span>${this.escapeHtml((n.strategy_refs || []).join(', '))}</span></div>
+          <div class="metric"><span class="label">Decision refs</span><span class="small muted">${this.escapeHtml((n.decision_refs || []).join(', '))}</span></div>
+          <div style="margin-top:12px">
+            <div class="small muted">理由</div>
+            <ul>${(n.rationale_ja || []).map(r => `<li>${this.escapeHtml(r)}</li>`).join('')}</ul>
+          </div>
+          ${n.headline ? `<div style="margin-top:12px"><div class="small muted">原文</div><div>${this.escapeHtml(n.headline)}</div></div>` : ''}
+          ${n.url ? `<div style="margin-top:12px"><a href="${this.escapeHtml(n.url)}" target="_blank" rel="noopener noreferrer">詳細を開く</a></div>` : `<div style="margin-top:12px" class="small muted">外部リンクなし（内部判断由来）</div>`}
+        `;
+    }
+
+    renderEventTypeBadge(eventType) {
+        const e = String(eventType || 'event').toLowerCase();
+        const map = {
+            momentum: ['モメンタム', 'success'],
+            event: ['イベント', 'warn'],
+            earnings: ['決算', 'danger'],
+            guidance: ['ガイダンス', 'warn'],
+            regulation: ['規制', 'danger'],
+            filing: ['開示', 'muted']
+        };
+        const pair = map[e] || ['その他', 'muted'];
+        return `<span class="badge badge-${pair[1]}">${pair[0]}</span>`;
+    }
+
+    renderNewsTimeline() {
+        const timeline = this.data?.news?.timeline || [];
+        if (!timeline.length) return '<p class="muted">タイムラインなし</p>';
+        const max = Math.max(...timeline.flatMap(t => [Number(t.positive || 0), Number(t.negative || 0), Number(t.neutral || 0), Number(t.count || 0)]), 1);
+        return `<div class="sparkline dual-bars"><div class="bars">${timeline.map(t => {
+            const ph = Math.max(8, Math.round((Number(t.positive || 0) / max) * 80));
+            const nh = Math.max(8, Math.round((Number(t.negative || 0) / max) * 80));
+            return `<div class="bar-pair"><div class="bar signal-bar" style="height:${ph}px"></div><div class="bar order-bar" style="height:${nh}px"></div></div>`;
+        }).join('')}</div><div class="legend small muted" style="margin-top:8px"><span class="legend-dot signal-dot"></span>Positive <span class="legend-dot order-dot"></span>Negative</div><div class="small muted" style="margin-top:8px">最新: ${timeline[timeline.length - 1]?.count ?? 0}件</div></div>`;
+    }
+
+    selectNews(id) {
+        this.selectedNewsId = id;
+        this.render();
+    }
+
+    setNewsUsedFilter(v) {
+        this.newsFilterUsed = v;
+        localStorage.setItem('newsFilterUsed', String(v));
+        this.render();
+    }
+
+    setNewsTrackedOnlyFilter(v) {
+        this.newsFilterTrackedOnly = v;
+        localStorage.setItem('newsFilterTrackedOnly', String(v));
+        this.render();
+    }
+
+    setNewsSentimentFilter(v) {
+        this.newsFilterSentiment = v;
+        localStorage.setItem('newsFilterSentiment', String(v));
+        this.render();
+    }
+
+    setNewsImpactFilter(v) {
+        this.newsFilterImpact = v;
+        localStorage.setItem('newsFilterImpact', String(v));
+        this.render();
+    }
+
+    setNewsSymbolFilter(v) {
+        this.newsFilterSymbol = v;
+        localStorage.setItem('newsFilterSymbol', String(v));
+        this.render();
+    }
+
+    setNewsSort(v) {
+        this.newsSort = v;
+        localStorage.setItem('newsSort', String(v));
+        this.render();
+    }
+
+    openNewsForSymbol(symbol) {
+        this.currentTab = 'news';
+        this.newsFilterSymbol = symbol || '';
+        localStorage.setItem('newsFilterSymbol', String(this.newsFilterSymbol));
+        const items = this.data?.news?.items || [];
+        const first = items.find(n => (n.symbol || '').toUpperCase() === String(symbol || '').toUpperCase());
+        this.selectedNewsId = first ? first.id : null;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        const tab = document.querySelector('.tab[data-tab="news"]');
+        if (tab) tab.classList.add('active');
+        this.render();
+    }
+
+    renderSentimentBadge(label, score) {
+        const l = String(label || 'neutral').toLowerCase();
+        const cls = l === 'positive' ? 'success' : l === 'negative' ? 'danger' : 'muted';
+        const ja = l === 'positive' ? 'ポジティブ' : l === 'negative' ? 'ネガティブ' : '中立';
+        return `<span class="badge badge-${cls}">${ja} ${score != null ? `(${Number(score).toFixed(2)})` : ''}</span>`;
+    }
+
+    renderImpactBadge(label) {
+        const l = String(label || 'low').toLowerCase();
+        const map = { low: ['低', 'muted'], medium: ['中', 'warn'], high: ['高', 'warn'], critical: ['重大', 'danger'] };
+        const pair = map[l] || ['不明', 'muted'];
+        return `<span class="badge badge-${pair[1]}">${pair[0]}</span>`;
+    }
+
+    renderInfluenceBar(score=0) {
+        const pct = Math.max(0, Math.min(100, Math.round(Number(score || 0) * 100)));
+        return `<div class="influence-wrap"><div class="influence-bar"><div class="influence-fill" style="width:${pct}%"></div></div><div class="small muted">${pct}%</div></div>`;
+    }
+
+    renderSourceReliabilityTable() {
+        const rows = this.data?.source_reliability?.rows || [];
+        const history = this.data?.source_reliability?.history || [];
+        if (!rows.length) return '<p class="muted">データなし</p>';
+        return `${history.length ? `<div style="margin-bottom:12px">${this.renderSourceReliabilityHistory(history)}</div>` : ''}<table>
+          <thead><tr><th>source</th><th>current</th><th>observed</th><th>suggested</th><th>delta</th><th>count</th><th>used</th><th>avg influence</th></tr></thead>
+          <tbody>${rows.map(r => `
+            <tr>
+              <td><strong>${this.escapeHtml(r.source)}</strong></td>
+              <td>${Number(r.current_reliability ?? 0).toFixed(2)}</td>
+              <td>${Number(r.observed_quality_score ?? 0).toFixed(2)}</td>
+              <td>${Number(r.suggested_reliability ?? 0).toFixed(2)}</td>
+              <td class="${(r.delta || 0) >= 0 ? 'success' : 'danger'}">${(r.delta || 0) >= 0 ? '+' : ''}${Number(r.delta || 0).toFixed(2)}</td>
+              <td>${r.count ?? 0}</td>
+              <td>${r.used_count ?? 0}</td>
+              <td>${Number(r.avg_influence ?? 0).toFixed(2)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    renderSourceReliabilityHistory(history = []) {
+        if (!history.length) return '';
+        const sourceMap = {};
+        for (const snap of history) {
+            for (const row of (snap.rows || [])) {
+                if (!sourceMap[row.source]) sourceMap[row.source] = [];
+                sourceMap[row.source].push({ time: snap.time, value: Number(row.suggested_reliability || 0), delta: Number(row.delta || 0) });
+            }
+        }
+        const entries = Object.entries(sourceMap);
+        if (!entries.length) return '';
+        return `<div><div class="small muted" style="margin-bottom:6px">提案値の履歴</div>${entries.map(([source, points]) => {
+            const max = Math.max(...points.map(p => p.value), 1);
+            const latest = points[points.length - 1] || { value: 0, delta: 0 };
+            return `<div style="margin-bottom:12px"><div class="small muted">${this.escapeHtml(source)} latest=${latest.value.toFixed(2)} delta=${latest.delta >= 0 ? '+' : ''}${latest.delta.toFixed(2)}</div><div class="bars">${points.map(p => {
+                const h = Math.max(8, Math.round((p.value / max) * 80));
+                return `<div class="bar-wrap"><div class="bar" style="height:${h}px"></div></div>`;
+            }).join('')}</div></div>`;
+        }).join('')}</div>`;
+    }
+
+    renderNewsDiagnostics() {
+        const d = this.data?.news?.diagnostics || {};
+        const renderCounts = (rows=[]) => rows.length ? rows.map(r => `<div class="metric"><span class="label">${this.escapeHtml(r.symbol)}</span><span class="value">${r.count}</span></div>`).join('') : '<p class="muted">データなし</p>';
+        return `<div class="grid">
+          <div class="card"><h3>Loaded</h3>${renderCounts(d.loaded_by_symbol || [])}</div>
+          <div class="card"><h3>Linked</h3>${renderCounts(d.linked_by_symbol || [])}</div>
+          <div class="card"><h3>Selected</h3>${renderCounts(d.selected_by_symbol || [])}</div>
+        </div>`;
+    }
+
     renderLogs() {
         const ld = this.data.logs || {};
         const lines = ld.lines || [];
@@ -644,7 +977,7 @@ class Console {
     renderSymbolOverviewTable(rows = []) {
         if (!rows.length) return '<p class="muted">データなし</p>';
         return `<table>
-            <thead><tr><th>symbol</th><th>strategies</th><th>decisions</th><th>deny</th><th>submitted</th><th>conv</th><th>sub qty</th><th>open pos</th><th>pos qty</th><th>hold d</th><th>uPnL</th></tr></thead>
+            <thead><tr><th>symbol</th><th>strategies</th><th>decisions</th><th>deny</th><th>submitted</th><th>conv</th><th>news</th><th>news sent</th><th>news impact</th><th>ref news</th><th>sub qty</th><th>open pos</th><th>pos qty</th><th>hold d</th><th>uPnL</th><th>latest news</th></tr></thead>
             <tbody>${rows.map(r => `
                 <tr>
                     <td><strong>${this.escapeHtml(r.symbol || '—')}</strong></td>
@@ -653,11 +986,16 @@ class Console {
                     <td class="danger">${r.deny ?? 0}</td>
                     <td>${r.submitted ?? 0}</td>
                     <td>${fmt.pct(r.conversion_rate ?? 0)}</td>
+                    <td>${r.news_count ?? 0}</td>
+                    <td>${Number(r.avg_news_sentiment ?? 0).toFixed(2)}</td>
+                    <td>${Number(r.avg_news_impact ?? 0).toFixed(2)}</td>
+                    <td>${r.decision_referenced_news_count ?? 0}</td>
                     <td>${r.submitted_qty ?? 0}</td>
                     <td>${r.open_position ? '✅' : '—'}</td>
                     <td>${r.position_qty ?? 0}</td>
                     <td>${r.holding_days ?? '—'}</td>
                     <td class="${(r.unrealized_pnl || 0) >= 0 ? 'success' : 'danger'}">${r.unrealized_pnl == null ? '—' : fmt.usdSigned(r.unrealized_pnl)}</td>
+                    <td class="small muted">${r.latest_news_headline_ja ? `<a href="#" onclick="event.preventDefault(); window.app.openNewsForSymbol('${this.escapeHtml(r.symbol || '')}')">${this.escapeHtml(r.latest_news_headline_ja || '')}</a>` : ''}</td>
                 </tr>`).join('')}
             </tbody>
         </table>`;
@@ -761,4 +1099,4 @@ class Console {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => { new Console(); });
+document.addEventListener('DOMContentLoaded', () => { window.app = new Console(); });

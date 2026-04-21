@@ -81,6 +81,33 @@
       "state": {
         "nextRunAtMs": 1774750500000
       }
+    },
+    {
+      "id": "f6f8bba1-news-collection-job",
+      "agentId": "main",
+      "sessionKey": "agent:main:main",
+      "name": "stock_swing_news_collection",
+      "enabled": true,
+      "createdAtMs": 1774753800000,
+      "updatedAtMs": 1774753800000,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 */2 * * *",
+        "tz": "Asia/Tokyo"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Execute stock_swing news collection:\n\nRun this command in the project directory:\ncd ~/stock_swing && source venv/bin/activate && python -m stock_swing.cli.collect_data --sources finnhub --symbols MRVL,CIEN,DELL,RBRK,PLTR,NOW,INTU,NBIS\n\nThis will refresh external company-news coverage for active tracked symbols.\n\nAfter completion, report the summary.",
+        "timeoutSeconds": 900
+      },
+      "delivery": {
+        "mode": "announce"
+      },
+      "state": {
+        "nextRunAtMs": 1774761000000
+      }
     }
   ]
 }

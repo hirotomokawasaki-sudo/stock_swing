@@ -39,6 +39,8 @@ class DashboardService:
         cron_jobs = self.get_cron_jobs()
         data_status = self.get_data_status()
         system = self.get_system_status()
+        news = self.get_news(trading=trading)
+        pipeline = self.get_pipeline_summary(trading=trading)
         overview = self.get_overview(
             trading=trading,
             positions=positions,
@@ -46,6 +48,8 @@ class DashboardService:
             data_status=data_status,
             system=system,
         )
+        source_reliability = self.get_source_reliability_report(news)
+        news_ingestion = self.get_news_ingestion_status(news)
         return {
             "time": now_iso(),
             "alerts": self.get_alerts(
@@ -54,12 +58,16 @@ class DashboardService:
                 positions=positions,
                 cron_jobs=cron_jobs,
                 data_status=data_status,
+                news=news,
             ),
             "overview": overview,
             "charts": self.get_charts(trading=trading, positions=positions),
-            "pipeline": self.get_pipeline_summary(trading=trading),
+            "pipeline": pipeline,
             "cron_jobs": cron_jobs,
             "reconciliation": self.get_reconciliation_status(),
+            "news": news,
+            "news_ingestion": news_ingestion,
+            "source_reliability": source_reliability,
             "data_status": data_status,
             "system": system,
             "trading": trading,
@@ -399,6 +407,15 @@ class DashboardService:
 
         discrepancies = self._summarize_reconciliation_discrepancies(reconciliation_events)
 
+        news_by_symbol = getattr(self, '_last_news_by_symbol', {}) or {}
+        for row in merged_symbol_stats.values():
+            news = news_by_symbol.get(row['symbol'], {})
+            row['news_count'] = news.get('news_count', 0)
+            row['avg_news_sentiment'] = news.get('avg_sentiment', 0.0)
+            row['avg_news_impact'] = news.get('avg_impact', 0.0)
+            row['latest_news_headline_ja'] = news.get('latest_headline_ja', '')
+            row['decision_referenced_news_count'] = news.get('decision_referenced', 0)
+
         return {
             "funnel": funnel,
             "actions": [{"action": k, "count": v} for k, v in sorted(actions.items(), key=lambda item: item[1], reverse=True)],
@@ -418,6 +435,184 @@ class DashboardService:
                 "decision_reasons": [{"reason": k, "count": v} for k, v in sorted(decision_reasons.items(), key=lambda item: item[1], reverse=True)],
                 "normalized_reasons": [{"reason": k, "count": v} for k, v in sorted(normalized_reasons.items(), key=lambda item: item[1], reverse=True)],
             }
+        }
+
+    def get_news(self, trading: Dict[str, Any] | None = None) -> Dict[str, Any]:
+        external_items = self._load_external_news_items(limit=200)
+        decision_items = self._build_news_items_from_decisions(limit=50)
+        tracked_symbols = {str(r.get('symbol') or 'UNKNOWN').upper() for r in (self.get_pipeline_summary(trading=trading).get('symbol_overview') or [])[:10]}
+        items = external_items or decision_items
+        loaded_items = list(items)
+        linked_items = self._link_news_to_decisions(items, decision_items)
+        for item in linked_items:
+            item['is_tracked_symbol'] = str(item.get('symbol') or 'UNKNOWN').upper() in tracked_symbols
+        selected_items = self._select_balanced_news_items(linked_items, limit=50)
+        items = selected_items
+        by_symbol = self._group_news_by_symbol(items)
+        self._last_news_by_symbol = {str(row.get('symbol') or 'UNKNOWN').upper(): row for row in by_symbol}
+        diagnostics = {
+            'loaded_by_symbol': self._count_items_by_symbol(loaded_items),
+            'linked_by_symbol': self._count_items_by_symbol(linked_items),
+            'selected_by_symbol': self._count_items_by_symbol(selected_items),
+        }
+        return {
+            "summary": self._summarize_news(items),
+            "items": items,
+            "by_symbol": by_symbol,
+            "by_source": self._group_news_by_source(items),
+            "by_event_type": self._group_news_by_event_type(items),
+            "timeline": self._build_news_timeline(items),
+            "selected": items[0] if items else None,
+            "diagnostics": diagnostics,
+        }
+
+    def get_news_ingestion_status(self, news: Dict[str, Any]) -> Dict[str, Any]:
+        items = news.get('items', []) if news else []
+        latest_time = None
+        oldest_time = None
+        sources = set()
+        symbols = set()
+        source_counts: Dict[str, int] = {}
+        now_dt = datetime.now().astimezone()
+        requested_symbols = ['MRVL', 'CIEN', 'DELL', 'RBRK', 'PLTR', 'NOW', 'INTU', 'NBIS']
+        collected_symbols = set()
+        source_failures: Dict[str, int] = {}
+        for item in items:
+            ts = self._parse_iso_datetime(item.get('published_at'))
+            if ts:
+                if latest_time is None or ts > latest_time:
+                    latest_time = ts
+                if oldest_time is None or ts < oldest_time:
+                    oldest_time = ts
+            source = str(item.get('source') or 'unknown')
+            symbol = str(item.get('symbol') or 'UNKNOWN').upper()
+            sources.add(source)
+            symbols.add(symbol)
+            collected_symbols.add(symbol)
+            source_counts[source] = source_counts.get(source, 0) + 1
+        freshness_hours = round((now_dt - latest_time).total_seconds() / 3600, 2) if latest_time else None
+        displayed_symbols = {str(i.get('symbol') or 'UNKNOWN').upper() for i in items}
+        displayed_tracked_symbols = {s for s in displayed_symbols if s in requested_symbols}
+        displayed_non_tracked_symbols = sorted(s for s in displayed_symbols if s not in requested_symbols)
+        raw_collected_symbols = set()
+        missing_symbols = [s for s in requested_symbols if s not in displayed_tracked_symbols]
+        missing_symbol_reasons = []
+        failure_reason_counts: Dict[str, int] = {}
+        status_path = self.project_root / 'data' / 'audits' / 'news_collection_status.json'
+        if status_path.exists():
+            try:
+                status_obj = json.loads(status_path.read_text(encoding='utf-8'))
+                for row in status_obj.get('symbols', []):
+                    symbol = str(row.get('symbol') or '').upper()
+                    raw_collected_symbols.add(symbol)
+                    reason = str(row.get('reason') or 'unknown')
+                    display_reason = reason
+                    if symbol in raw_collected_symbols and symbol not in displayed_symbols:
+                        display_reason = 'collected_but_not_displayed'
+                    elif symbol in raw_collected_symbols and symbol in displayed_symbols:
+                        display_reason = 'collected_and_displayed'
+                    if symbol in missing_symbols or row.get('used_fallback') or display_reason != 'collected_and_displayed':
+                        missing_symbol_reasons.append({'symbol': symbol, 'reason': display_reason, 'used_fallback': bool(row.get('used_fallback'))})
+                        failure_reason_counts[display_reason] = failure_reason_counts.get(display_reason, 0) + 1
+            except Exception:
+                pass
+        if missing_symbols:
+            source_failures['coverage_gap'] = len(missing_symbols)
+        cron_jobs = self.get_cron_jobs().get('jobs', [])
+        news_job = next((j for j in cron_jobs if j.get('name') == 'stock_swing_news_collection'), None)
+        last_success = latest_time.isoformat() if latest_time else None
+        last_failure = None if not missing_symbols else now_iso()
+        failure_count_24h = len(missing_symbols)
+        status = 'stale' if freshness_hours is not None and freshness_hours > 24 else 'ok' if items else 'empty'
+        if missing_symbols and status == 'ok':
+            status = 'partial'
+        return {
+            'latest_news_time': latest_time.isoformat() if latest_time else None,
+            'oldest_news_time': oldest_time.isoformat() if oldest_time else None,
+            'freshness_hours': freshness_hours,
+            'total_items': len(items),
+            'sources': sorted(sources),
+            'symbols_covered': len(symbols),
+            'source_counts': [{'source': k, 'count': v} for k, v in sorted(source_counts.items(), key=lambda item: item[1], reverse=True)],
+            'status': status,
+            'last_success': last_success,
+            'last_failure': last_failure,
+            'failure_count_24h': failure_count_24h,
+            'source_failures': [{'source': k, 'count': v} for k, v in source_failures.items()],
+            'symbols_requested': len(requested_symbols),
+            'symbols_collected': len(displayed_tracked_symbols),
+            'raw_symbols_collected': len(raw_collected_symbols),
+            'displayed_symbols_collected': len(displayed_symbols),
+            'displayed_tracked_symbols_collected': len(displayed_tracked_symbols),
+            'displayed_non_tracked_symbols': displayed_non_tracked_symbols,
+            'missing_symbols': missing_symbols,
+            'missing_symbol_reasons': missing_symbol_reasons,
+            'failure_reason_counts': [{'reason': k, 'count': v} for k, v in sorted(failure_reason_counts.items(), key=lambda item: item[1], reverse=True)],
+            'news_collection_job': news_job,
+        }
+
+    def get_source_reliability_report(self, news: Dict[str, Any]) -> Dict[str, Any]:
+        items = news.get('items', []) if news else []
+        grouped: Dict[str, Dict[str, Any]] = {}
+        for item in items:
+            source = str(item.get('source') or 'unknown')
+            row = grouped.setdefault(source, {
+                'source': source,
+                'current_reliability': float(item.get('source_reliability') or self._source_reliability(source)),
+                'count': 0,
+                'used_count': 0,
+                'avg_influence': 0.0,
+                'avg_sentiment_abs': 0.0,
+                'avg_impact': 0.0,
+                'observed_quality_score': 0.0,
+                'suggested_reliability': 0.0,
+                'delta': 0.0,
+            })
+            row['count'] += 1
+            row['used_count'] += 1 if item.get('used_in_decision') else 0
+            row['avg_influence'] += float(item.get('influence_score') or 0.0)
+            row['avg_sentiment_abs'] += abs(float(item.get('sentiment_score') or 0.0))
+            row['avg_impact'] += float(item.get('impact_score') or 0.0)
+        rows = []
+        for row in grouped.values():
+            count = max(1, row['count'])
+            row['avg_influence'] = round(row['avg_influence'] / count, 2)
+            row['avg_sentiment_abs'] = round(row['avg_sentiment_abs'] / count, 2)
+            row['avg_impact'] = round(row['avg_impact'] / count, 2)
+            used_ratio = row['used_count'] / count
+            observed = round(min(1.0, 0.35 * used_ratio + 0.35 * row['avg_influence'] + 0.15 * row['avg_impact'] + 0.15 * row['avg_sentiment_abs']), 2)
+            suggested = round(0.7 * row['current_reliability'] + 0.3 * observed, 2)
+            row['observed_quality_score'] = observed
+            row['suggested_reliability'] = suggested
+            row['delta'] = round(suggested - row['current_reliability'], 2)
+            rows.append(row)
+        history_path = self.project_root / 'data' / 'audits' / 'source_reliability_history.json'
+        history = []
+        if history_path.exists():
+            try:
+                history = json.loads(history_path.read_text(encoding='utf-8'))
+            except Exception:
+                history = []
+        snapshot = {
+            'time': now_iso(),
+            'rows': rows,
+        }
+        if not history or history[-1].get('time', '')[:10] != snapshot['time'][:10]:
+            history.append(snapshot)
+            history = history[-30:]
+            try:
+                history_path.parent.mkdir(parents=True, exist_ok=True)
+                history_path.write_text(json.dumps(history, ensure_ascii=False, indent=2), encoding='utf-8')
+            except Exception:
+                pass
+        return {
+            'rows': sorted(rows, key=lambda x: x.get('count', 0), reverse=True),
+            'summary': {
+                'sources': len(rows),
+                'with_positive_delta': sum(1 for r in rows if r.get('delta', 0) > 0),
+                'with_negative_delta': sum(1 for r in rows if r.get('delta', 0) < 0),
+            },
+            'history': history[-7:],
         }
 
     def get_reconciliation_status(self) -> Dict[str, Any]:
@@ -502,6 +697,7 @@ class DashboardService:
         positions: Dict[str, Any],
         cron_jobs: Dict[str, Any],
         data_status: Dict[str, Any],
+        news: Dict[str, Any] | None = None,
     ) -> List[Dict[str, Any]]:
         alerts: List[Dict[str, Any]] = []
         counts = data_status.get("counts", {})
@@ -582,6 +778,40 @@ class DashboardService:
                 "title": "Symbols with zero conversion",
                 "message": f"{len(low_conversion)} symbol(s) have decisions but no submissions",
                 "action_hint": "Review risk gates, sizing, and execution eligibility",
+                "updated_at": now_iso(),
+            })
+
+        news = news or {}
+        news_by_symbol = {str(r.get('symbol') or 'UNKNOWN').upper(): r for r in (news.get('by_symbol') or [])}
+        tracked_symbols = [str(r.get('symbol') or 'UNKNOWN').upper() for r in (self.get_pipeline_summary(trading=trading).get('symbol_overview') or [])[:10]]
+        no_news_symbols = [s for s in tracked_symbols if s not in news_by_symbol]
+        if no_news_symbols:
+            alerts.append({
+                "severity": "warning",
+                "code": "no_news_for_tracked_symbols",
+                "title": "Tracked symbols without news",
+                "message": f"No news items found for {len(no_news_symbols)} tracked symbol(s): {', '.join(no_news_symbols[:5])}",
+                "action_hint": "Check news collection coverage for active symbols",
+                "updated_at": now_iso(),
+            })
+
+        stale_news_symbols = []
+        now_dt = datetime.now().astimezone()
+        for sym, row in news_by_symbol.items():
+            headline = row.get('latest_headline_ja')
+            items = [i for i in (news.get('items') or []) if str(i.get('symbol') or '').upper() == sym]
+            if not items:
+                continue
+            latest = self._parse_iso_datetime(items[0].get('published_at'))
+            if latest and (now_dt - latest).total_seconds() > 86400:
+                stale_news_symbols.append(sym)
+        if stale_news_symbols:
+            alerts.append({
+                "severity": "warning",
+                "code": "stale_news_symbols",
+                "title": "Stale news detected",
+                "message": f"{len(stale_news_symbols)} symbol(s) have no fresh news in the last 24h: {', '.join(stale_news_symbols[:5])}",
+                "action_hint": "Refresh news ingestion or verify external source availability",
                 "updated_at": now_iso(),
             })
 
@@ -739,6 +969,451 @@ class DashboardService:
             "total": total,
             "types": [{"reason": k, "count": v} for k, v in sorted(counts.items(), key=lambda item: item[1], reverse=True)]
         }
+
+    def _load_external_news_items(self, limit: int = 50) -> List[Dict[str, Any]]:
+        raw_dir = self.project_root / "data" / "raw" / "finnhub"
+        if not raw_dir.exists():
+            return []
+        grouped: Dict[str, List[Dict[str, Any]]] = {}
+        paths = sorted(raw_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+        for path in paths:
+            try:
+                obj = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            if obj.get("endpoint") != "company-news":
+                continue
+            payload = obj.get("payload", {})
+            symbol = str(payload.get("symbol") or obj.get("request_params", {}).get("symbol") or "UNKNOWN").upper()
+            grouped.setdefault(symbol, [])
+            for idx, article in enumerate(payload.get("news", [])):
+                headline = str(article.get("headline") or "")
+                summary = str(article.get("summary") or "")
+                sentiment_label, sentiment_score = self._infer_sentiment_from_text(f"{headline} {summary}")
+                impact_label, impact_score = self._infer_impact_from_text(f"{headline} {summary}")
+                ja_texts = self._build_ja_news_texts_from_external(symbol, headline, summary, sentiment_label, impact_label)
+                source = article.get("source") or "finnhub"
+                source_reliability = self._source_reliability(source)
+                grouped[symbol].append({
+                    "id": f"external_news_{symbol}_{idx}_{path.stem}",
+                    "symbol": symbol,
+                    "source": source,
+                    "source_reliability": source_reliability,
+                    "published_at": datetime.fromtimestamp(article.get("datetime", 0), tz=timezone.utc).isoformat() if article.get("datetime") else now_iso(),
+                    "url": article.get("url"),
+                    "headline": headline,
+                    "headline_ja": ja_texts["headline_ja"],
+                    "snippet": summary,
+                    "summary_ja": ja_texts["summary_ja"],
+                    "event_type": ja_texts["event_type"],
+                    "related": article.get("related") or symbol,
+                    "category": article.get("category") or 'company',
+                    "sentiment_label": sentiment_label,
+                    "sentiment_label_ja": self._translate_sentiment_label(sentiment_label),
+                    "sentiment_score": sentiment_score,
+                    "sentiment_confidence": 0.6,
+                    "impact_label": impact_label,
+                    "impact_label_ja": self._translate_impact_label(impact_label),
+                    "impact_score": impact_score,
+                    "relevance_score": 0.7,
+                    "influence_score": 0.3,
+                    "used_in_decision": False,
+                    "is_tracked_symbol": False,
+                    "decision_refs": [],
+                    "strategy_refs": [],
+                    "rationale": [summary] if summary else [],
+                    "rationale_ja": ja_texts["rationale_ja"],
+                })
+        # per-symbol cap before global balancing to avoid dominance by a few symbols
+        capped: List[Dict[str, Any]] = []
+        per_symbol_cap = max(3, limit // max(1, len(grouped))) if grouped else limit
+        for symbol, rows in grouped.items():
+            rows.sort(key=lambda x: str(x.get('published_at') or ''), reverse=True)
+            capped.extend(rows[:per_symbol_cap])
+        capped.sort(key=lambda x: str(x.get('published_at') or ''), reverse=True)
+        return capped[: max(limit * 2, 100)]
+
+    def _link_news_to_decisions(self, news_items: List[Dict[str, Any]], decision_items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        linked: List[Dict[str, Any]] = []
+        general_market_terms = ['stock market today', 'market rebound', 'oil disruption', 'market stumbles', 'dow futures', 's&p 500', 'nasdaq']
+        ticker_aliases = {
+            'MRVL': ['marvell'], 'CIEN': ['ciena'], 'DELL': ['dell'], 'RBRK': ['rubrik'], 'PLTR': ['palantir'],
+            'AVGO': ['broadcom'], 'GOOGL': ['alphabet', 'google'], 'META': ['meta'], 'MSFT': ['microsoft'], 'AAPL': ['apple']
+        }
+        for item in news_items:
+            symbol = str(item.get("symbol") or "UNKNOWN").upper()
+            published = self._parse_iso_datetime(item.get("published_at"))
+            article_text = f"{item.get('headline','')} {item.get('snippet','')}".lower()
+            is_general_market = any(term in article_text for term in general_market_terms)
+            related_field = str(item.get('related') or '').upper()
+            aliases = ticker_aliases.get(symbol, [])
+            contains_own_name = any(alias in article_text for alias in aliases)
+            related_matches = related_field == symbol if related_field else False
+            own_mention_bonus = 0.2 if related_matches else 0.12 if contains_own_name else 0.0
+            other_ticker_penalty = 0.0
+            first_words = article_text[:120]
+            for ticker, names in ticker_aliases.items():
+                if ticker == symbol:
+                    continue
+                if ticker.lower() in first_words or any(name in first_words for name in names):
+                    other_ticker_penalty = max(other_ticker_penalty, 0.35)
+                elif ticker.lower() in article_text or any(name in article_text for name in names):
+                    other_ticker_penalty = max(other_ticker_penalty, 0.25)
+            scored_matches = []
+            for dec in decision_items:
+                if str(dec.get("symbol") or "UNKNOWN").upper() != symbol:
+                    continue
+                dec_time = self._parse_iso_datetime(dec.get("published_at"))
+                if published and dec_time:
+                    seconds = abs((dec_time - published).total_seconds())
+                    if seconds > 86400 * 2:
+                        continue
+                    time_score = max(0.0, 1.0 - (seconds / (86400 * 2)))
+                else:
+                    time_score = 0.3
+                note_text = ' '.join(dec.get('rationale') or dec.get('rationale_ja') or []) if isinstance(dec, dict) else ''
+                keyword_overlap = 0.0
+                keywords = ['partnership', 'guidance', 'earnings', 'probe', 'lawsuit', 'growth', 'momentum', 'breakout']
+                for kw in keywords:
+                    if kw in article_text and kw in note_text.lower():
+                        keyword_overlap += 0.15
+                headline_bonus = 0.0
+                headline_patterns = ['why ', 'stock is surging', 'gains on', 'stock pops', 'adds $', 'partnership', 'deal', 'guidance', 'earnings']
+                if any(p in article_text for p in headline_patterns):
+                    headline_bonus += 0.12
+                source_bonus = float(item.get('source_reliability') or 0.6) * 0.15
+                related_bonus = own_mention_bonus
+                general_penalty = 0.3 if is_general_market else 0.0
+                score = round(min(1.0, max(0.0, 0.1 + time_score * 0.38 + keyword_overlap + headline_bonus + source_bonus + related_bonus - general_penalty - other_ticker_penalty)), 2)
+                scored_matches.append((score, dec))
+            scored_matches.sort(key=lambda x: x[0], reverse=True)
+            top_matches = [m for m in scored_matches[:2] if m[0] >= 0.6]
+            refs = []
+            strategies = set()
+            best_influence = float(item.get("influence_score") or 0.0)
+            for score, dec in top_matches:
+                refs.extend(dec.get("decision_refs") or [])
+                for s in dec.get("strategy_refs") or []:
+                    strategies.add(str(s))
+                best_influence = max(best_influence, score)
+            enriched = dict(item)
+            enriched["decision_refs"] = sorted(set(refs))
+            enriched["strategy_refs"] = sorted(strategies)
+            enriched["used_in_decision"] = len(enriched["decision_refs"]) > 0
+            enriched["influence_score"] = round(best_influence, 2 if enriched["used_in_decision"] else 2)
+            if enriched["used_in_decision"]:
+                base_rationale = enriched.get("rationale_ja") or []
+                extra = f"{symbol} の意思決定に時間的・内容的に近い参考ニュースです。"
+                enriched["rationale_ja"] = base_rationale + ([extra] if extra not in base_rationale else [])
+            linked.append(enriched)
+        return linked
+
+    def _source_reliability(self, source: str) -> float:
+        s = str(source or '').lower()
+        if s in {'reuters', 'bloomberg', 'associated press', 'ap', 'wsj', 'wall street journal'}:
+            return 0.95
+        if s in {'yahoo', 'seekingalpha', 'marketwatch'}:
+            return 0.75
+        if s in {'finnhub', 'synthetic'}:
+            return 0.4
+        return 0.6
+
+    def _build_ja_news_texts_from_external(self, symbol: str, headline: str, summary: str, sentiment_label: str, impact_label: str) -> Dict[str, Any]:
+        text = f"{headline} {summary}".lower()
+        if 'earnings' in text or 'guidance' in text:
+            headline_ja = f"{symbol} に決算・見通し関連のニュース"
+            summary_ja = f"{symbol} に関する決算または業績見通し関連の報道です。業績期待や短期的な値動きに影響する可能性があります。"
+            rationale_ja = ["決算・見通し関連の報道は短期的な株価変動要因になりやすいため。"]
+            event_type = 'earnings'
+        elif 'probe' in text or 'lawsuit' in text or 'regulation' in text:
+            headline_ja = f"{symbol} に規制・法務関連のニュース"
+            summary_ja = f"{symbol} に関する規制・調査・訴訟関連の報道です。ネガティブサプライズやリスク再評価につながる可能性があります。"
+            rationale_ja = ["規制・訴訟関連の報道はボラティリティ上昇やセンチメント悪化につながりやすいため。"]
+            event_type = 'regulation'
+        elif 'momentum' in text or 'surge' in text or 'strong' in text or sentiment_label == 'positive':
+            headline_ja = f"{symbol} に追い風となるニュース"
+            summary_ja = f"{symbol} に対してポジティブに受け取られやすい報道です。短期的なモメンタム継続の参考材料になります。"
+            rationale_ja = ["ポジティブ材料として短期の上昇継続シナリオを補強するため。"]
+            event_type = 'momentum'
+        elif sentiment_label == 'negative':
+            headline_ja = f"{symbol} に逆風となるニュース"
+            summary_ja = f"{symbol} に対してネガティブに受け取られやすい報道です。ポジション縮小や慎重判断の材料になります。"
+            rationale_ja = ["ネガティブ材料としてリスク回避や売却判断を支えるため。"]
+            event_type = 'event'
+        else:
+            headline_ja = f"{symbol} に関する市場ニュース"
+            summary_ja = f"{symbol} に関する一般的な市場ニュースです。方向感は中立ですが、監視対象として参考になります。"
+            rationale_ja = ["判断材料の補助情報として参照するため。"]
+            event_type = 'event'
+        return {
+            'headline_ja': headline_ja,
+            'summary_ja': summary_ja,
+            'rationale_ja': rationale_ja,
+            'event_type': event_type,
+        }
+
+    def _infer_sentiment_from_text(self, text: str) -> tuple[str, float]:
+        t = (text or '').lower()
+        pos_words = ['beats', 'raise', 'raised', 'growth', 'upgrade', 'strong', 'gain', 'surge', 'positive', 'partnership', 'adds $', 'jumps', 'win', 'outperform']
+        neg_words = ['miss', 'probe', 'lawsuit', 'drop', 'decline', 'cut', 'warning', 'negative', 'downgrade', 'investigation', 'fraud', 'weakness', 'slump']
+        pos = sum(1 for w in pos_words if w in t)
+        neg = sum(1 for w in neg_words if w in t)
+        if pos > neg:
+            return 'positive', round(min(1.0, 0.25 + pos * 0.12), 2)
+        if neg > pos:
+            return 'negative', round(-min(1.0, 0.25 + neg * 0.12), 2)
+        return 'neutral', 0.0
+
+    def _infer_impact_from_text(self, text: str) -> tuple[str, float]:
+        t = (text or '').lower()
+        critical_words = ['acquisition', 'merger', 'bankruptcy', 'fraud', 'probe', 'lawsuit']
+        high_words = ['earnings', 'guidance', 'partnership', 'regulation', 'investigation', '$5b', 'market cap']
+        critical_hits = sum(1 for w in critical_words if w in t)
+        high_hits = sum(1 for w in high_words if w in t)
+        score = round(min(1.0, 0.2 + critical_hits * 0.35 + high_hits * 0.18), 2)
+        if score >= 0.85:
+            return 'critical', score
+        if score >= 0.6:
+            return 'high', score
+        if score >= 0.3:
+            return 'medium', score
+        return 'low', score
+
+    def _translate_sentiment_label(self, label: str) -> str:
+        mapping = {"positive": "ポジティブ", "negative": "ネガティブ", "neutral": "中立"}
+        return mapping.get(str(label or "neutral").lower(), "中立")
+
+    def _translate_impact_label(self, label: str) -> str:
+        mapping = {"low": "低", "medium": "中", "high": "高", "critical": "重大"}
+        return mapping.get(str(label or "low").lower(), "低")
+
+    def _classify_news_from_decision(self, decision: Dict[str, Any]) -> Dict[str, Any]:
+        action = str(decision.get("action") or "hold").lower()
+        confidence = float(decision.get("confidence") or 0.0)
+        signal_strength = float(decision.get("signal_strength") or 0.0)
+        if action == "buy":
+            sentiment_label = "positive"
+            sentiment_score = round(max(0.25, signal_strength), 2)
+        elif action == "sell":
+            sentiment_label = "negative"
+            sentiment_score = round(-max(0.25, signal_strength), 2)
+        else:
+            sentiment_label = "neutral"
+            sentiment_score = 0.0
+        impact_score = round(min(1.0, 0.4 + confidence * 0.4 + signal_strength * 0.2), 2)
+        if impact_score >= 0.85:
+            impact_label = "critical"
+        elif impact_score >= 0.6:
+            impact_label = "high"
+        elif impact_score >= 0.3:
+            impact_label = "medium"
+        else:
+            impact_label = "low"
+        return {
+            "sentiment_label": sentiment_label,
+            "sentiment_score": sentiment_score,
+            "sentiment_confidence": confidence,
+            "impact_label": impact_label,
+            "impact_score": impact_score,
+            "relevance_score": round(min(1.0, 0.5 + signal_strength * 0.5), 2),
+            "influence_score": round(min(1.0, 0.4 + confidence * 0.3 + signal_strength * 0.3), 2),
+        }
+
+    def _build_ja_news_texts_from_decision(self, decision: Dict[str, Any]) -> Dict[str, Any]:
+        symbol = str(decision.get("symbol") or "UNKNOWN").upper()
+        action = str(decision.get("action") or "hold").lower()
+        strategy = str(decision.get("strategy_id") or "unknown")
+        confidence = float(decision.get("confidence") or 0.0)
+        evidence = decision.get("evidence") or {}
+        notes = evidence.get("notes") or []
+        note = str(notes[0]) if notes else "判断材料が検出されました。"
+        event_type = "momentum" if strategy == "breakout_momentum_v1" else "event"
+
+        if "stop loss triggered" in note.lower():
+            headline_ja = f"{symbol} は損切り条件に達し、売り判断"
+            summary_ja = f"{symbol} は損失拡大を防ぐため、損切り条件に基づいて売却候補と判定されました。信頼度は {confidence:.2f} です。"
+            rationale_ja = [f"損切り条件が発動し、下落継続リスクを抑える必要があるため。"]
+            event_type = "event"
+        elif "bullish momentum" in note.lower() or "breakout" in note.lower():
+            headline_ja = f"{symbol} は上昇モメンタムが強く、買い判断"
+            summary_ja = f"{symbol} は強い上昇モメンタムが確認され、ブレイクアウト継続を狙う買い候補と判定されました。信頼度は {confidence:.2f} です。"
+            rationale_ja = [f"価格モメンタムが強く、短期的な上昇継続シナリオを支持するため。"]
+            event_type = "momentum"
+        elif action == "buy":
+            headline_ja = f"{symbol} にポジティブ材料、買い判断"
+            summary_ja = f"{symbol} は戦略 {strategy} により買い候補と判定されました。信頼度は {confidence:.2f} です。"
+            rationale_ja = [f"判断材料が買いシナリオを支持したため。"]
+        elif action == "sell":
+            headline_ja = f"{symbol} にネガティブ材料、売り判断"
+            summary_ja = f"{symbol} は戦略 {strategy} により売り候補と判定されました。信頼度は {confidence:.2f} です。"
+            rationale_ja = [f"判断材料が売り・縮小シナリオを支持したため。"]
+        else:
+            headline_ja = f"{symbol} の判断材料を更新"
+            summary_ja = f"{symbol} の最新判断材料を評価しました。信頼度は {confidence:.2f} です。"
+            rationale_ja = [f"判断材料の再評価を実施しました。"]
+
+        return {
+            "headline_ja": headline_ja,
+            "summary_ja": summary_ja,
+            "rationale_ja": rationale_ja,
+            "event_type": event_type,
+        }
+
+    def _build_news_items_from_decisions(self, limit: int = 50) -> List[Dict[str, Any]]:
+        decisions = self._load_recent_decisions(limit=limit)
+        items: List[Dict[str, Any]] = []
+        for idx, d in enumerate(decisions):
+            evidence = d.get("evidence") or {}
+            notes = evidence.get("notes") or []
+            note = str(notes[0]) if notes else f"Decision generated for {d.get('symbol', 'UNKNOWN')}"
+            classified = self._classify_news_from_decision(d)
+            ja_texts = self._build_ja_news_texts_from_decision(d)
+            symbol = str(d.get("symbol") or "UNKNOWN").upper()
+            published_at = d.get("generated_at") or now_iso()
+            action = str(d.get("action") or "hold").lower()
+            event_type = ja_texts["event_type"]
+            url = f"https://example.local/decisions/{d.get('decision_id')}"
+            headline_ja = ja_texts["headline_ja"]
+            summary_ja = ja_texts["summary_ja"]
+            items.append({
+                "id": f"news_decision_{idx}_{symbol}",
+                "symbol": symbol,
+                "source": "decision_engine",
+                "published_at": published_at,
+                "url": url,
+                "headline": note,
+                "headline_ja": headline_ja,
+                "snippet": note,
+                "summary_ja": summary_ja,
+                "event_type": event_type,
+                "sentiment_label": classified["sentiment_label"],
+                "sentiment_label_ja": self._translate_sentiment_label(classified["sentiment_label"]),
+                "sentiment_score": classified["sentiment_score"],
+                "sentiment_confidence": classified["sentiment_confidence"],
+                "impact_label": classified["impact_label"],
+                "impact_label_ja": self._translate_impact_label(classified["impact_label"]),
+                "impact_score": classified["impact_score"],
+                "relevance_score": classified["relevance_score"],
+                "influence_score": classified["influence_score"],
+                "used_in_decision": True,
+                "is_tracked_symbol": True,
+                "decision_refs": [d.get("decision_id")],
+                "strategy_refs": [d.get("strategy_id")],
+                "rationale": notes[:3],
+                "rationale_ja": ja_texts["rationale_ja"],
+            })
+        return items
+
+    def _summarize_news(self, items: List[Dict[str, Any]]) -> Dict[str, Any]:
+        return {
+            "total_24h": len(items),
+            "positive": sum(1 for i in items if i.get("sentiment_label") == "positive"),
+            "negative": sum(1 for i in items if i.get("sentiment_label") == "negative"),
+            "neutral": sum(1 for i in items if i.get("sentiment_label") == "neutral"),
+            "high_impact": sum(1 for i in items if i.get("impact_label") == "high"),
+            "critical_impact": sum(1 for i in items if i.get("impact_label") == "critical"),
+            "decision_referenced": sum(1 for i in items if i.get("used_in_decision")),
+            "symbols_covered": len({i.get("symbol") for i in items if i.get("symbol")}),
+        }
+
+    def _group_news_by_symbol(self, items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        grouped: Dict[str, Dict[str, Any]] = {}
+        for item in items:
+            symbol = item.get("symbol") or "UNKNOWN"
+            row = grouped.setdefault(symbol, {
+                "symbol": symbol,
+                "news_count": 0,
+                "positive": 0,
+                "negative": 0,
+                "neutral": 0,
+                "avg_sentiment": 0.0,
+                "avg_impact": 0.0,
+                "decision_referenced": 0,
+            })
+            row["news_count"] += 1
+            row[item.get("sentiment_label") or "neutral"] += 1
+            row["avg_sentiment"] += float(item.get("sentiment_score") or 0.0)
+            row["avg_impact"] += float(item.get("impact_score") or 0.0)
+            row["decision_referenced"] += 1 if item.get("used_in_decision") else 0
+        latest_by_symbol: Dict[str, str] = {}
+        for item in items:
+            symbol = item.get("symbol") or "UNKNOWN"
+            if symbol not in latest_by_symbol:
+                latest_by_symbol[symbol] = item.get("headline_ja") or item.get("headline") or ""
+        for row in grouped.values():
+            count = max(1, row["news_count"])
+            row["avg_sentiment"] = round(row["avg_sentiment"] / count, 2)
+            row["avg_impact"] = round(row["avg_impact"] / count, 2)
+            row["latest_headline_ja"] = latest_by_symbol.get(row["symbol"], "")
+            row["is_tracked_symbol"] = False
+        symbol_overview = self.get_pipeline_summary().get("symbol_overview", [])
+        symbol_map = {str(r.get("symbol") or "UNKNOWN").upper(): r for r in symbol_overview}
+        rows = sorted(grouped.values(), key=lambda x: x.get("news_count", 0), reverse=True)
+        for row in rows:
+            sym = str(row.get("symbol") or "UNKNOWN").upper()
+            linked = symbol_map.get(sym, {})
+            row["submitted"] = linked.get("submitted", 0)
+            row["open_position"] = linked.get("open_position", False)
+            row["conversion_rate"] = linked.get("conversion_rate", 0.0)
+            row["is_tracked_symbol"] = bool(linked)
+        return rows
+
+    def _select_balanced_news_items(self, items: List[Dict[str, Any]], limit: int = 50) -> List[Dict[str, Any]]:
+        if len(items) <= limit:
+            return items
+        grouped: Dict[str, List[Dict[str, Any]]] = {}
+        for item in items:
+            symbol = str(item.get('symbol') or 'UNKNOWN').upper()
+            grouped.setdefault(symbol, []).append(item)
+        selected: List[Dict[str, Any]] = []
+        used_ids = set()
+        # First pass: at least one item per symbol, sorted by influence then impact then time
+        for symbol, rows in grouped.items():
+            rows_sorted = sorted(rows, key=lambda x: (float(x.get('influence_score') or 0.0), float(x.get('impact_score') or 0.0), str(x.get('published_at') or '')), reverse=True)
+            top = rows_sorted[0]
+            selected.append(top)
+            used_ids.add(top.get('id'))
+            if len(selected) >= limit:
+                return selected[:limit]
+        # Second pass: fill remaining slots globally by influence/impact/freshness
+        remaining = [i for i in items if i.get('id') not in used_ids]
+        remaining.sort(key=lambda x: (float(x.get('influence_score') or 0.0), float(x.get('impact_score') or 0.0), str(x.get('published_at') or '')), reverse=True)
+        selected.extend(remaining[:max(0, limit - len(selected))])
+        return selected[:limit]
+
+    def _count_items_by_symbol(self, items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        counts: Dict[str, int] = {}
+        for item in items:
+            sym = str(item.get('symbol') or 'UNKNOWN').upper()
+            counts[sym] = counts.get(sym, 0) + 1
+        return [{'symbol': k, 'count': v} for k, v in sorted(counts.items(), key=lambda item: item[1], reverse=True)]
+
+    def _group_news_by_source(self, items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        grouped: Dict[str, Dict[str, Any]] = {}
+        for item in items:
+            source = item.get("source") or "unknown"
+            row = grouped.setdefault(source, {"source": source, "count": 0, "positive": 0, "negative": 0, "neutral": 0})
+            row["count"] += 1
+            row[item.get("sentiment_label") or "neutral"] += 1
+        return sorted(grouped.values(), key=lambda x: x.get("count", 0), reverse=True)
+
+    def _group_news_by_event_type(self, items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        grouped: Dict[str, Dict[str, Any]] = {}
+        for item in items:
+            event_type = item.get("event_type") or "event"
+            row = grouped.setdefault(event_type, {"event_type": event_type, "count": 0, "positive": 0, "negative": 0, "neutral": 0})
+            row["count"] += 1
+            row[item.get("sentiment_label") or "neutral"] += 1
+        return sorted(grouped.values(), key=lambda x: x.get("count", 0), reverse=True)
+
+    def _build_news_timeline(self, items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        timeline: Dict[str, Dict[str, Any]] = {}
+        for item in items:
+            ts = str(item.get("published_at") or now_iso())[:13] + ":00:00"
+            row = timeline.setdefault(ts, {"ts": ts, "count": 0, "positive": 0, "negative": 0, "neutral": 0})
+            row["count"] += 1
+            row[item.get("sentiment_label") or "neutral"] += 1
+        return sorted(timeline.values(), key=lambda x: x["ts"])
 
     def _normalize_rejection_reason(self, reason: str) -> str:
         text = (reason or "").strip().lower()
