@@ -157,8 +157,8 @@ class PaperExecutor:
         if isinstance(decision.evidence, dict):
             market_regime = decision.evidence.get("market_regime")
         sized_qty, sizing_details = self._calculate_position_size(decision, market_regime=market_regime or "neutral")
-        
-        # For SELL orders, cap quantity at current position size
+
+        # For SELL orders, prioritize risk reduction over entry sizing constraints
         if proposed.side == "sell":
             try:
                 positions_env = self.broker_client.fetch_positions()
@@ -169,15 +169,24 @@ class PaperExecutor:
                         if pos.get("symbol") == proposed.symbol:
                             current_qty = abs(int(float(pos.get("qty", 0))))
                             break
-                
+
                 if current_qty <= 0:
                     raise ValueError(f"No position to sell for {proposed.symbol}")
-                
-                # Cap sell quantity at current position
+
+                original_qty = sized_qty
+                if sized_qty < 1:
+                    sized_qty = current_qty
+                    sizing_details["sell_exit_override"] = True
+                    sizing_details["original_qty"] = original_qty
+                    sizing_details["skip_reason"] = None
+                    sizing_details["final_shares"] = sized_qty
+                    sizing_details["applied_constraint"] = "position_exit_override"
+
                 if sized_qty > current_qty:
                     sizing_details["original_qty"] = sized_qty
                     sizing_details["capped_to_position"] = current_qty
                     sized_qty = current_qty
+                    sizing_details["final_shares"] = sized_qty
             except Exception as e:
                 if "No position to sell" in str(e):
                     raise

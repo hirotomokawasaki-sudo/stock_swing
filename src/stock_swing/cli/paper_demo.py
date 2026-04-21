@@ -432,6 +432,26 @@ def main() -> int:  # noqa: C901
                 print(f"  {'OK' if ok else 'WARN'}: {sub.symbol} broker_status={result.broker_status} discrepancies={len(result.discrepancies)}")
                 for disc in result.discrepancies:
                     print(f"    {disc}")
+
+                if result.side == 'sell' and result.broker_status in {'filled', 'partially_filled', 'submitted', 'accepted', 'new', 'pending_new'}:
+                    exit_price = None
+                    if result.fills_detected:
+                        try:
+                            exit_price = float(result.fills_detected[0].get('avg_price') or 0)
+                        except Exception:
+                            exit_price = None
+                    if not exit_price:
+                        try:
+                            q = broker.fetch_latest_quote(sub.symbol).payload
+                            quote = q.get('quote', q)
+                            bid = float(quote.get('bp', 0) or 0)
+                            ask = float(quote.get('ap', 0) or 0)
+                            exit_price = round((bid + ask) / 2, 4) if bid and ask else 0.0
+                        except Exception:
+                            exit_price = 0.0
+                    if exit_price:
+                        pnl_tracker.record_exit(symbol=sub.symbol, exit_price=exit_price, broker_order_id=sub.broker_order_id)
+
                 audit_log.log_reconciliation(sub.submission_id, sub.broker_order_id, result.status_matched, result.discrepancies)
             except Exception as exc:
                 print(f"  WARN: {sub.symbol} reconcile failed: {exc}")

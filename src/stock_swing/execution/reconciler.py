@@ -37,6 +37,8 @@ class ReconciliationResult:
     internal_status: str
     fills_detected: list[dict[str, Any]] = field(default_factory=list)
     discrepancies: list[str] = field(default_factory=list)
+    symbol: str | None = None
+    side: str | None = None
 
 
 class Reconciler:
@@ -94,6 +96,8 @@ class Reconciler:
                 internal_status=submission.status,
                 fills_detected=[],
                 discrepancies=["order_not_found_at_broker"],
+                symbol=submission.symbol,
+                side=submission.side,
             )
         
         # Extract broker state
@@ -142,6 +146,8 @@ class Reconciler:
             internal_status=submission.status,
             fills_detected=fills_detected,
             discrepancies=discrepancies,
+            symbol=submission.symbol,
+            side=submission.side,
         )
     
     def _get_broker_order(self, broker_order_id: str) -> dict[str, Any] | None:

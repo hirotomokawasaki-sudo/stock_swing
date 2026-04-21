@@ -54,6 +54,33 @@
       "state": {
         "nextRunAtMs": 1774609200000
       }
+    },
+    {
+      "id": "6be2f3d0-4bdb-4d8d-a8e8-reconcile-orders",
+      "agentId": "main",
+      "sessionKey": "agent:main:main",
+      "name": "stock_swing_order_reconciliation",
+      "enabled": true,
+      "createdAtMs": 1774750000000,
+      "updatedAtMs": 1774750000000,
+      "schedule": {
+        "kind": "cron",
+        "expr": "*/15 * * * *",
+        "tz": "Asia/Tokyo"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Execute stock_swing order reconciliation:\n\nRun this command in the project directory:\ncd ~/stock_swing && source venv/bin/activate && python -m stock_swing.cli.reconcile_orders\n\nThis will reconcile recent submitted sell orders against broker truth and update the PnL tracker for filled exits.\n\nAfter completion, report the summary.",
+        "timeoutSeconds": 600
+      },
+      "delivery": {
+        "mode": "announce"
+      },
+      "state": {
+        "nextRunAtMs": 1774750500000
+      }
     }
   ]
 }
