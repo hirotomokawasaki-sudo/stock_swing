@@ -133,9 +133,9 @@ def calculate_baseline_metrics(pnl_data: dict[str, Any]) -> dict[str, Any]:
 
 def print_metrics(metrics: dict[str, Any]) -> None:
     """Print metrics in readable format."""
-    print("=" * 60)
+    print("=" * 70)
     print("BASELINE PERFORMANCE METRICS")
-    print("=" * 60)
+    print("=" * 70)
     print()
     
     if "error" in metrics:
@@ -151,43 +151,63 @@ def print_metrics(metrics: dict[str, Any]) -> None:
     # Returns
     r = metrics["returns"]
     print("RETURNS:")
-    print(f"  Initial Equity:    ${r['initial_equity']:>12,.2f}")
-    print(f"  Final Equity:      ${r['final_equity']:>12,.2f}")
-    print(f"  Total Return:      {r['total_return_pct']:>12.2f}%")
-    print(f"  Sharpe Ratio:      {r['sharpe_ratio']:>12.2f}")
+    print(f"  Initial Equity:        ${r['initial_equity']:>12,.2f}")
+    print(f"  Final Equity:          ${r['final_equity']:>12,.2f}")
+    print(f"  Total Return:           {r['total_return_pct']:>11.2f}%")
+    print(f"  Daily Avg Return:       {r['daily_avg_return']*100:>11.4f}%")
+    print(f"  Daily Std Return:       {r['daily_std_return']*100:>11.4f}%")
+    print(f"  Sharpe Ratio:           {r['sharpe_ratio']:>11.2f}")
     print()
     
     # Risk
     risk = metrics["risk"]
     print("RISK:")
-    print(f"  Max Drawdown:      {risk['max_drawdown_pct']:>12.2f}%")
-    print(f"  Peak Equity:       ${risk['peak_equity']:>12,.2f}")
+    print(f"  Max Drawdown:           {risk['max_drawdown_pct']:>11.2f}%")
+    print(f"  Peak Equity:           ${risk['peak_equity']:>12,.2f}")
     print()
     
     # Trading
     t = metrics["trading"]
-    print("TRADING:")
-    print(f"  Total Trades:      {t['total_trades']:>12}")
-    print(f"  Closed Trades:     {t['closed_trades']:>12}")
-    print(f"  Open Trades:       {t['open_trades']:>12}")
-    print(f"  Winning Trades:    {t['winning_trades']:>12}")
-    print(f"  Losing Trades:     {t['losing_trades']:>12}")
-    print(f"  Win Rate:          {t['win_rate_pct']:>12.2f}%")
-    print(f"  Avg Win:           ${t['avg_win']:>12,.2f}")
-    print(f"  Avg Loss:          ${t['avg_loss']:>12,.2f}")
-    print(f"  Win/Loss Ratio:    {t['avg_win_loss_ratio']:>12.2f}")
-    print(f"  Profit Factor:     {t['profit_factor']:>12.2f}")
+    print("TRADING ACTIVITY:")
+    print(f"  Total Trades:          {t['total_trades']:>12}")
+    print(f"  Closed Trades:         {t['closed_trades']:>12}")
+    print(f"  Open Trades:           {t['open_trades']:>12}")
+    print(f"  Winning Trades:        {t['winning_trades']:>12}")
+    print(f"  Losing Trades:         {t['losing_trades']:>12}")
+    print()
+    
+    print("TRADING PERFORMANCE:")
+    win_rate_note = " *" if t['win_rate_pct'] >= 95 else ""
+    print(f"  Win Rate:               {t['win_rate_pct']:>11.2f}%{win_rate_note}")
+    if t['winning_trades'] > 0:
+        print(f"  Avg Win:               ${t['avg_win']:>12,.2f}")
+    if t['losing_trades'] > 0:
+        print(f"  Avg Loss:              ${t['avg_loss']:>12,.2f}")
+        print(f"  Win/Loss Ratio:         {t['avg_win_loss_ratio']:>11.2f}")
+        print(f"  Profit Factor:          {t['profit_factor']:>11.2f}")
+    else:
+        print(f"  Avg Loss:               N/A (no losing trades)")
+        print(f"  Win/Loss Ratio:         N/A")
+        print(f"  Profit Factor:          N/A")
     print()
     
     # Signals
     s = metrics["signals"]
-    print("SIGNALS:")
-    print(f"  Total Signals:     {s['total_signals']:>12}")
-    print(f"  Orders Submitted:  {s['total_orders']:>12}")
-    print(f"  Execution Rate:    {s['execution_rate_pct']:>12.2f}%")
-    print(f"  Avg Signals/Day:   {s['avg_signals_per_day']:>12.1f}")
+    print("SIGNAL EXECUTION:")
+    print(f"  Total Signals:         {s['total_signals']:>12}")
+    print(f"  Orders Submitted:      {s['total_orders']:>12}")
+    print(f"  Execution Rate:         {s['execution_rate_pct']:>11.2f}%")
+    print(f"  Avg Signals/Day:        {s['avg_signals_per_day']:>11.1f}")
     print()
-    print("=" * 60)
+    
+    # Notes
+    if t['win_rate_pct'] >= 95:
+        print("NOTES:")
+        print("  * Win rate may be unreliable - very few or no losing trades")
+        print("    suggests incomplete exit tracking or insufficient sample")
+        print()
+    
+    print("=" * 70)
 
 
 def main() -> int:
