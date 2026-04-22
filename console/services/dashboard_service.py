@@ -31,7 +31,19 @@ class DashboardService:
         self.data_adapter = DataAdapter(project_root)
         self.system_adapter = SystemAdapter(project_root)
         self._tracker = PnLTracker(project_root) if _HAS_TRACKER else None
-        self._broker = None
+        self._broker = self._init_broker() if _HAS_TRACKER and BrokerClient else None
+
+    def _init_broker(self):
+        """Initialize broker client if credentials available."""
+        try:
+            import os
+            api_key = os.environ.get("BROKER_API_KEY", "")
+            api_secret = os.environ.get("BROKER_API_SECRET", "")
+            if not api_key or not api_secret:
+                return None
+            return BrokerClient(api_key=api_key, api_secret=api_secret, paper_mode=True)
+        except Exception:
+            return None
 
     def get_dashboard(self) -> Dict[str, Any]:
         trading = self.get_trading()
@@ -648,35 +660,17 @@ class DashboardService:
                     pending_or_mismatched += 1
             discrepancy_counts[normalized] = discrepancy_counts.get(normalized, 0) + 1
 
-        pending_orders = []
-        for evt in sub_events[:30]:
-            parsed = self._parse_submission_details(str(evt.get("details") or ""))
-            symbol = parsed.get("symbol") or "unknown"
-            side = parsed.get("side") or "unknown"
-            qty = parsed.get("qty") or 0
-            matching_rec = next((r for r in rec_events if r.get("subject") == evt.get("subject")), None)
-            rec_details = str(matching_rec.get("details") or "") if matching_rec else ""
-            if not matching_rec:
-                status = "pending_reconcile"
-            elif "0 discrepancies" in rec_details:
-                status = "reconciled_ok"
-            elif "status_mismatch" in rec_details:
-                status = "status_mismatch"
-            elif "qty_mismatch" in rec_details:
-                status = "qty_mismatch"
-            else:
-                status = "mismatch"
-            pending_orders.append({
-                "ts": evt.get("ts"),
-                "symbol": symbol,
-                "side": side,
-                "qty": qty,
-                "status": status,
-            })
+        # Fetch broker truth for pending orders
+        pending_orders = self._fetch_broker_pending_orders(sub_events[:30], rec_events)
+
+        for order in pending_orders:
+            symbol = order.get("symbol") or "unknown"
+            side = order.get("side") or "unknown"
+            status = order.get("status") or "unknown"
             row = by_symbol.setdefault(symbol, {"symbol": symbol, "submissions": 0, "buy": 0, "sell": 0, "mismatches": 0})
             row["submissions"] += 1
             row[side] = row.get(side, 0) + 1
-            if status != "reconciled_ok":
+            if status not in {"reconciled_ok", "filled"}:
                 row["mismatches"] += 1
 
         return {
@@ -689,6 +683,92 @@ class DashboardService:
             "by_symbol": sorted(by_symbol.values(), key=lambda x: (x.get("mismatches", 0), x.get("submissions", 0)), reverse=True)[:10],
             "pending_orders": pending_orders,
         }
+
+    def _fetch_broker_pending_orders(self, sub_events: List[Dict[str, Any]], rec_events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Fetch broker truth for pending orders."""
+        if not self._broker:
+            # Fallback to audit-based status
+            pending_orders = []
+            for evt in sub_events:
+                parsed = self._parse_submission_details(str(evt.get("details") or ""))
+                symbol = parsed.get("symbol") or "unknown"
+                side = parsed.get("side") or "unknown"
+                qty = parsed.get("qty") or 0
+                matching_rec = next((r for r in rec_events if r.get("subject") == evt.get("subject")), None)
+                rec_details = str(matching_rec.get("details") or "") if matching_rec else ""
+                if not matching_rec:
+                    status = "pending_reconcile"
+                elif "0 discrepancies" in rec_details:
+                    status = "reconciled_ok"
+                elif "status_mismatch" in rec_details:
+                    status = "status_mismatch"
+                elif "qty_mismatch" in rec_details:
+                    status = "qty_mismatch"
+                else:
+                    status = "mismatch"
+                pending_orders.append({
+                    "ts": evt.get("ts"),
+                    "symbol": symbol,
+                    "side": side,
+                    "qty": qty,
+                    "status": status,
+                    "broker_status": None,
+                    "broker_filled_qty": None,
+                })
+            return pending_orders
+
+        try:
+            # Fetch broker orders directly
+            broker_orders_env = self._broker.fetch_orders(status="all", limit=100)
+            broker_orders = broker_orders_env.payload if hasattr(broker_orders_env, "payload") else []
+            broker_map = {}
+            for order in broker_orders:
+                symbol = str(order.get("symbol") or "").upper()
+                side = str(order.get("side") or "").lower()
+                key = f"{symbol}_{side}"
+                if key not in broker_map:
+                    broker_map[key] = order
+
+            pending_orders = []
+            for evt in sub_events:
+                parsed = self._parse_submission_details(str(evt.get("details") or ""))
+                symbol = parsed.get("symbol") or "unknown"
+                side = parsed.get("side") or "unknown"
+                qty = parsed.get("qty") or 0
+                key = f"{symbol}_{side}"
+                broker_order = broker_map.get(key)
+                
+                if broker_order:
+                    broker_status = str(broker_order.get("status") or "unknown").lower()
+                    filled_qty = float(broker_order.get("filled_qty") or 0)
+                    if broker_status in {"filled", "partially_filled"} and filled_qty == qty:
+                        status = "filled"
+                    elif broker_status == "canceled":
+                        status = "canceled"
+                    elif broker_status == "rejected":
+                        status = "rejected"
+                    elif broker_status == "accepted":
+                        status = "accepted"
+                    else:
+                        status = broker_status
+                else:
+                    status = "pending_reconcile"
+                    broker_status = None
+                    filled_qty = None
+
+                pending_orders.append({
+                    "ts": evt.get("ts"),
+                    "symbol": symbol,
+                    "side": side,
+                    "qty": qty,
+                    "status": status,
+                    "broker_status": broker_status if broker_order else None,
+                    "broker_filled_qty": filled_qty if broker_order else None,
+                })
+            return pending_orders
+        except Exception:
+            # Fallback to audit-based on error
+            return self._fetch_broker_pending_orders(sub_events, rec_events)
 
     def get_alerts(
         self,
@@ -938,8 +1018,43 @@ class DashboardService:
         }
 
     def _fetch_current_prices(self, symbols: List[str | None]) -> Dict[str, float]:
-        # Broker bootstrap is environment-dependent; fail closed.
-        return {}
+        """Fetch current prices for symbols from latest raw broker data."""
+        prices: Dict[str, float] = {}
+        broker_raw_dir = self.project_root / "data" / "raw" / "broker"
+        
+        if not broker_raw_dir.exists():
+            return prices
+        
+        for symbol in symbols:
+            if not symbol:
+                continue
+            
+            symbol_upper = str(symbol).upper()
+            # Find latest broker file for symbol
+            matching_files = sorted(
+                broker_raw_dir.glob(f"broker_{symbol_upper.lower()}_*.json"),
+                key=lambda p: p.stat().st_mtime,
+                reverse=True
+            )
+            
+            if not matching_files:
+                continue
+            
+            try:
+                data = json.loads(matching_files[0].read_text(encoding="utf-8"))
+                payload = data.get("payload", {})
+                bars = payload.get("bars", [])
+                
+                if bars:
+                    # Use latest bar close price
+                    latest_bar = bars[-1]
+                    close_price = float(latest_bar.get("c") or 0.0)
+                    if close_price > 0:
+                        prices[symbol_upper] = close_price
+            except Exception:
+                pass
+        
+        return prices
 
     def _parse_submission_details(self, details: str) -> Dict[str, Any]:
         text = details or ""

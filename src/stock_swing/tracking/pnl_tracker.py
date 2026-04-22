@@ -219,31 +219,41 @@ class PnLTracker:
         """Return overall performance summary."""
         closed = [t for t in self.state.trades if t["status"] == "closed"]
         open_trades = [t for t in self.state.trades if t["status"] == "open"]
-        wins = [t for t in closed if (t.get("pnl") or 0) >= 0]
+        removed_trades = [t for t in self.state.trades if t["status"] == "reconciled_removed"]
+        wins = [t for t in closed if (t.get("pnl") or 0) > 0]
+        losses = [t for t in closed if (t.get("pnl") or 0) < 0]
+        flat = [t for t in closed if (t.get("pnl") or 0) == 0]
+        closed_with_valid_return = [t for t in closed if (t.get("entry_price") or 0) > 0 and t.get("return_pct") is not None]
 
         win_rate = len(wins) / len(closed) if closed else 0.0
         avg_return = (
-            sum(t.get("return_pct", 0) or 0 for t in closed) / len(closed)
-            if closed else 0.0
+            sum(t.get("return_pct", 0) or 0 for t in closed_with_valid_return) / len(closed_with_valid_return)
+            if closed_with_valid_return else None
         )
         avg_pnl = (
             sum(t.get("pnl", 0) or 0 for t in closed) / len(closed)
             if closed else 0.0
         )
 
+        trading_day_count = len({str((snap.get("date") or "")).strip() for snap in self.state.daily_snapshots if str((snap.get("date") or "")).strip()})
+
         return {
-            "total_trades": self.state.total_trades,
+            "total_trades": len(closed) + len(open_trades),
+            "all_trade_records": self.state.total_trades,
             "closed_trades": len(closed),
             "open_trades": len(open_trades),
+            "reconciled_removed_trades": len(removed_trades),
             "winning_trades": len(wins),
-            "losing_trades": len(closed) - len(wins),
+            "losing_trades": len(losses),
+            "flat_trades": len(flat),
             "win_rate": round(win_rate, 4),
             "cumulative_realized_pnl": round(self.state.cumulative_realized_pnl, 2),
-            "avg_return_per_trade": round(avg_return, 4),
+            "avg_return_per_trade": round(avg_return, 4) if avg_return is not None else None,
             "avg_pnl_per_trade": round(avg_pnl, 2),
+            "valid_return_trade_count": len(closed_with_valid_return),
             "max_drawdown_pct": self.state.max_drawdown_pct,
             "peak_equity": self.state.peak_equity,
-            "trading_days": len(self.state.daily_snapshots),
+            "trading_days": trading_day_count,
         }
 
     def get_open_positions(self) -> list[dict[str, Any]]:

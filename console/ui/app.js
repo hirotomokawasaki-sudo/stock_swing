@@ -271,11 +271,14 @@ class Console {
         <div class="grid">
             <div class="card">
                 <h3>パフォーマンス</h3>
+                <div class="metric"><span class="label">取引数(open+closed)</span><span class="value">${s.total_trades||0}</span></div>
                 <div class="metric"><span class="label">決済取引数</span><span class="value">${s.closed_trades||0}</span></div>
                 <div class="metric"><span class="label">保有取引数</span><span class="value">${s.open_trades||0}</span></div>
-                <div class="metric"><span class="label">勝 / 負</span><span class="value">${s.winning_trades||0} / ${s.losing_trades||0}</span></div>
+                <div class="metric"><span class="label">reconciled removed</span><span class="value muted">${s.reconciled_removed_trades||0}</span></div>
+                <div class="metric"><span class="label">勝 / 負 / 引分</span><span class="value">${s.winning_trades||0} / ${s.losing_trades||0} / ${s.flat_trades||0}</span></div>
                 <div class="metric"><span class="label">勝率</span><span class="value ${wr_cls}">${fmt.pct(winRate)}</span></div>
-                <div class="metric"><span class="label">平均リターン</span><span class="value ${s.avg_return_per_trade >= 0 ? 'success':'danger'}">${fmt.pctSigned(s.avg_return_per_trade)}</span></div>
+                <div class="metric"><span class="label">平均リターン</span><span class="value ${(s.avg_return_per_trade ?? 0) >= 0 ? 'success':'danger'}">${s.avg_return_per_trade == null ? '—' : fmt.pctSigned(s.avg_return_per_trade)}</span></div>
+                <div class="metric"><span class="label">有効return取引数</span><span class="value">${s.valid_return_trade_count||0}</span></div>
                 <div class="metric"><span class="label">平均損益</span><span class="value ${s.avg_pnl_per_trade >= 0 ? 'success':'danger'}">${fmt.usdSigned(s.avg_pnl_per_trade)}</span></div>
                 <div class="metric"><span class="label">累積実現損益</span><span class="value ${s.cumulative_realized_pnl >= 0 ? 'success':'danger'} big">${fmt.usdSigned(s.cumulative_realized_pnl)}</span></div>
                 <div class="metric"><span class="label">最大DD</span><span class="value ${s.max_drawdown_pct > 0.05 ? 'danger':''}">${fmt.pct(s.max_drawdown_pct)}</span></div>
@@ -614,7 +617,7 @@ class Console {
     renderNewsTable() {
         const items = this.getFilteredNewsItems();
         if (!items.length) return '<p class="muted">ニュースはありません</p>';
-        return `<table><thead><tr><th>時刻</th><th>銘柄</th><th>見出し</th><th>感情</th><th>重要度</th><th>影響度</th><th>採用</th></tr></thead><tbody>${items.map(n => `
+        return `<div class="table-wrap"><table><thead><tr><th>時刻</th><th>銘柄</th><th>見出し</th><th>感情</th><th>重要度</th><th>影響度</th><th>採用</th></tr></thead><tbody>${items.map(n => `
           <tr class="clickable-row ${this.selectedNewsId === n.id ? 'selected-row' : ''}" onclick="window.app.selectNews('${this.escapeHtml(n.id)}')">
             <td class="small muted">${fmt.dt(n.published_at)}</td>
             <td><strong>${this.escapeHtml(n.symbol || '—')}</strong>${n.is_tracked_symbol === false ? ' <span class="badge badge-muted">non-tracked</span>' : ' <span class="badge badge-success">tracked</span>'}</td>
@@ -623,7 +626,7 @@ class Console {
             <td>${this.renderImpactBadge(n.impact_label)}</td>
             <td>${this.renderInfluenceBar(n.influence_score)}</td>
             <td>${n.used_in_decision ? '<span class="badge badge-success">採用</span>' : '<span class="badge badge-muted">未採用</span>'}</td>
-          </tr>`).join('')}</tbody></table>`;
+          </tr>`).join('')}</tbody></table></div>`;
     }
 
     renderNewsAggregates() {
@@ -632,17 +635,17 @@ class Console {
         const byEventType = this.data?.news?.by_event_type || [];
         return `
           <h4 style="margin-bottom:8px">銘柄別</h4>
-          ${bySymbol.length ? `<table><thead><tr><th>銘柄</th><th>tracked</th><th>件数</th><th>平均感情</th><th>平均重要度</th><th>採用</th><th>submitted</th><th>open</th><th>conv</th><th>最新見出し</th></tr></thead><tbody>${bySymbol.map(r => `
-            <tr><td><strong>${this.escapeHtml(r.symbol)}</strong></td><td>${r.is_tracked_symbol === false ? '<span class="badge badge-muted">non-tracked</span>' : '<span class="badge badge-success">tracked</span>'}</td><td>${r.news_count}</td><td>${Number(r.avg_sentiment ?? 0).toFixed(2)}</td><td>${Number(r.avg_impact ?? 0).toFixed(2)}</td><td>${r.decision_referenced ?? 0}</td><td>${r.submitted ?? 0}</td><td>${r.open_position ? '✅' : '—'}</td><td>${fmt.pct(r.conversion_rate ?? 0)}</td><td class="small muted">${this.escapeHtml(r.latest_headline_ja || '')}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">銘柄別集計なし</p>'}
+          ${bySymbol.length ? `<div class="table-wrap"><table><thead><tr><th>銘柄</th><th>tracked</th><th>件数</th><th>平均感情</th><th>平均重要度</th><th>採用</th><th>submitted</th><th>open</th><th>conv</th><th>最新見出し</th></tr></thead><tbody>${bySymbol.map(r => `
+            <tr><td><strong>${this.escapeHtml(r.symbol)}</strong></td><td>${r.is_tracked_symbol === false ? '<span class="badge badge-muted">non-tracked</span>' : '<span class="badge badge-success">tracked</span>'}</td><td>${r.news_count}</td><td>${Number(r.avg_sentiment ?? 0).toFixed(2)}</td><td>${Number(r.avg_impact ?? 0).toFixed(2)}</td><td>${r.decision_referenced ?? 0}</td><td>${r.submitted ?? 0}</td><td>${r.open_position ? '✅' : '—'}</td><td>${fmt.pct(r.conversion_rate ?? 0)}</td><td class="small muted">${this.escapeHtml(r.latest_headline_ja || '')}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">銘柄別集計なし</p>'}
           <h4 style="margin:16px 0 8px">Symbol Overview 連携</h4>
-          ${bySymbol.length ? `<table><thead><tr><th>symbol</th><th>avg sentiment</th><th>avg impact</th><th>submitted</th><th>open</th><th>conv</th></tr></thead><tbody>${bySymbol.map(r => `
-            <tr><td><strong>${this.escapeHtml(r.symbol)}</strong></td><td>${Number(r.avg_sentiment ?? 0).toFixed(2)}</td><td>${Number(r.avg_impact ?? 0).toFixed(2)}</td><td>${r.submitted ?? 0}</td><td>${r.open_position ? '✅' : '—'}</td><td>${fmt.pct(r.conversion_rate ?? 0)}</td></tr>`).join('')}</tbody></table>` : ''}
+          ${bySymbol.length ? `<div class="table-wrap"><table><thead><tr><th>symbol</th><th>avg sentiment</th><th>avg impact</th><th>submitted</th><th>open</th><th>conv</th></tr></thead><tbody>${bySymbol.map(r => `
+            <tr><td><strong>${this.escapeHtml(r.symbol)}</strong></td><td>${Number(r.avg_sentiment ?? 0).toFixed(2)}</td><td>${Number(r.avg_impact ?? 0).toFixed(2)}</td><td>${r.submitted ?? 0}</td><td>${r.open_position ? '✅' : '—'}</td><td>${fmt.pct(r.conversion_rate ?? 0)}</td></tr>`).join('')}</tbody></table></div>` : ''}
           <h4 style="margin:16px 0 8px">ソース別</h4>
-          ${bySource.length ? `<table><thead><tr><th>source</th><th>count</th><th>pos</th><th>neg</th><th>neutral</th></tr></thead><tbody>${bySource.map(r => `
-            <tr><td>${this.escapeHtml(r.source)}</td><td>${r.count}</td><td>${r.positive}</td><td>${r.negative}</td><td>${r.neutral}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">ソース別集計なし</p>'}
+          ${bySource.length ? `<div class="table-wrap"><table><thead><tr><th>source</th><th>count</th><th>pos</th><th>neg</th><th>neutral</th></tr></thead><tbody>${bySource.map(r => `
+            <tr><td>${this.escapeHtml(r.source)}</td><td>${r.count}</td><td>${r.positive}</td><td>${r.negative}</td><td>${r.neutral}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">ソース別集計なし</p>'}
           <h4 style="margin:16px 0 8px">イベント種別</h4>
-          ${byEventType.length ? `<table><thead><tr><th>event_type</th><th>count</th><th>pos</th><th>neg</th><th>neutral</th></tr></thead><tbody>${byEventType.map(r => `
-            <tr><td>${this.renderEventTypeBadge(r.event_type)}</td><td>${r.count}</td><td>${r.positive}</td><td>${r.negative}</td><td>${r.neutral}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">イベント種別集計なし</p>'}`;
+          ${byEventType.length ? `<div class="table-wrap"><table><thead><tr><th>event_type</th><th>count</th><th>pos</th><th>neg</th><th>neutral</th></tr></thead><tbody>${byEventType.map(r => `
+            <tr><td>${this.renderEventTypeBadge(r.event_type)}</td><td>${r.count}</td><td>${r.positive}</td><td>${r.negative}</td><td>${r.neutral}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">イベント種別集計なし</p>'}`;
     }
 
     renderNewsDetail() {
@@ -870,7 +873,7 @@ class Console {
 
     renderBreakdownTable(rows = [], keyField = 'symbol') {
         if (!rows.length) return '<p class="muted">データなし</p>';
-        return `<table>
+        return `<div class="table-wrap"><table>
             <thead><tr><th>${keyField}</th><th>decisions</th><th>buy</th><th>sell</th><th>deny</th><th>pass</th><th>reject</th></tr></thead>
             <tbody>${rows.map(r => `
                 <tr>
@@ -883,12 +886,12 @@ class Console {
                     <td class="danger">${r.reject ?? 0}</td>
                 </tr>`).join('')}
             </tbody>
-        </table>`;
+        </table></div>`;
     }
 
     renderStrategyOverviewTable(rows = []) {
         if (!rows.length) return '<p class="muted">データなし</p>';
-        return `<table>
+        return `<div class="table-wrap"><table>
             <thead><tr><th>strategy</th><th>decisions</th><th>buy</th><th>sell</th><th>deny</th><th>pass</th><th>reject</th><th>conv</th></tr></thead>
             <tbody>${rows.map(r => `
                 <tr>
@@ -902,7 +905,7 @@ class Console {
                     <td>${fmt.pct(r.conversion_rate ?? 0)}</td>
                 </tr>`).join('')}
             </tbody>
-        </table>`;
+        </table></div>`;
     }
 
     renderReasonList(rows = []) {
@@ -912,7 +915,7 @@ class Console {
 
     renderSubmissionTable(rows = []) {
         if (!rows.length) return '<p class="muted">Submissionなし</p>';
-        return `<table>
+        return `<div class="table-wrap"><table>
             <thead><tr><th>time</th><th>symbol</th><th>side</th><th>qty</th><th>details</th></tr></thead>
             <tbody>${rows.map(r => `
                 <tr>
@@ -923,12 +926,12 @@ class Console {
                     <td class="small muted">${this.escapeHtml(r.details || '')}</td>
                 </tr>`).join('')}
             </tbody>
-        </table>`;
+        </table></div>`;
     }
 
     renderExecutionBySymbolTable(rows = []) {
         if (!rows.length) return '<p class="muted">データなし</p>';
-        return `<table>
+        return `<div class="table-wrap"><table>
             <thead><tr><th>symbol</th><th>submitted</th><th>buy</th><th>sell</th><th>qty</th></tr></thead>
             <tbody>${rows.map(r => `
                 <tr>
@@ -939,12 +942,12 @@ class Console {
                     <td>${r.qty ?? 0}</td>
                 </tr>`).join('')}
             </tbody>
-        </table>`;
+        </table></div>`;
     }
 
     renderPendingOrdersTable(rows = []) {
         if (!rows.length) return '<p class="muted">対象なし</p>';
-        return `<table>
+        return `<div class="table-wrap"><table>
             <thead><tr><th>time</th><th>symbol</th><th>side</th><th>qty</th><th>status</th></tr></thead>
             <tbody>${rows.map(r => `
                 <tr>
@@ -955,12 +958,12 @@ class Console {
                     <td><span class="tag ${r.status === 'reconciled_ok' ? 'success' : r.status.includes('mismatch') ? 'danger' : 'warn'}">${this.escapeHtml(r.status || '—')}</span></td>
                 </tr>`).join('')}
             </tbody>
-        </table>`;
+        </table></div>`;
     }
 
     renderReconciliationBySymbolTable(rows = []) {
         if (!rows.length) return '<p class="muted">データなし</p>';
-        return `<table>
+        return `<div class="table-wrap"><table>
             <thead><tr><th>symbol</th><th>submissions</th><th>buy</th><th>sell</th><th>mismatches</th></tr></thead>
             <tbody>${rows.map(r => `
                 <tr>
@@ -971,12 +974,12 @@ class Console {
                     <td class="${(r.mismatches || 0) > 0 ? 'danger' : 'success'}">${r.mismatches ?? 0}</td>
                 </tr>`).join('')}
             </tbody>
-        </table>`;
+        </table></div>`;
     }
 
     renderSymbolOverviewTable(rows = []) {
         if (!rows.length) return '<p class="muted">データなし</p>';
-        return `<table>
+        return `<div class="table-wrap"><table>
             <thead><tr><th>symbol</th><th>strategies</th><th>decisions</th><th>deny</th><th>submitted</th><th>conv</th><th>news</th><th>news sent</th><th>news impact</th><th>ref news</th><th>sub qty</th><th>open pos</th><th>pos qty</th><th>hold d</th><th>uPnL</th><th>latest news</th></tr></thead>
             <tbody>${rows.map(r => `
                 <tr>
@@ -998,7 +1001,7 @@ class Console {
                     <td class="small muted">${r.latest_news_headline_ja ? `<a href="#" onclick="event.preventDefault(); window.app.openNewsForSymbol('${this.escapeHtml(r.symbol || '')}')">${this.escapeHtml(r.latest_news_headline_ja || '')}</a>` : ''}</td>
                 </tr>`).join('')}
             </tbody>
-        </table>`;
+        </table></div>`;
     }
 
     renderExecutionSummary(execution = {}) {
@@ -1014,7 +1017,7 @@ class Console {
 
     renderRunList(runs = []) {
         if (!runs.length) return '<p class="muted">Run履歴なし</p>';
-        return `<table>
+        return `<div class="table-wrap"><table>
             <thead><tr><th>start</th><th>complete</th><th>decisions</th><th>submitted</th><th>conv</th></tr></thead>
             <tbody>${runs.map(r => `
                 <tr>
@@ -1025,7 +1028,7 @@ class Console {
                     <td>${fmt.pct(r.conversion_rate ?? 0)}</td>
                 </tr>`).join('')}
             </tbody>
-        </table>`;
+        </table></div>`;
     }
 
     renderMiniBars(series = [], key = 'value', type = 'count') {

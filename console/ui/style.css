@@ -149,9 +149,21 @@ main {
     color: white;
 }
 
+.table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-wrap table,
 table {
     width: 100%;
     border-collapse: collapse;
+}
+
+.table-wrap table {
+    min-width: 960px;
 }
 
 thead {
@@ -189,6 +201,22 @@ tr:hover {
     
     .tabs {
         flex-wrap: wrap;
+    }
+
+    .container {
+        padding: 12px;
+    }
+
+    main,
+    .card {
+        padding: 14px;
+    }
+
+    th,
+    td {
+        padding: 10px 8px;
+        font-size: 12px;
+        white-space: nowrap;
     }
 }
 

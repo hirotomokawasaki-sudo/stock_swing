@@ -218,7 +218,8 @@ def _build_report(
     lines.append(f"  勝 / 負       : {summary['winning_trades']} / {summary['losing_trades']}")
     wr = summary['win_rate']
     lines.append(f"  勝率          : {wr:.1%}" + (" 🔥" if wr >= 0.6 else (" ⚠️" if wr < 0.4 else "")))
-    lines.append(f"  平均リターン  : {summary['avg_return_per_trade']:>+.2%}")
+    avg_return = summary.get('avg_return_per_trade')
+    lines.append(f"  平均リターン  : {avg_return:>+.2%}" if avg_return is not None else "  平均リターン  : N/A")
     lines.append(f"  平均損益/取引 : ${summary['avg_pnl_per_trade']:>+,.2f}")
     lines.append(f"  最大DD        : {summary['max_drawdown_pct']:.2%}")
     lines.append(f"  取引日数      : {summary['trading_days']}")
