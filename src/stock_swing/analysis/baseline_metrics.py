@@ -24,6 +24,9 @@ def load_pnl_data(project_root: Path) -> dict[str, Any]:
 
 def calculate_baseline_metrics(pnl_data: dict[str, Any]) -> dict[str, Any]:
     """Calculate baseline performance metrics."""
+    from datetime import datetime
+    from collections import defaultdict
+    
     snapshots = pnl_data.get("daily_snapshots", [])
     trades = pnl_data.get("trades", [])
     
@@ -88,6 +91,119 @@ def calculate_baseline_metrics(pnl_data: dict[str, Any]) -> dict[str, Any]:
     total_orders = sum(s.get("orders_submitted", 0) for s in snapshots)
     execution_rate = total_orders / total_signals if total_signals > 0 else 0
     
+    # === NEW: Strategy breakdown ===
+    strategy_stats = defaultdict(lambda: {"trades": [], "wins": 0, "losses": 0})
+    for t in trades:
+        strat = t.get("strategy_id", "unknown")
+        strategy_stats[strat]["trades"].append(t)
+        if t.get("pnl") is not None:
+            if t["pnl"] > 0:
+                strategy_stats[strat]["wins"] += 1
+            elif t["pnl"] < 0:
+                strategy_stats[strat]["losses"] += 1
+    
+    strategy_breakdown = {}
+    for strat, stats in strategy_stats.items():
+        strat_closed = [t for t in stats["trades"] if t.get("pnl") is not None]
+        strat_pnls = [t["pnl"] for t in strat_closed]
+        strategy_breakdown[strat] = {
+            "total_trades": len(stats["trades"]),
+            "closed_trades": len(strat_closed),
+            "win_count": stats["wins"],
+            "loss_count": stats["losses"],
+            "win_rate": stats["wins"] / len(strat_closed) if strat_closed else 0,
+            "avg_pnl": statistics.mean(strat_pnls) if strat_pnls else 0,
+        }
+    
+    # === NEW: Trade duration analysis ===
+    durations = []
+    duration_buckets = {"0-2d": [], "2-5d": [], "5-10d": [], "10d+": []}
+    
+    for t in trades:
+        if t.get("entry_time") and t.get("exit_time"):
+            try:
+                entry = datetime.fromisoformat(t["entry_time"].replace("Z", "+00:00"))
+                exit = datetime.fromisoformat(t["exit_time"].replace("Z", "+00:00"))
+                duration_days = (exit - entry).total_seconds() / 86400
+                durations.append(duration_days)
+                
+                pnl_pct = t.get("pnl_pct", 0)
+                if duration_days < 2:
+                    duration_buckets["0-2d"].append(pnl_pct)
+                elif duration_days < 5:
+                    duration_buckets["2-5d"].append(pnl_pct)
+                elif duration_days < 10:
+                    duration_buckets["5-10d"].append(pnl_pct)
+                else:
+                    duration_buckets["10d+"].append(pnl_pct)
+            except (ValueError, TypeError):
+                pass
+    
+    duration_analysis = {
+        "avg_hold_days": statistics.mean(durations) if durations else 0,
+        "median_hold_days": statistics.median(durations) if durations else 0,
+        "min_hold_days": min(durations) if durations else 0,
+        "max_hold_days": max(durations) if durations else 0,
+        "by_bucket": {
+            k: {
+                "count": len(v),
+                "avg_return_pct": statistics.mean(v) * 100 if v else 0,
+            }
+            for k, v in duration_buckets.items()
+        },
+    }
+    
+    # === NEW: Symbol concentration ===
+    symbol_counts = defaultdict(int)
+    for t in trades:
+        sym = t.get("symbol", "unknown")
+        symbol_counts[sym] += 1
+    
+    total_trades_count = len(trades)
+    top_symbols = sorted(symbol_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+    
+    # HHI (Herfindahl-Hirschman Index)
+    hhi = sum((count / total_trades_count) ** 2 for count in symbol_counts.values())
+    
+    concentration_analysis = {
+        "unique_symbols": len(symbol_counts),
+        "top_5_symbols": [
+            {"symbol": sym, "count": count, "pct": count / total_trades_count * 100}
+            for sym, count in top_symbols
+        ],
+        "top_5_concentration_pct": sum(count for _, count in top_symbols) / total_trades_count * 100,
+        "hhi_index": hhi,
+    }
+    
+    # === NEW: Consecutive win/loss streaks ===
+    sorted_trades = sorted(
+        [t for t in trades if t.get("pnl") is not None],
+        key=lambda x: x.get("entry_time", "")
+    )
+    
+    max_win_streak = 0
+    max_loss_streak = 0
+    current_streak = 0
+    current_type = None
+    
+    for t in sorted_trades:
+        is_win = t["pnl"] > 0
+        if current_type == is_win:
+            current_streak += 1
+        else:
+            current_streak = 1
+            current_type = is_win
+        
+        if is_win and current_streak > max_win_streak:
+            max_win_streak = current_streak
+        elif not is_win and current_streak > max_loss_streak:
+            max_loss_streak = current_streak
+    
+    streak_analysis = {
+        "max_win_streak": max_win_streak,
+        "max_loss_streak": max_loss_streak,
+    }
+    
     return {
         "period": {
             "start_date": dates[0] if dates else None,
@@ -128,6 +244,10 @@ def calculate_baseline_metrics(pnl_data: dict[str, Any]) -> dict[str, Any]:
             "execution_rate_pct": execution_rate * 100,
             "avg_signals_per_day": total_signals / len(snapshots) if snapshots else 0,
         },
+        "strategy_breakdown": strategy_breakdown,
+        "duration_analysis": duration_analysis,
+        "concentration_analysis": concentration_analysis,
+        "streak_analysis": streak_analysis,
     }
 
 
@@ -199,6 +319,56 @@ def print_metrics(metrics: dict[str, Any]) -> None:
     print(f"  Execution Rate:         {s['execution_rate_pct']:>11.2f}%")
     print(f"  Avg Signals/Day:        {s['avg_signals_per_day']:>11.1f}")
     print()
+    
+    # Strategy Breakdown
+    strat_breakdown = metrics.get("strategy_breakdown", {})
+    if strat_breakdown:
+        print("STRATEGY PERFORMANCE:")
+        for strat_name, strat_metrics in sorted(strat_breakdown.items()):
+            print(f"  {strat_name}:")
+            print(f"    Total Trades:        {strat_metrics['total_trades']:>12}")
+            print(f"    Closed Trades:       {strat_metrics['closed_trades']:>12}")
+            if strat_metrics['closed_trades'] > 0:
+                print(f"    Win Rate:             {strat_metrics['win_rate']*100:>11.1f}%")
+                print(f"    Avg P&L:             ${strat_metrics['avg_pnl']:>12,.2f}")
+        print()
+    
+    # Duration Analysis
+    dur = metrics.get("duration_analysis", {})
+    if dur.get("avg_hold_days", 0) > 0:
+        print("TRADE DURATION:")
+        print(f"  Avg Hold Time:          {dur['avg_hold_days']:>11.1f} days")
+        print(f"  Median Hold Time:       {dur['median_hold_days']:>11.1f} days")
+        print(f"  Range:                  {dur['min_hold_days']:>5.1f} - {dur['max_hold_days']:>5.1f} days")
+        print()
+        print("  Performance by Duration:")
+        for bucket, stats in sorted(dur.get("by_bucket", {}).items()):
+            if stats["count"] > 0:
+                print(f"    {bucket:6}  {stats['count']:>3} trades  "
+                      f"({stats['avg_return_pct']:>+6.2f}% avg)")
+        print()
+    
+    # Concentration Analysis
+    conc = metrics.get("concentration_analysis", {})
+    if conc:
+        print("SYMBOL CONCENTRATION:")
+        print(f"  Unique Symbols:         {conc['unique_symbols']:>12}")
+        print(f"  Top 5 Concentration:     {conc['top_5_concentration_pct']:>11.1f}%")
+        print(f"  HHI Index:               {conc['hhi_index']:>11.3f}")
+        print()
+        print("  Top 5 Symbols:")
+        for sym_data in conc.get("top_5_symbols", []):
+            print(f"    {sym_data['symbol']:6}  {sym_data['count']:>3} trades "
+                  f"({sym_data['pct']:>5.1f}%)")
+        print()
+    
+    # Streak Analysis
+    streak = metrics.get("streak_analysis", {})
+    if streak:
+        print("CONSECUTIVE STREAKS:")
+        print(f"  Max Win Streak:         {streak['max_win_streak']:>12}")
+        print(f"  Max Loss Streak:        {streak['max_loss_streak']:>12}")
+        print()
     
     # Notes
     if t['win_rate_pct'] >= 95:
