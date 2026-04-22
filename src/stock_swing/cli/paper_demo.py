@@ -301,18 +301,22 @@ def main() -> int:  # noqa: C901
 
     # 8. Decisions
     _section("8. Decision Engine")
-    try:
-        pos_env = broker.fetch_positions()
-        pos_data = pos_env.payload
-        if isinstance(pos_data, list):
-            for pos in pos_data:
-                sym = pos.get("symbol")
-                qty = int(float(pos.get("qty", 0)))
-                if sym:
-                    current_positions[sym] = qty
+    
+    # Display current positions with details
+    if current_positions_full:
+        print("  Current Positions:")
+        print(f"    {'Symbol':6} {'Qty':>6} {'Avg Entry':>10} {'Current':>10} {'P&L $':>10} {'P&L %':>8}")
+        print(f"    {'-'*6} {'-'*6} {'-'*10} {'-'*10} {'-'*10} {'-'*8}")
+        for sym, pos_data in sorted(current_positions_full.items()):
+            qty = int(float(pos_data.get('qty', 0)))
+            avg_entry = float(pos_data.get('avg_entry_price', 0))
+            current = float(pos_data.get('current_price', 0))
+            unreal_pl = float(pos_data.get('unrealized_pl', 0))
+            unreal_plpc = float(pos_data.get('unrealized_plpc', 0))
+            print(f"    {sym:6} {qty:>6} ${avg_entry:>9.2f} ${current:>9.2f} ${unreal_pl:>9.2f} {unreal_plpc*100:>7.2f}%")
+        print()
+    else:
         print(f"  Current positions: {current_positions if current_positions else '(none)'}")
-    except Exception as exc:
-        print(f"  WARN: Could not fetch positions: {exc}")
 
     risk_validator = RiskValidator(
         min_signal_strength=args.min_signal_strength,
