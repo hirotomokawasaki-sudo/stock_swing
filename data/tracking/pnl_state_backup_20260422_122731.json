@@ -1,6 +1,6 @@
 {
   "created_at": "2026-04-03T10:39:59.492341+00:00",
-  "last_updated": "2026-04-22T03:29:26.726178+00:00",
+  "last_updated": "2026-04-22T00:00:59.577776+00:00",
   "trades": [
     {
       "trade_id": "CRM-d8aad4ae",
@@ -8,25 +8,14 @@
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
       "qty": 10,
-      "entry_price": 185.416,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-06T13:31:47.028161+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "4acca322-89de-44c5-87ee-80745903c748",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666736+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 185.416,
-      "current_price": 189.56,
-      "market_value": 1895.6,
-      "unrealized_pl": 41.44,
-      "unrealized_plpc": 0.02235
+      "broker_order_id": "4acca322-89de-44c5-87ee-80745903c748"
     },
     {
       "trade_id": "MRVL-6897873e",
@@ -42,17 +31,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "a9e2e1c5-a447-44d5-844b-aa00f6c14dd7",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666881+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667055+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "PLTR-70dc5d89",
@@ -68,17 +47,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "4e075a04-8f59-4c7e-9521-54c5d35b642d",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666884+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667059+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "ADBE-4402d609",
@@ -94,17 +63,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "cfccf2e3-1a8d-44a1-8813-27f1c1eec03e",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666885+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667061+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "NOW-97f4c077",
@@ -120,17 +79,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "21bbc60f-1ebe-4478-a345-4b0dc24c2ff7",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666887+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667062+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "DDOG-75e235b7",
@@ -146,17 +95,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "eb0d3cb6-4a0e-4b2d-88ec-8dd58b9411bc",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666888+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667064+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "CRWD-12aee43c",
@@ -172,17 +111,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "9e26d75b-b3ce-4611-b7ad-3410a3ad3c1f",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666889+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667065+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "DELL-372a6374",
@@ -198,17 +127,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "31479a36-dc53-48e7-9a50-b6f3a719a0ff",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666890+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667066+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "INTU-9dc53b1e",
@@ -224,17 +143,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "7c5fab48-ae75-4832-95fe-acd3f9fad322",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666891+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667067+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "RBRK-c1bc295b",
@@ -250,17 +159,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "9cede9e2-e83f-4232-a69a-4f4303e1296e",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666892+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667069+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "CIEN-ab1b8f3d",
@@ -276,17 +175,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "f295f70c-5a68-4372-a63f-f45d39c1f758",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666893+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667070+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "MRVL-fdb9d415",
@@ -302,17 +191,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "2c057ef8-349a-4c23-8532-2521a907482f",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666894+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667071+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "PLTR-ec01cf3b",
@@ -328,17 +207,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "20d52a14-799b-4c54-938a-a8868305d387",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666895+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667072+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "ADBE-1bda5aad",
@@ -354,17 +223,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "645670ec-1de8-4a48-b789-0848ea1bb1ab",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666897+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667073+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "NOW-bb699c55",
@@ -380,17 +239,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "da14b429-acdf-414f-bbb9-f038485746b1",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666898+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667074+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "DDOG-f6084d17",
@@ -406,17 +255,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "f0129347-d74b-48d0-ad72-7a744de5f5f9",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666899+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667075+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "CRWD-60c182de",
@@ -432,17 +271,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "5e103cfb-3845-4d03-bf1c-eb6c35757059",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666899+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667077+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "DELL-e37a5e3a",
@@ -458,17 +287,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "dd9f79c7-bfb5-411d-b914-cdc3c3a52488",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666901+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667078+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "INTU-bf86c45d",
@@ -484,17 +303,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "ad2eb0da-3724-494e-bb0e-88f989169a78",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666902+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667079+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "RBRK-9bb743e4",
@@ -510,17 +319,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "e738275b-b534-4951-bfbe-7949dc47538a",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666903+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667080+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "CIEN-1b341681",
@@ -536,17 +335,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "b18deae5-8a61-4094-b027-21321c652994",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666904+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667081+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "RBRK-541a1119",
@@ -562,17 +351,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "7dd581d9-22d3-407a-9910-f413b978c80e",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666905+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667082+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "CIEN-a29055f1",
@@ -588,17 +367,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "85fb5df1-5279-4807-8c4d-0d03c280fbbe",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666906+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667083+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "RBRK-c90aba02",
@@ -614,17 +383,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "c167e834-3c96-4c24-a6cb-d7902c0b5106",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666907+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667084+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "CIEN-f8da2a1b",
@@ -640,17 +399,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "2e62478d-884a-4e1a-8964-14dd269ecce9",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666908+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667085+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "MRVL-6ada6e65",
@@ -666,17 +415,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "f09c92c6-0f47-4d13-a7d1-1bc7f8fc4c0e",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666909+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667086+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "PLTR-b046d3e0",
@@ -692,17 +431,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "8cc543a7-0748-4f71-99d8-6ae6e250bec8",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666910+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667088+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "ADBE-a543ef57",
@@ -718,17 +447,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "c8b24516-a2b9-4b98-a592-235545a7fc7a",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666911+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667089+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "NOW-438258e6",
@@ -744,17 +463,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "1e77a77c-2d54-42cb-8d3d-8b0698194143",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666912+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667090+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "DDOG-4caf1a57",
@@ -770,17 +479,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "601bfd5b-61e6-4ce3-a27d-36900b0129cc",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666914+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667091+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "CRWD-15db9044",
@@ -796,17 +495,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "f230b47f-79a6-4ba5-a51d-39689b23dd02",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666915+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667092+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "DELL-8e47ea4f",
@@ -822,17 +511,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "caadbfe2-4b5a-4ec6-bddc-5d42dcc13768",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666916+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667093+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "INTU-586223a2",
@@ -848,17 +527,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "dbb4b7d1-0997-4ea7-897d-a2eefae93c00",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666917+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667094+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "RBRK-dd57995b",
@@ -874,17 +543,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "e20eed37-6173-445d-b604-b572833094e8",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666918+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667095+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "CIEN-83370ed5",
@@ -900,17 +559,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "9e906382-7337-480f-9bee-bbb65de234b9",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666919+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667096+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "MRVL-06957664",
@@ -926,17 +575,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "2c57acfe-b750-41ce-a424-90f93fd73078",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666920+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667097+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "PLTR-1ded0994",
@@ -952,17 +591,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "199597f8-da8c-407e-8843-778a1755b9c7",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666921+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667098+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "RBRK-2566c91b",
@@ -978,17 +607,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "3f171fbe-cab8-4753-a36c-a56d5f934a09",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666922+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667100+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "CIEN-1459115b",
@@ -1004,17 +623,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "9cb23e9e-2642-4f17-8ce9-6bedc1f7a0cd",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666923+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667101+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "RBRK-a559000f",
@@ -1030,17 +639,7 @@
       "return_pct": null,
       "status": "reconciled_removed",
       "broker_order_id": "a768d656-3299-4d67-8ed3-68f236f6cd97",
-      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08.",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666924+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        },
-        {
-          "timestamp": "2026-04-22T03:27:31.667102+00:00",
-          "note": "Removed during broker reconciliation - position not found in broker account"
-        }
-      ]
+      "reconcile_note": "Removed from open positions because broker current positions do not include this symbol/qty as of 2026-04-08."
     },
     {
       "trade_id": "MRVL-f53893f9",
@@ -1055,40 +654,22 @@
       "pnl": 8593.28,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "7f902f0d-384d-4f52-818c-b5af005b6fda",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666925+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "7f902f0d-384d-4f52-818c-b5af005b6fda"
     },
     {
       "trade_id": "PLTR-9cfaea5f",
       "symbol": "PLTR",
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
-      "qty": 74,
-      "entry_price": 150.228919,
+      "qty": 34,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-08T03:16:04.127907+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "1ba16860-2543-4dcd-a7bf-36a3193d0aab",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666926+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 150.228919,
-      "current_price": 147.6,
-      "market_value": 10922.4,
-      "unrealized_pl": -194.540006,
-      "unrealized_plpc": -0.0175
+      "broker_order_id": "1ba16860-2543-4dcd-a7bf-36a3193d0aab"
     },
     {
       "trade_id": "ADBE-74813bca",
@@ -1096,25 +677,14 @@
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
       "qty": 19,
-      "entry_price": 246.468947,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-08T03:16:07.976211+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "88212546-60cc-4d3c-82ed-9a9874feff3f",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666927+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 246.468947,
-      "current_price": 253.15,
-      "market_value": 4809.85,
-      "unrealized_pl": 126.940007,
-      "unrealized_plpc": 0.02711
+      "broker_order_id": "88212546-60cc-4d3c-82ed-9a9874feff3f"
     },
     {
       "trade_id": "NOW-218b5302",
@@ -1122,51 +692,29 @@
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
       "qty": 47,
-      "entry_price": 104.281702,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-08T03:16:11.829568+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "d035e9fc-81bc-40ed-893d-260ce98c1548",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666928+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 104.281702,
-      "current_price": 102.55,
-      "market_value": 4819.85,
-      "unrealized_pl": -81.389994,
-      "unrealized_plpc": -0.01661
+      "broker_order_id": "d035e9fc-81bc-40ed-893d-260ce98c1548"
     },
     {
       "trade_id": "DDOG-4dcb3182",
       "symbol": "DDOG",
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
-      "qty": 72,
-      "entry_price": 127.838889,
+      "qty": 32,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-08T03:16:15.718293+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "2944cc79-1559-445a-bb58-6f152feeee7d",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666929+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 127.838889,
-      "current_price": 125.69,
-      "market_value": 9049.68,
-      "unrealized_pl": -154.720008,
-      "unrealized_plpc": -0.01681
+      "broker_order_id": "2944cc79-1559-445a-bb58-6f152feeee7d"
     },
     {
       "trade_id": "CRWD-ec264999",
@@ -1181,14 +729,7 @@
       "pnl": 3187.45,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "d3fe10fb-bc46-49d8-9f9b-ba856d9f5f6f",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666930+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "d3fe10fb-bc46-49d8-9f9b-ba856d9f5f6f"
     },
     {
       "trade_id": "DELL-34d51464",
@@ -1203,14 +744,7 @@
       "pnl": 6984.09,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "4f3f1fda-b042-4db8-b5b2-bedb083b0d84",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666932+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "4f3f1fda-b042-4db8-b5b2-bedb083b0d84"
     },
     {
       "trade_id": "INTU-eceea88e",
@@ -1218,25 +752,14 @@
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
       "qty": 11,
-      "entry_price": 416.04,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-08T03:16:27.312539+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "cc4fcb4c-8190-4b1b-abe8-f074613a44d8",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666933+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 416.04,
-      "current_price": 409.75,
-      "market_value": 4507.25,
-      "unrealized_pl": -69.19,
-      "unrealized_plpc": -0.01512
+      "broker_order_id": "cc4fcb4c-8190-4b1b-abe8-f074613a44d8"
     },
     {
       "trade_id": "RBRK-0d5da236",
@@ -1251,14 +774,7 @@
       "pnl": 3017.53,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "d96b2a5b-ca72-4f30-9962-703507095d15",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666934+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "d96b2a5b-ca72-4f30-9962-703507095d15"
     },
     {
       "trade_id": "CIEN-d4472337",
@@ -1273,66 +789,37 @@
       "pnl": 5071.3,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "99899f74-b605-481e-92b8-0359809f52f0",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666935+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "99899f74-b605-481e-92b8-0359809f52f0"
     },
     {
       "trade_id": "MU-4881219e",
       "symbol": "MU",
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
-      "qty": 41,
-      "entry_price": 446.287073,
+      "qty": 7,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-10T14:51:40.010934+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "c9e254d3-2108-4045-9bbf-661b00be887a",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666936+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 446.287073,
-      "current_price": 453.13,
-      "market_value": 18578.33,
-      "unrealized_pl": 280.560007,
-      "unrealized_plpc": 0.01533
+      "broker_order_id": "c9e254d3-2108-4045-9bbf-661b00be887a"
     },
     {
       "trade_id": "MU-ff16c2ec",
       "symbol": "MU",
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
-      "qty": 41,
-      "entry_price": 446.287073,
+      "qty": 10,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-14T15:52:45.386057+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "34af1407-f5ac-46a0-ba7e-b6ca4c111e38",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666937+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 446.287073,
-      "current_price": 453.13,
-      "market_value": 18578.33,
-      "unrealized_pl": 280.560007,
-      "unrealized_plpc": 0.01533
+      "broker_order_id": "34af1407-f5ac-46a0-ba7e-b6ca4c111e38"
     },
     {
       "trade_id": "SMCI-63dcc304",
@@ -1347,92 +834,52 @@
       "pnl": 2840.44,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "a7d66386-7c48-4c03-b83d-0fe7029fe2cd",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666938+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "a7d66386-7c48-4c03-b83d-0fe7029fe2cd"
     },
     {
       "trade_id": "MU-6acf788d",
       "symbol": "MU",
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
-      "qty": 41,
-      "entry_price": 446.287073,
+      "qty": 10,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-14T17:28:31.794689+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "5634e717-3690-4be4-898a-c09b4c33cd9a",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666939+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 446.287073,
-      "current_price": 453.13,
-      "market_value": 18578.33,
-      "unrealized_pl": 280.560007,
-      "unrealized_plpc": 0.01533
+      "broker_order_id": "5634e717-3690-4be4-898a-c09b4c33cd9a"
     },
     {
       "trade_id": "MU-241a8ba2",
       "symbol": "MU",
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
-      "qty": 41,
-      "entry_price": 446.287073,
+      "qty": 10,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-14T21:19:32.291131+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "9f9c2509-a6da-4648-84fe-5d854546885d",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666940+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 446.287073,
-      "current_price": 453.13,
-      "market_value": 18578.33,
-      "unrealized_pl": 280.560007,
-      "unrealized_plpc": 0.01533
+      "broker_order_id": "9f9c2509-a6da-4648-84fe-5d854546885d"
     },
     {
       "trade_id": "MU-622543d3",
       "symbol": "MU",
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
-      "qty": 41,
-      "entry_price": 446.287073,
+      "qty": 4,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-15T14:50:56.567618+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "f879de92-5eb8-4c1e-a890-2539f2502af6",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666941+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 446.287073,
-      "current_price": 453.13,
-      "market_value": 18578.33,
-      "unrealized_pl": 280.560007,
-      "unrealized_plpc": 0.01533
+      "broker_order_id": "f879de92-5eb8-4c1e-a890-2539f2502af6"
     },
     {
       "trade_id": "SMCI-d1b58981",
@@ -1447,14 +894,7 @@
       "pnl": 56.25,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "e3842016-a607-4ad0-abad-e21661e739d5",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666942+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "e3842016-a607-4ad0-abad-e21661e739d5"
     },
     {
       "trade_id": "MRVL-1af16c6f",
@@ -1469,14 +909,7 @@
       "pnl": 296.32,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "a7394980-7081-4170-be10-7bb61891fa69",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666943+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "a7394980-7081-4170-be10-7bb61891fa69"
     },
     {
       "trade_id": "SMCI-f9834d73",
@@ -1491,14 +924,7 @@
       "pnl": 421.85,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "b7e343a9-9ae7-4699-80f4-4c2d9d19d5ef",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666944+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "b7e343a9-9ae7-4699-80f4-4c2d9d19d5ef"
     },
     {
       "trade_id": "MRVL-de6f4b29",
@@ -1513,14 +939,7 @@
       "pnl": 1333.44,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "5e2d99ff-3f23-4e2c-b14e-8e12b74dc271",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666945+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "5e2d99ff-3f23-4e2c-b14e-8e12b74dc271"
     },
     {
       "trade_id": "SMCI-412fecfb",
@@ -1535,14 +954,7 @@
       "pnl": 1799.88,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "ffa7da5d-6e8e-4e93-8778-8d1d1d738f7d",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666946+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "ffa7da5d-6e8e-4e93-8778-8d1d1d738f7d"
     },
     {
       "trade_id": "SMCI-f419d03f",
@@ -1557,14 +969,7 @@
       "pnl": 2277.97,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "f5f6e017-2bde-45cd-966b-4f8fca4258c5",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666948+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "f5f6e017-2bde-45cd-966b-4f8fca4258c5"
     },
     {
       "trade_id": "MRVL-d78afb72",
@@ -1579,14 +984,7 @@
       "pnl": 5926.4,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "99ec1cec-529d-4b37-9ac2-bd88712d131a",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666949+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "99ec1cec-529d-4b37-9ac2-bd88712d131a"
     },
     {
       "trade_id": "MRVL-379abd56",
@@ -1601,40 +999,22 @@
       "pnl": 8445.12,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "9496304b-7d7c-4c4b-902c-d8bf9ab14ddd",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666950+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "9496304b-7d7c-4c4b-902c-d8bf9ab14ddd"
     },
     {
       "trade_id": "PLTR-adecb69c",
       "symbol": "PLTR",
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
-      "qty": 74,
-      "entry_price": 150.228919,
+      "qty": 40,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-17T15:18:36.823593+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "2960bced-d5cb-4b24-b30f-4ca58c804181",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666951+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 150.228919,
-      "current_price": 147.6,
-      "market_value": 10922.4,
-      "unrealized_pl": -194.540006,
-      "unrealized_plpc": -0.0175
+      "broker_order_id": "2960bced-d5cb-4b24-b30f-4ca58c804181"
     },
     {
       "trade_id": "DELL-fc0b6307",
@@ -1649,14 +1029,7 @@
       "pnl": 3697.46,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "eb5310ac-c772-449e-8548-78273ef0eb15",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666952+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "eb5310ac-c772-449e-8548-78273ef0eb15"
     },
     {
       "trade_id": "MRVL-a7821e3d",
@@ -1671,14 +1044,7 @@
       "pnl": 2370.56,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "c94dccc3-d020-418c-887d-9db3ab181522",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666953+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "c94dccc3-d020-418c-887d-9db3ab181522"
     },
     {
       "trade_id": "MRVL-e2dd3207",
@@ -1693,14 +1059,7 @@
       "pnl": 8593.28,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "13d798b9-88c5-439e-beb1-6c9a7ef4971b",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666954+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "13d798b9-88c5-439e-beb1-6c9a7ef4971b"
     },
     {
       "trade_id": "SMCI-43024c71",
@@ -1715,14 +1074,7 @@
       "pnl": 2952.93,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "c147bb6e-0720-418d-9f9f-81d870419c0b",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666955+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "c147bb6e-0720-418d-9f9f-81d870419c0b"
     },
     {
       "trade_id": "MRVL-b216ef56",
@@ -1737,14 +1089,7 @@
       "pnl": 8296.96,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "c8e8e0cb-7a12-49dc-8105-7df4be6635e2",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666956+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "c8e8e0cb-7a12-49dc-8105-7df4be6635e2"
     },
     {
       "trade_id": "SMCI-40c0f33f",
@@ -1759,14 +1104,7 @@
       "pnl": 2952.93,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "bcb291e1-51e0-42bf-bafc-a82db189d4a1",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666957+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "bcb291e1-51e0-42bf-bafc-a82db189d4a1"
     },
     {
       "trade_id": "MRVL-dea4dbe9",
@@ -1781,14 +1119,7 @@
       "pnl": 8148.8,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "e25e543d-a7ff-4053-9436-a091012a47c2",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666958+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "e25e543d-a7ff-4053-9436-a091012a47c2"
     },
     {
       "trade_id": "MRVL-fd375a3b",
@@ -1803,14 +1134,7 @@
       "pnl": 8445.12,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "d1934735-e258-4358-82ec-e7fdc909e76c",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666959+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "d1934735-e258-4358-82ec-e7fdc909e76c"
     },
     {
       "trade_id": "MRVL-e437ad5a",
@@ -1825,14 +1149,7 @@
       "pnl": 8148.8,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "569ac701-d216-4d16-a3c7-ef154c994c75",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666960+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "569ac701-d216-4d16-a3c7-ef154c994c75"
     },
     {
       "trade_id": "MRVL-f56d3e9b",
@@ -1847,14 +1164,7 @@
       "pnl": 8148.8,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "b9cbfe3a-acb3-4fe2-8c91-1f78a166f790",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666961+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "b9cbfe3a-acb3-4fe2-8c91-1f78a166f790"
     },
     {
       "trade_id": "MRVL-21832de7",
@@ -1869,14 +1179,7 @@
       "pnl": 8148.8,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "e6d43d9b-754e-4c50-a4a4-c38634eadf79",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666963+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "e6d43d9b-754e-4c50-a4a4-c38634eadf79"
     },
     {
       "trade_id": "MRVL-5dc46bcf",
@@ -1891,14 +1194,7 @@
       "pnl": 8148.8,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "659006a3-73c1-4869-8519-22dca1b7fce1",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666964+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "659006a3-73c1-4869-8519-22dca1b7fce1"
     },
     {
       "trade_id": "MRVL-dc379ee5",
@@ -1913,14 +1209,7 @@
       "pnl": 8148.8,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "dfcc83c6-dab9-4074-aa25-69eb76ab92c8",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666965+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "dfcc83c6-dab9-4074-aa25-69eb76ab92c8"
     },
     {
       "trade_id": "CIEN-3a39dde8",
@@ -1935,14 +1224,7 @@
       "pnl": 5071.3,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "8c75d2e7-19bc-4432-b76d-e912fc05ad7e",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666966+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "8c75d2e7-19bc-4432-b76d-e912fc05ad7e"
     },
     {
       "trade_id": "DELL-eb21903a",
@@ -1957,14 +1239,7 @@
       "pnl": 10681.55,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "24772c98-ce8d-42de-a4f7-e2b291c0caf5",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666967+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "24772c98-ce8d-42de-a4f7-e2b291c0caf5"
     },
     {
       "trade_id": "RBRK-2a7eb5c6",
@@ -1979,40 +1254,22 @@
       "pnl": 3017.53,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "c9adabb8-f187-45f2-ae62-344e3c8535e4",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666968+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "c9adabb8-f187-45f2-ae62-344e3c8535e4"
     },
     {
       "trade_id": "DDOG-3d5eca7c",
       "symbol": "DDOG",
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
-      "qty": 72,
-      "entry_price": 127.838889,
+      "qty": 40,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-21T15:19:21.408381+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "97d8f188-9d10-4625-a8df-7f757ee74c5f",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666969+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 127.838889,
-      "current_price": 125.69,
-      "market_value": 9049.68,
-      "unrealized_pl": -154.720008,
-      "unrealized_plpc": -0.01681
+      "broker_order_id": "97d8f188-9d10-4625-a8df-7f757ee74c5f"
     },
     {
       "trade_id": "PATH-b7e9fa8c",
@@ -2020,25 +1277,14 @@
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
       "qty": 367,
-      "entry_price": 11.03,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-21T15:19:28.360278+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "3e092f97-3d99-4717-b5f3-b1414021366c",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666970+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 11.03,
-      "current_price": 10.93,
-      "market_value": 4011.31,
-      "unrealized_pl": -36.7,
-      "unrealized_plpc": -0.00907
+      "broker_order_id": "3e092f97-3d99-4717-b5f3-b1414021366c"
     },
     {
       "trade_id": "PANW-af4cfd6b",
@@ -2053,14 +1299,7 @@
       "pnl": 873.75,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "4397656f-09d8-4043-9e4d-d88d713cdc44",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666971+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "4397656f-09d8-4043-9e4d-d88d713cdc44"
     },
     {
       "trade_id": "NBIS-3e3b8ed0",
@@ -2075,14 +1314,7 @@
       "pnl": 160.53,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "3b228c82-93da-4505-be8a-7aa4e583754f",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666972+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "3b228c82-93da-4505-be8a-7aa4e583754f"
     },
     {
       "trade_id": "CRWD-af41606d",
@@ -2097,14 +1329,7 @@
       "pnl": 3187.45,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "6d148903-195b-409a-b25f-f4c7ee46fcdb",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666973+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "6d148903-195b-409a-b25f-f4c7ee46fcdb"
     },
     {
       "trade_id": "MRVL-01d43a8d",
@@ -2119,14 +1344,7 @@
       "pnl": 5335.39,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "da9d1ee8-026f-418c-871c-bd0e6fff26de",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666975+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "da9d1ee8-026f-418c-871c-bd0e6fff26de"
     },
     {
       "trade_id": "PANW-28977125",
@@ -2141,14 +1359,7 @@
       "pnl": 8600.48,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "a78a72ee-de5d-4e6a-b2d9-e0c729529cd3",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666976+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "a78a72ee-de5d-4e6a-b2d9-e0c729529cd3"
     },
     {
       "trade_id": "MRVL-ebcd298f",
@@ -2163,14 +1374,7 @@
       "pnl": 19817.18,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "de2de74b-4820-4dc1-b1f1-edf9b4300f59",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666977+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "de2de74b-4820-4dc1-b1f1-edf9b4300f59"
     },
     {
       "trade_id": "NBIS-5856e69b",
@@ -2185,14 +1389,7 @@
       "pnl": 160.53,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "fa5ac21b-2f4c-4d59-8d50-a3224609e333",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666978+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "fa5ac21b-2f4c-4d59-8d50-a3224609e333"
     },
     {
       "trade_id": "PANW-d6fa3e00",
@@ -2207,14 +1404,7 @@
       "pnl": 1930.72,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "dc1cd743-5aba-4bef-aa96-23af82619b33",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666979+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "dc1cd743-5aba-4bef-aa96-23af82619b33"
     },
     {
       "trade_id": "MRVL-215817e6",
@@ -2229,14 +1419,7 @@
       "pnl": 8384.19,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "a9b9c2f4-4df6-4500-81cd-f2e087e702c9",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666980+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "a9b9c2f4-4df6-4500-81cd-f2e087e702c9"
     },
     {
       "trade_id": "ARM-943b8a67",
@@ -2244,25 +1427,14 @@
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
       "qty": 30,
-      "entry_price": 175.41,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-21T18:04:01.183140+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "7abc67c4-7318-4299-92a3-1eb38ff5ff98",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666981+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 175.41,
-      "current_price": 179.3,
-      "market_value": 5379.0,
-      "unrealized_pl": 116.7,
-      "unrealized_plpc": 0.02218
+      "broker_order_id": "7abc67c4-7318-4299-92a3-1eb38ff5ff98"
     },
     {
       "trade_id": "CRWD-10112d66",
@@ -2277,14 +1449,7 @@
       "pnl": 4098.15,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "c8df31f1-ec1a-4116-97bc-8dedab93eda0",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666983+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "c8df31f1-ec1a-4116-97bc-8dedab93eda0"
     },
     {
       "trade_id": "HPE-1a053b5f",
@@ -2292,25 +1457,14 @@
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
       "qty": 5,
-      "entry_price": 28.8,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-21T18:36:44.839981+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "b19a398b-745a-4593-8814-8c71ecaddfb3",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666984+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 28.8,
-      "current_price": 29.1,
-      "market_value": 145.5,
-      "unrealized_pl": 1.5,
-      "unrealized_plpc": 0.01042
+      "broker_order_id": "b19a398b-745a-4593-8814-8c71ecaddfb3"
     },
     {
       "trade_id": "PANW-bdd0786e",
@@ -2325,14 +1479,7 @@
       "pnl": 7514.25,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "336f3e87-a597-427b-aeeb-d076eac34b5c",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666985+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "336f3e87-a597-427b-aeeb-d076eac34b5c"
     },
     {
       "trade_id": "ARM-0159cdf3",
@@ -2340,25 +1487,14 @@
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
       "qty": 30,
-      "entry_price": 175.41,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-21T21:17:26.928504+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "5a9370b5-2542-4e1e-b0d2-bd91653f44c2",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666986+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 175.41,
-      "current_price": 179.3,
-      "market_value": 5379.0,
-      "unrealized_pl": 116.7,
-      "unrealized_plpc": 0.02218
+      "broker_order_id": "5a9370b5-2542-4e1e-b0d2-bd91653f44c2"
     },
     {
       "trade_id": "PANW-279864af",
@@ -2373,14 +1509,7 @@
       "pnl": 7863.75,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "6dfe9a17-043a-4463-acbe-13aecebc2c37",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666987+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "6dfe9a17-043a-4463-acbe-13aecebc2c37"
     },
     {
       "trade_id": "CRWD-5984560e",
@@ -2395,14 +1524,7 @@
       "pnl": 5919.55,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "2f4cae81-19d0-4cf7-aecb-29f7ad8fc43c",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666988+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "2f4cae81-19d0-4cf7-aecb-29f7ad8fc43c"
     },
     {
       "trade_id": "DELL-c39caa5e",
@@ -2417,40 +1539,22 @@
       "pnl": 6778.68,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "2ec1124e-811a-4dc6-8b0b-6f849d43c772",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666989+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "2ec1124e-811a-4dc6-8b0b-6f849d43c772"
     },
     {
       "trade_id": "INTU-f115345b",
       "symbol": "INTU",
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
-      "qty": 11,
-      "entry_price": 416.04,
+      "qty": 12,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-21T21:17:43.850631+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "f7cd144b-c5ac-402d-8473-4b6e59fd5eb4",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666990+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 416.04,
-      "current_price": 409.75,
-      "market_value": 4507.25,
-      "unrealized_pl": -69.19,
-      "unrealized_plpc": -0.01512
+      "broker_order_id": "f7cd144b-c5ac-402d-8473-4b6e59fd5eb4"
     },
     {
       "trade_id": "NBIS-aa4719b7",
@@ -2465,14 +1569,7 @@
       "pnl": 4494.84,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "6754b8a2-0fb9-4100-ac90-fbe0e4373b48",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666991+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "6754b8a2-0fb9-4100-ac90-fbe0e4373b48"
     },
     {
       "trade_id": "CIEN-f9e73033",
@@ -2487,40 +1584,22 @@
       "pnl": 4564.17,
       "return_pct": 0.0,
       "status": "closed",
-      "broker_order_id": "8b0ab465-df33-49a0-8fab-ac562158b6e4",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666992+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "pnl_reliability": "low"
+      "broker_order_id": "8b0ab465-df33-49a0-8fab-ac562158b6e4"
     },
     {
       "trade_id": "CRM-6a6489db",
       "symbol": "CRM",
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
-      "qty": 10,
-      "entry_price": 185.416,
+      "qty": 33,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-21T21:17:55.586466+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "a8a548f8-227a-4412-ab5c-19ae5fd6bef5",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666993+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 185.416,
-      "current_price": 189.56,
-      "market_value": 1895.6,
-      "unrealized_pl": 41.44,
-      "unrealized_plpc": 0.02235
+      "broker_order_id": "a8a548f8-227a-4412-ab5c-19ae5fd6bef5"
     },
     {
       "trade_id": "IBM-e05e02d8",
@@ -2535,39 +1614,22 @@
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "9a4e1e70-1a93-412e-8b01-03e985475a3a",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666994+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ]
+      "broker_order_id": "9a4e1e70-1a93-412e-8b01-03e985475a3a"
     },
     {
       "trade_id": "HPE-5c0ff638",
       "symbol": "HPE",
       "strategy_id": "breakout_momentum_v1",
       "side": "buy",
-      "qty": 5,
-      "entry_price": 28.8,
+      "qty": 326,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-21T21:33:06.166855+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "bafb2278-6646-4176-ac75-eabee7de0691",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666995+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 28.8,
-      "current_price": 29.1,
-      "market_value": 145.5,
-      "unrealized_pl": 1.5,
-      "unrealized_plpc": 0.01042
+      "broker_order_id": "bafb2278-6646-4176-ac75-eabee7de0691"
     },
     {
       "trade_id": "FTNT-26f07ab8",
@@ -2582,13 +1644,7 @@
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "6314946b-b231-4021-94b9-d9275bc4e5ae",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666997+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ]
+      "broker_order_id": "6314946b-b231-4021-94b9-d9275bc4e5ae"
     },
     {
       "trade_id": "SNOW-10d35f54",
@@ -2603,13 +1659,7 @@
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "f48e871d-e314-44e3-b31b-96e360825ce9",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666998+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ]
+      "broker_order_id": "f48e871d-e314-44e3-b31b-96e360825ce9"
     },
     {
       "trade_id": "ORCL-46d2dced",
@@ -2624,13 +1674,7 @@
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "2650113f-ae71-4c3c-8d06-22ef38cc6093",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.666999+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ]
+      "broker_order_id": "2650113f-ae71-4c3c-8d06-22ef38cc6093"
     },
     {
       "trade_id": "MRVL-52f5d666",
@@ -2638,25 +1682,14 @@
       "strategy_id": "simple_exit_v1",
       "side": "sell",
       "qty": 55,
-      "entry_price": 151.59,
+      "entry_price": 0.0,
       "exit_price": null,
       "entry_time": "2026-04-21T21:33:34.778501+00:00",
       "exit_time": null,
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "broker_order_id": "78a218bd-985a-435f-99ac-ecf6c4298f43",
-      "notes": [
-        {
-          "timestamp": "2026-04-22T03:27:31.667000+00:00",
-          "note": "Entry price missing - P&L may be inaccurate"
-        }
-      ],
-      "avg_entry_price": 151.59,
-      "current_price": 154.21,
-      "market_value": 8481.55,
-      "unrealized_pl": 144.1,
-      "unrealized_plpc": 0.01728
+      "broker_order_id": "78a218bd-985a-435f-99ac-ecf6c4298f43"
     }
   ],
   "daily_snapshots": [
@@ -3698,22 +2731,5 @@
   "winning_trades": 46,
   "losing_trades": 0,
   "peak_equity": 103778.85,
-  "max_drawdown_pct": 0.0434,
-  "fix_history": [
-    {
-      "timestamp": "2026-04-22T03:27:31.667237+00:00",
-      "fixes_applied": [
-        "remove_duplicates",
-        "fix_missing_entry_prices",
-        "recalculate_pnl",
-        "fix_reconciled_removed"
-      ],
-      "note": "Automated P&L tracker fix"
-    },
-    {
-      "timestamp": "2026-04-22T03:29:26.726210+00:00",
-      "method": "fetch_from_broker",
-      "note": "Fetched actual prices from Alpaca and recalculated P&L"
-    }
-  ]
+  "max_drawdown_pct": 0.0434
 }
