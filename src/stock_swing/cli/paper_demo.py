@@ -286,9 +286,39 @@ def main() -> int:  # noqa: C901
     prioritized_entry = prioritize_buy_signals(entry_signals, current_positions_full)
     all_signals = prioritized_entry + exit_signals
 
-    print(f"  BreakoutMomentum: {len(breakout_signals)} signal(s)")
-    print(f"  EventSwing:       {len(event_signals)} signal(s)")
-    print(f"  SimpleExit:       {len(exit_signals)} signal(s)")
+    print(f"  Entry Signals:")
+    print(f"    BreakoutMomentum: {len(breakout_signals)} signal(s)")
+    print(f"    EventSwing:       {len(event_signals)} signal(s)")
+    print()
+    print(f"  Exit Signals:")
+    print(f"    SimpleExit:       {len(exit_signals)} signal(s)")
+    
+    # Exit signal analysis
+    if current_positions_full:
+        print(f"    (Checked {len(current_positions_full)} positions)")
+        
+        # Find positions closest to exit criteria
+        STOP_LOSS_PCT = -7.0
+        TAKE_PROFIT_PCT = 10.0
+        MAX_HOLD_DAYS = 5
+        
+        positions_with_metrics = []
+        for sym, pos_data in current_positions_full.items():
+            unreal_plpc = float(pos_data.get('unrealized_plpc', 0)) * 100
+            positions_with_metrics.append({
+                'symbol': sym,
+                'pnl_pct': unreal_plpc,
+                'dist_to_stop': abs(unreal_plpc - STOP_LOSS_PCT),
+                'dist_to_profit': abs(unreal_plpc - TAKE_PROFIT_PCT),
+            })
+        
+        if positions_with_metrics:
+            closest_stop = min(positions_with_metrics, key=lambda x: x['dist_to_stop'])
+            closest_profit = min(positions_with_metrics, key=lambda x: x['dist_to_profit'])
+            print(f"    Closest to stop:  {closest_stop['symbol']} ({closest_stop['pnl_pct']:+.2f}%, need {STOP_LOSS_PCT:.2f}%)")
+            print(f"    Closest to profit: {closest_profit['symbol']} ({closest_profit['pnl_pct']:+.2f}%, need {TAKE_PROFIT_PCT:+.2f}%)")
+    print()
+    
     print(f"  (Buy signals prioritized for sector diversification)")
     for sig in all_signals:
         print(f"  -> [{sig.strategy_id}] {sig.symbol}: {sig.action.upper()} strength={sig.signal_strength:.2f}")
@@ -302,11 +332,51 @@ def main() -> int:  # noqa: C901
     # 8. Decisions
     _section("8. Decision Engine")
     
-    # Display current positions with details
+    # Calculate portfolio metrics
     if current_positions_full:
+        total_position_value = sum(float(p.get('market_value', 0)) for p in current_positions_full.values())
+        total_unrealized_pl = sum(float(p.get('unrealized_pl', 0)) for p in current_positions_full.values())
+        exposure_pct = (total_position_value / equity * 100) if equity > 0 else 0
+        
+        # Get max exposure for current regime
+        from stock_swing.risk.position_sizing import REGIME_LIMITS
+        regime_for_limit = (decision.evidence.get("market_regime") if isinstance(decision.evidence, dict) else "neutral") if 'decision' in locals() else "neutral"
+        max_exposure_pct = REGIME_LIMITS.get(regime_for_limit, 0.70) * 100
+        max_exposure_value = equity * REGIME_LIMITS.get(regime_for_limit, 0.70)
+        available_capacity = max_exposure_value - total_position_value
+        
+        # Calculate sector breakdown
+        from stock_swing.risk.position_sizing import SYMBOL_SECTORS
+        sector_values = {}
+        for sym, pos_data in current_positions_full.items():
+            sector = SYMBOL_SECTORS.get(sym.upper(), 'Other')
+            value = float(pos_data.get('market_value', 0))
+            sector_values[sector] = sector_values.get(sector, 0) + value
+        
+        # Portfolio summary
+        print("  Portfolio Summary:")
+        print(f"    Total Positions:      {len(current_positions_full)}")
+        print(f"    Total Value:          ${total_position_value:>12,.2f}")
+        print(f"    Total Unrealized P&L: ${total_unrealized_pl:>12,.2f}")
+        print(f"    Exposure:             {exposure_pct:>12.1f}% (max: {max_exposure_pct:.0f}%)")
+        print(f"    Available Capacity:   ${available_capacity:>12,.2f} ({available_capacity/equity*100:.1f}%)")
+        print()
+        
+        # Sector allocation
+        if sector_values:
+            print("  Sector Allocation:")
+            for sector, value in sorted(sector_values.items(), key=lambda x: x[1], reverse=True):
+                sector_pct = (value / equity * 100)
+                warning = " ⚠️" if sector_pct > 40 else ""
+                print(f"    {sector:15} ${value:>10,.2f} ({sector_pct:>5.1f}%){warning}")
+            print()
+        
+        # Display current positions with details
         print("  Current Positions:")
         print(f"    {'Symbol':6} {'Qty':>6} {'Avg Entry':>10} {'Current':>10} {'P&L $':>10} {'P&L %':>8}")
         print(f"    {'-'*6} {'-'*6} {'-'*10} {'-'*10} {'-'*10} {'-'*8}")
+        winners = 0
+        losers = 0
         for sym, pos_data in sorted(current_positions_full.items()):
             qty = int(float(pos_data.get('qty', 0)))
             avg_entry = float(pos_data.get('avg_entry_price', 0))
@@ -314,6 +384,12 @@ def main() -> int:  # noqa: C901
             unreal_pl = float(pos_data.get('unrealized_pl', 0))
             unreal_plpc = float(pos_data.get('unrealized_plpc', 0))
             print(f"    {sym:6} {qty:>6} ${avg_entry:>9.2f} ${current:>9.2f} ${unreal_pl:>9.2f} {unreal_plpc*100:>7.2f}%")
+            if unreal_pl > 0:
+                winners += 1
+            elif unreal_pl < 0:
+                losers += 1
+        print(f"    {'─'*6} {'─'*6} {'─'*10} {'─'*10} {'─'*10} {'─'*8}")
+        print(f"    Total: {len(current_positions_full)} positions ({winners}W / {losers}L)")
         print()
     else:
         print(f"  Current positions: {current_positions if current_positions else '(none)'}")
