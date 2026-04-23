@@ -174,7 +174,7 @@ class DashboardService:
                 daily_snapshots[-1] = latest
 
             # Get closed trades from tracker state
-            closed_trades = [dict(t) for t in self._tracker.state.closed_trades]
+            closed_trades = [dict(t) for t in self._tracker.state.trades if t.get("status") == "closed"]
             
             return {
                 "available": True,
