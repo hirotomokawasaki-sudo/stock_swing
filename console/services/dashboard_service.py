@@ -1740,3 +1740,132 @@ class DashboardService:
             return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone()
         except Exception:
             return None
+
+    # ── Phase 1 Enhancement APIs ──────────────────────────────────────────────
+
+    def get_strategy_analysis(self) -> Dict[str, Any]:
+        """Get strategy performance analysis.
+        
+        Returns detailed metrics by strategy including win rates, Sharpe ratios,
+        profit factors, and symbol-level breakdowns.
+        """
+        if not self._tracker:
+            return {"available": False, "error": "PnLTracker not available"}
+        
+        try:
+            # Import analyzer
+            from stock_swing.analysis.strategy_analyzer import StrategyAnalyzer
+            
+            # Get trades
+            self._tracker.state = self._tracker._load_state()
+            trades = self._tracker.state.trades
+            
+            # Analyze
+            analyzer = StrategyAnalyzer()
+            by_strategy = analyzer.analyze_by_strategy(trades)
+            top_performers = analyzer.get_top_performers(by='sharpe', n=5)
+            comparison_data = analyzer.get_comparison_data()
+            
+            # Get symbol breakdowns for each strategy
+            symbol_breakdowns = {}
+            for strategy_id in by_strategy.keys():
+                symbol_breakdowns[strategy_id] = analyzer.get_symbol_breakdown(
+                    strategy_id, trades
+                )
+            
+            return {
+                "available": True,
+                "time": now_iso(),
+                "by_strategy": by_strategy,
+                "top_performers": top_performers,
+                "comparison_data": comparison_data,
+                "symbol_breakdowns": symbol_breakdowns,
+            }
+        except Exception as e:
+            return {"available": False, "error": str(e)}
+    
+    def get_live_metrics(self) -> Dict[str, Any]:
+        """Get real-time risk and portfolio metrics.
+        
+        Returns Kelly Criterion, risk score, drawdown, portfolio heat,
+        and other live risk metrics.
+        """
+        try:
+            # Import calculator
+            from stock_swing.analysis.risk_calculator import RiskCalculator
+            
+            # Get current data
+            trading = self.get_trading()
+            positions = self.get_positions(trading=trading)
+            
+            if not trading.get('available') or not positions.get('available'):
+                return {"available": False, "error": "Required data not available"}
+            
+            calc = RiskCalculator()
+            
+            # Extract data
+            summary = trading.get('summary', {})
+            pos_summary = positions.get('summary', {})
+            snapshots = trading.get('daily_snapshots', [])
+            trades = trading.get('closed_trades', [])
+            current_positions = positions.get('current', [])
+            
+            # Equity curve
+            equity_curve = [s.get('equity', 0) for s in snapshots if s.get('equity')]
+            
+            # Current metrics
+            current_equity = equity_curve[-1] if equity_curve else 100000.0
+            current_dd = calc.calculate_current_drawdown(equity_curve, percentage=True)
+            max_dd = calc.calculate_max_drawdown(equity_curve, percentage=True)
+            
+            # Kelly Criterion
+            win_rate = summary.get('win_rate', 0)
+            
+            if trades and win_rate > 0:
+                wins = [t.get('pnl', 0) for t in trades if t.get('pnl', 0) > 0]
+                losses = [abs(t.get('pnl', 0)) for t in trades if t.get('pnl', 0) < 0]
+                avg_win = sum(wins) / len(wins) if wins else 0
+                avg_loss = sum(losses) / len(losses) if losses else 0
+                kelly = calc.calculate_kelly_criterion(win_rate, avg_win, avg_loss)
+            else:
+                kelly = 0.0
+            
+            # Portfolio heat
+            portfolio_heat = calc.calculate_portfolio_heat(current_positions, current_equity)
+            
+            # Open P&L
+            open_pnl = pos_summary.get('unrealized_pnl', 0)
+            
+            # Risk score
+            risk_score = calc.calculate_risk_score(
+                current_positions,
+                current_equity,
+                current_dd,
+                portfolio_heat,
+                open_pnl
+            )
+            
+            # Days since last trade
+            days_since = calc.days_since_last_trade(trades)
+            
+            # Risk level and emoji
+            risk_level = calc.get_risk_level(risk_score)
+            risk_emoji = calc.get_risk_emoji(risk_score)
+            
+            return {
+                "available": True,
+                "time": now_iso(),
+                "current_drawdown_pct": current_dd,
+                "max_drawdown_pct": max_dd,
+                "kelly_suggested_size_pct": kelly * 100,  # Convert to percentage
+                "portfolio_heat_pct": portfolio_heat,
+                "risk_score": risk_score,
+                "risk_level": risk_level,
+                "risk_emoji": risk_emoji,
+                "days_since_last_trade": days_since,
+                "open_pnl": open_pnl,
+                "current_equity": current_equity,
+                "open_positions_count": len(current_positions),
+            }
+        except Exception as e:
+            return {"available": False, "error": str(e)}
