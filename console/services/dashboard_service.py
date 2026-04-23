@@ -1063,11 +1063,16 @@ class DashboardService:
         weights = sorted((p.get("portfolio_weight") or 0.0) for p in positions)
         largest_weight = weights[-1] if weights else 0.0
         top5 = sum(weights[-5:]) if weights else 0.0
+        # Count long/short positions
+        # Broker positions: qty > 0 = long, qty < 0 = short
+        long_count = len([p for p in positions if float(p.get("qty", 0)) > 0])
+        short_count = len([p for p in positions if float(p.get("qty", 0)) < 0])
+        
         return {
             "gross_exposure": gross_exposure,
             "net_exposure": gross_exposure,
-            "long_count": len([p for p in positions if str(p.get("side", "")).lower() == "buy"]),
-            "short_count": len([p for p in positions if str(p.get("side", "")).lower() == "sell"]),
+            "long_count": long_count,
+            "short_count": short_count,
             "largest_position_weight": largest_weight,
             "top5_concentration": top5,
             "unrealized_pnl": unrealized_pnl,
