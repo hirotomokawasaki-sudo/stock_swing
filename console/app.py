@@ -149,6 +149,21 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
         
+        # Phase 1 Enhancement APIs
+        if p == "/api/strategy_analysis":
+            try:
+                data = dashboard.get_strategy_analysis()
+                return self._json(data)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+        
+        if p == "/api/live_metrics":
+            try:
+                data = dashboard.get_live_metrics()
+                return self._json(data)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+
         # 404
         return self._json({"error": "not found"}, status=404)
     
@@ -182,17 +197,3 @@ def main():
 if __name__ == "__main__":
     main()
         
-        # Phase 1 Enhancement APIs
-        if p == "/api/strategy_analysis":
-            try:
-                data = dashboard.get_strategy_analysis()
-                return self._json(data)
-            except Exception as e:
-                return self._json({"error": str(e)}, status=500)
-        
-        if p == "/api/live_metrics":
-            try:
-                data = dashboard.get_live_metrics()
-                return self._json(data)
-            except Exception as e:
-                return self._json({"error": str(e)}, status=500)
