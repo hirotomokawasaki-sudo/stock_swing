@@ -173,11 +173,15 @@ class DashboardService:
                 latest["total_pnl"] = round(float(latest.get("realized_pnl") or 0.0) + unrealized, 2)
                 daily_snapshots[-1] = latest
 
+            # Get closed trades from tracker state
+            closed_trades = [dict(t) for t in self._tracker.state.closed_trades]
+            
             return {
                 "available": True,
                 "time": now_iso(),
                 "summary": summary,
                 "recent_trades": recent,
+                "closed_trades": closed_trades,
                 "daily_snapshots": daily_snapshots[-30:],
                 "open_positions": open_positions,
                 "current_prices": current_prices,
