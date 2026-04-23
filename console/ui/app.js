@@ -116,19 +116,26 @@ class Console {
         const ts = ov.trading_summary || {};
         const deltas = ov.deltas || {};
         const ps = this.data?.positions?.summary || {};
-        const latestEquity = this.latestEquity();
+        const account = ov.account || {};
+        const latestEquity = account.equity || this.latestEquity();
+        const cash = account.cash || 0;
+        const cashPct = latestEquity > 0 ? (cash / latestEquity) : 0;
+        const positionPct = latestEquity > 0 ? ((latestEquity - cash) / latestEquity) : 0;
 
         return `
         <div class="grid">
             <div class="card">
-                <h3>資産</h3>
-                <div class="metric"><span class="label">推定Equity</span><span class="value">${fmt.usd(latestEquity)}</span></div>
+                <h3>💰 資産総額</h3>
+                <div class="metric"><span class="label">Equity</span><span class="value big">${fmt.usd(latestEquity)}</span></div>
+                <div class="metric"><span class="label">現金</span><span class="value">${fmt.usd(cash)} <span class="small muted">(${fmt.pct(cashPct)})</span></span></div>
+                <div class="metric"><span class="label">ポジション</span><span class="value">${fmt.usd(ps.gross_exposure)} <span class="small muted">(${fmt.pct(positionPct)})</span></span></div>
                 ${this.renderDelta(deltas.equity_vs_prev_snapshot, 'usd')}
             </div>
             <div class="card">
-                <h3>含み損益</h3>
-                <div class="metric"><span class="label">Unrealized PnL</span><span class="value ${ps.unrealized_pnl >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(ps.unrealized_pnl)}</span></div>
-                <div class="small muted">概算値</div>
+                <h3>📊 損益</h3>
+                <div class="metric"><span class="label">含み損益</span><span class="value ${ps.unrealized_pnl >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(ps.unrealized_pnl)}</span></div>
+                <div class="metric"><span class="label">確定損益</span><span class="value ${ts.cumulative_realized_pnl >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(ts.cumulative_realized_pnl)}</span></div>
+                <div class="metric"><span class="label">合計損益</span><span class="value big ${(ps.unrealized_pnl + ts.cumulative_realized_pnl) >= 0 ? 'success' : 'danger'}">${fmt.usdSigned((ps.unrealized_pnl || 0) + (ts.cumulative_realized_pnl || 0))}</span></div>
             </div>
             <div class="card">
                 <h3>オープン取引</h3>
