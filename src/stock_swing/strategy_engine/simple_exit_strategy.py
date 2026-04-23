@@ -59,8 +59,14 @@ class SimpleExitStrategy(BaseStrategy):
         Returns:
             List of sell signals for positions that meet exit criteria.
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
         if not current_positions:
+            logger.warning("SimpleExit: No current_positions provided")
             return []
+        
+        logger.info(f"SimpleExit: Checking {len(current_positions)} positions")
         
         signals = []
         now = datetime.now(timezone.utc)
@@ -72,6 +78,8 @@ class SimpleExitStrategy(BaseStrategy):
                 latest_close = feature.values.get("latest_close")
                 if latest_close:
                     price_map[feature.symbol] = float(latest_close)
+        
+        logger.info(f"SimpleExit: price_map has {len(price_map)} symbols")
         
         # Check each position for exit criteria
         for symbol, position_data in current_positions.items():
@@ -87,6 +95,8 @@ class SimpleExitStrategy(BaseStrategy):
             
             # Calculate return
             return_pct = (current_price - avg_entry_price) / avg_entry_price
+            
+            logger.info(f"SimpleExit: {symbol} return={return_pct:.4f} ({return_pct*100:.2f}%), stop_loss={self.stop_loss_pct:.4f}, take_profit={self.take_profit_pct:.4f}")
             
             # Check holding period
             hold_days = None

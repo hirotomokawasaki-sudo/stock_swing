@@ -92,5 +92,82 @@
         "delta": 0.03
       }
     ]
+  },
+  {
+    "time": "2026-04-23T00:09:33.185570+09:00",
+    "rows": [
+      {
+        "source": "Yahoo",
+        "current_reliability": 0.75,
+        "count": 38,
+        "used_count": 38,
+        "avg_influence": 0.83,
+        "avg_sentiment_abs": 0.33,
+        "avg_impact": 0.25,
+        "observed_quality_score": 0.73,
+        "suggested_reliability": 0.74,
+        "delta": -0.01
+      },
+      {
+        "source": "Finnhub",
+        "current_reliability": 0.4,
+        "count": 1,
+        "used_count": 1,
+        "avg_influence": 0.78,
+        "avg_sentiment_abs": 0.37,
+        "avg_impact": 0.38,
+        "observed_quality_score": 0.74,
+        "suggested_reliability": 0.5,
+        "delta": 0.1
+      },
+      {
+        "source": "synthetic",
+        "current_reliability": 0.4,
+        "count": 4,
+        "used_count": 0,
+        "avg_influence": 0.3,
+        "avg_sentiment_abs": 0.37,
+        "avg_impact": 0.2,
+        "observed_quality_score": 0.19,
+        "suggested_reliability": 0.34,
+        "delta": -0.06
+      },
+      {
+        "source": "Benzinga",
+        "current_reliability": 0.6,
+        "count": 1,
+        "used_count": 0,
+        "avg_influence": 0.3,
+        "avg_sentiment_abs": 0.37,
+        "avg_impact": 0.2,
+        "observed_quality_score": 0.19,
+        "suggested_reliability": 0.48,
+        "delta": -0.12
+      },
+      {
+        "source": "SeekingAlpha",
+        "current_reliability": 0.75,
+        "count": 5,
+        "used_count": 5,
+        "avg_influence": 0.76,
+        "avg_sentiment_abs": 0.0,
+        "avg_impact": 0.2,
+        "observed_quality_score": 0.65,
+        "suggested_reliability": 0.72,
+        "delta": -0.03
+      },
+      {
+        "source": "ChartMill",
+        "current_reliability": 0.6,
+        "count": 1,
+        "used_count": 1,
+        "avg_influence": 0.76,
+        "avg_sentiment_abs": 0.37,
+        "avg_impact": 0.2,
+        "observed_quality_score": 0.7,
+        "suggested_reliability": 0.63,
+        "delta": 0.03
+      }
+    ]
   }
 ]

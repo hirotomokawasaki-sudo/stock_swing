@@ -80,24 +80,21 @@ def _infer_price_based_regime(momentum_results: list) -> str:
         return "cautious"
     return "neutral"
 
-# US Tech / IT universe (default for paper demo)
-# Large-cap core
-# AAPL  Apple          MSFT  Microsoft      GOOGL Google        META  Meta
-# AMZN  Amazon         NVDA  Nvidia         TSLA  Tesla
-# Mid/growth
-# AMD   AMD            AVGO  Broadcom       CRM   Salesforce
-# SNOW  Snowflake      PLTR  Palantir       HOOD  Robinhood
-# ETF (sector proxy)
-# QQQ   Nasdaq-100 ETF
+# Unified paper-demo / monitoring universe
+# Stocks: existing core AI stocks + approved additional normal stocks
+# ETFs: approved normal ETFs only (no leveraged / inverse / bear / short / yield-enhanced ETFs)
 DEFAULT_SYMBOLS = [
-    "AAPL", "MSFT", "NVDA", "GOOGL", "META",
-    "AMZN", "TSLA", "AMD",  "AVGO", "CRM",
+    "NVDA", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "AVGO", "AMD", "TSM", "ASML",
+    "INTC", "MU", "ARM", "AMAT", "LRCX", "KLAC", "QCOM", "MRVL", "PLTR", "ADBE",
+    "CRM", "ORCL", "NOW", "SNOW", "MDB", "DDOG", "PATH", "FICO", "SMCI", "PANW",
+    "CRWD", "FTNT", "ANET", "CSCO", "IBM", "HPE", "DELL", "HPQ", "SNPS", "CDNS",
+    "V", "MA", "INTU", "NBIS", "CRDO", "RBRK", "CIEN", "SHOC", "SOXQ", "SOXX",
+    "SMH", "FTXL", "PTF", "SMHX", "FRWD", "TTEQ", "GTOP", "CHPX", "CHPS", "PSCT",
+    "QTEC", "TDIV", "SKYY", "QTUM",
 ]
 
-# Full expanded watchlist (use with --universe full)
-TECH_UNIVERSE_FULL = DEFAULT_SYMBOLS + [
-    "SNOW", "PLTR", "HOOD", "QQQ",
-]
+# Legacy CLI compatibility: "full" maps to the unified universe as well.
+TECH_UNIVERSE_FULL = DEFAULT_SYMBOLS
 
 
 def main() -> int:  # noqa: C901
