@@ -461,10 +461,10 @@ code {
 .dual-bars {
     display: flex;
     gap: 4px;
-    height: 80px;
+    height: 100px;
     align-items: flex-end;
     background: #0f172a;
-    padding: 5px;
+    padding: 8px;
     border-radius: 4px;
     margin-bottom: 8px;
 }
@@ -472,6 +472,7 @@ code {
 .dual-bar-set {
     flex: 1;
     display: flex;
-    gap: 1px;
+    gap: 2px;
     align-items: flex-end;
+    min-width: 8px;
 }
