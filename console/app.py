@@ -87,6 +87,8 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             return self._file(ROOT / "ui" / "app.js", "application/javascript; charset=utf-8")
         if p == "/ui/style.css":
             return self._file(ROOT / "ui" / "style.css", "text/css; charset=utf-8")
+        if p == "/ui/test.html":
+            return self._file(ROOT / "ui" / "test.html", "text/html; charset=utf-8")
         
         # Health check
         if p == "/health":
