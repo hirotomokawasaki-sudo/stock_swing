@@ -102,6 +102,10 @@ class DashboardService:
         positions = positions or self.get_positions(trading=trading)
         trading_summary = trading.get("summary", {})
         positions_summary = positions.get("summary", {})
+        
+        # Get account info (equity, cash, buying power)
+        account_info = self._get_account_info()
+        
         return {
             "time": now_iso(),
             "health_score": system.get("score", 0),
@@ -110,6 +114,7 @@ class DashboardService:
             "cron_jobs_total": cron_jobs.get("total", 0),
             "data_counts": data_status.get("counts", {}),
             "runtime_mode": system.get("runtime_mode", "unknown"),
+            "account": account_info,
             "trading_summary": trading_summary,
             "positions_summary": positions_summary,
             "deltas": self.get_deltas(trading=trading, positions=positions),
@@ -987,6 +992,37 @@ class DashboardService:
             "lag_seconds": lag_seconds,
         })
         return enriched
+
+    def _get_account_info(self) -> Dict[str, Any]:
+        """Get account information from broker."""
+        if not self._broker:
+            return {
+                "available": False,
+                "equity": 0,
+                "cash": 0,
+                "buying_power": 0,
+            }
+        
+        try:
+            account = self._broker.fetch_account()
+            acc_data = account.payload if hasattr(account, 'payload') else account
+            
+            return {
+                "available": True,
+                "equity": float(acc_data.get('equity', 0)),
+                "cash": float(acc_data.get('cash', 0)),
+                "buying_power": float(acc_data.get('buying_power', 0)),
+                "portfolio_value": float(acc_data.get('portfolio_value', 0)),
+                "long_market_value": float(acc_data.get('long_market_value', 0)),
+            }
+        except Exception as e:
+            return {
+                "available": False,
+                "equity": 0,
+                "cash": 0,
+                "buying_power": 0,
+                "error": str(e),
+            }
 
     def _enrich_broker_position(self, broker_pos: dict) -> dict:
         """Enrich a broker position with calculated fields."""
