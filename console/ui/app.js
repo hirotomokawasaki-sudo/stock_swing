@@ -1038,6 +1038,37 @@ class Console {
         </table></div>`;
     }
 
+    renderMiniBarsWithDates(series = [], key = 'value', type = 'count') {
+        if (!series.length) return '<p class="muted">データなし</p>';
+        const vals = series.map(d => d[key]).filter(v => v != null);
+        if (!vals.length) return '<p class="muted">値なし</p>';
+        const max = Math.max(...vals);
+        const min = Math.min(...vals);
+        const range = max - min || 1;
+        
+        // Show dates for first, middle, last
+        const firstDate = series[0]?.ts ? new Date(series[0].ts).toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'}) : '';
+        const lastDate = series[series.length - 1]?.ts ? new Date(series[series.length - 1].ts).toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'}) : '';
+        
+        return `
+        <div class="mini-chart">
+            <div class="mini-bars">
+                ${series.map((d, i) => {
+                    const v = d[key];
+                    if (v == null) return '<div class="mini-bar" style="height:2px;background:#444"></div>';
+                    const pct = ((v - min) / range) * 100;
+                    const fmtVal = type === 'usd' ? fmt.usd(v) : type === 'pct' ? fmt.pct(v) : v;
+                    return `<div class="mini-bar" style="height:${Math.max(pct, 2)}%" title="${fmtVal}"></div>`;
+                }).join('')}
+            </div>
+            <div class="mini-labels" style="display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;margin-top:4px;">
+                <span>${firstDate}</span>
+                <span>${lastDate}</span>
+            </div>
+            <div class="muted small" style="margin-top:4px;">最小: ${type === 'usd' ? fmt.usd(min) : type === 'pct' ? fmt.pct(min) : min} / 最大: ${type === 'usd' ? fmt.usd(max) : type === 'pct' ? fmt.pct(max) : max}</div>
+        </div>`;
+    }
+
     renderMiniBars(series = [], key = 'value', type = 'count') {
         if (!series.length) return '<p class="muted">データなし</p>';
         const vals = series.map(p => Number(p[key] ?? 0));
@@ -1050,6 +1081,38 @@ class Console {
                 return `<div class="bar-wrap"><div class="bar" style="height:${h}px"></div></div>`;
             }).join('')}</div>
             <div class="small muted" style="margin-top:8px">最新: ${this.formatByType(vals[vals.length - 1], type)}</div>
+        </div>`;
+    }
+
+    renderSignalsOrdersWithDates(series = []) {
+        if (!series.length) return '<p class="muted">データなし</p>';
+        const maxSig = Math.max(...series.map(d => d.signals || 0));
+        const maxOrd = Math.max(...series.map(d => d.orders || 0));
+        const max = Math.max(maxSig, maxOrd, 1);
+        
+        const firstDate = series[0]?.ts ? new Date(series[0].ts).toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'}) : '';
+        const lastDate = series[series.length - 1]?.ts ? new Date(series[series.length - 1].ts).toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'}) : '';
+        
+        return `
+        <div class="mini-chart">
+            <div class="dual-bars">
+                ${series.map(d => {
+                    const sig = d.signals || 0;
+                    const ord = d.orders || 0;
+                    const sigPct = (sig / max) * 100;
+                    const ordPct = (ord / max) * 100;
+                    return `
+                    <div class="dual-bar-set">
+                        <div class="mini-bar" style="height:${Math.max(sigPct, 2)}%;background:#3b82f6" title="Signals: ${sig}"></div>
+                        <div class="mini-bar" style="height:${Math.max(ordPct, 2)}%;background:#10b981" title="Orders: ${ord}"></div>
+                    </div>`;
+                }).join('')}
+            </div>
+            <div class="mini-labels" style="display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;margin-top:4px;">
+                <span>${firstDate}</span>
+                <span>${lastDate}</span>
+            </div>
+            <div class="muted small" style="margin-top:4px;"><span style="color:#3b82f6">■</span> Signals / <span style="color:#10b981">■</span> Orders (最大: ${max})</div>
         </div>`;
     }
 

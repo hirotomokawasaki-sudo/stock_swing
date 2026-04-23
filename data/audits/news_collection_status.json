@@ -1,5 +1,5 @@
 {
-  "time": "2026-04-23T05:14:18.180457+00:00",
+  "time": "2026-04-23T07:03:28.973398+00:00",
   "symbols": [
     {
       "symbol": "MRVL",
@@ -39,7 +39,7 @@
     },
     {
       "symbol": "PLTR",
-      "news_count": 67,
+      "news_count": 68,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
@@ -48,7 +48,7 @@
     },
     {
       "symbol": "NOW",
-      "news_count": 92,
+      "news_count": 94,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
