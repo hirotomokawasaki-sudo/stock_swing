@@ -1176,18 +1176,6 @@ class Console {
             .replace(/>/g, '&gt;');
     }
 
-    startAutoRefresh() {
-        setInterval(async () => {
-            await this.loadData();
-            this.render();
-        }, 30000);
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => { window.app = new Console(); });
-
-    // ── Phase 1: Analysis Tab ──────────────────────────────────────────────
-
     async renderAnalysis() {
         const content = document.getElementById('content');
         content.innerHTML = '<div class="card"><h3>分析</h3><p class="muted">読み込み中...</p></div>';
@@ -1198,10 +1186,7 @@ document.addEventListener('DOMContentLoaded', () => { window.app = new Console()
                 fetch('/api/live_metrics').then(r => r.json())
             ]);
             
-            content.innerHTML = `
-                ${this.renderLiveMetricsCard(liveMetrics)}
-                ${this.renderStrategyAnalysis(strategyData)}
-            `;
+            content.innerHTML = this.renderLiveMetricsCard(liveMetrics) + this.renderStrategyAnalysis(strategyData);
         } catch (error) {
             content.innerHTML = `<div class="card"><p class="danger">エラー: ${error.message}</p></div>`;
         }
@@ -1264,7 +1249,6 @@ document.addEventListener('DOMContentLoaded', () => { window.app = new Console()
             return '<div class="card"><h3>戦略別パフォーマンス</h3><p class="muted">トレードデータなし</p></div>';
         }
         
-        // Sort by total trades
         strategies.sort((a, b) => b.total_trades - a.total_trades);
         
         return `
@@ -1303,8 +1287,6 @@ document.addEventListener('DOMContentLoaded', () => { window.app = new Console()
         </div>`;
     }
 
-    // ── Phase 1: Charts Tab ────────────────────────────────────────────────
-
     async renderCharts() {
         const content = document.getElementById('content');
         content.innerHTML = `
@@ -1330,7 +1312,6 @@ document.addEventListener('DOMContentLoaded', () => { window.app = new Console()
             </div>
         `;
         
-        // Wait for DOM
         setTimeout(() => {
             this.createEquityChart();
             this.createDrawdownChart();
@@ -1373,17 +1354,6 @@ document.addEventListener('DOMContentLoaded', () => { window.app = new Console()
                         callbacks: {
                             label: (ctx) => `Equity: ${fmt.usd(ctx.parsed.y)}`
                         }
-                    },
-                    zoom: {
-                        zoom: {
-                            wheel: { enabled: true },
-                            pinch: { enabled: true },
-                            mode: 'x'
-                        },
-                        pan: {
-                            enabled: true,
-                            mode: 'x'
-                        }
                     }
                 },
                 scales: {
@@ -1404,7 +1374,6 @@ document.addEventListener('DOMContentLoaded', () => { window.app = new Console()
         const ctx = document.getElementById('drawdown-chart');
         if (!ctx) return;
         
-        // Calculate drawdown
         const equity = snapshots.map(s => s.equity || 0);
         const peak = [];
         let maxSoFar = 0;
@@ -1422,7 +1391,7 @@ document.addEventListener('DOMContentLoaded', () => { window.app = new Console()
                 labels: dates,
                 datasets: [{
                     label: 'Drawdown',
-                    data: drawdown.map(d => -d),  // Negative for visual
+                    data: drawdown.map(d => -d),
                     borderColor: '#ef4444',
                     backgroundColor: 'rgba(239, 68, 68, 0.1)',
                     fill: true,
@@ -1459,7 +1428,6 @@ document.addEventListener('DOMContentLoaded', () => { window.app = new Console()
         const ctx = document.getElementById('pnl-distribution-chart');
         if (!ctx) return;
         
-        // Create histogram bins
         const pnls = trades.map(t => t.pnl || 0);
         const min = Math.min(...pnls);
         const max = Math.max(...pnls);
@@ -1508,25 +1476,22 @@ document.addEventListener('DOMContentLoaded', () => { window.app = new Console()
         const ctx = document.getElementById('monthly-returns-chart');
         if (!ctx) return;
         
-        // Group by month
         const monthlyData = {};
         snapshots.forEach(s => {
             const date = s.date || s.ts?.substring(0, 10) || '';
-            const month = date.substring(0, 7);  // YYYY-MM
+            const month = date.substring(0, 7);
             if (!monthlyData[month]) {
                 monthlyData[month] = [];
             }
             monthlyData[month].push(s.equity || 0);
         });
         
-        // Calculate monthly returns
         const months = Object.keys(monthlyData).sort();
         const returns = months.map((month, i) => {
             const equities = monthlyData[month];
-            const startEquity = equities[0];
             const endEquity = equities[equities.length - 1];
             if (i === 0) {
-                return 0;  // No previous month
+                return 0;
             }
             const prevMonth = months[i - 1];
             const prevEnd = monthlyData[prevMonth][monthlyData[prevMonth].length - 1];
@@ -1566,12 +1531,9 @@ document.addEventListener('DOMContentLoaded', () => { window.app = new Console()
         });
     }
 
-    // ── Auto-refresh for live metrics ──────────────────────────────────────
-
     startAutoRefresh() {
         setInterval(async () => {
             if (this.currentTab === 'analysis') {
-                // Refresh only live metrics card
                 try {
                     const liveMetrics = await fetch('/api/live_metrics').then(r => r.json());
                     const card = document.querySelector('.live-metrics-card');
@@ -1583,9 +1545,11 @@ document.addEventListener('DOMContentLoaded', () => { window.app = new Console()
                     console.error('Auto-refresh failed:', error);
                 }
             } else {
-                // Normal refresh
                 await this.loadData();
                 this.render();
             }
-        }, 30000);  // 30 seconds
+        }, 30000);
     }
+}
+
+document.addEventListener('DOMContentLoaded', () => { window.app = new Console(); });
