@@ -1046,7 +1046,10 @@ class Console {
         const min = Math.min(...vals);
         const range = max - min || 1;
         
-        // Show dates for first, middle, last
+        // For count type (positions), use 0 as baseline instead of min
+        const baseline = type === 'count' ? 0 : min;
+        const effectiveRange = type === 'count' ? max : range;
+        
         const firstDate = series[0]?.ts ? new Date(series[0].ts).toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'}) : '';
         const lastDate = series[series.length - 1]?.ts ? new Date(series[series.length - 1].ts).toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'}) : '';
         
@@ -1056,7 +1059,7 @@ class Console {
                 ${series.map((d, i) => {
                     const v = d[key];
                     if (v == null) return '<div class="mini-bar" style="height:2px;background:#444"></div>';
-                    const pct = ((v - min) / range) * 100;
+                    const pct = ((v - baseline) / effectiveRange) * 100;
                     const fmtVal = type === 'usd' ? fmt.usd(v) : type === 'pct' ? fmt.pct(v) : v;
                     return `<div class="mini-bar" style="height:${Math.max(pct, 2)}%" title="${fmtVal}"></div>`;
                 }).join('')}
@@ -1099,12 +1102,16 @@ class Console {
                 ${series.map(d => {
                     const sig = d.signals || 0;
                     const ord = d.orders || 0;
+                    // Use baseline of 0 for better visibility
                     const sigPct = (sig / max) * 100;
                     const ordPct = (ord / max) * 100;
+                    // Ensure minimum height of 5% for non-zero values
+                    const sigHeight = sig > 0 ? Math.max(sigPct, 5) : 2;
+                    const ordHeight = ord > 0 ? Math.max(ordPct, 5) : 2;
                     return `
                     <div class="dual-bar-set">
-                        <div class="mini-bar" style="height:${Math.max(sigPct, 2)}%;background:#3b82f6" title="Signals: ${sig}"></div>
-                        <div class="mini-bar" style="height:${Math.max(ordPct, 2)}%;background:#10b981" title="Orders: ${ord}"></div>
+                        <div class="mini-bar" style="height:${sigHeight}%;background:#3b82f6" title="Signals: ${sig}"></div>
+                        <div class="mini-bar" style="height:${ordHeight}%;background:#10b981" title="Orders: ${ord}"></div>
                     </div>`;
                 }).join('')}
             </div>
