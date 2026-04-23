@@ -2095,5 +2095,10 @@
   ],
   "cumulative_realized_pnl": 4292.74,
   "total_trades": 44,
-  "last_updated": "2026-04-23T16:59:44.408861"
+  "last_updated": "2026-04-23T16:59:44.408861",
+  "created_at": "2026-04-23T16:59:44.408861",
+  "winning_trades": 28,
+  "losing_trades": 16,
+  "peak_equity": 100000.0,
+  "max_drawdown_pct": 0.0
 }

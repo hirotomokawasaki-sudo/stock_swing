@@ -275,8 +275,16 @@ class PnLTracker:
                     data["trades"] = data["closed_trades"]
                     logger.info(f"Mapped {len(data['trades'])} closed_trades to trades field")
                 
+                # Remove closed_trades key (not part of PnLState dataclass)
+                data.pop("closed_trades", None)
+                
+                # Ensure required fields exist
+                if "created_at" not in data:
+                    data["created_at"] = data.get("last_updated", datetime.now(timezone.utc).isoformat())
+                
                 return PnLState(**data)
-            except Exception:
+            except Exception as e:
+                logger.error(f"Failed to load state: {e}")
                 pass
         now = datetime.now(timezone.utc).isoformat()
         return PnLState(created_at=now, last_updated=now)
