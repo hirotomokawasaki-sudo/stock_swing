@@ -6,6 +6,7 @@ the stock_swing trading system.
 """
 
 import json
+import os
 import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
@@ -15,6 +16,22 @@ from urllib.parse import urlparse, parse_qs
 ROOT = Path(__file__).resolve().parent
 PROJECT_ROOT = ROOT.parent
 sys.path.insert(0, str(PROJECT_ROOT))
+
+# Load environment variables from .env
+def load_env():
+    env_file = PROJECT_ROOT / '.env'
+    if env_file.exists():
+        with open(env_file) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ[key] = value
+        print(f"✅ Loaded environment from {env_file}")
+    else:
+        print(f"⚠️  No .env file found at {env_file}")
+
+load_env()
 
 from console.services.dashboard_service import DashboardService
 from console.utils.time_utils import now_iso
