@@ -165,20 +165,20 @@ class Console {
         return `
         <div class="grid charts-grid">
             <div class="card">
-                <h3>Equity</h3>
-                ${this.renderMiniBars(charts.equity || [], 'value', 'usd')}
+                <h3>Equity推移</h3>
+                ${this.renderMiniBarsWithDates(charts.equity || [], 'value', 'usd')}
             </div>
             <div class="card">
-                <h3>Drawdown</h3>
-                ${this.renderMiniBars(charts.drawdown_pct || [], 'value', 'pct')}
+                <h3>Drawdown推移</h3>
+                ${this.renderMiniBarsWithDates(charts.drawdown_pct || [], 'value', 'pct')}
             </div>
             <div class="card">
-                <h3>Open Positions</h3>
-                ${this.renderMiniBars(charts.open_positions || [], 'value', 'count')}
+                <h3>Open Positions推移</h3>
+                ${this.renderMiniBarsWithDates(charts.open_positions || [], 'value', 'count')}
             </div>
             <div class="card">
-                <h3>Signals / Orders</h3>
-                ${this.renderSignalsOrders(charts.signals_orders || [])}
+                <h3>Signals / Orders推移</h3>
+                ${this.renderSignalsOrdersWithDates(charts.signals_orders || [])}
             </div>
         </div>
         <div class="grid" style="margin-top:16px">
