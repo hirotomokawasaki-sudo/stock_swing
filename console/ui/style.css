@@ -460,11 +460,11 @@ code {
 /* Dual bars for signals/orders */
 .dual-bars {
     display: flex;
-    gap: 4px;
-    height: 100px;
+    gap: 3px;
+    height: 120px;
     align-items: flex-end;
     background: #0f172a;
-    padding: 8px;
+    padding: 10px;
     border-radius: 4px;
     margin-bottom: 8px;
 }
@@ -472,7 +472,13 @@ code {
 .dual-bar-set {
     flex: 1;
     display: flex;
-    gap: 2px;
+    flex-direction: row;
+    gap: 3px;
     align-items: flex-end;
-    min-width: 8px;
+    min-width: 10px;
+}
+
+.dual-bar-set .mini-bar {
+    width: 50%;
+    min-width: 4px;
 }
