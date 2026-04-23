@@ -419,3 +419,59 @@ code {
 ::-webkit-scrollbar-track { background: #0b0f18; }
 ::-webkit-scrollbar-thumb { background: #2a3342; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #3a4352; }
+
+/* Mini Chart Styles (for overview charts with dates) */
+.mini-chart {
+    padding: 10px 0;
+}
+
+.mini-bars {
+    display: flex;
+    gap: 2px;
+    height: 80px;
+    align-items: flex-end;
+    background: #0f172a;
+    padding: 5px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.mini-bar {
+    flex: 1;
+    background: linear-gradient(to top, #3b82f6, #60a5fa);
+    min-height: 2px;
+    border-radius: 2px 2px 0 0;
+    transition: all 0.2s;
+}
+
+.mini-bar:hover {
+    background: linear-gradient(to top, #2563eb, #3b82f6);
+    transform: scaleY(1.05);
+}
+
+.mini-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #9ca3af;
+    margin-top: 4px;
+}
+
+/* Dual bars for signals/orders */
+.dual-bars {
+    display: flex;
+    gap: 4px;
+    height: 80px;
+    align-items: flex-end;
+    background: #0f172a;
+    padding: 5px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.dual-bar-set {
+    flex: 1;
+    display: flex;
+    gap: 1px;
+    align-items: flex-end;
+}
