@@ -1,9 +1,9 @@
 {
-  "time": "2026-04-23T01:03:29.154207+00:00",
+  "time": "2026-04-23T05:14:18.180457+00:00",
   "symbols": [
     {
       "symbol": "MRVL",
-      "news_count": 89,
+      "news_count": 91,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
@@ -21,7 +21,7 @@
     },
     {
       "symbol": "DELL",
-      "news_count": 30,
+      "news_count": 31,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
@@ -39,7 +39,7 @@
     },
     {
       "symbol": "PLTR",
-      "news_count": 64,
+      "news_count": 67,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
@@ -48,7 +48,7 @@
     },
     {
       "symbol": "NOW",
-      "news_count": 90,
+      "news_count": 92,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
