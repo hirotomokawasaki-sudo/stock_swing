@@ -269,6 +269,12 @@ class PnLTracker:
         if self.state_path.exists():
             try:
                 data = json.loads(self.state_path.read_text(encoding="utf-8"))
+                
+                # FIX: Map closed_trades to trades if trades is empty (for restored data)
+                if "closed_trades" in data and not data.get("trades"):
+                    data["trades"] = data["closed_trades"]
+                    logger.info(f"Mapped {len(data['trades'])} closed_trades to trades field")
+                
                 return PnLState(**data)
             except Exception:
                 pass
