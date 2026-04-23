@@ -1091,7 +1091,6 @@ class Console {
         if (!series.length) return '<p class="muted">データなし</p>';
         const maxSig = Math.max(...series.map(d => d.signals || 0), 1);
         const maxOrd = Math.max(...series.map(d => d.orders || 0), 1);
-        const max = Math.max(maxSig, maxOrd);
         
         const firstDate = series[0]?.ts ? new Date(series[0].ts).toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'}) : '';
         const lastDate = series[series.length - 1]?.ts ? new Date(series[series.length - 1].ts).toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'}) : '';
@@ -1102,12 +1101,12 @@ class Console {
                 ${series.map(d => {
                     const sig = d.signals || 0;
                     const ord = d.orders || 0;
-                    // Calculate percentage from 0 to max
-                    const sigPct = (sig / max) * 100;
-                    const ordPct = (ord / max) * 100;
-                    // Minimum 10% height for non-zero values for better visibility
-                    const sigHeight = sig > 0 ? Math.max(sigPct, 10) : 3;
-                    const ordHeight = ord > 0 ? Math.max(ordPct, 10) : 3;
+                    // Use SEPARATE scales for each metric for better visibility
+                    const sigPct = (sig / maxSig) * 100;
+                    const ordPct = (ord / maxOrd) * 100;
+                    // Minimum 8% height for non-zero values
+                    const sigHeight = sig > 0 ? Math.max(sigPct, 8) : 3;
+                    const ordHeight = ord > 0 ? Math.max(ordPct, 8) : 3;
                     return `
                     <div class="dual-bar-set">
                         <div class="mini-bar" style="height:${sigHeight}%;background:#3b82f6" title="Signals: ${sig}"></div>
@@ -1119,7 +1118,11 @@ class Console {
                 <span>${firstDate}</span>
                 <span>${lastDate}</span>
             </div>
-            <div class="muted small" style="margin-top:4px;"><span style="color:#3b82f6">■</span> Signals (最大: ${maxSig}) / <span style="color:#10b981">■</span> Orders (最大: ${maxOrd})</div>
+            <div class="muted small" style="margin-top:4px;">
+                <span style="color:#3b82f6">■</span> Signals (0-${maxSig}) / 
+                <span style="color:#10b981">■</span> Orders (0-${maxOrd})
+                <span style="color:#6b7280"> ※個別スケール</span>
+            </div>
         </div>`;
     }
 
