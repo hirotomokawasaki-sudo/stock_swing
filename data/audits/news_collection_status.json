@@ -1,9 +1,9 @@
 {
-  "time": "2026-04-23T00:03:14.291785+00:00",
+  "time": "2026-04-23T01:03:29.154207+00:00",
   "symbols": [
     {
       "symbol": "MRVL",
-      "news_count": 88,
+      "news_count": 89,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
@@ -21,7 +21,7 @@
     },
     {
       "symbol": "DELL",
-      "news_count": 29,
+      "news_count": 30,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
