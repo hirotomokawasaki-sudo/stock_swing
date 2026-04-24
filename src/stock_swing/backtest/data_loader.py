@@ -41,16 +41,19 @@ class DataLoader:
                 with open(file_path, 'r') as f:
                     data = json.load(f)
                 
-                # Parse timestamp
-                ts_str = data.get('timestamp', '')
+                # Parse timestamp (try both 'timestamp' and 'generated_at')
+                ts_str = data.get('timestamp') or data.get('generated_at', '')
                 if ts_str:
-                    ts = datetime.fromisoformat(ts_str.replace('Z', '+00:00'))
-                    
-                    # Filter by date range
-                    if start_date and ts < start_date:
-                        continue
-                    if end_date and ts > end_date:
-                        continue
+                    try:
+                        ts = datetime.fromisoformat(ts_str.replace('Z', '+00:00'))
+                        
+                        # Filter by date range
+                        if start_date and ts < start_date:
+                            continue
+                        if end_date and ts > end_date:
+                            continue
+                    except Exception:
+                        pass  # Include if can't parse date
                 
                 decisions.append(data)
             
@@ -112,7 +115,7 @@ class DataLoader:
         
         dates = []
         for d in decisions:
-            ts_str = d.get('timestamp', '')
+            ts_str = d.get('timestamp') or d.get('generated_at', '')
             if ts_str:
                 try:
                     ts = datetime.fromisoformat(ts_str.replace('Z', '+00:00'))

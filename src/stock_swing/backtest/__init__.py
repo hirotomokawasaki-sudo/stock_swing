@@ -19,3 +19,6 @@ __all__ = [
     "BacktestResult",
     "BacktestTrade",
 ]
+from .price_cache import PriceCache
+
+__all__.append("PriceCache")
