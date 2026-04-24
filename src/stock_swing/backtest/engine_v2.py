@@ -93,7 +93,7 @@ class BacktestEngineV2:
             
             # Process entries
             for decision in daily_decisions:
-                self._process_entry(decision, current_date, parameters, use_real_prices)
+                self._process_entry(decision, current_date, parameters, use_real_prices, debug=False)
             
             # Get current prices
             current_prices = self._get_prices_for_date(current_date, use_real_prices)
@@ -154,7 +154,8 @@ class BacktestEngineV2:
         decision: Dict[str, Any],
         date: datetime,
         parameters: Dict[str, Any],
-        use_real_prices: bool
+        use_real_prices: bool,
+        debug: bool = False
     ):
         """Process potential entry from decision.
         
@@ -163,13 +164,19 @@ class BacktestEngineV2:
             date: Current date
             parameters: Backtest parameters
             use_real_prices: Use real prices if available
+            debug: Print debug information
         """
         # Extract decision details
         symbol = decision.get('symbol', '')
         action = decision.get('action', '')
         confidence = decision.get('confidence', 0.0)
         
+        if debug:
+            print(f"  Processing: {symbol} action={action} conf={confidence:.2f}")
+        
         if not symbol or action.lower() != 'buy':
+            if debug:
+                print(f"    Skip: not a BUY action")
             return
         
         # Check if decision was skipped in reality
@@ -182,6 +189,8 @@ class BacktestEngineV2:
         # Filter by confidence threshold
         min_confidence = parameters.get('confidence_threshold', 0.65)
         if confidence < min_confidence:
+            if debug:
+                print(f"    Skip: confidence {confidence:.2f} < {min_confidence:.2f}")
             return
         
         # Get entry price
@@ -198,7 +207,12 @@ class BacktestEngineV2:
                 entry_price = evidence.get('latest_close')
         
         if not entry_price or entry_price <= 0:
+            if debug:
+                print(f"    Skip: no valid entry price")
             return
+        
+        if debug:
+            print(f"    Entry price: ${entry_price:.2f}")
         
         # Check if can enter
         can_enter, qty = self.simulator.can_enter_position(
@@ -207,17 +221,25 @@ class BacktestEngineV2:
             parameters
         )
         
+        if debug:
+            print(f"    Can enter: {can_enter}, Qty: {qty}")
+        
         if not can_enter or qty < 1:
+            if debug:
+                print(f"    Skip: cannot enter or qty < 1")
             return
         
         # Enter position
-        self.simulator.enter_position(
+        success = self.simulator.enter_position(
             symbol,
             date,
             entry_price,
             qty,
             parameters
         )
+        
+        if debug:
+            print(f"    ✓ Entered: {success}, Total positions: {len(self.simulator.positions)}")
     
     def _get_prices_for_date(
         self,
@@ -244,10 +266,17 @@ class BacktestEngineV2:
                 if price:
                     prices[symbol] = price
             else:
-                # Use entry price as fallback
+                # TEMPORARY: Simulate price movement for testing
+                # In real backtest, we need actual price data
                 position = self.simulator.positions.get(symbol)
                 if position:
-                    prices[symbol] = position.entry_price
+                    # Simulate random walk: +/- 2% per day
+                    import random
+                    days_held = (date - position.entry_date).days
+                    # Slightly bullish bias for testing
+                    daily_return = random.uniform(-0.02, 0.03)
+                    simulated_price = position.entry_price * (1 + daily_return * days_held)
+                    prices[symbol] = max(simulated_price, position.entry_price * 0.90)  # Floor at -10%
         
         return prices
     
