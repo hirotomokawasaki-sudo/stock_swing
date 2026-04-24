@@ -1,77 +1,77 @@
 {
-  "time": "2026-04-23T07:03:28.973398+00:00",
+  "time": "2026-04-24T01:03:39.134830+00:00",
   "symbols": [
     {
       "symbol": "MRVL",
-      "news_count": 91,
+      "news_count": 67,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
-      "from": "2026-04-20",
-      "to": "2026-04-23"
+      "from": "2026-04-21",
+      "to": "2026-04-24"
     },
     {
       "symbol": "CIEN",
-      "news_count": 13,
+      "news_count": 16,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
-      "from": "2026-04-20",
-      "to": "2026-04-23"
+      "from": "2026-04-21",
+      "to": "2026-04-24"
     },
     {
       "symbol": "DELL",
-      "news_count": 31,
+      "news_count": 34,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
-      "from": "2026-04-20",
-      "to": "2026-04-23"
+      "from": "2026-04-21",
+      "to": "2026-04-24"
     },
     {
       "symbol": "RBRK",
-      "news_count": 2,
-      "used_fallback": false,
-      "reason": "ok",
-      "source": "finnhub",
-      "from": "2026-04-20",
-      "to": "2026-04-23"
-    },
-    {
-      "symbol": "PLTR",
-      "news_count": 68,
-      "used_fallback": false,
-      "reason": "ok",
-      "source": "finnhub",
-      "from": "2026-04-20",
-      "to": "2026-04-23"
-    },
-    {
-      "symbol": "NOW",
-      "news_count": 94,
-      "used_fallback": false,
-      "reason": "ok",
-      "source": "finnhub",
-      "from": "2026-04-20",
-      "to": "2026-04-23"
-    },
-    {
-      "symbol": "INTU",
-      "news_count": 10,
-      "used_fallback": false,
-      "reason": "ok",
-      "source": "finnhub",
-      "from": "2026-04-20",
-      "to": "2026-04-23"
-    },
-    {
-      "symbol": "NBIS",
       "news_count": 4,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
-      "from": "2026-04-20",
-      "to": "2026-04-23"
+      "from": "2026-04-21",
+      "to": "2026-04-24"
+    },
+    {
+      "symbol": "PLTR",
+      "news_count": 71,
+      "used_fallback": false,
+      "reason": "ok",
+      "source": "finnhub",
+      "from": "2026-04-21",
+      "to": "2026-04-24"
+    },
+    {
+      "symbol": "NOW",
+      "news_count": 202,
+      "used_fallback": false,
+      "reason": "ok",
+      "source": "finnhub",
+      "from": "2026-04-21",
+      "to": "2026-04-24"
+    },
+    {
+      "symbol": "INTU",
+      "news_count": 17,
+      "used_fallback": false,
+      "reason": "ok",
+      "source": "finnhub",
+      "from": "2026-04-21",
+      "to": "2026-04-24"
+    },
+    {
+      "symbol": "NBIS",
+      "news_count": 7,
+      "used_fallback": false,
+      "reason": "ok",
+      "source": "finnhub",
+      "from": "2026-04-21",
+      "to": "2026-04-24"
     }
   ]
 }

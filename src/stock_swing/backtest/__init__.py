@@ -1,10 +1,21 @@
-"""Backtesting framework for parameter optimization.
+"""Backtest engine for parameter optimization.
 
-This module provides tools for:
-- Historical trade simulation
-- Parameter grid search
-- Walk-forward validation
-- Performance analysis
+This module provides backtesting capabilities for optimizing trading
+parameters using historical decision and trade data.
 """
 
-__all__ = []
+from .engine import BacktestEngine
+from .data_loader import DataLoader
+from .parameter_grid import ParameterGrid
+from .trade_simulator import TradeSimulator
+from .metrics import MetricsCalculator, BacktestResult, BacktestTrade
+
+__all__ = [
+    "BacktestEngine",
+    "DataLoader",
+    "ParameterGrid",
+    "TradeSimulator",
+    "MetricsCalculator",
+    "BacktestResult",
+    "BacktestTrade",
+]
