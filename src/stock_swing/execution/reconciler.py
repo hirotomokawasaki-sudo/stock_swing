@@ -7,7 +7,7 @@ Internal state must not invent fills or positions.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from stock_swing.execution.paper_executor import FillRecord, OrderSubmission
@@ -140,7 +140,7 @@ class Reconciler:
         return ReconciliationResult(
             submission_id=submission.submission_id,
             broker_order_id=submission.broker_order_id,
-            reconciled_at=datetime.utcnow(),
+            reconciled_at=datetime.now(timezone.utc),
             status_matched=status_matched,
             broker_status=broker_status,
             internal_status=submission.status,
