@@ -85,27 +85,27 @@
 ## Week 2 — execution と PnL の精度を上げる
 
 ### T5. partial fill 対応
-- [ ] partial fill を tracker に反映
-- [ ] 数量ベースで open / close を整合
+- [x] partial fill を tracker に反映
+- [x] 数量ベースで open / close を整合
 
 ### T6. mismatch reason を構造化
-- [ ] accepted_not_filled
-- [ ] filled_pending_sync
-- [ ] status_mismatch
-- [ ] qty_mismatch
-- [ ] order_not_found
+- [x] accepted_not_filled
+- [x] filled_pending_sync
+- [x] status_mismatch
+- [x] qty_mismatch
+- [x] order_not_found
 
 ### T7. low conversion symbol / strategy の改善分析
-- [ ] symbol別 conversion 分析
-- [ ] strategy別 conversion 分析
-- [ ] risk gate / size cap / sector cap の候補抽出
+- [x] symbol別 conversion 分析
+- [x] strategy別 conversion 分析
+- [x] risk gate / size cap / sector cap の候補抽出
 
 ### T8. strategy overview 拡張
-- [ ] submissions
-- [ ] closes
-- [ ] realized pnl
-- [ ] open positions
-- [ ] rejection rate
+- [x] submissions
+- [x] closes
+- [x] realized pnl
+- [x] open positions
+- [x] rejection rate
 
 ---
 
