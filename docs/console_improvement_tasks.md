@@ -135,8 +135,11 @@
 - [ ] strategy health
 
 ### T12. parameter tuning support
-- [ ] max_position_size
-- [ ] risk budget
-- [ ] sector exposure cap
-- [ ] signal threshold
-- [ ] stop logic
+- [x] max_position_size
+- [x] min_signal_strength
+- [x] min_confidence
+- [x] symbol_position_limit_pct
+- [x] validation API
+- [x] apply API with confirmation
+- [x] rollback capability
+- [x] change logging
