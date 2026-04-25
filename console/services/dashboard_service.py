@@ -471,7 +471,7 @@ class DashboardService:
             "funnel": funnel,
             "conversion_rates": conversion_rates,
             "actions": [{"action": k, "count": v} for k, v in sorted(actions.items(), key=lambda item: item[1], reverse=True)],
-            "by_strategy": sorted(by_strategy.values(), key=lambda x: x.get("decisions", 0), reverse=True)[:10],
+            "by_strategy": self._enrich_strategy_overview(by_strategy, submission_events),
             "by_symbol": sorted(by_symbol.values(), key=lambda x: x.get("decisions", 0), reverse=True)[:10],
             "symbol_overview": sorted(merged_symbol_stats.values(), key=lambda x: (x.get("decisions", 0), x.get("submitted", 0)), reverse=True)[:15],
             "runs": paper_runs[:10],
@@ -1878,3 +1878,49 @@ class DashboardService:
             }
         except Exception as e:
             return {"available": False, "error": str(e)}
+
+    def _enrich_strategy_overview(self, by_strategy: Dict[str, Dict], submission_events: list) -> list:
+        """Enrich strategy overview with submissions, PnL, and position data."""
+        # Get submissions by strategy
+        submissions_by_strategy = {}
+        for evt in submission_events:
+            details = self._parse_submission_details(evt.get("details", ""))
+            strategy = details.get("strategy_id", "unknown")
+            submissions_by_strategy[strategy] = submissions_by_strategy.get(strategy, 0) + 1
+        
+        # Get PnL data from tracker
+        try:
+            from stock_swing.tracking.pnl_tracker import PnLTracker
+            tracker = PnLTracker(self.project_root)
+            closed_trades = [t for t in tracker.state.trades if t.get("status") == "closed"]
+            open_trades = [t for t in tracker.state.trades if t.get("status") == "open"]
+            
+            # Aggregate by strategy
+            pnl_by_strategy = {}
+            closes_by_strategy = {}
+            for trade in closed_trades:
+                strategy = trade.get("strategy_id", "unknown")
+                pnl_by_strategy[strategy] = pnl_by_strategy.get(strategy, 0.0) + trade.get("pnl", 0.0)
+                closes_by_strategy[strategy] = closes_by_strategy.get(strategy, 0) + 1
+            
+            open_by_strategy = {}
+            for trade in open_trades:
+                strategy = trade.get("strategy_id", "unknown")
+                open_by_strategy[strategy] = open_by_strategy.get(strategy, 0) + 1
+        except Exception:
+            pnl_by_strategy = {}
+            closes_by_strategy = {}
+            open_by_strategy = {}
+        
+        # Enrich each strategy
+        enriched = []
+        for strategy_id, stats in by_strategy.items():
+            stats["submissions"] = submissions_by_strategy.get(strategy_id, 0)
+            stats["closes"] = closes_by_strategy.get(strategy_id, 0)
+            stats["realized_pnl"] = round(pnl_by_strategy.get(strategy_id, 0.0), 2)
+            stats["open_positions"] = open_by_strategy.get(strategy_id, 0)
+            stats["rejection_rate"] = round((stats.get("reject", 0) / stats.get("decisions", 1)) * 100, 1)
+            stats["conversion_rate"] = round((stats["submissions"] / stats.get("decisions", 1)) * 100, 1)
+            enriched.append(stats)
+        
+        return sorted(enriched, key=lambda x: x.get("decisions", 0), reverse=True)[:10]
