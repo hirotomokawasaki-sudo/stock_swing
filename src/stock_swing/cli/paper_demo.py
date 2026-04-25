@@ -463,23 +463,30 @@ def main() -> int:  # noqa: C901
                 else:
                     print(f"OK broker_id={sub.broker_order_id} qty={sub.qty}")
                 # Fetch current price for P&L tracking entry
+                entry_price = 0.0
                 try:
                     q = broker.fetch_latest_quote(o.symbol).payload
                     quote = q.get("quote", q)
                     bid = float(quote.get("bp", 0) or 0)
                     ask = float(quote.get("ap", 0) or 0)
-                    entry_price = round((bid + ask) / 2, 4) if bid and ask else 0.0
+                    if bid and ask:
+                        entry_price = round((bid + ask) / 2, 4)
                 except Exception:
-                    entry_price = 0.0
-                pnl_tracker.record_submission(
-                    symbol=o.symbol,
-                    strategy_id=decision.strategy_id,
-                    side=o.side,
-                    qty=sub.qty,
-                    price=entry_price,
-                    broker_order_id=sub.broker_order_id,
-                    decision_id=decision.decision_id,
-                )
+                    pass
+                
+                # Only record submission if we have a valid entry price
+                if entry_price > 0:
+                    pnl_tracker.record_submission(
+                        symbol=o.symbol,
+                        strategy_id=decision.strategy_id,
+                        side=o.side,
+                        qty=sub.qty,
+                        price=entry_price,
+                        broker_order_id=sub.broker_order_id,
+                        decision_id=decision.decision_id,
+                    )
+                else:
+                    print(f"WARN: Skipped P&L tracking for {o.symbol} (entry_price unavailable)")
             else:
                 print(f"WARN {sub.status}: {sub.reject_reason}")
             audit_log.log_submission(sub.submission_id, sub.decision_id, sub.symbol, sub.side, sub.qty, sub.status, sub.broker_order_id)

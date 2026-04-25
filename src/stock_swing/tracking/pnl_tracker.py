@@ -96,7 +96,12 @@ class PnLTracker:
         """Record a new paper order submission as an open trade.
 
         Returns trade_id.
+        
+        Raises ValueError if price <= 0 (invalid entry price).
         """
+        if price <= 0:
+            raise ValueError(f"Invalid entry price {price} for {symbol}. Cannot record submission.")
+        
         trade_id = f"{symbol}-{decision_id[:8]}"
         now = datetime.now(timezone.utc).isoformat()
 
