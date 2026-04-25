@@ -34,6 +34,7 @@ def load_env():
 load_env()
 
 from console.services.dashboard_service import DashboardService
+from console.services.summary_service import SummaryService
 from console.utils.time_utils import now_iso
 
 HOST = "0.0.0.0"
@@ -41,6 +42,7 @@ PORT = 3333
 
 # Initialize services
 dashboard = DashboardService(PROJECT_ROOT)
+summary_service = SummaryService(PROJECT_ROOT)
 
 
 class ConsoleHandler(BaseHTTPRequestHandler):
@@ -164,6 +166,14 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
 
+        # T11: Daily summary
+        if p == "/api/summary/daily":
+            try:
+                data = summary_service.generate_daily_summary()
+                return self._json(data)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+        
         # 404
         return self._json({"error": "not found"}, status=404)
     
