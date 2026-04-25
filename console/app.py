@@ -174,6 +174,17 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
         
+        # T10: Symbol drilldown
+        if p.startswith("/api/symbol/"):
+            try:
+                symbol = p.split("/")[-1].upper()
+                if not symbol:
+                    return self._json({"error": "symbol required"}, status=400)
+                data = dashboard.get_symbol_detail(symbol)
+                return self._json(data)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+        
         # 404
         return self._json({"error": "not found"}, status=404)
     
