@@ -434,10 +434,40 @@ def main() -> int:  # noqa: C901
     reconciler = Reconciler(broker_client=broker)
     pnl_tracker = PnLTracker(project_root)
     submissions: list[OrderSubmission] = []
+    
+    # Symbol-level position size limit (10% of equity per symbol)
+    MAX_POSITION_PER_SYMBOL_PCT = 0.10
+    max_position_per_symbol = equity * MAX_POSITION_PER_SYMBOL_PCT
 
     for decision in actionable:
         o = decision.proposed_order
         try:
+            # Check symbol-level position size limit for BUY orders
+            if o.side == "buy" and o.symbol in current_positions_full:
+                existing_pos = current_positions_full[o.symbol]
+                existing_value = float(existing_pos.get('market_value', 0))
+                
+                # Get estimated order value
+                preview_qty, preview_sizing = executor._calculate_position_size(
+                    decision,
+                    market_regime=(decision.evidence.get("market_regime") if isinstance(decision.evidence, dict) else "neutral") or "neutral",
+                )
+                
+                # Estimate order value (qty * current_price)
+                try:
+                    q = broker.fetch_latest_quote(o.symbol).payload
+                    quote = q.get("quote", q)
+                    current_price = (float(quote.get("bp", 0) or 0) + float(quote.get("ap", 0) or 0)) / 2
+                    estimated_order_value = preview_qty * current_price
+                except:
+                    estimated_order_value = preview_qty * 100  # Conservative estimate
+                
+                total_value = existing_value + estimated_order_value
+                
+                if total_value > max_position_per_symbol:
+                    print(f"\n  SKIP {o.side.upper()} {preview_qty} {o.symbol}: Position limit (${existing_value:.0f} + ${estimated_order_value:.0f} = ${total_value:.0f} > ${max_position_per_symbol:.0f})")
+                    continue
+            
             preview_qty, preview_sizing = executor._calculate_position_size(
                 decision,
                 market_regime=(decision.evidence.get("market_regime") if isinstance(decision.evidence, dict) else "neutral") or "neutral",
