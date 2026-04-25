@@ -35,6 +35,7 @@ load_env()
 
 from console.services.dashboard_service import DashboardService
 from console.services.summary_service import SummaryService
+from console.services.parameter_service import ParameterService
 from console.utils.time_utils import now_iso
 
 HOST = "0.0.0.0"
@@ -43,6 +44,7 @@ PORT = 3333
 # Initialize services
 dashboard = DashboardService(PROJECT_ROOT)
 summary_service = SummaryService(PROJECT_ROOT)
+parameter_service = ParameterService(PROJECT_ROOT)
 
 
 class ConsoleHandler(BaseHTTPRequestHandler):
@@ -182,6 +184,28 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                     return self._json({"error": "symbol required"}, status=400)
                 data = dashboard.get_symbol_detail(symbol)
                 return self._json(data)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+        
+        # T12: Parameter management (READ-ONLY)
+        if p == "/api/parameters":
+            try:
+                data = parameter_service.get_all_parameters()
+                return self._json(data)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+        
+        if p.startswith("/api/parameters/") and p.endswith("/validate"):
+            try:
+                param_name = p.split("/")[-2]
+                value_str = q.get('value', [''])[0]
+                if not value_str:
+                    return self._json({"error": "value required"}, status=400)
+                value = float(value_str)
+                result = parameter_service.validate_value(param_name, value)
+                return self._json(result)
+            except ValueError as e:
+                return self._json({"error": str(e)}, status=400)
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
         
