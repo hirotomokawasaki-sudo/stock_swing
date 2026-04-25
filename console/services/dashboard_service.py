@@ -1924,3 +1924,55 @@ class DashboardService:
             enriched.append(stats)
         
         return sorted(enriched, key=lambda x: x.get("decisions", 0), reverse=True)[:10]
+
+    def get_symbol_detail(self, symbol: str) -> Dict[str, Any]:
+        """Get detailed information for a specific symbol."""
+        symbol = symbol.upper()
+        
+        # Latest decisions
+        decisions_dir = self.project_root / "data" / "decisions"
+        decisions = []
+        for f in sorted(decisions_dir.glob(f"decision_{symbol}_*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:20]:
+            try:
+                decisions.append(json.loads(f.read_text()))
+            except:
+                pass
+        
+        # Submissions
+        audit_dir = self.project_root / "data" / "audits"
+        submissions = []
+        for f in sorted(audit_dir.glob("paper_demo_*.log"), key=lambda p: p.stat().st_mtime, reverse=True)[:5]:
+            for line in f.read_text(encoding='utf-8').splitlines():
+                if f'| submission |' in line and symbol in line:
+                    submissions.append(line)
+                if len(submissions) >= 10:
+                    break
+        
+        # Open/closed trades from PnL tracker
+        try:
+            from stock_swing.tracking.pnl_tracker import PnLTracker
+            tracker = PnLTracker(self.project_root)
+            open_trades = [t for t in tracker.state.trades if t.get("symbol") == symbol and t.get("status") == "open"]
+            closed_trades = [t for t in tracker.state.trades if t.get("symbol") == symbol and t.get("status") == "closed"]
+        except:
+            open_trades = []
+            closed_trades = []
+        
+        # Current position
+        try:
+            positions = self.get_positions()
+            current_position = next((p for p in positions.get('positions', []) if p.get('symbol') == symbol), None)
+        except:
+            current_position = None
+        
+        return {
+            "symbol": symbol,
+            "latest_decisions": decisions[:10],
+            "submissions": submissions,
+            "open_trades": open_trades,
+            "closed_trades": closed_trades[:20],
+            "current_position": current_position,
+            "total_decisions": len(decisions),
+            "total_closed_trades": len(closed_trades),
+            "total_realized_pnl": sum(t.get("pnl", 0) for t in closed_trades),
+        }

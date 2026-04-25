@@ -1,9 +1,9 @@
 {
-  "time": "2026-04-25T05:24:53.160554+00:00",
+  "time": "2026-04-25T07:03:30.079052+00:00",
   "symbols": [
     {
       "symbol": "MRVL",
-      "news_count": 55,
+      "news_count": 57,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
