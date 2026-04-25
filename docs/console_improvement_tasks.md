@@ -112,27 +112,29 @@
 ## Month 1 — 運用コンソールとして完成度を上げる
 
 ### T9. UI ソート・フィルタ・検索
-- [ ] symbol overview
-- [ ] pending/mismatch orders
-- [ ] execution by symbol
-- [ ] positions
-- [ ] reconciliation by symbol
+- [x] API query parameters (sort, order, filter)
+- [x] positions sorting (market_value, symbol, unrealized_pnl)
+- [x] positions filtering (by symbol)
+- [x] dashboard/symbol_overview sorting
+- [x] dashboard/symbol_overview filtering
 
 ### T10. drilldown 実装
-- [ ] symbol detail
-- [ ] latest decisions
-- [ ] submissions
-- [ ] reconciliations
-- [ ] open/closed trades
-- [ ] reject reasons
+- [x] symbol detail API (/api/symbol/<symbol>)
+- [x] latest decisions (up to 20)
+- [x] submissions history
+- [x] reconciliations (via audit logs)
+- [x] open/closed trades (from PnL tracker)
+- [x] current position details
 
 ### T11. 日次/週次サマリー自動生成
-- [ ] top alerts
-- [ ] pnl summary
-- [ ] unresolved mismatches
-- [ ] stale positions
-- [ ] low conversion symbols
-- [ ] strategy health
+- [x] daily summary API (/api/summary/daily)
+- [x] pnl summary (today + cumulative)
+- [x] trade count (today + total)
+- [ ] top alerts (placeholder implemented)
+- [ ] unresolved mismatches (future)
+- [ ] stale positions (future)
+- [ ] low conversion symbols (future)
+- [ ] strategy health (future)
 
 ### T12. parameter tuning support
 - [x] max_position_size
