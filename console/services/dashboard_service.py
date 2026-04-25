@@ -459,8 +459,17 @@ class DashboardService:
             row['latest_news_headline_ja'] = news.get('latest_headline_ja', '')
             row['decision_referenced_news_count'] = news.get('decision_referenced', 0)
 
+        # Calculate conversion rates
+        conversion_rates = {
+            "decisions_to_orders": round((funnel["orders_submitted"] / funnel["decisions"]) * 100, 1) if funnel["decisions"] else 0.0,
+            "orders_to_fills": round((funnel["orders_filled"] / funnel["orders_submitted"]) * 100, 1) if funnel["orders_submitted"] else 0.0,
+            "decisions_to_fills": round((funnel["orders_filled"] / funnel["decisions"]) * 100, 1) if funnel["decisions"] else 0.0,
+            "raw_to_normalized": round((funnel["normalized"] / funnel["raw"]) * 100, 1) if funnel["raw"] else 0.0,
+        }
+        
         return {
             "funnel": funnel,
+            "conversion_rates": conversion_rates,
             "actions": [{"action": k, "count": v} for k, v in sorted(actions.items(), key=lambda item: item[1], reverse=True)],
             "by_strategy": sorted(by_strategy.values(), key=lambda x: x.get("decisions", 0), reverse=True)[:10],
             "by_symbol": sorted(by_symbol.values(), key=lambda x: x.get("decisions", 0), reverse=True)[:10],
