@@ -214,8 +214,51 @@ class ConsoleHandler(BaseHTTPRequestHandler):
     
     def do_POST(self):
         """Handle POST requests."""
-        # Future: settings management, job control, etc.
-        return self._json({"error": "not implemented"}, status=501)
+        u = urlparse(self.path)
+        p = u.path
+        
+        # T12: Apply parameter change
+        if p.startswith("/api/parameters/") and p.endswith("/apply"):
+            try:
+                # Read request body
+                content_length = int(self.headers.get('Content-Length', 0))
+                if content_length == 0:
+                    return self._json({"error": "Request body required"}, status=400)
+                
+                body = self.rfile.read(content_length)
+                data = json.loads(body.decode('utf-8'))
+                
+                param_name = p.split("/")[-2]
+                value = data.get("value")
+                confirmed = data.get("confirmed", False)
+                
+                if value is None:
+                    return self._json({"error": "value required"}, status=400)
+                
+                result = parameter_service.apply_parameter(param_name, float(value), confirmed)
+                
+                if result.get("success"):
+                    return self._json(result)
+                else:
+                    return self._json(result, status=400)
+                    
+            except ValueError as e:
+                return self._json({"error": str(e)}, status=400)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+        
+        # T12: Rollback parameter
+        if p.startswith("/api/parameters/") and p.endswith("/rollback"):
+            try:
+                param_name = p.split("/")[-2]
+                result = parameter_service.rollback_last_change(param_name)
+                return self._json(result)
+            except ValueError as e:
+                return self._json({"error": str(e)}, status=400)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+        
+        return self._json({"error": "not found"}, status=404)
 
 
 def main():

@@ -45,6 +45,24 @@ curl http://localhost:3333/api/parameters
 curl "http://localhost:3333/api/parameters/max_position_size/validate?value=500"
 ```
 
+### Apply a parameter change
+```bash
+# Without confirmation (will be rejected)
+curl -X POST http://localhost:3333/api/parameters/max_position_size/apply \
+  -H "Content-Type: application/json" \
+  -d '{"value": 500, "confirmed": false}'
+
+# With confirmation (will succeed if valid)
+curl -X POST http://localhost:3333/api/parameters/max_position_size/apply \
+  -H "Content-Type: application/json" \
+  -d '{"value": 500, "confirmed": true}'
+```
+
+### Rollback last change
+```bash
+curl -X POST http://localhost:3333/api/parameters/max_position_size/rollback
+```
+
 ## Implementation Status
 
 ### Phase 1: READ-ONLY ✅
@@ -56,10 +74,11 @@ curl "http://localhost:3333/api/parameters/max_position_size/validate?value=500"
 - Show warnings and impact estimation
 - Test boundary conditions
 
-### Phase 3: WRITE (NOT YET IMPLEMENTED)
+### Phase 3: WRITE ✅ COMPLETE
 - Apply changes with confirmation
-- Log all changes
+- Log all changes to `data/config/parameter_changes.log`
 - Rollback capability
+- Persist to `data/config/parameters.json`
 
 ## Safety Checklist
 

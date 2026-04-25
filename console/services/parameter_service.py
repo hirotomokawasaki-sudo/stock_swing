@@ -132,6 +132,89 @@ class ParameterService:
         
         return "Impact analysis not available"
     
+    def apply_parameter(self, name: str, value: float, confirmed: bool = False, user: str = "admin") -> Dict[str, Any]:
+        """Apply a parameter change with safety checks."""
+        # Validate first
+        validation = self.validate_value(name, value)
+        
+        if not validation["valid"]:
+            raise ValueError(f"Invalid value: {validation['error']}")
+        
+        # Check confirmation requirement
+        if validation["requires_confirmation"] and not confirmed:
+            return {
+                "success": False,
+                "error": "Confirmation required",
+                "validation": validation,
+            }
+        
+        # Get old value
+        param = self.PARAMETERS[name]
+        old_value = param["current"]
+        
+        # Apply change (in-memory for now, will write to config file)
+        self.PARAMETERS[name]["current"] = value
+        
+        # Log the change
+        self.log_change(name, old_value, value, user)
+        
+        # Write to config file
+        self._write_config(name, value)
+        
+        return {
+            "success": True,
+            "parameter": name,
+            "old_value": old_value,
+            "new_value": value,
+            "impact": validation["impact"],
+            "timestamp": datetime.now().isoformat(),
+        }
+    
+    def _write_config(self, name: str, value: float):
+        """Write parameter to config file."""
+        config_file = self.project_root / "data" / "config" / "parameters.json"
+        config_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Load existing config
+        if config_file.exists():
+            config = json.loads(config_file.read_text())
+        else:
+            config = {}
+        
+        # Update parameter
+        config[name] = value
+        
+        # Write back
+        config_file.write_text(json.dumps(config, indent=2))
+    
+    def rollback_last_change(self, name: str) -> Dict[str, Any]:
+        """Rollback the last change to a parameter."""
+        if not self.changes_log.exists():
+            raise ValueError("No change history found")
+        
+        # Read change log
+        lines = self.changes_log.read_text().splitlines()
+        if not lines:
+            raise ValueError("No changes to rollback")
+        
+        # Find last change for this parameter
+        last_change = None
+        for line in reversed(lines):
+            if f"| {name} |" in line:
+                last_change = line
+                break
+        
+        if not last_change:
+            raise ValueError(f"No changes found for parameter: {name}")
+        
+        # Parse the old value
+        parts = last_change.split("|")
+        change_part = parts[2].strip()  # "old → new"
+        old_value = float(change_part.split("→")[0].strip().replace("$", ""))
+        
+        # Apply rollback
+        return self.apply_parameter(name, old_value, confirmed=True, user="system_rollback")
+    
     def log_change(self, name: str, old_value: float, new_value: float, user: str = "admin"):
         """Log a parameter change."""
         timestamp = datetime.now().isoformat()
