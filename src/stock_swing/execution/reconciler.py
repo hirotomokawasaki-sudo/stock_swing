@@ -8,10 +8,34 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from enum import Enum
 from typing import Any
 
 from stock_swing.execution.paper_executor import FillRecord, OrderSubmission
 from stock_swing.sources.broker_client import BrokerClient
+
+
+class DiscrepancyType(str, Enum):
+    """Standardized discrepancy types for reconciliation."""
+    ORDER_NOT_FOUND = "order_not_found"
+    STATUS_MISMATCH = "status_mismatch"
+    SYMBOL_MISMATCH = "symbol_mismatch"
+    QTY_MISMATCH = "qty_mismatch"
+    SIDE_MISMATCH = "side_mismatch"
+    PRICE_MISMATCH = "price_mismatch"
+    ACCEPTED_NOT_FILLED = "accepted_not_filled"
+    FILLED_PENDING_SYNC = "filled_pending_sync"
+
+
+@dataclass
+class Discrepancy:
+    """Structured discrepancy information."""
+    type: DiscrepancyType
+    severity: str  # "critical", "warning", "info"
+    message: str
+    internal_value: Any = None
+    broker_value: Any = None
+    resolution_hint: str | None = None
 
 
 @dataclass
@@ -36,7 +60,8 @@ class ReconciliationResult:
     broker_status: str
     internal_status: str
     fills_detected: list[dict[str, Any]] = field(default_factory=list)
-    discrepancies: list[str] = field(default_factory=list)
+    discrepancies: list[Discrepancy] = field(default_factory=list)
+    discrepancies_legacy: list[str] = field(default_factory=list)  # Backward compatibility
     symbol: str | None = None
     side: str | None = None
 
@@ -87,15 +112,24 @@ class Reconciler:
         
         if not broker_order:
             # Broker has no record of this order
+            order_not_found = Discrepancy(
+                type=DiscrepancyType.ORDER_NOT_FOUND,
+                severity="critical",
+                message=f"Order {submission.broker_order_id} not found at broker",
+                internal_value=submission.broker_order_id,
+                broker_value=None,
+                resolution_hint="Check if order was rejected or never submitted"
+            )
             return ReconciliationResult(
                 submission_id=submission.submission_id,
                 broker_order_id=submission.broker_order_id,
-                reconciled_at=datetime.utcnow(),
+                reconciled_at=datetime.now(timezone.utc),
                 status_matched=False,
                 broker_status="not_found",
                 internal_status=submission.status,
                 fills_detected=[],
-                discrepancies=["order_not_found_at_broker"],
+                discrepancies=[order_not_found],
+                discrepancies_legacy=["order_not_found_at_broker"],
                 symbol=submission.symbol,
                 side=submission.side,
             )
@@ -119,23 +153,46 @@ class Reconciler:
         
         # Detect discrepancies
         discrepancies = []
+        discrepancies_legacy = []
+        
         if not status_matched:
-            discrepancies.append(
-                f"status_mismatch: internal={submission.status}, broker={broker_status}"
+            disc = Discrepancy(
+                type=DiscrepancyType.STATUS_MISMATCH,
+                severity="warning",
+                message=f"Status mismatch: internal={submission.status}, broker={broker_status}",
+                internal_value=submission.status,
+                broker_value=broker_status,
+                resolution_hint="Wait for broker status to update or investigate order state"
             )
+            discrepancies.append(disc)
+            discrepancies_legacy.append(f"status_mismatch: internal={submission.status}, broker={broker_status}")
         
         # Check symbol match
         if broker_order.get("symbol") != submission.symbol:
-            discrepancies.append(
-                f"symbol_mismatch: internal={submission.symbol}, broker={broker_order.get('symbol')}"
+            disc = Discrepancy(
+                type=DiscrepancyType.SYMBOL_MISMATCH,
+                severity="critical",
+                message=f"Symbol mismatch: internal={submission.symbol}, broker={broker_order.get('symbol')}",
+                internal_value=submission.symbol,
+                broker_value=broker_order.get('symbol'),
+                resolution_hint="Critical error - investigate order submission logic"
             )
+            discrepancies.append(disc)
+            discrepancies_legacy.append(f"symbol_mismatch: internal={submission.symbol}, broker={broker_order.get('symbol')}")
         
         # Check quantity match
         broker_qty = self._to_number(broker_order.get("qty"))
         if broker_qty != submission.qty:
-            discrepancies.append(
-                f"qty_mismatch: internal={submission.qty}, broker={broker_order.get('qty')}"
+            disc = Discrepancy(
+                type=DiscrepancyType.QTY_MISMATCH,
+                severity="warning",
+                message=f"Quantity mismatch: internal={submission.qty}, broker={broker_qty}",
+                internal_value=submission.qty,
+                broker_value=broker_qty,
+                resolution_hint="May indicate partial fill or order modification"
             )
+            discrepancies.append(disc)
+            discrepancies_legacy.append(f"qty_mismatch: internal={submission.qty}, broker={broker_order.get('qty')}")
         
         return ReconciliationResult(
             submission_id=submission.submission_id,
@@ -146,6 +203,7 @@ class Reconciler:
             internal_status=submission.status,
             fills_detected=fills_detected,
             discrepancies=discrepancies,
+            discrepancies_legacy=discrepancies_legacy,
             symbol=submission.symbol,
             side=submission.side,
         )
