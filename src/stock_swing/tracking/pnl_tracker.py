@@ -130,12 +130,23 @@ class PnLTracker:
         self,
         symbol: str,
         exit_price: float,
+        exit_qty: int | None = None,
         broker_order_id: str | None = None,
     ) -> TradeEntry | None:
-        """Mark the most recent open trade for a symbol as closed."""
+        """Mark open trades for a symbol as closed (supports partial fills).
+        
+        Args:
+            symbol: Symbol to exit
+            exit_price: Exit price
+            exit_qty: Quantity to exit (None = close all open positions)
+            broker_order_id: Broker order ID for tracking
+            
+        Returns:
+            The closed trade (or last partially closed trade if multiple)
+        """
         now = datetime.now(timezone.utc).isoformat()
 
-        # Find most recent open trade for symbol
+        # Find all open trades for symbol (FIFO order)
         open_trades = [
             t for t in self.state.trades
             if t["symbol"] == symbol and t["status"] == "open"
@@ -143,29 +154,78 @@ class PnLTracker:
         if not open_trades:
             return None
 
-        trade_dict = open_trades[-1]
-        entry_price = trade_dict["entry_price"]
-        qty = trade_dict["qty"]
+        # If no exit_qty specified, close all open positions
+        if exit_qty is None:
+            total_open_qty = sum(t["qty"] for t in open_trades)
+            exit_qty = total_open_qty
+        
+        remaining_to_exit = exit_qty
+        closed_trade = None
+        
+        # Close trades in FIFO order
+        for trade_dict in open_trades:
+            if remaining_to_exit <= 0:
+                break
+            
+            entry_price = trade_dict["entry_price"]
+            trade_qty = trade_dict["qty"]
+            
+            if remaining_to_exit >= trade_qty:
+                # Close this trade completely
+                qty_to_close = trade_qty
+                trade_dict["status"] = "closed"
+                remaining_to_exit -= trade_qty
+            else:
+                # Partial close: reduce qty, keep trade open
+                qty_to_close = remaining_to_exit
+                trade_dict["qty"] -= remaining_to_exit
+                # Create a new closed trade for the exited portion
+                closed_portion = dict(trade_dict)
+                closed_portion["qty"] = qty_to_close
+                closed_portion["status"] = "closed"
+                closed_portion["exit_price"] = exit_price
+                closed_portion["exit_time"] = now
+                
+                pnl = (exit_price - entry_price) * qty_to_close
+                return_pct = (exit_price - entry_price) / entry_price if entry_price else 0.0
+                closed_portion["pnl"] = round(pnl, 2)
+                closed_portion["return_pct"] = round(return_pct, 4)
+                
+                # Add closed portion as new trade
+                self.state.trades.append(closed_portion)
+                self.state.cumulative_realized_pnl += pnl
+                if pnl >= 0:
+                    self.state.winning_trades += 1
+                else:
+                    self.state.losing_trades += 1
+                
+                closed_trade = TradeEntry(**closed_portion)
+                remaining_to_exit = 0
+                continue
+            
+            # Full close of this trade
+            pnl = (exit_price - entry_price) * qty_to_close
+            return_pct = (exit_price - entry_price) / entry_price if entry_price else 0.0
 
-        pnl = (exit_price - entry_price) * qty
-        return_pct = (exit_price - entry_price) / entry_price if entry_price else 0.0
+            trade_dict.update({
+                "exit_price": exit_price,
+                "exit_time": now,
+                "pnl": round(pnl, 2),
+                "return_pct": round(return_pct, 4),
+                "status": "closed",
+            })
 
-        trade_dict.update({
-            "exit_price": exit_price,
-            "exit_time": now,
-            "pnl": round(pnl, 2),
-            "return_pct": round(return_pct, 4),
-            "status": "closed",
-        })
+            self.state.cumulative_realized_pnl += pnl
+            if pnl >= 0:
+                self.state.winning_trades += 1
+            else:
+                self.state.losing_trades += 1
+            
+            closed_trade = TradeEntry(**trade_dict)
 
-        self.state.cumulative_realized_pnl += pnl
-        if pnl >= 0:
-            self.state.winning_trades += 1
-        else:
-            self.state.losing_trades += 1
         self.state.last_updated = now
         self._save_state()
-        return TradeEntry(**trade_dict)
+        return closed_trade
 
     def record_daily_snapshot(
         self,

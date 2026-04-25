@@ -86,7 +86,13 @@ def main() -> int:
             filled_qty = float(match.get("filled_qty", 0) or 0)
             avg_price = match.get("filled_avg_price")
             if status in {"filled", "partially_filled"} and filled_qty > 0 and avg_price:
-                updated = tracker.record_exit(symbol=sub["symbol"], exit_price=float(avg_price), broker_order_id=match.get("id"))
+                # Pass filled_qty to support partial fills
+                updated = tracker.record_exit(
+                    symbol=sub["symbol"], 
+                    exit_price=float(avg_price), 
+                    exit_qty=int(filled_qty),
+                    broker_order_id=match.get("id")
+                )
                 if updated:
                     filled_exits += 1
         except Exception:
