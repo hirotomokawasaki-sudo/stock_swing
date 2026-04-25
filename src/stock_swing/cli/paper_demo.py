@@ -394,7 +394,7 @@ def main() -> int:  # noqa: C901
     risk_validator = RiskValidator(
         min_signal_strength=args.min_signal_strength,
         min_confidence=0.40,
-        max_position_size=50,
+        max_position_size=400,  # Increased from 50 to allow all valid requests (max $377)
     )
     decision_engine = DecisionEngine(runtime_mode=runtime_mode, risk_validator=risk_validator)
     decisions: list[DecisionRecord] = []
