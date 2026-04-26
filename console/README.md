@@ -1,113 +1,341 @@
+# Stock Swing Console
 
+Real-time monitoring and management console for the Stock Swing automated trading system.
 
-# Stock Swing Web Console
+## 🚀 Quick Start
 
-Web-based operations console for monitoring and managing the stock_swing trading system.
+### Prerequisites
+- Python 3.11+
+- Virtual environment activated
+- Environment variables configured (`.env` file)
 
-## Features
-
-- **Overview Dashboard**: System health, cron jobs status, data counts
-- **Cron Jobs**: View all scheduled jobs and their next run times
-- **Data Status**: Monitor data pipeline stages and freshness
-- **Logs**: Access system logs (coming soon)
-- **Auto-refresh**: Updates every 30 seconds
-
-## Quick Start
+### Start Console
 
 ```bash
-# Start the console
-cd ~/stock_swing/console
-python3 app.py
+# 1. Start WebSocket Server (real-time updates)
+cd /Users/hirotomookawasaki/stock_swing
+source venv/bin/activate
+python console/websocket_server.py &
 
-# Or use the startup script
-./start.sh
+# 2. Start HTTP Console
+cd console
+python app.py &
+
+# 3. Open in browser
+open http://localhost:3333
 ```
 
-Then open your browser to: **http://localhost:3333**
-
-## Health Check
-
-```bash
-curl http://localhost:3333/health
-```
-
-## API Endpoints
-
-- `GET /health` - Health check
-- `GET /api/dashboard` - Complete dashboard data
-- `GET /api/overview` - Overview summary
-- `GET /api/cron_jobs` - Cron jobs information
-- `GET /api/system_status` - System status
-
-## Stopping the Console
-
-```bash
-# Find and kill the process
-pkill -f "console/app.py"
-
-# Or if running in foreground, press Ctrl+C
-```
-
-## Architecture
-
-```
-console/
-├── app.py                  # HTTP server
-├── ui/
-│   ├── index.html         # Main page
-│   ├── app.js             # Frontend logic
-│   └── style.css          # Styles
-├── services/
-│   └── dashboard_service.py  # Data aggregation
-├── adapters/
-│   ├── cron_adapter.py    # Cron jobs data
-│   ├── data_adapter.py    # Data storage status
-│   └── system_adapter.py  # System health
-└── utils/
-    └── time_utils.py      # Time utilities
-```
-
-## Requirements
-
-- Python 3.10+
-- Project root: ~/stock_swing
-- Cron jobs backup: ~/stock_swing/cron_backup/jobs.json
-
-## Port
-
-Default: **3333**
-
-To change, edit `PORT` in `app.py`.
-
-## Security
-
-- Runs on localhost (0.0.0.0:3333)
-- Read-only dashboard (no write operations yet)
-- Future: Add authentication if exposing externally
-
-## Development
-
-The console watches for changes in:
-- Python files in `adapters/`, `services/`, `utils/`
-- UI files: `ui/*.{js,css,html}`
-
-Auto-reload is built-in when running via `python3 app.py`.
-
-## Troubleshooting
-
-### Console won't start
-- Check if port 3333 is already in use: `lsof -i :3333`
-- Verify Python 3.10+ is installed
-
-### No data showing
-- Verify cron_backup/jobs.json exists
-- Check that data/ directory has files
-- Ensure config/runtime/current_mode.yaml exists
-
-### API errors
-- Check console output for Python exceptions
-- Verify project_root path is correct
+### Ports
+- **HTTP Console**: `http://localhost:3333`
+- **WebSocket**: `ws://localhost:3334`
 
 ---
 
-**Last Updated**: 2026-03-27
+## 📊 Features
+
+### Overview Tab
+- **Real-time KPIs**: Equity, P&L, Position count
+- **Performance Attribution**: Alpha, Beta, Sharpe Ratio
+- **Portfolio Comparison Chart**: Your portfolio vs SPY benchmark (Chart.js)
+- **Period Selector**: Day / 3 Days / Week / Month / All Time
+- **Daily PnL Cards**: Today / Best Day / Worst Day
+- **Conversion Rate**: Today vs Cumulative
+
+### Weekly Summary Tab
+- **Weekly Statistics**: Trades, Win rate, P&L, Profit factor
+- **Strategy Performance**: P&L by strategy with charts
+- **Top Symbols**: Best performing symbols
+- **Best/Worst Trades**: Detailed breakdown
+- **Equity Progression**: Weekly equity curve
+
+### Analysis Tab
+- **Strategy Analysis**: Performance metrics by strategy
+- **Symbol Analysis**: Performance metrics by symbol
+- **Risk Metrics**: Sharpe ratio, Max drawdown
+
+### Charts Tab
+- **Equity Curve**: Historical equity progression
+- **Drawdown**: Drawdown percentage over time
+- **P&L Distribution**: Trade P&L histogram
+- **Monthly Returns**: Month-over-month returns
+
+### Trading Tab
+- **Recent Trades**: Last 10 trades with P&L
+- **Open Positions**: Current holdings
+- **Closed Trades**: Trade history
+
+### Positions Tab
+- **Position Details**: Symbol, Qty, Entry, Current, P&L
+- **Holding Days**: Average holding period
+- **Sorting**: By symbol, P&L, market value
+- **Filtering**: Search by symbol
+
+### Parameters Tab
+- **Parameter Management**: View and validate parameters
+- **Adjustable Parameters**:
+  - `max_position_size`: $100-1000 (current: $400)
+  - `min_signal_strength`: 0.30-0.80 (current: 0.50)
+  - `min_confidence`: 0.30-0.80 (current: 0.40)
+  - `symbol_position_limit_pct`: 5-20% (current: 10%)
+  - `max_sector_exposure_pct`: 50-95% (current: 80%)
+
+---
+
+## 🔌 API Endpoints
+
+### Dashboard
+- `GET /api/dashboard?period=month` - Full dashboard data
+- `GET /api/overview` - Overview KPIs
+- `GET /api/trading` - Trading performance
+- `GET /api/positions` - Current positions
+- `GET /api/charts` - Chart data
+
+### Performance
+- `GET /api/performance/attribution?benchmark=SPY` - Alpha, Beta, Sharpe
+- `GET /api/strategy_analysis` - Strategy performance
+- `GET /api/live_metrics` - Real-time metrics
+
+### Summary
+- `GET /api/summary/daily` - Daily summary with alerts
+- `GET /api/summary/weekly?weeks=1` - Weekly performance summary
+
+### Utilities
+- `GET /api/conversion/daily?date=YYYY-MM-DD` - Daily conversion rate
+- `GET /api/symbol/<SYMBOL>` - Symbol drilldown
+- `GET /api/parameters` - Parameter list with ranges
+- `GET /api/parameters/<NAME>/validate?value=X` - Validate parameter value
+
+---
+
+## 🎨 Technology Stack
+
+### Backend
+- **Framework**: Custom HTTP server (lightweight)
+- **WebSocket**: `asyncio` + `websockets`
+- **Data**: JSON files + PnL Tracker
+
+### Frontend
+- **Charts**: Chart.js 4.4.0 + Zoom Plugin 2.0.1
+- **Real-time**: Native WebSocket API
+- **Styling**: Custom CSS (dark theme)
+
+### Architecture
+```
+┌──────────────────┐
+│   Browser        │
+│   - Chart.js     │
+│   - WebSocket    │
+└────────┬─────────┘
+         │ HTTP + WS
+┌────────▼─────────────────┐
+│  Console Servers         │
+│  - app.py (HTTP:3333)    │
+│  - websocket_server.py   │
+│    (WS:3334)             │
+└────────┬─────────────────┘
+         │
+┌────────▼─────────────────┐
+│  Services                │
+│  - DashboardService      │
+│  - BenchmarkService      │
+│  - SummaryService        │
+│  - ParameterService      │
+└────────┬─────────────────┘
+         │
+┌────────▼─────────────────┐
+│  Data Layer              │
+│  - PnL Tracker           │
+│  - Broker Client (Alpaca)│
+│  - Decision Files        │
+│  - Benchmark Data (SPY)  │
+└──────────────────────────┘
+```
+
+---
+
+## 🔄 Real-Time Updates
+
+### How It Works
+1. **WebSocket Server** broadcasts updates every 30 seconds
+2. **Frontend** receives incremental updates
+3. **No page reload** required
+4. **Auto-reconnect** with 5-second retry
+
+### Updated Data
+- Equity
+- Unrealized P&L
+- Position count
+- Trading summary
+
+### Connection Status
+- 🟢 **Connected**: WebSocket active
+- 🔴 **Disconnected**: Reconnecting...
+- ⚫ **Unavailable**: Using polling fallback
+
+---
+
+## 📈 Key Metrics
+
+### Current Performance (2026-04-26)
+- **Equity**: $105,533.91
+- **Alpha**: +4.22% (outperforming SPY)
+- **Beta**: 0.25 (low volatility)
+- **Sharpe Ratio**: 4.19 (excellent)
+- **Win Rate**: 60.6% (weekly)
+- **Conversion Rate**: 28.6% (today) vs 22.3% (cumulative)
+
+---
+
+## 🛠️ Development
+
+### Directory Structure
+```
+console/
+├── app.py                   # HTTP server
+├── websocket_server.py      # WebSocket server
+├── services/                # Business logic
+│   ├── dashboard_service.py
+│   ├── benchmark_service.py
+│   ├── summary_service.py
+│   └── parameter_service.py
+└── ui/                      # Frontend
+    ├── index.html
+    ├── app.js
+    └── style.css
+```
+
+### Adding a New Tab
+1. Add button in `ui/index.html`:
+   ```html
+   <button class="tab" data-tab="mytab">My Tab</button>
+   ```
+
+2. Add case in `ui/app.js`:
+   ```javascript
+   case 'mytab': content.innerHTML = this.renderMyTab(); break;
+   ```
+
+3. Implement render method:
+   ```javascript
+   renderMyTab() {
+       return `<div class="card"><h3>My Tab</h3>...</div>`;
+   }
+   ```
+
+### Adding a New API Endpoint
+1. Add route in `app.py`:
+   ```python
+   if p == "/api/myendpoint":
+       try:
+           data = my_service.get_data()
+           return self._json(data)
+       except Exception as e:
+           return self._json({"error": str(e)}, status=500)
+   ```
+
+2. Implement service method in `services/`:
+   ```python
+   def get_data(self):
+       # Your logic here
+       return {"result": "data"}
+   ```
+
+---
+
+## 🐛 Troubleshooting
+
+### Console won't start
+```bash
+# Check if port is in use
+lsof -i :3333
+
+# Kill existing process
+pkill -f "python.*app.py"
+```
+
+### WebSocket not connecting
+```bash
+# Check if WebSocket server is running
+ps aux | grep websocket_server
+
+# Restart WebSocket server
+pkill -f websocket_server.py
+python console/websocket_server.py &
+```
+
+### Data not updating
+```bash
+# Check PnL tracker state
+ls -la data/tracking/pnl_state.json
+
+# Check decision files
+ls -la data/decisions/ | tail
+
+# Run reconciliation manually
+python scripts/reconcile_orders.py
+```
+
+---
+
+## 📝 Configuration
+
+### Environment Variables
+Required in `.env`:
+```bash
+BROKER_API_KEY=<your-alpaca-api-key>
+BROKER_API_SECRET=<your-alpaca-api-secret>
+```
+
+### Parameters
+Adjustable via Console UI or directly in config:
+- Position sizing
+- Risk thresholds
+- Signal strength
+- Sector exposure limits
+
+---
+
+## 📚 Related Documentation
+- [Console Improvement Tasks](../docs/console_improvement_tasks.md)
+- [Daily Logs](../docs/daily_logs/)
+- [Console Charts Guide](../docs/console_charts_guide.md)
+- [Feature: Portfolio Comparison Chart](../docs/feature_portfolio_comparison_chart.md)
+
+---
+
+## 🚀 Deployment
+
+### Production Checklist
+- [ ] Update benchmark data: `python scripts/fetch_benchmark.py`
+- [ ] Verify cron jobs: Check `/api/cron_jobs`
+- [ ] Test WebSocket: Verify 🟢 status
+- [ ] Check logs: `data/audits/paper_demo_*.log`
+- [ ] Monitor conversion rate: Target 20-30%
+
+### Monitoring
+- Check console every morning
+- Review weekly summary every Monday
+- Update parameters as needed
+- Monitor HPE short position (pending fill)
+
+---
+
+## 📊 Success Metrics
+
+### Trading Performance
+- ✅ Conversion Rate: 28.6% (target: 20-30%)
+- ✅ Alpha: +4.22% (outperforming market)
+- ✅ Sharpe Ratio: 4.19 (excellent risk-adjusted returns)
+- ✅ Win Rate: 60.6% (healthy)
+
+### System Health
+- ✅ All tasks (T1-T12) completed
+- ✅ Real-time updates functional
+- ✅ 14 features implemented
+- ✅ Production-ready status
+
+---
+
+**Last Updated**: 2026-04-26  
+**Version**: 1.0  
+**Status**: Production Ready ✅

@@ -12,12 +12,14 @@
             <h1>📈 Stock Swing コンソール</h1>
             <div id="status-bar">
                 <span id="system-status">読み込み中...</span>
+                <span id="ws-status" class="ws-disconnected">🔴 WebSocket</span>
                 <span id="last-update"></span>
             </div>
         </header>
 
         <nav class="tabs">
             <button class="tab active" data-tab="overview">概要</button>
+            <button class="tab" data-tab="weekly">週次</button>
             <button class="tab" data-tab="analysis">分析</button>
             <button class="tab" data-tab="charts">チャート</button>
             <button class="tab" data-tab="trading">取引</button>

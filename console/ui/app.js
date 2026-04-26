@@ -31,6 +31,7 @@ class Console {
             
             this.websocket.onopen = () => {
                 console.log('✅ WebSocket connected');
+                this.updateWSStatus('connected');
                 // Send heartbeat every 15 seconds
                 this.heartbeatInterval = setInterval(() => {
                     if (this.websocket.readyState === WebSocket.OPEN) {
@@ -54,6 +55,7 @@ class Console {
             
             this.websocket.onclose = () => {
                 console.log('❌ WebSocket disconnected');
+                this.updateWSStatus('disconnected');
                 clearInterval(this.heartbeatInterval);
                 // Reconnect after 5 seconds
                 setTimeout(() => this.setupWebSocket(), 5000);
@@ -64,6 +66,27 @@ class Console {
             };
         } catch (e) {
             console.log('WebSocket not available, using polling');
+            this.updateWSStatus('unavailable');
+        }
+    }
+    
+    updateWSStatus(status) {
+        const wsStatus = document.getElementById('ws-status');
+        if (!wsStatus) return;
+        
+        switch (status) {
+            case 'connected':
+                wsStatus.textContent = '🟢 WebSocket';
+                wsStatus.className = 'ws-connected';
+                break;
+            case 'disconnected':
+                wsStatus.textContent = '🔴 WebSocket';
+                wsStatus.className = 'ws-disconnected';
+                break;
+            case 'unavailable':
+                wsStatus.textContent = '⚫ WebSocket';
+                wsStatus.className = 'ws-unavailable';
+                break;
         }
     }
     
@@ -148,6 +171,7 @@ class Console {
         if (this.data.error) { content.innerHTML = `<div class="card"><p class="danger">エラー: ${this.data.error}</p></div>`; return; }
         switch (this.currentTab) {
             case 'overview':   content.innerHTML = this.renderOverview(); break;
+            case 'weekly':     this.renderWeeklySummary(); break;
             case 'analysis':   this.renderAnalysis(); break;
             case 'charts':     this.renderCharts(); break;
             case 'trading':    content.innerHTML = this.renderTrading(); break;
@@ -1657,6 +1681,221 @@ class Console {
         </div>`;
     }
 
+    async renderWeeklySummary() {
+        const content = document.getElementById('content');
+        content.innerHTML = '<div class="card"><p class="muted">週次サマリーを読み込み中...</p></div>';
+        
+        try {
+            const response = await fetch('/api/summary/weekly?weeks=1');
+            const weekly = await response.json();
+            
+            content.innerHTML = this.renderWeeklySummaryContent(weekly);
+            
+            // Create charts
+            setTimeout(() => {
+                this.createWeeklyPnLChart(weekly);
+                this.createStrategyPerformanceChart(weekly);
+            }, 100);
+        } catch (error) {
+            content.innerHTML = `<div class="card"><p class="danger">エラー: ${error.message}</p></div>`;
+        }
+    }
+    
+    renderWeeklySummaryContent(weekly) {
+        if (weekly.error) {
+            return `<div class="card"><p class="danger">エラー: ${weekly.error}</p></div>`;
+        }
+        
+        const summary = weekly.summary || {};
+        const period = weekly.period || {};
+        const bestTrade = weekly.best_trade || {};
+        const worstTrade = weekly.worst_trade || {};
+        
+        return `
+        <div class="card" style="margin-bottom:16px">
+            <h2>📊 週次サマリー</h2>
+            <p class="muted">期間: ${period.start} ～ ${period.end}</p>
+        </div>
+        
+        <div class="grid">
+            <div class="card">
+                <h3>📈 総トレード</h3>
+                <div class="metric"><span class="label">合計</span><span class="value big">${summary.total_trades || 0}</span></div>
+                <div class="metric"><span class="label">勝ち</span><span class="value success">${summary.winning_trades || 0}</span></div>
+                <div class="metric"><span class="label">負け</span><span class="value danger">${summary.losing_trades || 0}</span></div>
+            </div>
+            <div class="card">
+                <h3>💰 損益</h3>
+                <div class="metric"><span class="label">Total P&L</span><span class="value big ${summary.total_pnl >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(summary.total_pnl || 0)}</span></div>
+                <div class="metric"><span class="label">平均勝ち</span><span class="value success">${fmt.usd(summary.avg_win || 0)}</span></div>
+                <div class="metric"><span class="label">平均負け</span><span class="value danger">${fmt.usd(summary.avg_loss || 0)}</span></div>
+            </div>
+            <div class="card">
+                <h3>📊 統計</h3>
+                <div class="metric"><span class="label">勝率</span><span class="value ${summary.win_rate >= 50 ? 'success' : ''}">${summary.win_rate || 0}%</span></div>
+                <div class="metric"><span class="label">Profit Factor</span><span class="value ${summary.profit_factor >= 1.5 ? 'success' : ''}">${(summary.profit_factor || 0).toFixed(2)}</span></div>
+            </div>
+            <div class="card">
+                <h3>🏆 Best Trade</h3>
+                <div class="metric"><span class="label">Symbol</span><span class="value">${bestTrade.symbol || 'N/A'}</span></div>
+                <div class="metric"><span class="label">P&L</span><span class="value success">${fmt.usdSigned(bestTrade.pnl || 0)}</span></div>
+            </div>
+            <div class="card">
+                <h3>⚠️ Worst Trade</h3>
+                <div class="metric"><span class="label">Symbol</span><span class="value">${worstTrade.symbol || 'N/A'}</span></div>
+                <div class="metric"><span class="label">P&L</span><span class="value danger">${fmt.usdSigned(worstTrade.pnl || 0)}</span></div>
+            </div>
+        </div>
+        
+        <div class="grid" style="margin-top:16px">
+            <div class="card">
+                <h3>📈 Equity Progression</h3>
+                <canvas id="weekly-equity-chart"></canvas>
+            </div>
+            <div class="card">
+                <h3>🎯 Strategy Performance</h3>
+                <canvas id="strategy-performance-chart"></canvas>
+            </div>
+        </div>
+        
+        ${this.renderStrategyTable(weekly.by_strategy || [])}
+        ${this.renderTopSymbolsTable(weekly.top_symbols || [])}
+        `;
+    }
+    
+    renderStrategyTable(strategies) {
+        if (!strategies.length) return '';
+        
+        return `
+        <div class="card" style="margin-top:16px">
+            <h3>📊 戦略別パフォーマンス</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Strategy</th>
+                        <th>Trades</th>
+                        <th>P&L</th>
+                        <th>Win Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${strategies.map(s => `
+                        <tr>
+                            <td>${s.strategy_id}</td>
+                            <td>${s.trades}</td>
+                            <td class="${s.pnl >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(s.pnl)}</td>
+                            <td>${s.win_rate}%</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>`;
+    }
+    
+    renderTopSymbolsTable(symbols) {
+        if (!symbols.length) return '';
+        
+        return `
+        <div class="card" style="margin-top:16px">
+            <h3>🏆 Top Symbols</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Trades</th>
+                        <th>P&L</th>
+                        <th>Win Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${symbols.slice(0, 10).map(s => `
+                        <tr>
+                            <td><strong>${s.symbol}</strong></td>
+                            <td>${s.trades}</td>
+                            <td class="${s.pnl >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(s.pnl)}</td>
+                            <td>${s.win_rate}%</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>`;
+    }
+    
+    createWeeklyPnLChart(weekly) {
+        const ctx = document.getElementById('weekly-equity-chart');
+        if (!ctx) return;
+        
+        const progression = weekly.equity_progression || [];
+        const dates = progression.map(p => p.date);
+        const equity = progression.map(p => p.equity);
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Equity',
+                    data: equity,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 2,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: (value) => fmt.usd(value)
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    createStrategyPerformanceChart(weekly) {
+        const ctx = document.getElementById('strategy-performance-chart');
+        if (!ctx) return;
+        
+        const strategies = weekly.by_strategy || [];
+        const labels = strategies.map(s => s.strategy_id);
+        const pnls = strategies.map(s => s.pnl);
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'P&L',
+                    data: pnls,
+                    backgroundColor: pnls.map(pnl => pnl >= 0 ? 'rgba(16, 185, 129, 0.7)' : 'rgba(239, 68, 68, 0.7)')
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 2,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: (value) => fmt.usd(value)
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
     async renderCharts() {
         const content = document.getElementById('content');
         content.innerHTML = `
