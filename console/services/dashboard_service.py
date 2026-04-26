@@ -1059,6 +1059,29 @@ class DashboardService:
             except:
                 pass
         
+        # Get strategy_id from recent decisions
+        strategy_id = 'unknown'
+        try:
+            decisions_dir = self.project_root / "data" / "decisions"
+            if decisions_dir.exists():
+                # Find recent BUY decisions for this symbol
+                decision_files = sorted(
+                    decisions_dir.glob(f"decision_{symbol}_*.json"),
+                    key=lambda p: p.stat().st_mtime,
+                    reverse=True
+                )
+                for df in decision_files[:10]:  # Check last 10 decisions
+                    try:
+                        import json
+                        decision = json.loads(df.read_text())
+                        if decision.get('action') == 'buy':
+                            strategy_id = decision.get('strategy_id', 'unknown')
+                            break
+                    except:
+                        continue
+        except:
+            pass
+        
         return {
             'symbol': symbol,
             'qty': qty,
@@ -1068,7 +1091,7 @@ class DashboardService:
             'unrealized_pnl': unrealized_pl,
             'unrealized_pnl_pct': unrealized_plpc * 100,
             'holding_days': holding_days,
-            'strategy_id': 'unknown',
+            'strategy_id': strategy_id,
             'source': 'broker',
         }
 
