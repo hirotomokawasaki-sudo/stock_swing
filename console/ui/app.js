@@ -87,8 +87,65 @@ class Console {
         return `
         ${this.renderAlerts()}
         ${this.renderOverviewKpis()}
+        ${this.renderPerformanceAttribution()}
         ${this.renderOverviewCharts()}
         ${this.renderOverviewDiagnostics()}`;
+    }
+    
+    renderPerformanceAttribution() {
+        const perf = this.data?.performance || {};
+        if (!perf.available && perf.alpha?.available !== true) {
+            return `<div class="card"><h3>📊 パフォーマンス分析</h3><p class="muted">データ不足のため分析できません</p></div>`;
+        }
+        
+        const alpha = perf.alpha || {};
+        const beta = perf.beta || {};
+        const sharpe = perf.sharpe || {};
+        const summary = perf.summary || 'データ不足';
+        
+        if (!alpha.available) {
+            return `<div class="card"><h3>📊 パフォーマンス分析</h3><p class="muted">データ不足のため分析できません</p></div>`;
+        }
+        
+        const alphaValue = alpha.alpha || 0;
+        const betaValue = beta.beta || 1.0;
+        const sharpeValue = sharpe.sharpe_ratio || 0;
+        
+        return `
+        <div class="card performance-card">
+            <h3>📊 パフォーマンス分析 (vs ${alpha.benchmark?.symbol || 'SPY'})</h3>
+            <div class="performance-summary">${this.escapeHtml(summary)}</div>
+            <div class="grid" style="margin-top: 16px;">
+                <div class="perf-metric">
+                    <div class="perf-label">Alpha (超過リターン)</div>
+                    <div class="perf-value ${alphaValue >= 2 ? 'success' : alphaValue >= -2 ? '' : 'danger'}">${fmt.pctSigned(alphaValue / 100)}</div>
+                    <div class="perf-interpretation muted small">${this.escapeHtml(alpha.interpretation || '')}</div>
+                    <div class="perf-details muted small">
+                        あなた: ${fmt.pct((alpha.portfolio?.return_pct || 0) / 100)} | 
+                        市場: ${fmt.pct((alpha.benchmark?.return_pct || 0) / 100)}
+                    </div>
+                </div>
+                <div class="perf-metric">
+                    <div class="perf-label">Beta (ボラティリティ)</div>
+                    <div class="perf-value">${betaValue.toFixed(2)}</div>
+                    <div class="perf-interpretation muted small">${this.escapeHtml(beta.interpretation || '')}</div>
+                    <div class="perf-details muted small">
+                        ${betaValue < 1 ? '🛡️ 市場より低リスク' : betaValue > 1 ? '⚡ 市場より高リスク' : '📊 市場と同程度'}
+                    </div>
+                </div>
+                <div class="perf-metric">
+                    <div class="perf-label">Sharpe Ratio (効率)</div>
+                    <div class="perf-value ${sharpeValue >= 2 ? 'success' : sharpeValue >= 1 ? '' : 'danger'}">${sharpeValue.toFixed(2)}</div>
+                    <div class="perf-interpretation muted small">${this.escapeHtml(sharpe.interpretation || '')}</div>
+                    <div class="perf-details muted small">
+                        年間: ${fmt.pct((sharpe.annual_return_pct || 0) / 100)} ± ${fmt.pct((sharpe.annual_volatility_pct || 0) / 100)}
+                    </div>
+                </div>
+            </div>
+            <div class="perf-period muted small" style="margin-top: 12px;">
+                期間: ${alpha.period?.start || ''} ～ ${alpha.period?.end || ''} (${alpha.period?.days || 0}日間)
+            </div>
+        </div>`;
     }
 
     renderAlerts() {

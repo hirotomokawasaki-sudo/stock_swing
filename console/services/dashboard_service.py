@@ -62,6 +62,8 @@ class DashboardService:
         )
         source_reliability = self.get_source_reliability_report(news)
         news_ingestion = self.get_news_ingestion_status(news)
+        performance_attribution = self._get_performance_attribution(trading)
+        
         return {
             "time": now_iso(),
             "alerts": self.get_alerts(
@@ -84,8 +86,24 @@ class DashboardService:
             "system": system,
             "trading": trading,
             "positions": positions,
+            "performance": performance_attribution,
             "logs": self.get_logs(),
         }
+    
+    def _get_performance_attribution(self, trading: Dict[str, Any]) -> Dict[str, Any]:
+        """Get performance attribution metrics (Alpha, Beta, Sharpe)."""
+        try:
+            from console.services.benchmark_service import BenchmarkService
+            benchmark_service = BenchmarkService(self.project_root)
+            
+            snapshots = trading.get('daily_snapshots', [])
+            if not snapshots:
+                return {"available": False, "error": "No snapshot data"}
+            
+            attribution = benchmark_service.get_performance_attribution(snapshots, "SPY")
+            return attribution
+        except Exception as e:
+            return {"available": False, "error": str(e)}
 
     def get_overview(
         self,
