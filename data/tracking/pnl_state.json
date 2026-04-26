@@ -1,6 +1,6 @@
 {
   "created_at": "2026-04-23T16:59:44.408861",
-  "last_updated": "2026-04-25T00:19:15.947795+00:00",
+  "last_updated": "2026-04-26T03:27:06.058807+00:00",
   "trades": [
     {
       "id": 1,
@@ -1647,12 +1647,36 @@
       "loss_count": 0,
       "signals_generated": 0,
       "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-25",
+      "equity": 105533.91,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 0,
+      "orders_submitted": 0
+    },
+    {
+      "date": "2026-04-26",
+      "equity": 105533.91,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 14,
+      "orders_submitted": 3
     }
   ],
   "cumulative_realized_pnl": 4292.74,
   "total_trades": 44,
   "winning_trades": 28,
   "losing_trades": 16,
-  "peak_equity": 105456.7,
+  "peak_equity": 105533.91,
   "max_drawdown_pct": 0.007
 }

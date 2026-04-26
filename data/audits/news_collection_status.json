@@ -1,77 +1,77 @@
 {
-  "time": "2026-04-25T07:03:30.079052+00:00",
+  "time": "2026-04-26T03:16:02.069508+00:00",
   "symbols": [
     {
       "symbol": "MRVL",
-      "news_count": 57,
+      "news_count": 40,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
-      "from": "2026-04-22",
-      "to": "2026-04-25"
+      "from": "2026-04-23",
+      "to": "2026-04-26"
     },
     {
       "symbol": "CIEN",
-      "news_count": 14,
+      "news_count": 7,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
-      "from": "2026-04-22",
-      "to": "2026-04-25"
+      "from": "2026-04-23",
+      "to": "2026-04-26"
     },
     {
       "symbol": "DELL",
-      "news_count": 31,
+      "news_count": 21,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
-      "from": "2026-04-22",
-      "to": "2026-04-25"
+      "from": "2026-04-23",
+      "to": "2026-04-26"
     },
     {
       "symbol": "RBRK",
-      "news_count": 5,
+      "news_count": 3,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
-      "from": "2026-04-22",
-      "to": "2026-04-25"
+      "from": "2026-04-23",
+      "to": "2026-04-26"
     },
     {
       "symbol": "PLTR",
-      "news_count": 87,
+      "news_count": 58,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
-      "from": "2026-04-22",
-      "to": "2026-04-25"
+      "from": "2026-04-23",
+      "to": "2026-04-26"
     },
     {
       "symbol": "NOW",
-      "news_count": 223,
+      "news_count": 176,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
-      "from": "2026-04-22",
-      "to": "2026-04-25"
+      "from": "2026-04-23",
+      "to": "2026-04-26"
     },
     {
       "symbol": "INTU",
-      "news_count": 18,
+      "news_count": 16,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
-      "from": "2026-04-22",
-      "to": "2026-04-25"
+      "from": "2026-04-23",
+      "to": "2026-04-26"
     },
     {
       "symbol": "NBIS",
-      "news_count": 8,
+      "news_count": 6,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
-      "from": "2026-04-22",
-      "to": "2026-04-25"
+      "from": "2026-04-23",
+      "to": "2026-04-26"
     }
   ]
 }

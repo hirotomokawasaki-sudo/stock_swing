@@ -176,6 +176,15 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
         
+        # Daily conversion rate
+        if p == "/api/conversion/daily":
+            try:
+                date = q.get('date', [None])[0]
+                data = dashboard.get_daily_conversion_rate(date)
+                return self._json(data)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+        
         # T10: Symbol drilldown
         if p.startswith("/api/symbol/"):
             try:

@@ -1976,3 +1976,47 @@ class DashboardService:
             "total_closed_trades": len(closed_trades),
             "total_realized_pnl": sum(t.get("pnl", 0) for t in closed_trades),
         }
+
+    def get_daily_conversion_rate(self, date: str = None) -> Dict[str, Any]:
+        """Get conversion rate for a specific date.
+        
+        Args:
+            date: Date in YYYY-MM-DD format. Defaults to today.
+        
+        Returns:
+            Dict with decisions, submissions, and conversion_rate for the specified date.
+        """
+        if date is None:
+            date = datetime.now().strftime("%Y-%m-%d")
+        
+        # Get today's audit log
+        audit_file = self.project_root / "data" / "audits" / f"paper_demo_{date.replace('-', '')}.log"
+        
+        if not audit_file.exists():
+            return {
+                "date": date,
+                "decisions": 0,
+                "submissions": 0,
+                "conversion_rate": 0.0,
+                "error": f"No audit log found for {date}"
+            }
+        
+        # Count decisions and submissions
+        decisions = 0
+        submissions = 0
+        
+        with open(audit_file, 'r') as f:
+            for line in f:
+                if '| decision |' in line and '| generated |' in line:
+                    decisions += 1
+                elif '| submission |' in line and '| submitted |' in line:
+                    submissions += 1
+        
+        conversion_rate = (submissions / decisions * 100) if decisions > 0 else 0.0
+        
+        return {
+            "date": date,
+            "decisions": decisions,
+            "submissions": submissions,
+            "conversion_rate": round(conversion_rate, 1),
+        }

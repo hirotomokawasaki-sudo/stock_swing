@@ -44,7 +44,7 @@ class PositionSizingInputs:
     default_stop_pct: float = 0.05
     risk_per_share: float | None = None
     current_sector_exposure: float = 0.0
-    max_sector_exposure_pct: float = 0.50  # Increased from 0.30 to 0.50
+    max_sector_exposure_pct: float = 0.80  # Increased from 0.50 to 0.80 (2026-04-26: limited universe)
     confidence: float | None = None
 
 

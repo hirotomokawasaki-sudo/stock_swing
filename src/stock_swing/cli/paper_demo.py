@@ -364,7 +364,7 @@ def main() -> int:  # noqa: C901
             print("  Sector Allocation:")
             for sector, value in sorted(sector_values.items(), key=lambda x: x[1], reverse=True):
                 sector_pct = (value / equity * 100)
-                warning = " ⚠️" if sector_pct > 40 else ""
+                warning = " ⚠️" if sector_pct > 70 else ""  # Adjusted from 40 to 70 (2026-04-26)
                 print(f"    {sector:15} ${value:>10,.2f} ({sector_pct:>5.1f}%){warning}")
             print()
         
