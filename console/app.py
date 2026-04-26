@@ -36,6 +36,7 @@ load_env()
 from console.services.dashboard_service import DashboardService
 from console.services.summary_service import SummaryService
 from console.services.parameter_service import ParameterService
+from console.services.benchmark_service import BenchmarkService
 from console.utils.time_utils import now_iso
 
 HOST = "0.0.0.0"
@@ -45,6 +46,7 @@ PORT = 3333
 dashboard = DashboardService(PROJECT_ROOT)
 summary_service = SummaryService(PROJECT_ROOT)
 parameter_service = ParameterService(PROJECT_ROOT)
+benchmark_service = BenchmarkService(PROJECT_ROOT)
 
 
 class ConsoleHandler(BaseHTTPRequestHandler):
@@ -181,6 +183,17 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             try:
                 date = q.get('date', [None])[0]
                 data = dashboard.get_daily_conversion_rate(date)
+                return self._json(data)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+        
+        # Performance attribution (Alpha, Beta, Sharpe)
+        if p == "/api/performance/attribution":
+            try:
+                trading_data = dashboard.get_trading()
+                snapshots = trading_data.get('daily_snapshots', [])
+                benchmark = q.get('benchmark', ['SPY'])[0]
+                data = benchmark_service.get_performance_attribution(snapshots, benchmark)
                 return self._json(data)
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
