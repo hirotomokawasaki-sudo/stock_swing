@@ -1148,39 +1148,53 @@ class Console {
 
     renderSignalsOrdersWithDates(series = []) {
         if (!series.length) return '<p class="muted">データなし</p>';
-        const maxSig = Math.max(...series.map(d => d.signals || 0), 1);
-        const maxOrd = Math.max(...series.map(d => d.orders || 0), 1);
+        const maxVal = Math.max(...series.map(d => Math.max(d.signals || 0, d.orders || 0)), 1);
         
         const firstDate = series[0]?.ts ? new Date(series[0].ts).toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'}) : '';
         const lastDate = series[series.length - 1]?.ts ? new Date(series[series.length - 1].ts).toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'}) : '';
         
+        // Calculate total and conversion rate
+        const totalSignals = series.reduce((sum, d) => sum + (d.signals || 0), 0);
+        const totalOrders = series.reduce((sum, d) => sum + (d.orders || 0), 0);
+        const conversionRate = totalSignals > 0 ? (totalOrders / totalSignals * 100) : 0;
+        
         return `
-        <div class="mini-chart">
-            <div class="dual-bars">
-                ${series.map(d => {
+        <div class="mini-chart signals-orders-chart">
+            <div class="chart-stats" style="display:flex;gap:16px;margin-bottom:8px;font-size:12px;">
+                <div><span style="color:#3b82f6">■</span> Signals: <strong>${totalSignals}</strong></div>
+                <div><span style="color:#10b981">■</span> Orders: <strong>${totalOrders}</strong></div>
+                <div><span style="color:#fbbf24">▶</span> Conversion: <strong>${conversionRate.toFixed(1)}%</strong></div>
+            </div>
+            <div class="stacked-bars" style="display:flex;gap:2px;height:120px;align-items:flex-end;">
+                ${series.map((d, idx) => {
                     const sig = d.signals || 0;
                     const ord = d.orders || 0;
-                    // Use SEPARATE scales for each metric for better visibility
-                    const sigPct = (sig / maxSig) * 100;
-                    const ordPct = (ord / maxOrd) * 100;
-                    // Minimum 8% height for non-zero values
-                    const sigHeight = sig > 0 ? Math.max(sigPct, 8) : 3;
-                    const ordHeight = ord > 0 ? Math.max(ordPct, 8) : 3;
+                    const sigHeight = (sig / maxVal) * 100;
+                    const ordHeight = (ord / maxVal) * 100;
+                    const conv = sig > 0 ? (ord / sig * 100) : 0;
+                    const date = d.ts ? new Date(d.ts).toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'}) : '';
+                    
+                    // Show every 5th date or first/last
+                    const showDate = idx === 0 || idx === series.length - 1 || idx % 5 === 0;
+                    
                     return `
-                    <div class="dual-bar-set">
-                        <div class="mini-bar" style="height:${sigHeight}%;background:#3b82f6" title="Signals: ${sig}"></div>
-                        <div class="mini-bar" style="height:${ordHeight}%;background:#10b981" title="Orders: ${ord}"></div>
+                    <div class="stacked-bar-group" style="flex:1;position:relative;height:100%;">
+                        <div style="position:absolute;bottom:0;width:100%;height:100%;display:flex;flex-direction:column;justify-content:flex-end;">
+                            <div class="signal-bar" 
+                                 style="height:${Math.max(sigHeight, sig > 0 ? 8 : 0)}%;background:#3b82f6;opacity:0.7;border-radius:2px 2px 0 0;" 
+                                 title="${date}\nSignals: ${sig}\nOrders: ${ord}\nConversion: ${conv.toFixed(1)}%">
+                            </div>
+                            <div class="order-bar" 
+                                 style="height:${Math.max(ordHeight, ord > 0 ? 8 : 0)}%;background:#10b981;border-radius:2px 2px 0 0;margin-top:2px;" 
+                                 title="${date}\nOrders: ${ord}\nConversion: ${conv.toFixed(1)}%">
+                            </div>
+                        </div>
+                        ${showDate ? `<div class="bar-label" style="position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:9px;color:#6b7280;white-space:nowrap;">${date}</div>` : ''}
                     </div>`;
                 }).join('')}
             </div>
-            <div class="mini-labels" style="display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;margin-top:4px;">
-                <span>${firstDate}</span>
-                <span>${lastDate}</span>
-            </div>
-            <div class="muted small" style="margin-top:4px;">
-                <span style="color:#3b82f6">■</span> Signals (0-${maxSig}) / 
-                <span style="color:#10b981">■</span> Orders (0-${maxOrd})
-                <span style="color:#6b7280"> ※個別スケール</span>
+            <div class="mini-labels" style="margin-top:24px;font-size:11px;color:#9ca3af;text-align:center;">
+                期間: ${firstDate} ～ ${lastDate} (最大値: ${maxVal})
             </div>
         </div>`;
     }

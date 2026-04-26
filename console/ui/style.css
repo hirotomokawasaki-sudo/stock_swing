@@ -609,3 +609,45 @@ canvas {
     padding-top: 8px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+/* Signals/Orders Chart Improvements */
+.signals-orders-chart {
+    padding: 8px 0;
+}
+
+.chart-stats {
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+}
+
+.stacked-bars {
+    padding: 0 4px;
+}
+
+.stacked-bar-group {
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.stacked-bar-group:hover {
+    opacity: 1;
+}
+
+.stacked-bar-group .signal-bar,
+.stacked-bar-group .order-bar {
+    transition: all 0.2s;
+}
+
+.stacked-bar-group:hover .signal-bar {
+    opacity: 1 !important;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+}
+
+.stacked-bar-group:hover .order-bar {
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+.bar-label {
+    pointer-events: none;
+}
