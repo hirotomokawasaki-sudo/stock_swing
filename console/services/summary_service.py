@@ -144,3 +144,155 @@ class SummaryService:
             return low_conversion[:10]  # Top 10
         except:
             return []
+    
+    def generate_weekly_summary(self, weeks: int = 1) -> Dict[str, Any]:
+        """Generate weekly summary for the last N weeks."""
+        from stock_swing.tracking.pnl_tracker import PnLTracker
+        
+        try:
+            tracker = PnLTracker(self.project_root)
+            
+            # Get date range
+            end_date = datetime.now()
+            start_date = end_date - timedelta(weeks=weeks)
+            
+            # Filter trades in this period
+            period_trades = [
+                t for t in tracker.state.trades
+                if t.get("status") == "closed" and
+                t.get("exit_time") and
+                self._parse_datetime(t.get("exit_time")) >= start_date
+            ]
+            
+            # Calculate metrics
+            total_pnl = sum(t.get("pnl", 0) for t in period_trades)
+            winning_trades = [t for t in period_trades if t.get("pnl", 0) > 0]
+            losing_trades = [t for t in period_trades if t.get("pnl", 0) < 0]
+            
+            win_rate = (len(winning_trades) / len(period_trades) * 100) if period_trades else 0
+            
+            avg_win = sum(t.get("pnl", 0) for t in winning_trades) / len(winning_trades) if winning_trades else 0
+            avg_loss = sum(t.get("pnl", 0) for t in losing_trades) / len(losing_trades) if losing_trades else 0
+            
+            profit_factor = abs(sum(t.get("pnl", 0) for t in winning_trades) / sum(t.get("pnl", 0) for t in losing_trades)) if losing_trades and sum(t.get("pnl", 0) for t in losing_trades) != 0 else 0
+            
+            # Best and worst trades
+            best_trade = max(period_trades, key=lambda t: t.get("pnl", 0)) if period_trades else None
+            worst_trade = min(period_trades, key=lambda t: t.get("pnl", 0)) if period_trades else None
+            
+            # Strategy breakdown
+            from collections import defaultdict
+            strategy_stats = defaultdict(lambda: {"trades": 0, "pnl": 0, "wins": 0})
+            
+            for trade in period_trades:
+                strategy = trade.get("strategy_id", "unknown")
+                strategy_stats[strategy]["trades"] += 1
+                strategy_stats[strategy]["pnl"] += trade.get("pnl", 0)
+                if trade.get("pnl", 0) > 0:
+                    strategy_stats[strategy]["wins"] += 1
+            
+            # Convert to list
+            strategies = [
+                {
+                    "strategy_id": strategy,
+                    "trades": stats["trades"],
+                    "pnl": round(stats["pnl"], 2),
+                    "win_rate": round((stats["wins"] / stats["trades"] * 100) if stats["trades"] > 0 else 0, 1)
+                }
+                for strategy, stats in strategy_stats.items()
+            ]
+            strategies.sort(key=lambda s: s["pnl"], reverse=True)
+            
+            # Symbol breakdown
+            symbol_stats = defaultdict(lambda: {"trades": 0, "pnl": 0, "wins": 0})
+            
+            for trade in period_trades:
+                symbol = trade.get("symbol", "unknown")
+                symbol_stats[symbol]["trades"] += 1
+                symbol_stats[symbol]["pnl"] += trade.get("pnl", 0)
+                if trade.get("pnl", 0) > 0:
+                    symbol_stats[symbol]["wins"] += 1
+            
+            # Top performers
+            top_symbols = sorted(
+                [
+                    {
+                        "symbol": symbol,
+                        "trades": stats["trades"],
+                        "pnl": round(stats["pnl"], 2),
+                        "win_rate": round((stats["wins"] / stats["trades"] * 100) if stats["trades"] > 0 else 0, 1)
+                    }
+                    for symbol, stats in symbol_stats.items()
+                ],
+                key=lambda s: s["pnl"],
+                reverse=True
+            )[:10]
+            
+            # Weekly equity progression (from snapshots)
+            daily_snapshots = list(tracker.state.daily_snapshots)
+            weekly_snapshots = [
+                snap for snap in daily_snapshots
+                if self._parse_datetime(snap.get("date")) >= start_date
+            ]
+            
+            return {
+                "period": {
+                    "start": start_date.date().isoformat(),
+                    "end": end_date.date().isoformat(),
+                    "weeks": weeks
+                },
+                "summary": {
+                    "total_trades": len(period_trades),
+                    "winning_trades": len(winning_trades),
+                    "losing_trades": len(losing_trades),
+                    "win_rate": round(win_rate, 1),
+                    "total_pnl": round(total_pnl, 2),
+                    "avg_win": round(avg_win, 2),
+                    "avg_loss": round(avg_loss, 2),
+                    "profit_factor": round(profit_factor, 2)
+                },
+                "best_trade": {
+                    "symbol": best_trade.get("symbol") if best_trade else None,
+                    "pnl": round(best_trade.get("pnl", 0), 2) if best_trade else 0,
+                    "exit_time": best_trade.get("exit_time") if best_trade else None
+                } if best_trade else None,
+                "worst_trade": {
+                    "symbol": worst_trade.get("symbol") if worst_trade else None,
+                    "pnl": round(worst_trade.get("pnl", 0), 2) if worst_trade else 0,
+                    "exit_time": worst_trade.get("exit_time") if worst_trade else None
+                } if worst_trade else None,
+                "by_strategy": strategies,
+                "top_symbols": top_symbols,
+                "equity_progression": [
+                    {
+                        "date": snap.get("date"),
+                        "equity": snap.get("equity"),
+                        "realized_pnl": snap.get("realized_pnl")
+                    }
+                    for snap in weekly_snapshots[-7:]  # Last 7 days
+                ],
+                "generated_at": datetime.now().isoformat()
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "period": {
+                    "start": (datetime.now() - timedelta(weeks=weeks)).date().isoformat(),
+                    "end": datetime.now().date().isoformat(),
+                    "weeks": weeks
+                }
+            }
+    
+    def _parse_datetime(self, dt_str: Any) -> datetime:
+        """Parse datetime string."""
+        if not dt_str:
+            return datetime.min.replace(tzinfo=None)
+        if isinstance(dt_str, datetime):
+            # Make naive for comparison
+            return dt_str.replace(tzinfo=None) if dt_str.tzinfo else dt_str
+        try:
+            # Try ISO format and make naive
+            dt = datetime.fromisoformat(str(dt_str).replace('Z', '+00:00'))
+            return dt.replace(tzinfo=None) if dt.tzinfo else dt
+        except:
+            return datetime.min.replace(tzinfo=None)

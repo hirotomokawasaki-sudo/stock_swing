@@ -21,7 +21,74 @@ class Console {
         this.newsFilterImpact = localStorage.getItem('newsFilterImpact') || 'all';
         this.newsFilterSymbol = localStorage.getItem('newsFilterSymbol') || '';
         this.newsSort = localStorage.getItem('newsSort') || 'published_at';
+        this.websocket = null;
         this.init();
+    }
+    
+    setupWebSocket() {
+        try {
+            this.websocket = new WebSocket('ws://localhost:3334');
+            
+            this.websocket.onopen = () => {
+                console.log('✅ WebSocket connected');
+                // Send heartbeat every 15 seconds
+                this.heartbeatInterval = setInterval(() => {
+                    if (this.websocket.readyState === WebSocket.OPEN) {
+                        this.websocket.send('ping');
+                    }
+                }, 15000);
+            };
+            
+            this.websocket.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                
+                if (message.type === 'initial') {
+                    // Initial data load
+                    console.log('📥 Received initial data via WebSocket');
+                } else if (message.type === 'update') {
+                    // Real-time update
+                    console.log('🔄 Real-time update received');
+                    this.handleRealtimeUpdate(message.data);
+                }
+            };
+            
+            this.websocket.onclose = () => {
+                console.log('❌ WebSocket disconnected');
+                clearInterval(this.heartbeatInterval);
+                // Reconnect after 5 seconds
+                setTimeout(() => this.setupWebSocket(), 5000);
+            };
+            
+            this.websocket.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        } catch (e) {
+            console.log('WebSocket not available, using polling');
+        }
+    }
+    
+    handleRealtimeUpdate(data) {
+        // Update data without full reload
+        if (this.data && this.data.trading) {
+            this.data.trading.summary = data.summary;
+        }
+        
+        if (this.data && this.data.positions) {
+            this.data.positions.summary = {
+                ...this.data.positions.summary,
+                unrealized_pnl: data.unrealized_pnl
+            };
+            this.data.positions.count = data.position_count;
+        }
+        
+        // Re-render current tab
+        this.render();
+        
+        // Update status bar
+        const lastUpdate = document.getElementById('last-update');
+        if (lastUpdate) {
+            lastUpdate.textContent = `最終更新: ${new Date(data.timestamp).toLocaleTimeString('ja-JP')}`;
+        }
     }
     
     async changePeriod(period) {
@@ -35,6 +102,7 @@ class Console {
         this.setupTabs();
         await this.loadData();
         this.render();
+        this.setupWebSocket();  // Add WebSocket
         this.startAutoRefresh();
     }
 
@@ -1356,10 +1424,13 @@ class Console {
                 <div><span style="color:#6b7280">··</span> ${comparison.benchmark_symbol || 'SPY'}: <strong>${fmt.pctSigned(benchmarkReturn / 100)}</strong></div>
                 <div>Alpha: <strong class="${alpha >= 0 ? 'success' : 'danger'}">${fmt.pctSigned(alpha / 100)}</strong></div>
             </div>
-            <div class="comparison-chart" style="height:200px;position:relative;">
-                ${this.renderComparisonLines(portfolio, benchmark, minVal, maxVal)}
+            <div class="comparison-chart">
+                <canvas id="comparison-chart-canvas" height="200"></canvas>
             </div>
         </div>`;
+        
+        // Render chart after DOM update
+        setTimeout(() => this.createComparisonChart(portfolio, benchmark, comparison.benchmark_symbol), 100);
     }
     
     renderComparisonLines(portfolio, benchmark, minVal, maxVal) {
@@ -1763,6 +1834,103 @@ class Console {
                 aspectRatio: 2,
                 plugins: {
                     legend: { display: false }
+                }
+            }
+        });
+    }
+    
+    createComparisonChart(portfolio, benchmark, benchmarkSymbol = 'SPY') {
+        const ctx = document.getElementById('comparison-chart-canvas');
+        if (!ctx) return;
+        
+        // Destroy existing chart
+        if (this.comparisonChart) {
+            this.comparisonChart.destroy();
+        }
+        
+        const dates = portfolio.map(d => d.date);
+        const portfolioValues = portfolio.map(d => d.value);
+        const benchmarkValues = benchmark.map(d => d.value);
+        
+        this.comparisonChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [
+                    {
+                        label: 'あなた',
+                        data: portfolioValues,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.2,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    },
+                    {
+                        label: benchmarkSymbol,
+                        data: benchmarkValues,
+                        borderColor: '#6b7280',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0.2,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                return `${context.dataset.label}: ${fmt.usd(context.parsed.y)}`;
+                            }
+                        }
+                    },
+                    zoom: {
+                        pan: {
+                            enabled: true,
+                            mode: 'x'
+                        },
+                        zoom: {
+                            wheel: {
+                                enabled: true
+                            },
+                            pinch: {
+                                enabled: true
+                            },
+                            mode: 'x'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: (value) => fmt.usd(value)
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        }
+                    }
                 }
             }
         });

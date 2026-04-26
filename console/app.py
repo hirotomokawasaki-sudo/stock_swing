@@ -179,6 +179,15 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
         
+        # T11: Weekly summary
+        if p == "/api/summary/weekly":
+            try:
+                weeks = int(q.get('weeks', ['1'])[0])
+                data = summary_service.generate_weekly_summary(weeks=weeks)
+                return self._json(data)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+        
         # Daily conversion rate
         if p == "/api/conversion/daily":
             try:
