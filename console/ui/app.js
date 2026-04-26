@@ -189,6 +189,49 @@ class Console {
             </div>
         </div>`;
     }
+    
+    renderConversionRateCard(tradingSummary) {
+        const pipeline = this.data?.pipeline || {};
+        const funnel = pipeline.funnel || {};
+        
+        // Calculate conversion rate
+        const decisions = funnel.decisions || 0;
+        const submissions = funnel.orders_submitted || 0;
+        const conversionRate = decisions > 0 ? (submissions / decisions) * 100 : 0;
+        
+        // Get today's data if available
+        const dailySnapshots = this.data?.trading?.daily_snapshots || [];
+        let todayConversion = null;
+        if (dailySnapshots.length >= 2) {
+            const today = dailySnapshots[dailySnapshots.length - 1];
+            const yesterday = dailySnapshots[dailySnapshots.length - 2];
+            const todaySignals = (today.signals_generated || 0) - (yesterday.signals_generated || 0);
+            const todayOrders = (today.orders_submitted || 0) - (yesterday.orders_submitted || 0);
+            if (todaySignals > 0) {
+                todayConversion = (todayOrders / todaySignals) * 100;
+            }
+        }
+        
+        return `
+        <div class="card conversion-rate-card">
+            <h3>🎯 Conversion Rate</h3>
+            ${todayConversion !== null ? `
+                <div class="metric">
+                    <span class="label">今日</span>
+                    <span class="value ${todayConversion >= 20 ? 'success' : todayConversion >= 10 ? '' : 'warn'}">${todayConversion.toFixed(1)}%</span>
+                </div>
+            ` : ''}
+            <div class="metric">
+                <span class="label">累積</span>
+                <span class="value ${conversionRate >= 20 ? 'success' : conversionRate >= 10 ? '' : 'warn'}">${conversionRate.toFixed(1)}%</span>
+                <span class="small muted">(${submissions}/${decisions})</span>
+            </div>
+            <div class="metric">
+                <span class="label">目標</span>
+                <span class="value muted">20-30%</span>
+            </div>
+        </div>`;
+    }
 
     renderAlerts() {
         const alerts = this.data?.alerts || [];
@@ -252,6 +295,7 @@ class Console {
                 <div class="metric"><span class="label">Decisions</span><span class="value">${this.data?.data_status?.counts?.decisions ?? 0}</span></div>
                 ${this.renderDelta(deltas.decisions_vs_prev_snapshot, 'count')}
             </div>
+            ${this.renderConversionRateCard(ts)}
             <div class="card">
                 <h3>リスク</h3>
                 <div class="metric"><span class="label">Gross Exposure</span><span class="value">${fmt.usd(ps.gross_exposure)}</span></div>
@@ -1340,12 +1384,21 @@ class Console {
             return `${x}% ${y}px`;
         }).join(', ');
         
+        // Calculate mid value for better scale
+        const midVal = (maxVal + minVal) / 2;
+        
         // Simplified SVG rendering
         return `
-        <svg width="100%" height="200" style="border:1px solid rgba(255,255,255,0.1);border-radius:4px;">
+        <svg width="100%" height="200" style="border:1px solid rgba(255,255,255,0.1);border-radius:4px;background:rgba(0,0,0,0.2);">
+            <!-- Grid lines -->
+            <line x1="0" y1="10" x2="100%" y2="10" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="0" y1="100" x2="100%" y2="100" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+            <line x1="0" y1="190" x2="100%" y2="190" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            
             <!-- Y-axis labels -->
-            <text x="10" y="20" fill="#6b7280" font-size="11">${fmt.usd(maxVal)}</text>
-            <text x="10" y="190" fill="#6b7280" font-size="11">${fmt.usd(minVal)}</text>
+            <text x="10" y="20" fill="#9ca3af" font-size="11" font-weight="500">${fmt.usd(maxVal)}</text>
+            <text x="10" y="105" fill="#6b7280" font-size="10">${fmt.usd(midVal)}</text>
+            <text x="10" y="190" fill="#9ca3af" font-size="11" font-weight="500">${fmt.usd(minVal)}</text>
             
             <!-- Benchmark line (dashed) -->
             ${benchmark.length > 0 ? `
@@ -1355,7 +1408,7 @@ class Console {
                     stroke="#6b7280"
                     stroke-width="2"
                     stroke-dasharray="5,5"
-                    opacity="0.6"
+                    opacity="0.7"
                 />
             ` : ''}
             
@@ -1366,6 +1419,11 @@ class Console {
                 stroke="#3b82f6"
                 stroke-width="3"
             />
+            
+            <!-- Data points (optional) -->
+            ${portfolio.map((d, i) => `
+                <circle cx="${(i / (portfolio.length - 1)) * 100}%" cy="${((maxVal - d.value) / range) * 180 + 10}" r="2" fill="#3b82f6"/>
+            `).join('')}
         </svg>`;
     }
 

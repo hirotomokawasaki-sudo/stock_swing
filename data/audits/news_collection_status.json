@@ -1,5 +1,5 @@
 {
-  "time": "2026-04-26T03:16:02.069508+00:00",
+  "time": "2026-04-26T05:03:59.102473+00:00",
   "symbols": [
     {
       "symbol": "MRVL",
@@ -48,7 +48,7 @@
     },
     {
       "symbol": "NOW",
-      "news_count": 176,
+      "news_count": 177,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",

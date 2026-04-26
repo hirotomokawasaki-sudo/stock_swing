@@ -46,6 +46,15 @@ class ParameterService:
             "description": "Maximum position per symbol (% of equity)",
             "risk_level": "high",
         },
+        "max_sector_exposure_pct": {
+            "current": 0.80,
+            "min": 0.50,
+            "max": 0.95,
+            "recommended": 0.80,
+            "unit": "percentage",
+            "description": "Maximum exposure per sector (% of equity)",
+            "risk_level": "medium",
+        },
     }
     
     def __init__(self, project_root: Path):
