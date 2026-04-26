@@ -12,6 +12,7 @@ const fmt = {
 class Console {
     constructor() {
         this.currentTab = 'overview';
+        this.currentPeriod = localStorage.getItem('chartPeriod') || 'month';
         this.data = null;
         this.selectedNewsId = null;
         this.newsFilterUsed = localStorage.getItem('newsFilterUsed') === 'true';
@@ -21,6 +22,13 @@ class Console {
         this.newsFilterSymbol = localStorage.getItem('newsFilterSymbol') || '';
         this.newsSort = localStorage.getItem('newsSort') || 'published_at';
         this.init();
+    }
+    
+    async changePeriod(period) {
+        this.currentPeriod = period;
+        localStorage.setItem('chartPeriod', period);
+        await this.loadData();
+        this.render();
     }
 
     async init() {
@@ -43,7 +51,7 @@ class Console {
 
     async loadData() {
         try {
-            const response = await fetch('/api/dashboard');
+            const response = await fetch(`/api/dashboard?period=${this.currentPeriod}`);
             this.data = await response.json();
             this.updateStatusBar();
         } catch (error) {
@@ -147,6 +155,40 @@ class Console {
             </div>
         </div>`;
     }
+    
+    renderDailyPnlCard(dailyPnl) {
+        if (!dailyPnl || !dailyPnl.available) {
+            return `
+            <div class="card">
+                <h3>📅 Daily P&L</h3>
+                <p class="muted">データ不足</p>
+            </div>`;
+        }
+        
+        const today = dailyPnl.today || {};
+        const best = dailyPnl.best_day || {};
+        const worst = dailyPnl.worst_day || {};
+        
+        return `
+        <div class="card daily-pnl-card">
+            <h3>📅 Daily P&L</h3>
+            <div class="metric">
+                <span class="label">今日</span>
+                <span class="value ${(today.pnl || 0) >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(today.pnl || 0)}</span>
+                <span class="small muted">(${fmt.pctSigned((today.pnl_pct || 0) / 100)})</span>
+            </div>
+            <div class="metric">
+                <span class="label">Best Day</span>
+                <span class="value success">${fmt.usdSigned(best.pnl || 0)}</span>
+                <span class="small muted">${best.date || ''}</span>
+            </div>
+            <div class="metric">
+                <span class="label">Worst Day</span>
+                <span class="value danger">${fmt.usdSigned(worst.pnl || 0)}</span>
+                <span class="small muted">${worst.date || ''}</span>
+            </div>
+        </div>`;
+    }
 
     renderAlerts() {
         const alerts = this.data?.alerts || [];
@@ -180,6 +222,9 @@ class Console {
         const cash = account.cash || 0;
         const cashPct = latestEquity > 0 ? (cash / latestEquity) : 0;
         const positionPct = latestEquity > 0 ? ((latestEquity - cash) / latestEquity) : 0;
+        
+        // Daily PnL stats
+        const dailyPnl = this.data?.trading?.daily_pnl_stats || {};
 
         return `
         <div class="grid">
@@ -196,6 +241,7 @@ class Console {
                 <div class="metric"><span class="label">確定損益</span><span class="value ${ts.cumulative_realized_pnl >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(ts.cumulative_realized_pnl)}</span></div>
                 <div class="metric"><span class="label">合計損益</span><span class="value big ${(ps.unrealized_pnl + ts.cumulative_realized_pnl) >= 0 ? 'success' : 'danger'}">${fmt.usdSigned((ps.unrealized_pnl || 0) + (ts.cumulative_realized_pnl || 0))}</span></div>
             </div>
+            ${this.renderDailyPnlCard(dailyPnl)}
             <div class="card">
                 <h3>オープン取引</h3>
                 <div class="metric"><span class="label">件数</span><span class="value">${ts.open_trades ?? 0}</span></div>
@@ -221,7 +267,11 @@ class Console {
 
     renderOverviewCharts() {
         const charts = this.data?.charts?.overview || {};
+        const comparison = this.data?.charts?.comparison || {};
+        
         return `
+        ${this.renderPeriodSelector()}
+        ${this.renderComparisonChart(comparison)}
         <div class="grid charts-grid">
             <div class="card">
                 <h3>Equity推移</h3>
@@ -1197,6 +1247,126 @@ class Console {
                 期間: ${firstDate} ～ ${lastDate} (最大値: ${maxVal})
             </div>
         </div>`;
+    }
+    
+    renderPeriodSelector() {
+        const currentPeriod = this.currentPeriod || 'month';
+        const periods = [
+            { value: 'day', label: 'Day' },
+            { value: '3days', label: '3 Days' },
+            { value: 'week', label: 'Week' },
+            { value: 'month', label: 'Month' },
+            { value: 'all', label: 'All Time' }
+        ];
+        
+        return `
+        <div class="period-selector" style="margin-bottom:16px;">
+            ${periods.map(p => `
+                <button class="period-btn ${p.value === currentPeriod ? 'active' : ''}" 
+                        data-period="${p.value}"
+                        onclick="app.changePeriod('${p.value}')">
+                    ${p.label}
+                </button>
+            `).join('')}
+        </div>`;
+    }
+    
+    renderComparisonChart(comparison) {
+        if (!comparison || !comparison.available) {
+            return `<div class="card"><h3>📈 Portfolio Value Over Time</h3><p class="muted">ベンチマークデータなし</p></div>`;
+        }
+        
+        const portfolio = comparison.portfolio || [];
+        const benchmark = comparison.benchmark || [];
+        
+        if (portfolio.length === 0) {
+            return `<div class="card"><h3>📈 Portfolio Value Over Time</h3><p class="muted">データなし</p></div>`;
+        }
+        
+        // Calculate stats
+        const portfolioStart = portfolio[0]?.value || 100000;
+        const portfolioEnd = portfolio[portfolio.length - 1]?.value || 100000;
+        const portfolioReturn = ((portfolioEnd - portfolioStart) / portfolioStart) * 100;
+        
+        const benchmarkStart = benchmark[0]?.value || 100000;
+        const benchmarkEnd = benchmark[benchmark.length - 1]?.value || 100000;
+        const benchmarkReturn = ((benchmarkEnd - benchmarkStart) / benchmarkStart) * 100;
+        
+        const alpha = portfolioReturn - benchmarkReturn;
+        
+        // Render line chart
+        const maxVal = Math.max(
+            ...portfolio.map(d => d.value || 0),
+            ...benchmark.map(d => d.value || 0)
+        );
+        const minVal = Math.min(
+            ...portfolio.map(d => d.value || 0),
+            ...benchmark.map(d => d.value || 0)
+        );
+        
+        return `
+        <div class="card comparison-chart-card" style="margin-bottom:16px;">
+            <h3>📈 Portfolio Value Over Time vs ${comparison.benchmark_symbol || 'SPY'}</h3>
+            <div class="comparison-stats" style="display:flex;gap:20px;margin-bottom:12px;font-size:13px;">
+                <div><span style="color:#3b82f6">━━</span> あなた: <strong class="${portfolioReturn >= 0 ? 'success' : 'danger'}">${fmt.pctSigned(portfolioReturn / 100)}</strong></div>
+                <div><span style="color:#6b7280">··</span> ${comparison.benchmark_symbol || 'SPY'}: <strong>${fmt.pctSigned(benchmarkReturn / 100)}</strong></div>
+                <div>Alpha: <strong class="${alpha >= 0 ? 'success' : 'danger'}">${fmt.pctSigned(alpha / 100)}</strong></div>
+            </div>
+            <div class="comparison-chart" style="height:200px;position:relative;">
+                ${this.renderComparisonLines(portfolio, benchmark, minVal, maxVal)}
+            </div>
+        </div>`;
+    }
+    
+    renderComparisonLines(portfolio, benchmark, minVal, maxVal) {
+        const range = maxVal - minVal;
+        if (range === 0) return '<p class="muted">データ不足</p>';
+        
+        // Create SVG-like representation with divs
+        const width = 100; // percentage
+        const height = 200; // px
+        
+        // Portfolio line points
+        const portfolioPoints = portfolio.map((d, i) => {
+            const x = (i / (portfolio.length - 1)) * width;
+            const y = ((maxVal - d.value) / range) * height;
+            return `${x}% ${y}px`;
+        }).join(', ');
+        
+        // Benchmark line points (if available)
+        const benchmarkPoints = benchmark.map((d, i) => {
+            const x = (i / (benchmark.length - 1)) * width;
+            const y = ((maxVal - d.value) / range) * height;
+            return `${x}% ${y}px`;
+        }).join(', ');
+        
+        // Simplified SVG rendering
+        return `
+        <svg width="100%" height="200" style="border:1px solid rgba(255,255,255,0.1);border-radius:4px;">
+            <!-- Y-axis labels -->
+            <text x="10" y="20" fill="#6b7280" font-size="11">${fmt.usd(maxVal)}</text>
+            <text x="10" y="190" fill="#6b7280" font-size="11">${fmt.usd(minVal)}</text>
+            
+            <!-- Benchmark line (dashed) -->
+            ${benchmark.length > 0 ? `
+                <polyline 
+                    points="${benchmark.map((d, i) => `${(i / (benchmark.length - 1)) * 100}%,${((maxVal - d.value) / range) * 180 + 10}`).join(' ')}"
+                    fill="none"
+                    stroke="#6b7280"
+                    stroke-width="2"
+                    stroke-dasharray="5,5"
+                    opacity="0.6"
+                />
+            ` : ''}
+            
+            <!-- Portfolio line (solid) -->
+            <polyline 
+                points="${portfolio.map((d, i) => `${(i / (portfolio.length - 1)) * 100}%,${((maxVal - d.value) / range) * 180 + 10}`).join(' ')}"
+                fill="none"
+                stroke="#3b82f6"
+                stroke-width="3"
+            />
+        </svg>`;
     }
 
     renderSignalsOrders(series = []) {

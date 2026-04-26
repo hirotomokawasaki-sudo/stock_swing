@@ -108,7 +108,8 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         # API endpoints
         if p == "/api/dashboard":
             try:
-                data = dashboard.get_dashboard()
+                period = q.get('period', ['month'])[0]
+                data = dashboard.get_dashboard(period=period)
                 return self._json(data)
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)

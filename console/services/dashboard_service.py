@@ -45,7 +45,7 @@ class DashboardService:
         except Exception:
             return None
 
-    def get_dashboard(self) -> Dict[str, Any]:
+    def get_dashboard(self, period: str = 'month') -> Dict[str, Any]:
         trading = self.get_trading()
         positions = self.get_positions(trading=trading)
         cron_jobs = self.get_cron_jobs()
@@ -75,7 +75,7 @@ class DashboardService:
                 news=news,
             ),
             "overview": overview,
-            "charts": self.get_charts(trading=trading, positions=positions),
+            "charts": self.get_charts(trading=trading, positions=positions, period=period),
             "pipeline": pipeline,
             "cron_jobs": cron_jobs,
             "reconciliation": self.get_reconciliation_status(),
@@ -194,6 +194,9 @@ class DashboardService:
             # Get closed trades from tracker state
             closed_trades = [dict(t) for t in self._tracker.state.trades if t.get("status") == "closed"]
             
+            # Calculate daily PnL stats
+            daily_pnl_stats = self._calculate_daily_pnl_stats(daily_snapshots)
+            
             return {
                 "available": True,
                 "time": now_iso(),
@@ -203,6 +206,7 @@ class DashboardService:
                 "daily_snapshots": daily_snapshots[-30:],
                 "open_positions": open_positions,
                 "current_prices": current_prices,
+                "daily_pnl_stats": daily_pnl_stats,
             }
         except Exception as e:
             return {"available": False, "error": str(e)}
@@ -302,16 +306,20 @@ class DashboardService:
             "unrealized_pnl": positions.get("summary", {}).get("unrealized_pnl"),
         }
 
-    def get_charts(self, trading: Dict[str, Any], positions: Dict[str, Any]) -> Dict[str, Any]:
+    def get_charts(self, trading: Dict[str, Any], positions: Dict[str, Any], period: str = 'month') -> Dict[str, Any]:
         snapshots = trading.get("daily_snapshots", []) if trading else []
         summary = trading.get("summary", {}) if trading else {}
         peak_equity = summary.get("peak_equity") or 0
+        
+        # Filter snapshots by period
+        filtered_snapshots = self._filter_by_period(snapshots, period)
+        
         equity = []
         drawdown_pct = []
         open_positions = []
         signals_orders = []
 
-        for idx, snap in enumerate(snapshots[-30:]):
+        for idx, snap in enumerate(filtered_snapshots):
             ts = f"{snap.get('date', '')}T00:00:00"
             eq = snap.get("equity")
             dd = None
@@ -326,14 +334,110 @@ class DashboardService:
                 "orders": snap.get("orders_submitted"),
             })
 
+        # Get comparison chart with benchmark
+        comparison_chart = self._get_comparison_chart(snapshots, period)
+
         return {
             "overview": {
                 "equity": equity,
                 "drawdown_pct": drawdown_pct,
                 "open_positions": open_positions,
                 "signals_orders": signals_orders,
-            }
+            },
+            "comparison": comparison_chart,
         }
+    
+    def _filter_by_period(self, snapshots: List[Dict[str, Any]], period: str) -> List[Dict[str, Any]]:
+        """Filter snapshots by time period."""
+        if not snapshots:
+            return []
+        
+        if period == 'day':
+            return snapshots[-1:]
+        elif period == '3days':
+            return snapshots[-3:]
+        elif period == 'week':
+            return snapshots[-7:]
+        elif period == 'month':
+            return snapshots[-30:]
+        else:  # 'all'
+            return snapshots
+    
+    def _get_comparison_chart(self, snapshots: List[Dict[str, Any]], period: str) -> Dict[str, Any]:
+        """Get portfolio vs benchmark comparison chart data."""
+        try:
+            from console.services.benchmark_service import BenchmarkService
+            benchmark_service = BenchmarkService(self.project_root)
+            
+            # Filter snapshots by period
+            filtered_snapshots = self._filter_by_period(snapshots, period)
+            
+            if not filtered_snapshots:
+                return {"available": False, "error": "No snapshot data"}
+            
+            # Load benchmark data
+            spy_data = benchmark_service.load_benchmark_data('SPY')
+            if not spy_data:
+                return {"available": False, "error": "No benchmark data"}
+            
+            # Match dates and normalize
+            portfolio_series = []
+            benchmark_series = []
+            
+            # Build benchmark map
+            spy_map = {d['date']: d['close'] for d in spy_data}
+            
+            # Get starting points
+            first_snap = filtered_snapshots[0]
+            first_date = first_snap.get('date')
+            first_equity = first_snap.get('equity')
+            
+            if not first_date or not first_equity:
+                return {"available": False, "error": "Invalid snapshot data"}
+            
+            first_spy_price = spy_map.get(first_date)
+            if not first_spy_price:
+                # Find closest date
+                for snap in filtered_snapshots:
+                    date = snap.get('date')
+                    if date in spy_map:
+                        first_date = date
+                        first_equity = snap.get('equity')
+                        first_spy_price = spy_map[date]
+                        break
+            
+            if not first_spy_price:
+                return {"available": False, "error": "No matching benchmark data"}
+            
+            # Normalize and build series
+            for snap in filtered_snapshots:
+                date = snap.get('date')
+                equity = snap.get('equity')
+                
+                if date and equity:
+                    portfolio_series.append({
+                        'date': date,
+                        'value': equity
+                    })
+                    
+                    # Normalize SPY to same starting point
+                    if date in spy_map:
+                        spy_price = spy_map[date]
+                        normalized_spy = (spy_price / first_spy_price) * first_equity
+                        benchmark_series.append({
+                            'date': date,
+                            'value': normalized_spy
+                        })
+            
+            return {
+                "available": True,
+                "portfolio": portfolio_series,
+                "benchmark": benchmark_series,
+                "benchmark_symbol": "SPY",
+                "period": period
+            }
+        except Exception as e:
+            return {"available": False, "error": str(e)}
 
     def get_pipeline_summary(self, trading: Dict[str, Any] | None = None) -> Dict[str, Any]:
         counts = self.data_adapter.get_counts() or {}
@@ -1797,6 +1901,52 @@ class DashboardService:
             return round(float(current) - float(previous), 2)
         except Exception:
             return None
+    
+    def _calculate_daily_pnl_stats(self, snapshots: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Calculate daily PnL statistics (best, worst, today)."""
+        if not snapshots or len(snapshots) < 2:
+            return {
+                "available": False,
+                "best_day": None,
+                "worst_day": None,
+                "today": None
+            }
+        
+        daily_pnls = []
+        
+        for i in range(1, len(snapshots)):
+            prev_equity = snapshots[i-1].get('equity')
+            curr_equity = snapshots[i].get('equity')
+            date = snapshots[i].get('date')
+            
+            if prev_equity and curr_equity and date:
+                daily_pnl = curr_equity - prev_equity
+                daily_pnls.append({
+                    'date': date,
+                    'pnl': daily_pnl,
+                    'pnl_pct': (daily_pnl / prev_equity) * 100 if prev_equity > 0 else 0
+                })
+        
+        if not daily_pnls:
+            return {
+                "available": False,
+                "best_day": None,
+                "worst_day": None,
+                "today": None
+            }
+        
+        # Find best and worst
+        best_day = max(daily_pnls, key=lambda x: x['pnl'])
+        worst_day = min(daily_pnls, key=lambda x: x['pnl'])
+        today = daily_pnls[-1] if daily_pnls else None
+        
+        return {
+            "available": True,
+            "best_day": best_day,
+            "worst_day": worst_day,
+            "today": today,
+            "total_days": len(daily_pnls)
+        }
 
     def _parse_iso_datetime(self, value: str | None) -> datetime | None:
         if not value:

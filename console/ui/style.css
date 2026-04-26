@@ -651,3 +651,65 @@ canvas {
 .bar-label {
     pointer-events: none;
 }
+
+/* Period Selector */
+.period-selector {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+}
+
+.period-btn {
+    padding: 8px 16px;
+    background: #1a2332;
+    border: 1px solid #2d3f56;
+    color: #9ca3af;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.period-btn:hover {
+    background: #243447;
+    border-color: #3b82f6;
+    color: #e5e7eb;
+}
+
+.period-btn.active {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* Comparison Chart */
+.comparison-chart-card {
+    background: linear-gradient(135deg, #1a2332 0%, #243447 100%);
+}
+
+.comparison-stats {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 10px 16px;
+    border-radius: 6px;
+}
+
+.comparison-chart {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    padding: 12px;
+}
+
+/* Daily PnL Card */
+.daily-pnl-card .metric {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.daily-pnl-card .metric:last-child {
+    border-bottom: none;
+}
