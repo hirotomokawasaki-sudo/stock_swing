@@ -1047,15 +1047,29 @@ class DashboardService:
         unrealized_pl = float(broker_pos.get('unrealized_pl', 0))
         unrealized_plpc = float(broker_pos.get('unrealized_plpc', 0))
         
-        # Calculate holding days (if created_at available)
+        # Get entry_time and calculate holding days from PnL tracker
         holding_days = None
-        created_at = broker_pos.get('created_at')
-        if created_at:
+        entry_time = None
+        if self._tracker:
             try:
-                from datetime import timezone as tz
-                created_dt = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
-                now_dt = datetime.now(tz.utc)
-                holding_days = (now_dt - created_dt).days
+                # Find open trades for this symbol
+                open_trades = [t for t in self._tracker.state.trades 
+                              if t.get('symbol') == symbol and t.get('status') == 'open']
+                if open_trades:
+                    # Use the earliest entry time
+                    entry_times = [t.get('entry_time') for t in open_trades if t.get('entry_time')]
+                    if entry_times:
+                        entry_time = min(entry_times)  # Earliest entry
+                        try:
+                            from datetime import timezone as tz
+                            if isinstance(entry_time, str):
+                                entry_dt = datetime.fromisoformat(entry_time.replace('Z', '+00:00'))
+                            else:
+                                entry_dt = datetime.fromtimestamp(entry_time, tz=tz.utc)
+                            now_dt = datetime.now(tz.utc)
+                            holding_days = (now_dt - entry_dt).days
+                        except:
+                            pass
             except:
                 pass
         
@@ -1091,6 +1105,7 @@ class DashboardService:
             'unrealized_pnl': unrealized_pl,
             'unrealized_pnl_pct': unrealized_plpc * 100,
             'holding_days': holding_days,
+            'entry_time': entry_time,  # Add entry_time field
             'strategy_id': strategy_id,
             'source': 'broker',
         }

@@ -12,14 +12,15 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from stock_swing.tracking.pnl_tracker import PnLTracker
 
-def find_strategy_for_symbol(symbol: str, decisions_dir: Path) -> str:
-    """Find most common strategy for a symbol from decision files."""
+def find_strategy_and_time_for_symbol(symbol: str, decisions_dir: Path) -> tuple:
+    """Find most common strategy and earliest entry time for a symbol from decision files."""
     strategies = []
+    entry_times = []
     
     decision_files = sorted(
         decisions_dir.glob(f"decision_{symbol}_*.json"),
         key=lambda p: p.stat().st_mtime,
-        reverse=True
+        reverse=False  # Oldest first to find earliest entry
     )
     
     for df in decision_files[:20]:  # Check last 20 decisions
@@ -29,15 +30,26 @@ def find_strategy_for_symbol(symbol: str, decisions_dir: Path) -> str:
                 strategy_id = decision.get('strategy_id')
                 if strategy_id:
                     strategies.append(strategy_id)
+                
+                # Get timestamp from decision (try multiple fields)
+                timestamp = decision.get('timestamp') or decision.get('generated_at')
+                if timestamp and not entry_times:  # Only take first (earliest) entry
+                    entry_times.append(timestamp)
         except:
             continue
+    
+    strategy = 'unknown'
+    entry_time = None
     
     if strategies:
         # Return most common strategy
         from collections import Counter
-        return Counter(strategies).most_common(1)[0][0]
+        strategy = Counter(strategies).most_common(1)[0][0]
     
-    return 'unknown'
+    if entry_times:
+        entry_time = entry_times[0]  # Earliest entry
+    
+    return strategy, entry_time
 
 def main():
     tracker = PnLTracker(PROJECT_ROOT)
@@ -51,14 +63,14 @@ def main():
     print(f"Total trades: {len(tracker.state.trades)}")
     print()
     
-    # Build strategy map for each symbol
-    symbol_strategies = {}
+    # Build strategy and entry_time map for each symbol
+    symbol_info = {}
     symbols = set(t.get('symbol') for t in tracker.state.trades if t.get('symbol'))
     
     for symbol in symbols:
-        strategy = find_strategy_for_symbol(symbol, decisions_dir)
-        symbol_strategies[symbol] = strategy
-        print(f"  {symbol}: {strategy}")
+        strategy, entry_time = find_strategy_and_time_for_symbol(symbol, decisions_dir)
+        symbol_info[symbol] = {'strategy': strategy, 'entry_time': entry_time}
+        print(f"  {symbol}: {strategy}, entry_time={entry_time}")
     
     print()
     print("Updating trades...")
@@ -66,12 +78,19 @@ def main():
     updated = 0
     for trade in tracker.state.trades:
         symbol = trade.get('symbol')
-        if symbol and symbol in symbol_strategies:
+        if symbol and symbol in symbol_info:
+            info = symbol_info[symbol]
+            
+            # Update strategy_id
             old_strategy = trade.get('strategy_id', 'N/A')
-            new_strategy = symbol_strategies[symbol]
-            if old_strategy in ['N/A', None, 'unknown']:
+            new_strategy = info['strategy']
+            if old_strategy in ['N/A', None, 'unknown', 'breakout_momentum_v1']:
                 trade['strategy_id'] = new_strategy
                 updated += 1
+            
+            # Update entry_time if available and trade is open
+            if info['entry_time'] and trade.get('status') == 'open':
+                trade['entry_time'] = info['entry_time']
     
     print(f"Updated {updated} trades")
     
