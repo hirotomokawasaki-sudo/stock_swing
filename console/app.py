@@ -171,6 +171,17 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
 
+        if p == "/api/decision_reasons":
+            try:
+                strategy = q.get('strategy', [None])[0]
+                days = int(q.get('days', ['7'])[0])
+                limit = int(q.get('limit', ['200'])[0])
+                symbol = q.get('symbol', [None])[0]
+                data = dashboard.get_decision_reasons(strategy=strategy, days=days, limit=limit, symbol=symbol)
+                return self._json(data)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+
         # T11: Daily summary
         if p == "/api/summary/daily":
             try:

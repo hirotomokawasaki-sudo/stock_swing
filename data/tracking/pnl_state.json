@@ -337,7 +337,8 @@
       "exit_time": "2026-04-21 15:59:48.506842+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "strategy_exit"
     },
     {
       "id": 26,

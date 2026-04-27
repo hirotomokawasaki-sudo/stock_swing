@@ -5,6 +5,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List
+from collections import Counter
 
 from console.adapters.cron_adapter import CronAdapter
 from console.adapters.data_adapter import DataAdapter
@@ -2147,6 +2148,135 @@ class DashboardService:
         except Exception as e:
             return {"available": False, "error": str(e)}
     
+    def get_decision_reasons(self, strategy: str | None = None, days: int = 7, limit: int = 200, symbol: str | None = None) -> Dict[str, Any]:
+        """Aggregate deny/reject/review reasons from recent decision files."""
+        try:
+            decisions_dir = self.project_root / "data" / "decisions"
+            if not decisions_dir.exists():
+                return {"available": False, "error": "decisions directory not found"}
+
+            cutoff = datetime.now().astimezone() - __import__('datetime').timedelta(days=days)
+            files = sorted(decisions_dir.glob("decision_*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+            rows = []
+            for df in files:
+                if len(rows) >= limit:
+                    break
+                try:
+                    d = json.loads(df.read_text(encoding="utf-8"))
+                except Exception:
+                    continue
+                if strategy and d.get("strategy_id") != strategy:
+                    continue
+                if symbol and str(d.get("symbol") or "").upper() != str(symbol).upper():
+                    continue
+                ts_raw = d.get("generated_at")
+                try:
+                    ts = datetime.fromisoformat(str(ts_raw).replace("Z", "+00:00")) if ts_raw else None
+                except Exception:
+                    ts = None
+                if ts and ts.astimezone() < cutoff:
+                    continue
+                rows.append(d)
+
+            def norm_reason(decision: Dict[str, Any]) -> str:
+                notes = " ".join((decision.get("evidence") or {}).get("notes") or []).lower()
+                if "position_size would exceed limit" in notes or ("position" in notes and "exceed limit" in notes):
+                    return "position_size_limit"
+                if "signal" in notes and "threshold" in notes:
+                    return "signal_below_threshold"
+                if "confidence" in notes and "threshold" in notes:
+                    return "confidence_below_threshold"
+                if "position limit" in notes:
+                    return "symbol_position_limit"
+                if "sector" in notes and "limit" in notes:
+                    return "sector_cap"
+                if "exposure" in notes and "limit" in notes:
+                    return "exposure_cap"
+                if "review" in notes:
+                    return "manual_review_required"
+                if "deny" in notes:
+                    return "risk_denied"
+                return "other"
+
+            summary = {"buy": 0, "sell": 0, "hold": 0, "deny": 0, "review": 0, "pass": 0, "reject": 0}
+            deny_counter: Counter[str] = Counter()
+            review_counter: Counter[str] = Counter()
+            by_symbol: Dict[str, Dict[str, Any]] = {}
+            recent_denies = []
+            signal_vals = []
+            conf_vals = []
+
+            for d in rows:
+                action = str(d.get("action") or "hold").lower()
+                risk_state = str(d.get("risk_state") or "").lower()
+                sym = str(d.get("symbol") or "UNKNOWN").upper()
+                summary[action] = summary.get(action, 0) + 1
+                if risk_state == "pass":
+                    summary["pass"] += 1
+                else:
+                    summary["reject"] += 1
+                sig = d.get("signal_strength")
+                conf = d.get("confidence")
+                if sig is not None:
+                    signal_vals.append(float(sig))
+                if conf is not None:
+                    conf_vals.append(float(conf))
+
+                sym_row = by_symbol.setdefault(sym, {"symbol": sym, "decision_count": 0, "deny": 0, "review": 0, "top_deny_reason": None})
+                sym_row["decision_count"] += 1
+
+                reason = norm_reason(d)
+                if action == "deny" or risk_state not in {"", "pass"}:
+                    deny_counter[reason] += 1
+                    sym_row["deny"] += 1
+                    sym_row["top_deny_reason"] = sym_row["top_deny_reason"] or reason
+                    if len(recent_denies) < 20:
+                        recent_denies.append({
+                            "symbol": sym,
+                            "ts": d.get("generated_at"),
+                            "reason": reason,
+                            "action": action,
+                            "signal_strength": sig,
+                            "confidence": conf,
+                        })
+                if action == "review" or risk_state == "review":
+                    review_counter[reason] += 1
+                    sym_row["review"] += 1
+
+            def dist(vals: list[float]) -> Dict[str, Any]:
+                if not vals:
+                    return {"avg": None, "p25": None, "p50": None, "p75": None}
+                vals = sorted(vals)
+                n = len(vals)
+                def q(pct: float):
+                    idx = min(n - 1, max(0, int(round((n - 1) * pct))))
+                    return round(vals[idx], 4)
+                return {
+                    "avg": round(sum(vals) / n, 4),
+                    "p25": q(0.25),
+                    "p50": q(0.50),
+                    "p75": q(0.75),
+                }
+
+            return {
+                "available": True,
+                "strategy": strategy,
+                "period": {"days": days, "decision_count": len(rows)},
+                "summary": summary,
+                "top_reasons": {
+                    "deny": [{"reason": r, "count": c} for r, c in deny_counter.most_common(10)],
+                    "review": [{"reason": r, "count": c} for r, c in review_counter.most_common(10)],
+                },
+                "by_symbol": sorted(by_symbol.values(), key=lambda x: (x.get("deny", 0), x.get("decision_count", 0)), reverse=True)[:20],
+                "distributions": {
+                    "signal_strength": dist(signal_vals),
+                    "confidence": dist(conf_vals),
+                },
+                "samples": {"recent_denies": recent_denies},
+            }
+        except Exception as e:
+            return {"available": False, "error": str(e)}
+
     def get_live_metrics(self) -> Dict[str, Any]:
         """Get real-time risk and portfolio metrics.
         
