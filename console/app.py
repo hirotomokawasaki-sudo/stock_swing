@@ -40,7 +40,7 @@ from console.services.benchmark_service import BenchmarkService
 from console.utils.time_utils import now_iso
 
 HOST = "0.0.0.0"
-PORT = 3333
+PORT = int(os.environ.get("CONSOLE_PORT", "3333"))
 
 # Initialize services
 dashboard = DashboardService(PROJECT_ROOT)

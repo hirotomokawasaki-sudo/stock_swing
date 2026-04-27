@@ -16,8 +16,9 @@ from console.utils.time_utils import now_iso
 
 # P&L tracker
 _project_root_guess = Path(__file__).resolve().parents[2]
-if (_project_root_guess / "src").exists():
-    sys.path.insert(0, str(_project_root_guess / "src"))
+_src_path = _project_root_guess / "src"
+if _src_path.exists() and str(_src_path) not in sys.path:
+    sys.path.insert(0, str(_src_path))
 
 try:
     from stock_swing.tracking.pnl_tracker import PnLTracker
@@ -26,7 +27,6 @@ try:
 except Exception as e:
     _HAS_TRACKER = False
     BrokerClient = None
-    # Debug: print(f"Failed to import tracker: {e}")
 
 
 class DashboardService:
