@@ -297,7 +297,8 @@
 - [ ] `simple_exit_v2` の改善案が文書化されている
 - [ ] Exit 戦略の改善優先順位が明確になっている
 
-**完了日**: 2026-04-27 (Phase 1: T21-1, T21-2)
+**完了日**: 2026-04-27
+**進捗**: Phase 1完了（60%）、Phase 2完了（改善案定義）
 **確認結果**:
 - exit_reason backfill: 23/24件（P&L heuristic使用）
 - API実装: `/api/exit_reasons` 動作確認済み
@@ -306,6 +307,11 @@
   - stop_loss: 8件 (0% win rate, -$66.47 avg, -$532 total)
   - P&L比率: 3.7:1（利益 vs 損失）
 - 分析スクリプト: `scripts/check_exit_reasons.py` 作成
+- **Phase 2完了**: simple_exit_v2改善案文書化完了
+  - 主要発見: 14/15件が早期利確（平均4.55%、目標10%の半分）
+  - 改善案: Trailing stop（優先度最高）、Volatility-aware、Partial exit
+  - 期待効果: 平均リターン4.55%→8-10%、年間P&L +$1,000-1,500
+  - ドキュメント: `docs/simple_exit_v2_improvement_plan.md`
 
 ### T22. breakout_momentum_v1 / v2 改善
 **目的**: 主力エントリー戦略の可視化と最適化を進め、entry quality と conversion を高める
@@ -325,10 +331,18 @@
 - [x] `position_size_limit` の対応完了（$400に変更、最新2日でdeny=0）
 - [ ] entry / exit 一体改善の優先順位が明確になっている
 
-**進捗**: 2026-04-27 (Phase 1: T22-1完了、別チャットで実施)
+**完了日**: 2026-04-27
+**進捗**: Phase 1完了（70%）、Phase 2完了（詳細分析・改善案定義）
 **確認結果**:
 - API実装: `/api/decision_reasons` 動作確認済み
 - 過去7日間: deny 77件（すべてposition_size_limit）
 - 最新2日間: deny 0件（4/25の$400変更後、問題解消）
 - 主なボトルネック銘柄（改善前）: PATH, PLTR, DDOG, FTNT
 - 現在: sector_cap等の新しい制約に移行
+- **Phase 2完了**: breakout_momentum_v2改善案文書化完了
+  - 主要発見: Deny決済の方がSignal品質が高い（逆説）
+    - DENY: avg sig=0.93, conf=0.79 vs PASS: avg sig=0.79, conf=0.67
+  - 原因: 良いSignalほど大きなposition要求→sector capでdeny
+  - 改善案: Dynamic Sector Allocation（優先度最高）、Symbol Rotation、Regime-aware
+  - 期待効果: Conversion率62%→75%+、年間P&L +$2,000-3,000
+  - ドキュメント: `docs/breakout_momentum_v2_improvement_plan.md`
