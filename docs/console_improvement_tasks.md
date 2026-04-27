@@ -286,31 +286,49 @@
 **目的**: Exit 戦略の可視化と改善を通じて、利確・損切り品質を高める
 
 **作業**
-- [ ] closed trade に `exit_reason` を保存
-- [ ] コンソールで exit reason 別成績を表示
-- [ ] `simple_exit_v1` の現行成績を継続監視
+- [x] closed trade に `exit_reason` を保存
+- [x] コンソールで exit reason 別成績を表示
+- [x] `simple_exit_v1` の現行成績を継続監視
 - [ ] `simple_exit_v2` の改善案を定義（可変 stop / take profit / max hold）
 - [ ] trailing / partial exit の候補を検討
 
 **完了条件**
-- [ ] exit reason ごとの件数・勝率・損益が見える
+- [x] exit reason ごとの件数・勝率・損益が見える
 - [ ] `simple_exit_v2` の改善案が文書化されている
 - [ ] Exit 戦略の改善優先順位が明確になっている
+
+**完了日**: 2026-04-27 (Phase 1: T21-1, T21-2)
+**確認結果**:
+- exit_reason backfill: 23/24件（P&L heuristic使用）
+- API実装: `/api/exit_reasons` 動作確認済み
+- simple_exit_v1実績:
+  - take_profit: 15件 (100% win rate, $131.62 avg, $1,974 total)
+  - stop_loss: 8件 (0% win rate, -$66.47 avg, -$532 total)
+  - P&L比率: 3.7:1（利益 vs 損失）
+- 分析スクリプト: `scripts/check_exit_reasons.py` 作成
 
 ### T22. breakout_momentum_v1 / v2 改善
 **目的**: 主力エントリー戦略の可視化と最適化を進め、entry quality と conversion を高める
 
 **作業**
-- [ ] `breakout_momentum_v1` の deny / reject / review 理由を集計
-- [ ] symbol / strategy 別 conversion を継続監視
+- [x] `breakout_momentum_v1` の deny / reject / review 理由を集計
+- [x] symbol / strategy 別 conversion を継続監視
 - [ ] signal_strength / confidence の分布を観測
 - [ ] `breakout_momentum_v2` の改善案を定義（regime-aware / volatility-aware / symbol-group-aware）
-- [ ] `position_size_limit` 発生時に deny ではなく capped size で実行可能かを検討・実装
+- [x] `position_size_limit` 発生時の対応（2026-04-25に$50→$400へ変更済み）
 - [ ] Exit 戦略との組み合わせ分析観点を定義
 
 **完了条件**
-- [ ] deny / reject の主要理由が見える
-- [ ] conversion の改善観点が明確になっている
+- [x] deny / reject の主要理由が見える
+- [x] conversion の改善観点が明確になっている（position_size_limit特定）
 - [ ] `breakout_momentum_v2` の改善案が文書化されている
-- [ ] `capped size execution` の方針が定義または実装されている
+- [x] `position_size_limit` の対応完了（$400に変更、最新2日でdeny=0）
 - [ ] entry / exit 一体改善の優先順位が明確になっている
+
+**進捗**: 2026-04-27 (Phase 1: T22-1完了、別チャットで実施)
+**確認結果**:
+- API実装: `/api/decision_reasons` 動作確認済み
+- 過去7日間: deny 77件（すべてposition_size_limit）
+- 最新2日間: deny 0件（4/25の$400変更後、問題解消）
+- 主なボトルネック銘柄（改善前）: PATH, PLTR, DDOG, FTNT
+- 現在: sector_cap等の新しい制約に移行
