@@ -34,6 +34,7 @@ class TradeEntry:
     return_pct: float | None  # return %
     status: str  # "open" | "closed"
     broker_order_id: str | None = None
+    exit_strategy_id: str | None = None
 
 
 @dataclass
@@ -132,6 +133,7 @@ class PnLTracker:
         exit_price: float,
         exit_qty: int | None = None,
         broker_order_id: str | None = None,
+        exit_strategy_id: str | None = None,
     ) -> TradeEntry | None:
         """Mark open trades for a symbol as closed (supports partial fills).
         
@@ -190,6 +192,8 @@ class PnLTracker:
                 return_pct = (exit_price - entry_price) / entry_price if entry_price else 0.0
                 closed_portion["pnl"] = round(pnl, 2)
                 closed_portion["return_pct"] = round(return_pct, 4)
+                if exit_strategy_id:
+                    closed_portion["exit_strategy_id"] = exit_strategy_id
                 
                 # Add closed portion as new trade
                 self.state.trades.append(closed_portion)
@@ -214,6 +218,8 @@ class PnLTracker:
                 "return_pct": round(return_pct, 4),
                 "status": "closed",
             })
+            if exit_strategy_id:
+                trade_dict["exit_strategy_id"] = exit_strategy_id
 
             self.state.cumulative_realized_pnl += pnl
             if pnl >= 0:

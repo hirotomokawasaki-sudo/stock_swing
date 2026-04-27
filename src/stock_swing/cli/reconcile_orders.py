@@ -91,7 +91,8 @@ def main() -> int:
                     symbol=sub["symbol"], 
                     exit_price=float(avg_price), 
                     exit_qty=int(filled_qty),
-                    broker_order_id=match.get("id")
+                    broker_order_id=match.get("id"),
+                    exit_strategy_id="simple_exit_v1"
                 )
                 if updated:
                     filled_exits += 1

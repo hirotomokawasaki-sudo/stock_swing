@@ -632,20 +632,24 @@ class Console {
         return `
         <div class="grid" style="margin-bottom:16px">
             <div class="card">
-                <h3>Exposure</h3>
-                <div class="metric"><span class="label">Gross</span><span class="value">${fmt.usd(s.gross_exposure)}</span></div>
-                <div class="metric"><span class="label">Net</span><span class="value">${fmt.usd(s.net_exposure)}</span></div>
+                <h3>Total Positions</h3>
+                <div class="metric"><span class="label">Count</span><span class="value big">${s.position_count ?? 0}</span></div>
                 <div class="metric"><span class="label">Long / Short</span><span class="value">${s.long_count ?? 0} / ${s.short_count ?? 0}</span></div>
             </div>
             <div class="card">
-                <h3>PnL</h3>
-                <div class="metric"><span class="label">Unrealized</span><span class="value ${s.unrealized_pnl >= 0 ? 'success':'danger'}">${fmt.usdSigned(s.unrealized_pnl)}</span></div>
-                <div class="metric"><span class="label">平均保有日数</span><span class="value">${s.avg_holding_days ?? '—'}</span></div>
+                <h3>Portfolio Value</h3>
+                <div class="metric"><span class="label">Total</span><span class="value big">${fmt.usd(s.portfolio_value)}</span></div>
+                <div class="metric"><span class="label">Market Value</span><span class="value">${fmt.usd(s.gross_exposure)}</span></div>
             </div>
             <div class="card">
-                <h3>集中度</h3>
-                <div class="metric"><span class="label">最大比率</span><span class="value">${fmt.pct(s.largest_position_weight)}</span></div>
-                <div class="metric"><span class="label">Top5</span><span class="value">${fmt.pct(s.top5_concentration)}</span></div>
+                <h3>Cash</h3>
+                <div class="metric"><span class="label">Available</span><span class="value big">${fmt.usd(s.cash)}</span></div>
+                <div class="metric"><span class="label">Top5 Weight</span><span class="value">${fmt.pct(s.top5_concentration)}</span></div>
+            </div>
+            <div class="card">
+                <h3>Total P&L</h3>
+                <div class="metric"><span class="label">Amount</span><span class="value big ${s.total_pnl >= 0 ? 'success':'danger'}">${fmt.usdSigned(s.total_pnl)}</span></div>
+                <div class="metric"><span class="label">P&L %</span><span class="value ${s.total_pnl >= 0 ? 'success':'danger'}">${s.total_pnl_pct != null ? fmt.pct(s.total_pnl_pct) : '—'}</span></div>
             </div>
         </div>`;
     }
@@ -653,29 +657,52 @@ class Console {
     renderPositions() {
         const pd = this.data.positions || {};
         const positions = pd.positions || [];
+        const summary = pd.summary || {};
+        const totalMarketValue = positions.reduce((sum, p) => sum + Number(p.market_value || 0), 0);
+        const totalUnrealized = positions.reduce((sum, p) => sum + Number(p.unrealized_pnl || 0), 0);
 
         return `
         ${this.renderPositionsSummary()}
         <div class="card">
-            <h3>保有ポジション (${positions.length}件)</h3>
+            <h3>Current Positions (${positions.length})</h3>
             ${positions.length === 0
                 ? '<p class="muted">保有ポジションなし。Paper Demo実行後に表示されます。</p>'
                 : `<table>
-                    <thead><tr><th>銘柄</th><th>売買</th><th>数量</th><th>取得価格</th><th>現在価格</th><th>時価</th><th>含み損益</th><th>保有日数</th><th>比率</th><th>戦略</th><th>取得時刻</th></tr></thead>
+                    <thead><tr><th>Ticker</th><th>Qty</th><th>Avg Price</th><th>Current Price</th><th>Market Value</th><th>P&L</th><th>P&L %</th><th>Weight</th><th>Holding</th><th>Stop</th><th>Target</th><th>Decision</th></tr></thead>
                     <tbody>${positions.map(p => `
                         <tr>
                             <td><strong>${p.symbol}</strong></td>
-                            <td>${p.side?.toUpperCase()}</td>
                             <td>${p.qty}</td>
                             <td>${fmt.usd(p.entry_price)}</td>
                             <td>${fmt.usd(p.current_price)}</td>
                             <td>${fmt.usd(p.market_value)}</td>
                             <td class="${(p.unrealized_pnl||0) >= 0 ? 'success':'danger'}">${fmt.usdSigned(p.unrealized_pnl)}</td>
-                            <td>${p.holding_days ?? '—'}</td>
+                            <td class="${(p.unrealized_return_pct||0) >= 0 ? 'success':'danger'}">${p.unrealized_return_pct != null ? fmt.pct(p.unrealized_return_pct) : '—'}</td>
                             <td>${fmt.pct(p.portfolio_weight)}</td>
-                            <td><span class="tag">${p.strategy_id}</span></td>
-                            <td class="muted small">${fmt.dt(p.entry_time)}</td>
+                            <td>${p.holding_days != null ? `${Number(p.holding_days).toFixed(1)}日` : '—'}</td>
+                            <td>${p.stop_price != null ? fmt.usd(p.stop_price) : '—'}</td>
+                            <td>${p.target_price != null ? fmt.usd(p.target_price) : '—'}</td>
+                            <td>${(() => {
+                                const status = p.decision_status || 'hold';
+                                const label = ({hold:'保有', review:'再確認', sell:'売却候補', stop_loss:'損切り候補', take_profit:'利確候補'})[status] || '保有';
+                                const cls = ({hold:'muted', review:'warn', sell:'warn', stop_loss:'danger', take_profit:'success'})[status] || 'muted';
+                                return `<span class="badge badge-${cls}">${label}</span>`;
+                            })()}</td>
                         </tr>`).join('')}
+                        <tr style="border-top:2px solid #374151;background:rgba(255,255,255,0.03)">
+                            <td><strong>Total</strong></td>
+                            <td><strong>${positions.reduce((sum, p) => sum + Number(p.qty || 0), 0)}</strong></td>
+                            <td>—</td>
+                            <td>—</td>
+                            <td><strong>${fmt.usd(totalMarketValue)}</strong></td>
+                            <td class="${totalUnrealized >= 0 ? 'success':'danger'}"><strong>${fmt.usdSigned(totalUnrealized)}</strong></td>
+                            <td class="${(summary.total_pnl_pct||0) >= 0 ? 'success':'danger'}"><strong>${summary.total_pnl_pct != null ? fmt.pct(summary.total_pnl_pct) : '—'}</strong></td>
+                            <td><strong>100.0%</strong></td>
+                            <td><strong>${summary.avg_holding_days != null ? `${Number(summary.avg_holding_days).toFixed(1)}日` : '—'}</strong></td>
+                            <td>—</td>
+                            <td>—</td>
+                            <td class="muted small"><strong>集計</strong></td>
+                        </tr>
                     </tbody></table>`
             }
         </div>`;
@@ -1643,38 +1670,62 @@ class Console {
             return '<div class="card"><h3>戦略別パフォーマンス</h3><p class="muted">トレードデータなし</p></div>';
         }
         
-        strategies.sort((a, b) => b.total_trades - a.total_trades);
+        strategies.sort((a, b) => {
+            const closedDiff = (b.total_trades || 0) - (a.total_trades || 0);
+            if (closedDiff !== 0) return closedDiff;
+            return (b.decision_count || 0) - (a.decision_count || 0);
+        });
         
+        const exitSummary = data.exit_strategy_summary || {};
         return `
         <div class="card">
             <h3>戦略別パフォーマンス</h3>
+            <p class="muted">クローズ済みトレード実績を中心に表示し、未決済でも判断・執行実績がある戦略は補足付きで併記します。Exit戦略では Closed / Exit Closed 列に暫定の決済件数を表示する場合があります。</p>
             <div class="table-wrap">
                 <table>
                     <thead>
                         <tr>
                             <th>Strategy</th>
-                            <th>Trades</th>
+                            <th>Closed / Exit Closed</th>
+                            <th>Decisions</th>
+                            <th>Pass</th>
+                            <th>Open</th>
                             <th>Win Rate</th>
                             <th>Total P&L</th>
                             <th>Avg P&L</th>
                             <th>Sharpe</th>
-                            <th>Profit Factor</th>
+                            <th>PF</th>
                             <th>Max DD</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${strategies.map(s => `
+                        ${strategies.map(s => {
+                            const exit = exitSummary[s.strategy_id] || null;
+                            const hasExitRealized = !!(exit && exit.closed_trades > 0 && !s.has_closed_trades);
+                            const winRate = hasExitRealized ? (exit.win_rate || 0) : (s.win_rate || 0);
+                            const totalPnl = hasExitRealized ? (exit.total_pnl || 0) : (s.total_pnl || 0);
+                            const avgPnl = hasExitRealized ? (exit.avg_pnl || 0) : (s.avg_pnl || 0);
+                            const closedTrades = hasExitRealized ? (exit.closed_trades || 0) : (s.total_trades ?? 0);
+                            return `
                             <tr>
-                                <td><strong>${this.escapeHtml(s.strategy_id)}</strong></td>
-                                <td>${s.total_trades}</td>
-                                <td>${fmt.pct(s.win_rate)}</td>
-                                <td class="${s.total_pnl >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(s.total_pnl)}</td>
-                                <td class="${s.avg_pnl >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(s.avg_pnl)}</td>
-                                <td class="${s.sharpe_ratio >= 1 ? 'success' : ''}">${s.sharpe_ratio.toFixed(2)}</td>
-                                <td>${s.profit_factor.toFixed(2)}</td>
-                                <td>${fmt.usd(s.max_drawdown)}</td>
+                                <td>
+                                    <strong>${this.escapeHtml(s.strategy_id)}</strong>
+                                    ${hasExitRealized
+                                        ? '<div class="small muted">exit 実績ベースの暫定損益を表示</div>'
+                                        : (!s.has_closed_trades ? '<div class="small muted">未クローズのため、損益指標はまだ確定していません</div>' : '')}
+                                </td>
+                                <td>${closedTrades}</td>
+                                <td>${s.decision_count ?? 0}</td>
+                                <td>${s.pass_count ?? 0}</td>
+                                <td>${s.open_positions ?? 0}</td>
+                                <td>${fmt.pct(winRate)}</td>
+                                <td class="${totalPnl >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(totalPnl)}</td>
+                                <td class="${avgPnl >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(avgPnl)}</td>
+                                <td class="${(s.sharpe_ratio || 0) >= 1 ? 'success' : ''}">${(s.sharpe_ratio || 0).toFixed(2)}</td>
+                                <td>${(s.profit_factor || 0).toFixed(2)}</td>
+                                <td>${fmt.usd(s.max_drawdown || 0)}</td>
                             </tr>
-                        `).join('')}
+                        `}).join('')}
                     </tbody>
                 </table>
             </div>

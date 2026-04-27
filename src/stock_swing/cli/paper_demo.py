@@ -564,7 +564,12 @@ def main() -> int:  # noqa: C901
                         except Exception:
                             exit_price = 0.0
                     if exit_price:
-                        pnl_tracker.record_exit(symbol=sub.symbol, exit_price=exit_price, broker_order_id=sub.broker_order_id)
+                        pnl_tracker.record_exit(
+                            symbol=sub.symbol,
+                            exit_price=exit_price,
+                            broker_order_id=sub.broker_order_id,
+                            exit_strategy_id=decision.strategy_id,
+                        )
 
                 audit_log.log_reconciliation(sub.submission_id, sub.broker_order_id, result.status_matched, result.discrepancies)
             except Exception as exc:

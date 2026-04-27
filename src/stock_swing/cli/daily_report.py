@@ -15,7 +15,7 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 project_root = Path(__file__).resolve().parents[3]
@@ -255,11 +255,14 @@ def _build_report(
             pnl = t.get("pnl") or 0
             ret = t.get("return_pct") or 0
             icon = "✅" if pnl >= 0 else "❌"
-            side_ja = "買い" if t['side'].upper() == "BUY" else "売り"
+            side = str(t.get("side") or t.get("entry_side") or "BUY").upper()
+            side_ja = "買い" if side == "BUY" else "売り"
+            symbol = t.get("symbol") or "?"
+            strategy_id = t.get("strategy_id") or t.get("strategy") or "unknown"
             lines.append(
-                f"  {icon} {t['symbol']:<6} {side_ja}"
+                f"  {icon} {symbol:<6} {side_ja}"
                 f"  損益: ${pnl:>+,.2f} ({ret:>+.1%})"
-                f"  [{t['strategy_id']}]"
+                f"  [{strategy_id}]"
             )
         lines.append("")
     else:

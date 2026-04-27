@@ -130,11 +130,11 @@
 - [x] daily summary API (/api/summary/daily)
 - [x] pnl summary (today + cumulative)
 - [x] trade count (today + total)
-- [ ] top alerts (placeholder implemented)
-- [ ] unresolved mismatches (future)
-- [ ] stale positions (future)
-- [ ] low conversion symbols (future)
-- [ ] strategy health (future)
+- [x] top alerts
+- [x] unresolved mismatches
+- [x] stale positions
+- [x] low conversion symbols
+- [x] strategy health
 
 ### T12. parameter tuning support
 - [x] max_position_size
@@ -145,3 +145,142 @@
 - [x] apply API with confirmation
 - [x] rollback capability
 - [x] change logging
+
+---
+
+## Phase 2 — 運用確認と安定化
+
+### Week 3 — 運用確認を固める
+
+### T13. daily summary / alerts 運用品質確認
+**目的**: summary API が実運用で使える品質か確認する
+
+**作業**
+- [ ] `/api/summary/daily` の返却内容を連日確認
+- [ ] `pnl_summary` / `alerts` / `unresolved_mismatches` / `stale_positions` / `strategy_health` の妥当性確認
+- [ ] 誤警報 / 欠落警報の記録
+
+**完了条件**
+- [ ] 主要 summary 項目が安定して返る
+- [ ] top alerts の誤警報が許容範囲
+- [ ] 運用上必要な alert が拾えている
+
+### T14. daily_report_morning 継続安定確認
+**目的**: 日次レポート配信を正規運用として安定化する
+
+**作業**
+- [ ] 連日 `status=ok` / `deliveryStatus=delivered` を確認
+- [ ] 保存ファイル出力確認
+- [ ] Telegram 本文の品質確認
+
+**完了条件**
+- [ ] 数日連続で日次レポート成功
+- [ ] 配信 / 保存 / 要約内容に破綻なし
+
+### T15. paper_demo cron 完走性確認
+**目的**: paper_demo の cron が timeout せず完走できるようにする
+
+**作業**
+- [ ] 4本の `stock_swing_paper_demo_*` 実行結果監視
+- [ ] `status` / `durationMs` / `deliveryStatus` 確認
+- [ ] timeout 再発時は wrapper / universe / bar-limit を追加調整
+
+**完了条件**
+- [ ] 少なくとも代表 run で `status=ok`
+- [ ] timeout の連続発生が解消
+- [ ] 実行時間が許容範囲に収まる
+
+### T16. reconciliation / broker truth 運用整合確認
+**目的**: tracker・broker・UI の整合を運用ベースで確認する
+
+**作業**
+- [ ] pending / mismatch / filled の整合確認
+- [ ] closed trade の後追い反映確認
+- [ ] mismatch reason の実データ確認
+
+**完了条件**
+- [ ] broker truth と UI 表示が継続一致
+- [ ] closed trade の同期漏れがない
+- [ ] unresolved mismatch が説明可能
+
+### Month 2 — 安定運用と観測性を高める
+
+### T17. cron ヘルス監視整備
+**目的**: cron 障害を早く見つける
+
+**作業**
+- [ ] 主要ジョブの success/error/timeout 監視観点を定義
+- [ ] 遅延・連続失敗・未実行を検知する基準作成
+- [ ] 日次確認フローを明文化
+
+**完了条件**
+- [ ] 主要 cron の健全性確認手順が定義済み
+- [ ] timeout / 失敗の見逃しが減る
+
+### T18. operational verification checklist の継続運用
+**目的**: 完了済み機能の劣化を防ぐ
+
+**作業**
+- [ ] `operational_verification_checklist.md` を週次/随時更新
+- [ ] 確認済み項目と未確認項目を管理
+- [ ] 実害のあった項目を優先監視に昇格
+
+**完了条件**
+- [ ] checklist が形骸化せず使われている
+- [ ] 確認結果が daily log に反映される
+
+### T19. summary / alert の観測性改善
+**目的**: summary が「返る」だけでなく「役立つ」状態にする
+
+**作業**
+- [ ] alert の妥当性見直し
+- [ ] noisy alert / missing alert の改善
+- [ ] 必要なら UI への表示追加
+
+**完了条件**
+- [ ] top alerts が運用判断に使える
+- [ ] 誤警報が抑えられている
+- [ ] summary の主要情報が見やすい
+
+### T20. paper_demo 運用モード最適化
+**目的**: paper_demo を継続運用可能な負荷へ調整する
+
+**作業**
+- [ ] 実行時間・signal 数・submission 数を観測
+- [ ] cron 用の軽量設定を必要に応じて分離
+- [ ] universe / threshold / bar-limit の再調整
+
+**完了条件**
+- [ ] paper_demo が安定して回る
+- [ ] 負荷と出力品質のバランスが取れている
+
+### T21. simple_exit_v1 / v2 改善
+**目的**: Exit 戦略の可視化と改善を通じて、利確・損切り品質を高める
+
+**作業**
+- [ ] closed trade に `exit_reason` を保存
+- [ ] コンソールで exit reason 別成績を表示
+- [ ] `simple_exit_v1` の現行成績を継続監視
+- [ ] `simple_exit_v2` の改善案を定義（可変 stop / take profit / max hold）
+- [ ] trailing / partial exit の候補を検討
+
+**完了条件**
+- [ ] exit reason ごとの件数・勝率・損益が見える
+- [ ] `simple_exit_v2` の改善案が文書化されている
+- [ ] Exit 戦略の改善優先順位が明確になっている
+
+### T22. breakout_momentum_v1 / v2 改善
+**目的**: 主力エントリー戦略の可視化と最適化を進め、entry quality と conversion を高める
+
+**作業**
+- [ ] `breakout_momentum_v1` の deny / reject / review 理由を集計
+- [ ] symbol / strategy 別 conversion を継続監視
+- [ ] signal_strength / confidence の分布を観測
+- [ ] `breakout_momentum_v2` の改善案を定義（regime-aware / volatility-aware / symbol-group-aware）
+- [ ] Exit 戦略との組み合わせ分析観点を定義
+
+**完了条件**
+- [ ] deny / reject の主要理由が見える
+- [ ] conversion の改善観点が明確になっている
+- [ ] `breakout_momentum_v2` の改善案が文書化されている
+- [ ] entry / exit 一体改善の優先順位が明確になっている

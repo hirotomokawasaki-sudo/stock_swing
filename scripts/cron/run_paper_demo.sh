@@ -27,9 +27,10 @@ else
 fi
 
 # Run paper demo with outside-hours allowed (will queue orders)
+# Keep cron path fast and avoid duplicate Telegram sends from the CLI itself.
 echo "🚀 Running paper demo..." | tee -a "$LOG_FILE"
 echo "🧩 Args: $*" | tee -a "$LOG_FILE"
-python -m stock_swing.cli.paper_demo --allow-outside-hours "$@" 2>&1 | tee -a "$LOG_FILE"
+python -m stock_swing.cli.paper_demo --allow-outside-hours --min-momentum 0.05 "$@" 2>&1 | tee -a "$LOG_FILE"
 EXIT_CODE=${PIPESTATUS[0]}
 
 echo "" | tee -a "$LOG_FILE"

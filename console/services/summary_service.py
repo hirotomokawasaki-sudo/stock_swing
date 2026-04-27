@@ -2,6 +2,8 @@
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, Any
+from collections import Counter
+import sys
 import json
 
 
@@ -10,6 +12,11 @@ class SummaryService:
     
     def __init__(self, project_root: Path):
         self.project_root = project_root
+        src_path = self.project_root / "src"
+        if src_path.exists():
+            src_str = str(src_path)
+            if src_str not in sys.path:
+                sys.path.insert(0, src_str)
     
     def generate_daily_summary(self) -> Dict[str, Any]:
         """Generate daily summary."""
@@ -39,8 +46,12 @@ class SummaryService:
             pnl_summary = {}
             open_positions = []
         
+        unresolved_mismatches = self._get_unresolved_mismatches()
+        stale_positions = self._get_stale_positions(open_positions)
+        strategy_health = self._get_strategy_health()
+        
         # Top alerts
-        alerts = self._generate_alerts(pnl_summary, open_positions)
+        alerts = self._generate_alerts(pnl_summary, open_positions, unresolved_mismatches, stale_positions, strategy_health)
         
         # Low conversion symbols
         low_conversion = self._analyze_low_conversion_symbols()
@@ -49,19 +60,26 @@ class SummaryService:
             "date": today,
             "alerts": alerts,
             "pnl_summary": pnl_summary,
+            "unresolved_mismatches": unresolved_mismatches,
+            "stale_positions": stale_positions,
+            "strategy_health": strategy_health,
             "low_conversion_symbols": low_conversion,
             "generated_at": datetime.now().isoformat(),
         }
     
-    def _generate_alerts(self, pnl_summary: Dict[str, Any], open_positions: list) -> list:
+    def _generate_alerts(self, pnl_summary: Dict[str, Any], open_positions: list, unresolved_mismatches: Dict[str, Any] = None, stale_positions: Dict[str, Any] = None, strategy_health: Dict[str, Any] = None) -> list:
         """Generate top alerts based on current state."""
         alerts = []
+        unresolved_mismatches = unresolved_mismatches or {}
+        stale_positions = stale_positions or {}
+        strategy_health = strategy_health or {}
         
         # Alert: Large daily loss
         today_pnl = pnl_summary.get("today_pnl", 0)
         if today_pnl < -1000:
             alerts.append({
                 "severity": "high",
+                "code": "large_daily_loss",
                 "title": f"Large daily loss: ${abs(today_pnl):,.2f}",
                 "description": "Today's P&L is significantly negative",
                 "action": "Review stop loss settings and position sizing"
@@ -71,6 +89,7 @@ class SummaryService:
         if len(open_positions) > 15:
             alerts.append({
                 "severity": "medium",
+                "code": "high_position_count",
                 "title": f"High position count: {len(open_positions)}",
                 "description": "Too many open positions may reduce focus",
                 "action": "Consider closing underperforming positions"
@@ -84,13 +103,324 @@ class SummaryService:
         if total_unrealized < -2000:
             alerts.append({
                 "severity": "high",
+                "code": "large_unrealized_loss",
                 "title": f"Large unrealized loss: ${abs(total_unrealized):,.2f}",
                 "description": "Unrealized losses are significant",
                 "action": "Review individual positions for stop loss triggers"
             })
-        
-        return alerts
+
+        # Alert: unresolved reconciliation mismatches
+        mismatch_count = unresolved_mismatches.get("count", 0)
+        if mismatch_count > 0:
+            top_reason = None
+            reason_counts = unresolved_mismatches.get("by_reason", [])
+            if reason_counts:
+                top_reason = reason_counts[0].get("reason")
+            alerts.append({
+                "severity": "high" if mismatch_count >= 3 else "medium",
+                "code": "unresolved_mismatches",
+                "title": f"Unresolved mismatches: {mismatch_count}",
+                "description": (
+                    f"Recent reconciliation issues remain unresolved"
+                    + (f" (top reason: {top_reason})" if top_reason else "")
+                ),
+                "action": "Review reconciliation status and broker truth for affected orders"
+            })
+
+        # Alert: stale positions
+        stale_count = stale_positions.get("count", 0)
+        if stale_count > 0:
+            threshold_days = stale_positions.get("threshold_days", 10)
+            alerts.append({
+                "severity": "medium" if stale_count < 3 else "high",
+                "code": "stale_positions",
+                "title": f"Stale positions: {stale_count}",
+                "description": f"{stale_count} open position(s) held for {threshold_days}+ days",
+                "action": "Review exit criteria and long-held positions"
+            })
+
+        # Alert: unhealthy strategies
+        weak_strategies = strategy_health.get("needs_attention", [])
+        if weak_strategies:
+            top = weak_strategies[0]
+            alerts.append({
+                "severity": "medium",
+                "code": "strategy_health_attention",
+                "title": f"Strategy health attention: {len(weak_strategies)}",
+                "description": f"{top.get('strategy_id')} has low conversion or elevated rejection rate",
+                "action": "Review strategy thresholds, risk gates, and execution eligibility"
+            })
+
+        severity_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+        alerts.sort(key=lambda a: (severity_rank.get(a.get("severity", "low"), 99), a.get("title", "")))
+        return alerts[:5]
     
+    def _get_stale_positions(self, open_positions: list, threshold_days: int = 10) -> Dict[str, Any]:
+        """Summarize open positions whose holding period exceeds the stale threshold.
+
+        Source of truth: PnL tracker open positions. We derive holding days from entry_time
+        when present, and fall back to a precomputed holding_days field if available.
+        """
+        try:
+            stale_items = []
+            now = datetime.now()
+            for pos in open_positions or []:
+                holding_days = pos.get("holding_days")
+                if holding_days is None:
+                    entry_time = pos.get("entry_time")
+                    if entry_time:
+                        entry_dt = self._parse_datetime(entry_time)
+                        if entry_dt != datetime.min.replace(tzinfo=None):
+                            holding_days = round((now - entry_dt).total_seconds() / 86400, 1)
+                if holding_days is None:
+                    continue
+                if float(holding_days) >= threshold_days:
+                    stale_items.append({
+                        "symbol": pos.get("symbol"),
+                        "qty": pos.get("qty"),
+                        "entry_price": pos.get("entry_price"),
+                        "current_price": pos.get("current_price"),
+                        "holding_days": round(float(holding_days), 1),
+                        "strategy_id": pos.get("strategy_id"),
+                        "entry_time": pos.get("entry_time"),
+                    })
+
+            stale_items.sort(key=lambda x: x.get("holding_days", 0), reverse=True)
+            return {
+                "count": len(stale_items),
+                "threshold_days": threshold_days,
+                "items": stale_items[:20],
+            }
+        except Exception:
+            return {"count": 0, "threshold_days": threshold_days, "items": []}
+
+    def _get_strategy_health(self) -> Dict[str, Any]:
+        """Summarize strategy-level health from decisions, submissions, and tracker trades.
+
+        Source of truth:
+        - decisions: data/decisions/decision_*.json
+        - submissions: reconciliation/submission audit logs in data/audits/*.log
+        - realized/open stats: PnL tracker trades
+        """
+        try:
+            decisions_dir = self.project_root / "data" / "decisions"
+            audits_dir = self.project_root / "data" / "audits"
+
+            decision_counts: Dict[str, int] = {}
+            reject_counts: Dict[str, int] = {}
+            pass_counts: Dict[str, int] = {}
+
+            if decisions_dir.exists():
+                decision_files = sorted(
+                    decisions_dir.glob("decision_*.json"),
+                    key=lambda p: p.stat().st_mtime,
+                    reverse=True,
+                )[:200]
+                for df in decision_files:
+                    try:
+                        decision = json.loads(df.read_text(encoding="utf-8"))
+                    except Exception:
+                        continue
+                    strategy_id = decision.get("strategy_id") or "unknown"
+                    decision_counts[strategy_id] = decision_counts.get(strategy_id, 0) + 1
+                    risk_state = str(decision.get("risk_state") or "").lower()
+                    if risk_state == "pass":
+                        pass_counts[strategy_id] = pass_counts.get(strategy_id, 0) + 1
+                    else:
+                        reject_counts[strategy_id] = reject_counts.get(strategy_id, 0) + 1
+
+            submissions_by_strategy: Dict[str, int] = {}
+            if audits_dir.exists():
+                audit_files = sorted(audits_dir.glob("*.log"), key=lambda p: p.stat().st_mtime, reverse=True)[:10]
+                for path in audit_files:
+                    try:
+                        recent_decisions = []
+                        for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+                            s = line.strip()
+                            if not s:
+                                continue
+
+                            # Audit logs are pipe-delimited text, not JSON.
+                            parts = [part.strip() for part in s.split("|")]
+                            if len(parts) < 7:
+                                continue
+                            category = parts[2].lower()
+                            action = parts[3].lower()
+                            subject = parts[4]
+                            details = parts[6]
+
+                            if category == "decision" and action == "generated":
+                                # Example subject: strategy:breakout_momentum_v1
+                                strategy_id = subject.split(":", 1)[1].strip() if ":" in subject else (subject or "unknown")
+                                detail_l = details.lower()
+                                side = None
+                                symbol = None
+                                if detail_l.startswith("decision: buy "):
+                                    side = "buy"
+                                    symbol = details.split()[-1].upper()
+                                elif detail_l.startswith("decision: sell "):
+                                    side = "sell"
+                                    symbol = details.split()[-1].upper()
+                                if side and symbol:
+                                    recent_decisions.append({
+                                        "strategy_id": strategy_id,
+                                        "side": side,
+                                        "symbol": symbol,
+                                    })
+                                    recent_decisions = recent_decisions[-100:]
+                                continue
+
+                            if category != "submission" or action != "submitted":
+                                continue
+
+                            # Example details: Order submitted: buy 55 MRVL
+                            detail_l = details.lower()
+                            words = details.split()
+                            if len(words) < 4:
+                                continue
+                            sub_side = words[2].lower() if words[0].lower() == "order" else None
+                            sub_symbol = words[-1].upper()
+                            if sub_side not in {"buy", "sell"}:
+                                continue
+
+                            strategy_id = "unknown"
+                            for dec in reversed(recent_decisions):
+                                if dec["side"] == sub_side and dec["symbol"] == sub_symbol:
+                                    strategy_id = dec["strategy_id"]
+                                    break
+                            submissions_by_strategy[strategy_id] = submissions_by_strategy.get(strategy_id, 0) + 1
+                    except Exception:
+                        continue
+
+            realized_pnl: Dict[str, float] = {}
+            closes: Dict[str, int] = {}
+            open_positions: Dict[str, int] = {}
+            try:
+                from stock_swing.tracking.pnl_tracker import PnLTracker
+                tracker = PnLTracker(self.project_root)
+                for trade in tracker.state.trades:
+                    strategy_id = trade.get("strategy_id") or "unknown"
+                    if trade.get("status") == "closed":
+                        closes[strategy_id] = closes.get(strategy_id, 0) + 1
+                        realized_pnl[strategy_id] = realized_pnl.get(strategy_id, 0.0) + float(trade.get("pnl") or 0.0)
+                    elif trade.get("status") == "open":
+                        open_positions[strategy_id] = open_positions.get(strategy_id, 0) + 1
+            except Exception:
+                pass
+
+            strategy_ids = set(decision_counts) | set(submissions_by_strategy) | set(realized_pnl) | set(open_positions)
+            rows = []
+            needs_attention = []
+            for strategy_id in sorted(strategy_ids):
+                decisions = decision_counts.get(strategy_id, 0)
+                submissions = submissions_by_strategy.get(strategy_id, 0)
+                passes = pass_counts.get(strategy_id, 0)
+                rejects = reject_counts.get(strategy_id, 0)
+
+                # Operationally, conversion should be measured against executable/pass decisions,
+                # not all generated decisions. Clamp the numerator to avoid >100% rates caused by
+                # repeated/retried submissions in audit logs.
+                executable_decisions = passes if passes > 0 else max(decisions - rejects, 0)
+                effective_submissions = min(submissions, executable_decisions) if executable_decisions > 0 else 0
+                conversion_rate = round((effective_submissions / executable_decisions * 100), 1) if executable_decisions > 0 else 0.0
+                rejection_rate = round((rejects / decisions * 100), 1) if decisions > 0 else 0.0
+                row = {
+                    "strategy_id": strategy_id,
+                    "decisions": decisions,
+                    "executable_decisions": executable_decisions,
+                    "submissions": submissions,
+                    "effective_submissions": effective_submissions,
+                    "closes": closes.get(strategy_id, 0),
+                    "realized_pnl": round(realized_pnl.get(strategy_id, 0.0), 2),
+                    "open_positions": open_positions.get(strategy_id, 0),
+                    "conversion_rate": conversion_rate,
+                    "rejection_rate": rejection_rate,
+                }
+                rows.append(row)
+                if executable_decisions >= 5 and (conversion_rate < 20.0 or rejection_rate >= 80.0):
+                    needs_attention.append(row)
+
+            rows.sort(key=lambda x: (x.get("decisions", 0), x.get("submissions", 0)), reverse=True)
+            needs_attention.sort(key=lambda x: (x.get("rejection_rate", 0), -x.get("conversion_rate", 0)), reverse=True)
+            return {
+                "count": len(rows),
+                "items": rows[:20],
+                "needs_attention": needs_attention[:10],
+            }
+        except Exception:
+            return {"count": 0, "items": [], "needs_attention": []}
+
+    def _get_unresolved_mismatches(self) -> Dict[str, Any]:
+        """Summarize recent unresolved reconciliation mismatches from audit logs.
+
+        Source of truth: recent reconciliation audit lines in data/audits/*.log.
+        We count only records that are not clean reconciliations.
+        """
+        try:
+            audits_dir = self.project_root / "data" / "audits"
+            if not audits_dir.exists():
+                return {"count": 0, "by_reason": [], "items": []}
+
+            audit_files = sorted(audits_dir.glob("*.log"), key=lambda p: p.stat().st_mtime, reverse=True)[:10]
+            rec_events = []
+            for path in audit_files:
+                try:
+                    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+                        s = line.strip()
+                        if not s:
+                            continue
+                        try:
+                            rec = json.loads(s)
+                        except Exception:
+                            continue
+                        if rec.get("category") == "reconciliation":
+                            rec_events.append(rec)
+                except Exception:
+                    continue
+
+            unresolved = []
+            reason_counter: Counter[str] = Counter()
+            for evt in rec_events[-200:]:
+                details = str(evt.get("details") or "")
+                if "0 discrepancies" in details:
+                    continue
+
+                reason = "mismatch"
+                if "qty_mismatch" in details:
+                    reason = "qty_mismatch"
+                elif "status_mismatch" in details:
+                    reason = "status_mismatch"
+                elif "order_not_found" in details:
+                    reason = "order_not_found"
+                elif "symbol_mismatch" in details:
+                    reason = "symbol_mismatch"
+                elif "side_mismatch" in details:
+                    reason = "side_mismatch"
+                elif "price_mismatch" in details:
+                    reason = "price_mismatch"
+                elif "1 discrepancies" in details:
+                    reason = "single_discrepancy"
+
+                reason_counter[reason] += 1
+                unresolved.append({
+                    "ts": evt.get("ts"),
+                    "subject": evt.get("subject"),
+                    "reason": reason,
+                    "details": details,
+                })
+
+            unresolved = sorted(unresolved, key=lambda x: x.get("ts") or "", reverse=True)
+            return {
+                "count": len(unresolved),
+                "by_reason": [
+                    {"reason": reason, "count": count}
+                    for reason, count in reason_counter.most_common(10)
+                ],
+                "items": unresolved[:20],
+            }
+        except Exception:
+            return {"count": 0, "by_reason": [], "items": []}
+
     def _analyze_low_conversion_symbols(self) -> list:
         """Analyze symbols with low conversion rates."""
         try:

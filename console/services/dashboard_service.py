@@ -221,12 +221,25 @@ class DashboardService:
                 
                 if broker_data:
                     enriched_positions = [self._enrich_broker_position(p) for p in broker_data]
+                    summary = self._summarize_positions(enriched_positions, trading=trading)
+                    summary["position_count"] = len(enriched_positions)
+                    account = self._get_account_info()
+                    portfolio_value = float(account.get("portfolio_value") or account.get("equity") or 0.0)
+                    cash = float(account.get("cash") or 0.0)
+                    total_cost_basis = sum(float(p.get("entry_price") or 0.0) * float(p.get("qty") or 0.0) for p in enriched_positions)
+                    total_pnl = sum(float(p.get("unrealized_pnl") or 0.0) for p in enriched_positions)
+                    summary.update({
+                        "portfolio_value": portfolio_value,
+                        "cash": cash,
+                        "total_pnl": round(total_pnl, 2),
+                        "total_pnl_pct": round((total_pnl / total_cost_basis), 4) if total_cost_basis > 0 else None,
+                    })
                     return {
                         "available": True,
                         "time": now_iso(),
                         "positions": enriched_positions,
                         "count": len(enriched_positions),
-                        "summary": self._summarize_positions(enriched_positions, trading=trading),
+                        "summary": summary,
                         "source": "broker",
                     }
             except Exception as e:
@@ -242,12 +255,25 @@ class DashboardService:
             positions = self._tracker.get_open_positions()
             current_prices = (trading or {}).get("current_prices") or self._fetch_current_prices([p.get("symbol") for p in positions])
             enriched_positions = [self._enrich_position(p, current_prices=current_prices) for p in positions]
+            summary = self._summarize_positions(enriched_positions, trading=trading)
+            summary["position_count"] = len(enriched_positions)
+            account = self._get_account_info()
+            portfolio_value = float(account.get("portfolio_value") or account.get("equity") or 0.0)
+            cash = float(account.get("cash") or 0.0)
+            total_cost_basis = sum(float(p.get("entry_price") or 0.0) * float(p.get("qty") or 0.0) for p in enriched_positions)
+            total_pnl = sum(float(p.get("unrealized_pnl") or 0.0) for p in enriched_positions)
+            summary.update({
+                "portfolio_value": portfolio_value,
+                "cash": cash,
+                "total_pnl": round(total_pnl, 2),
+                "total_pnl_pct": round((total_pnl / total_cost_basis), 4) if total_cost_basis > 0 else None,
+            })
             return {
                 "available": True,
                 "time": now_iso(),
                 "positions": enriched_positions,
                 "count": len(enriched_positions),
-                "summary": self._summarize_positions(enriched_positions, trading=trading),
+                "summary": summary,
                 "source": "tracker",
             }
         except Exception as e:
@@ -1218,6 +1244,7 @@ class DashboardService:
         except:
             pass
         
+        latest_decision = self._get_latest_decision_for_symbol(symbol)
         return {
             'symbol': symbol,
             'qty': qty,
@@ -1229,6 +1256,7 @@ class DashboardService:
             'holding_days': holding_days,
             'entry_time': entry_time,  # Add entry_time field
             'strategy_id': strategy_id,
+            'decision_status': self._derive_position_decision_status(latest_decision, holding_days=holding_days),
             'source': 'broker',
         }
 
@@ -1244,6 +1272,7 @@ class DashboardService:
         entry_time = self._parse_iso_datetime(enriched.get("entry_time"))
         now = datetime.now().astimezone()
         holding_days = round((now - entry_time).total_seconds() / 86400, 1) if entry_time else None
+        latest_decision = self._get_latest_decision_for_symbol(enriched.get("symbol"))
         enriched.update({
             "current_price": current_price,
             "market_value": market_value,
@@ -1254,6 +1283,7 @@ class DashboardService:
             "stop_price": None,
             "target_price": None,
             "sector": None,
+            "decision_status": self._derive_position_decision_status(latest_decision, holding_days=holding_days),
         })
         return enriched
 
@@ -1287,6 +1317,41 @@ class DashboardService:
             "unrealized_pnl": unrealized_pnl,
             "avg_holding_days": avg_holding_days,
         }
+
+    def _get_latest_decision_for_symbol(self, symbol: str | None) -> Dict[str, Any] | None:
+        if not symbol:
+            return None
+        decisions_dir = self.project_root / "data" / "decisions"
+        if not decisions_dir.exists():
+            return None
+        symbol = str(symbol).upper()
+        for df in sorted(decisions_dir.glob(f"decision_{symbol}_*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:20]:
+            try:
+                return json.loads(df.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+        return None
+
+    def _derive_position_decision_status(self, decision: Dict[str, Any] | None, holding_days: float | None = None) -> str:
+        if not decision:
+            if holding_days is not None and holding_days >= 10:
+                return "review"
+            return "hold"
+        action = str(decision.get("action") or "hold").lower()
+        notes = " ".join((decision.get("evidence") or {}).get("notes") or []).lower()
+        if action == "sell":
+            if "stop loss" in notes:
+                return "stop_loss"
+            if "take profit" in notes:
+                return "take_profit"
+            return "sell"
+        if action == "review":
+            return "review"
+        if action == "deny":
+            return "review"
+        if holding_days is not None and holding_days >= 10:
+            return "review"
+        return "hold"
 
     def _fetch_current_prices(self, symbols: List[str | None]) -> Dict[str, float]:
         """Fetch current prices for symbols from latest raw broker data."""
@@ -1963,6 +2028,8 @@ class DashboardService:
         
         Returns detailed metrics by strategy including win rates, Sharpe ratios,
         profit factors, and symbol-level breakdowns.
+        Also includes strategies that have operational activity even when they do not
+        yet have closed trades.
         """
         if not self._tracker:
             return {"available": False, "error": "PnLTracker not available"}
@@ -1975,12 +2042,92 @@ class DashboardService:
             self._tracker.state = self._tracker._load_state()
             trades = self._tracker.state.trades
             
-            # Analyze
+            # Analyze closed-trade performance first
             analyzer = StrategyAnalyzer()
             by_strategy = analyzer.analyze_by_strategy(trades)
             top_performers = analyzer.get_top_performers(by='sharpe', n=5)
             comparison_data = analyzer.get_comparison_data()
+
+            # Add operational-only strategies from decisions / open trades
+            decisions_dir = self.project_root / "data" / "decisions"
+            decision_counts: Dict[str, int] = {}
+            pass_counts: Dict[str, int] = {}
+            reject_counts: Dict[str, int] = {}
+            if decisions_dir.exists():
+                decision_files = sorted(decisions_dir.glob("decision_*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:200]
+                for df in decision_files:
+                    try:
+                        d = json.loads(df.read_text(encoding="utf-8"))
+                    except Exception:
+                        continue
+                    strategy_id = d.get("strategy_id") or "unknown"
+                    decision_counts[strategy_id] = decision_counts.get(strategy_id, 0) + 1
+                    if str(d.get("risk_state") or "").lower() == "pass":
+                        pass_counts[strategy_id] = pass_counts.get(strategy_id, 0) + 1
+                    else:
+                        reject_counts[strategy_id] = reject_counts.get(strategy_id, 0) + 1
+
+            open_counts: Dict[str, int] = {}
+            for trade in trades:
+                if trade.get("status") == "open":
+                    sid = trade.get("strategy_id", "unknown")
+                    open_counts[sid] = open_counts.get(sid, 0) + 1
+
+            # Include strategies seen in decisions/open trades even if no closed trades exist yet
+            all_strategy_ids = set(by_strategy.keys()) | set(decision_counts.keys()) | set(open_counts.keys())
+            for strategy_id in all_strategy_ids:
+                if strategy_id not in by_strategy:
+                    by_strategy[strategy_id] = {
+                        "strategy_id": strategy_id,
+                        "total_trades": 0,
+                        "winning_trades": 0,
+                        "losing_trades": 0,
+                        "flat_trades": 0,
+                        "win_rate": 0.0,
+                        "total_pnl": 0.0,
+                        "avg_win": 0.0,
+                        "avg_loss": 0.0,
+                        "avg_pnl": 0.0,
+                        "largest_win": 0.0,
+                        "largest_loss": 0.0,
+                        "profit_factor": 0.0,
+                        "sharpe_ratio": 0.0,
+                        "max_drawdown": 0.0,
+                        "avg_duration_days": 0.0,
+                    }
+                by_strategy[strategy_id]["decision_count"] = decision_counts.get(strategy_id, 0)
+                by_strategy[strategy_id]["pass_count"] = pass_counts.get(strategy_id, 0)
+                by_strategy[strategy_id]["reject_count"] = reject_counts.get(strategy_id, 0)
+                by_strategy[strategy_id]["open_positions"] = open_counts.get(strategy_id, 0)
+                by_strategy[strategy_id]["has_closed_trades"] = by_strategy[strategy_id].get("total_trades", 0) > 0
             
+            # Temporary operational exit summary for strategies that act on exits
+            exit_summary = {}
+            for trade in trades:
+                if trade.get("status") != "closed":
+                    continue
+                exit_strategy_id = trade.get("exit_strategy_id")
+                if not exit_strategy_id:
+                    continue
+                row = exit_summary.setdefault(exit_strategy_id, {
+                    "closed_trades": 0,
+                    "winning_trades": 0,
+                    "losing_trades": 0,
+                    "total_pnl": 0.0,
+                })
+                pnl = float(trade.get("pnl") or 0.0)
+                row["closed_trades"] += 1
+                row["total_pnl"] += pnl
+                if pnl >= 0:
+                    row["winning_trades"] += 1
+                else:
+                    row["losing_trades"] += 1
+            for strategy_id, row in exit_summary.items():
+                total = row["closed_trades"] or 0
+                row["win_rate"] = round((row["winning_trades"] / total), 4) if total else 0.0
+                row["avg_pnl"] = round((row["total_pnl"] / total), 2) if total else 0.0
+                row["total_pnl"] = round(row["total_pnl"], 2)
+
             # Get symbol breakdowns for each strategy
             symbol_breakdowns = {}
             for strategy_id in by_strategy.keys():
@@ -1995,6 +2142,7 @@ class DashboardService:
                 "top_performers": top_performers,
                 "comparison_data": comparison_data,
                 "symbol_breakdowns": symbol_breakdowns,
+                "exit_strategy_summary": exit_summary,
             }
         except Exception as e:
             return {"available": False, "error": str(e)}
