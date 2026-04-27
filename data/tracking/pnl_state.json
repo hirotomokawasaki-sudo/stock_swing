@@ -14,7 +14,8 @@
       "exit_time": "2026-04-22 18:09:29.340438+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "take_profit"
     },
     {
       "id": 2,
@@ -28,7 +29,8 @@
       "exit_time": "2026-04-22 18:09:29.340438+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "take_profit"
     },
     {
       "id": 3,
@@ -55,7 +57,8 @@
       "exit_time": "2026-04-22 18:25:56.304522+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "stop_loss"
     },
     {
       "id": 5,
@@ -134,7 +137,8 @@
       "exit_time": "2026-04-22 18:26:08.069225+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "stop_loss"
     },
     {
       "id": 11,
@@ -148,7 +152,8 @@
       "exit_time": "2026-04-22 18:26:11.596240+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "stop_loss"
     },
     {
       "id": 12,
@@ -162,7 +167,8 @@
       "exit_time": "2026-04-22 18:26:11.596240+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "stop_loss"
     },
     {
       "id": 13,
@@ -202,7 +208,8 @@
       "exit_time": "2026-04-15 15:53:38.825781+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "take_profit"
     },
     {
       "id": 16,
@@ -268,7 +275,8 @@
       "exit_time": "2026-04-17 15:52:18.707687+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "take_profit"
     },
     {
       "id": 21,
@@ -295,7 +303,8 @@
       "exit_time": "2026-04-20 15:18:42.054796+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "take_profit"
     },
     {
       "id": 23,
@@ -309,7 +318,8 @@
       "exit_time": "2026-04-20 15:18:42.054796+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "take_profit"
     },
     {
       "id": 24,
@@ -323,7 +333,8 @@
       "exit_time": "2026-04-20 17:58:00.162969+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "take_profit"
     },
     {
       "id": 25,
@@ -352,7 +363,8 @@
       "exit_time": "2026-04-21 16:21:43.411721+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "take_profit"
     },
     {
       "id": 27,
@@ -366,7 +378,8 @@
       "exit_time": "2026-04-21 16:21:43.411721+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "take_profit"
     },
     {
       "id": 28,
@@ -380,7 +393,8 @@
       "exit_time": "2026-04-21 16:21:43.411721+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "take_profit"
     },
     {
       "id": 29,
@@ -420,7 +434,8 @@
       "exit_time": "2026-04-22 18:26:26.248492+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "stop_loss"
     },
     {
       "id": 32,
@@ -434,7 +449,8 @@
       "exit_time": "2026-04-22 18:26:33.494303+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "take_profit"
     },
     {
       "id": 33,
@@ -448,7 +464,8 @@
       "exit_time": "2026-04-21 16:38:29.621883+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "stop_loss"
     },
     {
       "id": 34,
@@ -462,7 +479,8 @@
       "exit_time": "2026-04-21 16:38:29.621883+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "stop_loss"
     },
     {
       "id": 35,
@@ -489,7 +507,8 @@
       "exit_time": "2026-04-22 18:43:12.776720+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "take_profit"
     },
     {
       "id": 37,
@@ -542,7 +561,8 @@
       "exit_time": "2026-04-15 18:34:14.593699+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "stop_loss"
     },
     {
       "id": 41,
@@ -556,7 +576,8 @@
       "exit_time": "2026-04-17 15:52:21.140925+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "take_profit"
     },
     {
       "id": 42,
@@ -570,7 +591,8 @@
       "exit_time": "2026-04-17 15:52:21.140925+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "take_profit"
     },
     {
       "id": 43,
@@ -597,7 +619,8 @@
       "exit_time": "2026-04-22 18:43:21.308345+00:00",
       "status": "closed",
       "strategy_id": "breakout_momentum_v1",
-      "exit_strategy_id": "simple_exit_v1"
+      "exit_strategy_id": "simple_exit_v1",
+      "exit_reason": "take_profit"
     },
     {
       "symbol": "ADBE",

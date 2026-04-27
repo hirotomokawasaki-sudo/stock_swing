@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any
 
 
-@dataclass
+@dataclass(slots=True)
 class RawEnvelope:
     source: str
     endpoint: str
@@ -14,7 +14,7 @@ class RawEnvelope:
     payload: dict[str, Any]
 
 
-@dataclass
+@dataclass(slots=True)
 class CanonicalRecord:
     record_id: str
     schema_version: str
@@ -31,7 +31,7 @@ class CanonicalRecord:
     payload: dict[str, Any] = field(default_factory=dict)
 
 
-@dataclass
+@dataclass(slots=True)
 class DecisionRecord:
     decision_id: str
     schema_version: str

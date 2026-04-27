@@ -15,18 +15,14 @@ from console.adapters.system_adapter import SystemAdapter
 from console.utils.time_utils import now_iso
 
 # P&L tracker
-_project_root_guess = Path(__file__).resolve().parents[2]
-if (_project_root_guess / "src").exists():
-    sys.path.insert(0, str(_project_root_guess / "src"))
-
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 try:
     from stock_swing.tracking.pnl_tracker import PnLTracker
     from stock_swing.sources.broker_client import BrokerClient
     _HAS_TRACKER = True
-except Exception as e:
+except Exception:
     _HAS_TRACKER = False
     BrokerClient = None
-    # Debug: print(f"Failed to import tracker: {e}")
 
 
 class DashboardService:
@@ -218,7 +214,7 @@ class DashboardService:
         except Exception as e:
             return {"available": False, "error": str(e)}
 
-    def get_positions(self, trading: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def get_positions(self, trading: Dict[str, Any] | None = None) -> Dict[str, Any]:
         """Get open positions from broker (fallback to PnL tracker if unavailable)."""
         # Try broker first (source of truth)
         if self._broker:
@@ -472,7 +468,7 @@ class DashboardService:
         except Exception as e:
             return {"available": False, "error": str(e)}
 
-    def get_pipeline_summary(self, trading: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def get_pipeline_summary(self, trading: Dict[str, Any] | None = None) -> Dict[str, Any]:
         counts = self.data_adapter.get_counts() or {}
         decisions = self._load_recent_decisions(limit=500)
         audits = self._load_recent_audit_lines(limit=500)
@@ -644,7 +640,7 @@ class DashboardService:
             }
         }
 
-    def get_news(self, trading: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def get_news(self, trading: Dict[str, Any] | None = None) -> Dict[str, Any]:
         external_items = self._load_external_news_items(limit=200)
         decision_items = self._build_news_items_from_decisions(limit=50)
         tracked_symbols = {str(r.get('symbol') or 'UNKNOWN').upper() for r in (self.get_pipeline_summary(trading=trading).get('symbol_overview') or [])[:10]}
@@ -972,7 +968,7 @@ class DashboardService:
         positions: Dict[str, Any],
         cron_jobs: Dict[str, Any],
         data_status: Dict[str, Any],
-        news: Optional[Dict[str, Any]] = None,
+        news: Dict[str, Any] | None = None,
     ) -> List[Dict[str, Any]]:
         alerts: List[Dict[str, Any]] = []
         counts = data_status.get("counts", {})
@@ -1294,7 +1290,7 @@ class DashboardService:
         })
         return enriched
 
-    def _summarize_positions(self, positions: List[Dict[str, Any]], trading: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def _summarize_positions(self, positions: List[Dict[str, Any]], trading: Dict[str, Any] | None = None) -> Dict[str, Any]:
         trading = trading or {}
         snapshots = trading.get("daily_snapshots", [])
         latest_equity = snapshots[-1].get("equity") if snapshots else None
@@ -1325,7 +1321,7 @@ class DashboardService:
             "avg_holding_days": avg_holding_days,
         }
 
-    def _get_latest_decision_for_symbol(self, symbol: Optional[str]) -> Optional[Dict[str, Any]]:
+    def _get_latest_decision_for_symbol(self, symbol: str | None) -> Dict[str, Any] | None:
         if not symbol:
             return None
         decisions_dir = self.project_root / "data" / "decisions"
@@ -1339,7 +1335,7 @@ class DashboardService:
                 continue
         return None
 
-    def _derive_position_decision_status(self, decision: Optional[Dict[str, Any]], holding_days: Optional[float] = None) -> str:
+    def _derive_position_decision_status(self, decision: Dict[str, Any] | None, holding_days: float | None = None) -> str:
         if not decision:
             if holding_days is not None and holding_days >= 10:
                 return "review"
@@ -1360,7 +1356,7 @@ class DashboardService:
             return "review"
         return "hold"
 
-    def _fetch_current_prices(self, symbols: List[Optional[str]]) -> Dict[str, float]:
+    def _fetch_current_prices(self, symbols: List[str | None]) -> Dict[str, float]:
         """Fetch current prices for symbols from latest raw broker data."""
         prices: Dict[str, float] = {}
         broker_raw_dir = self.project_root / "data" / "raw" / "broker"
@@ -1889,7 +1885,7 @@ class DashboardService:
 
     def _summarize_paper_runs(self, audits: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         runs: List[Dict[str, Any]] = []
-        current: Optional[Dict[str, Any]] = None
+        current: Dict[str, Any] | None = None
         for evt in reversed(audits):
             if evt.get("category") == "system" and evt.get("action") == "paper_demo_start":
                 if current:
@@ -1952,7 +1948,7 @@ class DashboardService:
                 continue
         return parsed
 
-    def _parse_audit_line(self, line: str) -> Optional[Dict[str, Any]]:
+    def _parse_audit_line(self, line: str) -> Dict[str, Any] | None:
         parts = [p.strip() for p in line.split(" | ", 6)]
         if len(parts) < 7:
             return None
@@ -2020,7 +2016,7 @@ class DashboardService:
             "total_days": len(daily_pnls)
         }
 
-    def _parse_iso_datetime(self, value: Optional[str]) -> Optional[datetime]:
+    def _parse_iso_datetime(self, value: str | None) -> datetime | None:
         if not value:
             return None
         try:
@@ -2184,7 +2180,7 @@ class DashboardService:
         except Exception as e:
             return {"available": False, "error": str(e)}
     
-    def get_exit_reason_summary(self, exit_strategy: Optional[str] = None) -> Dict[str, Any]:
+    def get_exit_reason_summary(self, exit_strategy: str | None = None) -> Dict[str, Any]:
         """Get exit reason breakdown with performance metrics.
         
         Returns aggregated metrics by exit_reason (stop_loss, take_profit, max_hold, etc.)
@@ -2259,7 +2255,7 @@ class DashboardService:
         except Exception as e:
             return {"available": False, "error": str(e)}
     
-    def get_decision_reasons(self, strategy: Optional[str] = None, days: int = 7, limit: int = 200, symbol: Optional[str] = None) -> Dict[str, Any]:
+    def get_decision_reasons(self, strategy: str | None = None, days: int = 7, limit: int = 200, symbol: str | None = None) -> Dict[str, Any]:
         """Aggregate deny/reject/review reasons from recent decision files."""
         try:
             decisions_dir = self.project_root / "data" / "decisions"

@@ -181,6 +181,14 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                 return self._json(data)
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
+        
+        if p == "/api/exit_reasons":
+            try:
+                exit_strategy = q.get('exit_strategy', [None])[0]
+                data = dashboard.get_exit_reason_summary(exit_strategy=exit_strategy)
+                return self._json(data)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
 
         # T11: Daily summary
         if p == "/api/summary/daily":
