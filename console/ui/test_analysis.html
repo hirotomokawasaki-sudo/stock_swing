@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Strategy Analysis Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .section { margin: 20px 0; padding: 15px; background: #f5f5f5; }
+        .error { color: red; }
+        .success { color: green; }
+        table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #4CAF50; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Strategy Analysis Test</h1>
+    
+    <div class="section">
+        <h2>API Status</h2>
+        <div id="status">Loading...</div>
+    </div>
+    
+    <div class="section">
+        <h2>Strategy Analysis</h2>
+        <div id="strategy-analysis">Loading...</div>
+    </div>
+    
+    <div class="section">
+        <h2>Exit Reasons</h2>
+        <div id="exit-reasons">Loading...</div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        
+        async function testAPI() {
+            const statusDiv = document.getElementById('status');
+            
+            try {
+                // Test health
+                const health = await fetch(`${API_BASE}/health`).then(r => r.json());
+                statusDiv.innerHTML = `<span class="success">✅ Console OK</span><br>Time: ${health.time}`;
+                
+                // Test strategy analysis
+                const analysis = await fetch(`${API_BASE}/api/strategy_analysis`).then(r => r.json());
+                displayStrategyAnalysis(analysis);
+                
+                // Test exit reasons
+                const exitReasons = await fetch(`${API_BASE}/api/exit_reasons`).then(r => r.json());
+                displayExitReasons(exitReasons);
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+        
+        function displayStrategyAnalysis(data) {
+            const div = document.getElementById('strategy-analysis');
+            
+            if (!data.available) {
+                div.innerHTML = `<span class="error">❌ Error: ${data.error || 'Not available'}</span>`;
+                return;
+            }
+            
+            let html = '<table><tr><th>Strategy</th><th>Trades</th><th>Win Rate</th><th>Total P&L</th><th>Sharpe</th></tr>';
+            
+            const strategies = data.by_strategy || {};
+            for (const [id, metrics] of Object.entries(strategies)) {
+                html += `<tr>
+                    <td>${id}</td>
+                    <td>${metrics.total_trades || 0}</td>
+                    <td>${(metrics.win_rate * 100).toFixed(1)}%</td>
+                    <td>$${(metrics.total_pnl || 0).toFixed(2)}</td>
+                    <td>${(metrics.sharpe_ratio || 0).toFixed(2)}</td>
+                </tr>`;
+            }
+            html += '</table>';
+            
+            // Exit reason summary
+            if (data.exit_reason_summary && data.exit_reason_summary.length > 0) {
+                html += '<h3 style="margin-top: 20px;">Exit Reasons</h3>';
+                html += '<table><tr><th>Reason</th><th>Count</th><th>Win Rate</th><th>Avg P&L</th><th>Total P&L</th></tr>';
+                
+                for (const reason of data.exit_reason_summary) {
+                    html += `<tr>
+                        <td>${reason.reason}</td>
+                        <td>${reason.count}</td>
+                        <td>${reason.win_rate.toFixed(1)}%</td>
+                        <td>$${reason.avg_pnl.toFixed(2)}</td>
+                        <td>$${reason.total_pnl.toFixed(2)}</td>
+                    </tr>`;
+                }
+                html += '</table>';
+            }
+            
+            div.innerHTML = html;
+        }
+        
+        function displayExitReasons(data) {
+            const div = document.getElementById('exit-reasons');
+            
+            if (!data.available) {
+                div.innerHTML = `<span class="error">❌ Error: ${data.error || 'Not available'}</span>`;
+                return;
+            }
+            
+            let html = `<p>Total closed trades: ${data.total_closed_trades}</p>`;
+            html += '<table><tr><th>Reason</th><th>Count</th><th>Win Rate</th><th>Avg P&L</th><th>Total P&L</th></tr>';
+            
+            for (const reason of data.exit_reasons || []) {
+                html += `<tr>
+                    <td>${reason.reason}</td>
+                    <td>${reason.count}</td>
+                    <td>${reason.win_rate.toFixed(1)}%</td>
+                    <td>$${reason.avg_pnl.toFixed(2)}</td>
+                    <td>$${reason.total_pnl.toFixed(2)}</td>
+                </tr>`;
+            }
+            html += '</table>';
+            
+            div.innerHTML = html;
+        }
+        
+        // Run test on load
+        testAPI();
+        
+        // Refresh every 30 seconds
+        setInterval(testAPI, 30000);
+    </script>
+</body>
+</html>
