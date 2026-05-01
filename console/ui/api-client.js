@@ -63,17 +63,48 @@ class RobustAPIClient {
    * @returns {Promise<Object>} result
    */
   async getDashboard() {
+    const startTime = Date.now();
     const result = await this.fetchWithRetry('/api/dashboard');
+    const endTime = Date.now();
+    
+    // パフォーマンス測定
+    if (typeof performanceMonitor !== 'undefined') {
+      performanceMonitor.measureAPICall('/api/dashboard', startTime, endTime, result.success);
+    }
     
     if (result.success) {
       // データを検証・正規化
       const validatedData = dataValidator.validate(result.data);
+      
+      // キャッシュに保存（recoveryManager利用可能な場合）
+      if (typeof recoveryManager !== 'undefined') {
+        recoveryManager.cacheData('dashboard', validatedData);
+      }
       
       return {
         success: true,
         data: validatedData,
         timestamp: new Date()
       };
+    }
+    
+    // エラー追跡
+    if (typeof errorTracker !== 'undefined') {
+      errorTracker.trackAPIError('/api/dashboard', 0, result.error);
+    }
+    
+    // キャッシュからフォールバック
+    if (typeof recoveryManager !== 'undefined') {
+      const cached = recoveryManager.getCachedData('dashboard');
+      if (cached) {
+        console.warn('Using cached dashboard data');
+        return {
+          success: true,
+          data: cached,
+          source: 'cache',
+          timestamp: new Date()
+        };
+      }
     }
     
     // エラー時はデフォルトデータを返す

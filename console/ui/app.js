@@ -141,20 +141,47 @@ class Console {
     }
 
     render() {
+        const startTime = Date.now();
         const content = document.getElementById('content');
         if (!this.data) { content.innerHTML = '<p class="muted">読み込み中...</p>'; return; }
         if (this.data.error) { content.innerHTML = `<div class="card"><p class="danger">エラー: ${this.data.error}</p></div>`; return; }
-        switch (this.currentTab) {
-            case 'overview':   content.innerHTML = this.renderOverview(); this.initOverviewCharts(); break;
-            case 'weekly':     content.innerHTML = this.renderWeekly(); this.initWeeklyCharts(); break;
-            case 'analysis':   content.innerHTML = this.renderAnalysis(); this.initAnalysisCharts(); break;
-            case 'charts':     content.innerHTML = this.renderCharts(); this.initAllCharts(); break;
-            case 'trading':    content.innerHTML = this.renderTrading(); break;
-            case 'positions':  content.innerHTML = this.renderPositions(); break;
-            case 'news':       content.innerHTML = this.renderNews(); break;
-            case 'cron':       content.innerHTML = this.renderCronJobs(); break;
-            case 'data':       content.innerHTML = this.renderDataStatus(); break;
-            case 'logs':       content.innerHTML = this.renderLogs(); break;
+        
+        try {
+            switch (this.currentTab) {
+                case 'overview':   content.innerHTML = this.renderOverview(); this.initOverviewCharts(); break;
+                case 'weekly':     content.innerHTML = this.renderWeekly(); this.initWeeklyCharts(); break;
+                case 'analysis':   content.innerHTML = this.renderAnalysis(); this.initAnalysisCharts(); break;
+                case 'charts':     content.innerHTML = this.renderCharts(); this.initAllCharts(); break;
+                case 'trading':    content.innerHTML = this.renderTrading(); break;
+                case 'positions':  content.innerHTML = this.renderPositions(); break;
+                case 'news':       content.innerHTML = this.renderNews(); break;
+                case 'cron':       content.innerHTML = this.renderCronJobs(); break;
+                case 'data':       content.innerHTML = this.renderDataStatus(); break;
+                case 'logs':       content.innerHTML = this.renderLogs(); break;
+            }
+            
+            // Phase 3: パフォーマンス測定
+            const endTime = Date.now();
+            if (typeof performanceMonitor !== 'undefined') {
+                performanceMonitor.measureRender(this.currentTab, startTime, endTime);
+            }
+            
+        } catch (error) {
+            // Phase 3: レンダリングエラー追跡
+            console.error(`Render error in ${this.currentTab}:`, error);
+            
+            if (typeof errorTracker !== 'undefined') {
+                errorTracker.trackRenderError(this.currentTab, error.message);
+            }
+            
+            content.innerHTML = `
+                <div class="card">
+                    <h3>⚠️ レンダリングエラー</h3>
+                    <p>タブの表示中にエラーが発生しました。</p>
+                    <p class="danger">${error.message}</p>
+                    <button onclick="location.reload()">ページを再読み込み</button>
+                </div>
+            `;
         }
     }
 
@@ -1606,4 +1633,76 @@ class Console {
 
 document.addEventListener('DOMContentLoaded', () => {
     const consoleApp = new Console();
+    
+    // Phase 3: Initialize monitoring and health checks
+    initializeMonitoring();
 });
+
+/**
+ * Phase 3: モニタリングとヘルスチェックの初期化
+ */
+function initializeMonitoring() {
+    console.log('🚀 Initializing Phase 3 monitoring...');
+    
+    // ヘルスチェックの登録
+    if (typeof healthMonitor !== 'undefined') {
+        // Dashboard APIヘルスチェック
+        healthMonitor.registerCheck('dashboard_api', async () => {
+            const start = Date.now();
+            const result = await apiClient.getDashboard();
+            const duration = Date.now() - start;
+            
+            return {
+                success: result.success,
+                responseTime: duration,
+                dataAge: result.timestamp ? Date.now() - result.timestamp.getTime() : 0,
+                errorRate: typeof errorTracker !== 'undefined' 
+                  ? errorTracker.calculateErrorRate(3600000) 
+                  : 0
+            };
+        }, {
+            interval: 60000, // 1分ごと
+            thresholds: {
+                responseTime: 5000,  // 5秒
+                errorRate: 0.1,      // 10%
+                dataAge: 300000      // 5分
+            }
+        });
+        
+        // ヘルスモニタリング開始
+        healthMonitor.startMonitoring(60000); // 1分ごと
+        console.log('✅ Health monitoring started');
+    }
+    
+    // グローバルコマンドの登録（デバッグ用）
+    window.showPerformanceReport = () => {
+        if (typeof performanceMonitor !== 'undefined') {
+            return performanceMonitor.printReport();
+        }
+    };
+    
+    window.showErrorReport = () => {
+        if (typeof errorTracker !== 'undefined') {
+            return errorTracker.printReport();
+        }
+    };
+    
+    window.showHealthReport = () => {
+        if (typeof healthMonitor !== 'undefined') {
+            return healthMonitor.printReport();
+        }
+    };
+    
+    window.showRecoveryReport = () => {
+        if (typeof recoveryManager !== 'undefined') {
+            return recoveryManager.printReport();
+        }
+    };
+    
+    console.log('✅ Phase 3 monitoring initialized');
+    console.log('💡 Debug commands available:');
+    console.log('   - showPerformanceReport()');
+    console.log('   - showErrorReport()');
+    console.log('   - showHealthReport()');
+    console.log('   - showRecoveryReport()');
+}

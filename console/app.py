@@ -101,12 +101,22 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             return self._file(ROOT / "ui" / "error-handler.js", "application/javascript; charset=utf-8")
         if p == "/ui/state-manager.js":
             return self._file(ROOT / "ui" / "state-manager.js", "application/javascript; charset=utf-8")
+        if p == "/ui/performance-monitor.js":
+            return self._file(ROOT / "ui" / "performance-monitor.js", "application/javascript; charset=utf-8")
+        if p == "/ui/error-tracker.js":
+            return self._file(ROOT / "ui" / "error-tracker.js", "application/javascript; charset=utf-8")
+        if p == "/ui/health-monitor.js":
+            return self._file(ROOT / "ui" / "health-monitor.js", "application/javascript; charset=utf-8")
+        if p == "/ui/recovery-manager.js":
+            return self._file(ROOT / "ui" / "recovery-manager.js", "application/javascript; charset=utf-8")
         if p == "/ui/style.css":
             return self._file(ROOT / "ui" / "style.css", "text/css; charset=utf-8")
         if p == "/ui/test.html":
             return self._file(ROOT / "ui" / "test.html", "text/html; charset=utf-8")
         if p == "/ui/test-robustness.html":
             return self._file(ROOT / "ui" / "test-robustness.html", "text/html; charset=utf-8")
+        if p == "/ui/test-phase3.html":
+            return self._file(ROOT / "ui" / "test-phase3.html", "text/html; charset=utf-8")
         
         # Health check
         if p == "/health":

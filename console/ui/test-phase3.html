@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 3 Test - Stock Swing Console</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+        }
+        .test-result {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .pass {
+            color: #00ff00;
+        }
+        .fail {
+            color: #ff0000;
+        }
+        .warn {
+            color: #ffaa00;
+        }
+        button {
+            background: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #00cc00;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Phase 3 Feature Tests</h1>
+    <p>Stock Swing Console - Monitoring & Recovery</p>
+    
+    <div class="test-section">
+        <h2>1. Performance Monitor</h2>
+        <button onclick="testPerformanceMonitor()">Test Performance Monitor</button>
+        <div id="perf-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Error Tracker</h2>
+        <button onclick="testErrorTracker()">Test Error Tracker</button>
+        <div id="error-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Health Monitor</h2>
+        <button onclick="testHealthMonitor()">Test Health Monitor</button>
+        <div id="health-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Recovery Manager</h2>
+        <button onclick="testRecoveryManager()">Test Recovery Manager</button>
+        <div id="recovery-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. Combined Report</h2>
+        <button onclick="showAllReports()">Show All Reports</button>
+        <div id="combined-results"></div>
+    </div>
+    
+    <!-- Load all Phase 3 modules -->
+    <script src="/ui/utils.js?v=20260501-1910"></script>
+    <script src="/ui/validators.js?v=20260501-1910"></script>
+    <script src="/ui/performance-monitor.js?v=20260501-1910"></script>
+    <script src="/ui/error-tracker.js?v=20260501-1910"></script>
+    <script src="/ui/health-monitor.js?v=20260501-1910"></script>
+    <script src="/ui/recovery-manager.js?v=20260501-1910"></script>
+    <script src="/ui/api-client.js?v=20260501-1910"></script>
+    
+    <script>
+        function log(container, message, type = 'pass') {
+            const div = document.createElement('div');
+            div.className = 'test-result ' + type;
+            div.textContent = message;
+            document.getElementById(container).appendChild(div);
+        }
+        
+        function testPerformanceMonitor() {
+            const container = 'perf-results';
+            document.getElementById(container).innerHTML = '';
+            
+            log(container, '📊 Testing Performance Monitor...');
+            
+            if (typeof performanceMonitor === 'undefined') {
+                log(container, '❌ performanceMonitor not loaded', 'fail');
+                return;
+            }
+            
+            // Simulate API call
+            const start = Date.now();
+            setTimeout(() => {
+                const end = Date.now();
+                performanceMonitor.measureAPICall('/test/api', start, end, true);
+                log(container, '✅ API call measured');
+            }, 100);
+            
+            // Simulate render
+            const renderStart = Date.now();
+            setTimeout(() => {
+                const renderEnd = Date.now();
+                performanceMonitor.measureRender('test-component', renderStart, renderEnd);
+                log(container, '✅ Render measured');
+            }, 200);
+            
+            // Get stats after a delay
+            setTimeout(() => {
+                const stats = performanceMonitor.getStats('apiCalls');
+                log(container, `📈 API Stats: ${stats.count} calls, avg ${stats.avg}ms`);
+                
+                const summary = performanceMonitor.getSummary();
+                log(container, `📊 Success Rate: ${(summary.apiSuccessRate * 100).toFixed(2)}%`);
+            }, 500);
+        }
+        
+        function testErrorTracker() {
+            const container = 'error-results';
+            document.getElementById(container).innerHTML = '';
+            
+            log(container, '🚨 Testing Error Tracker...');
+            
+            if (typeof errorTracker === 'undefined') {
+                log(container, '❌ errorTracker not loaded', 'fail');
+                return;
+            }
+            
+            // Track test errors
+            errorTracker.trackAPIError('/test/api', 500, 'Internal Server Error');
+            log(container, '✅ API error tracked');
+            
+            errorTracker.trackRenderError('test-component', 'Test render error');
+            log(container, '✅ Render error tracked');
+            
+            errorTracker.trackDataError('test-field', 'Test data error');
+            log(container, '✅ Data error tracked');
+            
+            // Get stats
+            setTimeout(() => {
+                const stats = errorTracker.getStats(3600000);
+                log(container, `📊 Total errors: ${stats.total}`);
+                log(container, `📊 Error rate: ${(stats.errorRate * 100).toFixed(2)}%`);
+                
+                Object.entries(stats.byType).forEach(([type, count]) => {
+                    log(container, `   ${type}: ${count}`);
+                });
+            }, 100);
+        }
+        
+        async function testHealthMonitor() {
+            const container = 'health-results';
+            document.getElementById(container).innerHTML = '';
+            
+            log(container, '🏥 Testing Health Monitor...');
+            
+            if (typeof healthMonitor === 'undefined') {
+                log(container, '❌ healthMonitor not loaded', 'fail');
+                return;
+            }
+            
+            // Register a test health check
+            healthMonitor.registerCheck('test-check', async () => {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                return {
+                    status: 'healthy',
+                    responseTime: 100,
+                    errorRate: 0
+                };
+            });
+            
+            log(container, '✅ Health check registered');
+            
+            // Run check
+            const result = await healthMonitor.runCheck('test-check');
+            log(container, `✅ Health check completed: ${result.status}`);
+            log(container, `   Response time: ${result.duration}ms`);
+            
+            // Get summary
+            const summary = healthMonitor.getSummary();
+            log(container, `📊 Overall status: ${summary.overall}`);
+        }
+        
+        async function testRecoveryManager() {
+            const container = 'recovery-results';
+            document.getElementById(container).innerHTML = '';
+            
+            log(container, '🔧 Testing Recovery Manager...');
+            
+            if (typeof recoveryManager === 'undefined') {
+                log(container, '❌ recoveryManager not loaded', 'fail');
+                return;
+            }
+            
+            // Test caching
+            const testData = { foo: 'bar', timestamp: Date.now() };
+            recoveryManager.cacheData('test-key', testData);
+            log(container, '✅ Data cached');
+            
+            const cached = recoveryManager.getCachedData('test-key');
+            log(container, cached ? '✅ Data retrieved from cache' : '❌ Cache retrieval failed', cached ? 'pass' : 'fail');
+            
+            // Test retry operation
+            let attemptCount = 0;
+            const testOperation = async () => {
+                attemptCount++;
+                if (attemptCount < 2) {
+                    throw new Error('Test failure');
+                }
+                return { success: true };
+            };
+            
+            try {
+                const result = await recoveryManager.retryOperation(testOperation, { maxRetries: 2, retryDelay: [100, 200] });
+                log(container, `✅ Retry successful after ${attemptCount} attempts`);
+            } catch (error) {
+                log(container, `❌ Retry failed: ${error.message}`, 'fail');
+            }
+            
+            // Get stats
+            const stats = recoveryManager.getStats();
+            log(container, `📊 Total recoveries: ${stats.total}`);
+            log(container, `📊 Success rate: ${(stats.successRate * 100).toFixed(2)}%`);
+        }
+        
+        function showAllReports() {
+            const container = 'combined-results';
+            document.getElementById(container).innerHTML = '';
+            
+            log(container, '📋 Generating Combined Report...\n');
+            
+            // Performance report
+            if (typeof performanceMonitor !== 'undefined') {
+                log(container, '📊 === Performance Report ===');
+                const perfSummary = performanceMonitor.getSummary();
+                log(container, `Page Load: ${perfSummary.pageLoad.count} times, avg ${perfSummary.pageLoad.avg}ms`);
+                log(container, `API Calls: ${perfSummary.apiCalls.count} calls, avg ${perfSummary.apiCalls.avg}ms`);
+                log(container, `Renders: ${perfSummary.renders.count} renders, avg ${perfSummary.renders.avg}ms`);
+                log(container, '');
+            }
+            
+            // Error report
+            if (typeof errorTracker !== 'undefined') {
+                log(container, '🚨 === Error Report ===');
+                const errorStats = errorTracker.getStats(3600000);
+                log(container, `Total Errors: ${errorStats.total}`);
+                log(container, `Error Rate: ${(errorStats.errorRate * 100).toFixed(2)}%`);
+                Object.entries(errorStats.byType).forEach(([type, count]) => {
+                    log(container, `  ${type}: ${count}`);
+                });
+                log(container, '');
+            }
+            
+            // Health report
+            if (typeof healthMonitor !== 'undefined') {
+                log(container, '🏥 === Health Report ===');
+                const healthSummary = healthMonitor.getSummary();
+                log(container, `Overall Status: ${healthSummary.overall}`);
+                Object.entries(healthSummary.checks).forEach(([name, check]) => {
+                    log(container, `  ${name}: ${check.status}`);
+                });
+                log(container, '');
+            }
+            
+            // Recovery report
+            if (typeof recoveryManager !== 'undefined') {
+                log(container, '🔧 === Recovery Report ===');
+                const recoveryStats = recoveryManager.getStats();
+                log(container, `Total Recoveries: ${recoveryStats.total}`);
+                log(container, `Success Rate: ${(recoveryStats.successRate * 100).toFixed(2)}%`);
+                log(container, `Cache Entries: ${recoveryManager.cache.size}`);
+                log(container, '');
+            }
+            
+            log(container, '✅ Report complete!');
+        }
+        
+        // Auto-run basic tests on load
+        window.addEventListener('load', () => {
+            console.log('🧪 Phase 3 test page loaded');
+            console.log('Available commands:');
+            console.log('  - testPerformanceMonitor()');
+            console.log('  - testErrorTracker()');
+            console.log('  - testHealthMonitor()');
+            console.log('  - testRecoveryManager()');
+            console.log('  - showAllReports()');
+        });
+    </script>
+</body>
+</html>
