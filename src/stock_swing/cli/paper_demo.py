@@ -138,6 +138,19 @@ def main() -> int:  # noqa: C901
     print(f"  Dry run   : {args.dry_run}")
     print()
 
+    # 0. Manual Kill Switch Check (GW emergency stop)
+    MANUAL_KILL_SWITCH_FILE = project_root / "data" / "kill_switch_manual.txt"
+    if MANUAL_KILL_SWITCH_FILE.exists():
+        print("\n" + "=" * 60)
+        print("🚨 MANUAL KILL SWITCH ACTIVATED")
+        print("=" * 60)
+        print(f"Kill switch file detected: {MANUAL_KILL_SWITCH_FILE}")
+        print("Trading is DISABLED.")
+        print(f"To resume trading, remove the file:")
+        print(f"  rm {MANUAL_KILL_SWITCH_FILE}")
+        print("=" * 60)
+        return 1
+
     # 1. Runtime mode
     _section("1. Runtime Mode")
     try:

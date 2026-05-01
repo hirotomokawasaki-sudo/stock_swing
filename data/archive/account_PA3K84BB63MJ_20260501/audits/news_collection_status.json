@@ -1,9 +1,9 @@
 {
-  "time": "2026-05-01T11:03:44.563867+00:00",
+  "time": "2026-05-01T09:03:46.081752+00:00",
   "symbols": [
     {
       "symbol": "MRVL",
-      "news_count": 48,
+      "news_count": 47,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
@@ -21,7 +21,7 @@
     },
     {
       "symbol": "DELL",
-      "news_count": 26,
+      "news_count": 25,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
@@ -30,7 +30,7 @@
     },
     {
       "symbol": "RBRK",
-      "news_count": 4,
+      "news_count": 3,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
@@ -39,7 +39,7 @@
     },
     {
       "symbol": "PLTR",
-      "news_count": 76,
+      "news_count": 75,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
@@ -66,7 +66,7 @@
     },
     {
       "symbol": "NBIS",
-      "news_count": 7,
+      "news_count": 6,
       "used_fallback": false,
       "reason": "ok",
       "source": "finnhub",
