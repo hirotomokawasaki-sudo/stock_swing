@@ -40,7 +40,7 @@ class PositionSizingInputs:
     symbol: str | None = None
     asset_class: str | None = None
     max_risk_per_trade_pct: float = 0.005  # 0.5% risk per trade
-    max_position_notional_pct: float = 0.06  # 6% max position size (reduced from 8% for $1M capital)
+    max_position_notional_pct: float = 0.08  # 8% max position size (optimal for $1M capital)
     default_stop_pct: float = 0.05
     risk_per_share: float | None = None
     current_sector_exposure: float = 0.0
