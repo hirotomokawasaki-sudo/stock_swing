@@ -39,8 +39,8 @@ class PositionSizingInputs:
     market_regime: str = "neutral"
     symbol: str | None = None
     asset_class: str | None = None
-    max_risk_per_trade_pct: float = 0.005
-    max_position_notional_pct: float = 0.08
+    max_risk_per_trade_pct: float = 0.005  # 0.5% risk per trade
+    max_position_notional_pct: float = 0.06  # 6% max position size (reduced from 8% for $1M capital)
     default_stop_pct: float = 0.05
     risk_per_share: float | None = None
     current_sector_exposure: float = 0.0
@@ -94,7 +94,7 @@ class PositionSizingPolicy:
         max_loss_usd = equity * float(inputs.max_risk_per_trade_pct)
         notional_pct = float(inputs.max_position_notional_pct)
         if asset_class == 'etf':
-            notional_pct = max(notional_pct, 0.10)
+            notional_pct = max(notional_pct, 0.08)  # Reduced from 0.10 to 0.08 for better ETF diversification
         max_position_notional_usd = equity * notional_pct
         max_total_exposure_usd = equity * regime_limit
         remaining_capacity = max_total_exposure_usd - exposure

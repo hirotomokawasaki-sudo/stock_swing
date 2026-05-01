@@ -499,9 +499,10 @@ def main() -> int:  # noqa: C901
     pnl_tracker = PnLTracker(project_root)
     submissions: list[OrderSubmission] = []
     
-    # Symbol-level position size limit (12% of equity per symbol, 30% for ETFs)
-    MAX_POSITION_PER_SYMBOL_PCT = 0.12
-    MAX_POSITION_PER_ETF_PCT = 0.30  # Higher limit for diversified ETFs (mid-long term holdings)
+    # Symbol-level position size limit (6% of equity per symbol, 15% for ETFs)
+    # Reduced from 12%/30% for better diversification with $1M capital (2026-05-01)
+    MAX_POSITION_PER_SYMBOL_PCT = 0.06  # $60K per stock @ $1M equity
+    MAX_POSITION_PER_ETF_PCT = 0.15      # $150K per ETF @ $1M equity
     max_position_per_symbol = equity * MAX_POSITION_PER_SYMBOL_PCT
 
     for decision in actionable:
