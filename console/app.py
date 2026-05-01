@@ -91,10 +91,22 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             return self._file(ROOT / "ui" / "index.html", "text/html; charset=utf-8")
         if p == "/ui/app.js":
             return self._file(ROOT / "ui" / "app.js", "application/javascript; charset=utf-8")
+        if p == "/ui/utils.js":
+            return self._file(ROOT / "ui" / "utils.js", "application/javascript; charset=utf-8")
+        if p == "/ui/validators.js":
+            return self._file(ROOT / "ui" / "validators.js", "application/javascript; charset=utf-8")
+        if p == "/ui/api-client.js":
+            return self._file(ROOT / "ui" / "api-client.js", "application/javascript; charset=utf-8")
+        if p == "/ui/error-handler.js":
+            return self._file(ROOT / "ui" / "error-handler.js", "application/javascript; charset=utf-8")
+        if p == "/ui/state-manager.js":
+            return self._file(ROOT / "ui" / "state-manager.js", "application/javascript; charset=utf-8")
         if p == "/ui/style.css":
             return self._file(ROOT / "ui" / "style.css", "text/css; charset=utf-8")
         if p == "/ui/test.html":
             return self._file(ROOT / "ui" / "test.html", "text/html; charset=utf-8")
+        if p == "/ui/test-robustness.html":
+            return self._file(ROOT / "ui" / "test-robustness.html", "text/html; charset=utf-8")
         
         # Health check
         if p == "/health":

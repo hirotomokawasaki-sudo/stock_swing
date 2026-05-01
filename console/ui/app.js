@@ -1,12 +1,21 @@
 // Stock Swing Console Frontend
 
+// Format helpers (using safe utilities)
 const fmt = {
-    usd: (v) => v == null ? '—' : `$${Number(v).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`,
-    pct: (v) => v == null ? '—' : `${(Number(v) * 100).toFixed(2)}%`,
-    pctSigned: (v) => v == null ? '—' : `${Number(v) >= 0 ? '+' : ''}${(Number(v) * 100).toFixed(2)}%`,
-    usdSigned: (v) => v == null ? '—' : `${Number(v) >= 0 ? '+$' : '-$'}${Math.abs(Number(v)).toLocaleString('en-US', {minimumFractionDigits: 2})}`,
-    dt: (iso) => iso ? new Date(iso).toLocaleString('ja-JP') : '—',
-    badge: (label, cls) => `<span class="badge badge-${cls}">${label}</span>`,
+    usd: (v) => v == null ? '—' : safeCurrency(v),
+    pct: (v) => v == null ? '—' : safePercent(v),
+    pctSigned: (v) => {
+        if (v == null) return '—';
+        const num = safeNumber(v, 0);
+        return `${num >= 0 ? '+' : ''}${safePercent(v)}`;
+    },
+    usdSigned: (v) => {
+        if (v == null) return '—';
+        const num = safeNumber(v, 0);
+        return `${num >= 0 ? '+' : ''}${safeCurrency(v)}`;
+    },
+    dt: (iso) => iso ? safeDate(iso, true) : '—',
+    badge: (label, cls) => `<span class="badge badge-${escapeHtml(cls)}">${escapeHtml(label)}</span>`,
 };
 
 class Console {
@@ -44,15 +53,25 @@ class Console {
 
     async loadData() {
         try {
-            const response = await fetch('http://localhost:3335/api/dashboard');
-            const jsonData = await response.json();
-            this.normalizeData(jsonData);
-            console.log('Fetched Data (normalized):', jsonData);
-            this.data = jsonData;
-            this.updateStatusBar();
+            // Use robust API client with retry logic
+            errorHandler.showLoading('Loading dashboard data...');
+            const result = await apiClient.getDashboard();
+            
+            if (result.success) {
+                this.normalizeData(result.data);
+                console.log('Fetched Data (validated & normalized):', result.data);
+                this.data = result.data;
+                this.updateStatusBar();
+                errorHandler.hide();
+            } else {
+                console.error('Failed to load data:', result.error);
+                this.data = dataValidator.getDefaultData();
+                errorHandler.showError(`Failed to load data: ${result.error}`);
+            }
         } catch (error) {
-            console.error('Failed to load data:', error);
-            this.data = { error: error.message };
+            console.error('Unexpected error in loadData:', error);
+            this.data = dataValidator.getDefaultData();
+            errorHandler.showError(`Unexpected error: ${error.message}`);
         }
     }
 

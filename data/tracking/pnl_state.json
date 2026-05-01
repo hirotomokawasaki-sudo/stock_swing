@@ -1,6 +1,6 @@
 {
   "created_at": "2026-04-23T16:59:44.408861",
-  "last_updated": "2026-05-01T00:00:50.757776+00:00",
+  "last_updated": "2026-05-01T09:05:03.612207+00:00",
   "trades": [
     {
       "id": 1,
@@ -2107,6 +2107,18 @@
       "loss_count": 0,
       "signals_generated": 0,
       "orders_submitted": 0
+    },
+    {
+      "date": "2026-05-01",
+      "equity": 104585.52,
+      "realized_pnl": 0,
+      "unrealized_pnl": 0.0,
+      "total_pnl": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 10,
+      "orders_submitted": 4
     }
   ],
   "cumulative_realized_pnl": 4468.254658,
