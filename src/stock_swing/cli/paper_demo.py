@@ -309,7 +309,7 @@ def main() -> int:  # noqa: C901
             stop_loss_pct=-0.07,
             trailing_activation_pct=0.05,
             trailing_stop_pct=0.03,
-            max_hold_days=2,  # Changed from 10 to 2
+            max_hold_days=9,  # 9 days to allow for variance from winning trade avg of 6.4 days
         )
     exit_signals = exit_strat.generate(all_features, current_positions_full)
     
@@ -499,9 +499,9 @@ def main() -> int:  # noqa: C901
     pnl_tracker = PnLTracker(project_root)
     submissions: list[OrderSubmission] = []
     
-    # Symbol-level position size limit (12% of equity per symbol, 15% for ETFs)
+    # Symbol-level position size limit (12% of equity per symbol, 30% for ETFs)
     MAX_POSITION_PER_SYMBOL_PCT = 0.12
-    MAX_POSITION_PER_ETF_PCT = 0.15  # Higher limit for diversified ETFs
+    MAX_POSITION_PER_ETF_PCT = 0.30  # Higher limit for diversified ETFs (mid-long term holdings)
     max_position_per_symbol = equity * MAX_POSITION_PER_SYMBOL_PCT
 
     for decision in actionable:

@@ -31,7 +31,7 @@ class SimpleExitV2Strategy(BaseStrategy):
         stop_loss_pct: float = -0.07,  # -7% initial stop loss
         trailing_activation_pct: float = 0.05,  # 5% profit to activate trailing
         trailing_stop_pct: float = 0.03,  # 3% pullback from peak to exit
-        max_hold_days: int = 10,  # Extended from 5 to 10 days
+        max_hold_days: int = 9,  # 9 days to allow for variance from winning trade avg of 6.4 days
     ):
         """Initialize simple exit V2 strategy.
         
