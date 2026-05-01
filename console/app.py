@@ -109,6 +109,8 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             return self._file(ROOT / "ui" / "health-monitor.js", "application/javascript; charset=utf-8")
         if p == "/ui/recovery-manager.js":
             return self._file(ROOT / "ui" / "recovery-manager.js", "application/javascript; charset=utf-8")
+        if p == "/ui/report-generator.js":
+            return self._file(ROOT / "ui" / "report-generator.js", "application/javascript; charset=utf-8")
         if p == "/ui/style.css":
             return self._file(ROOT / "ui" / "style.css", "text/css; charset=utf-8")
         if p == "/ui/test.html":

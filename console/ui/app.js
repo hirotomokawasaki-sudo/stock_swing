@@ -158,6 +158,7 @@ class Console {
                 case 'cron':       content.innerHTML = this.renderCronJobs(); break;
                 case 'data':       content.innerHTML = this.renderDataStatus(); break;
                 case 'logs':       content.innerHTML = this.renderLogs(); break;
+                case 'metrics':    content.innerHTML = this.renderMetrics(); break;
             }
             
             // Phase 3: パフォーマンス測定
@@ -964,6 +965,211 @@ class Console {
         </div>`;
     }
 
+    renderMetrics() {
+        // Phase 3 パフォーマンスダッシュボード
+        let html = '<div class="grid">';
+        
+        // パフォーマンスサマリー
+        if (typeof performanceMonitor !== 'undefined') {
+            const perfSummary = performanceMonitor.getSummary();
+            
+            html += `
+                <div class="card">
+                    <h3>⚡ パフォーマンスサマリー</h3>
+                    <div class="metrics-grid">
+                        <div class="metric">
+                            <span class="label">ページロード</span>
+                            <span class="value">${perfSummary.pageLoad.avg || 0}ms</span>
+                            <span class="detail">p95: ${perfSummary.pageLoad.p95 || 0}ms</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">API呼び出し</span>
+                            <span class="value">${perfSummary.apiCalls.avg || 0}ms</span>
+                            <span class="detail">p95: ${perfSummary.apiCalls.p95 || 0}ms</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">レンダリング</span>
+                            <span class="value">${perfSummary.renders.avg || 0}ms</span>
+                            <span class="detail">p95: ${perfSummary.renders.p95 || 0}ms</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">API成功率</span>
+                            <span class="value success">${(perfSummary.apiSuccessRate * 100).toFixed(2)}%</span>
+                            <span class="detail">${perfSummary.apiCalls.count} calls</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            html += `<div class="card"><p class="muted">パフォーマンスモニター未初期化</p></div>`;
+        }
+        
+        // エラーサマリー
+        if (typeof errorTracker !== 'undefined') {
+            const errorStats = errorTracker.getStats(3600000);
+            const errorStatusClass = errorStats.total === 0 ? 'success' : 
+                                     errorStats.total < 5 ? 'warn' : 'danger';
+            
+            html += `
+                <div class="card">
+                    <h3>🚨 エラーサマリー（過去1時間）</h3>
+                    <div class="metrics-grid">
+                        <div class="metric">
+                            <span class="label">総エラー数</span>
+                            <span class="value ${errorStatusClass}">${errorStats.total}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">エラー率</span>
+                            <span class="value ${errorStatusClass}">${(errorStats.errorRate * 100).toFixed(2)}%</span>
+                        </div>
+                    </div>
+            `;
+            
+            if (Object.keys(errorStats.byType).length > 0) {
+                html += `<h4>エラー種別:</h4><div class="metrics-grid">`;
+                Object.entries(errorStats.byType)
+                    .sort((a, b) => b[1] - a[1])
+                    .forEach(([type, count]) => {
+                        html += `
+                            <div class="metric">
+                                <span class="label">${this.escapeHtml(type)}</span>
+                                <span class="value">${count}</span>
+                            </div>
+                        `;
+                    });
+                html += `</div>`;
+            }
+            
+            html += `</div>`;
+        } else {
+            html += `<div class="card"><p class="muted">エラートラッカー未初期化</p></div>`;
+        }
+        
+        // ヘルスサマリー
+        if (typeof healthMonitor !== 'undefined') {
+            const healthSummary = healthMonitor.getSummary();
+            const healthStatusClass = healthSummary.overall === 'healthy' ? 'success' : 
+                                      healthSummary.overall === 'warning' ? 'warn' : 'danger';
+            const healthIcon = healthSummary.overall === 'healthy' ? '✅' : 
+                              healthSummary.overall === 'warning' ? '⚠️' : '❌';
+            
+            html += `
+                <div class="card">
+                    <h3>🏥 ヘルスサマリー</h3>
+                    <div class="metric">
+                        <span class="label">全体ステータス</span>
+                        <span class="value ${healthStatusClass}">${healthIcon} ${healthSummary.overall}</span>
+                    </div>
+                    <h4>ヘルスチェック:</h4>
+                    <div class="metrics-grid">
+            `;
+            
+            Object.entries(healthSummary.checks).forEach(([name, check]) => {
+                const checkIcon = check.status === 'healthy' ? '✅' : 
+                                 check.status === 'warning' ? '⚠️' : 
+                                 check.status === 'error' ? '❌' : '⏸️';
+                const checkClass = check.status === 'healthy' ? 'success' : 
+                                  check.status === 'warning' ? 'warn' : 
+                                  check.status === 'error' ? 'danger' : 'muted';
+                
+                html += `
+                    <div class="metric">
+                        <span class="label">${checkIcon} ${this.escapeHtml(name)}</span>
+                        <span class="value ${checkClass}">${check.status}</span>
+                    </div>
+                `;
+            });
+            
+            html += `</div></div>`;
+        } else {
+            html += `<div class="card"><p class="muted">ヘルスモニター未初期化</p></div>`;
+        }
+        
+        // リカバリーサマリー
+        if (typeof recoveryManager !== 'undefined') {
+            const recoveryStats = recoveryManager.getStats(3600000);
+            const successRate = recoveryStats.successRate || 0;
+            const successClass = successRate >= 0.8 ? 'success' : 
+                                successRate >= 0.5 ? 'warn' : 'danger';
+            
+            html += `
+                <div class="card">
+                    <h3>🔧 リカバリーサマリー（過去1時間）</h3>
+                    <div class="metrics-grid">
+                        <div class="metric">
+                            <span class="label">総リカバリー数</span>
+                            <span class="value">${recoveryStats.total}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">成功率</span>
+                            <span class="value ${successClass}">${(successRate * 100).toFixed(2)}%</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">キャッシュエントリ</span>
+                            <span class="value">${recoveryManager.cache.size}</span>
+                        </div>
+                    </div>
+            `;
+            
+            if (Object.keys(recoveryStats.byType).length > 0) {
+                html += `<h4>リカバリー種別:</h4><div class="metrics-grid">`;
+                Object.entries(recoveryStats.byType)
+                    .sort((a, b) => b[1] - a[1])
+                    .forEach(([type, count]) => {
+                        html += `
+                            <div class="metric">
+                                <span class="label">${this.escapeHtml(type)}</span>
+                                <span class="value">${count}</span>
+                            </div>
+                        `;
+                    });
+                html += `</div>`;
+            }
+            
+            html += `</div>`;
+        } else {
+            html += `<div class="card"><p class="muted">リカバリーマネージャー未初期化</p></div>`;
+        }
+        
+        // 週次レポート
+        if (typeof reportGenerator !== 'undefined') {
+            const latestReport = reportGenerator.getLatestReport();
+            
+            html += `
+                <div class="card full-width">
+                    <h3>📊 週次レポート</h3>
+            `;
+            
+            if (latestReport) {
+                const scoreColor = latestReport.overallScore >= 80 ? 'success' : 
+                                  latestReport.overallScore >= 60 ? 'warn' : 'danger';
+                
+                html += `
+                    <div class="metric">
+                        <span class="label">最新レポート</span>
+                        <span class="value">${latestReport.period.label}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">総合スコア</span>
+                        <span class="value ${scoreColor}">${latestReport.overallScore}/100</span>
+                    </div>
+                    <button onclick="showLatestReport()" class="btn-primary">レポート詳細を表示</button>
+                `;
+            } else {
+                html += `
+                    <p class="muted">レポートがまだ生成されていません</p>
+                    <button onclick="generateWeeklyReportNow()" class="btn-primary">今すぐレポートを生成</button>
+                `;
+            }
+            
+            html += `</div>`;
+        }
+        
+        html += '</div>';
+        
+        return html;
+    }
+
     parseLogLine(line) {
         if (!line || typeof line !== 'string') return null;
         const parts = line.split(' | ');
@@ -1699,10 +1905,62 @@ function initializeMonitoring() {
         }
     };
     
+    // レポート生成コマンド
+    window.generateWeeklyReportNow = () => {
+        if (typeof reportGenerator !== 'undefined') {
+            const report = reportGenerator.generateWeeklyReport();
+            console.log('📊 Weekly report generated:', report);
+            if (typeof errorHandler !== 'undefined') {
+                errorHandler.showSuccess('週次レポートを生成しました！');
+            }
+            return report;
+        }
+    };
+    
+    window.showLatestReport = () => {
+        if (typeof reportGenerator !== 'undefined') {
+            const report = reportGenerator.getLatestReport();
+            if (report) {
+                const html = reportGenerator.formatReportHTML(report);
+                const win = window.open('', 'WeeklyReport', 'width=800,height=600');
+                win.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>週次レポート</title>
+                        <link rel="stylesheet" href="/ui/style.css">
+                        <style>
+                            body { padding: 20px; background: #0b0f18; color: #e5e7eb; }
+                            .report-card { max-width: 900px; margin: 0 auto; }
+                            .report-header { text-align: center; margin-bottom: 30px; }
+                            .report-score { font-size: 32px; font-weight: bold; margin: 20px 0; }
+                            .report-section { margin: 30px 0; }
+                            .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+                            .metric-card { background: #1a2332; padding: 15px; border-radius: 8px; }
+                            .metric-label { color: #9ca3af; font-size: 14px; }
+                            .metric-value { font-size: 24px; font-weight: bold; margin: 10px 0; }
+                            .metric-detail { color: #9ca3af; font-size: 12px; }
+                            .recommendations-list { list-style: none; padding: 0; }
+                            .recommendations-list li { background: #1a2332; padding: 15px; margin: 10px 0; border-radius: 8px; }
+                            .priority-badge { padding: 4px 8px; border-radius: 4px; color: white; font-size: 12px; margin-right: 10px; }
+                            .top-errors { margin-top: 15px; }
+                        </style>
+                    </head>
+                    <body>${html}</body>
+                    </html>
+                `);
+            } else {
+                console.warn('レポートがまだ生成されていません');
+            }
+        }
+    };
+    
     console.log('✅ Phase 3 monitoring initialized');
     console.log('💡 Debug commands available:');
     console.log('   - showPerformanceReport()');
     console.log('   - showErrorReport()');
     console.log('   - showHealthReport()');
     console.log('   - showRecoveryReport()');
+    console.log('   - generateWeeklyReportNow()');
+    console.log('   - showLatestReport()');
 }
