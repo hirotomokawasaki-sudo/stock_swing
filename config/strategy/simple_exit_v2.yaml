@@ -1,0 +1,10 @@
+enabled: true
+name: simple_exit_v2
+# Stop loss threshold (negative value, e.g., -0.07 = -7%)
+stop_loss_pct: -0.07
+# Profit threshold to activate trailing stop (e.g., 0.05 = 5%)
+trailing_activation_pct: 0.05
+# Pullback percentage from peak to trigger exit (e.g., 0.03 = 3%)
+trailing_stop_pct: 0.03
+# Maximum holding period in days
+max_hold_days: 2

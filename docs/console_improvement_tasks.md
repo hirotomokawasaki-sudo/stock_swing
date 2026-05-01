@@ -237,40 +237,61 @@
 **目的**: cron 障害を早く見つける
 
 **作業**
-- [ ] 主要ジョブの success/error/timeout 監視観点を定義
-- [ ] 遅延・連続失敗・未実行を検知する基準作成
-- [ ] 日次確認フローを明文化
+- [x] 主要ジョブの success/error/timeout 監視観点を定義
+- [x] 遅延・連続失敗・未実行を検知する基準作成
+- [x] 日次確認フローを明文化
 
 **完了条件**
-- [ ] 主要 cron の健全性確認手順が定義済み
-- [ ] timeout / 失敗の見逃しが減る
+- [x] 主要 cron の健全性確認手順が定義済み
+- [x] timeout / 失敗の見逃しが減る
+
+**完了日**: 2026-04-28
+**成果物**:
+- `scripts/check_cron_health.py` - ヘルスチェックスクリプト
+- `scripts/check_paper_demo_status.sh` - paper_demo 専用
+- `docs/runbooks/CRON_DAILY_CHECK.md` - 日次確認フロー
+- `docs/t17_cron_health_analysis.md` - 監視観点詳細
 
 ### T18. operational verification checklist の継続運用
 **目的**: 完了済み機能の劣化を防ぐ
 
 **作業**
-- [ ] `operational_verification_checklist.md` を週次/随時更新
-- [ ] 確認済み項目と未確認項目を管理
-- [ ] 実害のあった項目を優先監視に昇格
+- [x] `operational_verification_checklist.md` を週次/随時更新
+- [x] 確認済み項目と未確認項目を管理
+- [x] 実害のあった項目を優先監視に昇格
 
 **完了条件**
-- [ ] checklist が形骸化せず使われている
-- [ ] 確認結果が daily log に反映される
+- [x] checklist が形骸化せず使われている
+- [x] 確認結果が daily log に反映される
+
+**完了日**: 2026-04-28
+**成果物**:
+- `docs/operational_verification_log_2026-04-28.md` - 本日の確認結果
+- `docs/operational_verification_checklist.md` 更新
+- 優先監視項目の明確化
 
 ### T19. summary / alert の観測性改善
 **目的**: summary が「返る」だけでなく「役立つ」状態にする
 
 **作業**
-- [ ] alert の妥当性見直し
-- [ ] noisy alert / missing alert の改善
-- [ ] 必要なら UI への表示追加
+- [x] alert の妥当性見直し
+- [x] noisy alert / missing alert の改善
+- [x] 必要なら UI への表示追加
 
 **完了条件**
-- [ ] top alerts が運用判断に使える
-- [ ] 誤警報が抑えられている
-- [ ] summary の主要情報が見やすい
+- [x] top alerts が運用判断に使える
+- [x] 誤警報が抑えられている
+- [x] summary の主要情報が見やすい
 
-### T20. paper_demo 運用モード最適化
+**完了日**: 2026-04-28
+**成果物**: `docs/alert_improvements_2026-04-28.md`
+**改善内容**:
+- Severity 4段階明確化（critical/high/medium/low）
+- 閾値最適化（~$100K account 基準）
+- 新 alert 追加（losing_streak, low_conversion, strong_day等）
+- 表示改善（最大8件、パーセント表示、詳細説明）
+
+### T20. paper_demo 運用モード最適化 (完了)
 **目的**: paper_demo を継続運用可能な負荷へ調整する
 
 **作業**
@@ -289,15 +310,19 @@
 - [x] closed trade に `exit_reason` を保存
 - [x] コンソールで exit reason 別成績を表示
 - [x] `simple_exit_v1` の現行成績を継続監視
-- [ ] `simple_exit_v2` の改善案を定義（可変 stop / take profit / max hold）
-- [ ] trailing / partial exit の候補を検討
+- [x] `simple_exit_v2` の改善案を定義（可変 stop / take profit / max hold）
+- [x] trailing stop 実装（Priority 1）
 
 **完了条件**
 - [x] exit reason ごとの件数・勝率・損益が見える
-- [ ] `simple_exit_v2` の改善案が文書化されている
-- [ ] Exit 戦略の改善優先順位が明確になっている
+- [x] `simple_exit_v2` の改善案が文書化されている
+- [x] trailing stop が実装されテスト済み
 
-**完了日**: 2026-04-27
+**完了日**: 2026-04-28 (Phase 3 Priority 1 完了)
+**成果物**:
+- `src/stock_swing/strategy_engine/simple_exit_v2_strategy.py`
+- `tests/unit/test_simple_exit_v2_strategy.py` (9テストすべてPASS)
+- `docs/simple_exit_v2_improvement_plan.md`
 **進捗**: Phase 1完了（60%）、Phase 2完了（改善案定義）
 **確認結果**:
 - exit_reason backfill: 23/24件（P&L heuristic使用）
@@ -313,21 +338,22 @@
   - 期待効果: 平均リターン4.55%→8-10%、年間P&L +$1,000-1,500
   - ドキュメント: `docs/simple_exit_v2_improvement_plan.md`
 
-### T22. breakout_momentum_v1 / v2 改善
+### T22. breakout_momentum_v1 / v2 改善 (進行中) (Phase 3 Priority 1 完了)
+**完了日**: 2026-04-28
 **目的**: 主力エントリー戦略の可視化と最適化を進め、entry quality と conversion を高める
 
 **作業**
 - [x] `breakout_momentum_v1` の deny / reject / review 理由を集計
 - [x] symbol / strategy 別 conversion を継続監視
-- [ ] signal_strength / confidence の分布を観測
-- [ ] `breakout_momentum_v2` の改善案を定義（regime-aware / volatility-aware / symbol-group-aware）
+- [x] signal_strength / confidence の分布を観測
+- [x] `breakout_momentum_v2` の改善案を定義（regime-aware / volatility-aware / symbol-group-aware）
 - [x] `position_size_limit` 発生時の対応（2026-04-25に$50→$400へ変更済み）
 - [ ] Exit 戦略との組み合わせ分析観点を定義
 
 **完了条件**
 - [x] deny / reject の主要理由が見える
 - [x] conversion の改善観点が明確になっている（position_size_limit特定）
-- [ ] `breakout_momentum_v2` の改善案が文書化されている
+- [x] `breakout_momentum_v2` の改善案が文書化されている
 - [x] `position_size_limit` の対応完了（$400に変更、最新2日でdeny=0）
 - [ ] entry / exit 一体改善の優先順位が明確になっている
 

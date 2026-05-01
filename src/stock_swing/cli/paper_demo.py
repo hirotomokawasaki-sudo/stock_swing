@@ -17,6 +17,8 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import yaml
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -44,6 +46,7 @@ from stock_swing.decision_engine.decision_engine import DecisionEngine, Decision
 from stock_swing.decision_engine.risk_validator import RiskValidator
 from stock_swing.execution.paper_executor import OrderSubmission, PaperExecutor
 from stock_swing.execution.reconciler import Reconciler
+from stock_swing.risk.portfolio_allocator import PortfolioAllocator
 from stock_swing.feature_engine.macro_regime_feature import MacroRegimeFeature
 from stock_swing.feature_engine.price_momentum_feature import PriceMomentumFeature
 from stock_swing.normalization.broker_normalizer import BrokerNormalizer
@@ -54,9 +57,10 @@ from stock_swing.storage.stage_store import StageStore
 from stock_swing.strategy_engine.breakout_momentum_strategy import BreakoutMomentumStrategy
 from stock_swing.strategy_engine.event_swing_strategy import EventSwingStrategy
 from stock_swing.strategy_engine.simple_exit_strategy import SimpleExitStrategy
+from stock_swing.strategy_engine.simple_exit_v2_strategy import SimpleExitV2Strategy
 from stock_swing.tracking.pnl_tracker import PnLTracker
 from stock_swing.utils.market_calendar import MarketCalendar
-from stock_swing.utils.signal_prioritization import prioritize_buy_signals
+from stock_swing.utils.signal_prioritization import prioritize_buy_signals, prioritize_buy_signals_v2
 
 
 def _infer_price_based_regime(momentum_results: list) -> str:
@@ -96,6 +100,12 @@ DEFAULT_SYMBOLS = [
 # Legacy CLI compatibility: "full" maps to the unified universe as well.
 TECH_UNIVERSE_FULL = DEFAULT_SYMBOLS
 
+# ETF symbols for portfolio allocation
+ETF_SYMBOLS = {
+    'SHOC', 'SOXQ', 'SOXX', 'SMH', 'FTXL', 'PTF', 'SMHX', 'FRWD', 
+    'TTEQ', 'GTOP', 'CHPX', 'CHPS', 'PSCT', 'QTEC', 'TDIV', 'SKYY', 'QTUM'
+}
+
 
 def main() -> int:  # noqa: C901
     parser = argparse.ArgumentParser(description="stock_swing paper trading demo")
@@ -105,8 +115,8 @@ def main() -> int:  # noqa: C901
                         help="Predefined symbol universe: default (10 tech) / full (14 tech+ETF)")
     parser.add_argument("--timeframe", type=str, default="1Day")
     parser.add_argument("--bar-limit", type=int, default=20)
-    parser.add_argument("--min-momentum", type=float, default=0.03)
-    parser.add_argument("--min-signal-strength", type=float, default=0.55)
+    parser.add_argument("--min-momentum", type=float, default=0.025)
+    parser.add_argument("--min-signal-strength", type=float, default=0.52)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--allow-outside-hours", action="store_true")
     parser.add_argument("--telegram", action="store_true", help="Send summary to Telegram")
@@ -198,25 +208,36 @@ def main() -> int:  # noqa: C901
     )
     audit_log.log_system_event("paper_demo_start", details=f"symbols={symbols} dry_run={args.dry_run}")
 
-    # 5. Data collection
+    # 5. Data collection (parallel)
     _section("5. Data Collection (Broker Bars)")
     normalizer = BrokerNormalizer()
     all_records: list[CanonicalRecord] = []
+    max_workers = int(os.environ.get("PAPER_DEMO_MAX_WORKERS", "8"))
 
-    for symbol in symbols:
+    def fetch_single_symbol(symbol: str) -> tuple[str, list[CanonicalRecord], int, str | None]:
+        """Fetch bars for a single symbol. Returns (symbol, records, bar_count, error)."""
         try:
             raw = broker.fetch_bars(symbol, timeframe=args.timeframe, limit=args.bar_limit)
             bar_count = len(raw.payload.get("bars", []))
             records = normalizer.normalize(raw)
-            all_records.extend(records)
-            print(f"  OK: {symbol:<6} {bar_count:3d} bars -> {len(records):3d} records")
+            return (symbol, records, bar_count, None)
         except Exception as exc:
-            print(f"  WARN: {symbol:<6} fetch failed: {exc}")
+            return (symbol, [], 0, str(exc))
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(fetch_single_symbol, symbol): symbol for symbol in symbols}
+        for future in as_completed(futures):
+            symbol, records, bar_count, error = future.result()
+            if error:
+                print(f"  WARN: {symbol:<6} fetch failed: {error}")
+            else:
+                all_records.extend(records)
+                print(f"  OK: {symbol:<6} {bar_count:3d} bars -> {len(records):3d} records")
 
     if not all_records:
         print("\n  ERROR: No data fetched. Cannot proceed.")
         return 1
-    print(f"\n  Total records: {len(all_records)}")
+    print(f"\n  Total records: {len(all_records)} (fetched with {max_workers} parallel workers)")
 
     # 6. Features
     _section("6. Feature Computation")
@@ -270,17 +291,36 @@ def main() -> int:  # noqa: C901
     breakout_signals = breakout_strat.generate(all_features)
     event_signals = event_strat.generate(all_features)
     
-    # Exit strategy for current positions
-    exit_strat = SimpleExitStrategy(
-        stop_loss_pct=-0.07,  # -7% stop loss
-        take_profit_pct=0.10,  # +10% take profit
-        max_hold_days=5,
-    )
+    # Exit strategy for current positions (V2 with trailing stop)
+    # Load exit strategy config
+    exit_config_path = project_root / "config" / "strategy" / "simple_exit_v2.yaml"
+    if exit_config_path.exists():
+        with open(exit_config_path) as f:
+            exit_config = yaml.safe_load(f)
+        exit_strat = SimpleExitV2Strategy(
+            stop_loss_pct=exit_config.get('stop_loss_pct', -0.07),
+            trailing_activation_pct=exit_config.get('trailing_activation_pct', 0.05),
+            trailing_stop_pct=exit_config.get('trailing_stop_pct', 0.03),
+            max_hold_days=exit_config.get('max_hold_days', 2),
+        )
+    else:
+        # Fallback to default values
+        exit_strat = SimpleExitV2Strategy(
+            stop_loss_pct=-0.07,
+            trailing_activation_pct=0.05,
+            trailing_stop_pct=0.03,
+            max_hold_days=2,  # Changed from 10 to 2
+        )
     exit_signals = exit_strat.generate(all_features, current_positions_full)
     
-    # Prioritize buy signals for sector diversification
+    # Prioritize buy signals for sector diversification (V2 with dynamic allocation)
     entry_signals = breakout_signals + event_signals
-    prioritized_entry = prioritize_buy_signals(entry_signals, current_positions_full)
+    prioritized_entry = prioritize_buy_signals_v2(
+        entry_signals,
+        current_positions_full,
+        equity=equity,
+        max_sector_exposure_pct=0.80,  # 80% sector cap
+    )
     all_signals = prioritized_entry + exit_signals
 
     print(f"  Entry Signals:")
@@ -288,16 +328,17 @@ def main() -> int:  # noqa: C901
     print(f"    EventSwing:       {len(event_signals)} signal(s)")
     print()
     print(f"  Exit Signals:")
-    print(f"    SimpleExit:       {len(exit_signals)} signal(s)")
+    print(f"    SimpleExitV2:     {len(exit_signals)} signal(s) (with trailing stop)")
     
     # Exit signal analysis
     if current_positions_full:
         print(f"    (Checked {len(current_positions_full)} positions)")
         
-        # Find positions closest to exit criteria
+        # Find positions closest to exit criteria (V2 thresholds)
         STOP_LOSS_PCT = -7.0
-        TAKE_PROFIT_PCT = 10.0
-        MAX_HOLD_DAYS = 5
+        TRAILING_ACTIVATION_PCT = 5.0
+        TRAILING_STOP_PCT = 3.0
+        MAX_HOLD_DAYS = 10
         
         positions_with_metrics = []
         for sym, pos_data in current_positions_full.items():
@@ -306,17 +347,17 @@ def main() -> int:  # noqa: C901
                 'symbol': sym,
                 'pnl_pct': unreal_plpc,
                 'dist_to_stop': abs(unreal_plpc - STOP_LOSS_PCT),
-                'dist_to_profit': abs(unreal_plpc - TAKE_PROFIT_PCT),
+                'dist_to_trailing': abs(unreal_plpc - TRAILING_ACTIVATION_PCT),
             })
         
         if positions_with_metrics:
             closest_stop = min(positions_with_metrics, key=lambda x: x['dist_to_stop'])
-            closest_profit = min(positions_with_metrics, key=lambda x: x['dist_to_profit'])
+            closest_trailing = min(positions_with_metrics, key=lambda x: x['dist_to_trailing'])
             print(f"    Closest to stop:  {closest_stop['symbol']} ({closest_stop['pnl_pct']:+.2f}%, need {STOP_LOSS_PCT:.2f}%)")
-            print(f"    Closest to profit: {closest_profit['symbol']} ({closest_profit['pnl_pct']:+.2f}%, need {TAKE_PROFIT_PCT:+.2f}%)")
+            print(f"    Closest to trailing: {closest_trailing['symbol']} ({closest_trailing['pnl_pct']:+.2f}%, activation at {TRAILING_ACTIVATION_PCT:+.2f}%)")
     print()
     
-    print(f"  (Buy signals prioritized for sector diversification)")
+    print(f"  (Buy signals prioritized with dynamic sector allocation V2)")
     for sig in all_signals:
         print(f"  -> [{sig.strategy_id}] {sig.symbol}: {sig.action.upper()} strength={sig.signal_strength:.2f}")
         print(f"     {sig.reasoning}")
@@ -414,6 +455,29 @@ def main() -> int:  # noqa: C901
 
     # 9. Paper execution
     actionable = [d for d in decisions if d.action in {"buy", "sell"} and d.risk_state == "pass" and d.proposed_order is not None]
+    
+    # Portfolio allocation: Prioritize ETF or Stock buys based on target allocation
+    portfolio_allocator = PortfolioAllocator(
+        project_root / "config" / "strategy" / "portfolio_allocation.yaml"
+    )
+    actionable = portfolio_allocator.filter_decisions_by_allocation(
+        decisions=actionable,
+        current_positions=current_positions_full,
+        etf_symbols=ETF_SYMBOLS
+    )
+    
+    # Log allocation status
+    alloc_status = portfolio_allocator.get_allocation_status(
+        current_positions=current_positions_full,
+        etf_symbols=ETF_SYMBOLS
+    )
+    print(f"\n  Portfolio Allocation:")
+    print(f"    ETF:   {alloc_status['current_etf_pct']:>6.1%} (target: {alloc_status['target_etf_pct']:.1%}) = ${alloc_status['etf_value']:>10,.0f}")
+    print(f"    Stock: {alloc_status['current_stock_pct']:>6.1%} (target: {alloc_status['target_stock_pct']:.1%}) = ${alloc_status['stock_value']:>10,.0f}")
+    if alloc_status['needs_rebalance']:
+        rebal_type = 'ETF' if alloc_status['etf_deficit'] > 0 else 'Stock'
+        print(f"    ⚠️  Rebalancing needed: Prioritizing {rebal_type} purchases")
+    
     _section("9. Paper Order Submission")
     print(f"  Actionable: {len(actionable)}  Denied/held: {len(decisions) - len(actionable)}")
 
@@ -435,8 +499,9 @@ def main() -> int:  # noqa: C901
     pnl_tracker = PnLTracker(project_root)
     submissions: list[OrderSubmission] = []
     
-    # Symbol-level position size limit (10% of equity per symbol)
-    MAX_POSITION_PER_SYMBOL_PCT = 0.10
+    # Symbol-level position size limit (12% of equity per symbol, 15% for ETFs)
+    MAX_POSITION_PER_SYMBOL_PCT = 0.12
+    MAX_POSITION_PER_ETF_PCT = 0.15  # Higher limit for diversified ETFs
     max_position_per_symbol = equity * MAX_POSITION_PER_SYMBOL_PCT
 
     for decision in actionable:
@@ -446,6 +511,11 @@ def main() -> int:  # noqa: C901
             if o.side == "buy" and o.symbol in current_positions_full:
                 existing_pos = current_positions_full[o.symbol]
                 existing_value = float(existing_pos.get('market_value', 0))
+                
+                # Determine position limit (higher for ETFs)
+                is_etf = o.symbol in ETF_SYMBOLS
+                position_limit_pct = MAX_POSITION_PER_ETF_PCT if is_etf else MAX_POSITION_PER_SYMBOL_PCT
+                max_position_value = equity * position_limit_pct
                 
                 # Get estimated order value
                 preview_qty, preview_sizing = executor._calculate_position_size(
@@ -464,8 +534,9 @@ def main() -> int:  # noqa: C901
                 
                 total_value = existing_value + estimated_order_value
                 
-                if total_value > max_position_per_symbol:
-                    print(f"\n  SKIP {o.side.upper()} {preview_qty} {o.symbol}: Position limit (${existing_value:.0f} + ${estimated_order_value:.0f} = ${total_value:.0f} > ${max_position_per_symbol:.0f})")
+                if total_value > max_position_value:
+                    asset_type = "ETF" if is_etf else "Stock"
+                    print(f"\n  SKIP {o.side.upper()} {preview_qty} {o.symbol} ({asset_type}): Position limit (${existing_value:.0f} + ${estimated_order_value:.0f} = ${total_value:.0f} > ${max_position_value:.0f} [{position_limit_pct:.0%}])")
                     continue
             
             preview_qty, preview_sizing = executor._calculate_position_size(

@@ -6,28 +6,42 @@ Real-time monitoring and management console for the Stock Swing automated tradin
 
 ### Prerequisites
 - Python 3.11+
-- Virtual environment activated
+- Virtual environment created at `venv/`
 - Environment variables configured (`.env` file)
 
 ### Start Console
 
 ```bash
-# 1. Start WebSocket Server (real-time updates)
 cd /Users/hirotomookawasaki/stock_swing
-source venv/bin/activate
-python console/websocket_server.py &
+./console/manage.sh start
+./console/manage.sh status
+./console/manage.sh health
+open http://localhost:3335
+```
 
-# 2. Start HTTP Console
-cd console
-python app.py &
+### Stop / Restart
 
-# 3. Open in browser
-open http://localhost:3333
+```bash
+./console/manage.sh stop
+./console/manage.sh restart
+```
+
+### Watchdog
+
+```bash
+# one-shot health check + self-heal
+./console/manage.sh watchdog-run-once
+
+# background watchdog loop (default: every 60s)
+./console/manage.sh watchdog-start
+./console/manage.sh watchdog-status
+./console/manage.sh watchdog-stop
 ```
 
 ### Ports
-- **HTTP Console**: `http://localhost:3333`
+- **HTTP Console**: `http://localhost:3335` (default via `manage.sh`)
 - **WebSocket**: `ws://localhost:3334`
+- `app.py` 単体実行時の既定値は `3333` のままです。`manage.sh` は運用用に `3335` を使います。
 
 ---
 
@@ -246,21 +260,17 @@ console/
 
 ### Console won't start
 ```bash
-# Check if port is in use
-lsof -i :3333
+./console/manage.sh status
+./console/manage.sh health
 
-# Kill existing process
-pkill -f "python.*app.py"
+# If needed
+./console/manage.sh restart
 ```
 
 ### WebSocket not connecting
 ```bash
-# Check if WebSocket server is running
-ps aux | grep websocket_server
-
-# Restart WebSocket server
-pkill -f websocket_server.py
-python console/websocket_server.py &
+./console/manage.sh health
+./console/manage.sh restart
 ```
 
 ### Data not updating

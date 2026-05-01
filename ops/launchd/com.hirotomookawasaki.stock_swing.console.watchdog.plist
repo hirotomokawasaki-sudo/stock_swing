@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.hirotomookawasaki.stock_swing.console.watchdog</string>
+    
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/hirotomookawasaki/stock_swing/console/manage.sh</string>
+        <string>watchdog-loop</string>
+    </array>
+    
+    <key>WorkingDirectory</key>
+    <string>/Users/hirotomookawasaki/stock_swing</string>
+    
+    <key>RunAtLoad</key>
+    <true/>
+    
+    <key>KeepAlive</key>
+    <true/>
+    
+    <key>StandardOutPath</key>
+    <string>/Users/hirotomookawasaki/stock_swing/logs/launchd_watchdog.log</string>
+    
+    <key>StandardErrorPath</key>
+    <string>/Users/hirotomookawasaki/stock_swing/logs/launchd_watchdog.err</string>
+    
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>CONSOLE_PORT</key>
+        <string>3335</string>
+        <key>CONSOLE_HOST</key>
+        <string>0.0.0.0</string>
+        <key>CONSOLE_WS_PORT</key>
+        <string>3334</string>
+        <key>CONSOLE_WS_HOST</key>
+        <string>127.0.0.1</string>
+        <key>WATCHDOG_INTERVAL</key>
+        <string>60</string>
+        <key>PYTHON_BIN</key>
+        <string>/Users/hirotomookawasaki/stock_swing/venv/bin/python</string>
+    </dict>
+</dict>
+</plist>

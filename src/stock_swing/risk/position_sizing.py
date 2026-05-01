@@ -14,10 +14,10 @@ from math import floor
 
 
 REGIME_LIMITS = {
-    "bullish": 0.95,  # Increased from 0.85 for paper trading
-    "neutral": 0.85,  # Increased from 0.70 for paper trading
-    "cautious": 0.65, # Increased from 0.50 for paper trading
-    "unknown": 0.85,  # Increased from 0.70 for paper trading
+    "bullish": 0.85,  # Moderately aggressive for bull markets
+    "neutral": 0.75,  # Target 70-75% exposure in neutral regime
+    "cautious": 0.60, # Conservative in cautious regime
+    "unknown": 0.75,  # Same as neutral when regime is uncertain
 }
 
 ETF_SYMBOLS = {

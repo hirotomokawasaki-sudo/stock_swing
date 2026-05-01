@@ -1,0 +1,40 @@
+{
+  "id": "d4fb64ec-6b22-4985-8945-552f986eec2b",
+  "name": "stock_swing_paper_demo_premarket",
+  "enabled": true,
+  "createdAtMs": 1775572545178,
+  "schedule": {
+    "kind": "cron",
+    "expr": "25 23 * * 1-5",
+    "tz": "Asia/Tokyo"
+  },
+  "sessionTarget": "isolated",
+  "wakeMode": "now",
+  "payload": {
+    "kind": "agentTurn",
+    "message": "Run exactly this command and wait for it to finish:\\ncd ~/stock_swing && source venv/bin/activate && ~/stock_swing/scripts/cron/run_paper_demo.sh\\n\\nThen reply in at most 3 bullets: final status, elapsed time, and processed symbol count if shown. Keep it concise and stop.",
+    "timeoutSeconds": 3600,
+    "toolsAllow": [
+      "exec"
+    ],
+    "thinking": "off",
+    "lightContext": true
+  },
+  "delivery": {
+    "mode": "announce",
+    "channel": "telegram",
+    "to": "8417431746"
+  },
+  "state": {
+    "nextRunAtMs": 1777472700000,
+    "lastRunAtMs": 1777386421884,
+    "lastRunStatus": "ok",
+    "lastStatus": "ok",
+    "lastDurationMs": 2027248,
+    "lastDeliveryStatus": "delivered",
+    "consecutiveErrors": 0,
+    "lastDelivered": true,
+    "consecutiveSkipped": 0
+  },
+  "updatedAtMs": 1777425240264
+}

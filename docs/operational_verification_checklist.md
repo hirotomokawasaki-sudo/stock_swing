@@ -1,5 +1,7 @@
 # stock_swing 完了済み機能の運用確認チェックリスト
 
+**関連ドキュメント**: `docs/runbooks/CRON_DAILY_CHECK.md` に日次確認フローを記載
+
 ## 目的
 完了済みの console / tracker / cron 改善項目について、実装完了だけでなく実運用上も正常に機能しているかを確認する。
 

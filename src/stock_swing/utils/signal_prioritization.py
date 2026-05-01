@@ -93,3 +93,99 @@ def prioritize_buy_signals(
     non_buy_signals = [s for s in signals if s.action != "buy"]
     
     return prioritized_buys + non_buy_signals
+
+
+def prioritize_buy_signals_v2(
+    signals: list[CandidateSignal],
+    current_positions: dict[str, dict] | None = None,
+    equity: float = 100000.0,
+    max_sector_exposure_pct: float = 0.80,
+) -> list[CandidateSignal]:
+    """Prioritize buy signals with dynamic sector allocation (V2).
+    
+    Improvements over V1:
+    - Sorts by signal quality (signal_strength * confidence) within sector
+    - Enforces sector cap dynamically
+    - Prioritizes high-quality signals first
+    
+    Args:
+        signals: List of candidate signals.
+        current_positions: Current positions for sector exposure calculation.
+        equity: Account equity for sector cap calculation.
+        max_sector_exposure_pct: Maximum exposure per sector (e.g., 0.80 = 80%).
+    
+    Returns:
+        Prioritized list of signals respecting sector caps.
+    """
+    if not signals:
+        return []
+    
+    # Filter to buy signals only
+    buy_signals = [s for s in signals if s.action == "buy"]
+    non_buy_signals = [s for s in signals if s.action != "buy"]
+    
+    if not buy_signals:
+        return signals
+    
+    # Calculate current sector exposure
+    sector_exposure = {}
+    if current_positions:
+        sector_exposure = calculate_sector_exposure(current_positions)
+    
+    # Group signals by sector and sort by quality
+    sector_signals: dict[str, list[CandidateSignal]] = {}
+    
+    for signal in buy_signals:
+        symbol = signal.symbol.upper()
+        sector = SYMBOL_SECTORS.get(symbol, "unknown")
+        
+        if sector not in sector_signals:
+            sector_signals[sector] = []
+        sector_signals[sector].append(signal)
+    
+    # Sort signals within each sector by quality (signal_strength * confidence)
+    for sector in sector_signals:
+        sector_signals[sector].sort(
+            key=lambda s: s.signal_strength * s.confidence,
+            reverse=True,
+        )
+    
+    # Allocate signals respecting sector caps
+    max_sector_value = equity * max_sector_exposure_pct
+    prioritized_buys = []
+    
+    # Round-robin allocation across sectors to promote diversification
+    sectors_list = list(sector_signals.keys())
+    sector_indices = {sector: 0 for sector in sectors_list}
+    
+    # Keep allocating until all signals are processed or sectors are full
+    while any(sector_indices[s] < len(sector_signals[s]) for s in sectors_list):
+        allocated_this_round = False
+        
+        for sector in sectors_list:
+            idx = sector_indices[sector]
+            if idx >= len(sector_signals[sector]):
+                continue  # This sector is exhausted
+            
+            signal = sector_signals[sector][idx]
+            current_sector_exposure = sector_exposure.get(sector, 0.0)
+            
+            # Estimate signal notional (use metadata if available)
+            estimated_notional = 1000.0  # Default
+            if isinstance(signal.metadata, dict):
+                estimated_notional = signal.metadata.get("estimated_notional", 1000.0)
+            
+            # Check if adding this signal would exceed sector cap
+            if current_sector_exposure + estimated_notional <= max_sector_value:
+                prioritized_buys.append(signal)
+                sector_exposure[sector] = current_sector_exposure + estimated_notional
+                allocated_this_round = True
+            
+            sector_indices[sector] += 1
+        
+        # If no signals were allocated this round, all sectors are capped
+        if not allocated_this_round:
+            break
+    
+    # Combine with non-buy signals (preserve order)
+    return prioritized_buys + non_buy_signals

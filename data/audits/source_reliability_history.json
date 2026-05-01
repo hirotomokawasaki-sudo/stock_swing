@@ -405,5 +405,277 @@
         "delta": -0.08
       }
     ]
+  },
+  {
+    "time": "2026-04-28T00:16:27.429593+09:00",
+    "rows": [
+      {
+        "source": "SeekingAlpha",
+        "current_reliability": 0.75,
+        "count": 23,
+        "used_count": 21,
+        "avg_influence": 0.76,
+        "avg_sentiment_abs": 0.19,
+        "avg_impact": 0.21,
+        "observed_quality_score": 0.65,
+        "suggested_reliability": 0.72,
+        "delta": -0.03
+      },
+      {
+        "source": "Yahoo",
+        "current_reliability": 0.75,
+        "count": 23,
+        "used_count": 21,
+        "avg_influence": 0.85,
+        "avg_sentiment_abs": 0.37,
+        "avg_impact": 0.32,
+        "observed_quality_score": 0.72,
+        "suggested_reliability": 0.74,
+        "delta": -0.01
+      },
+      {
+        "source": "synthetic",
+        "current_reliability": 0.4,
+        "count": 3,
+        "used_count": 0,
+        "avg_influence": 0.3,
+        "avg_sentiment_abs": 0.37,
+        "avg_impact": 0.2,
+        "observed_quality_score": 0.19,
+        "suggested_reliability": 0.34,
+        "delta": -0.06
+      },
+      {
+        "source": "Finnhub",
+        "current_reliability": 0.4,
+        "count": 1,
+        "used_count": 0,
+        "avg_influence": 0.3,
+        "avg_sentiment_abs": 0.0,
+        "avg_impact": 0.2,
+        "observed_quality_score": 0.14,
+        "suggested_reliability": 0.32,
+        "delta": -0.08
+      }
+    ]
+  },
+  {
+    "time": "2026-04-29T00:01:00.139419+09:00",
+    "rows": [
+      {
+        "source": "Yahoo",
+        "current_reliability": 0.75,
+        "count": 31,
+        "used_count": 29,
+        "avg_influence": 0.78,
+        "avg_sentiment_abs": 0.38,
+        "avg_impact": 0.29,
+        "observed_quality_score": 0.7,
+        "suggested_reliability": 0.73,
+        "delta": -0.02
+      },
+      {
+        "source": "SeekingAlpha",
+        "current_reliability": 0.75,
+        "count": 7,
+        "used_count": 7,
+        "avg_influence": 0.87,
+        "avg_sentiment_abs": 0.37,
+        "avg_impact": 0.25,
+        "observed_quality_score": 0.75,
+        "suggested_reliability": 0.75,
+        "delta": 0.0
+      },
+      {
+        "source": "Fintel",
+        "current_reliability": 0.6,
+        "count": 1,
+        "used_count": 0,
+        "avg_influence": 0.3,
+        "avg_sentiment_abs": 0.0,
+        "avg_impact": 0.2,
+        "observed_quality_score": 0.14,
+        "suggested_reliability": 0.46,
+        "delta": -0.14
+      },
+      {
+        "source": "synthetic",
+        "current_reliability": 0.4,
+        "count": 3,
+        "used_count": 0,
+        "avg_influence": 0.3,
+        "avg_sentiment_abs": 0.37,
+        "avg_impact": 0.2,
+        "observed_quality_score": 0.19,
+        "suggested_reliability": 0.34,
+        "delta": -0.06
+      },
+      {
+        "source": "Finnhub",
+        "current_reliability": 0.4,
+        "count": 5,
+        "used_count": 4,
+        "avg_influence": 0.69,
+        "avg_sentiment_abs": 0.0,
+        "avg_impact": 0.34,
+        "observed_quality_score": 0.57,
+        "suggested_reliability": 0.45,
+        "delta": 0.05
+      },
+      {
+        "source": "Benzinga",
+        "current_reliability": 0.6,
+        "count": 3,
+        "used_count": 3,
+        "avg_influence": 0.77,
+        "avg_sentiment_abs": 0.0,
+        "avg_impact": 0.2,
+        "observed_quality_score": 0.65,
+        "suggested_reliability": 0.61,
+        "delta": 0.01
+      }
+    ]
+  },
+  {
+    "time": "2026-04-30T00:16:38.151899+09:00",
+    "rows": [
+      {
+        "source": "Yahoo",
+        "current_reliability": 0.75,
+        "count": 26,
+        "used_count": 24,
+        "avg_influence": 0.76,
+        "avg_sentiment_abs": 0.46,
+        "avg_impact": 0.26,
+        "observed_quality_score": 0.7,
+        "suggested_reliability": 0.73,
+        "delta": -0.02
+      },
+      {
+        "source": "SeekingAlpha",
+        "current_reliability": 0.75,
+        "count": 4,
+        "used_count": 3,
+        "avg_influence": 0.71,
+        "avg_sentiment_abs": 0.12,
+        "avg_impact": 0.2,
+        "observed_quality_score": 0.56,
+        "suggested_reliability": 0.69,
+        "delta": -0.06
+      },
+      {
+        "source": "ChartMill",
+        "current_reliability": 0.6,
+        "count": 1,
+        "used_count": 1,
+        "avg_influence": 0.76,
+        "avg_sentiment_abs": 0.37,
+        "avg_impact": 0.2,
+        "observed_quality_score": 0.7,
+        "suggested_reliability": 0.63,
+        "delta": 0.03
+      },
+      {
+        "source": "Benzinga",
+        "current_reliability": 0.6,
+        "count": 15,
+        "used_count": 15,
+        "avg_influence": 0.77,
+        "avg_sentiment_abs": 0.0,
+        "avg_impact": 0.2,
+        "observed_quality_score": 0.65,
+        "suggested_reliability": 0.61,
+        "delta": 0.01
+      },
+      {
+        "source": "synthetic",
+        "current_reliability": 0.4,
+        "count": 3,
+        "used_count": 0,
+        "avg_influence": 0.3,
+        "avg_sentiment_abs": 0.37,
+        "avg_impact": 0.2,
+        "observed_quality_score": 0.19,
+        "suggested_reliability": 0.34,
+        "delta": -0.06
+      },
+      {
+        "source": "Finnhub",
+        "current_reliability": 0.4,
+        "count": 1,
+        "used_count": 0,
+        "avg_influence": 0.3,
+        "avg_sentiment_abs": 0.0,
+        "avg_impact": 0.2,
+        "observed_quality_score": 0.14,
+        "suggested_reliability": 0.32,
+        "delta": -0.08
+      }
+    ]
+  },
+  {
+    "time": "2026-05-01T00:00:13.355284+09:00",
+    "rows": [
+      {
+        "source": "Yahoo",
+        "current_reliability": 0.75,
+        "count": 23,
+        "used_count": 12,
+        "avg_influence": 0.56,
+        "avg_sentiment_abs": 0.41,
+        "avg_impact": 0.33,
+        "observed_quality_score": 0.49,
+        "suggested_reliability": 0.67,
+        "delta": -0.08
+      },
+      {
+        "source": "Finnhub",
+        "current_reliability": 0.4,
+        "count": 2,
+        "used_count": 0,
+        "avg_influence": 0.3,
+        "avg_sentiment_abs": 0.0,
+        "avg_impact": 0.2,
+        "observed_quality_score": 0.14,
+        "suggested_reliability": 0.32,
+        "delta": -0.08
+      },
+      {
+        "source": "SeekingAlpha",
+        "current_reliability": 0.75,
+        "count": 19,
+        "used_count": 19,
+        "avg_influence": 0.77,
+        "avg_sentiment_abs": 0.37,
+        "avg_impact": 0.2,
+        "observed_quality_score": 0.7,
+        "suggested_reliability": 0.73,
+        "delta": -0.02
+      },
+      {
+        "source": "synthetic",
+        "current_reliability": 0.4,
+        "count": 3,
+        "used_count": 0,
+        "avg_influence": 0.3,
+        "avg_sentiment_abs": 0.37,
+        "avg_impact": 0.2,
+        "observed_quality_score": 0.19,
+        "suggested_reliability": 0.34,
+        "delta": -0.06
+      },
+      {
+        "source": "Benzinga",
+        "current_reliability": 0.6,
+        "count": 3,
+        "used_count": 3,
+        "avg_influence": 0.77,
+        "avg_sentiment_abs": 0.0,
+        "avg_impact": 0.2,
+        "observed_quality_score": 0.65,
+        "suggested_reliability": 0.61,
+        "delta": 0.01
+      }
+    ]
   }
 ]

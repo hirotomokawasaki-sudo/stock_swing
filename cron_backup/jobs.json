@@ -1,74 +1,18 @@
 {
-  "version": 1,
   "jobs": [
     {
-      "id": "4d76bf16-bd96-4ff3-b5db-a735f62c2d35",
-      "agentId": "main",
-      "sessionKey": "agent:main:main",
-      "name": "stock_swing_data_collection",
-      "enabled": true,
-      "createdAtMs": 1774599856124,
-      "updatedAtMs": 1774599856124,
-      "schedule": {
-        "kind": "cron",
-        "expr": "40 */2 * * *",
-        "tz": "Asia/Tokyo"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Execute stock_swing data collection:\n\nRun this command in the project directory:\ncd ~/stock_swing && source venv/bin/activate && python -m stock_swing.cli.collect_data --symbols AAPL,MSFT,GOOGL,AMZN,TSLA\n\nThis will collect data from all sources (Finnhub, FRED, SEC, Broker).\n\nAfter completion, report the summary.",
-        "timeoutSeconds": 600
-      },
-      "delivery": {
-        "mode": "announce"
-      },
-      "state": {
-        "nextRunAtMs": 1774604400000
-      }
-    },
-    {
-      "id": "630f2a52-6d11-4635-9066-776d63901859",
-      "agentId": "main",
-      "sessionKey": "agent:main:main",
-      "name": "stock_swing_data_analysis",
-      "enabled": true,
-      "createdAtMs": 1774600482225,
-      "updatedAtMs": 1774600482225,
-      "schedule": {
-        "kind": "cron",
-        "expr": "0 0,4,8,12,16,20 * * *",
-        "tz": "Asia/Tokyo"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Execute stock_swing data analysis:\n\nRun this command in the project directory:\ncd ~/stock_swing && source venv/bin/activate && python -m stock_swing.cli.analyze_data --symbols AAPL,MSFT,GOOGL,AMZN,TSLA\n\nThis will analyze collected data through the full pipeline:\n1. Normalize raw data → canonical records\n2. Extract features (MacroRegime, EarningsEvent, PriceMomentum)\n3. Generate signals (EventSwing, BreakoutMomentum strategies)\n4. Create decisions (DecisionEngine + RiskValidator)\n5. Generate reports\n\nAfter completion, report the summary.",
-        "timeoutSeconds": 900
-      },
-      "delivery": {
-        "mode": "announce"
-      },
-      "state": {
-        "nextRunAtMs": 1774609200000
-      }
-    },
-    {
-      "id": "6be2f3d0-4bdb-4d8d-a8e8-reconcile-orders",
+      "id": "73410e77-5a22-40f5-9b90-d2c6d286434e",
       "agentId": "main",
       "sessionKey": "agent:main:main",
       "name": "stock_swing_order_reconciliation",
       "enabled": true,
-      "createdAtMs": 1774750000000,
-      "updatedAtMs": 1774750000000,
+      "createdAtMs": 1776765681051,
       "schedule": {
         "kind": "cron",
         "expr": "*/15 * * * *",
         "tz": "Asia/Tokyo"
       },
-      "sessionTarget": "isolated",
+      "sessionTarget": "session:agent:main:main",
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
@@ -76,26 +20,34 @@
         "timeoutSeconds": 600
       },
       "delivery": {
-        "mode": "announce"
+        "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774750500000
-      }
+        "nextRunAtMs": 1777624200000,
+        "lastRunAtMs": 1777623300009,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 50929,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
+      },
+      "updatedAtMs": 1777623350938
     },
     {
-      "id": "f6f8bba1-news-collection-job",
+      "id": "0a5ae126-cc03-44af-b4a8-b12b9821bd6f",
       "agentId": "main",
       "sessionKey": "agent:main:main",
       "name": "stock_swing_news_collection",
       "enabled": true,
-      "createdAtMs": 1774753800000,
-      "updatedAtMs": 1774753800000,
+      "createdAtMs": 1776765677115,
       "schedule": {
         "kind": "cron",
         "expr": "0 */2 * * *",
-        "tz": "Asia/Tokyo"
+        "tz": "Asia/Tokyo",
+        "staggerMs": 300000
       },
-      "sessionTarget": "isolated",
+      "sessionTarget": "session:agent:main:main",
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
@@ -103,11 +55,254 @@
         "timeoutSeconds": 900
       },
       "delivery": {
-        "mode": "announce"
+        "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774761000000
-      }
+        "nextRunAtMs": 1777626203299,
+        "lastRunAtMs": 1777619765361,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 36688,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
+      },
+      "updatedAtMs": 1777619802049
+    },
+    {
+      "id": "d4fb64ec-6b22-4985-8945-552f986eec2b",
+      "name": "stock_swing_paper_demo_premarket",
+      "enabled": true,
+      "createdAtMs": 1775572545178,
+      "schedule": {
+        "expr": "0 23 * * 1-5",
+        "kind": "cron"
+      },
+      "sessionTarget": "session:agent:main:main",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run exactly this command and wait for it to finish:\\ncd ~/stock_swing && source venv/bin/activate && ~/stock_swing/scripts/cron/run_paper_demo.sh\\n\\nThen reply in at most 3 bullets: final status, elapsed time, and processed symbol count if shown. Keep it concise and stop.",
+        "timeoutSeconds": 3600,
+        "toolsAllow": [
+          "exec"
+        ],
+        "thinking": "off",
+        "lightContext": true
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "8417431746"
+      },
+      "state": {
+        "nextRunAtMs": 1777644000000,
+        "lastRunAtMs": 1777559250964,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 29661,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": true,
+        "consecutiveSkipped": 0
+      },
+      "updatedAtMs": 1777600197637
+    },
+    {
+      "id": "6eda856d-915a-4605-9428-8d5d13553176",
+      "name": "stock_swing_paper_demo_market_open",
+      "enabled": true,
+      "createdAtMs": 1775572545176,
+      "schedule": {
+        "expr": "5 23 * * 1-5",
+        "kind": "cron"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run exactly this command and wait for it to finish:\\ncd ~/stock_swing && source venv/bin/activate && ~/stock_swing/scripts/cron/run_paper_demo.sh\\n\\nThen reply in at most 3 bullets: final status, elapsed time, and processed symbol count if shown. Keep it concise and stop.",
+        "timeoutSeconds": 3600,
+        "toolsAllow": [
+          "exec"
+        ],
+        "thinking": "off",
+        "lightContext": true
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "8417431746"
+      },
+      "state": {
+        "nextRunAtMs": 1777644300000,
+        "lastRunAtMs": 1777560226221,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 23134,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0,
+        "lastDelivered": true
+      },
+      "updatedAtMs": 1777600201876
+    },
+    {
+      "id": "a2986600-6e6a-4712-afa1-0ac8062e90fd",
+      "name": "stock_swing_paper_demo_midday",
+      "enabled": true,
+      "createdAtMs": 1775572545160,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 2 * * 2-6",
+        "tz": "Asia/Tokyo"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run exactly this command and wait for it to finish:\\ncd ~/stock_swing && source venv/bin/activate && ~/stock_swing/scripts/cron/run_paper_demo.sh\\n\\nThen reply in at most 3 bullets: final status, elapsed time, and processed symbol count if shown. Keep it concise and stop.",
+        "timeoutSeconds": 3600,
+        "toolsAllow": [
+          "exec"
+        ],
+        "thinking": "off",
+        "lightContext": true
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "8417431746"
+      },
+      "state": {
+        "nextRunAtMs": 1777654800000,
+        "lastRunAtMs": 1777568707924,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 24048,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0,
+        "lastDelivered": true
+      },
+      "updatedAtMs": 1777568731972
+    },
+    {
+      "id": "fc5f2185-2117-4413-9684-da79ac428869",
+      "name": "stock_swing_paper_demo_market_close",
+      "enabled": true,
+      "createdAtMs": 1775572545145,
+      "schedule": {
+        "kind": "cron",
+        "expr": "55 5 * * 2-6",
+        "tz": "Asia/Tokyo"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "exec",
+        "message": "source $HOME/.bashrc && cd ~/stock_swing && source venv/bin/activate && ~/stock_swing/scripts/cron/run_paper_demo.sh && echo 'Execution Completed'",
+        "timeoutSeconds": 3600,
+        "toolsAllow": [
+          "exec"
+        ],
+        "thinking": "off",
+        "lightContext": true
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "8417431746"
+      },
+      "state": {
+        "nextRunAtMs": 1777668900000,
+        "lastRunAtMs": 1777582860002,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 31032,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": true,
+        "consecutiveSkipped": 0
+      },
+      "updatedAtMs": 1777582891034
+    },
+    {
+      "id": "494e46d9-9214-492f-b83c-18a5e59bd5f7",
+      "agentId": "main",
+      "sessionKey": "agent:main:main",
+      "name": "daily_report_morning",
+      "enabled": true,
+      "createdAtMs": 1775212819440,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * 2-6",
+        "tz": "Asia/Tokyo"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run exactly this command and wait for it to finish:\\ncd ~/stock_swing && source venv/bin/activate && python -m stock_swing.cli.daily_report --telegram\\n\\nThen reply in at most 5 bullets with: Equity, P&L, trade count, win rate, max drawdown. Keep it concise and stop.",
+        "timeoutSeconds": 900,
+        "toolsAllow": [
+          "exec"
+        ],
+        "thinking": "off",
+        "lightContext": true
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "8417431746"
+      },
+      "state": {
+        "nextRunAtMs": 1777680000000,
+        "lastRunAtMs": 1777593600008,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 80631,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0,
+        "lastDelivered": true
+      },
+      "updatedAtMs": 1777593680639
     }
-  ]
+  ],
+  "total": 7,
+  "offset": 0,
+  "limit": 7,
+  "hasMore": false,
+  "nextOffset": null,
+  "deliveryPreviews": {
+    "73410e77-5a22-40f5-9b90-d2c6d286434e": {
+      "label": "none -> last",
+      "detail": "last -> no route, will fail-closed: Delivering to Telegram requires target <chatId>"
+    },
+    "0a5ae126-cc03-44af-b4a8-b12b9821bd6f": {
+      "label": "none -> last",
+      "detail": "last -> no route, will fail-closed: Delivering to Telegram requires target <chatId>"
+    },
+    "d4fb64ec-6b22-4985-8945-552f986eec2b": {
+      "label": "announce -> telegram:8417431746",
+      "detail": "explicit"
+    },
+    "6eda856d-915a-4605-9428-8d5d13553176": {
+      "label": "announce -> telegram:8417431746",
+      "detail": "explicit"
+    },
+    "a2986600-6e6a-4712-afa1-0ac8062e90fd": {
+      "label": "announce -> telegram:8417431746",
+      "detail": "explicit"
+    },
+    "fc5f2185-2117-4413-9684-da79ac428869": {
+      "label": "announce -> telegram:8417431746",
+      "detail": "explicit"
+    },
+    "494e46d9-9214-492f-b83c-18a5e59bd5f7": {
+      "label": "announce -> telegram:8417431746",
+      "detail": "explicit"
+    }
+  }
 }

@@ -1,0 +1,36 @@
+{
+  "id": "a2986600-6e6a-4712-afa1-0ac8062e90fd",
+  "name": "stock_swing_paper_demo_midday",
+  "enabled": true,
+  "createdAtMs": 1775572545160,
+  "schedule": {
+    "kind": "cron",
+    "expr": "0 2 * * 2-6",
+    "tz": "Asia/Tokyo"
+  },
+  "sessionTarget": "isolated",
+  "wakeMode": "now",
+  "payload": {
+    "kind": "agentTurn",
+    "message": "Run paper demo midday: ~/stock_swing/scripts/cron/run_paper_demo.sh\n\nUse this unified symbol universe for the paper demo and monitoring set. Include existing core AI stocks plus approved additional normal stocks and normal ETFs. Exclude leveraged, inverse, bear, short, and yield-enhanced ETFs.\n\nCore + approved stock symbols:\nNVDA,MSFT,GOOGL,AMZN,META,TSLA,AVGO,AMD,TSM,ASML,INTC,MU,ARM,AMAT,LRCX,KLAC,QCOM,MRVL,PLTR,ADBE,CRM,ORCL,NOW,SNOW,MDB,DDOG,PATH,FICO,SMCI,PANW,CRWD,FTNT,ANET,CSCO,IBM,HPE,DELL,HPQ,SNPS,CDNS,V,MA,INTU,NBIS,CRDO,RBRK,CIEN\n\nApproved normal ETF symbols:\nSHOC,SOXQ,SOXX,SMH,FTXL,PTF,SMHX,FRWD,TTEQ,GTOP,CHPX,CHPS,PSCT,QTEC,TDIV,SKYY,QTUM\n\nIf the script supports explicit symbols or a config override, run it with this universe. If it reads symbols from a project config, update/use that configured universe for this run. Keep the final report concise (<=15 bullets) and finish immediately after command completion. After completion, report the summary including which symbols were actually processed.",
+    "timeoutSeconds": 2400
+  },
+  "delivery": {
+    "mode": "announce",
+    "channel": "telegram",
+    "to": "8417431746"
+  },
+  "state": {
+    "nextRunAtMs": 1777482000000,
+    "lastRunAtMs": 1777395701900,
+    "lastRunStatus": "error",
+    "lastStatus": "error",
+    "lastDurationMs": 3002067,
+    "lastDeliveryStatus": "unknown",
+    "consecutiveErrors": 12,
+    "lastErrorReason": "timeout",
+    "lastError": "cron: job execution timed out",
+    "consecutiveSkipped": 0
+  },
+  "updatedAtMs": 1777398703967
+}

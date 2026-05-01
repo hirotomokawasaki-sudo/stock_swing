@@ -1,0 +1,43 @@
+{
+  "id": "494e46d9-9214-492f-b83c-18a5e59bd5f7",
+  "agentId": "main",
+  "sessionKey": "agent:main:main",
+  "name": "daily_report_morning",
+  "enabled": true,
+  "createdAtMs": 1775212819440,
+  "schedule": {
+    "kind": "cron",
+    "expr": "0 9 * * 2-6",
+    "tz": "Asia/Tokyo"
+  },
+  "sessionTarget": "isolated",
+  "wakeMode": "now",
+  "payload": {
+    "kind": "agentTurn",
+    "message": "Run exactly this command and wait for it to finish:\\ncd ~/stock_swing && source venv/bin/activate && python -m stock_swing.cli.daily_report --telegram\\n\\nThen reply in at most 5 bullets with: Equity, P&L, trade count, win rate, max drawdown. Keep it concise and stop.",
+    "timeoutSeconds": 900,
+    "toolsAllow": [
+      "exec"
+    ],
+    "thinking": "off",
+    "lightContext": true
+  },
+  "delivery": {
+    "mode": "announce",
+    "channel": "telegram",
+    "to": "8417431746"
+  },
+  "state": {
+    "nextRunAtMs": 1777507200000,
+    "lastRunAtMs": 1777420980058,
+    "lastRunStatus": "error",
+    "lastStatus": "error",
+    "lastDurationMs": 1058003,
+    "lastDeliveryStatus": "unknown",
+    "consecutiveErrors": 1,
+    "lastError": "cron: job execution timed out",
+    "lastErrorReason": "timeout",
+    "consecutiveSkipped": 0
+  },
+  "updatedAtMs": 1777425240275
+}

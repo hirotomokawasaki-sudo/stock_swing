@@ -68,46 +68,90 @@ class SummaryService:
         }
     
     def _generate_alerts(self, pnl_summary: Dict[str, Any], open_positions: list, unresolved_mismatches: Dict[str, Any] = None, stale_positions: Dict[str, Any] = None, strategy_health: Dict[str, Any] = None) -> list:
-        """Generate top alerts based on current state."""
+        """Generate top alerts based on current state.
+        
+        Severity levels:
+        - critical: Immediate action required (system failure, major loss)
+        - high: Attention needed soon (large losses, issues)
+        - medium: Monitor closely (warnings, minor issues)
+        - low: Informational (opportunities, minor notes)
+        """
         alerts = []
         unresolved_mismatches = unresolved_mismatches or {}
         stale_positions = stale_positions or {}
         strategy_health = strategy_health or {}
         
-        # Alert: Large daily loss
+        # Alert: Large daily loss (adjusted for ~$100K account)
         today_pnl = pnl_summary.get("today_pnl", 0)
-        if today_pnl < -1000:
+        if today_pnl < -500:  # -0.5% of $100K
+            severity = "critical" if today_pnl < -2000 else "high" if today_pnl < -1000 else "medium"
             alerts.append({
-                "severity": "high",
-                "code": "large_daily_loss",
-                "title": f"Large daily loss: ${abs(today_pnl):,.2f}",
-                "description": "Today's P&L is significantly negative",
-                "action": "Review stop loss settings and position sizing"
+                "severity": severity,
+                "code": "daily_loss",
+                "title": f"Daily loss: ${abs(today_pnl):,.2f} ({today_pnl/100000*100:.1f}%)",
+                "description": f"Today's P&L is negative (threshold: -$500)",
+                "action": "Review stop loss settings and position sizing" if severity != "medium" else "Monitor closely"
             })
         
-        # Alert: Too many open positions
-        if len(open_positions) > 15:
+        # Alert: Winning streak (informational)
+        elif today_pnl > 1000:  # +1% of $100K
             alerts.append({
-                "severity": "medium",
+                "severity": "low",
+                "code": "strong_day",
+                "title": f"Strong daily performance: +${today_pnl:,.2f}",
+                "description": "Today's P&L is significantly positive",
+                "action": "Review what worked well for future reference"
+            })
+        
+        # Alert: Too many open positions (adjusted threshold)
+        position_count = len(open_positions)
+        if position_count > 20:  # Increased from 15 to reduce noise
+            alerts.append({
+                "severity": "medium" if position_count <= 25 else "high",
                 "code": "high_position_count",
-                "title": f"High position count: {len(open_positions)}",
-                "description": "Too many open positions may reduce focus",
+                "title": f"High position count: {position_count}",
+                "description": "Too many open positions may reduce focus and increase risk",
                 "action": "Consider closing underperforming positions"
             })
         
-        # Alert: Unrealized loss threshold
+        # Alert: Unrealized loss threshold (adjusted for account size)
         total_unrealized = sum(
             (p.get('current_price', 0) - p.get('entry_price', 0)) * p.get('qty', 0)
             for p in open_positions
         )
-        if total_unrealized < -2000:
+        if total_unrealized < -1000:  # -1% of $100K
+            severity = "critical" if total_unrealized < -5000 else "high" if total_unrealized < -2500 else "medium"
             alerts.append({
-                "severity": "high",
-                "code": "large_unrealized_loss",
-                "title": f"Large unrealized loss: ${abs(total_unrealized):,.2f}",
-                "description": "Unrealized losses are significant",
+                "severity": severity,
+                "code": "unrealized_loss",
+                "title": f"Unrealized loss: ${abs(total_unrealized):,.2f} ({total_unrealized/100000*100:.1f}%)",
+                "description": f"Unrealized losses are significant (threshold: -$1,000)",
                 "action": "Review individual positions for stop loss triggers"
             })
+        
+        # Alert: Consecutive losing days
+        try:
+            from stock_swing.tracking.pnl_tracker import PnLTracker
+            tracker = PnLTracker(self.project_root)
+            recent_snapshots = sorted(tracker.state.daily_snapshots, key=lambda x: x.get('date', ''), reverse=True)[:5]
+            consecutive_losses = 0
+            for snap in recent_snapshots:
+                daily_pnl = snap.get('daily_realized_pnl', 0)
+                if daily_pnl < 0:
+                    consecutive_losses += 1
+                else:
+                    break
+            
+            if consecutive_losses >= 3:
+                alerts.append({
+                    "severity": "high" if consecutive_losses >= 4 else "medium",
+                    "code": "losing_streak",
+                    "title": f"Consecutive losing days: {consecutive_losses}",
+                    "description": f"{consecutive_losses} consecutive days with negative P&L",
+                    "action": "Review strategy performance and market conditions"
+                })
+        except:
+            pass
 
         # Alert: unresolved reconciliation mismatches
         mismatch_count = unresolved_mismatches.get("count", 0)
@@ -116,44 +160,95 @@ class SummaryService:
             reason_counts = unresolved_mismatches.get("by_reason", [])
             if reason_counts:
                 top_reason = reason_counts[0].get("reason")
-            alerts.append({
-                "severity": "high" if mismatch_count >= 3 else "medium",
-                "code": "unresolved_mismatches",
-                "title": f"Unresolved mismatches: {mismatch_count}",
-                "description": (
-                    f"Recent reconciliation issues remain unresolved"
-                    + (f" (top reason: {top_reason})" if top_reason else "")
-                ),
-                "action": "Review reconciliation status and broker truth for affected orders"
-            })
+            # Only alert if >= 3 mismatches (reduce noise)
+            if mismatch_count >= 3:
+                alerts.append({
+                    "severity": "critical" if mismatch_count >= 10 else "high" if mismatch_count >= 5 else "medium",
+                    "code": "unresolved_mismatches",
+                    "title": f"Unresolved mismatches: {mismatch_count}",
+                    "description": (
+                        f"Recent reconciliation issues remain unresolved"
+                        + (f" (top reason: {top_reason})" if top_reason else "")
+                    ),
+                    "action": "Review reconciliation status and broker truth for affected orders"
+                })
 
-        # Alert: stale positions
+        # Alert: stale positions (only if significantly old)
         stale_count = stale_positions.get("count", 0)
         if stale_count > 0:
             threshold_days = stale_positions.get("threshold_days", 10)
-            alerts.append({
-                "severity": "medium" if stale_count < 3 else "high",
-                "code": "stale_positions",
-                "title": f"Stale positions: {stale_count}",
-                "description": f"{stale_count} open position(s) held for {threshold_days}+ days",
-                "action": "Review exit criteria and long-held positions"
-            })
+            # Only alert if stale positions are truly concerning
+            if stale_count >= 2 or threshold_days > 15:
+                alerts.append({
+                    "severity": "medium" if stale_count <= 3 else "high",
+                    "code": "stale_positions",
+                    "title": f"Stale positions: {stale_count}",
+                    "description": f"{stale_count} open position(s) held for {threshold_days}+ days",
+                    "action": "Review exit criteria and long-held positions"
+                })
 
-        # Alert: unhealthy strategies
+        # Alert: unhealthy strategies (improved)
         weak_strategies = strategy_health.get("needs_attention", [])
         if weak_strategies:
             top = weak_strategies[0]
-            alerts.append({
-                "severity": "medium",
-                "code": "strategy_health_attention",
-                "title": f"Strategy health attention: {len(weak_strategies)}",
-                "description": f"{top.get('strategy_id')} has low conversion or elevated rejection rate",
-                "action": "Review strategy thresholds, risk gates, and execution eligibility"
-            })
+            # Check for critically low conversion
+            critical_strategies = [s for s in weak_strategies if s.get("conversion_rate", 100) < 10]
+            if critical_strategies:
+                alerts.append({
+                    "severity": "high",
+                    "code": "strategy_critical",
+                    "title": f"Critical strategy health: {len(critical_strategies)} strategy(ies)",
+                    "description": f"{critical_strategies[0].get('strategy_id')} has <10% conversion rate",
+                    "action": "Urgent review of strategy configuration and risk gates"
+                })
+            elif len(weak_strategies) >= 2:
+                alerts.append({
+                    "severity": "medium",
+                    "code": "strategy_health_attention",
+                    "title": f"Strategy health attention: {len(weak_strategies)}",
+                    "description": f"{top.get('strategy_id')} and others have low conversion or high rejection",
+                    "action": "Review strategy thresholds, risk gates, and execution eligibility"
+                })
+        
+        # Alert: Low overall conversion rate
+        try:
+            all_strategies = strategy_health.get("items", [])
+            if all_strategies:
+                total_executable = sum(s.get("executable_decisions", 0) for s in all_strategies)
+                total_submissions = sum(s.get("effective_submissions", 0) for s in all_strategies)
+                overall_conversion = (total_submissions / total_executable * 100) if total_executable > 0 else 0
+                
+                if total_executable >= 10 and overall_conversion < 30:
+                    alerts.append({
+                        "severity": "high" if overall_conversion < 20 else "medium",
+                        "code": "low_overall_conversion",
+                        "title": f"Low overall conversion: {overall_conversion:.1f}%",
+                        "description": f"Only {overall_conversion:.1f}% of executable decisions result in submissions",
+                        "action": "Review risk gates, sector caps, and position size limits"
+                    })
+        except:
+            pass
+        
+        # Alert: No trading activity (if significant)
+        today_trades = pnl_summary.get("today_trades", 0)
+        cumulative_trades = pnl_summary.get("total_trades", 0)
+        if cumulative_trades >= 10 and today_trades == 0:
+            # Check if market is open (heuristic: if we have positions, market was open recently)
+            if position_count > 0:
+                alerts.append({
+                    "severity": "low",
+                    "code": "no_trades_today",
+                    "title": "No trades closed today",
+                    "description": "No trading activity recorded today",
+                    "action": "Verify market conditions and strategy signals"
+                })
 
+        # Sort by severity and return top alerts
         severity_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}
         alerts.sort(key=lambda a: (severity_rank.get(a.get("severity", "low"), 99), a.get("title", "")))
-        return alerts[:5]
+        
+        # Return top 8 alerts (increased from 5 for better coverage)
+        return alerts[:8]
     
     def _get_stale_positions(self, open_positions: list, threshold_days: int = 10) -> Dict[str, Any]:
         """Summarize open positions whose holding period exceeds the stale threshold.

@@ -3,6 +3,7 @@
 
 import asyncio
 import json
+import os
 import websockets
 from pathlib import Path
 import sys
@@ -19,6 +20,9 @@ clients = set()
 
 # Dashboard service
 dashboard = DashboardService(PROJECT_ROOT)
+
+HOST = os.environ.get("CONSOLE_WS_HOST", "127.0.0.1")
+PORT = int(os.environ.get("CONSOLE_WS_PORT", "3334"))
 
 
 async def register(websocket):
@@ -104,13 +108,12 @@ async def periodic_updates():
 
 async def main():
     """Start WebSocket server."""
-    # Start server
-    server = await websockets.serve(handler, "localhost", 3334)
-    print("✅ WebSocket server started on ws://localhost:3334")
-    
+    await websockets.serve(handler, HOST, PORT)
+    print(f"✅ WebSocket server started on ws://{HOST}:{PORT}")
+
     # Start periodic updates
     asyncio.create_task(periodic_updates())
-    
+
     # Keep running
     await asyncio.Future()
 
