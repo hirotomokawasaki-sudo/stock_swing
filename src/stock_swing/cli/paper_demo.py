@@ -588,17 +588,27 @@ def main() -> int:  # noqa: C901
                         entry_price = round((bid + ask) / 2, 4)
                 except Exception:
                     pass
+
+                if entry_price <= 0:
+                    sizing_price = float((sub.sizing_details or {}).get("current_price") or 0)
+                    if sizing_price > 0:
+                        entry_price = round(sizing_price, 4)
+
+                if entry_price <= 0 and o.limit_price:
+                    entry_price = round(float(o.limit_price), 4)
                 
                 # Only record submission if we have a valid entry price
                 if entry_price > 0:
                     pnl_tracker.record_submission(
                         symbol=o.symbol,
-                        strategy_id=decision.strategy_id,
+                        strategy_id=decision.strategy_version_id,
                         side=o.side,
                         qty=sub.qty,
                         price=entry_price,
                         broker_order_id=sub.broker_order_id,
                         decision_id=decision.decision_id,
+                        original_strategy_id=decision.strategy_id,
+                        strategy_version_id=decision.strategy_version_id,
                     )
                 else:
                     print(f"WARN: Skipped P&L tracking for {o.symbol} (entry_price unavailable)")
@@ -707,6 +717,7 @@ def _save_decisions(decisions: list[DecisionRecord], store: StageStore, ts_tag: 
                 "generated_at": d.generated_at.isoformat(),
                 "mode": d.mode,
                 "strategy_id": d.strategy_id,
+                "strategy_version_id": d.strategy_version_id,
                 "symbol": d.symbol,
                 "action": d.action,
                 "confidence": d.confidence,

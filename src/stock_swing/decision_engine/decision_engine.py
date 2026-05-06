@@ -19,6 +19,7 @@ from typing import Any
 
 from stock_swing.core.runtime import RuntimeMode
 from stock_swing.decision_engine.risk_validator import RiskState, RiskValidator
+from stock_swing.utils.strategy_versioning import resolve_strategy_version_id
 from stock_swing.strategy_engine.base_strategy import CandidateSignal
 
 
@@ -102,6 +103,7 @@ class DecisionRecord:
     generated_at: datetime
     mode: str
     strategy_id: str
+    strategy_version_id: str
     symbol: str
     action: str
     confidence: float
@@ -214,13 +216,17 @@ class DecisionEngine:
         if risk_result.deny_reasons:
             evidence["notes"].extend(risk_result.deny_reasons)
         
+        generated_at = datetime.now(timezone.utc)
+        strategy_version_id = resolve_strategy_version_id(candidate.strategy_id, generated_at)
+
         # Create decision record
         decision = DecisionRecord(
             decision_id=decision_id,
             schema_version="v1",
-            generated_at=datetime.now(timezone.utc),
+            generated_at=generated_at,
             mode=self.runtime_mode.value,
             strategy_id=candidate.strategy_id,
+            strategy_version_id=strategy_version_id,
             symbol=candidate.symbol,
             action=action,
             confidence=candidate.confidence,

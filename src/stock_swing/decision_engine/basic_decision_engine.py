@@ -5,6 +5,7 @@ import hashlib
 
 from stock_swing.core.types import DecisionRecord
 from stock_swing.decision_engine.interfaces import DecisionEngine
+from stock_swing.utils.strategy_versioning import resolve_strategy_version_id
 
 
 class BasicDecisionEngine(DecisionEngine):
@@ -14,12 +15,14 @@ class BasicDecisionEngine(DecisionEngine):
         action = "deny" if deny_reasons else "review"
         now = datetime.now(timezone.utc)
         digest = hashlib.sha256(f"{symbol}|{mode}|{now.isoformat()}".encode()).hexdigest()[:16]
+        strategy_id = signal.get("strategy_id", "unknown")
         return DecisionRecord(
             decision_id=digest,
             schema_version="v1",
             generated_at=now,
             mode=mode,
-            strategy_id=signal.get("strategy_id", "unknown"),
+            strategy_id=strategy_id,
+            strategy_version_id=resolve_strategy_version_id(strategy_id, now),
             symbol=symbol,
             action=action,
             confidence=float(signal.get("signal_strength", 0.0)),

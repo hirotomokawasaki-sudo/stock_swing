@@ -7,7 +7,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional
-from collections import Counter
+from collections import Counter, defaultdict
 
 from console.adapters.cron_adapter import CronAdapter
 from console.adapters.data_adapter import DataAdapter
@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 try:
     from stock_swing.tracking.pnl_tracker import PnLTracker
     from stock_swing.sources.broker_client import BrokerClient
+    from stock_swing.utils.strategy_versioning import extract_decision_dt, normalize_strategy_id, resolve_strategy_key
     _HAS_TRACKER = True
 except Exception:
     _HAS_TRACKER = False
@@ -28,6 +29,8 @@ except Exception:
 class DashboardService:
     """Aggregates data from multiple adapters for dashboard display."""
 
+    CURRENT_ACCOUNT_CUTOFF = datetime.fromisoformat("2026-05-01T19:32:00+09:00")
+
     def __init__(self, project_root: Path):
         self.project_root = project_root
         self.cron_adapter = CronAdapter(project_root)
@@ -35,6 +38,7 @@ class DashboardService:
         self.system_adapter = SystemAdapter(project_root)
         self._tracker = PnLTracker(project_root) if _HAS_TRACKER else None
         self._broker = self._init_broker() if _HAS_TRACKER and BrokerClient else None
+        self._broker_orders_cache: list[dict[str, Any]] | None = None
 
     def _init_broker(self):
         """Initialize broker client if credentials available."""
@@ -65,7 +69,7 @@ class DashboardService:
         )
         source_reliability = self.get_source_reliability_report(news)
         news_ingestion = self.get_news_ingestion_status(news)
-        performance_attribution = self._get_performance_attribution(trading)
+        performance_attribution = self._get_performance_attribution(trading, period=period)
         
         return {
             "time": now_iso(),
@@ -93,20 +97,168 @@ class DashboardService:
             "logs": self.get_logs(),
         }
     
-    def _get_performance_attribution(self, trading: Dict[str, Any]) -> Dict[str, Any]:
+    def _get_performance_attribution(self, trading: Dict[str, Any], period: str = 'month') -> Dict[str, Any]:
         """Get performance attribution metrics (Alpha, Beta, Sharpe)."""
         try:
             from console.services.benchmark_service import BenchmarkService
             benchmark_service = BenchmarkService(self.project_root)
-            
+
             snapshots = trading.get('daily_snapshots', [])
             if not snapshots:
-                return {"available": False, "error": "No snapshot data"}
-            
-            attribution = benchmark_service.get_performance_attribution(snapshots, "SPY")
+                return {"available": False, "error": "No snapshot data", "period_filter": period}
+
+            filtered_snapshots = self._filter_by_period(snapshots, period)
+            if not filtered_snapshots:
+                return {"available": False, "error": "No snapshot data for selected period", "period_filter": period}
+
+            attribution = benchmark_service.get_performance_attribution(filtered_snapshots, "SPY")
+            attribution["period_filter"] = period
+            attribution["snapshot_count"] = len(filtered_snapshots)
+            attribution["by_strategy"] = self._get_strategy_performance_attribution(trading, period=period)
             return attribution
         except Exception as e:
-            return {"available": False, "error": str(e)}
+            return {"available": False, "error": str(e), "period_filter": period}
+
+    def _get_strategy_performance_attribution(self, trading: Dict[str, Any], period: str = 'month') -> List[Dict[str, Any]]:
+        """Get strategy-level attribution, preferring persisted daily snapshots."""
+        try:
+            from console.services.benchmark_service import BenchmarkService
+            benchmark_service = BenchmarkService(self.project_root)
+        except Exception:
+            return []
+
+        strategy_snapshots = trading.get("strategy_daily_snapshots", []) or []
+        if strategy_snapshots:
+            filtered_strategy_snapshots = self._filter_by_period(strategy_snapshots, period)
+            by_strategy_snapshots: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+            for row in filtered_strategy_snapshots:
+                strategy_id = str(row.get("strategy_version_id") or "unknown")
+                if row.get("date"):
+                    by_strategy_snapshots[strategy_id].append({
+                        "date": row.get("date"),
+                        "equity": row.get("equity_index"),
+                    })
+
+            filtered_dates = {str(s.get("date") or "") for s in filtered_strategy_snapshots}
+            closed_by_strategy: Dict[str, Dict[str, Any]] = defaultdict(lambda: {
+                "closed_trades": 0,
+                "winning_trades": 0,
+                "losing_trades": 0,
+                "realized_pnl": 0.0,
+            })
+            for trade in trading.get("closed_trades", []) or []:
+                exit_date = str(trade.get("exit_time") or "")[:10]
+                if exit_date not in filtered_dates:
+                    continue
+                strategy_id = str(trade.get("strategy_id") or trade.get("strategy_version_id") or "unknown")
+                row = closed_by_strategy[strategy_id]
+                pnl = float(trade.get("pnl") or 0.0)
+                row["closed_trades"] += 1
+                row["realized_pnl"] += pnl
+                if pnl > 0:
+                    row["winning_trades"] += 1
+                elif pnl < 0:
+                    row["losing_trades"] += 1
+
+            results: List[Dict[str, Any]] = []
+            for strategy_id, snaps in by_strategy_snapshots.items():
+                snaps = sorted(snaps, key=lambda s: str(s.get("date") or ""))
+                if len(snaps) < 2:
+                    continue
+                attribution = benchmark_service.get_performance_attribution(snaps, "SPY")
+                active_days = sum(
+                    1
+                    for row in filtered_strategy_snapshots
+                    if str(row.get("strategy_version_id") or "") == strategy_id
+                    and ((row.get("gross_exposure") or 0) > 0 or (row.get("trade_count") or 0) > 0)
+                )
+                source_row = closed_by_strategy.get(strategy_id, {})
+                results.append({
+                    "strategy_version_id": strategy_id,
+                    "closed_trades": source_row.get("closed_trades", 0),
+                    "winning_trades": source_row.get("winning_trades", 0),
+                    "losing_trades": source_row.get("losing_trades", 0),
+                    "realized_pnl": round(float(source_row.get("realized_pnl") or 0.0), 2),
+                    "active_days": active_days,
+                    "approximation": "persisted_strategy_daily_snapshot",
+                    "alpha": attribution.get("alpha", {}),
+                    "beta": attribution.get("beta", {}),
+                    "sharpe": attribution.get("sharpe", {}),
+                    "summary": attribution.get("summary", ""),
+                })
+            if results:
+                return sorted(results, key=lambda r: (r.get("closed_trades", 0), r.get("realized_pnl", 0.0)), reverse=True)
+
+        snapshots = self._filter_by_period(trading.get("daily_snapshots", []), period)
+        unique_dates: List[str] = []
+        seen_dates: set[str] = set()
+        for snap in snapshots:
+            date = str(snap.get("date") or "")
+            if date and date not in seen_dates:
+                unique_dates.append(date)
+                seen_dates.add(date)
+        if len(unique_dates) < 2:
+            return []
+
+        filtered_dates = set(unique_dates)
+        rows_by_strategy: Dict[str, Dict[str, Any]] = {}
+        for trade in trading.get("closed_trades", []) or []:
+            exit_time = str(trade.get("exit_time") or "")
+            exit_date = exit_time[:10] if len(exit_time) >= 10 else ""
+            if exit_date not in filtered_dates:
+                continue
+            strategy_id = str(trade.get("strategy_id") or trade.get("strategy_version_id") or "unknown")
+            row = rows_by_strategy.setdefault(strategy_id, {
+                "strategy_version_id": strategy_id,
+                "dates": defaultdict(lambda: {"pnl": 0.0, "capital": 0.0, "count": 0}),
+                "closed_trades": 0,
+                "realized_pnl": 0.0,
+                "winning_trades": 0,
+                "losing_trades": 0,
+            })
+            capital = abs(float(trade.get("entry_price") or 0.0) * float(trade.get("qty") or 0.0))
+            pnl = float(trade.get("pnl") or 0.0)
+            row["dates"][exit_date]["pnl"] += pnl
+            row["dates"][exit_date]["capital"] += capital
+            row["dates"][exit_date]["count"] += 1
+            row["closed_trades"] += 1
+            row["realized_pnl"] += pnl
+            if pnl > 0:
+                row["winning_trades"] += 1
+            elif pnl < 0:
+                row["losing_trades"] += 1
+
+        results = []
+        for strategy_id, row in rows_by_strategy.items():
+            equity = 100.0
+            synthetic_snapshots: List[Dict[str, Any]] = []
+            active_days = 0
+            for date in unique_dates:
+                day = row["dates"].get(date) or {}
+                capital = float(day.get("capital") or 0.0)
+                pnl = float(day.get("pnl") or 0.0)
+                day_return = (pnl / capital) if capital > 0 else 0.0
+                if capital > 0:
+                    active_days += 1
+                equity *= (1.0 + day_return)
+                synthetic_snapshots.append({"date": date, "equity": equity})
+
+            attribution = benchmark_service.get_performance_attribution(synthetic_snapshots, "SPY")
+            results.append({
+                "strategy_version_id": strategy_id,
+                "closed_trades": row["closed_trades"],
+                "winning_trades": row["winning_trades"],
+                "losing_trades": row["losing_trades"],
+                "realized_pnl": round(row["realized_pnl"], 2),
+                "active_days": active_days,
+                "approximation": "closed-trade_daily_realized_return_sleeve",
+                "alpha": attribution.get("alpha", {}),
+                "beta": attribution.get("beta", {}),
+                "sharpe": attribution.get("sharpe", {}),
+                "summary": attribution.get("summary", ""),
+            })
+
+        return sorted(results, key=lambda r: (r.get("closed_trades", 0), r.get("realized_pnl", 0.0)), reverse=True)
 
     def get_overview(
         self,
@@ -178,8 +330,11 @@ class DashboardService:
             open_positions = self._tracker.get_open_positions()
             current_prices = self._fetch_current_prices([p.get("symbol") for p in open_positions])
             summary = self._tracker.get_summary()
+            position_snapshot = self.get_positions()
+            if position_snapshot.get("available"):
+                summary["open_trades"] = max(int(summary.get("open_trades") or 0), int(position_snapshot.get("count") or 0))
             recent = self._tracker.get_recent_trades(10)
-            daily_snapshots = list(self._tracker.state.daily_snapshots)
+            daily_snapshots = self._enrich_daily_snapshots(list(self._tracker.state.daily_snapshots), list(self._tracker.state.trades), position_snapshot)
             if daily_snapshots:
                 latest = dict(daily_snapshots[-1])
                 unrealized = 0.0
@@ -207,6 +362,7 @@ class DashboardService:
                 "recent_trades": recent,
                 "closed_trades": closed_trades,
                 "daily_snapshots": daily_snapshots[-30:],
+                "strategy_daily_snapshots": list(self._tracker.state.strategy_daily_snapshots)[-200:],
                 "open_positions": open_positions,
                 "current_prices": current_prices,
                 "daily_pnl_stats": daily_pnl_stats,
@@ -470,11 +626,14 @@ class DashboardService:
 
     def get_pipeline_summary(self, trading: Dict[str, Any] | None = None) -> Dict[str, Any]:
         counts = self.data_adapter.get_counts() or {}
-        decisions = self._load_recent_decisions(limit=500)
-        audits = self._load_recent_audit_lines(limit=500)
+        decisions = [d for d in self._load_recent_decisions(limit=500) if self._is_current_account_decision(d)]
+        audits = [a for a in self._load_recent_audit_lines(limit=500) if self._is_current_account_audit_event(a)]
         submission_events = [a for a in audits if a.get("category") == "submission" and a.get("action") == "submitted"]
         reconciliation_events = [a for a in audits if a.get("category") == "reconciliation"]
         paper_runs = self._summarize_paper_runs(audits)
+
+        position_snapshot = self.get_positions(trading=trading)
+        position_count = position_snapshot.get("count", 0) if position_snapshot.get("available") else 0
 
         funnel = {
             "raw": counts.get("raw", 0),
@@ -487,7 +646,7 @@ class DashboardService:
             "orders_filled": len(submission_events),
             "reconciliations": len(reconciliation_events),
             "paper_runs": len(paper_runs),
-            "positions_opened": trading.get("summary", {}).get("open_trades", 0) if trading else 0,
+            "positions_opened": position_count,
             "positions_closed": trading.get("summary", {}).get("closed_trades", 0) if trading else 0,
         }
 
@@ -498,7 +657,7 @@ class DashboardService:
         actions: Dict[str, int] = {}
 
         for d in decisions:
-            strategy = d.get("strategy_id") or "unknown"
+            strategy = resolve_strategy_key(d) or "unknown"
             symbol = d.get("symbol") or "unknown"
             action = str(d.get("action") or "unknown").lower()
             risk_state = str(d.get("risk_state") or "unknown").lower()
@@ -568,7 +727,7 @@ class DashboardService:
         strategy_map: Dict[str, set[str]] = {}
         for d in decisions:
             symbol = str(d.get("symbol") or "unknown").upper()
-            strategy_map.setdefault(symbol, set()).add(str(d.get("strategy_id") or "unknown"))
+            strategy_map.setdefault(symbol, set()).add(str(resolve_strategy_key(d) or "unknown"))
 
         for sym_row in by_symbol.values():
             symbol = str(sym_row.get("symbol") or "unknown").upper()
@@ -585,7 +744,7 @@ class DashboardService:
             merged["submitted_sell"] = sub_row.get("sell", 0)
             merged["submitted_qty"] = sub_row.get("qty", 0)
 
-        enriched_positions = positions.get("positions", []) if (positions := self.get_positions(trading=trading)).get("available") else []
+        enriched_positions = position_snapshot.get("positions", []) if position_snapshot.get("available") else []
         for pos in enriched_positions:
             symbol = str(pos.get("symbol") or "unknown").upper()
             merged = merged_symbol_stats.setdefault(symbol, empty_symbol_row(symbol))
@@ -1197,33 +1356,9 @@ class DashboardService:
         market_value = float(broker_pos.get('market_value', 0))
         unrealized_pl = float(broker_pos.get('unrealized_pl', 0))
         unrealized_plpc = float(broker_pos.get('unrealized_plpc', 0))
-        
-        # Get entry_time and calculate holding days from PnL tracker
-        holding_days = None
-        entry_time = None
-        if self._tracker:
-            try:
-                # Find open trades for this symbol
-                open_trades = [t for t in self._tracker.state.trades 
-                              if t.get('symbol') == symbol and t.get('status') == 'open']
-                if open_trades:
-                    # Use the earliest entry time
-                    entry_times = [t.get('entry_time') for t in open_trades if t.get('entry_time')]
-                    if entry_times:
-                        entry_time = min(entry_times)  # Earliest entry
-                        try:
-                            from datetime import timezone as tz
-                            if isinstance(entry_time, str):
-                                entry_dt = datetime.fromisoformat(entry_time.replace('Z', '+00:00'))
-                            else:
-                                entry_dt = datetime.fromtimestamp(entry_time, tz=tz.utc)
-                            now_dt = datetime.now(tz.utc)
-                            holding_days = (now_dt - entry_dt).days
-                        except:
-                            pass
-            except:
-                pass
-        
+
+        entry_time, holding_days = self._get_position_entry_context(symbol, float(broker_pos.get('qty', 0)))
+
         # Get strategy_id from recent decisions
         strategy_id = 'unknown'
         try:
@@ -1240,7 +1375,7 @@ class DashboardService:
                         import json
                         decision = json.loads(df.read_text())
                         if decision.get('action') == 'buy':
-                            strategy_id = decision.get('strategy_id', 'unknown')
+                            strategy_id = resolve_strategy_key(decision, occurred_at=entry_time or extract_decision_dt(decision, df), path=df)
                             break
                     except:
                         continue
@@ -1252,13 +1387,15 @@ class DashboardService:
             'symbol': symbol,
             'qty': qty,
             'entry_price': avg_entry,
+            'avg_entry_price': avg_entry,
             'current_price': current_price,
             'market_value': market_value,
             'unrealized_pnl': unrealized_pl,
-            'unrealized_pnl_pct': unrealized_plpc * 100,
+            'unrealized_pnl_pct': unrealized_plpc,
             'holding_days': holding_days,
-            'entry_time': entry_time,  # Add entry_time field
+            'entry_time': entry_time,
             'strategy_id': strategy_id,
+            'strategy_version_id': strategy_id,
             'decision_status': self._derive_position_decision_status(latest_decision, holding_days=holding_days),
             'source': 'broker',
         }
@@ -1276,18 +1413,24 @@ class DashboardService:
         now = datetime.now().astimezone()
         holding_days = round((now - entry_time).total_seconds() / 86400, 1) if entry_time else None
         latest_decision = self._get_latest_decision_for_symbol(enriched.get("symbol"))
+        normalized_return_pct = round(unrealized_return_pct, 4) if unrealized_return_pct is not None else None
         enriched.update({
             "current_price": current_price,
             "market_value": market_value,
             "unrealized_pnl": round(unrealized_pnl, 2) if unrealized_pnl is not None else None,
-            "unrealized_return_pct": round(unrealized_return_pct, 4) if unrealized_return_pct is not None else None,
+            "unrealized_return_pct": normalized_return_pct,
+            "unrealized_pnl_pct": normalized_return_pct,
             "holding_days": holding_days,
             "portfolio_weight": None,
             "stop_price": None,
             "target_price": None,
             "sector": None,
             "decision_status": self._derive_position_decision_status(latest_decision, holding_days=holding_days),
+            "strategy_id": resolve_strategy_key({"strategy_id": enriched.get("strategy_id"), "strategy_version_id": enriched.get("strategy_version_id")}, occurred_at=enriched.get("entry_time")),
+            "strategy_version_id": resolve_strategy_key({"strategy_id": enriched.get("strategy_id"), "strategy_version_id": enriched.get("strategy_version_id")}, occurred_at=enriched.get("entry_time")),
         })
+        if entry_price > 0 and enriched.get("avg_entry_price") in (None, 0, 0.0):
+            enriched["avg_entry_price"] = entry_price
         return enriched
 
     def _summarize_positions(self, positions: List[Dict[str, Any]], trading: Dict[str, Any] | None = None) -> Dict[str, Any]:
@@ -1320,6 +1463,110 @@ class DashboardService:
             "unrealized_pnl": unrealized_pnl,
             "avg_holding_days": avg_holding_days,
         }
+
+    def _get_position_entry_context(self, symbol: str, qty: float) -> tuple[str | None, float | None]:
+        entry_dt = self._get_tracker_entry_datetime(symbol)
+        if entry_dt is None:
+            entry_dt = self._infer_entry_datetime_from_broker_orders(symbol, qty)
+        if entry_dt is None:
+            return None, None
+        now = datetime.now(entry_dt.tzinfo or timezone.utc)
+        return entry_dt.isoformat(), round((now - entry_dt).total_seconds() / 86400, 1)
+
+    def _get_tracker_entry_datetime(self, symbol: str) -> datetime | None:
+        if not self._tracker:
+            return None
+        try:
+            self._tracker.state = self._tracker._load_state()
+            open_trades = [
+                t for t in self._tracker.state.trades
+                if str(t.get("symbol") or "").upper() == str(symbol or "").upper() and t.get("status") == "open"
+            ]
+            entry_datetimes: list[datetime] = []
+            for trade in open_trades:
+                entry_time = trade.get("entry_time")
+                if not entry_time:
+                    continue
+                if isinstance(entry_time, str):
+                    entry_dt = self._parse_iso_datetime(entry_time)
+                else:
+                    entry_dt = datetime.fromtimestamp(float(entry_time), tz=timezone.utc).astimezone()
+                if entry_dt is not None:
+                    entry_datetimes.append(entry_dt)
+            return min(entry_datetimes) if entry_datetimes else None
+        except Exception:
+            return None
+
+    def _infer_entry_datetime_from_broker_orders(self, symbol: str, qty: float) -> datetime | None:
+        if not self._broker or not symbol or not qty:
+            return None
+        orders = self._get_broker_orders()
+        if not orders:
+            return None
+
+        symbol_upper = str(symbol).upper()
+        lots: list[list[Any]] = []
+        for order in sorted(orders, key=lambda o: self._order_sort_key(o) or datetime.min.replace(tzinfo=timezone.utc)):
+            if str(order.get("symbol") or "").upper() != symbol_upper:
+                continue
+            side = str(order.get("side") or "").lower()
+            filled_qty = float(order.get("filled_qty") or order.get("qty") or 0.0)
+            order_dt = self._order_sort_key(order)
+            if filled_qty <= 0 or order_dt is None:
+                continue
+
+            if qty > 0:
+                if side == "buy":
+                    lots.append([filled_qty, order_dt])
+                elif side == "sell":
+                    remaining = filled_qty
+                    while remaining > 0 and lots:
+                        lot_qty, lot_dt = lots[0]
+                        matched = min(lot_qty, remaining)
+                        lot_qty -= matched
+                        remaining -= matched
+                        if lot_qty <= 1e-9:
+                            lots.pop(0)
+                        else:
+                            lots[0][0] = lot_qty
+            else:
+                if side == "sell":
+                    lots.append([filled_qty, order_dt])
+                elif side == "buy":
+                    remaining = filled_qty
+                    while remaining > 0 and lots:
+                        lot_qty, lot_dt = lots[0]
+                        matched = min(lot_qty, remaining)
+                        lot_qty -= matched
+                        remaining -= matched
+                        if lot_qty <= 1e-9:
+                            lots.pop(0)
+                        else:
+                            lots[0][0] = lot_qty
+
+        return lots[0][1] if lots else None
+
+    def _get_broker_orders(self) -> list[dict[str, Any]]:
+        if self._broker_orders_cache is not None:
+            return self._broker_orders_cache
+        self._broker_orders_cache = []
+        if not self._broker:
+            return self._broker_orders_cache
+        try:
+            orders_envelope = self._broker.fetch_orders(status="all", limit=500)
+            payload = orders_envelope.payload if hasattr(orders_envelope, "payload") else orders_envelope
+            if isinstance(payload, list):
+                self._broker_orders_cache = [o for o in payload if isinstance(o, dict)]
+        except Exception:
+            self._broker_orders_cache = []
+        return self._broker_orders_cache
+
+    def _order_sort_key(self, order: Dict[str, Any]) -> datetime | None:
+        for key in ("filled_at", "submitted_at", "created_at", "updated_at"):
+            dt = self._parse_iso_datetime(order.get(key))
+            if dt is not None:
+                return dt
+        return None
 
     def _get_latest_decision_for_symbol(self, symbol: str | None) -> Dict[str, Any] | None:
         if not symbol:
@@ -1752,7 +1999,7 @@ class DashboardService:
                 "used_in_decision": True,
                 "is_tracked_symbol": True,
                 "decision_refs": [d.get("decision_id")],
-                "strategy_refs": [d.get("strategy_id")],
+                "strategy_refs": [resolve_strategy_key(d)],
                 "rationale": notes[:3],
                 "rationale_ja": ja_texts["rationale_ja"],
             })
@@ -1917,6 +2164,17 @@ class DashboardService:
         runs.reverse()
         return runs
 
+    def _current_account_cutoff(self) -> datetime:
+        return self.CURRENT_ACCOUNT_CUTOFF
+
+    def _is_current_account_decision(self, decision: Dict[str, Any]) -> bool:
+        dt = extract_decision_dt(decision)
+        return bool(dt and dt >= self._current_account_cutoff())
+
+    def _is_current_account_audit_event(self, event: Dict[str, Any]) -> bool:
+        dt = self._parse_iso_datetime(event.get("ts"))
+        return bool(dt and dt >= self._current_account_cutoff())
+
     def _load_recent_decisions(self, limit: int = 500) -> List[Dict[str, Any]]:
         decisions_dir = self.project_root / "data" / "decisions"
         if not decisions_dir.exists():
@@ -1925,7 +2183,10 @@ class DashboardService:
         results: List[Dict[str, Any]] = []
         for path in files:
             try:
-                results.append(json.loads(path.read_text(encoding="utf-8")))
+                decision = json.loads(path.read_text(encoding="utf-8"))
+                decision["strategy_id"] = resolve_strategy_key(decision, path=path)
+                decision["strategy_version_id"] = resolve_strategy_key(decision, path=path)
+                results.append(decision)
             except Exception:
                 continue
         return results
@@ -2016,6 +2277,67 @@ class DashboardService:
             "total_days": len(daily_pnls)
         }
 
+    def _enrich_daily_snapshots(
+        self,
+        snapshots: List[Dict[str, Any]],
+        trades: List[Dict[str, Any]],
+        position_snapshot: Dict[str, Any] | None = None,
+    ) -> List[Dict[str, Any]]:
+        if not snapshots:
+            return snapshots
+
+        closed_by_date: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        for trade in trades:
+            if trade.get("status") != "closed":
+                continue
+            exit_time = str(trade.get("exit_time") or "")
+            if len(exit_time) >= 10:
+                closed_by_date[exit_time[:10]].append(trade)
+
+        running_peak = None
+        latest_date = str(snapshots[-1].get("date") or "") if snapshots else ""
+        current_gross_exposure = None
+        if position_snapshot and position_snapshot.get("available"):
+            current_gross_exposure = float((position_snapshot.get("summary") or {}).get("gross_exposure") or 0.0)
+
+        enriched: List[Dict[str, Any]] = []
+        for snapshot in snapshots:
+            row = dict(snapshot)
+            date = str(row.get("date") or "")
+            equity = row.get("equity")
+            if equity is not None:
+                equity = float(equity)
+                running_peak = equity if running_peak is None else max(running_peak, equity)
+                row["max_drawdown_pct"] = round(((running_peak - equity) / running_peak), 4) if running_peak else 0.0
+            else:
+                row["max_drawdown_pct"] = 0.0
+
+            day_trades = closed_by_date.get(date, [])
+            if day_trades:
+                win_count = sum(1 for t in day_trades if float(t.get("pnl") or 0.0) > 0)
+                loss_count = sum(1 for t in day_trades if float(t.get("pnl") or 0.0) < 0)
+                row["trade_count"] = len(day_trades)
+                row["win_count"] = win_count
+                row["loss_count"] = loss_count
+                row["realized_pnl"] = round(sum(float(t.get("pnl") or 0.0) for t in day_trades), 2)
+                valid_returns = [float(t.get("return_pct") or 0.0) for t in day_trades if t.get("return_pct") is not None]
+                row["avg_return_per_trade"] = round(sum(valid_returns) / len(valid_returns), 4) if valid_returns else 0.0
+            else:
+                row.setdefault("trade_count", 0)
+                row.setdefault("win_count", 0)
+                row.setdefault("loss_count", 0)
+                row.setdefault("realized_pnl", 0.0)
+                row.setdefault("avg_return_per_trade", 0.0)
+
+            trade_count = int(row.get("trade_count") or 0)
+            win_count = int(row.get("win_count") or 0)
+            row["win_rate"] = round((win_count / trade_count), 4) if trade_count else 0.0
+            if current_gross_exposure is not None and date == latest_date:
+                row["gross_exposure"] = current_gross_exposure
+            enriched.append(row)
+
+        return enriched
+
     def _parse_iso_datetime(self, value: str | None) -> datetime | None:
         if not value:
             return None
@@ -2063,7 +2385,7 @@ class DashboardService:
                         d = json.loads(df.read_text(encoding="utf-8"))
                     except Exception:
                         continue
-                    strategy_id = d.get("strategy_id") or "unknown"
+                    strategy_id = resolve_strategy_key(d, path=df) or "unknown"
                     decision_counts[strategy_id] = decision_counts.get(strategy_id, 0) + 1
                     if str(d.get("risk_state") or "").lower() == "pass":
                         pass_counts[strategy_id] = pass_counts.get(strategy_id, 0) + 1
@@ -2272,15 +2594,13 @@ class DashboardService:
                     d = json.loads(df.read_text(encoding="utf-8"))
                 except Exception:
                     continue
-                if strategy and d.get("strategy_id") != strategy:
+                normalized_strategy = resolve_strategy_key(d, path=df)
+                d["strategy_id"] = normalized_strategy
+                if strategy and normalized_strategy != strategy:
                     continue
                 if symbol and str(d.get("symbol") or "").upper() != str(symbol).upper():
                     continue
-                ts_raw = d.get("generated_at")
-                try:
-                    ts = datetime.fromisoformat(str(ts_raw).replace("Z", "+00:00")) if ts_raw else None
-                except Exception:
-                    ts = None
+                ts = extract_decision_dt(d, df)
                 if ts and ts.astimezone() < cutoff:
                     continue
                 rows.append(d)
@@ -2472,12 +2792,11 @@ class DashboardService:
 
     def _enrich_strategy_overview(self, by_strategy: Dict[str, Dict], submission_events: list) -> list:
         """Enrich strategy overview with submissions, PnL, and position data."""
-        # Get submissions by strategy
-        submissions_by_strategy = {}
-        for evt in submission_events:
-            details = self._parse_submission_details(evt.get("details", ""))
-            strategy = details.get("strategy_id", "unknown")
-            submissions_by_strategy[strategy] = submissions_by_strategy.get(strategy, 0) + 1
+        positions_snapshot = self.get_positions()
+        broker_open_positions = positions_snapshot.get("positions", []) if positions_snapshot.get("available") else []
+
+        # Get submissions by strategy using broker orders + decisions matching.
+        submission_stats_by_strategy = self._infer_submission_stats_by_strategy(submission_events)
         
         # Get PnL data from tracker
         try:
@@ -2502,19 +2821,133 @@ class DashboardService:
             pnl_by_strategy = {}
             closes_by_strategy = {}
             open_by_strategy = {}
+
+        if broker_open_positions:
+            broker_open_by_strategy: Dict[str, int] = {}
+            for position in broker_open_positions:
+                strategy = position.get("strategy_id", "unknown")
+                broker_open_by_strategy[strategy] = broker_open_by_strategy.get(strategy, 0) + 1
+            open_by_strategy = broker_open_by_strategy
         
         # Enrich each strategy
         enriched = []
         for strategy_id, stats in by_strategy.items():
-            stats["submissions"] = submissions_by_strategy.get(strategy_id, 0)
+            submission_stats = submission_stats_by_strategy.get(strategy_id, {})
+            stats["strategy_version_id"] = stats.get("strategy_version_id") or strategy_id
+            stats["submissions"] = submission_stats.get("submissions", 0)
+            stats["submitted_decisions"] = submission_stats.get("submitted_decisions", 0)
             stats["closes"] = closes_by_strategy.get(strategy_id, 0)
             stats["realized_pnl"] = round(pnl_by_strategy.get(strategy_id, 0.0), 2)
             stats["open_positions"] = open_by_strategy.get(strategy_id, 0)
             stats["rejection_rate"] = round((stats.get("reject", 0) / stats.get("decisions", 1)) * 100, 1)
-            stats["conversion_rate"] = round((stats["submissions"] / stats.get("decisions", 1)) * 100, 1)
+            raw_conversion = (stats["submitted_decisions"] / stats.get("decisions", 1)) if stats.get("decisions", 0) else 0.0
+            stats["conversion_rate"] = round(min(raw_conversion, 1.0), 4)
             enriched.append(stats)
         
         return sorted(enriched, key=lambda x: x.get("decisions", 0), reverse=True)[:10]
+
+    def _load_decisions_for_matching(self, limit: int = 2000) -> List[Dict[str, Any]]:
+        decisions_dir = self.project_root / "data" / "decisions"
+        if not decisions_dir.exists():
+            return []
+        files = sorted(decisions_dir.glob("decision_*.json"), key=lambda p: p.stat().st_mtime)
+        if limit > 0:
+            files = files[-limit:]
+        decisions: List[Dict[str, Any]] = []
+        for path in files:
+            try:
+                d = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            generated_at = extract_decision_dt(d, path)
+            if generated_at is None:
+                continue
+            proposed_order = d.get("proposed_order") or {}
+            sizing = d.get("sizing") or (d.get("evidence") or {}).get("sizing") or {}
+            qty = int(float(sizing.get("final_shares") or proposed_order.get("qty") or 0))
+            if generated_at < self._current_account_cutoff():
+                continue
+            resolved_strategy = resolve_strategy_key(d, path=path)
+            decisions.append({
+                **d,
+                "_generated_at": generated_at,
+                "_symbol": str(d.get("symbol") or "").upper(),
+                "_action": str(d.get("action") or "").lower(),
+                "_qty": qty,
+                "strategy_id": resolved_strategy,
+                "strategy_version_id": resolved_strategy,
+            })
+        return decisions
+
+    def _match_order_to_decision(self, decisions: List[Dict[str, Any]], symbol: str, side: str, qty: int, when: datetime | None) -> Dict[str, Any] | None:
+        symbol = str(symbol or "").upper()
+        side = str(side or "").lower()
+        candidates = [d for d in decisions if d.get("_symbol") == symbol and d.get("_action") == side]
+        if not candidates:
+            return None
+        if when is None:
+            return candidates[-1]
+
+        best: tuple[float, Dict[str, Any]] | None = None
+        for decision in candidates:
+            generated_at = decision.get("_generated_at")
+            if generated_at is None:
+                continue
+            delta_seconds = (when - generated_at).total_seconds()
+            if delta_seconds < -600:
+                continue
+            if delta_seconds > 72 * 3600:
+                continue
+            decision_qty = int(decision.get("_qty") or 0)
+            qty_penalty = abs(decision_qty - qty) if decision_qty > 0 and qty > 0 else 0
+            score = qty_penalty * 1_000_000 + abs(delta_seconds)
+            if best is None or score < best[0]:
+                best = (score, decision)
+        return best[1] if best else None
+
+    def _infer_submission_stats_by_strategy(self, submission_events: list | None = None) -> Dict[str, Dict[str, int]]:
+        decisions = self._load_decisions_for_matching()
+        stats: Dict[str, Dict[str, Any]] = {}
+
+        def bump(strategy: str, decision_id: str | None = None) -> None:
+            row = stats.setdefault(strategy, {"submissions": 0, "decision_ids": set()})
+            row["submissions"] += 1
+            if decision_id:
+                row["decision_ids"].add(decision_id)
+
+        orders = self._get_broker_orders()
+        if orders:
+            for order in sorted(orders, key=lambda o: self._order_sort_key(o) or datetime.max.replace(tzinfo=timezone.utc)):
+                side = str(order.get("side") or "").lower()
+                status = str(order.get("status") or "").lower()
+                if side not in {"buy", "sell"}:
+                    continue
+                if status in {"rejected", "replaced"}:
+                    continue
+                symbol = str(order.get("symbol") or "").upper()
+                qty = int(float(order.get("qty") or order.get("filled_qty") or 0))
+                when = self._order_sort_key(order)
+                decision = self._match_order_to_decision(decisions, symbol, side, qty, when)
+                strategy = resolve_strategy_key(decision or {"strategy_id": "unknown"}, occurred_at=when)
+                bump(strategy, (decision or {}).get("decision_id"))
+        else:
+            for evt in submission_events or []:
+                details = self._parse_submission_details(evt.get("details", ""))
+                symbol = details.get("symbol") or ""
+                side = details.get("side") or ""
+                qty = int(details.get("qty") or 0)
+                when = self._parse_iso_datetime(evt.get("ts"))
+                decision = self._match_order_to_decision(decisions, symbol, side, qty, when)
+                strategy = resolve_strategy_key(decision or {"strategy_id": "unknown"}, occurred_at=when)
+                bump(strategy, (decision or {}).get("decision_id"))
+
+        return {
+            strategy: {
+                "submissions": int(row.get("submissions") or 0),
+                "submitted_decisions": len(row.get("decision_ids") or set()),
+            }
+            for strategy, row in stats.items()
+        }
 
     def get_symbol_detail(self, symbol: str) -> Dict[str, Any]:
         """Get detailed information for a specific symbol."""

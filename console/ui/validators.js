@@ -102,12 +102,18 @@ class DashboardDataValidator {
         symbol: escapeHtml(safeGet(pos, 'symbol', 'N/A')),
         qty: safeNumber(safeGet(pos, 'qty'), 0),
         market_value: safeNumber(safeGet(pos, 'market_value'), 0),
-        avg_entry_price: safeNumber(safeGet(pos, 'avg_entry_price'), 0),
+        entry_price: safeNumber(safeGet(pos, 'entry_price'), safeNumber(safeGet(pos, 'avg_entry_price'), 0)),
+        avg_entry_price: safeNumber(safeGet(pos, 'avg_entry_price'), safeNumber(safeGet(pos, 'entry_price'), 0)),
         current_price: safeNumber(safeGet(pos, 'current_price'), 0),
         unrealized_pnl: safeNumber(safeGet(pos, 'unrealized_pnl'), 0),
-        unrealized_pnl_pct: safeNumber(safeGet(pos, 'unrealized_pnl_pct'), 0),
+        unrealized_pnl_pct: safeNumber(safeGet(pos, 'unrealized_pnl_pct'), safeNumber(safeGet(pos, 'unrealized_return_pct'), 0)),
+        unrealized_return_pct: safeNumber(safeGet(pos, 'unrealized_return_pct'), safeNumber(safeGet(pos, 'unrealized_pnl_pct'), 0)),
         portfolio_weight: safeNumber(safeGet(pos, 'portfolio_weight'), 0),
-        holding_days: safeGet(pos, 'holding_days', null)
+        holding_days: safeGet(pos, 'holding_days', null),
+        entry_time: safeGet(pos, 'entry_time', null),
+        strategy_id: escapeHtml(safeGet(pos, 'strategy_id', '')),
+        strategy_version_id: escapeHtml(safeGet(pos, 'strategy_version_id', safeGet(pos, 'strategy_id', ''))),
+        decision_status: escapeHtml(safeGet(pos, 'decision_status', ''))
       }))
     };
   }
@@ -135,7 +141,10 @@ class DashboardDataValidator {
         exit_time: safeGet(trade, 'exit_time', null),
         realized_pnl: safeNumber(safeGet(trade, 'realized_pnl'), 0),
         return_pct: safeNumber(safeGet(trade, 'return_pct'), 0),
-        status: escapeHtml(safeGet(trade, 'status', 'unknown'))
+        status: escapeHtml(safeGet(trade, 'status', 'unknown')),
+        strategy_id: escapeHtml(safeGet(trade, 'strategy_id', '')),
+        original_strategy_id: escapeHtml(safeGet(trade, 'original_strategy_id', safeGet(trade, 'strategy_id', ''))),
+        strategy_version_id: escapeHtml(safeGet(trade, 'strategy_version_id', safeGet(trade, 'strategy_id', '')))
       })),
       daily_snapshots: safeArray(safeGet(data, 'trading.daily_snapshots'))
     };
@@ -210,7 +219,11 @@ class DashboardDataValidator {
         decisions: safeNumber(safeGet(data, 'pipeline.funnel.decisions'), 0),
         orders_submitted: safeNumber(safeGet(data, 'pipeline.funnel.orders_submitted'), 0)
       },
-      by_strategy: safeArray(safeGet(data, 'pipeline.by_strategy'))
+      by_strategy: safeArray(safeGet(data, 'pipeline.by_strategy')).map(row => ({
+        ...row,
+        strategy_version_id: escapeHtml(safeGet(row, 'strategy_version_id', safeGet(row, 'strategy_id', ''))),
+        submitted_decisions: safeNumber(safeGet(row, 'submitted_decisions'), 0)
+      }))
     };
   }
   
@@ -219,17 +232,66 @@ class DashboardDataValidator {
    */
   validatePerformance(data) {
     return {
+      period_filter: escapeHtml(safeGet(data, 'performance.period_filter', 'month')),
+      snapshot_count: safeNumber(safeGet(data, 'performance.snapshot_count'), 0),
       sharpe: {
+        available: safeGet(data, 'performance.sharpe.available', true) !== false,
+        error: escapeHtml(safeGet(data, 'performance.sharpe.error', '')),
         sharpe_ratio: safeNumber(safeGet(data, 'performance.sharpe.sharpe_ratio'), 0),
         annual_return_pct: safeNumber(safeGet(data, 'performance.sharpe.annual_return_pct'), 0),
         annual_volatility_pct: safeNumber(safeGet(data, 'performance.sharpe.annual_volatility_pct'), 0)
       },
       alpha: {
-        alpha: safeNumber(safeGet(data, 'performance.alpha.alpha'), 0)
+        available: safeGet(data, 'performance.alpha.available', true) !== false,
+        error: escapeHtml(safeGet(data, 'performance.alpha.error', '')),
+        alpha: safeNumber(safeGet(data, 'performance.alpha.alpha'), 0),
+        portfolio: {
+          return_pct: safeNumber(safeGet(data, 'performance.alpha.portfolio.return_pct'), 0)
+        },
+        benchmark: {
+          symbol: escapeHtml(safeGet(data, 'performance.alpha.benchmark.symbol', 'SPY')),
+          return_pct: safeNumber(safeGet(data, 'performance.alpha.benchmark.return_pct'), 0)
+        },
+        period: {
+          start: escapeHtml(safeGet(data, 'performance.alpha.period.start', '')),
+          end: escapeHtml(safeGet(data, 'performance.alpha.period.end', '')),
+          days: safeNumber(safeGet(data, 'performance.alpha.period.days'), 0)
+        },
+        interpretation: escapeHtml(safeGet(data, 'performance.alpha.interpretation', ''))
       },
       beta: {
-        beta: safeNumber(safeGet(data, 'performance.beta.beta'), 0)
-      }
+        available: safeGet(data, 'performance.beta.available', true) !== false,
+        error: escapeHtml(safeGet(data, 'performance.beta.error', '')),
+        beta: safeNumber(safeGet(data, 'performance.beta.beta'), 0),
+        r_squared: safeNumber(safeGet(data, 'performance.beta.r_squared'), 0),
+        correlation: safeNumber(safeGet(data, 'performance.beta.correlation'), 0),
+        interpretation: escapeHtml(safeGet(data, 'performance.beta.interpretation', ''))
+      },
+      by_strategy: safeArray(safeGet(data, 'performance.by_strategy')).map(row => ({
+        strategy_version_id: escapeHtml(safeGet(row, 'strategy_version_id', '')),
+        closed_trades: safeNumber(safeGet(row, 'closed_trades'), 0),
+        winning_trades: safeNumber(safeGet(row, 'winning_trades'), 0),
+        losing_trades: safeNumber(safeGet(row, 'losing_trades'), 0),
+        realized_pnl: safeNumber(safeGet(row, 'realized_pnl'), 0),
+        active_days: safeNumber(safeGet(row, 'active_days'), 0),
+        approximation: escapeHtml(safeGet(row, 'approximation', '')),
+        summary: escapeHtml(safeGet(row, 'summary', '')),
+        alpha: {
+          available: safeGet(row, 'alpha.available', true) !== false,
+          error: escapeHtml(safeGet(row, 'alpha.error', '')),
+          alpha: safeNumber(safeGet(row, 'alpha.alpha'), 0),
+        },
+        beta: {
+          available: safeGet(row, 'beta.available', true) !== false,
+          error: escapeHtml(safeGet(row, 'beta.error', '')),
+          beta: safeNumber(safeGet(row, 'beta.beta'), 0),
+        },
+        sharpe: {
+          available: safeGet(row, 'sharpe.available', true) !== false,
+          error: escapeHtml(safeGet(row, 'sharpe.error', '')),
+          sharpe_ratio: safeNumber(safeGet(row, 'sharpe.sharpe_ratio'), 0),
+        },
+      }))
     };
   }
   
@@ -313,17 +375,33 @@ class DashboardDataValidator {
         by_strategy: []
       },
       performance: {
+        period_filter: 'month',
+        snapshot_count: 0,
         sharpe: {
+          available: false,
+          error: '',
           sharpe_ratio: 0,
           annual_return_pct: 0,
           annual_volatility_pct: 0
         },
         alpha: {
-          alpha: 0
+          available: false,
+          error: '',
+          alpha: 0,
+          portfolio: { return_pct: 0 },
+          benchmark: { symbol: 'SPY', return_pct: 0 },
+          period: { start: '', end: '', days: 0 },
+          interpretation: ''
         },
         beta: {
-          beta: 0
-        }
+          available: false,
+          error: '',
+          beta: 0,
+          r_squared: 0,
+          correlation: 0,
+          interpretation: ''
+        },
+        by_strategy: []
       },
       system: {
         status: 'unknown',

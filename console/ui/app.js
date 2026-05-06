@@ -31,6 +31,7 @@ const fmt = {
 class Console {
     constructor() {
         this.currentTab = 'overview';
+        this.currentPeriod = localStorage.getItem('dashboardPeriod') || 'month';
         this.data = null;
         this.selectedNewsId = null;
         this.newsFilterUsed = localStorage.getItem('newsFilterUsed') === 'true';
@@ -64,7 +65,7 @@ class Console {
     async loadData() {
         try {
             // Fetch raw data using relative path (works from any port)
-            const response = await fetch('/api/dashboard');
+            const response = await fetch(`/api/dashboard?period=${encodeURIComponent(this.currentPeriod)}`);
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
@@ -160,6 +161,7 @@ class Console {
                 case 'logs':       content.innerHTML = this.renderLogs(); break;
                 case 'metrics':    content.innerHTML = this.renderMetrics(); break;
             }
+            this.setupPeriodSelectors();
             
             // Phase 3: パフォーマンス測定
             const endTime = Date.now();
@@ -481,12 +483,13 @@ class Console {
         
         const s = td.summary || {};
         const recent = td.recent_trades || [];
+        const allClosedTrades = td.closed_trades || recent;
         const snaps = td.daily_snapshots || [];
         const winRate = s.win_rate;
         const wr_cls = winRate >= 0.55 ? 'success' : winRate < 0.40 && s.closed_trades > 0 ? 'danger' : 'warn';
         
         // 戦略別パフォーマンスを計算
-        const strategyPerf = this.calculateStrategyPerformance(pipeline.by_strategy || [], recent);
+        const strategyPerf = this.calculateStrategyPerformance(pipeline.by_strategy || [], allClosedTrades);
 
         return `
         ${this.renderPipelineFunnel()}
@@ -519,6 +522,10 @@ class Console {
         </div>`;
     }
 
+    formatStrategyLabel(value) {
+        return this.escapeHtml((value || '').replace(/_/g, ' '));
+    }
+
     calculateStrategyPerformance(pipelineData, trades) {
         const strategyStats = {};
         
@@ -526,6 +533,7 @@ class Console {
         pipelineData.forEach(s => {
             strategyStats[s.strategy_id] = {
                 strategy_id: s.strategy_id,
+                strategy_version_id: s.strategy_version_id || s.strategy_id,
                 decisions: s.decisions || 0,
                 buy: s.buy || 0,
                 sell: s.sell || 0,
@@ -548,11 +556,33 @@ class Console {
         
         // Calculate trade stats from actual trades
         trades.forEach(trade => {
-            const sid = trade.strategy_id;
-            if (!sid || !strategyStats[sid]) return;
+            const sid = trade.strategy_id || 'unknown';
+            if (!strategyStats[sid]) {
+                strategyStats[sid] = {
+                    strategy_id: trade.original_strategy_id || sid,
+                    strategy_version_id: trade.strategy_version_id || sid,
+                    decisions: 0,
+                    buy: 0,
+                    sell: 0,
+                    deny: 0,
+                    pass: 0,
+                    reject: 0,
+                    realized_pnl: 0,
+                    open_positions: 0,
+                    rejection_rate: 0,
+                    conversion_rate: 0,
+                    closed_trades: 0,
+                    winning_trades: 0,
+                    losing_trades: 0,
+                    win_rate: 0,
+                    avg_pnl: 0,
+                    avg_return_pct: 0
+                };
+            }
             
             if (trade.status === 'closed') {
                 strategyStats[sid].closed_trades++;
+                strategyStats[sid].realized_pnl = (strategyStats[sid].realized_pnl || 0) + (trade.pnl || 0);
                 if ((trade.pnl || 0) > 0) {
                     strategyStats[sid].winning_trades++;
                 } else if ((trade.pnl || 0) < 0) {
@@ -577,6 +607,7 @@ class Console {
         if (!data || data.length === 0) return '<p class="muted">戦略データなし</p>';
         return `<div class="table-wrap"><table><thead><tr>
             <th>戦略</th>
+            <th>strategy_version_id</th>
             <th>決済取引</th>
             <th>勝率</th>
             <th>勝/負</th>
@@ -584,6 +615,7 @@ class Console {
             <th>累積実現PnL</th>
             <th>オープン</th>
             <th>意思決定</th>
+            <th>submitted_decisions</th>
             <th>Buy</th>
             <th>Sell</th>
             <th>Deny</th>
@@ -593,9 +625,11 @@ class Console {
         ${data.map(s => {
             const winRateClass = (s.win_rate || 0) >= 0.6 ? 'success' : (s.win_rate || 0) >= 0.4 ? 'warn' : 'danger';
             const pnlClass = (s.realized_pnl || 0) >= 0 ? 'success' : 'danger';
+            const conversionRate = (s.conversion_rate || 0) > 1 ? (s.conversion_rate || 0) / 100 : (s.conversion_rate || 0);
             return `
             <tr>
-                <td><strong>${this.escapeHtml((s.strategy_id || '').replace(/_/g, ' '))}</strong></td>
+                <td><strong>${this.formatStrategyLabel(s.strategy_id || '')}</strong></td>
+                <td class="small">${this.formatStrategyLabel(s.strategy_version_id || s.strategy_id || '')}</td>
                 <td>${s.closed_trades || 0}</td>
                 <td class="${winRateClass}">${fmt.pct(s.win_rate || 0)}</td>
                 <td>${s.winning_trades || 0} / ${s.losing_trades || 0}</td>
@@ -603,11 +637,12 @@ class Console {
                 <td class="${pnlClass}"><strong>${fmt.usdSigned(s.realized_pnl || 0)}</strong></td>
                 <td>${s.open_positions || 0}</td>
                 <td>${s.decisions || 0}</td>
+                <td>${s.submitted_decisions || 0}</td>
                 <td class="success">${s.buy || 0}</td>
                 <td class="warn">${s.sell || 0}</td>
                 <td class="danger">${s.deny || 0}</td>
                 <td>${fmt.pct((s.rejection_rate || 0) / 100)}</td>
-                <td>${fmt.pct(s.conversion_rate || 0)}</td>
+                <td>${fmt.pct(conversionRate)}</td>
             </tr>`;
         }).join('')}
         </tbody></table></div>`;
@@ -663,7 +698,7 @@ class Console {
             return dateB - dateA; // 降順（最新が上）
         });
         return `<div class="table-wrap"><table><thead><tr>
-            <th>エントリー</th><th>エグジット</th><th>シンボル</th><th>数量</th><th>エントリー価格</th><th>エグジット価格</th><th>PnL</th><th>リターン</th><th>ステータス</th>
+            <th>エントリー</th><th>エグジット</th><th>シンボル</th><th>数量</th><th>エントリー価格</th><th>エグジット価格</th><th>PnL</th><th>リターン</th><th>元戦略</th><th>strategy_version_id</th><th>ステータス</th>
         </tr></thead><tbody>
         ${sortedData.map(trade => `
             <tr>
@@ -675,6 +710,8 @@ class Console {
                 <td>${trade.exit_price ? fmt.usd(trade.exit_price) : '—'}</td>
                 <td class="${(trade.pnl || 0) >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(trade.pnl || 0)}</td>
                 <td class="${(trade.return_pct || 0) >= 0 ? 'success' : 'danger'}">${fmt.pctSigned(trade.return_pct || 0)}</td>
+                <td class="small">${this.formatStrategyLabel(trade.original_strategy_id || trade.strategy_id || '')}</td>
+                <td class="small">${this.formatStrategyLabel(trade.strategy_version_id || trade.strategy_id || '')}</td>
                 <td><span class="badge badge-${trade.status === 'closed' ? 'success' : trade.status === 'open' ? 'warn' : 'unknown'}">${this.escapeHtml(trade.status || '-')}</span></td>
             </tr>`).join('')}
         </tbody></table></div>`;
@@ -775,11 +812,12 @@ class Console {
     renderPositionsTable(data) {
         if (!data || data.length === 0) return '<p class="muted">ポジションなし</p>';
         return `<div class="table-wrap"><table><thead><tr>
-            <th>シンボル</th><th>数量</th><th>取得日</th><th>保有日数</th><th>取得価格</th><th>現在価格</th><th>評価額</th><th>評価損益</th><th>損益率</th><th>比率</th><th>ステータス</th><th>戦略</th>
+            <th>シンボル</th><th>数量</th><th>取得日</th><th>保有日数</th><th>取得価格</th><th>現在価格</th><th>評価額</th><th>評価損益</th><th>損益率</th><th>比率</th><th>ステータス</th><th>strategy_version_id</th>
         </tr></thead><tbody>
         ${data.map(pos => {
+            const pnlPct = pos.unrealized_pnl_pct ?? pos.unrealized_return_pct ?? pos.return_pct ?? 0;
             const pnlClass = (pos.unrealized_pnl || 0) >= 0 ? 'success' : 'danger';
-            const pnlPctClass = (pos.unrealized_pnl_pct || 0) >= 0 ? 'success' : 'danger';
+            const pnlPctClass = pnlPct >= 0 ? 'success' : 'danger';
             const statusBadge = pos.decision_status === 'stop_loss' ? 'danger' : pos.decision_status === 'review' ? 'warn' : 'success';
             return `
             <tr>
@@ -787,14 +825,14 @@ class Console {
                 <td>${pos.qty || pos.quantity || 0}</td>
                 <td class="small">${pos.entry_time ? fmt.dt(pos.entry_time) : '—'}</td>
                 <td>${pos.holding_days != null ? pos.holding_days + '日' : '—'}</td>
-                <td>${fmt.usd(pos.entry_price || pos.avg_price || 0)}</td>
+                <td>${fmt.usd(pos.entry_price ?? pos.avg_entry_price ?? pos.avg_price ?? 0)}</td>
                 <td>${fmt.usd(pos.current_price || 0)}</td>
                 <td>${fmt.usd(pos.market_value || pos.exposure || 0)}</td>
                 <td class="${pnlClass}">${fmt.usdSigned(pos.unrealized_pnl || 0)}</td>
-                <td class="${pnlPctClass}">${fmt.pctSigned(pos.unrealized_pnl_pct || pos.return_pct || 0)}</td>
+                <td class="${pnlPctClass}">${fmt.pctSigned(pnlPct)}</td>
                 <td>${fmt.pct(pos.portfolio_weight || 0)}</td>
                 <td><span class="badge badge-${statusBadge}">${this.escapeHtml(pos.decision_status || '-')}</span></td>
-                <td class="small">${this.escapeHtml((pos.strategy_id || '').replace('_v1', '').replace('_', ' '))}</td>
+                <td class="small">${this.formatStrategyLabel(pos.strategy_version_id || pos.strategy_id || '')}</td>
             </tr>`;
         }).join('')}
         </tbody></table></div>`;
@@ -1274,38 +1312,50 @@ class Console {
         const alpha = perf.alpha || {};
         const beta = perf.beta || {};
         const sharpe = perf.sharpe || {};
-        
+
+        const alphaAvailable = alpha.available !== false;
+        const betaAvailable = beta.available !== false;
+        const sharpeAvailable = sharpe.available !== false;
+
         // Alphaの色分け
         const alphaValue = alpha.alpha || 0;
-        const alphaClass = alphaValue > 2 ? 'success' : alphaValue > 0 ? 'warn' : 'danger';
-        const alphaIcon = alphaValue > 0 ? '🚀' : '🐢';
-        
+        const alphaClass = !alphaAvailable ? 'unknown' : alphaValue > 2 ? 'success' : alphaValue > 0 ? 'warn' : 'danger';
+        const alphaIcon = !alphaAvailable ? '⏸️' : alphaValue > 0 ? '🚀' : '🐢';
+
         // Betaの色分け
         const betaValue = beta.beta || 0;
-        const betaClass = betaValue < 0.5 ? 'success' : betaValue < 1 ? 'warn' : 'danger';
-        const betaIcon = betaValue < 0.5 ? '🛡️' : betaValue < 1 ? '⚠️' : '🔥';
-        
+        const betaClass = !betaAvailable ? 'unknown' : betaValue < 0.5 ? 'success' : betaValue < 1 ? 'warn' : 'danger';
+        const betaIcon = !betaAvailable ? '⏸️' : betaValue < 0.5 ? '🛡️' : betaValue < 1 ? '⚠️' : '🔥';
+
         // Sharpeの色分け
         const sharpeValue = sharpe.sharpe_ratio || 0;
-        const sharpeClass = sharpeValue > 2 ? 'success' : sharpeValue > 1 ? 'warn' : 'danger';
-        const sharpeIcon = sharpeValue > 2 ? '⭐' : sharpeValue > 1 ? '🟡' : '🔴';
-        
+        const sharpeClass = !sharpeAvailable ? 'unknown' : sharpeValue > 2 ? 'success' : sharpeValue > 1 ? 'warn' : 'danger';
+        const sharpeIcon = !sharpeAvailable ? '⏸️' : sharpeValue > 2 ? '⭐' : sharpeValue > 1 ? '🟡' : '🔴';
+        const periodInfo = alpha.period?.start && alpha.period?.end
+            ? `${alpha.period.start} → ${alpha.period.end} (${alpha.period.days || 0}点)`
+            : `${this.getPeriodLabel(perf.period_filter || this.currentPeriod)} / snapshots=${perf.snapshot_count || 0}`;
+        const strategyAttribution = perf.by_strategy || [];
+
         return `
+        ${this.renderPeriodSelector()}
+        <div class="card" style="margin-bottom: 16px;">
+            <div class="metric"><span class="label">分析対象期間</span><span class="value">${this.escapeHtml(periodInfo)}</span></div>
+        </div>
         <div class="grid">
             <div class="card performance-card ${alphaClass}-border">
                 <h3>${alphaIcon} α (Alpha) - 超過リターン</h3>
                 <div class="metric big-metric">
-                    <span class="value huge ${alphaClass}">${fmt.pctSigned(alphaValue / 100)}</span>
+                    <span class="value huge ${alphaClass}">${alphaAvailable ? fmt.pctSigned(alphaValue / 100) : 'N/A'}</span>
                 </div>
-                <div class="metric"><span class="label">ポートフォリオ</span><span class="value success">${fmt.pct((alpha.portfolio?.return_pct || 0) / 100)}</span></div>
-                <div class="metric"><span class="label">ベンチマーク (${alpha.benchmark?.symbol || 'SPY'})</span><span class="value">${fmt.pct((alpha.benchmark?.return_pct || 0) / 100)}</span></div>
+                <div class="metric"><span class="label">ポートフォリオ</span><span class="value success">${alphaAvailable ? fmt.pct((alpha.portfolio?.return_pct || 0) / 100) : '—'}</span></div>
+                <div class="metric"><span class="label">ベンチマーク (${alpha.benchmark?.symbol || 'SPY'})</span><span class="value">${alphaAvailable ? fmt.pct((alpha.benchmark?.return_pct || 0) / 100) : '—'}</span></div>
                 <div class="interpretation-box ${alphaClass}">
-                    <strong>評価:</strong> ${this.escapeHtml(alpha.interpretation || '')}
+                    <strong>${alphaAvailable ? '評価' : '状態'}:</strong> ${this.escapeHtml(alphaAvailable ? (alpha.interpretation || '') : (alpha.error || 'データ不足'))}
                 </div>
                 <div class="progress-bar-container">
                     <div class="progress-label">アルファ貢献度</div>
                     <div class="progress-bar">
-                        <div class="progress-fill ${alphaClass}" style="width: ${Math.min(Math.abs(alphaValue) * 10, 100)}%"></div>
+                        <div class="progress-fill ${alphaClass}" style="width: ${alphaAvailable ? Math.min(Math.abs(alphaValue) * 10, 100) : 0}%"></div>
                     </div>
                 </div>
             </div>
@@ -1313,17 +1363,17 @@ class Console {
             <div class="card performance-card ${betaClass}-border">
                 <h3>${betaIcon} β (Beta) - 市場連動性</h3>
                 <div class="metric big-metric">
-                    <span class="value huge ${betaClass}">${betaValue.toFixed(2)}</span>
+                    <span class="value huge ${betaClass}">${betaAvailable ? betaValue.toFixed(2) : 'N/A'}</span>
                 </div>
-                <div class="metric"><span class="label">R² (決定係数)</span><span class="value">${(beta.r_squared || 0).toFixed(3)}</span></div>
-                <div class="metric"><span class="label">相関係数</span><span class="value">${(beta.correlation || 0).toFixed(3)}</span></div>
+                <div class="metric"><span class="label">R² (決定係数)</span><span class="value">${betaAvailable ? (beta.r_squared || 0).toFixed(3) : '—'}</span></div>
+                <div class="metric"><span class="label">相関係数</span><span class="value">${betaAvailable ? (beta.correlation || 0).toFixed(3) : '—'}</span></div>
                 <div class="interpretation-box ${betaClass}">
-                    <strong>評価:</strong> ${this.escapeHtml(beta.interpretation || '')}
+                    <strong>${betaAvailable ? '評価' : '状態'}:</strong> ${this.escapeHtml(betaAvailable ? (beta.interpretation || '') : (beta.error || 'データ不足'))}
                 </div>
                 <div class="progress-bar-container">
                     <div class="progress-label">市場連動度</div>
                     <div class="progress-bar">
-                        <div class="progress-fill ${betaClass}" style="width: ${Math.min(betaValue * 100, 100)}%"></div>
+                        <div class="progress-fill ${betaClass}" style="width: ${betaAvailable ? Math.min(betaValue * 100, 100) : 0}%"></div>
                     </div>
                 </div>
             </div>
@@ -1331,17 +1381,17 @@ class Console {
             <div class="card performance-card ${sharpeClass}-border">
                 <h3>${sharpeIcon} Sharpe Ratio - リスク調整後リターン</h3>
                 <div class="metric big-metric">
-                    <span class="value huge ${sharpeClass}">${sharpeValue.toFixed(2)}</span>
+                    <span class="value huge ${sharpeClass}">${sharpeAvailable ? sharpeValue.toFixed(2) : 'N/A'}</span>
                 </div>
-                <div class="metric"><span class="label">年間リターン</span><span class="value success">${fmt.pct((sharpe.annual_return_pct || 0) / 100)}</span></div>
-                <div class="metric"><span class="label">年間ボラティリティ</span><span class="value danger">${fmt.pct((sharpe.annual_volatility_pct || 0) / 100)}</span></div>
+                <div class="metric"><span class="label">年間リターン</span><span class="value success">${sharpeAvailable ? fmt.pct((sharpe.annual_return_pct || 0) / 100) : '—'}</span></div>
+                <div class="metric"><span class="label">年間ボラティリティ</span><span class="value danger">${sharpeAvailable ? fmt.pct((sharpe.annual_volatility_pct || 0) / 100) : '—'}</span></div>
                 <div class="interpretation-box ${sharpeClass}">
-                    <strong>評価:</strong> ${this.escapeHtml(sharpe.interpretation || '')}
+                    <strong>${sharpeAvailable ? '評価' : '状態'}:</strong> ${this.escapeHtml(sharpeAvailable ? (sharpe.interpretation || '') : (sharpe.error || 'データ不足'))}
                 </div>
                 <div class="progress-bar-container">
                     <div class="progress-label">シャープ質</div>
                     <div class="progress-bar">
-                        <div class="progress-fill ${sharpeClass}" style="width: ${Math.min(sharpeValue * 50, 100)}%"></div>
+                        <div class="progress-fill ${sharpeClass}" style="width: ${sharpeAvailable ? Math.min(sharpeValue * 50, 100) : 0}%"></div>
                     </div>
                 </div>
             </div>
@@ -1359,13 +1409,49 @@ class Console {
                 <h3>🎯 リスク・リターン比較</h3>
                 <canvas id="riskReturnChart" height="100"></canvas>
             </div>
+        </div>
+
+        <div class="grid" style="margin-top: 16px;">
+            <div class="card" style="grid-column: 1 / -1;">
+                <h3>🧪 戦略別 α/β/Sharpe（近似）</h3>
+                <p class="muted small">closed trades の日次 realized return から作る近似値です。戦略別の日次 equity snapshot が無いため、参考値として扱ってください。</p>
+                ${this.renderStrategyAttributionTable(strategyAttribution)}
+            </div>
         </div>`;
+    }
+
+    renderStrategyAttributionTable(data) {
+        if (!data || data.length === 0) return '<p class="muted">戦略別 attribution はまだ計算できるデータがありません</p>';
+        return `<div class="table-wrap"><table><thead><tr>
+            <th>strategy_version_id</th><th>決済取引</th><th>稼働日</th><th>勝/負</th><th>実現PnL</th><th>α</th><th>β</th><th>Sharpe</th><th>メモ</th>
+        </tr></thead><tbody>
+        ${data.map(row => {
+            const alphaTxt = row.alpha?.available !== false ? fmt.pctSigned((row.alpha?.alpha || 0) / 100) : 'N/A';
+            const betaTxt = row.beta?.available !== false ? (row.beta?.beta || 0).toFixed(2) : 'N/A';
+            const sharpeTxt = row.sharpe?.available !== false ? (row.sharpe?.sharpe_ratio || 0).toFixed(2) : 'N/A';
+            const alphaCls = row.alpha?.available !== false ? ((row.alpha?.alpha || 0) >= 0 ? 'success' : 'danger') : 'muted';
+            const pnlCls = (row.realized_pnl || 0) >= 0 ? 'success' : 'danger';
+            const memo = row.summary || row.alpha?.error || row.beta?.error || row.sharpe?.error || row.approximation || '';
+            return `<tr>
+                <td class="small">${this.formatStrategyLabel(row.strategy_version_id || '')}</td>
+                <td>${row.closed_trades || 0}</td>
+                <td>${row.active_days || 0}</td>
+                <td>${row.winning_trades || 0} / ${row.losing_trades || 0}</td>
+                <td class="${pnlCls}">${fmt.usdSigned(row.realized_pnl || 0)}</td>
+                <td class="${alphaCls}">${alphaTxt}</td>
+                <td>${betaTxt}</td>
+                <td>${sharpeTxt}</td>
+                <td class="small muted">${this.escapeHtml(memo)}</td>
+            </tr>`;
+        }).join('')}
+        </tbody></table></div>`;
     }
 
     renderCharts() {
         const charts = this.data?.charts?.overview || {};
         
         return `
+        ${this.renderPeriodSelector()}
         <div class="grid" style="margin-bottom: 16px;">
             <div class="card" style="grid-column: 1 / -1;">
                 <h3>💰 Equity推移</h3>
@@ -1401,6 +1487,37 @@ class Console {
                 <canvas id="winRateChart" height="80"></canvas>
             </div>
         </div>`;
+    }
+
+    renderPeriodSelector() {
+        const periods = [
+            ['day', '1D'],
+            ['3days', '3D'],
+            ['week', '1W'],
+            ['month', '1M'],
+            ['all', 'ALL'],
+        ];
+        return `<div class="period-selector" style="margin-bottom: 16px;">
+            ${periods.map(([key, label]) => `<button class="period-btn ${this.currentPeriod === key ? 'active' : ''}" data-period="${key}">${label}</button>`).join('')}
+        </div>`;
+    }
+
+    getPeriodLabel(period) {
+        const labels = { day: '1日', '3days': '3日', week: '1週間', month: '1か月', all: '全期間' };
+        return labels[period] || period || '—';
+    }
+
+    setupPeriodSelectors() {
+        document.querySelectorAll('.period-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const nextPeriod = btn.dataset.period || 'month';
+                if (nextPeriod === this.currentPeriod) return;
+                this.currentPeriod = nextPeriod;
+                localStorage.setItem('dashboardPeriod', nextPeriod);
+                await this.loadData();
+                this.render();
+            });
+        });
     }
 
     renderNews() {

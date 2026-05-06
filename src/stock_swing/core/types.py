@@ -38,6 +38,7 @@ class DecisionRecord:
     generated_at: datetime
     mode: str
     strategy_id: str
+    strategy_version_id: str
     symbol: str
     action: str
     confidence: float

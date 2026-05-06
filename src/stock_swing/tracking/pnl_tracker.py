@@ -12,10 +12,13 @@ State is persisted to data/tracking/pnl_state.json
 from __future__ import annotations
 
 import json
+from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from stock_swing.utils.strategy_versioning import normalize_strategy_id
 
 
 @dataclass
@@ -33,7 +36,9 @@ class TradeEntry:
     pnl: float | None  # realized P&L in USD
     return_pct: float | None  # return %
     status: str  # "open" | "closed"
+    strategy_version_id: str | None = None
     broker_order_id: str | None = None
+    original_strategy_id: str | None = None
     exit_strategy_id: str | None = None
     exit_reason: str | None = None
 
@@ -54,12 +59,33 @@ class DailySnapshot:
 
 
 @dataclass
+class StrategyDailySnapshot:
+    """End-of-day performance snapshot by strategy_version_id."""
+    date: str  # YYYY-MM-DD
+    strategy_version_id: str
+    equity_index: float
+    day_return_pct: float
+    realized_pnl: float
+    cumulative_realized_pnl: float
+    unrealized_pnl: float
+    total_pnl: float
+    gross_exposure: float
+    traded_notional: float
+    trade_count: int
+    win_count: int
+    loss_count: int
+    open_positions: int
+    approximation: str = "normalized_strategy_sleeve"
+
+
+@dataclass
 class PnLState:
     """Full persistent P&L state."""
     created_at: str
     last_updated: str
     trades: list[dict[str, Any]] = field(default_factory=list)
     daily_snapshots: list[dict[str, Any]] = field(default_factory=list)
+    strategy_daily_snapshots: list[dict[str, Any]] = field(default_factory=list)
     cumulative_realized_pnl: float = 0.0
     total_trades: int = 0
     winning_trades: int = 0
@@ -94,6 +120,8 @@ class PnLTracker:
         price: float,
         broker_order_id: str | None,
         decision_id: str,
+        original_strategy_id: str | None = None,
+        strategy_version_id: str | None = None,
     ) -> str:
         """Record a new paper order submission as an open trade.
 
@@ -107,10 +135,13 @@ class PnLTracker:
         trade_id = f"{symbol}-{decision_id[:8]}"
         now = datetime.now(timezone.utc).isoformat()
 
+        normalized_strategy_id = strategy_version_id or normalize_strategy_id(strategy_id, now)
+
         trade = TradeEntry(
             trade_id=trade_id,
             symbol=symbol,
-            strategy_id=strategy_id,
+            strategy_id=normalized_strategy_id,
+            strategy_version_id=normalized_strategy_id,
             side=side,
             qty=qty,
             entry_price=price,
@@ -121,6 +152,7 @@ class PnLTracker:
             return_pct=None,
             status="open",
             broker_order_id=broker_order_id,
+            original_strategy_id=original_strategy_id or strategy_id,
         )
         self.state.trades.append(asdict(trade))
         self.state.total_trades += 1
@@ -288,6 +320,7 @@ class PnLTracker:
             orders_submitted=orders_submitted,
         )
         self.state.daily_snapshots.append(asdict(snap))
+        self._record_strategy_daily_snapshots(today=today, current_prices=current_prices)
         self.state.last_updated = datetime.now(timezone.utc).isoformat()
         self._save_state()
         return snap
@@ -339,6 +372,99 @@ class PnLTracker:
     def get_recent_trades(self, n: int = 10) -> list[dict[str, Any]]:
         closed = [t for t in self.state.trades if t["status"] == "closed"]
         return closed[-n:]
+
+    def _record_strategy_daily_snapshots(self, today: str, current_prices: dict[str, float]) -> None:
+        """Upsert strategy-level end-of-day snapshots for the current day."""
+        current_prices = current_prices or {}
+
+        closed_by_strategy: dict[str, dict[str, float | int]] = defaultdict(lambda: {
+            "realized_pnl": 0.0,
+            "traded_notional": 0.0,
+            "trade_count": 0,
+            "win_count": 0,
+            "loss_count": 0,
+        })
+        cumulative_realized_by_strategy: dict[str, float] = defaultdict(float)
+        open_by_strategy: dict[str, dict[str, float | int]] = defaultdict(lambda: {
+            "unrealized_pnl": 0.0,
+            "gross_exposure": 0.0,
+            "open_positions": 0,
+        })
+
+        for trade in self.state.trades:
+            strategy_id = str(trade.get("strategy_version_id") or trade.get("strategy_id") or "unknown")
+            if trade.get("status") == "closed":
+                pnl = float(trade.get("pnl") or 0.0)
+                cumulative_realized_by_strategy[strategy_id] += pnl
+                exit_time = str(trade.get("exit_time") or "")
+                if exit_time[:10] == today:
+                    row = closed_by_strategy[strategy_id]
+                    row["realized_pnl"] += pnl
+                    row["traded_notional"] += abs(float(trade.get("entry_price") or 0.0) * float(trade.get("qty") or 0.0))
+                    row["trade_count"] += 1
+                    if pnl > 0:
+                        row["win_count"] += 1
+                    elif pnl < 0:
+                        row["loss_count"] += 1
+            elif trade.get("status") == "open":
+                curr = current_prices.get(str(trade.get("symbol") or ""))
+                qty = float(trade.get("qty") or 0.0)
+                entry_price = float(trade.get("entry_price") or 0.0)
+                market_price = float(curr if curr is not None else entry_price)
+                row = open_by_strategy[strategy_id]
+                row["gross_exposure"] += market_price * qty
+                row["open_positions"] += 1
+                if curr is not None:
+                    row["unrealized_pnl"] += (market_price - entry_price) * qty
+
+        latest_prior_by_strategy: dict[str, dict[str, Any]] = {}
+        for row in self.state.strategy_daily_snapshots:
+            if str(row.get("date") or "") == today:
+                continue
+            strategy_id = str(row.get("strategy_version_id") or "unknown")
+            prev = latest_prior_by_strategy.get(strategy_id)
+            if prev is None or str(row.get("date") or "") > str(prev.get("date") or ""):
+                latest_prior_by_strategy[strategy_id] = row
+
+        new_rows: list[dict[str, Any]] = []
+        all_strategy_ids = set(cumulative_realized_by_strategy) | set(closed_by_strategy) | set(open_by_strategy)
+        for strategy_id in sorted(all_strategy_ids):
+            prev = latest_prior_by_strategy.get(strategy_id)
+            realized = float((closed_by_strategy.get(strategy_id) or {}).get("realized_pnl") or 0.0)
+            cumulative_realized = float(cumulative_realized_by_strategy.get(strategy_id) or 0.0)
+            unrealized = float((open_by_strategy.get(strategy_id) or {}).get("unrealized_pnl") or 0.0)
+            gross_exposure = float((open_by_strategy.get(strategy_id) or {}).get("gross_exposure") or 0.0)
+            traded_notional = float((closed_by_strategy.get(strategy_id) or {}).get("traded_notional") or 0.0)
+            prev_unrealized = float((prev or {}).get("unrealized_pnl") or 0.0)
+            prev_gross = float((prev or {}).get("gross_exposure") or 0.0)
+            prev_equity_index = float((prev or {}).get("equity_index") or 100.0)
+
+            day_pnl = realized + (unrealized - prev_unrealized)
+            capital_base = max(traded_notional, gross_exposure, prev_gross, 1.0)
+            day_return_pct = round(day_pnl / capital_base, 6)
+            equity_index = round(prev_equity_index * (1.0 + day_return_pct), 6)
+
+            row = StrategyDailySnapshot(
+                date=today,
+                strategy_version_id=strategy_id,
+                equity_index=equity_index,
+                day_return_pct=day_return_pct,
+                realized_pnl=round(realized, 2),
+                cumulative_realized_pnl=round(cumulative_realized, 2),
+                unrealized_pnl=round(unrealized, 2),
+                total_pnl=round(cumulative_realized + unrealized, 2),
+                gross_exposure=round(gross_exposure, 2),
+                traded_notional=round(traded_notional, 2),
+                trade_count=int((closed_by_strategy.get(strategy_id) or {}).get("trade_count") or 0),
+                win_count=int((closed_by_strategy.get(strategy_id) or {}).get("win_count") or 0),
+                loss_count=int((closed_by_strategy.get(strategy_id) or {}).get("loss_count") or 0),
+                open_positions=int((open_by_strategy.get(strategy_id) or {}).get("open_positions") or 0),
+            )
+            new_rows.append(asdict(row))
+
+        self.state.strategy_daily_snapshots = [
+            row for row in self.state.strategy_daily_snapshots if str(row.get("date") or "") != today
+        ] + new_rows
 
     # ── Internal ──────────────────────────────────────────────────────────────
 
