@@ -69,3 +69,14 @@ logs/*.log
 # Console state
 console/state/
 console/*.log
+
+# Runtime/generated local state
+.run/*.pid
+
+data/audits/news_collection_status.json
+data/audits/source_reliability_history.json
+data/risk_monitor_state.json
+
+data/tracking/pnl_state.json
+data/tracking/pnl_state.backfill_backup_*.json
+data/tracking/pnl_state.strategy_snapshot_backup_*.json
