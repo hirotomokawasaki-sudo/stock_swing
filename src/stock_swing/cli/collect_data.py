@@ -18,6 +18,7 @@ from stock_swing.core.path_manager import PathManager
 from stock_swing.core.types import RawEnvelope
 from stock_swing.storage.stage_store import StageStore
 from stock_swing.sources.finnhub_client import FinnhubClient
+from stock_swing.sources.retry import RetryConfig
 
 
 DEFAULT_SYMBOLS = "NVDA,MSFT,GOOGL,AMZN,META,TSLA,AVGO,AMD,TSM,ASML,INTC,MU,ARM,AMAT,LRCX,KLAC,QCOM,MRVL,PLTR,ADBE,CRM,ORCL,NOW,SNOW,MDB,DDOG,PATH,FICO,SMCI,PANW,CRWD,FTNT,ANET,CSCO,IBM,HPE,DELL,HPQ,SNPS,CDNS,V,MA,INTU,NBIS,CRDO,RBRK,CIEN,SHOC,SOXQ,SOXX,SMH,FTXL,PTF,SMHX,FRWD,TTEQ,GTOP,CHPX,CHPS,PSCT,QTEC,TDIV,SKYY,QTUM"
@@ -103,7 +104,16 @@ def collect_finnhub(symbols, store):
     client = None
     if api_key:
         try:
-            client = FinnhubClient(api_key=api_key)
+            client = FinnhubClient(
+                api_key=api_key,
+                retry_config=RetryConfig(
+                    max_attempts=2,
+                    initial_delay=1.0,
+                    max_delay=3.0,
+                    backoff_factor=2.0,
+                    timeout=5.0,
+                ),
+            )
         except Exception:
             client = None
     today = datetime.now(timezone.utc).date().isoformat()

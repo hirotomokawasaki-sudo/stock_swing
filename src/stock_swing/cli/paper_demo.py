@@ -201,6 +201,23 @@ def main() -> int:  # noqa: C901
     )
     print(f"  URL: {broker.base_url}")
 
+    latest_quote_cache: dict[str, float] = {}
+
+    def get_mid_price(symbol: str) -> float:
+        cached = latest_quote_cache.get(symbol)
+        if cached is not None:
+            return cached
+        try:
+            q = broker.fetch_latest_quote(symbol).payload
+            quote = q.get("quote", q)
+            bid = float(quote.get("bp", 0) or 0)
+            ask = float(quote.get("ap", 0) or 0)
+            price = round((bid + ask) / 2, 4) if bid and ask else 0.0
+        except Exception:
+            price = 0.0
+        latest_quote_cache[symbol] = price
+        return price
+
     try:
         account_env = broker.fetch_account()
         acct = account_env.payload
@@ -538,12 +555,10 @@ def main() -> int:  # noqa: C901
                 )
                 
                 # Estimate order value (qty * current_price)
-                try:
-                    q = broker.fetch_latest_quote(o.symbol).payload
-                    quote = q.get("quote", q)
-                    current_price = (float(quote.get("bp", 0) or 0) + float(quote.get("ap", 0) or 0)) / 2
+                current_price = get_mid_price(o.symbol)
+                if current_price > 0:
                     estimated_order_value = preview_qty * current_price
-                except:
+                else:
                     estimated_order_value = preview_qty * 100  # Conservative estimate
                 
                 total_value = existing_value + estimated_order_value
@@ -565,7 +580,10 @@ def main() -> int:  # noqa: C901
                     f"exposure={preview_sizing.get('shares_by_exposure')}]"
                 )
             print(f"\n  Submitting {o.side.upper()} {preview_qty} {o.symbol} ({o.order_type}){preview_basis} ... ", end="", flush=True)
-            sub = executor.submit(decision)
+            sub = executor.submit(
+                decision,
+                current_qty=current_positions.get(o.symbol) if o.side == "sell" else None,
+            )
             submissions.append(sub)
             if sub.status == "submitted":
                 sizing = sub.sizing_details or {}
@@ -578,16 +596,7 @@ def main() -> int:  # noqa: C901
                 else:
                     print(f"OK broker_id={sub.broker_order_id} qty={sub.qty}")
                 # Fetch current price for P&L tracking entry
-                entry_price = 0.0
-                try:
-                    q = broker.fetch_latest_quote(o.symbol).payload
-                    quote = q.get("quote", q)
-                    bid = float(quote.get("bp", 0) or 0)
-                    ask = float(quote.get("ap", 0) or 0)
-                    if bid and ask:
-                        entry_price = round((bid + ask) / 2, 4)
-                except Exception:
-                    pass
+                entry_price = get_mid_price(o.symbol)
 
                 if entry_price <= 0:
                     sizing_price = float((sub.sizing_details or {}).get("current_price") or 0)
@@ -650,14 +659,7 @@ def main() -> int:  # noqa: C901
                         except Exception:
                             exit_price = None
                     if not exit_price:
-                        try:
-                            q = broker.fetch_latest_quote(sub.symbol).payload
-                            quote = q.get('quote', q)
-                            bid = float(quote.get('bp', 0) or 0)
-                            ask = float(quote.get('ap', 0) or 0)
-                            exit_price = round((bid + ask) / 2, 4) if bid and ask else 0.0
-                        except Exception:
-                            exit_price = 0.0
+                        exit_price = get_mid_price(sub.symbol)
                     if exit_price:
                         exit_reason = "strategy_exit"
                         notes = " ".join((decision.evidence or {}).get("notes") or []).lower() if getattr(decision, 'evidence', None) else ""

@@ -125,11 +125,14 @@ class PaperExecutor:
     def submit(
         self,
         decision: DecisionRecord,
+        current_qty: int | None = None,
     ) -> OrderSubmission:
         """Submit order from decision record.
         
         Args:
             decision: Decision record with proposed order.
+            current_qty: Optional current broker position quantity for SELL orders.
+                When provided, avoids an extra broker positions fetch.
             
         Returns:
             OrderSubmission record.
@@ -161,31 +164,33 @@ class PaperExecutor:
         # For SELL orders, prioritize risk reduction over entry sizing constraints
         if proposed.side == "sell":
             try:
-                positions_env = self.broker_client.fetch_positions()
-                positions = positions_env.payload if hasattr(positions_env, 'payload') else positions_env
-                current_qty = 0
-                if isinstance(positions, list):
-                    for pos in positions:
-                        if pos.get("symbol") == proposed.symbol:
-                            current_qty = abs(int(float(pos.get("qty", 0))))
-                            break
+                sell_qty = current_qty
+                if sell_qty is None:
+                    positions_env = self.broker_client.fetch_positions()
+                    positions = positions_env.payload if hasattr(positions_env, 'payload') else positions_env
+                    sell_qty = 0
+                    if isinstance(positions, list):
+                        for pos in positions:
+                            if pos.get("symbol") == proposed.symbol:
+                                sell_qty = abs(int(float(pos.get("qty", 0))))
+                                break
 
-                if current_qty <= 0:
+                if not sell_qty or sell_qty <= 0:
                     raise ValueError(f"No position to sell for {proposed.symbol}")
 
                 original_qty = sized_qty
                 if sized_qty < 1:
-                    sized_qty = current_qty
+                    sized_qty = sell_qty
                     sizing_details["sell_exit_override"] = True
                     sizing_details["original_qty"] = original_qty
                     sizing_details["skip_reason"] = None
                     sizing_details["final_shares"] = sized_qty
                     sizing_details["applied_constraint"] = "position_exit_override"
 
-                if sized_qty > current_qty:
+                if sized_qty > sell_qty:
                     sizing_details["original_qty"] = sized_qty
-                    sizing_details["capped_to_position"] = current_qty
-                    sized_qty = current_qty
+                    sizing_details["capped_to_position"] = sell_qty
+                    sized_qty = sell_qty
                     sizing_details["final_shares"] = sized_qty
             except Exception as e:
                 if "No position to sell" in str(e):

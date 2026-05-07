@@ -291,17 +291,24 @@
 - 新 alert 追加（losing_streak, low_conversion, strong_day等）
 - 表示改善（最大8件、パーセント表示、詳細説明）
 
-### T20. paper_demo 運用モード最適化 (完了)
+### T20. paper_demo 運用モード最適化 (進行中)
 **目的**: paper_demo を継続運用可能な負荷へ調整する
 
 **作業**
-- [ ] 実行時間・signal 数・submission 数を観測
+- [x] 実行時間・signal 数・submission 数を観測
 - [ ] cron 用の軽量設定を必要に応じて分離
 - [ ] universe / threshold / bar-limit の再調整
 
 **完了条件**
 - [ ] paper_demo が安定して回る
 - [ ] 負荷と出力品質のバランスが取れている
+
+**進捗更新**: 2026-05-07
+- paper_demo 4ジョブを wrapper 経由から direct Python 実行へ統一
+- `toolsAllow` に `process` を追加し、background 時の追跡を可能化
+- `market_open` の重さは data collection ではなく注文処理・reconciliation 側が支配的と確認
+- `paper_demo.py` / `paper_executor.py` に軽量化を実装
+- 今夜の `premarket / market_open` 実績確認後、軽量設定分離の要否を判断する
 
 ### T21. simple_exit_v1 / v2 改善
 **目的**: Exit 戦略の可視化と改善を通じて、利確・損切り品質を高める
@@ -348,14 +355,14 @@
 - [x] signal_strength / confidence の分布を観測
 - [x] `breakout_momentum_v2` の改善案を定義（regime-aware / volatility-aware / symbol-group-aware）
 - [x] `position_size_limit` 発生時の対応（2026-04-25に$50→$400へ変更済み）
-- [ ] Exit 戦略との組み合わせ分析観点を定義
+- [x] Exit 戦略との組み合わせ分析観点を定義
 
 **完了条件**
 - [x] deny / reject の主要理由が見える
 - [x] conversion の改善観点が明確になっている（position_size_limit特定）
 - [x] `breakout_momentum_v2` の改善案が文書化されている
 - [x] `position_size_limit` の対応完了（$400に変更、最新2日でdeny=0）
-- [ ] entry / exit 一体改善の優先順位が明確になっている
+- [x] entry / exit 一体改善の優先順位が明確になっている
 
 **完了日**: 2026-04-27
 **進捗**: Phase 1完了（70%）、Phase 2完了（詳細分析・改善案定義）
@@ -372,3 +379,9 @@
   - 改善案: Dynamic Sector Allocation（優先度最高）、Symbol Rotation、Regime-aware
   - 期待効果: Conversion率62%→75%+、年間P&L +$2,000-3,000
   - ドキュメント: `docs/breakout_momentum_v2_improvement_plan.md`
+- **2026-05-07更新**:
+  - entry / exit 一体分析観点を `docs/t22_entry_exit_analysis_framework_2026-05-07.md` に整理
+  - `scripts/analyze_entry_exit_pairs.py` を追加し、closed trades の entry_strategy × exit_reason / regime 深掘りを可能化
+  - cautious regime での ARM / DELL / CIEN 悪化傾向を確認
+  - 具体改善案は `docs/t22_cautious_regime_symbol_actions_2026-05-07.md` に整理
+  - ただし過剰最適化回避のため、cautious regime 向け個別改善は当面ペンディング

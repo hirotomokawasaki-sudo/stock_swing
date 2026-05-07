@@ -62,6 +62,20 @@ def main() -> int:
     tracker = PnLTracker(project_root)
     tracker.state = tracker._load_state()
 
+    orders_env = broker.fetch_orders(status="all", limit=500)
+    orders = orders_env.payload if hasattr(orders_env, "payload") else orders_env
+    if not isinstance(orders, list):
+        print("broker.fetch_orders() did not return a list")
+        return 1
+
+    latest_sell_orders_by_symbol = {}
+    for order in orders:
+        symbol = str(order.get("symbol", "")).upper()
+        side = str(order.get("side", "")).lower()
+        if side != "sell" or not symbol:
+            continue
+        latest_sell_orders_by_symbol.setdefault(symbol, order)
+
     submissions = load_recent_submissions(project_root / "data" / "audits")
     filled_exits = 0
     checked = 0
@@ -71,15 +85,7 @@ def main() -> int:
             continue
         checked += 1
         try:
-            # find broker order id from tracker open trades or audit context is not in plain line, so query broker recent orders by symbol
-            orders_env = broker.fetch_orders(status="all")
-            orders = orders_env.payload if hasattr(orders_env, "payload") else orders_env
-            match = None
-            if isinstance(orders, list):
-                for order in orders:
-                    if str(order.get("symbol", "")).upper() == sub["symbol"] and str(order.get("side", "")).lower() == "sell":
-                        match = order
-                        break
+            match = latest_sell_orders_by_symbol.get(sub["symbol"])
             if not match:
                 continue
             status = str(match.get("status", "")).lower()
