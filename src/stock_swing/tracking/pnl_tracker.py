@@ -12,6 +12,8 @@ State is persisted to data/tracking/pnl_state.json
 from __future__ import annotations
 
 import json
+import logging
+import os
 from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -19,6 +21,8 @@ from pathlib import Path
 from typing import Any
 
 from stock_swing.utils.strategy_versioning import normalize_strategy_id
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -36,6 +40,7 @@ class TradeEntry:
     pnl: float | None  # realized P&L in USD
     return_pct: float | None  # return %
     status: str  # "open" | "closed"
+    account_id: str | None = None  # Broker account ID
     strategy_version_id: str | None = None
     broker_order_id: str | None = None
     original_strategy_id: str | None = None
@@ -122,6 +127,7 @@ class PnLTracker:
         decision_id: str,
         original_strategy_id: str | None = None,
         strategy_version_id: str | None = None,
+        account_id: str | None = None,
     ) -> str:
         """Record a new paper order submission as an open trade.
 
@@ -151,6 +157,7 @@ class PnLTracker:
             pnl=None,
             return_pct=None,
             status="open",
+            account_id=account_id,
             broker_order_id=broker_order_id,
             original_strategy_id=original_strategy_id or strategy_id,
         )
@@ -366,6 +373,73 @@ class PnLTracker:
             "trading_days": trading_day_count,
         }
 
+    def get_summary_by_account(self, account_id: str | None = None) -> dict[str, Any]:
+        """Return performance summary for a specific account.
+        
+        If account_id is None, returns combined summary across all accounts.
+        """
+        if account_id is None:
+            return self.get_summary()
+        
+        account_trades = [t for t in self.state.trades if t.get("account_id") == account_id]
+        closed = [t for t in account_trades if t["status"] == "closed"]
+        open_trades = [t for t in account_trades if t["status"] == "open"]
+        removed_trades = [t for t in account_trades if t["status"] == "reconciled_removed"]
+        wins = [t for t in closed if (t.get("pnl") or 0) > 0]
+        losses = [t for t in closed if (t.get("pnl") or 0) < 0]
+        flat = [t for t in closed if (t.get("pnl") or 0) == 0]
+        closed_with_valid_return = [t for t in closed if (t.get("entry_price") or 0) > 0 and t.get("return_pct") is not None]
+
+        win_rate = len(wins) / len(closed) if closed else 0.0
+        avg_return = (
+            sum(t.get("return_pct", 0) or 0 for t in closed_with_valid_return) / len(closed_with_valid_return)
+            if closed_with_valid_return else None
+        )
+        avg_pnl = (
+            sum(t.get("pnl", 0) or 0 for t in closed) / len(closed)
+            if closed else 0.0
+        )
+        cumulative_realized_pnl = sum(t.get("pnl", 0) or 0 for t in closed)
+
+        # Max drawdown for this account (simplified)
+        max_dd = 0.0
+        peak = 100_000.0
+        running = 100_000.0
+        for t in sorted(closed, key=lambda x: x.get("exit_time") or ""):
+            running += t.get("pnl", 0) or 0
+            if running > peak:
+                peak = running
+            if peak > 0:
+                dd = (peak - running) / peak
+                if dd > max_dd:
+                    max_dd = dd
+
+        return {
+            "account_id": account_id,
+            "total_trades": len(closed) + len(open_trades),
+            "closed_trades": len(closed),
+            "open_trades": len(open_trades),
+            "reconciled_removed_trades": len(removed_trades),
+            "winning_trades": len(wins),
+            "losing_trades": len(losses),
+            "flat_trades": len(flat),
+            "win_rate": round(win_rate, 4),
+            "cumulative_realized_pnl": round(cumulative_realized_pnl, 2),
+            "avg_return_per_trade": round(avg_return, 4) if avg_return is not None else None,
+            "avg_pnl_per_trade": round(avg_pnl, 2),
+            "valid_return_trade_count": len(closed_with_valid_return),
+            "max_drawdown_pct": round(max_dd, 4),
+        }
+
+    def list_accounts(self) -> list[str]:
+        """Return list of unique account IDs in trades."""
+        accounts = set()
+        for t in self.state.trades:
+            acc_id = t.get("account_id")
+            if acc_id:
+                accounts.add(acc_id)
+        return sorted(accounts)
+
     def get_open_positions(self) -> list[dict[str, Any]]:
         return [t for t in self.state.trades if t["status"] == "open"]
 
@@ -484,6 +558,17 @@ class PnLTracker:
                 # Ensure required fields exist
                 if "created_at" not in data:
                     data["created_at"] = data.get("last_updated", datetime.now(timezone.utc).isoformat())
+                
+                # Migration: Add account_id to existing trades if missing
+                default_account_id = os.environ.get("BROKER_ACCOUNT_ID", "legacy_account")
+                migrated_count = 0
+                for trade in data.get("trades", []):
+                    if "account_id" not in trade or trade["account_id"] is None:
+                        trade["account_id"] = default_account_id
+                        migrated_count += 1
+                
+                if migrated_count > 0:
+                    logger.info(f"Migrated {migrated_count} trades with default account_id: {default_account_id}")
                 
                 return PnLState(**data)
             except Exception as e:

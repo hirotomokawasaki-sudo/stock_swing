@@ -618,6 +618,7 @@ def main() -> int:  # noqa: C901
                         decision_id=decision.decision_id,
                         original_strategy_id=decision.strategy_id,
                         strategy_version_id=decision.strategy_version_id,
+                        account_id=os.environ.get("BROKER_ACCOUNT_ID"),
                     )
                 else:
                     print(f"WARN: Skipped P&L tracking for {o.symbol} (entry_price unavailable)")

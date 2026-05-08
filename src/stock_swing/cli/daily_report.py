@@ -83,6 +83,10 @@ def _main_impl(args) -> int:
     summary = tracker.get_summary()
     open_pos = tracker.get_open_positions()
     recent = tracker.get_recent_trades(5)
+    
+    # Account-specific summaries
+    accounts = tracker.list_accounts()
+    account_summaries = {acc: tracker.get_summary_by_account(acc) for acc in accounts}
 
     # Fetch live account equity from broker
     equity = 100_000.0
@@ -164,6 +168,7 @@ def _main_impl(args) -> int:
         recent=recent,
         current_prices=current_prices,
         latest_sizing=latest_sizing,
+        account_summaries=account_summaries,
     )
     report_text = "\n".join(lines)
     print(report_text)
@@ -198,6 +203,7 @@ def _build_report(
     recent: list,
     current_prices: dict,
     latest_sizing: list,
+    account_summaries: dict | None = None,
 ) -> list[str]:
     lines = []
     lines.append("📈 stock_swing 日次レポート")
@@ -224,6 +230,16 @@ def _build_report(
     lines.append(f"  最大DD        : {summary['max_drawdown_pct']:.2%}")
     lines.append(f"  取引日数      : {summary['trading_days']}")
     lines.append("")
+    
+    # Account-specific summaries (if multiple accounts)
+    if account_summaries and len(account_summaries) > 1:
+        lines.append("🏦 口座別サマリー")
+        for acc_id, acc_sum in account_summaries.items():
+            acc_short = acc_id[:8] if len(acc_id) > 8 else acc_id
+            lines.append(f"  [{acc_short}]")
+            lines.append(f"    決済: {acc_sum['closed_trades']}件  勝率: {acc_sum['win_rate']:.1%}")
+            lines.append(f"    累積損益: ${acc_sum['cumulative_realized_pnl']:>+,.2f}")
+        lines.append("")
 
     # Open positions
     if open_pos:

@@ -91,11 +91,32 @@ def main() -> int:
             status = str(match.get("status", "")).lower()
             filled_qty = float(match.get("filled_qty", 0) or 0)
             avg_price = match.get("filled_avg_price")
+            
+            # Sanity check: reject obviously wrong prices
+            if avg_price is not None:
+                avg_price_float = float(avg_price)
+                # Check for extreme price movements (likely data error)
+                # Most stocks won't move more than 50% in a single trade
+                open_trades = [t for t in tracker.state.trades if t["symbol"] == sub["symbol"] and t["status"] == "open"]
+                if open_trades:
+                    entry_price = open_trades[0].get("entry_price", 0)
+                    if entry_price > 0:
+                        price_change = abs((avg_price_float - entry_price) / entry_price)
+                        if price_change > 0.5:  # 50% price change threshold
+                            print(f"WARN: Rejecting extreme price for {sub['symbol']}: entry=${entry_price:.2f} exit=${avg_price_float:.2f} ({price_change:.1%} change)", file=sys.stderr)
+                            continue
+            
             if status in {"filled", "partially_filled"} and filled_qty > 0 and avg_price:
+                avg_price_float = float(avg_price)
+                # Final sanity check: price must be positive
+                if avg_price_float <= 0:
+                    print(f"WARN: Invalid exit price for {sub['symbol']}: ${avg_price_float}", file=sys.stderr)
+                    continue
+                    
                 # Pass filled_qty to support partial fills
                 updated = tracker.record_exit(
                     symbol=sub["symbol"], 
-                    exit_price=float(avg_price), 
+                    exit_price=avg_price_float, 
                     exit_qty=int(filled_qty),
                     broker_order_id=match.get("id"),
                     exit_strategy_id="simple_exit_v1",
@@ -103,6 +124,7 @@ def main() -> int:
                 )
                 if updated:
                     filled_exits += 1
+                    print(f"INFO: Recorded exit for {sub['symbol']}: {int(filled_qty)} @ ${avg_price_float:.2f}", file=sys.stderr)
         except Exception:
             continue
 
