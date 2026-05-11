@@ -95,16 +95,32 @@ def main() -> int:
             # Sanity check: reject obviously wrong prices
             if avg_price is not None:
                 avg_price_float = float(avg_price)
-                # Check for extreme price movements (likely data error)
-                # Most stocks won't move more than 50% in a single trade
+                
+                # Check 1: Reject prices against entry price (30% threshold)
                 open_trades = [t for t in tracker.state.trades if t["symbol"] == sub["symbol"] and t["status"] == "open"]
                 if open_trades:
                     entry_price = open_trades[0].get("entry_price", 0)
                     if entry_price > 0:
                         price_change = abs((avg_price_float - entry_price) / entry_price)
-                        if price_change > 0.5:  # 50% price change threshold
+                        if price_change > 0.30:  # 30% price change threshold (lowered from 50%)
                             print(f"WARN: Rejecting extreme price for {sub['symbol']}: entry=${entry_price:.2f} exit=${avg_price_float:.2f} ({price_change:.1%} change)", file=sys.stderr)
                             continue
+                
+                # Check 2: Verify against current market price
+                try:
+                    quote_resp = broker.fetch_latest_quote(sub["symbol"])
+                    quote = quote_resp.payload.get("quote", quote_resp.payload)
+                    bid = float(quote.get("bp", 0) or 0)
+                    ask = float(quote.get("ap", 0) or 0)
+                    if bid > 0 and ask > 0:
+                        mid_price = (bid + ask) / 2
+                        market_deviation = abs((avg_price_float - mid_price) / mid_price)
+                        if market_deviation > 0.30:  # 30% deviation from market
+                            print(f"WARN: Rejecting price far from market for {sub['symbol']}: filled=${avg_price_float:.2f} market=${mid_price:.2f} ({market_deviation:.1%} deviation)", file=sys.stderr)
+                            continue
+                except Exception:
+                    # Market quote fetch failed, skip this check
+                    pass
             
             if status in {"filled", "partially_filled"} and filled_qty > 0 and avg_price:
                 avg_price_float = float(avg_price)
