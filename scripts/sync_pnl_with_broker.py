@@ -153,11 +153,16 @@ def main():
     state['cumulative_realized_pnl'] = round(actual_pnl, 2)
     state['last_updated'] = datetime.now().isoformat()
     
-    # Add note about sync
-    if 'notes' not in state:
-        state['notes'] = []
+    # Note: We don't add a 'notes' field because PnLState dataclass doesn't support it
+    # Instead, we create a separate sync log file
+    sync_log_file = state_file.parent / 'broker_sync_log.json'
     
-    state['notes'].append({
+    if sync_log_file.exists():
+        sync_log = json.loads(sync_log_file.read_text(encoding='utf-8'))
+    else:
+        sync_log = []
+    
+    sync_log.append({
         'timestamp': datetime.now().isoformat(),
         'action': 'broker_sync',
         'description': 'Synced cumulative_realized_pnl with Broker equity',
@@ -165,6 +170,8 @@ def main():
         'new_value': round(actual_pnl, 2),
         'broker_equity': round(broker_equity, 2)
     })
+    
+    sync_log_file.write_text(json.dumps(sync_log, indent=2, ensure_ascii=False), encoding='utf-8')
     
     # Save
     state_file.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
