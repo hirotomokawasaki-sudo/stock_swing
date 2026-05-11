@@ -7,6 +7,7 @@ Sends messages to a configured Telegram chat via Bot API.
 from __future__ import annotations
 
 import os
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -32,13 +33,17 @@ class TelegramNotifier:
         text: str,
         parse_mode: str = "HTML",
         disable_notification: bool = False,
+        max_retries: int = 3,
+        retry_delay: float = 2.0,
     ) -> bool:
-        """Send a text message to the configured chat.
+        """Send a text message to the configured chat with retry logic.
 
         Args:
             text: Message text (supports HTML or Markdown based on parse_mode)
             parse_mode: "HTML" or "Markdown" (default: HTML)
             disable_notification: If True, sends silently
+            max_retries: Maximum number of retry attempts (default: 3)
+            retry_delay: Delay between retries in seconds (default: 2.0)
 
         Returns:
             True if message sent successfully, False otherwise
@@ -55,24 +60,42 @@ class TelegramNotifier:
             "disable_notification": disable_notification,
         }
 
-        try:
-            data = urllib.parse.urlencode(payload).encode("utf-8")
-            req = urllib.request.Request(url, data=data, method="POST")
-            with urllib.request.urlopen(req, timeout=10) as response:
-                if response.status == 200:
-                    return True
-                else:
-                    print(f"[ERROR] Telegram API returned {response.status}")
-                    return False
-        except urllib.error.HTTPError as e:
-            print(f"[ERROR] Telegram HTTP error: {e.code} {e.reason}")
-            return False
-        except urllib.error.URLError as e:
-            print(f"[ERROR] Telegram network error: {e.reason}")
-            return False
-        except Exception as e:
-            print(f"[ERROR] Telegram send failed: {e}")
-            return False
+        for attempt in range(max_retries):
+            try:
+                data = urllib.parse.urlencode(payload).encode("utf-8")
+                req = urllib.request.Request(url, data=data, method="POST")
+                with urllib.request.urlopen(req, timeout=15) as response:
+                    if response.status == 200:
+                        if attempt > 0:
+                            print(f"[INFO] Telegram sent successfully on retry {attempt + 1}")
+                        return True
+                    else:
+                        print(f"[ERROR] Telegram API returned {response.status}")
+                        if attempt < max_retries - 1:
+                            print(f"[INFO] Retrying in {retry_delay}s... (attempt {attempt + 1}/{max_retries})")
+                            time.sleep(retry_delay)
+                        continue
+            except urllib.error.HTTPError as e:
+                print(f"[ERROR] Telegram HTTP error: {e.code} {e.reason}")
+                if attempt < max_retries - 1:
+                    print(f"[INFO] Retrying in {retry_delay}s... (attempt {attempt + 1}/{max_retries})")
+                    time.sleep(retry_delay)
+                continue
+            except urllib.error.URLError as e:
+                print(f"[ERROR] Telegram network error: {e.reason}")
+                if attempt < max_retries - 1:
+                    print(f"[INFO] Retrying in {retry_delay}s... (attempt {attempt + 1}/{max_retries})")
+                    time.sleep(retry_delay)
+                continue
+            except Exception as e:
+                print(f"[ERROR] Telegram send failed: {e}")
+                if attempt < max_retries - 1:
+                    print(f"[INFO] Retrying in {retry_delay}s... (attempt {attempt + 1}/{max_retries})")
+                    time.sleep(retry_delay)
+                continue
+        
+        print(f"[ERROR] Telegram send failed after {max_retries} attempts")
+        return False
 
     def send_markdown(self, text: str, silent: bool = False) -> bool:
         """Send a message with Markdown formatting.

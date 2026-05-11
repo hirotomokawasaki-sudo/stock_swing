@@ -336,6 +336,7 @@ def _send_error_notification(exc: Exception) -> None:
     try:
         from stock_swing.utils.telegram_notifier import send_notification
         import traceback
+        import socket
         
         jst = timezone(timedelta(hours=9))
         jst_time = datetime.now(timezone.utc).astimezone(jst).strftime('%Y-%m-%d %H:%M JST')
@@ -343,6 +344,9 @@ def _send_error_notification(exc: Exception) -> None:
         error_msg = str(exc)
         if len(error_msg) > 200:
             error_msg = error_msg[:200] + "..."
+        
+        # Get exception type
+        exc_type = type(exc).__name__
         
         # Get short traceback
         tb = traceback.format_exc()
@@ -355,9 +359,18 @@ def _send_error_notification(exc: Exception) -> None:
         if len(tb_short) > 400:
             tb_short = tb_short[:400] + "..."
         
+        # Network connectivity check
+        connectivity = "OK"
+        try:
+            socket.create_connection(("api.telegram.org", 443), timeout=3)
+        except Exception:
+            connectivity = "NG (network issue detected)"
+        
         message = f"""<b>🚨 Daily Report エラー</b>
 🗓 {jst_time}
+🌐 Network: {connectivity}
 
+<b>エラー種別:</b> {exc_type}
 <b>エラー内容:</b>
 <code>{error_msg}</code>
 
@@ -367,11 +380,21 @@ def _send_error_notification(exc: Exception) -> None:
 <b>対応:</b>
 • ログを確認
 • ブローカーAPI接続を確認
-• 手動で再実行"""
+• 手動で再実行: <code>cd ~/stock_swing && source venv/bin/activate && python -m stock_swing.cli.daily_report --telegram</code>"""
         
-        send_notification(message)
+        # Try to send with retry logic
+        success = send_notification(message)
+        if not success:
+            print(f"[ERROR] Failed to send error notification to Telegram after retries", file=sys.stderr)
+            # Fall back to local log
+            error_log = project_root / "logs" / f"daily_report_error_{jst_time.replace(' ', '_').replace(':', '')}.log"
+            error_log.parent.mkdir(parents=True, exist_ok=True)
+            error_log.write_text(f"{jst_time}\n{exc_type}: {error_msg}\n\n{tb}", encoding="utf-8")
+            print(f"[INFO] Error logged to: {error_log}", file=sys.stderr)
     except Exception as e:
         print(f"[ERROR] Failed to send error notification: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
 
 
 if __name__ == "__main__":
