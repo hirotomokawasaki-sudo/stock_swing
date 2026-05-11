@@ -45,14 +45,41 @@ python -m stock_swing.cli.reconcile_buy_orders
 
 ## 推奨スケジュール
 
-### Daily Audit (毎日)
+### ✅ Configured (OpenClaw Cron)
+
+以下のジョブは **OpenClaw Cron で設定済み**:
+
+**Daily Audit:**
+- **Job ID**: `c118d9f3-beea-4da0-899d-8f549ed15baa`
+- **Name**: `stock_swing_daily_audit`
+- **Schedule**: 毎日 06:00 JST
+- **Next run**: 2026-05-12 06:00 JST
+- **Delivery**: Telegram announce
+
+**Weekly Full Audit:**
+- **Job ID**: `6a97221b-5d6d-450f-9eec-8a5f4d0249a6`
+- **Name**: `stock_swing_weekly_full_audit`
+- **Schedule**: 毎週月曜 07:00 JST
+- **Next run**: 2026-05-19 07:00 JST (next Monday)
+- **Delivery**: Telegram announce
+
+**確認方法:**
+```bash
+openclaw cron list
+```
+
+---
+
+### Alternative (System Cron)
+
+**Note**: OpenClaw Cron を使用する場合、以下は不要です。
+
+システム cron を使用する場合:
+
 ```bash
 # 毎日 06:00 JST に直近10日間の取引を監査
 0 6 * * * cd ~/stock_swing && source venv/bin/activate && python scripts/audit_trades_with_market_data.py --recent-days 10 >> logs/audit_$(date +\%Y\%m\%d).log 2>&1
-```
 
-### Weekly Full Audit (毎週)
-```bash
 # 毎週月曜 07:00 JST に全取引を監査
 0 7 * * 1 cd ~/stock_swing && source venv/bin/activate && python scripts/audit_trades_with_market_data.py >> logs/audit_full_$(date +\%Y\%m\%d).log 2>&1
 ```
