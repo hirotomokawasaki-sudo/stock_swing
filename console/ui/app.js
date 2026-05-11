@@ -1947,10 +1947,42 @@ class Console {
     }
 
     startAutoRefresh() {
-        setInterval(async () => {
+        // 市場時間を判定して更新頻度を調整
+        const getRefreshInterval = () => {
+            const now = new Date();
+            const hour = now.getHours();
+            const day = now.getDay(); // 0=日曜, 6=土曜
+            
+            // 週末
+            if (day === 0 || day === 6) {
+                return 3600000; // 1時間
+            }
+            
+            // 平日の市場時間外 (23:30-9:30 JST)
+            if (hour >= 23 || hour < 9) {
+                return 3600000; // 1時間
+            }
+            
+            // 平日の市場時間中 (9:30-16:00 JST)
+            if (hour >= 9 && hour < 16) {
+                return 300000; // 5分
+            }
+            
+            // その他の時間 (16:00-23:30 JST)
+            return 1800000; // 30分
+        };
+        
+        const refresh = async () => {
             await this.loadData();
             if (this.currentTab !== 'alerts') this.render();
-        }, 60000);
+            
+            // 次の更新をスケジュール（動的にintervalを変更）
+            const interval = getRefreshInterval();
+            setTimeout(refresh, interval);
+        };
+        
+        // 初回実行
+        refresh();
     }
 }
 
@@ -1992,9 +2024,19 @@ function initializeMonitoring() {
             }
         });
         
-        // ヘルスモニタリング開始
-        healthMonitor.startMonitoring(60000); // 1分ごと
-        console.log('✅ Health monitoring started');
+        // ヘルスモニタリング開始（市場時間外は30分、市場時間中は5分）
+        const hour = new Date().getHours();
+        const day = new Date().getDay();
+        let monitoringInterval = 1800000; // デフォルト: 30分
+        
+        if (day === 0 || day === 6) {
+            monitoringInterval = 3600000; // 週末: 1時間
+        } else if (hour >= 9 && hour < 16) {
+            monitoringInterval = 300000; // 市場時間中: 5分
+        }
+        
+        healthMonitor.startMonitoring(monitoringInterval);
+        console.log(`✅ Health monitoring started (interval: ${monitoringInterval/1000}s)`);
     }
     
     // グローバルコマンドの登録（デバッグ用）
