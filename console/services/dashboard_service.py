@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -29,7 +30,8 @@ except Exception:
 class DashboardService:
     """Aggregates data from multiple adapters for dashboard display."""
 
-    CURRENT_ACCOUNT_CUTOFF = datetime.fromisoformat("2026-05-01T19:32:00+09:00")
+    DEFAULT_CURRENT_ACCOUNT_CUTOFF = datetime.fromisoformat("2026-05-01T19:32:00+09:00")
+    NEWS_COLLECTION_JOB_NAME = "stock_swing_news_collection"
 
     def __init__(self, project_root: Path):
         self.project_root = project_root
@@ -55,10 +57,12 @@ class DashboardService:
     def get_dashboard(self, period: str = 'month') -> Dict[str, Any]:
         trading = self.get_trading()
         positions = self.get_positions(trading=trading)
+        archives = self.get_archive_history(trading=trading)
         cron_jobs = self.get_cron_jobs()
         data_status = self.get_data_status()
         system = self.get_system_status()
-        news = self.get_news(trading=trading)
+        tracked_symbols = self._get_tracked_symbols(trading=trading, cron_jobs=cron_jobs)
+        news = self.get_news(trading=trading, tracked_symbols=tracked_symbols)
         pipeline = self.get_pipeline_summary(trading=trading)
         overview = self.get_overview(
             trading=trading,
@@ -68,7 +72,7 @@ class DashboardService:
             system=system,
         )
         source_reliability = self.get_source_reliability_report(news)
-        news_ingestion = self.get_news_ingestion_status(news)
+        news_ingestion = self.get_news_ingestion_status(news, tracked_symbols=tracked_symbols)
         performance_attribution = self._get_performance_attribution(trading, period=period)
         
         return {
@@ -93,6 +97,7 @@ class DashboardService:
             "system": system,
             "trading": trading,
             "positions": positions,
+            "archives": archives,
             "performance": performance_attribution,
             "logs": self.get_logs(),
         }
@@ -307,6 +312,7 @@ class DashboardService:
     def get_data_status(self) -> Dict[str, Any]:
         counts = self.data_adapter.get_counts()
         freshness = self.data_adapter.get_freshness()
+        freshness["decisions"] = self._get_current_account_decision_freshness()
         return {
             "time": now_iso(),
             "counts": counts,
@@ -466,6 +472,121 @@ class DashboardService:
             "lines": lines,
             "line_count": len(lines),
             "daily_report": report_text,
+        }
+
+    def get_archive_history(self, trading: Dict[str, Any] | None = None) -> Dict[str, Any]:
+        """Return archived performance epochs and migration history."""
+        trading = trading or self.get_trading()
+        tracking_context = (trading.get("summary") or {}).get("tracking_context") or {}
+
+        archive_root = self.project_root / "data" / "archive"
+        docs_root = self.project_root / "docs"
+
+        migration_note_by_date: Dict[str, str] = {}
+        migration_docs: List[Dict[str, Any]] = []
+        for note_path in sorted(docs_root.glob("account_migration_*.md")):
+            date = note_path.stem.removeprefix("account_migration_")
+            rel_path = str(note_path.relative_to(self.project_root))
+            migration_note_by_date[date] = rel_path
+            migration_docs.append({
+                "date": date,
+                "path": rel_path,
+                "title": note_path.stem.replace("account_migration_", "Migration "),
+            })
+
+        current = {
+            "account_id": tracking_context.get("broker_account_id"),
+            "baseline_date": tracking_context.get("baseline_date"),
+            "baseline_equity": tracking_context.get("baseline_equity"),
+            "tracking_label": tracking_context.get("tracking_label"),
+            "performance_scope": tracking_context.get("performance_scope"),
+            "archive_path": tracking_context.get("archive_path"),
+            "migration_note_path": tracking_context.get("migration_note_path"),
+            "trade_count": (trading.get("summary") or {}).get("total_trades", 0),
+            "closed_trade_count": (trading.get("summary") or {}).get("closed_trades", 0),
+            "open_trade_count": (trading.get("summary") or {}).get("open_trades", 0),
+            "cumulative_realized_pnl": (trading.get("summary") or {}).get("cumulative_realized_pnl", 0.0),
+        }
+
+        archives: List[Dict[str, Any]] = []
+        if archive_root.exists():
+            for archive_dir in sorted(archive_root.iterdir(), reverse=True):
+                if not archive_dir.is_dir():
+                    continue
+
+                archive_name = archive_dir.name
+                archive_path = str(archive_dir.relative_to(self.project_root))
+                archive_date = None
+                account_label = None
+                if archive_name.startswith("account_"):
+                    remainder = archive_name[len("account_"):]
+                    if "_" in remainder:
+                        account_label, maybe_date = remainder.rsplit("_", 1)
+                        if len(maybe_date) == 8 and maybe_date.isdigit():
+                            archive_date = f"{maybe_date[:4]}-{maybe_date[4:6]}-{maybe_date[6:8]}"
+
+                manifest_path = archive_dir / "manifest.json"
+                manifest: Dict[str, Any] = {}
+                if manifest_path.exists():
+                    try:
+                        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                    except Exception:
+                        manifest = {}
+
+                tracking_state_path = archive_dir / "tracking" / "pnl_state.json"
+                tracking_state: Dict[str, Any] = {}
+                if tracking_state_path.exists():
+                    try:
+                        tracking_state = json.loads(tracking_state_path.read_text(encoding="utf-8"))
+                    except Exception:
+                        tracking_state = {}
+
+                effective_date = (
+                    manifest.get("baseline_date")
+                    or archive_date
+                    or str(manifest.get("archived_at") or "")[:10]
+                    or None
+                )
+                note_path = manifest.get("migration_note_path") or migration_note_by_date.get(effective_date)
+
+                archived_at = manifest.get("archived_at")
+                if not archived_at and effective_date:
+                    archived_at = f"{effective_date}T00:00:00+09:00"
+
+                trades = tracking_state.get("trades") or []
+                closed_trades = [t for t in trades if t.get("status") == "closed"]
+                open_trades = [t for t in trades if t.get("status") == "open"]
+
+                archives.append({
+                    "archive_name": archive_name,
+                    "archive_path": archive_path,
+                    "archive_date": effective_date,
+                    "archived_at": archived_at,
+                    "reason": manifest.get("reason") or "account_migration",
+                    "previous_account_id": manifest.get("previous_account_id") or tracking_state.get("broker_account_id") or account_label,
+                    "new_account_id": manifest.get("new_account_id"),
+                    "baseline_date": manifest.get("baseline_date") or tracking_state.get("baseline_date") or effective_date,
+                    "baseline_equity": manifest.get("baseline_equity") or tracking_state.get("baseline_equity") or tracking_state.get("peak_equity"),
+                    "trade_count": len(trades),
+                    "closed_trade_count": len(closed_trades),
+                    "open_trade_count": len(open_trades),
+                    "cumulative_realized_pnl": round(float(tracking_state.get("cumulative_realized_pnl") or 0.0), 2),
+                    "peak_equity": tracking_state.get("peak_equity"),
+                    "last_updated": tracking_state.get("last_updated"),
+                    "tracking_files": len(list((archive_dir / "tracking").glob("*"))) if (archive_dir / "tracking").exists() else 0,
+                    "audit_files": len(list((archive_dir / "audits").glob("*"))) if (archive_dir / "audits").exists() else 0,
+                    "note_path": note_path,
+                    "has_manifest": manifest_path.exists(),
+                })
+
+        archives.sort(key=lambda item: (item.get("archive_date") or "", item.get("archived_at") or ""), reverse=True)
+
+        return {
+            "generated_at": now_iso(),
+            "current": current,
+            "archives": archives,
+            "migration_docs": sorted(migration_docs, key=lambda item: item.get("date") or "", reverse=True),
+            "count": len(archives),
         }
 
     def get_deltas(self, trading: Dict[str, Any], positions: Dict[str, Any]) -> Dict[str, Any]:
@@ -799,21 +920,24 @@ class DashboardService:
             }
         }
 
-    def get_news(self, trading: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    def get_news(self, trading: Dict[str, Any] | None = None, tracked_symbols: List[str] | None = None) -> Dict[str, Any]:
         external_items = self._load_external_news_items(limit=200)
         decision_items = self._build_news_items_from_decisions(limit=50)
-        tracked_symbols = {str(r.get('symbol') or 'UNKNOWN').upper() for r in (self.get_pipeline_summary(trading=trading).get('symbol_overview') or [])[:10]}
+        tracked_symbols = tracked_symbols or self._get_tracked_symbols(trading=trading)
+        tracked_symbol_set = {str(symbol).upper() for symbol in tracked_symbols}
         items = external_items or decision_items
         loaded_items = list(items)
         linked_items = self._link_news_to_decisions(items, decision_items)
         for item in linked_items:
-            item['is_tracked_symbol'] = str(item.get('symbol') or 'UNKNOWN').upper() in tracked_symbols
+            item['is_tracked_symbol'] = str(item.get('symbol') or 'UNKNOWN').upper() in tracked_symbol_set
         selected_items = self._select_balanced_news_items(linked_items, limit=50)
         items = selected_items
         by_symbol = self._group_news_by_symbol(items)
         self._last_news_by_symbol = {str(row.get('symbol') or 'UNKNOWN').upper(): row for row in by_symbol}
         diagnostics = {
+            'tracked_symbols': tracked_symbols,
             'loaded_by_symbol': self._count_items_by_symbol(loaded_items),
+            'loaded_latest_by_symbol': self._latest_news_time_by_symbol(loaded_items),
             'linked_by_symbol': self._count_items_by_symbol(linked_items),
             'selected_by_symbol': self._count_items_by_symbol(selected_items),
         }
@@ -828,7 +952,7 @@ class DashboardService:
             "diagnostics": diagnostics,
         }
 
-    def get_news_ingestion_status(self, news: Dict[str, Any]) -> Dict[str, Any]:
+    def get_news_ingestion_status(self, news: Dict[str, Any], tracked_symbols: List[str] | None = None) -> Dict[str, Any]:
         items = news.get('items', []) if news else []
         latest_time = None
         oldest_time = None
@@ -836,7 +960,9 @@ class DashboardService:
         symbols = set()
         source_counts: Dict[str, int] = {}
         now_dt = datetime.now().astimezone()
-        requested_symbols = ['MRVL', 'CIEN', 'DELL', 'RBRK', 'PLTR', 'NOW', 'INTU', 'NBIS']
+        requested_symbols = tracked_symbols or list(news.get('diagnostics', {}).get('tracked_symbols') or self._get_tracked_symbols())
+        requested_symbols = [str(symbol).upper() for symbol in requested_symbols]
+        loaded_latest_by_symbol = news.get('diagnostics', {}).get('loaded_latest_by_symbol') or {}
         collected_symbols = set()
         source_failures: Dict[str, int] = {}
         for item in items:
@@ -857,7 +983,8 @@ class DashboardService:
         displayed_tracked_symbols = {s for s in displayed_symbols if s in requested_symbols}
         displayed_non_tracked_symbols = sorted(s for s in displayed_symbols if s not in requested_symbols)
         raw_collected_symbols = set()
-        missing_symbols = [s for s in requested_symbols if s not in displayed_tracked_symbols]
+        coverage_symbols = set(loaded_latest_by_symbol)
+        missing_symbols = [s for s in requested_symbols if s not in coverage_symbols]
         missing_symbol_reasons = []
         failure_reason_counts: Dict[str, int] = {}
         status_path = self.project_root / 'data' / 'audits' / 'news_collection_status.json'
@@ -878,15 +1005,23 @@ class DashboardService:
                         failure_reason_counts[display_reason] = failure_reason_counts.get(display_reason, 0) + 1
             except Exception:
                 pass
+        if raw_collected_symbols:
+            coverage_symbols = raw_collected_symbols
+            missing_symbols = [s for s in requested_symbols if s not in coverage_symbols]
         if missing_symbols:
             source_failures['coverage_gap'] = len(missing_symbols)
+        stale_symbols = []
+        for symbol in requested_symbols:
+            latest_for_symbol = self._parse_iso_datetime(loaded_latest_by_symbol.get(symbol))
+            if latest_for_symbol and (now_dt - latest_for_symbol).total_seconds() > 86400:
+                stale_symbols.append(symbol)
         cron_jobs = self.get_cron_jobs().get('jobs', [])
-        news_job = next((j for j in cron_jobs if j.get('name') == 'stock_swing_news_collection'), None)
+        news_job = next((j for j in cron_jobs if j.get('name') == self.NEWS_COLLECTION_JOB_NAME), None)
         last_success = latest_time.isoformat() if latest_time else None
-        last_failure = None if not missing_symbols else now_iso()
-        failure_count_24h = len(missing_symbols)
+        last_failure = None if not (missing_symbols or stale_symbols) else now_iso()
+        failure_count_24h = len(missing_symbols) + len(stale_symbols)
         status = 'stale' if freshness_hours is not None and freshness_hours > 24 else 'ok' if items else 'empty'
-        if missing_symbols and status == 'ok':
+        if (missing_symbols or stale_symbols) and status == 'ok':
             status = 'partial'
         return {
             'latest_news_time': latest_time.isoformat() if latest_time else None,
@@ -908,6 +1043,7 @@ class DashboardService:
             'displayed_tracked_symbols_collected': len(displayed_tracked_symbols),
             'displayed_non_tracked_symbols': displayed_non_tracked_symbols,
             'missing_symbols': missing_symbols,
+            'stale_symbols': stale_symbols,
             'missing_symbol_reasons': missing_symbol_reasons,
             'failure_reason_counts': [{'reason': k, 'count': v} for k, v in sorted(failure_reason_counts.items(), key=lambda item: item[1], reverse=True)],
             'news_collection_job': news_job,
@@ -1212,9 +1348,9 @@ class DashboardService:
             })
 
         news = news or {}
-        news_by_symbol = {str(r.get('symbol') or 'UNKNOWN').upper(): r for r in (news.get('by_symbol') or [])}
-        tracked_symbols = [str(r.get('symbol') or 'UNKNOWN').upper() for r in (self.get_pipeline_summary(trading=trading).get('symbol_overview') or [])[:10]]
-        no_news_symbols = [s for s in tracked_symbols if s not in news_by_symbol]
+        tracked_symbols = news.get('diagnostics', {}).get('tracked_symbols') or self._get_tracked_symbols(trading=trading, cron_jobs=cron_jobs)
+        news_ingestion = self.get_news_ingestion_status(news, tracked_symbols=tracked_symbols)
+        no_news_symbols = news_ingestion.get('missing_symbols') or []
         if no_news_symbols:
             alerts.append({
                 "severity": "warning",
@@ -1225,22 +1361,13 @@ class DashboardService:
                 "updated_at": now_iso(),
             })
 
-        stale_news_symbols = []
-        now_dt = datetime.now().astimezone()
-        for sym, row in news_by_symbol.items():
-            headline = row.get('latest_headline_ja')
-            items = [i for i in (news.get('items') or []) if str(i.get('symbol') or '').upper() == sym]
-            if not items:
-                continue
-            latest = self._parse_iso_datetime(items[0].get('published_at'))
-            if latest and (now_dt - latest).total_seconds() > 86400:
-                stale_news_symbols.append(sym)
+        stale_news_symbols = news_ingestion.get('stale_symbols') or []
         if stale_news_symbols:
             alerts.append({
                 "severity": "warning",
                 "code": "stale_news_symbols",
                 "title": "Stale news detected",
-                "message": f"{len(stale_news_symbols)} symbol(s) have no fresh news in the last 24h: {', '.join(stale_news_symbols[:5])}",
+                "message": f"{len(stale_news_symbols)} tracked symbol(s) have no fresh news in the last 24h: {', '.join(stale_news_symbols[:5])}",
                 "action_hint": "Refresh news ingestion or verify external source availability",
                 "updated_at": now_iso(),
             })
@@ -1294,25 +1421,36 @@ class DashboardService:
 
     def _enrich_cron_job(self, job: Dict[str, Any], now: datetime) -> Dict[str, Any]:
         enriched = dict(job)
+        state = enriched.get("state") or {}
         next_run = self._parse_iso_datetime(enriched.get("next_run"))
-        last_run = datetime.fromtimestamp(enriched.get("updatedAtMs", 0) / 1000, tz=timezone.utc).astimezone() if enriched.get("updatedAtMs") else None
-        last_success = last_run if enriched.get("enabled") else None
-        duration_ms = 0
-        if next_run and last_run:
-            duration_ms = max(0, int((next_run - last_run).total_seconds() * 1000))
-        lag_seconds = 0
-        if next_run and next_run < now and enriched.get("enabled"):
-            lag_seconds = int((now - next_run).total_seconds())
+        if not next_run and state.get("nextRunAtMs"):
+            next_run = datetime.fromtimestamp(state["nextRunAtMs"] / 1000, tz=timezone.utc).astimezone()
+
+        last_run = self._parse_iso_datetime(enriched.get("last_run"))
+        if not last_run and state.get("lastRunAtMs"):
+            last_run = datetime.fromtimestamp(state["lastRunAtMs"] / 1000, tz=timezone.utc).astimezone()
+        if not last_run and enriched.get("updatedAtMs"):
+            last_run = datetime.fromtimestamp(enriched.get("updatedAtMs", 0) / 1000, tz=timezone.utc).astimezone()
+
+        running = bool(enriched.get("running")) or str(state.get("lastStatus") or "").lower() == "running"
+        last_status = str(state.get("lastRunStatus") or enriched.get("last_run_status") or "").lower()
+        duration_ms = state.get("lastDurationMs") or enriched.get("last_duration_ms")
+        lag_seconds = enriched.get("lag_seconds")
+        if lag_seconds is None:
+            lag_seconds = int((now - next_run).total_seconds()) if next_run and next_run < now and enriched.get("enabled") and not running else 0
+
+        last_success = last_run if last_status == "ok" else None
+        last_failure = last_run if last_status == "error" else None
 
         enriched.update({
             "last_run": last_run.isoformat() if last_run else None,
             "last_success": last_success.isoformat() if last_success else None,
-            "last_failure": None,
+            "last_failure": last_failure.isoformat() if last_failure else None,
             "last_duration_ms": duration_ms or None,
             "avg_duration_ms": duration_ms or None,
-            "success_rate_7d": 1.0 if enriched.get("enabled") else 0.0,
-            "running": False,
-            "lag_seconds": lag_seconds,
+            "success_rate_7d": 1.0 if enriched.get("enabled") and last_status != "error" else 0.0 if not enriched.get("enabled") else enriched.get("success_rate_7d", 1.0),
+            "running": running,
+            "lag_seconds": max(0, int(lag_seconds or 0)),
         })
         return enriched
 
@@ -2164,8 +2302,106 @@ class DashboardService:
         runs.reverse()
         return runs
 
+    def _load_tracking_state_metadata(self) -> Dict[str, Any]:
+        state_path = self.project_root / "data" / "tracking" / "pnl_state.json"
+        if not state_path.exists():
+            return {}
+        try:
+            return json.loads(state_path.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+
+    def _get_current_account_decision_freshness(self) -> Dict[str, Any]:
+        current_decisions = [d for d in self._load_recent_decisions(limit=500) if self._is_current_account_decision(d)]
+        cutoff = self._current_account_cutoff()
+        if not current_decisions:
+            return {
+                "status": "empty",
+                "age_hours": None,
+                "newest_file": None,
+                "scope": "current_account_since_baseline",
+                "cutoff": cutoff.isoformat(),
+            }
+
+        newest = max(current_decisions, key=lambda d: extract_decision_dt(d) or datetime.fromtimestamp(0, tz=timezone.utc))
+        newest_dt = extract_decision_dt(newest)
+        if newest_dt is None:
+            return {
+                "status": "unknown",
+                "age_hours": None,
+                "newest_file": newest.get("_source_file"),
+                "scope": "current_account_since_baseline",
+                "cutoff": cutoff.isoformat(),
+            }
+
+        age_hours = round((datetime.now().astimezone() - newest_dt).total_seconds() / 3600, 1)
+        if age_hours < 6:
+            status = "fresh"
+        elif age_hours < 24:
+            status = "aging"
+        else:
+            status = "stale"
+        return {
+            "status": status,
+            "age_hours": age_hours,
+            "newest_file": newest.get("_source_file"),
+            "scope": "current_account_since_baseline",
+            "cutoff": cutoff.isoformat(),
+        }
+
+    def _extract_symbols_from_job_message(self, message: str | None) -> List[str]:
+        if not message:
+            return []
+        match = re.search(r"--symbols\s+([A-Za-z0-9,._-]+)", message)
+        if not match:
+            return []
+        return [s.strip().upper() for s in match.group(1).split(",") if s.strip()]
+
+    def _get_tracked_symbols(
+        self,
+        trading: Dict[str, Any] | None = None,
+        cron_jobs: Dict[str, Any] | None = None,
+    ) -> List[str]:
+        cron_job_rows = (cron_jobs or self.get_cron_jobs()).get("jobs", [])
+        news_job = next((j for j in cron_job_rows if j.get("name") == self.NEWS_COLLECTION_JOB_NAME), None)
+        from_job = self._extract_symbols_from_job_message(((news_job or {}).get("payload") or {}).get("message"))
+        if from_job:
+            return from_job
+
+        symbol_rows = (self.get_pipeline_summary(trading=trading).get("symbol_overview") or [])[:10]
+        from_pipeline = [str(r.get("symbol") or "").upper() for r in symbol_rows if r.get("symbol")]
+        if from_pipeline:
+            return from_pipeline
+
+        return []
+
+    def _latest_news_time_by_symbol(self, items: List[Dict[str, Any]]) -> Dict[str, str]:
+        latest_by_symbol: Dict[str, datetime] = {}
+        for item in items:
+            symbol = str(item.get("symbol") or "UNKNOWN").upper()
+            published_at = self._parse_iso_datetime(item.get("published_at"))
+            if not published_at:
+                continue
+            previous = latest_by_symbol.get(symbol)
+            if previous is None or published_at > previous:
+                latest_by_symbol[symbol] = published_at
+        return {symbol: dt.isoformat() for symbol, dt in latest_by_symbol.items()}
+
     def _current_account_cutoff(self) -> datetime:
-        return self.CURRENT_ACCOUNT_CUTOFF
+        tracking_meta = self._load_tracking_state_metadata()
+        created_at = self._parse_iso_datetime(tracking_meta.get("created_at"))
+        if created_at:
+            return created_at
+
+        baseline_date = tracking_meta.get("baseline_date")
+        if baseline_date:
+            local_tz = datetime.now().astimezone().tzinfo
+            try:
+                return datetime.fromisoformat(f"{baseline_date}T00:00:00").replace(tzinfo=local_tz)
+            except Exception:
+                pass
+
+        return self.DEFAULT_CURRENT_ACCOUNT_CUTOFF
 
     def _is_current_account_decision(self, decision: Dict[str, Any]) -> bool:
         dt = extract_decision_dt(decision)
@@ -2186,6 +2422,7 @@ class DashboardService:
                 decision = json.loads(path.read_text(encoding="utf-8"))
                 decision["strategy_id"] = resolve_strategy_key(decision, path=path)
                 decision["strategy_version_id"] = resolve_strategy_key(decision, path=path)
+                decision["_source_file"] = path.name
                 results.append(decision)
             except Exception:
                 continue

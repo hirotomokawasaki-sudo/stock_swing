@@ -36,6 +36,9 @@ open http://localhost:3335
 ./console/manage.sh watchdog-start
 ./console/manage.sh watchdog-status
 ./console/manage.sh watchdog-stop
+
+# rotate active console/watchdog logs into logs/archive/YYYY-MM-DD/
+./console/manage.sh rotate-logs
 ```
 
 ### Ports
@@ -118,6 +121,17 @@ open http://localhost:3335
 - `GET /api/symbol/<SYMBOL>` - Symbol drilldown
 - `GET /api/parameters` - Parameter list with ranges
 - `GET /api/parameters/<NAME>/validate?value=X` - Validate parameter value
+- `GET /api/archives` - account migration / archive history
+
+---
+
+## 📁 Log Rotation
+
+- Active logs stay in `logs/`
+- Rotated logs are archived into `logs/archive/YYYY-MM-DD/`
+- Default keep count: `LOG_ROTATE_KEEP=10`
+- Default size threshold for automatic rotation: `LOG_ROTATE_MAX_BYTES=1048576`
+- `watchdog-run-once` also checks active log sizes and rotates oversized logs in place
 
 ---
 

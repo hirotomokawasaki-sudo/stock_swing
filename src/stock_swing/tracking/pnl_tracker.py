@@ -15,7 +15,7 @@ import json
 import logging
 import os
 from collections import defaultdict
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -97,6 +97,14 @@ class PnLState:
     losing_trades: int = 0
     peak_equity: float = 100_000.0
     max_drawdown_pct: float = 0.0
+    broker_account_id: str | None = None
+    baseline_date: str | None = None
+    baseline_equity: float | None = None
+    tracking_label: str | None = None
+    performance_scope: str = "current_account_since_baseline"
+    archived_from_account_id: str | None = None
+    archive_path: str | None = None
+    migration_note_path: str | None = None
 
 
 class PnLTracker:
@@ -371,6 +379,16 @@ class PnLTracker:
             "max_drawdown_pct": self.state.max_drawdown_pct,
             "peak_equity": self.state.peak_equity,
             "trading_days": trading_day_count,
+            "tracking_context": {
+                "broker_account_id": self.state.broker_account_id,
+                "baseline_date": self.state.baseline_date,
+                "baseline_equity": self.state.baseline_equity,
+                "tracking_label": self.state.tracking_label,
+                "performance_scope": self.state.performance_scope,
+                "archived_from_account_id": self.state.archived_from_account_id,
+                "archive_path": self.state.archive_path,
+                "migration_note_path": self.state.migration_note_path,
+            },
         }
 
     def get_summary_by_account(self, account_id: str | None = None) -> dict[str, Any]:
@@ -558,9 +576,27 @@ class PnLTracker:
                 # Ensure required fields exist
                 if "created_at" not in data:
                     data["created_at"] = data.get("last_updated", datetime.now(timezone.utc).isoformat())
-                
-                # Migration: Add account_id to existing trades if missing
+
                 default_account_id = os.environ.get("BROKER_ACCOUNT_ID", "legacy_account")
+                if "broker_account_id" not in data:
+                    data["broker_account_id"] = default_account_id
+                if "baseline_date" not in data:
+                    data["baseline_date"] = str(data.get("created_at") or "")[:10] or None
+                if "baseline_equity" not in data:
+                    data["baseline_equity"] = data.get("peak_equity", 100_000.0)
+                if "tracking_label" not in data:
+                    baseline_date = data.get("baseline_date") or str(data.get("created_at") or "")[:10]
+                    data["tracking_label"] = f"alpaca_account_epoch_{baseline_date}" if baseline_date else None
+                if "performance_scope" not in data:
+                    data["performance_scope"] = "current_account_since_baseline"
+                if "archived_from_account_id" not in data:
+                    data["archived_from_account_id"] = None
+                if "archive_path" not in data:
+                    data["archive_path"] = None
+                if "migration_note_path" not in data:
+                    data["migration_note_path"] = None
+
+                # Migration: Add account_id to existing trades if missing
                 migrated_count = 0
                 for trade in data.get("trades", []):
                     if "account_id" not in trade or trade["account_id"] is None:
@@ -569,13 +605,27 @@ class PnLTracker:
                 
                 if migrated_count > 0:
                     logger.info(f"Migrated {migrated_count} trades with default account_id: {default_account_id}")
-                
+
+                allowed = {f.name for f in fields(PnLState)}
+                unknown_keys = sorted(set(data.keys()) - allowed)
+                if unknown_keys:
+                    logger.warning(f"Ignoring unknown PnL state keys: {unknown_keys}")
+                    data = {k: v for k, v in data.items() if k in allowed}
+
                 return PnLState(**data)
             except Exception as e:
                 logger.error(f"Failed to load state: {e}")
                 pass
         now = datetime.now(timezone.utc).isoformat()
-        return PnLState(created_at=now, last_updated=now)
+        default_account_id = os.environ.get("BROKER_ACCOUNT_ID")
+        return PnLState(
+            created_at=now,
+            last_updated=now,
+            broker_account_id=default_account_id,
+            baseline_date=now[:10],
+            baseline_equity=100_000.0,
+            tracking_label=f"alpaca_account_epoch_{now[:10]}",
+        )
 
     def _save_state(self) -> None:
         self.state_path.write_text(

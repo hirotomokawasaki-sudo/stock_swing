@@ -1,0 +1,7 @@
+stock_swing analysis report
+generated_at=2026-04-21T15:10:02.278952
+symbols=5
+normalized_records=13
+features=1
+signals=0
+decisions=0

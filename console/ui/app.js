@@ -1,6 +1,6 @@
 // Stock Swing Console Frontend
-// Version: 2026-05-01-1850 (Robustness improvements + relative paths)
-console.log('📊 Stock Swing Console v2026-05-01-1850 loaded');
+// Version: 2026-05-12-0938 (archive history view)
+console.log('📊 Stock Swing Console v2026-05-12-0938 loaded');
 
 // Format helpers (safe + compatible with original implementation)
 const fmt = {
@@ -155,6 +155,7 @@ class Console {
                 case 'charts':     content.innerHTML = this.renderCharts(); this.initAllCharts(); break;
                 case 'trading':    content.innerHTML = this.renderTrading(); break;
                 case 'positions':  content.innerHTML = this.renderPositions(); break;
+                case 'archives':   content.innerHTML = this.renderArchives(); break;
                 case 'news':       content.innerHTML = this.renderNews(); break;
                 case 'cron':       content.innerHTML = this.renderCronJobs(); break;
                 case 'data':       content.innerHTML = this.renderDataStatus(); break;
@@ -485,8 +486,11 @@ class Console {
         const recent = td.recent_trades || [];
         const allClosedTrades = td.closed_trades || recent;
         const snaps = td.daily_snapshots || [];
+        const tracking = s.tracking_context || {};
         const winRate = s.win_rate;
         const wr_cls = winRate >= 0.55 ? 'success' : winRate < 0.40 && s.closed_trades > 0 ? 'danger' : 'warn';
+        const shortAccountId = tracking.broker_account_id ? `${tracking.broker_account_id.slice(0, 8)}…` : '—';
+        const shortArchivedAccountId = tracking.archived_from_account_id ? `${tracking.archived_from_account_id.slice(0, 8)}…` : '—';
         
         // 戦略別パフォーマンスを計算
         const strategyPerf = this.calculateStrategyPerformance(pipeline.by_strategy || [], allClosedTrades);
@@ -494,6 +498,21 @@ class Console {
         return `
         ${this.renderPipelineFunnel()}
         <div class="grid">
+            <div class="card">
+                <h3>トラッキング範囲</h3>
+                <div class="metric"><span class="label">スコープ</span><span class="value">${this.escapeHtml(tracking.performance_scope || 'current_account_since_baseline')}</span></div>
+                <div class="metric"><span class="label">現アカウント</span><span class="value">${this.escapeHtml(shortAccountId)}</span></div>
+                <div class="metric"><span class="label">基準日</span><span class="value">${tracking.baseline_date || '—'}</span></div>
+                <div class="metric"><span class="label">開始資金</span><span class="value">${tracking.baseline_equity != null ? fmt.usd(tracking.baseline_equity) : '—'}</span></div>
+                <div class="metric"><span class="label">ラベル</span><span class="small muted">${this.escapeHtml(tracking.tracking_label || '—')}</span></div>
+            </div>
+            <div class="card">
+                <h3>旧成績アーカイブ</h3>
+                <div class="metric"><span class="label">旧アカウント</span><span class="value">${this.escapeHtml(shortArchivedAccountId)}</span></div>
+                <div class="metric"><span class="label">退避先</span><span class="small muted">${this.escapeHtml(tracking.archive_path || '—')}</span></div>
+                <div class="metric"><span class="label">移行メモ</span><span class="small muted">${this.escapeHtml(tracking.migration_note_path || '—')}</span></div>
+                <div class="small muted">旧成績は上記アーカイブ配下、新成績は 2026-05-12 基準で集計しています。</div>
+            </div>
             <div class="card">
                 <h3>パフォーマンス</h3>
                 <div class="metric"><span class="label">取引数(open+closed)</span><span class="value">${s.total_trades||0}</span></div>
@@ -925,6 +944,72 @@ class Console {
         return integrity.checks.map(check =>
             `<div class="metric"><span class="label">${this.escapeHtml(check.name)}</span><span class="small ${check.status}">${this.escapeHtml(check.message)}</span></div>`
         ).join('');
+    }
+
+    renderArchives() {
+        const archiveData = this.data.archives || {};
+        const current = archiveData.current || {};
+        const archives = archiveData.archives || [];
+        const docs = archiveData.migration_docs || [];
+
+        return `
+        <div class="grid">
+            <div class="card">
+                <h3>現行トラッキング</h3>
+                <div class="metric"><span class="label">現アカウント</span><span class="value">${this.escapeHtml(current.account_id || '—')}</span></div>
+                <div class="metric"><span class="label">基準日</span><span class="value">${this.escapeHtml(current.baseline_date || '—')}</span></div>
+                <div class="metric"><span class="label">開始資金</span><span class="value">${current.baseline_equity != null ? fmt.usd(current.baseline_equity) : '—'}</span></div>
+                <div class="metric"><span class="label">現行取引数</span><span class="value">${current.trade_count || 0}</span></div>
+                <div class="metric"><span class="label">累積実現PnL</span><span class="value ${(current.cumulative_realized_pnl || 0) >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(current.cumulative_realized_pnl || 0)}</span></div>
+                <div class="metric"><span class="label">移行メモ</span><span class="small muted">${this.escapeHtml(current.migration_note_path || '—')}</span></div>
+            </div>
+            <div class="card">
+                <h3>履歴サマリー</h3>
+                <div class="metric"><span class="label">アーカイブ数</span><span class="value">${archives.length}</span></div>
+                <div class="metric"><span class="label">移行メモ数</span><span class="value">${docs.length}</span></div>
+                <div class="metric"><span class="label">最新アーカイブ</span><span class="value">${this.escapeHtml(archives[0]?.archive_date || '—')}</span></div>
+                <div class="small muted">旧成績は archive 配下、現行成績は baseline 以降で集計しています。</div>
+            </div>
+        </div>
+        <div class="card">
+            <h3>旧成績アーカイブ一覧</h3>
+            ${archives.length ? this.renderArchiveHistoryTable(archives) : '<p class="muted">アーカイブなし</p>'}
+        </div>
+        <div class="card" style="margin-top:16px;">
+            <h3>Migration Notes</h3>
+            ${docs.length ? this.renderMigrationDocsTable(docs) : '<p class="muted">移行メモなし</p>'}
+        </div>`;
+    }
+
+    renderArchiveHistoryTable(data) {
+        return `<div class="table-wrap"><table><thead><tr>
+            <th>Archive Date</th><th>旧アカウント</th><th>新アカウント</th><th>基準資金</th><th>取引数</th><th>決済/保有</th><th>累積PnL</th><th>ファイル</th><th>参照先</th>
+        </tr></thead><tbody>
+        ${data.map(item => `
+            <tr>
+                <td>${this.escapeHtml(item.archive_date || '—')}</td>
+                <td class="small">${this.escapeHtml(item.previous_account_id || '—')}</td>
+                <td class="small">${this.escapeHtml(item.new_account_id || '—')}</td>
+                <td>${item.baseline_equity != null ? fmt.usd(item.baseline_equity) : '—'}</td>
+                <td>${item.trade_count || 0}</td>
+                <td>${item.closed_trade_count || 0} / ${item.open_trade_count || 0}</td>
+                <td class="${(item.cumulative_realized_pnl || 0) >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(item.cumulative_realized_pnl || 0)}</td>
+                <td>${item.tracking_files || 0} tracking / ${item.audit_files || 0} audit</td>
+                <td><div class="small muted">${this.escapeHtml(item.archive_path || '—')}</div><div class="small muted">${this.escapeHtml(item.note_path || '—')}</div></td>
+            </tr>`).join('')}
+        </tbody></table></div>`;
+    }
+
+    renderMigrationDocsTable(data) {
+        return `<div class="table-wrap"><table><thead><tr>
+            <th>Date</th><th>Path</th>
+        </tr></thead><tbody>
+        ${data.map(item => `
+            <tr>
+                <td>${this.escapeHtml(item.date || '—')}</td>
+                <td class="small">${this.escapeHtml(item.path || '—')}</td>
+            </tr>`).join('')}
+        </tbody></table></div>`;
     }
 
     renderLogs() {

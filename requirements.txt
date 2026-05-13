@@ -16,3 +16,4 @@ anyio>=4.0.0
 # Data validation
 python-dotenv>=1.0.0
 
+massive>=2.7.0

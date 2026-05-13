@@ -55,12 +55,15 @@ class ConsoleHandler(BaseHTTPRequestHandler):
     def _json(self, data, status=200):
         """Send JSON response."""
         payload = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(payload)))
-        self.send_header("Cache-Control", "no-cache")
-        self.end_headers()
-        self.wfile.write(payload)
+        try:
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(payload)))
+            self.send_header("Cache-Control", "no-cache")
+            self.end_headers()
+            self.wfile.write(payload)
+        except (BrokenPipeError, ConnectionResetError):
+            return
     
     def _file(self, path: Path, content_type: str):
         """Serve static file."""
@@ -68,13 +71,16 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             self._json({"error": "not found"}, status=404)
             return
         data = path.read_bytes()
-        self.send_response(200)
-        self.send_header("Content-Type", content_type)
-        self.send_header("Content-Length", str(len(data)))
-        if path.suffix in ('.js', '.css', '.html'):
-            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
-        self.end_headers()
-        self.wfile.write(data)
+        try:
+            self.send_response(200)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(data)))
+            if path.suffix in ('.js', '.css', '.html'):
+                self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+            self.end_headers()
+            self.wfile.write(data)
+        except (BrokenPipeError, ConnectionResetError):
+            return
     
     def log_message(self, format, *args):
         """Suppress request logging (too noisy)."""
@@ -169,6 +175,13 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         if p == "/api/positions":
             try:
                 data = dashboard.get_positions()
+                return self._json(data)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+
+        if p == "/api/archives":
+            try:
+                data = dashboard.get_archive_history()
                 return self._json(data)
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)

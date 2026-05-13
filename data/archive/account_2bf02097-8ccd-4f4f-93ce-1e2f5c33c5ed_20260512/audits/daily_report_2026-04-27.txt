@@ -1,0 +1,51 @@
+📈 stock_swing 日次レポート
+🗓  2026-04-27  |  モード: paper
+
+💰 口座情報 (ペーパー)
+  ステータス    : ACTIVE
+  資産総額      : $  105,236.71
+  買付余力      : $  331,578.85
+  累積損益      : $   +4,292.74
+
+📊 パフォーマンス (運用開始以降)
+  決済取引数    : 44
+  勝 / 負       : 28 / 16
+  勝率          : 63.6% 🔥
+  平均リターン  : +3.26%
+  平均損益/取引 : $+97.56
+  最大DD        : 0.70%
+  取引日数      : 22
+
+📂 保有ポジション (10件)
+  ADBE     19株  取得=$246.47
+  ARM       6株  取得=$229.23
+  CRM      43株  取得=$188.44
+  DDOG     72株  取得=$127.84
+  FTNT     89株  取得=$86.34
+  HPE     -13株  取得=$28.14
+  IBM       2株  取得=$231.74
+  PANW     49株  取得=$172.85
+  PATH    367株  取得=$11.03
+  PLTR     74株  取得=$150.23
+
+🔄 最近の決済取引 (直近5件)
+  ✅ SNOW   買い  損益: $+50.40 (+1.6%)  [breakout_momentum_v1]
+  ❌ SMCI   買い  損益: $-33.98 (-1.1%)  [breakout_momentum_v1]
+  ✅ SMCI   買い  損益: $+103.61 (+4.7%)  [breakout_momentum_v1]
+  ✅ SMCI   買い  損益: $+18.23 (+3.3%)  [breakout_momentum_v1]
+  ❌ SMCI   買い  損益: $-30.62 (-1.7%)  [breakout_momentum_v1]
+
+📏 最新のポジションサイズ根拠 (直近5件)
+  PANW   採用=0株 [risk=71 / notional=57 / exposure=95]
+         採用制約=notional 相場regime=cautious 資産クラス=stock セクター=software confidence=0.85 資産=$105533.91 株価=$147.06 最大許容損失=$527.67 最大投入額=$8442.71
+  FTNT   採用=0株 [risk=134 / notional=107 / exposure=179]
+         採用制約=notional 相場regime=cautious 資産クラス=stock セクター=software confidence=0.85 資産=$105533.91 株価=$78.22 最大許容損失=$527.67 最大投入額=$8442.71
+  ARM    採用=58株 [risk=73 / notional=58 / exposure=97]
+         採用制約=notional 相場regime=cautious 資産クラス=stock セクター=semis confidence=0.85 資産=$105533.91 株価=$144.11 最大許容損失=$527.67 最大投入額=$8442.71
+  CRWD   採用=0株 [risk=14 / notional=22 / exposure=38]
+         採用制約=risk 相場regime=cautious 資産クラス=stock セクター=software confidence=0.6929271515885678 資産=$105533.91 株価=$369.68 最大許容損失=$527.67 最大投入額=$8442.71
+  NBIS   採用=0株 [risk=28 / notional=83 / exposure=139]
+         採用制約=risk 相場regime=cautious 資産クラス=stock セクター=software confidence=0.6963276836158194 資産=$105533.91 株価=$100.86 最大許容損失=$527.67 最大投入額=$8442.71
+
+────────────────────────────────────────
+次回実行: 日本時間 22:30 (米国プレマーケット)

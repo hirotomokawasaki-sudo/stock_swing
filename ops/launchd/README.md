@@ -53,7 +53,15 @@ cd /Users/hirotomookawasaki/stock_swing
 tail -f logs/launchd_watchdog.log
 tail -f logs/console_http.log
 tail -f logs/console_websocket.log
+
+# 必要に応じて手動ローテーション
+./console/manage.sh rotate-logs
 ```
+
+- active logs: `logs/`
+- rotated logs: `logs/archive/YYYY-MM-DD/`
+- size threshold: `LOG_ROTATE_MAX_BYTES` (default 1,048,576 bytes)
+- keep count: `LOG_ROTATE_KEEP` (default 10)
 
 ## 注意
 

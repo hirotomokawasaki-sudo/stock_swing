@@ -18,6 +18,7 @@ from stock_swing.core.path_manager import PathManager
 from stock_swing.core.types import RawEnvelope
 from stock_swing.storage.stage_store import StageStore
 from stock_swing.sources.finnhub_client import FinnhubClient
+from stock_swing.sources.massive_client import MassiveClient
 from stock_swing.sources.retry import RetryConfig
 
 
@@ -26,9 +27,11 @@ DEFAULT_SYMBOLS = "NVDA,MSFT,GOOGL,AMZN,META,TSLA,AVGO,AMD,TSM,ASML,INTC,MU,ARM,
 
 def main():
     parser = argparse.ArgumentParser(description="Collect data from sources")
-    parser.add_argument("--sources", type=str, default="finnhub,fred,sec,broker")
+    parser.add_argument("--sources", type=str, default="finnhub,fred,sec,broker,massive")
     parser.add_argument("--symbols", type=str, default=DEFAULT_SYMBOLS)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--days", type=int, default=30, help="Days of historical data to collect (for massive)")
+    parser.add_argument("--timeframe", type=str, default="daily", help="Timeframe for bars: daily, 5min, 15min, 1min (for massive)")
     args = parser.parse_args()
 
     sources = [s.strip() for s in args.sources.split(",") if s.strip()]
@@ -60,6 +63,8 @@ def main():
         elif source == "broker":
             written.extend(collect_broker(symbols, store))
             written.extend(collect_broker_bars(symbols, store))
+        elif source == "massive":
+            written.extend(collect_massive(symbols, store, days=args.days, timeframe=args.timeframe))
         else:
             print(f"⚠️ Unknown source: {source}")
 
@@ -249,6 +254,91 @@ def collect_broker_bars(symbols, store):
         payload = {"symbol": symbol, "bars": bars}
         path = _write_raw_snapshot(store, "broker", symbol, "marketdata/bars", payload, {"symbol": symbol, "timeframe": "1Day"})
         written.append(str(path))
+    return written
+
+
+def collect_massive(symbols, store, days=30, timeframe="daily"):
+    """Collect historical bars from Massive API.
+    
+    Args:
+        symbols: List of stock symbols
+        store: StageStore for persisting data
+        days: Number of days of historical data
+        timeframe: Bar timeframe (daily, 5min, 15min, 1min)
+    
+    Returns:
+        List of written file paths
+    """
+    written = []
+    
+    # Load .env for MASSIVE_API_KEY
+    try:
+        from stock_swing.cli.paper_demo import _load_env, project_root as demo_project_root
+        _load_env(demo_project_root / '.env')
+    except Exception:
+        pass
+    
+    api_key = os.environ.get('MASSIVE_API_KEY', '')
+    if not api_key:
+        print("⚠️ MASSIVE_API_KEY not found in environment, skipping massive source")
+        return written
+    
+    try:
+        client = MassiveClient(api_key=api_key)
+    except Exception as e:
+        print(f"⚠️ Failed to initialize MassiveClient: {e}")
+        return written
+    
+    end_date = datetime.now(timezone.utc)
+    start_date = end_date - timedelta(days=days)
+    from_str = start_date.strftime("%Y-%m-%d")
+    to_str = end_date.strftime("%Y-%m-%d")
+    
+    print(f"📊 Collecting Massive bars: {from_str} to {to_str} ({timeframe})")
+    
+    for symbol in symbols:
+        try:
+            # Fetch bars based on timeframe
+            if timeframe == "daily":
+                bars = client.fetch_daily_bars(symbol, from_str, to_str)
+                endpoint = "aggs/daily"
+            elif timeframe in ["1min", "5min", "15min"]:
+                multiplier = int(timeframe.replace("min", ""))
+                bars = client.fetch_minute_bars(symbol, from_str, to_str, multiplier=multiplier)
+                endpoint = f"aggs/{timeframe}"
+            else:
+                print(f"⚠️ Unknown timeframe {timeframe} for {symbol}, skipping")
+                continue
+            
+            if not bars:
+                print(f"⚠️ No bars returned for {symbol}")
+                continue
+            
+            # Convert to standard format
+            bars_payload = []
+            for bar in bars:
+                bars_payload.append({
+                    "t": int(bar.timestamp.timestamp()),
+                    "o": bar.open,
+                    "h": bar.high,
+                    "l": bar.low,
+                    "c": bar.close,
+                    "v": bar.volume,
+                    "vw": bar.vwap if bar.vwap else None,
+                    "n": bar.transactions if bar.transactions else None,
+                })
+            
+            payload = {"symbol": symbol, "bars": bars_payload, "timeframe": timeframe}
+            request_params = {"symbol": symbol, "from": from_str, "to": to_str, "timeframe": timeframe}
+            
+            path = _write_raw_snapshot(store, "massive", symbol, endpoint, payload, request_params)
+            written.append(str(path))
+            print(f"✅ {symbol}: {len(bars)} {timeframe} bars")
+            
+        except Exception as e:
+            print(f"❌ Failed to fetch {symbol} from Massive: {e}")
+            continue
+    
     return written
 
 

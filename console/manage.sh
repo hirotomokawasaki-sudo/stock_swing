@@ -9,6 +9,7 @@
 #   ./console/manage.sh watchdog-start
 #   ./console/manage.sh watchdog-stop
 #   ./console/manage.sh watchdog-status
+#   ./console/manage.sh rotate-logs
 
 set -euo pipefail
 
@@ -31,10 +32,95 @@ WATCHDOG_PID_FILE="$RUN_DIR/console_watchdog.pid"
 HTTP_LOG_FILE="$LOG_DIR/console_http.log"
 WS_LOG_FILE="$LOG_DIR/console_websocket.log"
 WATCHDOG_LOG_FILE="$LOG_DIR/console_watchdog.log"
+LAUNCHD_WATCHDOG_LOG_FILE="$LOG_DIR/launchd_watchdog.log"
+LAUNCHD_WATCHDOG_ERR_FILE="$LOG_DIR/launchd_watchdog.err"
+LOG_ARCHIVE_DIR="$LOG_DIR/archive"
 HTTP_LATEST_LINK="$LOG_DIR/console_latest.log"
+LOG_ROTATE_KEEP="${LOG_ROTATE_KEEP:-10}"
+LOG_ROTATE_MAX_BYTES="${LOG_ROTATE_MAX_BYTES:-1048576}"
+LAUNCHD_WATCHDOG_LABEL="${LAUNCHD_WATCHDOG_LABEL:-com.hirotomookawasaki.stock_swing.console.watchdog}"
 
 ensure_dirs() {
-  mkdir -p "$LOG_DIR" "$RUN_DIR"
+  mkdir -p "$LOG_DIR" "$RUN_DIR" "$LOG_ARCHIVE_DIR"
+}
+
+log_size_bytes() {
+  local log_file="$1"
+  if [ -f "$log_file" ]; then
+    wc -c < "$log_file" | tr -d '[:space:]'
+  else
+    echo 0
+  fi
+}
+
+prune_rotated_logs() {
+  local stem="$1"
+  local ext="$2"
+  local old_files
+  old_files=$(find "$LOG_ARCHIVE_DIR" -type f -name "${stem}_*.${ext}" 2>/dev/null | sort -r | tail -n +$((LOG_ROTATE_KEEP + 1)) || true)
+  if [ -n "$old_files" ]; then
+    while IFS= read -r old_file; do
+      [ -n "$old_file" ] && rm -f "$old_file"
+    done <<EOF
+$old_files
+EOF
+  fi
+}
+
+rotate_log_file() {
+  local log_file="$1"
+  local mode="${2:-force}"
+  local filename stem ext ts archive_dir archive_file size_bytes
+
+  ensure_dirs
+  filename="$(basename "$log_file")"
+  stem="${filename%.*}"
+  ext="${filename##*.}"
+
+  if [ ! -f "$log_file" ]; then
+    : > "$log_file"
+    chmod 600 "$log_file" 2>/dev/null || true
+    return 0
+  fi
+
+  size_bytes="$(log_size_bytes "$log_file")"
+  if [ "$mode" != "force" ] && [ "$size_bytes" -lt "$LOG_ROTATE_MAX_BYTES" ]; then
+    return 0
+  fi
+
+  if [ "$size_bytes" -gt 0 ]; then
+    ts="$(date '+%Y%m%d_%H%M%S')"
+    archive_dir="$LOG_ARCHIVE_DIR/$(date '+%Y-%m-%d')"
+    archive_file="$archive_dir/${stem}_${ts}.${ext}"
+    mkdir -p "$archive_dir"
+    cp "$log_file" "$archive_file"
+    : > "$log_file"
+  else
+    : > "$log_file"
+  fi
+
+  chmod 600 "$log_file" 2>/dev/null || true
+  prune_rotated_logs "$stem" "$ext"
+}
+
+rotate_runtime_logs_if_needed() {
+  rotate_log_file "$HTTP_LOG_FILE" size
+  rotate_log_file "$WS_LOG_FILE" size
+  rotate_log_file "$WATCHDOG_LOG_FILE" size
+  rotate_log_file "$LAUNCHD_WATCHDOG_LOG_FILE" size
+  rotate_log_file "$LAUNCHD_WATCHDOG_ERR_FILE" size
+}
+
+force_rotate_all_logs() {
+  rotate_log_file "$HTTP_LOG_FILE" force
+  rotate_log_file "$WS_LOG_FILE" force
+  rotate_log_file "$WATCHDOG_LOG_FILE" force
+  rotate_log_file "$LAUNCHD_WATCHDOG_LOG_FILE" force
+  rotate_log_file "$LAUNCHD_WATCHDOG_ERR_FILE" force
+}
+
+prepare_watchdog_log() {
+  rotate_log_file "$WATCHDOG_LOG_FILE" force
 }
 
 require_python() {
@@ -95,6 +181,8 @@ start_http() {
     return 1
   fi
 
+  rotate_log_file "$HTTP_LOG_FILE"
+
   echo "▶️  Starting HTTP console on http://localhost:$CONSOLE_PORT"
   (
     cd "$ROOT"
@@ -131,6 +219,8 @@ start_ws() {
     echo "❌ Port $CONSOLE_WS_PORT is already in use by pid(s): $listeners"
     return 1
   fi
+
+  rotate_log_file "$WS_LOG_FILE"
 
   echo "▶️  Starting WebSocket server on ws://$CONSOLE_WS_HOST:$CONSOLE_WS_PORT"
   (
@@ -239,6 +329,7 @@ restart_ws() {
 
 watchdog_run_once() {
   ensure_dirs
+  rotate_runtime_logs_if_needed
   local changed=0
 
   if health_http; then
@@ -290,6 +381,7 @@ watchdog_start() {
     return 0
   fi
 
+  prepare_watchdog_log
   echo "▶️  Starting watchdog loop"
   nohup "$SCRIPT_PATH" watchdog-loop >> "$WATCHDOG_LOG_FILE" 2>&1 &
   echo $! > "$WATCHDOG_PID_FILE"
@@ -302,8 +394,41 @@ watchdog_start() {
   echo "✅ Watchdog started (pid=$pid)"
 }
 
+launchd_watchdog_target() {
+  echo "gui/$(id -u)/$LAUNCHD_WATCHDOG_LABEL"
+}
+
+launchd_watchdog_snapshot() {
+  launchctl print "$(launchd_watchdog_target)" 2>/dev/null || return 1
+}
+
+show_watchdog_status() {
+  cleanup_pidfile "$WATCHDOG_PID_FILE"
+  local pid snapshot launchd_state launchd_pid
+  pid="$(read_pid "$WATCHDOG_PID_FILE" || true)"
+
+  if pid_running "$pid"; then
+    echo "✅ Watchdog: running (pid=$pid, interval=${WATCHDOG_INTERVAL}s)"
+    return 0
+  fi
+
+  snapshot="$(launchd_watchdog_snapshot || true)"
+  if [ -n "$snapshot" ]; then
+    launchd_state="$(printf '%s\n' "$snapshot" | awk -F'= ' '/state = / {print $2; exit}')"
+    launchd_pid="$(printf '%s\n' "$snapshot" | awk -F'= ' '/pid = / {print $2; exit}')"
+    if [ "$launchd_state" = "running" ]; then
+      echo "✅ Watchdog: running via launchd (pid=${launchd_pid:-unknown}, label=$LAUNCHD_WATCHDOG_LABEL, interval=${WATCHDOG_INTERVAL}s)"
+    else
+      echo "⚠️  Watchdog: launchd loaded (state=${launchd_state:-unknown}, label=$LAUNCHD_WATCHDOG_LABEL)"
+    fi
+    return 0
+  fi
+
+  echo "❌ Watchdog: stopped"
+}
+
 watchdog_status() {
-  show_status_line "Watchdog" "$WATCHDOG_PID_FILE" 0
+  show_watchdog_status
 }
 
 case "${1:-start}" in
@@ -325,13 +450,7 @@ case "${1:-start}" in
   status)
     show_status_line "HTTP console" "$HTTP_PID_FILE" "$CONSOLE_PORT"
     show_status_line "WebSocket server" "$WS_PID_FILE" "$CONSOLE_WS_PORT"
-    cleanup_pidfile "$WATCHDOG_PID_FILE"
-    local_pid="$(read_pid "$WATCHDOG_PID_FILE" || true)"
-    if pid_running "$local_pid"; then
-      echo "✅ Watchdog: running (pid=$local_pid, interval=${WATCHDOG_INTERVAL}s)"
-    else
-      echo "❌ Watchdog: stopped"
-    fi
+    show_watchdog_status
     ;;
   health)
     health
@@ -349,16 +468,14 @@ case "${1:-start}" in
     stop_pidfile "Watchdog" "$WATCHDOG_PID_FILE"
     ;;
   watchdog-status)
-    cleanup_pidfile "$WATCHDOG_PID_FILE"
-    pid="$(read_pid "$WATCHDOG_PID_FILE" || true)"
-    if pid_running "$pid"; then
-      echo "✅ Watchdog running (pid=$pid, interval=${WATCHDOG_INTERVAL}s)"
-    else
-      echo "❌ Watchdog stopped"
-    fi
+    show_watchdog_status
+    ;;
+  rotate-logs)
+    force_rotate_all_logs
+    echo "✅ Rotated active console/watchdog logs into $LOG_ARCHIVE_DIR/$(date '+%Y-%m-%d')"
     ;;
   *)
-    echo "Usage: $0 {start|stop|restart|status|health|watchdog-run-once|watchdog-start|watchdog-stop|watchdog-status}"
+    echo "Usage: $0 {start|stop|restart|status|health|watchdog-run-once|watchdog-start|watchdog-stop|watchdog-status|rotate-logs}"
     exit 1
     ;;
 esac

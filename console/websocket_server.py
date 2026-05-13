@@ -33,7 +33,7 @@ async def register(websocket):
 
 async def unregister(websocket):
     """Unregister client."""
-    clients.remove(websocket)
+    clients.discard(websocket)
     print(f"Client disconnected. Total clients: {len(clients)}")
 
 
@@ -69,7 +69,7 @@ async def broadcast_update():
         print(f"Broadcast error: {e}")
 
 
-async def handler(websocket, path):
+async def handler(websocket, path=None):
     """Handle WebSocket connection."""
     await register(websocket)
     

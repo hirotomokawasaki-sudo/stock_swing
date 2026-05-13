@@ -1,0 +1,48 @@
+📈 stock_swing 日次レポート
+🗓  2026-05-11  |  モード: paper
+
+💰 口座情報 (ペーパー)
+  ステータス    : ACTIVE
+  資産総額      : $1,042,808.85
+  買付余力      : $3,359,556.46
+  累積損益      : $+1,011,671.36
+
+📊 パフォーマンス (運用開始以降)
+  決済取引数    : 145
+  勝 / 負       : 109 / 36
+  勝率          : 75.2% 🔥
+  平均リターン  : +16.05%
+  平均損益/取引 : $+6,977.04
+  最大DD        : 11.07%
+  取引日数      : 9
+
+📂 保有ポジション (7件)
+  INTC    919株  取得=$61.69
+  INTC    966株  取得=$61.69
+  CIEN     85株  取得=$487.15
+  INTC    966株  取得=$61.69
+  KLAC     29株  取得=$1,726.24
+  MRVL    494株  取得=$119.90
+  NBIS    280株  取得=$136.29
+
+🔄 最近の決済取引 (直近5件)
+  ✅ HPE    買い  損益: $+15,219.10 (+24.1%)  [breakout_momentum_v2_threshold_tuned]
+  ✅ DELL   買い  損益: $+25,101.54 (+41.5%)  [breakout_momentum_v2_threshold_tuned]
+  ✅ ARM    買い  損益: $+19,338.73 (+43.8%)  [breakout_momentum_v2_threshold_tuned]
+  ✅ DELL   買い  損益: $+150.76 (+41.5%)  [breakout_momentum_v2_threshold_tuned]
+  ✅ ARM    買い  損益: $+131.11 (+43.8%)  [breakout_momentum_v2_threshold_tuned]
+
+📏 最新のポジションサイズ根拠 (直近5件)
+  NBIS   採用=611株 [risk=764 / notional=611 / exposure=5368]
+         採用制約=notional 相場regime=neutral 資産クラス=stock セクター=software confidence=0.9 資産=$1041776.64 株価=$136.29 最大許容損失=$5208.88 最大投入額=$83342.13
+  HPE    採用=3357株 [risk=4197 / notional=3357 / exposure=26318]
+         採用制約=notional 相場regime=neutral 資産クラス=stock セクター=software confidence=0.9 資産=$1041751.19 株価=$24.82 最大許容損失=$5208.76 最大投入額=$83340.1
+  DELL   採用=459株 [risk=574 / notional=459 / exposure=3128]
+         採用制約=notional 相場regime=neutral 資産クラス=stock セクター=software confidence=0.9 資産=$1041815.06 株価=$181.46 最大許容損失=$5209.08 最大投入額=$83345.2
+  ARM    採用=556株 [risk=695 / notional=556 / exposure=3365]
+         採用制約=notional 相場regime=neutral 資産クラス=stock セクター=semis confidence=0.9 資産=$1041868.61 株価=$149.805 最大許容損失=$5209.34 最大投入額=$83349.49
+  AMD    採用=352株 [risk=440 / notional=352 / exposure=1601]
+         採用制約=notional 相場regime=neutral 資産クラス=stock セクター=semis confidence=0.9 資産=$1041745.56 株価=$236.64 最大許容損失=$5208.73 最大投入額=$83339.64
+
+────────────────────────────────────────
+次回実行: 日本時間 22:30 (米国プレマーケット)

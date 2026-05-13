@@ -1,0 +1,13 @@
+{
+  "archived_at": "2026-05-12T09:21:07.316498+09:00",
+  "reason": "alpaca_account_switch_and_console_reset",
+  "previous_account_id": "2bf02097-8ccd-4f4f-93ce-1e2f5c33c5ed",
+  "new_account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+  "baseline_date": "2026-05-12",
+  "baseline_equity": 1000000.0,
+  "notes": [
+    "Learning data is preserved in decisions/signals/models.",
+    "Performance tracking was reset for the new Alpaca account.",
+    "Previous account performance was archived under this directory."
+  ]
+}

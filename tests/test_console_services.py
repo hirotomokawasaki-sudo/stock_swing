@@ -9,6 +9,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "console"))
 
 from console.services.summary_service import SummaryService
 from console.services.benchmark_service import BenchmarkService
+from console.services.dashboard_service import DashboardService
 
 
 class TestSummaryService:
@@ -137,6 +138,73 @@ class TestWeeklySummaryAPI:
                 assert 'trades' in symbol
                 assert 'pnl' in symbol
                 assert 'win_rate' in symbol
+
+
+class TestDashboardService:
+    """Test dashboard service helpers."""
+
+    def test_archive_history_shape(self):
+        service = DashboardService(PROJECT_ROOT)
+        history = service.get_archive_history()
+
+        assert 'generated_at' in history
+        assert 'current' in history
+        assert 'archives' in history
+        assert 'migration_docs' in history
+        assert isinstance(history['archives'], list)
+        assert isinstance(history['migration_docs'], list)
+
+        if history['archives']:
+            first = history['archives'][0]
+            assert 'archive_path' in first
+            assert 'archive_date' in first
+            assert 'trade_count' in first
+
+    def test_current_account_cutoff_uses_tracking_state_created_at(self, monkeypatch):
+        service = DashboardService(PROJECT_ROOT)
+        monkeypatch.setattr(service, '_load_tracking_state_metadata', lambda: {
+            'created_at': '2026-05-12T00:17:00+00:00',
+            'baseline_date': '2026-05-12',
+        })
+
+        cutoff = service._current_account_cutoff()
+
+        assert cutoff.strftime('%Y-%m-%d %H:%M') == '2026-05-12 09:17'
+
+    def test_get_tracked_symbols_prefers_news_collection_job_payload(self, monkeypatch):
+        service = DashboardService(PROJECT_ROOT)
+        monkeypatch.setattr(service, 'get_cron_jobs', lambda: {
+            'jobs': [
+                {
+                    'name': 'stock_swing_news_collection',
+                    'payload': {
+                        'message': 'cd ~/stock_swing && python -u -m stock_swing.cli.collect_data --sources finnhub --symbols MRVL,CIEN,DELL,RBRK'
+                    },
+                }
+            ]
+        })
+
+        assert service._get_tracked_symbols() == ['MRVL', 'CIEN', 'DELL', 'RBRK']
+
+    def test_alerts_use_news_ingestion_scope(self, monkeypatch):
+        service = DashboardService(PROJECT_ROOT)
+        monkeypatch.setattr(service, 'get_news_ingestion_status', lambda news, tracked_symbols=None: {
+            'missing_symbols': ['MRVL', 'CIEN'],
+            'stale_symbols': ['DELL'],
+        })
+
+        alerts = service.get_alerts(
+            overview={},
+            trading={},
+            positions={'positions': [], 'summary': {}},
+            cron_jobs={'jobs': []},
+            data_status={'counts': {}, 'freshness': {}, 'integrity': {}},
+            news={'diagnostics': {'tracked_symbols': ['MRVL', 'CIEN', 'DELL']}},
+        )
+
+        messages = {alert['code']: alert['message'] for alert in alerts}
+        assert messages['no_news_for_tracked_symbols'].endswith('MRVL, CIEN')
+        assert messages['stale_news_symbols'].endswith('DELL')
 
 
 class TestPerformanceAttribution:

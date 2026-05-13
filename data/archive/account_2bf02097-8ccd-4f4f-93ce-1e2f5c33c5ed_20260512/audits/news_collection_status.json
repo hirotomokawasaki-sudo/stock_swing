@@ -1,0 +1,77 @@
+{
+  "time": "2026-05-11T23:17:37.839543+00:00",
+  "symbols": [
+    {
+      "symbol": "MRVL",
+      "news_count": 18,
+      "used_fallback": false,
+      "reason": "ok",
+      "source": "finnhub",
+      "from": "2026-05-08",
+      "to": "2026-05-11"
+    },
+    {
+      "symbol": "CIEN",
+      "news_count": 15,
+      "used_fallback": false,
+      "reason": "ok",
+      "source": "finnhub",
+      "from": "2026-05-08",
+      "to": "2026-05-11"
+    },
+    {
+      "symbol": "DELL",
+      "news_count": 42,
+      "used_fallback": false,
+      "reason": "ok",
+      "source": "finnhub",
+      "from": "2026-05-08",
+      "to": "2026-05-11"
+    },
+    {
+      "symbol": "RBRK",
+      "news_count": 1,
+      "used_fallback": true,
+      "reason": "no_company_news",
+      "source": "finnhub",
+      "from": "2026-05-08",
+      "to": "2026-05-11"
+    },
+    {
+      "symbol": "PLTR",
+      "news_count": 64,
+      "used_fallback": false,
+      "reason": "ok",
+      "source": "finnhub",
+      "from": "2026-05-08",
+      "to": "2026-05-11"
+    },
+    {
+      "symbol": "NOW",
+      "news_count": 27,
+      "used_fallback": false,
+      "reason": "ok",
+      "source": "finnhub",
+      "from": "2026-05-08",
+      "to": "2026-05-11"
+    },
+    {
+      "symbol": "INTU",
+      "news_count": 6,
+      "used_fallback": false,
+      "reason": "ok",
+      "source": "finnhub",
+      "from": "2026-05-08",
+      "to": "2026-05-11"
+    },
+    {
+      "symbol": "NBIS",
+      "news_count": 10,
+      "used_fallback": false,
+      "reason": "ok",
+      "source": "finnhub",
+      "from": "2026-05-08",
+      "to": "2026-05-11"
+    }
+  ]
+}
