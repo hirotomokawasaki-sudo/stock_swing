@@ -1,0 +1,61 @@
+{
+  "decision_id": "13640770-f9c2-2825-2749-8eed83e96863",
+  "schema_version": "v1",
+  "generated_at": "2026-04-08T14:43:15.431632+00:00",
+  "mode": "paper",
+  "strategy_id": "breakout_momentum_v1",
+  "symbol": "MRVL",
+  "action": "deny",
+  "confidence": 0.85,
+  "signal_strength": 1.0,
+  "risk_state": "deny",
+  "deny_reasons": [
+    "position_size would exceed limit: 68 > 50"
+  ],
+  "requires_operator_approval": false,
+  "time_horizon": "2d",
+  "evidence": {
+    "feature_refs": [
+      "price_momentum"
+    ],
+    "raw_refs": [],
+    "notes": [
+      "Strong bullish momentum (12.55%) indicates breakout",
+      "position_size would exceed limit: 68 > 50"
+    ],
+    "risk_per_share": 8.522500000000003,
+    "stop_price": 84.1475,
+    "latest_close": 92.67,
+    "atr": 4.261250000000001,
+    "market_regime": "cautious",
+    "macro_regime_raw": "unknown",
+    "price_regime_raw": "cautious"
+  },
+  "proposed_order": null,
+  "sizing": {
+    "final_shares": null,
+    "shares_by_risk": null,
+    "shares_by_notional": null,
+    "shares_by_exposure": null,
+    "regime_used": null,
+    "asset_class_used": null,
+    "risk_per_share": 8.522500000000003,
+    "stop_price": 84.1475,
+    "latest_close": 92.67,
+    "atr": 4.261250000000001,
+    "max_loss_usd": null,
+    "max_position_notional_usd": null,
+    "remaining_exposure_capacity_usd": null,
+    "account_equity": null,
+    "current_price": null,
+    "current_total_exposure": null,
+    "current_sector_exposure": null,
+    "sector_used": null,
+    "max_sector_exposure_usd": null,
+    "remaining_sector_capacity_usd": null,
+    "confidence": null,
+    "applied_constraint": null,
+    "skip_reason": null
+  },
+  "strategy_version_id": "breakout_momentum_v1_explicit"
+}

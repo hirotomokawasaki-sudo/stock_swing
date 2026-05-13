@@ -1,0 +1,61 @@
+{
+  "decision_id": "23b906d8-743e-723b-03c3-a737d6596f39",
+  "schema_version": "v1",
+  "generated_at": "2026-04-24T17:21:19.435283+00:00",
+  "mode": "paper",
+  "strategy_id": "breakout_momentum_v1",
+  "symbol": "PANW",
+  "action": "deny",
+  "confidence": 0.85,
+  "signal_strength": 1.0,
+  "risk_state": "deny",
+  "deny_reasons": [
+    "position_size would exceed limit: 59 > 50"
+  ],
+  "requires_operator_approval": false,
+  "time_horizon": "2d",
+  "evidence": {
+    "feature_refs": [
+      "price_momentum"
+    ],
+    "raw_refs": [],
+    "notes": [
+      "Strong bullish momentum (15.77%) indicates breakout",
+      "position_size would exceed limit: 59 > 50"
+    ],
+    "risk_per_share": 10.378499999999992,
+    "stop_price": 153.6815,
+    "latest_close": 164.06,
+    "atr": 5.189249999999996,
+    "market_regime": "neutral",
+    "macro_regime_raw": "unknown",
+    "price_regime_raw": "neutral"
+  },
+  "proposed_order": null,
+  "sizing": {
+    "final_shares": null,
+    "shares_by_risk": null,
+    "shares_by_notional": null,
+    "shares_by_exposure": null,
+    "regime_used": null,
+    "asset_class_used": null,
+    "risk_per_share": 10.378499999999992,
+    "stop_price": 153.6815,
+    "latest_close": 164.06,
+    "atr": 5.189249999999996,
+    "max_loss_usd": null,
+    "max_position_notional_usd": null,
+    "remaining_exposure_capacity_usd": null,
+    "account_equity": null,
+    "current_price": null,
+    "current_total_exposure": null,
+    "current_sector_exposure": null,
+    "sector_used": null,
+    "max_sector_exposure_usd": null,
+    "remaining_sector_capacity_usd": null,
+    "confidence": null,
+    "applied_constraint": null,
+    "skip_reason": null
+  },
+  "strategy_version_id": "breakout_momentum_v1_explicit"
+}

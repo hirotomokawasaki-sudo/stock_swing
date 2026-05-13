@@ -1,0 +1,33 @@
+{
+  "decision_id": "12aee43c-2127-a5bf-4d31-9c339886d2ca",
+  "schema_version": "v1",
+  "generated_at": "2026-04-08T01:18:41.452291+00:00",
+  "mode": "paper",
+  "strategy_id": "breakout_momentum_v1",
+  "symbol": "CRWD",
+  "action": "buy",
+  "confidence": 0.5345938135240381,
+  "signal_strength": 0.6289338982635743,
+  "risk_state": "pass",
+  "deny_reasons": [],
+  "requires_operator_approval": false,
+  "time_horizon": "2d",
+  "evidence": {
+    "feature_refs": [
+      "price_momentum"
+    ],
+    "raw_refs": [],
+    "notes": [
+      "Strong bullish momentum (6.29%) indicates breakout"
+    ]
+  },
+  "proposed_order": {
+    "symbol": "CRWD",
+    "side": "buy",
+    "order_type": "market",
+    "qty": 10,
+    "time_in_force": "day",
+    "limit_price": null
+  },
+  "strategy_version_id": "breakout_momentum_v1_explicit"
+}

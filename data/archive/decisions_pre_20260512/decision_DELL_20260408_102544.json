@@ -1,0 +1,33 @@
+{
+  "decision_id": "e37a5e3a-acb0-8b7d-6710-d10312455f11",
+  "schema_version": "v1",
+  "generated_at": "2026-04-08T01:26:16.440316+00:00",
+  "mode": "paper",
+  "strategy_id": "breakout_momentum_v1",
+  "symbol": "DELL",
+  "action": "buy",
+  "confidence": 0.85,
+  "signal_strength": 1.0,
+  "risk_state": "pass",
+  "deny_reasons": [],
+  "requires_operator_approval": false,
+  "time_horizon": "2d",
+  "evidence": {
+    "feature_refs": [
+      "price_momentum"
+    ],
+    "raw_refs": [],
+    "notes": [
+      "Strong bullish momentum (21.20%) indicates breakout"
+    ]
+  },
+  "proposed_order": {
+    "symbol": "DELL",
+    "side": "buy",
+    "order_type": "market",
+    "qty": 10,
+    "time_in_force": "day",
+    "limit_price": null
+  },
+  "strategy_version_id": "breakout_momentum_v1_explicit"
+}

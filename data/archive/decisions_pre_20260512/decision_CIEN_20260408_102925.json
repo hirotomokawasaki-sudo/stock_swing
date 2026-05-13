@@ -1,0 +1,33 @@
+{
+  "decision_id": "a29055f1-1a50-ae5d-01a8-f1b8ddc62dbe",
+  "schema_version": "v1",
+  "generated_at": "2026-04-08T01:29:36.357905+00:00",
+  "mode": "paper",
+  "strategy_id": "breakout_momentum_v1",
+  "symbol": "CIEN",
+  "action": "buy",
+  "confidence": 0.8345177314750926,
+  "signal_strength": 0.9817855664412853,
+  "risk_state": "pass",
+  "deny_reasons": [],
+  "requires_operator_approval": false,
+  "time_horizon": "2d",
+  "evidence": {
+    "feature_refs": [
+      "price_momentum"
+    ],
+    "raw_refs": [],
+    "notes": [
+      "Strong bullish momentum (9.82%) indicates breakout"
+    ]
+  },
+  "proposed_order": {
+    "symbol": "CIEN",
+    "side": "buy",
+    "order_type": "market",
+    "qty": 10,
+    "time_in_force": "day",
+    "limit_price": null
+  },
+  "strategy_version_id": "breakout_momentum_v1_explicit"
+}

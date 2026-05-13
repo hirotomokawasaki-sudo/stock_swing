@@ -1,0 +1,61 @@
+{
+  "decision_id": "6d6e1d04-9bfd-a000-6e90-3746561531ca",
+  "schema_version": "v1",
+  "generated_at": "2026-04-08T17:17:27.682124+00:00",
+  "mode": "paper",
+  "strategy_id": "breakout_momentum_v1",
+  "symbol": "RBRK",
+  "action": "deny",
+  "confidence": 0.5235849056603771,
+  "signal_strength": 0.6159822419533848,
+  "risk_state": "deny",
+  "deny_reasons": [
+    "position_size would exceed limit: 66 > 50"
+  ],
+  "requires_operator_approval": false,
+  "time_horizon": "2d",
+  "evidence": {
+    "feature_refs": [
+      "price_momentum"
+    ],
+    "raw_refs": [],
+    "notes": [
+      "Strong bullish momentum (6.16%) indicates breakout",
+      "position_size would exceed limit: 66 > 50"
+    ],
+    "risk_per_share": 6.166499999999998,
+    "stop_price": 51.2235,
+    "latest_close": 57.39,
+    "atr": 3.083249999999999,
+    "market_regime": "cautious",
+    "macro_regime_raw": "unknown",
+    "price_regime_raw": "cautious"
+  },
+  "proposed_order": null,
+  "sizing": {
+    "final_shares": null,
+    "shares_by_risk": null,
+    "shares_by_notional": null,
+    "shares_by_exposure": null,
+    "regime_used": null,
+    "asset_class_used": null,
+    "risk_per_share": 6.166499999999998,
+    "stop_price": 51.2235,
+    "latest_close": 57.39,
+    "atr": 3.083249999999999,
+    "max_loss_usd": null,
+    "max_position_notional_usd": null,
+    "remaining_exposure_capacity_usd": null,
+    "account_equity": null,
+    "current_price": null,
+    "current_total_exposure": null,
+    "current_sector_exposure": null,
+    "sector_used": null,
+    "max_sector_exposure_usd": null,
+    "remaining_sector_capacity_usd": null,
+    "confidence": null,
+    "applied_constraint": null,
+    "skip_reason": null
+  },
+  "strategy_version_id": "breakout_momentum_v1_explicit"
+}

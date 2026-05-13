@@ -1,0 +1,61 @@
+{
+  "decision_id": "5e764a66-254c-6ff7-fe22-b4bbdd0d69e9",
+  "schema_version": "v1",
+  "generated_at": "2026-04-21T15:59:48.849920+00:00",
+  "mode": "paper",
+  "strategy_id": "breakout_momentum_v1",
+  "symbol": "DDOG",
+  "action": "deny",
+  "confidence": 0.85,
+  "signal_strength": 1.0,
+  "risk_state": "deny",
+  "deny_reasons": [
+    "position_size would exceed limit: 82 > 50"
+  ],
+  "requires_operator_approval": false,
+  "time_horizon": "2d",
+  "evidence": {
+    "feature_refs": [
+      "price_momentum"
+    ],
+    "raw_refs": [],
+    "notes": [
+      "Strong bullish momentum (22.05%) indicates breakout",
+      "position_size would exceed limit: 82 > 50"
+    ],
+    "risk_per_share": 12.697499999999998,
+    "stop_price": 112.41749999999999,
+    "latest_close": 125.115,
+    "atr": 6.348749999999999,
+    "market_regime": "neutral",
+    "macro_regime_raw": "unknown",
+    "price_regime_raw": "neutral"
+  },
+  "proposed_order": null,
+  "sizing": {
+    "final_shares": null,
+    "shares_by_risk": null,
+    "shares_by_notional": null,
+    "shares_by_exposure": null,
+    "regime_used": null,
+    "asset_class_used": null,
+    "risk_per_share": 12.697499999999998,
+    "stop_price": 112.41749999999999,
+    "latest_close": 125.115,
+    "atr": 6.348749999999999,
+    "max_loss_usd": null,
+    "max_position_notional_usd": null,
+    "remaining_exposure_capacity_usd": null,
+    "account_equity": null,
+    "current_price": null,
+    "current_total_exposure": null,
+    "current_sector_exposure": null,
+    "sector_used": null,
+    "max_sector_exposure_usd": null,
+    "remaining_sector_capacity_usd": null,
+    "confidence": null,
+    "applied_constraint": null,
+    "skip_reason": null
+  },
+  "strategy_version_id": "breakout_momentum_v1_explicit"
+}

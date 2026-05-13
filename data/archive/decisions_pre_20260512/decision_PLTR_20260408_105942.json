@@ -1,0 +1,33 @@
+{
+  "decision_id": "e124066c-8644-0fd1-fccc-71bf5f99839c",
+  "schema_version": "v1",
+  "generated_at": "2026-04-08T01:59:44.543286+00:00",
+  "mode": "paper",
+  "strategy_id": "breakout_momentum_v1",
+  "symbol": "PLTR",
+  "action": "buy",
+  "confidence": 0.8041987403778854,
+  "signal_strength": 0.9461161651504535,
+  "risk_state": "pass",
+  "deny_reasons": [],
+  "requires_operator_approval": false,
+  "time_horizon": "2d",
+  "evidence": {
+    "feature_refs": [
+      "price_momentum"
+    ],
+    "raw_refs": [],
+    "notes": [
+      "Strong bullish momentum (9.46%) indicates breakout"
+    ]
+  },
+  "proposed_order": {
+    "symbol": "PLTR",
+    "side": "buy",
+    "order_type": "market",
+    "qty": 10,
+    "time_in_force": "day",
+    "limit_price": null
+  },
+  "strategy_version_id": "breakout_momentum_v1_explicit"
+}

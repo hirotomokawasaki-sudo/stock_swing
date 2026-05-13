@@ -1,0 +1,41 @@
+{
+  "decision_id": "ea7d458d-f5d7-1b99-515e-3e969ca52524",
+  "schema_version": "v1",
+  "generated_at": "2026-04-08T02:25:56.448105+00:00",
+  "mode": "paper",
+  "strategy_id": "breakout_momentum_v1",
+  "symbol": "RBRK",
+  "action": "buy",
+  "confidence": 0.5235849056603771,
+  "signal_strength": 0.6159822419533848,
+  "risk_state": "pass",
+  "deny_reasons": [],
+  "requires_operator_approval": false,
+  "time_horizon": "2d",
+  "evidence": {
+    "feature_refs": [
+      "price_momentum"
+    ],
+    "raw_refs": [],
+    "notes": [
+      "Strong bullish momentum (6.16%) indicates breakout"
+    ],
+    "risk_per_share": 6.166499999999998,
+    "stop_price": 51.2235,
+    "latest_close": 57.39,
+    "atr": 3.083249999999999,
+    "market_regime": "bullish",
+    "macro_regime_raw": "unknown",
+    "price_regime_raw": "bullish"
+  },
+  "proposed_order": {
+    "symbol": "RBRK",
+    "side": "buy",
+    "order_type": "market",
+    "qty": 10,
+    "time_in_force": "day",
+    "limit_price": null
+  },
+  "sizing": null,
+  "strategy_version_id": "breakout_momentum_v1_explicit"
+}

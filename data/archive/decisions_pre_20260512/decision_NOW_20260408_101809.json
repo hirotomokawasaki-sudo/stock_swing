@@ -1,0 +1,33 @@
+{
+  "decision_id": "97f4c077-6ab2-14e7-ef89-90e8b3353a84",
+  "schema_version": "v1",
+  "generated_at": "2026-04-08T01:18:41.451835+00:00",
+  "mode": "paper",
+  "strategy_id": "breakout_momentum_v1",
+  "symbol": "NOW",
+  "action": "buy",
+  "confidence": 0.85,
+  "signal_strength": 1.0,
+  "risk_state": "pass",
+  "deny_reasons": [],
+  "requires_operator_approval": false,
+  "time_horizon": "2d",
+  "evidence": {
+    "feature_refs": [
+      "price_momentum"
+    ],
+    "raw_refs": [],
+    "notes": [
+      "Strong bullish momentum (17.36%) indicates breakout"
+    ]
+  },
+  "proposed_order": {
+    "symbol": "NOW",
+    "side": "buy",
+    "order_type": "market",
+    "qty": 10,
+    "time_in_force": "day",
+    "limit_price": null
+  },
+  "strategy_version_id": "breakout_momentum_v1_explicit"
+}

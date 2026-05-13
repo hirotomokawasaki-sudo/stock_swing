@@ -1,0 +1,33 @@
+{
+  "decision_id": "a543ef57-9190-4f48-55e3-c3ea9e6993cd",
+  "schema_version": "v1",
+  "generated_at": "2026-04-08T01:46:14.941708+00:00",
+  "mode": "paper",
+  "strategy_id": "breakout_momentum_v1",
+  "symbol": "ADBE",
+  "action": "buy",
+  "confidence": 0.4914960570925507,
+  "signal_strength": 0.5782306554030008,
+  "risk_state": "pass",
+  "deny_reasons": [],
+  "requires_operator_approval": false,
+  "time_horizon": "2d",
+  "evidence": {
+    "feature_refs": [
+      "price_momentum"
+    ],
+    "raw_refs": [],
+    "notes": [
+      "Strong bullish momentum (5.78%) indicates breakout"
+    ]
+  },
+  "proposed_order": {
+    "symbol": "ADBE",
+    "side": "buy",
+    "order_type": "market",
+    "qty": 10,
+    "time_in_force": "day",
+    "limit_price": null
+  },
+  "strategy_version_id": "breakout_momentum_v1_explicit"
+}

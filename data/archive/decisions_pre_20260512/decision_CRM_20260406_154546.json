@@ -1,0 +1,33 @@
+{
+  "decision_id": "49909676-a75a-ed71-21f5-529adb14d46d",
+  "schema_version": "v1",
+  "generated_at": "2026-04-06T06:45:47.495492+00:00",
+  "mode": "paper",
+  "strategy_id": "breakout_momentum_v1",
+  "symbol": "CRM",
+  "action": "buy",
+  "confidence": 0.47404785538895605,
+  "signal_strength": 0.5577033592811248,
+  "risk_state": "pass",
+  "deny_reasons": [],
+  "requires_operator_approval": false,
+  "time_horizon": "2d",
+  "evidence": {
+    "feature_refs": [
+      "price_momentum"
+    ],
+    "raw_refs": [],
+    "notes": [
+      "Strong bullish momentum (5.58%) indicates breakout"
+    ]
+  },
+  "proposed_order": {
+    "symbol": "CRM",
+    "side": "buy",
+    "order_type": "market",
+    "qty": 10,
+    "time_in_force": "day",
+    "limit_price": null
+  },
+  "strategy_version_id": "breakout_momentum_v1_explicit"
+}

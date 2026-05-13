@@ -1,0 +1,33 @@
+{
+  "decision_id": "6ada6e65-f1fa-1364-4641-fc9f48a28cd1",
+  "schema_version": "v1",
+  "generated_at": "2026-04-08T01:46:14.941192+00:00",
+  "mode": "paper",
+  "strategy_id": "breakout_momentum_v1",
+  "symbol": "MRVL",
+  "action": "buy",
+  "confidence": 0.85,
+  "signal_strength": 1.0,
+  "risk_state": "pass",
+  "deny_reasons": [],
+  "requires_operator_approval": false,
+  "time_horizon": "2d",
+  "evidence": {
+    "feature_refs": [
+      "price_momentum"
+    ],
+    "raw_refs": [],
+    "notes": [
+      "Strong bullish momentum (12.55%) indicates breakout"
+    ]
+  },
+  "proposed_order": {
+    "symbol": "MRVL",
+    "side": "buy",
+    "order_type": "market",
+    "qty": 10,
+    "time_in_force": "day",
+    "limit_price": null
+  },
+  "strategy_version_id": "breakout_momentum_v1_explicit"
+}
