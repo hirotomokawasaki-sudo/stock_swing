@@ -86,6 +86,38 @@ def _infer_price_based_regime(momentum_results: list) -> str:
         return "cautious"
     return "neutral"
 
+
+def _select_intraday_candidate_symbols(
+    breakout_signals: list,
+    limit: int | None = None,
+) -> list[str]:
+    """Select symbols that deserve intraday confirmation.
+
+    The intraday feature only enhances breakout signals today, so we first run
+    the cheaper daily pass on the full universe, then fetch intraday bars only
+    for the breakout candidates that survived the daily filter.
+    """
+    ranked = sorted(
+        breakout_signals,
+        key=lambda signal: (
+            float(getattr(signal, "signal_strength", 0.0) or 0.0),
+            float(getattr(signal, "confidence", 0.0) or 0.0),
+            getattr(signal, "symbol", ""),
+        ),
+        reverse=True,
+    )
+    symbols: list[str] = []
+    seen: set[str] = set()
+    for signal in ranked:
+        symbol = str(getattr(signal, "symbol", "") or "").upper()
+        if not symbol or symbol in seen:
+            continue
+        seen.add(symbol)
+        symbols.append(symbol)
+        if limit is not None and limit > 0 and len(symbols) >= limit:
+            break
+    return symbols
+
 # Unified paper-demo / monitoring universe
 # Stocks: existing core AI stocks + approved additional normal stocks
 # ETFs: approved normal ETFs only (no leveraged / inverse / bear / short / yield-enhanced ETFs)
@@ -119,6 +151,8 @@ def main() -> int:  # noqa: C901
     parser.add_argument("--bar-limit", type=int, default=20)
     parser.add_argument("--min-momentum", type=float, default=0.025)
     parser.add_argument("--min-signal-strength", type=float, default=0.52)
+    parser.add_argument("--intraday-candidate-limit", type=int, default=0,
+                        help="Max symbols to fetch 5-minute intraday bars for after daily screening (0 = all daily breakout candidates)")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--allow-outside-hours", action="store_true")
     parser.add_argument("--telegram", action="store_true", help="Send summary to Telegram")
@@ -271,78 +305,18 @@ def main() -> int:  # noqa: C901
         return 1
     print(f"\n  Total records: {len(all_records)} (fetched with {max_workers} parallel workers)")
 
-    # 5b. Intraday data collection (5-minute bars for intraday momentum)
-    _section("5b. Data Collection (5-Minute Intraday Bars)")
-    intraday_records: list[CanonicalRecord] = []
-    
-    # Enable/disable intraday feature via environment variable
-    use_intraday = os.environ.get("PAPER_DEMO_USE_INTRADAY", "true").lower() == "true"
-    
-    if use_intraday:
-        def fetch_intraday_bars(symbol: str) -> tuple[str, list[CanonicalRecord], int, str | None]:
-            """Fetch 5-minute bars for intraday momentum analysis."""
-            try:
-                # Fetch ~8 hours of 5-minute bars (100 bars = 500 minutes ≈ 8.3 hours)
-                raw = broker.fetch_bars(symbol, timeframe="5Min", limit=100)
-                bar_count = len(raw.payload.get("bars", []))
-                records = normalizer.normalize(raw)
-                return (symbol, records, bar_count, None)
-            except Exception as exc:
-                return (symbol, [], 0, str(exc))
-        
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {executor.submit(fetch_intraday_bars, sym): sym for sym in symbols}
-            for future in as_completed(futures):
-                symbol, records, bar_count, error = future.result()
-                if error:
-                    print(f"  WARN: {symbol:<6} intraday fetch failed: {error}")
-                else:
-                    intraday_records.extend(records)
-                    print(f"  OK: {symbol:<6} {bar_count:3d} 5-min bars -> {len(records):3d} records")
-        
-        print(f"\n  Total intraday records: {len(intraday_records)}")
-        if not intraday_records:
-            print("  WARN: No intraday data fetched. Intraday momentum feature will be skipped.")
-    else:
-        print("  Intraday feature disabled (set PAPER_DEMO_USE_INTRADAY=true to enable)")
-
-    # 6. Features
+    # 6. Features (daily pass on full universe)
     _section("6. Feature Computation")
     momentum_feat = PriceMomentumFeature(period_days=args.bar_limit)
     macro_feat = MacroRegimeFeature()
     momentum_results = momentum_feat.compute(all_records)
     macro_results = macro_feat.compute([])
-    
-    # Compute intraday momentum if data available
-    intraday_results = []
-    if intraday_records:
-        # Load optimal parameters from config
-        intraday_config_path = project_root / "config" / "features" / "intraday_momentum.yaml"
-        if intraday_config_path.exists():
-            with open(intraday_config_path) as f:
-                intraday_config = yaml.safe_load(f)
-            lookback_bars = intraday_config.get('lookback_bars', 25)
-            smoothing_window = intraday_config.get('smoothing_window', 5)
-            vwap_threshold = intraday_config.get('vwap_threshold', 0.005)
-        else:
-            # Fallback to optimal defaults
-            lookback_bars = 25
-            smoothing_window = 5
-            vwap_threshold = 0.005
-        
-        intraday_feat = IntradayMomentumFeature(
-            lookback_bars=lookback_bars,
-            smoothing_window=smoothing_window,
-            vwap_threshold=vwap_threshold
-        )
-        intraday_results = intraday_feat.compute(intraday_records)
-        print(f"  Intraday momentum computed: {len(intraday_results)} symbols (lookback={lookback_bars})")
-    
+
     detected_regime = macro_results[0].values.get('regime', 'unknown') if macro_results else 'unknown'
     macro_based_regime = 'bullish' if detected_regime == 'expansion' else ('cautious' if detected_regime in {'recession', 'high_volatility'} else 'neutral')
     price_based_regime = _infer_price_based_regime(momentum_results)
     regime_for_sizing = price_based_regime if detected_regime == 'unknown' else macro_based_regime
-    all_features = momentum_results + intraday_results + macro_results
+    daily_features = momentum_results + macro_results
 
     print(f"  Macro regime: {detected_regime}")
     print(f"  Price regime: {price_based_regime}")
@@ -356,22 +330,10 @@ def main() -> int:  # noqa: C901
         t = f.values.get("trend", "?")
         b = f.values.get("bars_used", 0)
         print(f"  {f.symbol:<6}  {m:>+10.2%}  {t:<10}  {b:>5}")
-    
-    # Display intraday momentum if available
-    if intraday_results:
-        print()
-        print(f"  Intraday Momentum (5-min bars):")
-        print(f"  {'Symbol':<6}  {'Smoothed':>10}  {'VWAP Signal':<12}  {'Vol%':>6}")
-        print(f"  {'------':<6}  {'--------':>10}  {'------------':<12}  {'----':>6}")
-        for f in sorted(intraday_results, key=lambda x: x.values.get("smoothed_momentum", 0), reverse=True):
-            sm = f.values.get("smoothed_momentum", 0)
-            vwap_sig = f.values.get("vwap_signal", "unknown")
-            iv = f.values.get("intraday_volatility", 0) or 0
-            print(f"  {f.symbol:<6}  {sm:>+10.2%}  {vwap_sig:<12}  {iv:>6.2%}")
 
     # 7. Strategy signals
     _section("7. Strategy Signals")
-    
+
     # First, get current positions for exit strategy
     current_positions_full: dict[str, dict] = {}
     current_positions: dict[str, int] = {}
@@ -387,21 +349,103 @@ def main() -> int:  # noqa: C901
                     current_positions_full[sym] = pos
     except Exception as exc:
         print(f"  WARN: Could not fetch positions for exit strategy: {exc}")
-    
-    # Entry strategies
+
+    # Entry strategies: first pass on daily features only.
     breakout_strat = BreakoutMomentumStrategy(
         min_momentum=args.min_momentum,
         min_signal_strength=args.min_signal_strength,
     )
     event_strat = EventSwingStrategy()
-    breakout_signals = breakout_strat.generate(all_features)
-    event_signals = event_strat.generate(all_features)
-    
+    breakout_signals = breakout_strat.generate(daily_features)
+    event_signals = event_strat.generate(daily_features)
+
+    # 7b. Intraday data collection (5-minute bars for breakout candidates only)
+    _section("7b. Data Collection (5-Minute Intraday Bars)")
+    intraday_records: list[CanonicalRecord] = []
+    intraday_results = []
+
+    use_intraday = os.environ.get("PAPER_DEMO_USE_INTRADAY", "true").lower() == "true"
+    intraday_candidate_limit = args.intraday_candidate_limit if args.intraday_candidate_limit and args.intraday_candidate_limit > 0 else None
+    intraday_candidates = _select_intraday_candidate_symbols(breakout_signals, intraday_candidate_limit)
+
+    if use_intraday and intraday_candidates:
+        print(
+            f"  Two-stage fetch enabled: {len(symbols)} daily symbols -> "
+            f"{len(intraday_candidates)} intraday candidate(s)"
+        )
+
+        def fetch_intraday_bars(symbol: str) -> tuple[str, list[CanonicalRecord], int, str | None]:
+            """Fetch 5-minute bars for intraday momentum analysis."""
+            try:
+                # Fetch ~8 hours of 5-minute bars (100 bars = 500 minutes ≈ 8.3 hours)
+                raw = broker.fetch_bars(symbol, timeframe="5Min", limit=100)
+                bar_count = len(raw.payload.get("bars", []))
+                records = normalizer.normalize(raw)
+                return (symbol, records, bar_count, None)
+            except Exception as exc:
+                return (symbol, [], 0, str(exc))
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(fetch_intraday_bars, sym): sym for sym in intraday_candidates}
+            for future in as_completed(futures):
+                symbol, records, bar_count, error = future.result()
+                if error:
+                    print(f"  WARN: {symbol:<6} intraday fetch failed: {error}")
+                else:
+                    intraday_records.extend(records)
+                    print(f"  OK: {symbol:<6} {bar_count:3d} 5-min bars -> {len(records):3d} records")
+
+        print(f"\n  Total intraday records: {len(intraday_records)}")
+        if not intraday_records:
+            print("  WARN: No intraday data fetched. Intraday momentum feature will be skipped.")
+    elif not use_intraday:
+        print("  Intraday feature disabled (set PAPER_DEMO_USE_INTRADAY=true to enable)")
+    else:
+        print("  No breakout candidates from daily pass. Skipping intraday fetch.")
+
+    # Compute intraday momentum if data available
+    if intraday_records:
+        # Load optimal parameters from config
+        intraday_config_path = project_root / "config" / "features" / "intraday_momentum.yaml"
+        if intraday_config_path.exists():
+            with open(intraday_config_path) as f:
+                intraday_config = yaml.safe_load(f)
+            lookback_bars = intraday_config.get('lookback_bars', 25)
+            smoothing_window = intraday_config.get('smoothing_window', 5)
+            vwap_threshold = intraday_config.get('vwap_threshold', 0.005)
+        else:
+            # Fallback to optimal defaults
+            lookback_bars = 25
+            smoothing_window = 5
+            vwap_threshold = 0.005
+
+        intraday_feat = IntradayMomentumFeature(
+            lookback_bars=lookback_bars,
+            smoothing_window=smoothing_window,
+            vwap_threshold=vwap_threshold
+        )
+        intraday_results = intraday_feat.compute(intraday_records)
+        print(f"  Intraday momentum computed: {len(intraday_results)} symbols (lookback={lookback_bars})")
+
+    all_features = daily_features + intraday_results
+
+    # Display intraday momentum if available
+    if intraday_results:
+        print()
+        print(f"  Intraday Momentum (5-min bars):")
+        print(f"  {'Symbol':<6}  {'Smoothed':>10}  {'VWAP Signal':<12}  {'Vol%':>6}")
+        print(f"  {'------':<6}  {'--------':>10}  {'------------':<12}  {'----':>6}")
+        for f in sorted(intraday_results, key=lambda x: x.values.get("smoothed_momentum", 0), reverse=True):
+            sm = f.values.get("smoothed_momentum", 0)
+            vwap_sig = f.values.get("vwap_signal", "unknown")
+            iv = f.values.get("intraday_volatility", 0) or 0
+            print(f"  {f.symbol:<6}  {sm:>+10.2%}  {vwap_sig:<12}  {iv:>6.2%}")
+
     # Enhance signals with intraday momentum (Hybrid Strategy)
     if intraday_results:
         # Create intraday lookup by symbol
         intraday_by_symbol = {f.symbol: f for f in intraday_results}
-        
+
         # Load intraday config for thresholds
         intraday_config_path = project_root / "config" / "features" / "intraday_momentum.yaml"
         if intraday_config_path.exists():
@@ -410,15 +454,15 @@ def main() -> int:  # noqa: C901
             momentum_threshold = intraday_config.get('signal_criteria', {}).get('momentum_threshold', 0.003)
         else:
             momentum_threshold = 0.003  # 0.3% optimal threshold
-        
+
         enhanced_breakout_signals = []
         for signal in breakout_signals:
             intraday_feat = intraday_by_symbol.get(signal.symbol)
-            
+
             if intraday_feat:
                 smoothed_mom = intraday_feat.values.get('smoothed_momentum', 0)
                 vwap_signal = intraday_feat.values.get('vwap_signal', 'neutral')
-                
+
                 # Boost confidence if intraday confirms (both bullish + VWAP favorable)
                 if smoothed_mom > momentum_threshold and vwap_signal != 'below_vwap':
                     # High confidence: both daily and intraday bullish
@@ -441,7 +485,7 @@ def main() -> int:  # noqa: C901
             else:
                 # No intraday data, keep original
                 enhanced_breakout_signals.append(signal)
-        
+
         breakout_signals = enhanced_breakout_signals
     
     # Exit strategy for current positions (V2 with trailing stop)
