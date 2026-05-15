@@ -15,7 +15,7 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 project_root = Path(__file__).resolve().parents[3]
@@ -47,6 +47,24 @@ def _format_runtime_mode(runtime_mode: str) -> str:
         "backtest": "バックテスト",
     }
     return mapping.get(str(runtime_mode or "").strip().lower(), runtime_mode or "不明")
+
+
+def _next_report_schedule_text(today_utc: date | None = None) -> str:
+    today_utc = today_utc or datetime.now(timezone.utc).date()
+    jst = timezone(timedelta(hours=9))
+    today_jst = datetime.combine(today_utc, datetime.min.time(), tzinfo=timezone.utc).astimezone(jst).date()
+    weekday = today_jst.weekday()
+
+    if weekday <= 3:  # Mon-Thu JST -> next day 09:00 JST
+        next_date = today_jst + timedelta(days=1)
+    elif weekday == 4:  # Fri JST -> Saturday report for Friday US session
+        next_date = today_jst + timedelta(days=1)
+    elif weekday == 5:  # Sat JST -> next Tuesday 09:00 JST
+        next_date = today_jst + timedelta(days=3)
+    else:  # Sun JST -> next Tuesday 09:00 JST
+        next_date = today_jst + timedelta(days=2)
+
+    return f"次回レポート予定: {next_date.isoformat()} 09:00 JST"
 
 
 def _load_broker_snapshot(tracker_open_positions: list[dict]) -> dict[str, object]:
@@ -299,11 +317,13 @@ def _build_report(
 ) -> list[str]:
     lines = []
     lines.append("📈 stock_swing 日次レポート")
+    generated_at = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=9))).strftime("%Y-%m-%d %H:%M JST")
     lines.append(f"🗓  {today}  |  モード: {_format_runtime_mode(runtime_mode)}")
+    lines.append(f"🕒  集計時刻: {generated_at}")
     lines.append("")
 
     # Account
-    lines.append("💰 口座情報 (ペーパー)")
+    lines.append(f"💰 口座情報 ({_format_runtime_mode(runtime_mode)})")
     lines.append(f"  ステータス    : {account_status}")
     lines.append(f"  資産総額      : ${equity:>12,.2f}")
     lines.append(f"  買付余力      : ${buying_power:>12,.2f}")
@@ -410,7 +430,7 @@ def _build_report(
         lines.append("")
 
     lines.append("─" * 40)
-    lines.append(f"次回実行: 日本時間 22:30 (米国プレマーケット)")
+    lines.append(_next_report_schedule_text())
     return lines
 
 
