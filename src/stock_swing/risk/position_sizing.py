@@ -20,6 +20,10 @@ REGIME_LIMITS = {
     "unknown": 0.75,  # Same as neutral when regime is uncertain
 }
 
+DEFAULT_MAX_POSITION_NOTIONAL_PCT = 0.06
+DEFAULT_MAX_SECTOR_EXPOSURE_PCT = 0.55
+ETF_POSITION_SIZE_MULTIPLIER = 0.70
+
 ETF_SYMBOLS = {
     'SHOC','SOXQ','SOXX','SMH','FTXL','PTF','SMHX','FRWD','TTEQ','GTOP','CHPX','CHPS','PSCT','QTEC','TDIV','SKYY','QTUM'
 }
@@ -40,11 +44,11 @@ class PositionSizingInputs:
     symbol: str | None = None
     asset_class: str | None = None
     max_risk_per_trade_pct: float = 0.005  # 0.5% risk per trade
-    max_position_notional_pct: float = 0.08  # 8% max position size (optimal for $1M capital)
+    max_position_notional_pct: float = DEFAULT_MAX_POSITION_NOTIONAL_PCT
     default_stop_pct: float = 0.05
     risk_per_share: float | None = None
     current_sector_exposure: float = 0.0
-    max_sector_exposure_pct: float = 0.80  # Increased from 0.50 to 0.80 (2026-04-26: limited universe)
+    max_sector_exposure_pct: float = DEFAULT_MAX_SECTOR_EXPOSURE_PCT
     confidence: float | None = None
 
 
@@ -67,6 +71,19 @@ class PositionSizingResult:
     skip_reason: str | None = None
 
 
+def classify_asset_class(symbol: str | None, asset_class: str | None = None) -> str:
+    symbol = (symbol or '').upper()
+    return asset_class or ('etf' if symbol in ETF_SYMBOLS else 'stock')
+
+
+def effective_position_notional_pct(symbol: str | None, asset_class: str | None = None, base_pct: float = DEFAULT_MAX_POSITION_NOTIONAL_PCT) -> float:
+    resolved_asset_class = classify_asset_class(symbol, asset_class)
+    pct = float(base_pct)
+    if resolved_asset_class == 'etf':
+        pct *= ETF_POSITION_SIZE_MULTIPLIER
+    return round(pct, 6)
+
+
 class PositionSizingPolicy:
     """Hybrid sizing policy using risk, notional, and exposure caps."""
 
@@ -77,7 +94,7 @@ class PositionSizingPolicy:
         regime = (inputs.market_regime or "neutral").lower()
         regime_limit = REGIME_LIMITS.get(regime, REGIME_LIMITS["neutral"])
         symbol = (inputs.symbol or '').upper()
-        asset_class = inputs.asset_class or ('etf' if symbol in ETF_SYMBOLS else 'stock')
+        asset_class = classify_asset_class(symbol, inputs.asset_class)
         sector = SYMBOL_SECTORS.get(symbol)
 
         if equity <= 0:
@@ -92,9 +109,7 @@ class PositionSizingPolicy:
             return self._empty(inputs, regime, "invalid_risk_per_share")
 
         max_loss_usd = equity * float(inputs.max_risk_per_trade_pct)
-        notional_pct = float(inputs.max_position_notional_pct)
-        if asset_class == 'etf':
-            notional_pct = max(notional_pct, 0.08)  # Reduced from 0.10 to 0.08 for better ETF diversification
+        notional_pct = effective_position_notional_pct(symbol, asset_class, float(inputs.max_position_notional_pct))
         max_position_notional_usd = equity * notional_pct
         max_total_exposure_usd = equity * regime_limit
         remaining_capacity = max_total_exposure_usd - exposure
@@ -164,7 +179,7 @@ class PositionSizingPolicy:
             remaining_sector_capacity_usd=0.0,
             risk_per_share_used=0.0,
             regime_used=regime,
-            asset_class_used=(inputs.asset_class or ('etf' if (inputs.symbol or '').upper() in ETF_SYMBOLS else 'stock')),
+            asset_class_used=classify_asset_class(inputs.symbol, inputs.asset_class),
             sector_used=SYMBOL_SECTORS.get((inputs.symbol or '').upper()),
             skip_reason=reason,
         )

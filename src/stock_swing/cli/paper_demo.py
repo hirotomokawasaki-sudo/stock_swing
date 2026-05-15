@@ -655,11 +655,9 @@ def main() -> int:  # noqa: C901
     pnl_tracker = PnLTracker(project_root)
     submissions: list[OrderSubmission] = []
     
-    # Symbol-level position size limit (8% of equity per symbol, 15% for ETFs)
-    # Adjusted to 8%/15% for optimal balance of diversification and impact (2026-05-01)
-    MAX_POSITION_PER_SYMBOL_PCT = 0.08  # $80K per stock @ $1M equity
-    MAX_POSITION_PER_ETF_PCT = 0.15      # $150K per ETF @ $1M equity
-    max_position_per_symbol = equity * MAX_POSITION_PER_SYMBOL_PCT
+    # Symbol-level position size limit.
+    # 2026-05-15 risk tightening: stocks use 6% of equity, ETFs use 70% of that cap
+    # to reduce concentration in thematic / sector products.
 
     for decision in actionable:
         o = decision.proposed_order
@@ -669,9 +667,10 @@ def main() -> int:  # noqa: C901
                 existing_pos = current_positions_full[o.symbol]
                 existing_value = float(existing_pos.get('market_value', 0))
                 
-                # Determine position limit (higher for ETFs)
+                # Determine position limit using the same sizing policy as order generation.
+                from stock_swing.risk.position_sizing import effective_position_notional_pct
                 is_etf = o.symbol in ETF_SYMBOLS
-                position_limit_pct = MAX_POSITION_PER_ETF_PCT if is_etf else MAX_POSITION_PER_SYMBOL_PCT
+                position_limit_pct = effective_position_notional_pct(o.symbol)
                 max_position_value = equity * position_limit_pct
                 
                 # Get estimated order value
