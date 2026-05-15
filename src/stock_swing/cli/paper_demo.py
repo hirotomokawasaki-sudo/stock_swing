@@ -123,9 +123,9 @@ def _select_intraday_candidate_symbols(
 # ETFs: approved normal ETFs only (no leveraged / inverse / bear / short / yield-enhanced ETFs)
 #
 # 2026-05-15 CRITICAL UPDATE:
-# ALL ETFs have been REMOVED due to stale broker data (last update: 2026-04-22)
-# This caused 15-40% price deviations leading to incorrect entry/exit decisions.
-# ETF total loss: -$9,367.59 across 37 trades.
+# Alpaca fetch_bars() stopped updating ALL symbols (stocks + ETFs) on 2026-04-22.
+# SOLUTION: Use Massive API for historical bars (provides fresh data for all symbols).
+# Hybrid fetcher: Massive primary, Broker fallback.
 # See docs/daily_logs/2026-05-15_exit_investigation.md for full analysis.
 #
 DEFAULT_SYMBOLS = [
@@ -139,22 +139,19 @@ DEFAULT_SYMBOLS = [
     "SMCI", "PANW", "CRWD", "FTNT", "ANET", "CSCO", "IBM",
     # Hardware & Networking
     "HPE", "DELL", "HPQ", "SNPS", "CDNS", "NBIS", "CRDO", "RBRK", "CIEN",
-    # Note: SHOC removed - was showing stale data patterns
-    # ETFs DISABLED (stale broker data since 2026-04-22):
-    # "SOXQ", "SOXX", "SMH", "FTXL", "PTF", "SMHX", "FRWD", "TTEQ",
-    # "GTOP", "CHPX", "CHPS", "PSCT", "QTEC", "TDIV", "SKYY", "QTUM",
+    # ETFs (re-enabled with Massive API)
+    "SOXQ", "SOXX", "SMH", "FTXL", "PTF", "SMHX", "FRWD", "TTEQ",
+    "GTOP", "CHPX", "CHPS", "PSCT", "QTEC", "TDIV", "SKYY", "QTUM",
 ]
 
 # Legacy CLI compatibility: "full" maps to the unified universe as well.
 TECH_UNIVERSE_FULL = DEFAULT_SYMBOLS
 
 # ETF symbols for portfolio allocation
-# 2026-05-15: All ETFs temporarily disabled due to stale broker data (stopped 2026-04-22)
-# This caused systematic -$9,367 loss across 37 ETF trades due to 15-40% price deviations.
+# 2026-05-15: Re-enabled with Massive API providing fresh data
 ETF_SYMBOLS = {
-    # Temporarily disabled - broker fetch_bars() returns stale data
-    # 'SOXQ', 'SOXX', 'SMH', 'FTXL', 'PTF', 'SMHX', 'FRWD', 
-    # 'TTEQ', 'GTOP', 'CHPX', 'CHPS', 'PSCT', 'QTEC', 'TDIV', 'SKYY', 'QTUM'
+    'SOXQ', 'SOXX', 'SMH', 'FTXL', 'PTF', 'SMHX', 'FRWD', 
+    'TTEQ', 'GTOP', 'CHPX', 'CHPS', 'PSCT', 'QTEC', 'TDIV', 'SKYY', 'QTUM'
 }
 
 
@@ -291,36 +288,55 @@ def main() -> int:  # noqa: C901
     )
     audit_log.log_system_event("paper_demo_start", details=f"symbols={symbols} dry_run={args.dry_run}")
 
-    # 5. Data collection (parallel)
-    _section("5. Data Collection (Broker Bars)")
-    normalizer = BrokerNormalizer()
+    # 5. Data collection (hybrid: Massive primary, Broker fallback)
+    _section("5. Data Collection (Hybrid: Massive Primary, Broker Fallback)")
+    
+    # Initialize hybrid fetcher (prefers Massive for all symbols)
+    # 2026-05-15: Alpaca fetch_bars() stopped updating ALL symbols on 2026-04-22
+    from stock_swing.sources.hybrid_data_fetcher import HybridDataFetcher
+    hybrid_fetcher = HybridDataFetcher(
+        broker_client=broker,
+        etf_symbols=ETF_SYMBOLS,
+        massive_api_key=os.environ.get("MASSIVE_API_KEY")
+    )
+    
     all_records: list[CanonicalRecord] = []
     max_workers = int(os.environ.get("PAPER_DEMO_MAX_WORKERS", "8"))
 
-    def fetch_single_symbol(symbol: str) -> tuple[str, list[CanonicalRecord], int, str | None]:
-        """Fetch bars for a single symbol. Returns (symbol, records, bar_count, error)."""
+    def fetch_single_symbol(symbol: str) -> tuple[str, list[CanonicalRecord], int, str | None, str]:
+        """Fetch bars for a single symbol. Returns (symbol, records, bar_count, error, source)."""
         try:
-            raw = broker.fetch_bars(symbol, timeframe=args.timeframe, limit=args.bar_limit)
-            bar_count = len(raw.payload.get("bars", []))
-            records = normalizer.normalize(raw)
-            return (symbol, records, bar_count, None)
+            records, source = hybrid_fetcher.fetch_bars(
+                symbol,
+                timeframe=args.timeframe,
+                limit=args.bar_limit
+            )
+            bar_count = len(records)
+            if source == "failed":
+                return (symbol, [], 0, "Fetch failed", source)
+            return (symbol, records, bar_count, None, source)
         except Exception as exc:
-            return (symbol, [], 0, str(exc))
+            return (symbol, [], 0, str(exc), "failed")
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(fetch_single_symbol, symbol): symbol for symbol in symbols}
+        source_counts = {"massive": 0, "broker": 0, "failed": 0}
         for future in as_completed(futures):
-            symbol, records, bar_count, error = future.result()
+            symbol, records, bar_count, error, source = future.result()
+            source_counts[source] += 1
             if error:
                 print(f"  WARN: {symbol:<6} fetch failed: {error}")
             else:
                 all_records.extend(records)
-                print(f"  OK: {symbol:<6} {bar_count:3d} bars -> {len(records):3d} records")
+                source_icon = "📊" if source == "massive" else "📈"
+                print(f"  OK: {symbol:<6} {bar_count:3d} bars -> {len(records):3d} records [{source_icon} {source}]")
 
     if not all_records:
         print("\n  ERROR: No data fetched. Cannot proceed.")
         return 1
-    print(f"\n  Total records: {len(all_records)} (fetched with {max_workers} parallel workers)")
+    print(f"\n  Total records: {len(all_records)}")
+    print(f"  Sources: Massive={source_counts['massive']}, Broker={source_counts['broker']}, Failed={source_counts['failed']}")
+    print(f"  Workers: {max_workers} parallel")
 
     # 6. Features (daily pass on full universe)
     _section("6. Feature Computation")
