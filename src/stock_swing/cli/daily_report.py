@@ -168,6 +168,7 @@ def main() -> int:
     parser.add_argument("--save", action="store_true", help="Save report to data/audits/")
     parser.add_argument("--telegram", action="store_true", help="Send report to Telegram")
     parser.add_argument("--silent", action="store_true", help="Send Telegram notification silently")
+    parser.add_argument("--mode", choices=["brief", "full"], default="full", help="Report mode: brief (morning summary) or full (detailed)")
     args = parser.parse_args()
     
     try:
@@ -276,6 +277,7 @@ def _main_impl(args) -> int:
         latest_sizing=latest_sizing,
         account_summaries=account_summaries,
         positions_source=positions_source,
+        mode=args.mode,
     )
     report_text = "\n".join(lines)
     print(report_text)
@@ -314,6 +316,7 @@ def _build_report(
     latest_sizing: list,
     account_summaries: dict | None = None,
     positions_source: str = "tracker",
+    mode: str = "full",
 ) -> list[str]:
     lines = []
     lines.append("📈 stock_swing 日次レポート")
@@ -334,15 +337,20 @@ def _build_report(
 
     # Performance
     lines.append("📊 パフォーマンス (運用開始以降)")
-    lines.append(f"  決済取引数    : {summary['closed_trades']}")
-    lines.append(f"  勝 / 負       : {summary['winning_trades']} / {summary['losing_trades']}")
-    wr = summary['win_rate']
-    lines.append(f"  勝率          : {wr:.1%}" + (" 🔥" if wr >= 0.6 else (" ⚠️" if wr < 0.4 else "")))
-    avg_return = summary.get('avg_return_per_trade')
-    lines.append(f"  平均リターン  : {avg_return:>+.2%}" if avg_return is not None else "  平均リターン  : 取得不可")
-    lines.append(f"  平均損益/取引 : ${summary['avg_pnl_per_trade']:>+,.2f}")
-    lines.append(f"  最大DD        : {summary['max_drawdown_pct']:.2%}")
-    lines.append(f"  取引日数      : {summary['trading_days']}")
+    if mode == "brief":
+        lines.append(f"  決済取引数    : {summary['closed_trades']}")
+        wr = summary['win_rate']
+        lines.append(f"  勝率          : {wr:.1%}" + (" 🔥" if wr >= 0.6 else (" ⚠️" if wr < 0.4 else "")))
+    else:
+        lines.append(f"  決済取引数    : {summary['closed_trades']}")
+        lines.append(f"  勝 / 負       : {summary['winning_trades']} / {summary['losing_trades']}")
+        wr = summary['win_rate']
+        lines.append(f"  勝率          : {wr:.1%}" + (" 🔥" if wr >= 0.6 else (" ⚠️" if wr < 0.4 else "")))
+        avg_return = summary.get('avg_return_per_trade')
+        lines.append(f"  平均リターン  : {avg_return:>+.2%}" if avg_return is not None else "  平均リターン  : 取得不可")
+        lines.append(f"  平均損益/取引 : ${summary['avg_pnl_per_trade']:>+,.2f}")
+        lines.append(f"  最大DD        : {summary['max_drawdown_pct']:.2%}")
+        lines.append(f"  取引日数      : {summary['trading_days']}")
     lines.append("")
     
     # Account-specific summaries (if multiple accounts)
@@ -359,27 +367,33 @@ def _build_report(
     if open_pos:
         source_label = "ブローカー" if positions_source == "broker" else "トラッカー"
         lines.append(f"📂 保有ポジション ({len(open_pos)}件 / ソース: {source_label})")
-        for pos in open_pos:
-            sym = pos["symbol"]
-            entry = float(pos.get("entry_price") or pos.get("avg_entry_price") or 0.0)
-            qty = pos.get("qty")
-            curr = pos.get("current_price") or current_prices.get(sym)
-            unreal = pos.get("unrealized_pnl")
-            unreal_pct = pos.get("unrealized_pnl_pct")
-            if curr:
-                curr = float(curr)
-                qty_val = float(qty or 0.0)
-                if unreal is None:
-                    unreal = (curr - entry) * qty_val
-                if unreal_pct is None and entry:
-                    unreal_pct = (curr - entry) / entry
-                lines.append(
-                    f"  {sym:<6} {qty:>4}株  取得=${entry:,.2f}"
-                    f"  現在=${curr:,.2f}"
-                    f"  含損益={(float(unreal_pct) if unreal_pct is not None else 0.0):>+.1%} (${float(unreal):>+,.0f})"
-                )
-            else:
-                lines.append(f"  {sym:<6} {qty:>4}株  取得=${entry:,.2f}")
+        if mode == "brief":
+            # Brief mode: just list symbols
+            symbols = [pos.get("symbol") or "?" for pos in open_pos]
+            lines.append(f"  {', '.join(symbols)}")
+        else:
+            # Full mode: show details
+            for pos in open_pos:
+                sym = pos["symbol"]
+                entry = float(pos.get("entry_price") or pos.get("avg_entry_price") or 0.0)
+                qty = pos.get("qty")
+                curr = pos.get("current_price") or current_prices.get(sym)
+                unreal = pos.get("unrealized_pnl")
+                unreal_pct = pos.get("unrealized_pnl_pct")
+                if curr:
+                    curr = float(curr)
+                    qty_val = float(qty or 0.0)
+                    if unreal is None:
+                        unreal = (curr - entry) * qty_val
+                    if unreal_pct is None and entry:
+                        unreal_pct = (curr - entry) / entry
+                    lines.append(
+                        f"  {sym:<6} {qty:>4}株  取得=${entry:,.2f}"
+                        f"  現在=${curr:,.2f}"
+                        f"  含損益={(float(unreal_pct) if unreal_pct is not None else 0.0):>+.1%} (${float(unreal):>+,.0f})"
+                    )
+                else:
+                    lines.append(f"  {sym:<6} {qty:>4}株  取得=${entry:,.2f}")
         lines.append("")
     else:
         lines.append("📂 保有ポジション: なし")
@@ -387,8 +401,9 @@ def _build_report(
 
     # Recent trades
     if recent:
-        lines.append(f"🔄 最近の決済取引 (直近{len(recent)}件)")
-        for t in reversed(recent):
+        display_count = 3 if mode == "brief" else len(recent)
+        lines.append(f"🔄 最近の決済取引 (直近{display_count}件)")
+        for t in list(reversed(recent))[:display_count]:
             pnl = t.get("pnl") or 0
             ret = t.get("return_pct") or 0
             icon = "✅" if pnl >= 0 else "❌"
@@ -396,17 +411,20 @@ def _build_report(
             side_ja = "買い" if side == "BUY" else "売り"
             symbol = t.get("symbol") or "?"
             strategy_id = t.get("strategy_id") or t.get("strategy") or "unknown"
-            lines.append(
-                f"  {icon} {symbol:<6} {side_ja}"
-                f"  損益: ${pnl:>+,.2f} ({ret:>+.1%})"
-                f"  [{strategy_id}]"
-            )
+            if mode == "brief":
+                lines.append(f"  {icon} {symbol:<6}  ${pnl:>+,.2f} ({ret:>+.1%})")
+            else:
+                lines.append(
+                    f"  {icon} {symbol:<6} {side_ja}"
+                    f"  損益: ${pnl:>+,.2f} ({ret:>+.1%})"
+                    f"  [{strategy_id}]"
+                )
         lines.append("")
     else:
         lines.append("🔄 決済取引なし")
         lines.append("")
 
-    if latest_sizing:
+    if mode == "full" and latest_sizing:
         lines.append(f"📏 最新のポジションサイズ根拠 (直近{min(len(latest_sizing), 5)}件)")
         seen = set()
         count = 0
