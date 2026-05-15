@@ -40,6 +40,90 @@ from stock_swing.sources.broker_client import BrokerClient
 from stock_swing.tracking.pnl_tracker import PnLTracker
 
 
+def _format_runtime_mode(runtime_mode: str) -> str:
+    mapping = {
+        "paper": "ペーパー",
+        "live": "ライブ",
+        "backtest": "バックテスト",
+    }
+    return mapping.get(str(runtime_mode or "").strip().lower(), runtime_mode or "不明")
+
+
+def _load_broker_snapshot(tracker_open_positions: list[dict]) -> dict[str, object]:
+    equity = 100_000.0
+    buying_power = 100_000.0
+    account_status = "UNKNOWN"
+    current_prices: dict[str, float] = {}
+    open_positions: list[dict] = [dict(pos) for pos in tracker_open_positions]
+    unrealized_pnl = 0.0
+    positions_source = "tracker"
+
+    broker = BrokerClient(
+        api_key=os.environ["BROKER_API_KEY"],
+        api_secret=os.environ["BROKER_API_SECRET"],
+        paper_mode=True,
+        base_url=os.environ["BROKER_BASE_URL"],
+    )
+    acct = broker.fetch_account().payload
+    equity = float(acct.get("equity", equity))
+    buying_power = float(acct.get("buying_power", buying_power))
+    account_status = acct.get("status", "UNKNOWN")
+
+    broker_positions = broker.fetch_positions().payload
+    normalized_positions: list[dict] = []
+    for pos in broker_positions or []:
+        symbol = str(pos.get("symbol") or "").strip()
+        if not symbol:
+            continue
+        qty = float(pos.get("qty") or 0.0)
+        entry_price = float(pos.get("avg_entry_price") or 0.0)
+        current_price = float(pos.get("current_price") or 0.0)
+        position_unrealized = float(pos.get("unrealized_pl") or 0.0)
+        current_prices[symbol] = current_price
+        unrealized_pnl += position_unrealized
+        normalized_positions.append(
+            {
+                "symbol": symbol,
+                "qty": int(qty) if qty.is_integer() else qty,
+                "entry_price": entry_price,
+                "current_price": current_price,
+                "unrealized_pnl": position_unrealized,
+                "unrealized_pnl_pct": float(pos.get("unrealized_plpc") or 0.0),
+                "side": pos.get("side") or "long",
+                "market_value": float(pos.get("market_value") or 0.0),
+                "cost_basis": float(pos.get("cost_basis") or 0.0),
+            }
+        )
+
+    if normalized_positions:
+        open_positions = normalized_positions
+        positions_source = "broker"
+    else:
+        for pos in open_positions:
+            sym = pos.get("symbol")
+            if not sym:
+                continue
+            try:
+                q = broker.fetch_latest_quote(sym).payload
+                quote = q.get("quote", q)
+                bid = quote.get("bp", 0) or 0
+                ask = quote.get("ap", 0) or 0
+                if bid and ask:
+                    current_prices[sym] = round((bid + ask) / 2, 4)
+            except Exception:
+                pass
+
+    return {
+        "equity": equity,
+        "buying_power": buying_power,
+        "account_status": account_status,
+        "current_prices": current_prices,
+        "open_positions": open_positions,
+        "unrealized_pnl": round(unrealized_pnl, 2),
+        "positions_source": positions_source,
+    }
+
+
 def _load_latest_decision_sizing() -> list[dict]:
     decisions_dir = project_root / "data" / "decisions"
     if not decisions_dir.exists():
@@ -80,55 +164,54 @@ def main() -> int:
 def _main_impl(args) -> int:
 
     tracker = PnLTracker(project_root)
-    summary = tracker.get_summary()
     open_pos = tracker.get_open_positions()
-    recent = tracker.get_recent_trades(5)
-    
-    # Account-specific summaries
-    accounts = tracker.list_accounts()
-    account_summaries = {acc: tracker.get_summary_by_account(acc) for acc in accounts}
 
     # Fetch live account equity from broker
     equity = 100_000.0
     buying_power = 100_000.0
     account_status = "UNKNOWN"
+    unrealized_pnl = 0.0
+    positions_source = "tracker"
     try:
-        broker = BrokerClient(
-            api_key=os.environ["BROKER_API_KEY"],
-            api_secret=os.environ["BROKER_API_SECRET"],
-            paper_mode=True,
-            base_url=os.environ["BROKER_BASE_URL"],
-        )
-        acct = broker.fetch_account().payload
-        equity = float(acct.get("equity", equity))
-        buying_power = float(acct.get("buying_power", buying_power))
-        account_status = acct.get("status", "UNKNOWN")
-
-        # Fetch current prices for open positions
-        current_prices: dict[str, float] = {}
-        for pos in open_pos:
-            sym = pos["symbol"]
-            try:
-                q = broker.fetch_latest_quote(sym).payload
-                quote = q.get("quote", q)
-                bid = quote.get("bp", 0) or 0
-                ask = quote.get("ap", 0) or 0
-                if bid and ask:
-                    current_prices[sym] = round((bid + ask) / 2, 4)
-            except Exception:
-                pass
+        broker_snapshot = _load_broker_snapshot(open_pos)
+        equity = float(broker_snapshot["equity"])
+        buying_power = float(broker_snapshot["buying_power"])
+        account_status = str(broker_snapshot["account_status"])
+        current_prices = dict(broker_snapshot["current_prices"])
+        open_pos = list(broker_snapshot["open_positions"])
+        unrealized_pnl = float(broker_snapshot["unrealized_pnl"])
+        positions_source = str(broker_snapshot["positions_source"])
 
         # Record daily snapshot
         today_audit = project_root / "data" / "audits"
         today_audit.mkdir(parents=True, exist_ok=True)
-        snap = tracker.record_daily_snapshot(
+        tracker.record_daily_snapshot(
             equity=equity,
             current_prices=current_prices,
         )
     except Exception as exc:
-        snap = None
         current_prices = {}
         print(f"[WARN] Broker fetch failed: {exc}", file=sys.stderr)
+
+    tracker.state = tracker._load_state()
+    summary = tracker.get_summary()
+    recent = tracker.get_recent_trades(5)
+
+    # Account-specific summaries
+    accounts = tracker.list_accounts()
+    account_summaries = {acc: tracker.get_summary_by_account(acc) for acc in accounts}
+
+    if positions_source != "broker":
+        unrealized_pnl = round(
+            sum(
+                ((float(current_prices.get(pos.get("symbol"), 0.0)) - float(pos.get("entry_price") or 0.0)) * float(pos.get("qty") or 0.0))
+                for pos in open_pos
+                if pos.get("symbol") in current_prices and float(pos.get("entry_price") or 0.0) > 0
+            ),
+            2,
+        )
+
+    total_pnl = round(float(summary.get("cumulative_realized_pnl") or 0.0) + unrealized_pnl, 2)
 
     today = datetime.now(timezone.utc).date().isoformat()
     runtime_mode = "?"
@@ -149,6 +232,9 @@ def _main_impl(args) -> int:
                 "buying_power": buying_power,
             },
             "performance": summary,
+            "unrealized_pnl": unrealized_pnl,
+            "total_pnl": total_pnl,
+            "positions_source": positions_source,
             "open_positions": open_pos,
             "recent_trades": recent,
             "latest_sizing": latest_sizing,
@@ -164,11 +250,14 @@ def _main_impl(args) -> int:
         equity=equity,
         buying_power=buying_power,
         summary=summary,
+        unrealized_pnl=unrealized_pnl,
+        total_pnl=total_pnl,
         open_pos=open_pos,
         recent=recent,
         current_prices=current_prices,
         latest_sizing=latest_sizing,
         account_summaries=account_summaries,
+        positions_source=positions_source,
     )
     report_text = "\n".join(lines)
     print(report_text)
@@ -199,15 +288,18 @@ def _build_report(
     equity: float,
     buying_power: float,
     summary: dict,
+    unrealized_pnl: float,
+    total_pnl: float,
     open_pos: list,
     recent: list,
     current_prices: dict,
     latest_sizing: list,
     account_summaries: dict | None = None,
+    positions_source: str = "tracker",
 ) -> list[str]:
     lines = []
     lines.append("📈 stock_swing 日次レポート")
-    lines.append(f"🗓  {today}  |  モード: {runtime_mode}")
+    lines.append(f"🗓  {today}  |  モード: {_format_runtime_mode(runtime_mode)}")
     lines.append("")
 
     # Account
@@ -215,7 +307,9 @@ def _build_report(
     lines.append(f"  ステータス    : {account_status}")
     lines.append(f"  資産総額      : ${equity:>12,.2f}")
     lines.append(f"  買付余力      : ${buying_power:>12,.2f}")
-    lines.append(f"  累積損益      : ${summary['cumulative_realized_pnl']:>+12,.2f}")
+    lines.append(f"  確定損益(累積): ${summary['cumulative_realized_pnl']:>+12,.2f}")
+    lines.append(f"  含み損益(現在): ${unrealized_pnl:>+12,.2f}")
+    lines.append(f"  合計損益(現在): ${total_pnl:>+12,.2f}")
     lines.append("")
 
     # Performance
@@ -225,7 +319,7 @@ def _build_report(
     wr = summary['win_rate']
     lines.append(f"  勝率          : {wr:.1%}" + (" 🔥" if wr >= 0.6 else (" ⚠️" if wr < 0.4 else "")))
     avg_return = summary.get('avg_return_per_trade')
-    lines.append(f"  平均リターン  : {avg_return:>+.2%}" if avg_return is not None else "  平均リターン  : N/A")
+    lines.append(f"  平均リターン  : {avg_return:>+.2%}" if avg_return is not None else "  平均リターン  : 取得不可")
     lines.append(f"  平均損益/取引 : ${summary['avg_pnl_per_trade']:>+,.2f}")
     lines.append(f"  最大DD        : {summary['max_drawdown_pct']:.2%}")
     lines.append(f"  取引日数      : {summary['trading_days']}")
@@ -243,19 +337,26 @@ def _build_report(
 
     # Open positions
     if open_pos:
-        lines.append(f"📂 保有ポジション ({len(open_pos)}件)")
+        source_label = "ブローカー" if positions_source == "broker" else "トラッカー"
+        lines.append(f"📂 保有ポジション ({len(open_pos)}件 / ソース: {source_label})")
         for pos in open_pos:
             sym = pos["symbol"]
-            entry = pos["entry_price"]
-            qty = pos["qty"]
-            curr = current_prices.get(sym)
+            entry = float(pos.get("entry_price") or pos.get("avg_entry_price") or 0.0)
+            qty = pos.get("qty")
+            curr = pos.get("current_price") or current_prices.get(sym)
+            unreal = pos.get("unrealized_pnl")
+            unreal_pct = pos.get("unrealized_pnl_pct")
             if curr:
-                unreal = (curr - entry) * qty
-                unreal_pct = (curr - entry) / entry
+                curr = float(curr)
+                qty_val = float(qty or 0.0)
+                if unreal is None:
+                    unreal = (curr - entry) * qty_val
+                if unreal_pct is None and entry:
+                    unreal_pct = (curr - entry) / entry
                 lines.append(
                     f"  {sym:<6} {qty:>4}株  取得=${entry:,.2f}"
                     f"  現在=${curr:,.2f}"
-                    f"  含損益={unreal_pct:>+.1%} (${unreal:>+,.0f})"
+                    f"  含損益={(float(unreal_pct) if unreal_pct is not None else 0.0):>+.1%} (${float(unreal):>+,.0f})"
                 )
             else:
                 lines.append(f"  {sym:<6} {qty:>4}株  取得=${entry:,.2f}")
