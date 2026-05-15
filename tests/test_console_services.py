@@ -192,6 +192,7 @@ class TestDashboardService:
             'missing_symbols': ['MRVL', 'CIEN'],
             'stale_symbols': ['DELL'],
         })
+        monkeypatch.setattr(service, 'check_broker_tracker_consistency', lambda: {'available': False})
 
         alerts = service.get_alerts(
             overview={},
@@ -205,6 +206,68 @@ class TestDashboardService:
         messages = {alert['code']: alert['message'] for alert in alerts}
         assert messages['no_news_for_tracked_symbols'].endswith('MRVL, CIEN')
         assert messages['stale_news_symbols'].endswith('DELL')
+
+    def test_check_broker_tracker_consistency_aggregates_duplicate_tracker_positions(self):
+        service = DashboardService(PROJECT_ROOT)
+
+        class _Resp:
+            def __init__(self, payload):
+                self.payload = payload
+
+        class _Broker:
+            def fetch_positions(self):
+                return _Resp([
+                    {'symbol': 'AAPL', 'qty': '10', 'avg_entry_price': '180.0'},
+                ])
+
+        class _Tracker:
+            def _load_state(self):
+                return None
+
+            def get_open_positions(self):
+                return [
+                    {'symbol': 'AAPL', 'qty': 10, 'entry_price': 180.0},
+                    {'symbol': 'AAPL', 'qty': 10, 'entry_price': 180.0},
+                ]
+
+        service._broker = _Broker()
+        service._tracker = _Tracker()
+
+        result = service.check_broker_tracker_consistency()
+
+        assert result['available'] is True
+        assert result['summary']['total_mismatches'] == 1
+        mismatch = result['mismatches'][0]
+        assert mismatch['symbol'] == 'AAPL'
+        assert mismatch['broker_qty'] == 10
+        assert mismatch['tracker_qty'] == 20
+        assert mismatch['tracker_trade_count'] == 2
+
+    def test_alerts_include_broker_tracker_mismatch(self, monkeypatch):
+        service = DashboardService(PROJECT_ROOT)
+        monkeypatch.setattr(service, 'get_news_ingestion_status', lambda news, tracked_symbols=None: {
+            'missing_symbols': [],
+            'stale_symbols': [],
+        })
+        monkeypatch.setattr(service, 'check_broker_tracker_consistency', lambda: {
+            'available': True,
+            'mismatches': [{'symbol': 'AAPL'}],
+            'tracker_only': ['TSLA'],
+            'summary': {'total_mismatches': 1},
+        })
+
+        alerts = service.get_alerts(
+            overview={},
+            trading={},
+            positions={'positions': [], 'summary': {}},
+            cron_jobs={'jobs': []},
+            data_status={'counts': {}, 'freshness': {}, 'integrity': {}},
+            news={'diagnostics': {'tracked_symbols': []}},
+        )
+
+        codes = {alert['code'] for alert in alerts}
+        assert 'broker_tracker_mismatch' in codes
+        assert 'tracker_phantom_positions' in codes
 
 
 class TestPerformanceAttribution:

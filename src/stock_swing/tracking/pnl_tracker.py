@@ -137,12 +137,18 @@ class PnLTracker:
         strategy_version_id: str | None = None,
         account_id: str | None = None,
     ) -> str:
-        """Record a new paper order submission as an open trade.
+        """Record a new buy submission as an open trade.
 
-        Returns trade_id.
-        
+        Returns trade_id for buy entries.
+        Non-buy submissions are ignored because exits must be recorded via
+        ``record_exit`` after broker fill confirmation.
+
         Raises ValueError if price <= 0 (invalid entry price).
         """
+        if side.lower() != "buy":
+            logger.warning("Skipping non-buy submission in PnL tracker: %s %s qty=%s", side, symbol, qty)
+            return ""
+
         if price <= 0:
             raise ValueError(f"Invalid entry price {price} for {symbol}. Cannot record submission.")
         

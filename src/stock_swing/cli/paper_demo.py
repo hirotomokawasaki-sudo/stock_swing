@@ -721,33 +721,35 @@ def main() -> int:  # noqa: C901
                     )
                 else:
                     print(f"OK broker_id={sub.broker_order_id} qty={sub.qty}")
-                # Fetch current price for P&L tracking entry
-                entry_price = get_mid_price(o.symbol)
+                if o.side == "buy":
+                    # Only buy submissions create new open trades in the P&L tracker.
+                    # Sell submissions are exits and must be recorded only after actual fills
+                    # are confirmed during reconciliation.
+                    entry_price = get_mid_price(o.symbol)
 
-                if entry_price <= 0:
-                    sizing_price = float((sub.sizing_details or {}).get("current_price") or 0)
-                    if sizing_price > 0:
-                        entry_price = round(sizing_price, 4)
+                    if entry_price <= 0:
+                        sizing_price = float((sub.sizing_details or {}).get("current_price") or 0)
+                        if sizing_price > 0:
+                            entry_price = round(sizing_price, 4)
 
-                if entry_price <= 0 and o.limit_price:
-                    entry_price = round(float(o.limit_price), 4)
-                
-                # Only record submission if we have a valid entry price
-                if entry_price > 0:
-                    pnl_tracker.record_submission(
-                        symbol=o.symbol,
-                        strategy_id=decision.strategy_version_id,
-                        side=o.side,
-                        qty=sub.qty,
-                        price=entry_price,
-                        broker_order_id=sub.broker_order_id,
-                        decision_id=decision.decision_id,
-                        original_strategy_id=decision.strategy_id,
-                        strategy_version_id=decision.strategy_version_id,
-                        account_id=os.environ.get("BROKER_ACCOUNT_ID"),
-                    )
-                else:
-                    print(f"WARN: Skipped P&L tracking for {o.symbol} (entry_price unavailable)")
+                    if entry_price <= 0 and o.limit_price:
+                        entry_price = round(float(o.limit_price), 4)
+
+                    if entry_price > 0:
+                        pnl_tracker.record_submission(
+                            symbol=o.symbol,
+                            strategy_id=decision.strategy_version_id,
+                            side=o.side,
+                            qty=sub.qty,
+                            price=entry_price,
+                            broker_order_id=sub.broker_order_id,
+                            decision_id=decision.decision_id,
+                            original_strategy_id=decision.strategy_id,
+                            strategy_version_id=decision.strategy_version_id,
+                            account_id=os.environ.get("BROKER_ACCOUNT_ID"),
+                        )
+                    else:
+                        print(f"WARN: Skipped P&L tracking for {o.symbol} (entry_price unavailable)")
             else:
                 print(f"WARN {sub.status}: {sub.reject_reason}")
             audit_log.log_submission(sub.submission_id, sub.decision_id, sub.symbol, sub.side, sub.qty, sub.status, sub.broker_order_id)
@@ -778,16 +780,22 @@ def main() -> int:  # noqa: C901
                 for disc in result.discrepancies:
                     print(f"    {disc}")
 
-                if result.side == 'sell' and result.broker_status in {'filled', 'partially_filled', 'submitted', 'accepted', 'new', 'pending_new'}:
+                # CRITICAL FIX: Only record exit when actually filled
+                # Previously accepted/submitted/new orders were prematurely closed using mid_price
+                if result.side == 'sell' and result.broker_status in {'filled', 'partially_filled'}:
                     exit_price = None
+                    exit_qty = None
                     if result.fills_detected:
                         try:
-                            exit_price = float(result.fills_detected[0].get('avg_price') or 0)
+                            fill = result.fills_detected[0]
+                            exit_price = float(fill.get('avg_price') or 0)
+                            exit_qty = int(float(fill.get('qty') or 0))
                         except Exception:
                             exit_price = None
-                    if not exit_price:
-                        exit_price = get_mid_price(sub.symbol)
-                    if exit_price:
+                            exit_qty = None
+                    
+                    # Only record if we have actual fill data
+                    if exit_price and exit_price > 0:
                         exit_reason = "strategy_exit"
                         notes = " ".join((decision.evidence or {}).get("notes") or []).lower() if getattr(decision, 'evidence', None) else ""
                         if "stop loss" in notes:
@@ -799,6 +807,7 @@ def main() -> int:  # noqa: C901
                         pnl_tracker.record_exit(
                             symbol=sub.symbol,
                             exit_price=exit_price,
+                            exit_qty=exit_qty,
                             broker_order_id=sub.broker_order_id,
                             exit_strategy_id=decision.strategy_id,
                             exit_reason=exit_reason,

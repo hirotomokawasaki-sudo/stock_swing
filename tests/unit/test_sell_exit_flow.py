@@ -135,6 +135,27 @@ def test_no_position_to_sell():
         assert updated is None, "Exit should not be recorded if no position exists"
 
 
+def test_sell_submission_is_not_recorded_as_open_trade():
+    """Sell submissions must never create new open trades in tracker."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        project_root = Path(tmpdir)
+        tracker = PnLTracker(project_root)
+
+        trade_id = tracker.record_submission(
+            symbol="AAPL",
+            strategy_id="test_strategy",
+            side="sell",
+            qty=10,
+            price=185.0,
+            broker_order_id="sell-order-123",
+            decision_id="decision-sell-1",
+        )
+
+        assert trade_id == ""
+        assert tracker.get_open_positions() == []
+        assert tracker.get_summary()["total_trades"] == 0
+
+
 def test_partial_fill_preview():
     """Test partial fill detection (preview for future T5 task)."""
     # CONTEXT: Partial fills require special handling in tracker.

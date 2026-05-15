@@ -444,6 +444,95 @@ class DashboardService:
         except Exception as e:
             return {"available": False, "positions": [], "summary": {}, "error": str(e), "source": "error"}
 
+    def check_broker_tracker_consistency(self) -> Dict[str, Any]:
+        """Check consistency between broker positions and tracker state.
+        
+        Returns dict with:
+        - mismatches: list of symbols where broker/tracker disagree
+        - broker_only: symbols in broker but not tracker
+        - tracker_only: symbols in tracker but not broker
+        - consistent: symbols that match
+        """
+        if not self._broker or not self._tracker:
+            return {"available": False, "error": "Broker or Tracker not available"}
+        
+        try:
+            # Get broker positions
+            broker_resp = self._broker.fetch_positions()
+            broker_positions = broker_resp.payload if hasattr(broker_resp, 'payload') else broker_resp
+            broker_map = {p.get('symbol'): p for p in broker_positions}
+            
+            # Get tracker positions and aggregate by symbol so duplicate open lots
+            # cannot be hidden by dict overwrite.
+            self._tracker.state = self._tracker._load_state()
+            tracker_positions = self._tracker.get_open_positions()
+            tracker_map = {}
+            for pos in tracker_positions:
+                symbol = pos.get('symbol')
+                if not symbol:
+                    continue
+                qty = int(float(pos.get('qty', 0) or 0))
+                entry = float(pos.get('entry_price', 0) or 0)
+                row = tracker_map.setdefault(symbol, {
+                    'symbol': symbol,
+                    'qty': 0,
+                    'entry_notional': 0.0,
+                    'trade_count': 0,
+                })
+                row['qty'] += qty
+                row['entry_notional'] += entry * qty
+                row['trade_count'] += 1
+            
+            broker_symbols = set(broker_map.keys())
+            tracker_symbols = set(tracker_map.keys())
+            
+            mismatches = []
+            consistent = []
+            
+            # Check common symbols
+            for symbol in broker_symbols & tracker_symbols:
+                broker_pos = broker_map[symbol]
+                tracker_pos = tracker_map[symbol]
+                
+                broker_qty = int(float(broker_pos.get('qty', 0) or 0))
+                tracker_qty = int(tracker_pos.get('qty', 0) or 0)
+                broker_entry = float(broker_pos.get('avg_entry_price', 0) or 0)
+                tracker_entry = (
+                    float(tracker_pos.get('entry_notional', 0) or 0) / tracker_qty
+                    if tracker_qty > 0 else 0.0
+                )
+                
+                if broker_qty != tracker_qty or abs(broker_entry - tracker_entry) > 0.01:
+                    mismatches.append({
+                        'symbol': symbol,
+                        'broker_qty': broker_qty,
+                        'tracker_qty': tracker_qty,
+                        'broker_entry': broker_entry,
+                        'tracker_entry': round(tracker_entry, 4),
+                        'tracker_trade_count': int(tracker_pos.get('trade_count') or 0),
+                        'qty_diff': broker_qty - tracker_qty,
+                        'price_diff': round(broker_entry - tracker_entry, 2),
+                    })
+                else:
+                    consistent.append(symbol)
+            
+            return {
+                "available": True,
+                "time": now_iso(),
+                "mismatches": mismatches,
+                "broker_only": sorted(broker_symbols - tracker_symbols),
+                "tracker_only": sorted(tracker_symbols - broker_symbols),
+                "consistent": consistent,
+                "summary": {
+                    "total_mismatches": len(mismatches),
+                    "broker_only_count": len(broker_symbols - tracker_symbols),
+                    "tracker_only_count": len(tracker_symbols - broker_symbols),
+                    "consistent_count": len(consistent),
+                },
+            }
+        except Exception as e:
+            return {"available": False, "error": str(e)}
+
     def get_logs(self, max_lines: int = 200) -> Dict[str, Any]:
         """Get recent audit log lines."""
         today = datetime.now().strftime("%Y%m%d")
@@ -1282,6 +1371,33 @@ class DashboardService:
                 "action_hint": "Inspect collection and analysis outputs",
                 "updated_at": now_iso(),
             })
+        
+        # Check broker-tracker consistency
+        consistency = self.check_broker_tracker_consistency()
+        if consistency.get("available"):
+            summary = consistency.get("summary", {})
+            mismatches = consistency.get("mismatches", [])
+            tracker_only = consistency.get("tracker_only", [])
+            
+            if mismatches:
+                alerts.append({
+                    "severity": "critical",
+                    "code": "broker_tracker_mismatch",
+                    "title": "Broker-Tracker position mismatch",
+                    "message": f"{len(mismatches)} symbol(s) have different qty/price in broker vs tracker: {', '.join(m['symbol'] for m in mismatches[:3])}",
+                    "action_hint": "Run scripts/rebuild_pnl_state_from_broker.py to fix",
+                    "updated_at": now_iso(),
+                })
+            
+            if tracker_only:
+                alerts.append({
+                    "severity": "warning",
+                    "code": "tracker_phantom_positions",
+                    "title": "Phantom positions in tracker",
+                    "message": f"{len(tracker_only)} symbol(s) are open in tracker but not in broker: {', '.join(tracker_only[:3])}",
+                    "action_hint": "These may be prematurely closed positions - rebuild pnl_state.json",
+                    "updated_at": now_iso(),
+                })
 
         if trading_summary.get("open_trades", 0) > 0 and trading_summary.get("closed_trades", 0) == 0:
             alerts.append({
