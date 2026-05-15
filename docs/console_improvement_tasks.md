@@ -417,3 +417,120 @@
   - cautious regime での ARM / DELL / CIEN 悪化傾向を確認
   - 具体改善案は `docs/t22_cautious_regime_symbol_actions_2026-05-07.md` に整理
   - ただし過剰最適化回避のため、cautious regime 向け個別改善は当面ペンディング
+
+---
+
+## 2026-05-15 重大問題の解決と今後の対応
+
+### 完了: Exit Strategy の根本修正
+**問題**: Alpaca fetch_bars() API がすべての symbols (stocks + ETFs) で 2026-04-22 に停止
+**影響**:
+- 23日前の stale data による 15-40% price deviation
+- ETF total loss: -$9,367.59 (37 trades)
+- すべての exit signals が誤判定
+
+**実施した修正**:
+1. ✅ Stale data detection 実装 (`72ca13a`)
+   - `PriceMomentumFeature`: 7日以上古いデータに `stale_data` フラグ
+   - `SimpleExitV2Strategy`: Position current_price を最優先
+   - テスト追加: `test_stale_price_data.py`
+
+2. ✅ Massive API 統合 (`c91f530`)
+   - `HybridDataFetcher`: Massive primary, Broker fallback
+   - すべての symbols で fresh data 取得（2026-05-14）
+   - ETF trading 安全に再開
+
+3. ✅ Massive WebSocket 設定文書化 (`ded5b3f`)
+   - Business plan 向け正しい設定を文書化
+   - 実装ガイド作成: `docs/massive_websocket_implementation.md`
+
+### T23. Massive API 運用監視（新規）
+**目的**: Massive API の安定運用と最適化
+
+**作業**
+- [ ] 今夜 23:00 JST の paper_demo cron で Massive API 動作確認
+- [ ] Massive API rate limit の監視（Basic plan: ~5 req/min）
+- [ ] Parallel fetching (64 symbols) のパフォーマンス測定
+- [ ] 必要に応じて `PAPER_DEMO_MAX_WORKERS` を調整
+- [ ] Massive API エラーハンドリングの強化
+- [ ] Broker fallback 時のアラート設定
+
+**完了条件**
+- [ ] 連続3営業日、すべての symbols で fresh data 取得を確認
+- [ ] Rate limit 超過なし
+- [ ] paper_demo 実行時間が許容範囲内（< 60分）
+
+**優先度**: 高（今夜から監視開始）
+
+### T24. Massive WebSocket 実装（Phase 2）
+**目的**: Real-time price data でコンソールと取引判断を強化
+
+**作業**
+- [ ] `MassiveWebSocketClient` 実装
+  - Connection & authentication
+  - Subscribe to symbols (AM.AAPL format)
+  - Message parsing & handling
+- [ ] Console 統合
+  - Real-time price display
+  - Unrealized P&L live update
+- [ ] Trading system 統合
+  - Intraday entry/exit signals
+  - Real-time alert triggers
+- [ ] テスト
+  - Manual test with wscat
+  - Automated integration tests
+
+**完了条件**
+- [ ] WebSocket client が安定動作（reconnection 機能含む）
+- [ ] Console で real-time prices 表示
+- [ ] Intraday signals が real-time data を使用
+
+**優先度**: 中（Massive API REST 運用が安定してから）
+**参考**: `docs/massive_websocket_implementation.md`
+
+### T15. paper_demo cron 完走性確認（継続中）
+**進捗更新**: 2026-05-15 (21:30)
+- premarket timeout 対策として二段階 intraday 取得を実装済み (`af87ab6`)
+- Massive API 統合により data collection の信頼性向上
+- **次回確認**: 今夜 23:00 JST の premarket 実行
+  - Massive API の動作確認
+  - timeout 解消確認
+  - 実行時間測定
+
+**完了条件（変更なし）**:
+- [ ] 連続3営業日、4ジョブすべて完走
+- [ ] premarket が 60分以内に完了
+- [ ] decision count / submitted count が妥当
+
+### T20. paper_demo 運用モード最適化（継続中）
+**進捗更新**: 2026-05-15 (21:30)
+- sizing 改善案A 実装完了 (`4ec3aba`)
+- Massive API 統合により **15-40% price deviation を完全解消**
+- **重要**: 今後の ETF 取引は fresh data ベースで正常動作
+- 数営業日の運用監視で sizing 効果を確認
+
+**完了条件（更新）**:
+- [ ] live cron 安定完走（3営業日連続）
+- [ ] sizing 改善が意図どおり効く（集中リスク・過大ポジション抑制）
+- [ ] Massive API 経由で price deviation がない
+- [ ] 副作用（過剰 skip など）が許容範囲
+
+**優先度**: 高（今夜から本格運用開始）
+
+---
+
+## 優先順位まとめ（2026-05-15 更新）
+
+### 今夜〜明日（最優先）
+1. **T23**: Massive API 運用監視（今夜 23:00 JST から）
+2. **T15**: premarket cron 完走性確認
+3. **T20**: sizing 改善 + Massive API の live 効果確認
+
+### 今週中
+4. **T23**: Massive API の安定運用確認（連続3営業日）
+5. **T20**: 数営業日の運用監視で sizing 効果測定
+
+### 中期（2-4週間）
+6. **T24**: Massive WebSocket 実装（Phase 2）
+7. その他の既存 task の進行
+
