@@ -121,23 +121,40 @@ def _select_intraday_candidate_symbols(
 # Unified paper-demo / monitoring universe
 # Stocks: existing core AI stocks + approved additional normal stocks
 # ETFs: approved normal ETFs only (no leveraged / inverse / bear / short / yield-enhanced ETFs)
+#
+# 2026-05-15 CRITICAL UPDATE:
+# ALL ETFs have been REMOVED due to stale broker data (last update: 2026-04-22)
+# This caused 15-40% price deviations leading to incorrect entry/exit decisions.
+# ETF total loss: -$9,367.59 across 37 trades.
+# See docs/daily_logs/2026-05-15_exit_investigation.md for full analysis.
+#
 DEFAULT_SYMBOLS = [
+    # Large cap tech
     "NVDA", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "AVGO", "AMD", "TSM", "ASML",
-    "INTC", "MU", "ARM", "AMAT", "LRCX", "KLAC", "QCOM", "MRVL", "PLTR", "ADBE",
-    "CRM", "ORCL", "NOW", "SNOW", "MDB", "DDOG", "PATH", "FICO", "SMCI", "PANW",
-    "CRWD", "FTNT", "ANET", "CSCO", "IBM", "HPE", "DELL", "HPQ", "SNPS", "CDNS",
-    "V", "MA", "INTU", "NBIS", "CRDO", "RBRK", "CIEN", "SHOC", "SOXQ", "SOXX",
-    "SMH", "FTXL", "PTF", "SMHX", "FRWD", "TTEQ", "GTOP", "CHPX", "CHPS", "PSCT",
-    "QTEC", "TDIV", "SKYY", "QTUM",
+    # Semiconductors
+    "INTC", "MU", "ARM", "AMAT", "LRCX", "KLAC", "QCOM", "MRVL",
+    # Software & Cloud
+    "PLTR", "ADBE", "CRM", "ORCL", "NOW", "SNOW", "MDB", "DDOG", "PATH", "FICO",
+    # Cybersecurity & Infrastructure
+    "SMCI", "PANW", "CRWD", "FTNT", "ANET", "CSCO", "IBM",
+    # Hardware & Networking
+    "HPE", "DELL", "HPQ", "SNPS", "CDNS", "NBIS", "CRDO", "RBRK", "CIEN",
+    # Note: SHOC removed - was showing stale data patterns
+    # ETFs DISABLED (stale broker data since 2026-04-22):
+    # "SOXQ", "SOXX", "SMH", "FTXL", "PTF", "SMHX", "FRWD", "TTEQ",
+    # "GTOP", "CHPX", "CHPS", "PSCT", "QTEC", "TDIV", "SKYY", "QTUM",
 ]
 
 # Legacy CLI compatibility: "full" maps to the unified universe as well.
 TECH_UNIVERSE_FULL = DEFAULT_SYMBOLS
 
 # ETF symbols for portfolio allocation
+# 2026-05-15: All ETFs temporarily disabled due to stale broker data (stopped 2026-04-22)
+# This caused systematic -$9,367 loss across 37 ETF trades due to 15-40% price deviations.
 ETF_SYMBOLS = {
-    'SHOC', 'SOXQ', 'SOXX', 'SMH', 'FTXL', 'PTF', 'SMHX', 'FRWD', 
-    'TTEQ', 'GTOP', 'CHPX', 'CHPS', 'PSCT', 'QTEC', 'TDIV', 'SKYY', 'QTUM'
+    # Temporarily disabled - broker fetch_bars() returns stale data
+    # 'SOXQ', 'SOXX', 'SMH', 'FTXL', 'PTF', 'SMHX', 'FRWD', 
+    # 'TTEQ', 'GTOP', 'CHPX', 'CHPS', 'PSCT', 'QTEC', 'TDIV', 'SKYY', 'QTUM'
 }
 
 
@@ -318,11 +335,32 @@ def main() -> int:  # noqa: C901
     regime_for_sizing = price_based_regime if detected_regime == 'unknown' else macro_based_regime
     daily_features = momentum_results + macro_results
 
+    # Data freshness validation (2026-05-15: prevent stale price data)
+    stale_symbols = set()
+    for f in momentum_results:
+        if "stale_data" in f.quality_flags:
+            stale_symbols.add(f.symbol)
+            data_age = f.values.get("data_age_days", "unknown")
+            print(f"  ⚠️  WARNING: {f.symbol} has stale price data (age: {data_age} days)")
+    
+    if stale_symbols:
+        print(f"\n  ⚠️  CRITICAL: {len(stale_symbols)} symbols with stale data detected.")
+        print(f"     Stale symbols: {', '.join(sorted(stale_symbols))}")
+        print(f"     These symbols will be EXCLUDED from trading to prevent")
+        print(f"     incorrect entry/exit decisions.\n")
+        audit_log.log_system_event(
+            "stale_data_detected",
+            details=f"Excluded {len(stale_symbols)} symbols: {','.join(sorted(stale_symbols))}"
+        )
+        # Filter out stale symbols from features
+        momentum_results = [f for f in momentum_results if f.symbol not in stale_symbols]
+        daily_features = momentum_results + macro_results
+
     print(f"  Macro regime: {detected_regime}")
     print(f"  Price regime: {price_based_regime}")
     print(f"  Sizing regime: {regime_for_sizing}")
     print()
-    print(f"  Daily Momentum:")
+    print(f"  Daily Momentum (fresh data only):")
     print(f"  {'Symbol':<6}  {'Momentum':>10}  {'Trend':<10}  {'Bars':>5}")
     print(f"  {'------':<6}  {'--------':>10}  {'----':>10}  {'----':>5}")
     for f in sorted(momentum_results, key=lambda x: x.values.get("momentum", 0), reverse=True):
@@ -358,6 +396,16 @@ def main() -> int:  # noqa: C901
     event_strat = EventSwingStrategy()
     breakout_signals = breakout_strat.generate(daily_features)
     event_signals = event_strat.generate(daily_features)
+    
+    # Filter out stale symbols from entry signals (2026-05-15: prevent stale data trades)
+    if stale_symbols:
+        breakout_signals = [s for s in breakout_signals if s.symbol not in stale_symbols]
+        event_signals = [s for s in event_signals if s.symbol not in stale_symbols]
+        print(f"  \u26a0️  Filtered {len(stale_symbols)} stale symbols from entry signals.")
+        audit_log.log_system_event(
+            "stale_symbols_filtered_from_entry",
+            details=f"{','.join(sorted(stale_symbols))}"
+        )
 
     # 7b. Intraday data collection (5-minute bars for breakout candidates only)
     _section("7b. Data Collection (5-Minute Intraday Bars)")
