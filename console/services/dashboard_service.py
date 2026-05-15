@@ -1383,19 +1383,19 @@ class DashboardService:
                 alerts.append({
                     "severity": "critical",
                     "code": "broker_tracker_mismatch",
-                    "title": "Broker-Tracker position mismatch",
-                    "message": f"{len(mismatches)} symbol(s) have different qty/price in broker vs tracker: {', '.join(m['symbol'] for m in mismatches[:3])}",
-                    "action_hint": "Run scripts/rebuild_pnl_state_from_broker.py to fix",
+                    "title": "Overview P&L may be corrupted",
+                    "message": f"{len(mismatches)} symbol(s) have different qty/entry in broker vs tracker, so overview P&L may be wrong: {', '.join(m['symbol'] for m in mismatches[:3])}",
+                    "action_hint": "Rebuild pnl_state from broker fills and re-check the Overview tab.",
                     "updated_at": now_iso(),
                 })
             
             if tracker_only:
                 alerts.append({
-                    "severity": "warning",
+                    "severity": "critical",
                     "code": "tracker_phantom_positions",
-                    "title": "Phantom positions in tracker",
-                    "message": f"{len(tracker_only)} symbol(s) are open in tracker but not in broker: {', '.join(tracker_only[:3])}",
-                    "action_hint": "These may be prematurely closed positions - rebuild pnl_state.json",
+                    "title": "Tracker has phantom open positions",
+                    "message": f"{len(tracker_only)} symbol(s) are open only in tracker and can inflate overview P&L: {', '.join(tracker_only[:3])}",
+                    "action_hint": "Run the broker-based rebuild script; these often come from unfilled sell orders being tracked incorrectly.",
                     "updated_at": now_iso(),
                 })
 

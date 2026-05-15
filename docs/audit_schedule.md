@@ -18,10 +18,13 @@ python scripts/audit_trades_with_market_data.py --recent-days 10
 **検出内容**:
 - Entry price が市場範囲外（30%以上乖離）
 - Exit price が市場範囲外（30%以上乖離）
+- tracker open positions と broker positions の不整合
+- duplicate tracker lots / phantom positions / broker-only positions
 
 **出力**:
 - 異常検出時: exit code 1 + 詳細レポート
 - 正常時: exit code 0 + サマリー
+- integrity 異常時は `scripts/rebuild_pnl_state_from_broker.py --backup` を案内
 
 ---
 
@@ -100,17 +103,24 @@ openclaw cron list
    cp pnl_state.json pnl_state_backup_$(date +%Y%m%d_%H%M%S).json
    ```
 
-3. **異常取引の削除**
-   - Cleanup スクリプトを作成
-   - PnL Tracker から異常取引を削除
+3. **price anomaly か integrity anomaly かを切り分け**
+   - price anomaly: 市場価格との差分を確認
+   - integrity anomaly: broker/tracker mismatch, phantom positions を確認
 
-4. **コンソール再起動**
+4. **tracker integrity 異常なら broker ベースで rebuild**
+   ```bash
+   cd ~/stock_swing
+   source venv/bin/activate
+   python scripts/rebuild_pnl_state_from_broker.py --backup
+   ```
+
+5. **コンソール再起動**
    ```bash
    cd ~/stock_swing
    ./console/manage.sh restart
    ```
 
-5. **Alpaca に報告**
+6. **Alpaca に報告**
    - 異常価格の事例をまとめて報告
    - API バグの修正を依頼
 

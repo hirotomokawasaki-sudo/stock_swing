@@ -265,9 +265,11 @@ class TestDashboardService:
             news={'diagnostics': {'tracked_symbols': []}},
         )
 
-        codes = {alert['code'] for alert in alerts}
-        assert 'broker_tracker_mismatch' in codes
-        assert 'tracker_phantom_positions' in codes
+        by_code = {alert['code']: alert for alert in alerts}
+        assert 'broker_tracker_mismatch' in by_code
+        assert 'tracker_phantom_positions' in by_code
+        assert 'overview P&L may be wrong' in by_code['broker_tracker_mismatch']['message']
+        assert 'inflate overview P&L' in by_code['tracker_phantom_positions']['message']
 
 
 class TestPerformanceAttribution:
