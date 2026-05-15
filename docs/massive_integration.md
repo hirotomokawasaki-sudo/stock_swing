@@ -128,9 +128,44 @@ python scripts/compare_bars_quality.py --symbol NVDA --days 365 --timeframe 1Day
 - `docs/massive_integration.md` - This file
 - `.env` - Contains `MASSIVE_API_KEY`
 
+## WebSocket Configuration (Business Plan)
+
+**IMPORTANT: The default WebSocket documentation shows generic endpoints.**
+**For Business plan accounts, use the contract-specific endpoints below:**
+
+### Correct WebSocket Connection
+```bash
+# Connect to Business plan WebSocket
+wscat -c wss://nasdaq-basic-business.massive.com/stocks
+```
+
+### Authentication
+```json
+{"action":"auth", "params":"jWjKRcHk7x8_egXHGCGrbWnS67dPgWtp"}
+```
+
+### Subscribe to Real-time Data
+```json
+# Subscribe to 1-minute aggregate bars
+{"action":"subscribe", "params":"AM.AAPL,AM.MSFT"}
+
+# Data format examples:
+# AM.AAPL = Apple 1-minute aggregate bars
+# AM.MSFT = Microsoft 1-minute aggregate bars
+```
+
+### Key Differences from Default Docs
+| Item | Default (Free tier) | Business Plan (Contract) |
+|------|---------------------|-------------------------|
+| WebSocket URL | `wss://socket.massive.com/stocks` | `wss://nasdaq-basic-business.massive.com/stocks` |
+| Auth Method | API key in header | `{"action":"auth", "params":"<token>"}` |
+| Real-time Access | 15-min delay | Real-time |
+
+⚠️ **Note**: Always use contract-specific credentials when logged into the Business plan account.
+
 ## References
 
-- [Massive Docs](https://massive.com/docs/)
+- [Massive Docs](https://massive.com/docs/) (⚠️ Shows default endpoints - use contract-specific URLs above)
 - [Python Client GitHub](https://github.com/massive-com/client-python)
 - [REST API Quickstart](https://massive.com/docs/rest/quickstart)
-- [WebSocket Docs](https://massive.com/docs/websocket/overview)
+- [WebSocket Docs](https://massive.com/docs/websocket/overview) (⚠️ Generic docs - see Business plan config above)
