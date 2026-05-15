@@ -210,6 +210,19 @@
 - 次回実行: 2026-04-27 23:25〜（本日夜）
 - **ブロッカー**: 設定変更後の初回実行未確認
 
+**進捗更新**: 2026-05-15
+- `paper_demo_*` 4ジョブの現況を再確認
+- `market_open` / `midday` / `market_close` は `status=ok` を確認
+- `premarket` は依然 `timeout` 残りで、last duration は約62分、consecutiveErrors=2
+- timeout 対策として `paper_demo.py` を二段階取得へ変更
+  - daily bars は全銘柄取得
+  - breakout 候補のみ intraday 5-minute bars を取得
+  - commit: `af87ab6` (`Use two-stage intraday fetch in paper demo`)
+- premarket cron コマンドを更新
+  - `python -u -m stock_swing.cli.paper_demo --allow-outside-hours --min-momentum 0.05 --intraday-candidate-limit 15`
+- dry-run では intraday 取得対象が `64 symbols -> 34 candidates` に減少、関連テスト `35 passed`
+- **判定**: premarket timeout の再発解消はまだ未確認のため、T15 は継続中
+
 ### T16. reconciliation / broker truth 運用整合確認
 **目的**: tracker・broker・UI の整合を運用ベースで確認する
 
@@ -302,6 +315,9 @@
 **完了条件**
 - [ ] paper_demo が安定して回る
 - [ ] 負荷と出力品質のバランスが取れている
+- [ ] live cron が timeout / error なしで連続して正常完走する
+- [ ] live decision で stock 6% / ETF 4.2% / sector 55% の sizing が意図どおり適用される
+- [ ] 数営業日運用して、peak exposure / sector concentration / ETF偏重 / 大きいサイズ帯が実際に抑制され、副作用（過剰 skip など）が許容範囲に収まる
 
 **進捗更新**: 2026-05-07
 - paper_demo 4ジョブを wrapper 経由から direct Python 実行へ統一
@@ -309,6 +325,22 @@
 - `market_open` の重さは data collection ではなく注文処理・reconciliation 側が支配的と確認
 - `paper_demo.py` / `paper_executor.py` に軽量化を実装
 - 今夜の `premarket / market_open` 実績確認後、軽量設定分離の要否を判断する
+
+**進捗更新**: 2026-05-15
+- `position_sizing.py` / `paper_demo.py` に sizing 改善案A を実装
+- stock の `max_position_notional_pct` を `8% -> 6%` に縮小
+- `max_sector_exposure_pct` を `80% -> 55%` に縮小
+- ETF は stock の `0.7x` cap（実効 `4.2%`）へ変更
+- `tests/unit/test_position_sizing_policy.py` を追加し、関連回帰テスト `31 passed` を確認
+- `paper_demo --dry-run --universe full --allow-outside-hours` で broker 接続 / data collection / feature computation 正常を確認
+- closed trades 67件ベースの簡易リプレイで、peak total exposure `-14.73%`、ETF entry notional `-21.04%`、total entry notional `-19.85%` を確認
+- 追加で `paper_demo.py` を二段階 intraday 取得へ変更
+  - daily 全件スクリーニング後、breakout 候補のみ intraday 取得
+  - `--intraday-candidate-limit` を追加し、premarket は `15` に設定
+  - dry-run で intraday 取得対象が `64 -> 34` 候補へ減少
+  - 追加テスト込みで `35 passed`
+  - commit: `af87ab6` (`Use two-stage intraday fetch in paper demo`)
+- **判定**: sizing / exposure 抑制と premarket 軽量化の両方に前進。ただし live cron 完走性と数営業日の運用監視が未了のため、T20 は継続中
 
 ### T21. simple_exit_v1 / v2 改善
 **目的**: Exit 戦略の可視化と改善を通じて、利確・損切り品質を高める

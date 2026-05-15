@@ -74,10 +74,21 @@ class SimpleExitV2Strategy(BaseStrategy):
         signals = []
         now = datetime.now(timezone.utc)
         
-        # Get current prices from features
+        # Get current prices from features (excluding stale data)
         price_map = {}
+        stale_symbols = set()
         for feature in features:
             if feature.feature_name == "price_momentum" and feature.symbol:
+                # Skip stale data (>7 days old)
+                if "stale_data" in feature.quality_flags:
+                    stale_symbols.add(feature.symbol)
+                    data_age = feature.values.get("data_age_days", "unknown")
+                    logger.warning(
+                        f"Skipping stale price data for {feature.symbol} "
+                        f"(age: {data_age} days)"
+                    )
+                    continue
+                
                 latest_close = feature.values.get("latest_close")
                 if latest_close:
                     price_map[feature.symbol] = float(latest_close)
@@ -91,7 +102,23 @@ class SimpleExitV2Strategy(BaseStrategy):
                 continue  # Skip short positions or zero qty
             
             avg_entry_price = float(position_data.get("avg_entry_price", 0))
-            current_price = price_map.get(symbol) or float(position_data.get("current_price", 0))
+            
+            # Price fallback priority:
+            # 1. Position current_price (fresh from broker)
+            # 2. Feature price_map (only if not stale)
+            # This prevents using stale historical bars when fresh position data exists.
+            position_current_price = float(position_data.get("current_price", 0))
+            feature_price = price_map.get(symbol)
+            
+            if position_current_price > 0:
+                current_price = position_current_price
+                price_source = "position"
+            elif feature_price:
+                current_price = feature_price
+                price_source = "feature"
+            else:
+                current_price = 0
+                price_source = "none"
             
             if avg_entry_price <= 0 or current_price <= 0:
                 continue  # Skip if missing price data
@@ -111,7 +138,9 @@ class SimpleExitV2Strategy(BaseStrategy):
             logger.info(
                 f"SimpleExitV2: {symbol} return={return_pct:.4f} ({return_pct*100:.2f}%), "
                 f"peak_return={peak_return_pct:.4f}, "
-                f"trailing_active={peak_return_pct >= self.trailing_activation_pct}"
+                f"trailing_active={peak_return_pct >= self.trailing_activation_pct}, "
+                f"price_source={price_source}, "
+                f"current=${current_price:.2f}, entry=${avg_entry_price:.2f}"
             )
             
             # Check holding period
@@ -175,6 +204,8 @@ class SimpleExitV2Strategy(BaseStrategy):
                         "qty": qty,
                         "exit_trigger": exit_reason.split(":")[0].strip(),
                         "trailing_active": peak_return_pct >= self.trailing_activation_pct,
+                        "price_source": price_source,
+                        "stale_data_skipped": symbol in stale_symbols,
                     },
                 )
                 signals.append(signal)

@@ -35,7 +35,16 @@ class PriceMomentumFeature(BaseFeature):
             
         Returns:
             List of FeatureResult (one per symbol).
+            
+        Note:
+            Stale data detection: Bars older than 7 days are flagged.
+            Consumers should check quality_flags for "stale_data".
         """
+        import logging
+        from datetime import timedelta
+        
+        logger = logging.getLogger(__name__)
+        
         # Filter to price records
         price_records = [
             r for r in records 
@@ -80,6 +89,17 @@ class PriceMomentumFeature(BaseFeature):
             # Simple momentum: (latest_close - earliest_close) / earliest_close
             earliest_close = sorted_records[0].payload.get("close")
             latest_close = sorted_records[-1].payload.get("close")
+            latest_bar_time = sorted_records[-1].event_time
+            
+            # Stale data detection: warn if latest bar is >7 days old
+            data_age_days = (now - latest_bar_time).days
+            is_stale = data_age_days > 7
+            
+            if is_stale:
+                logger.warning(
+                    f"STALE DATA: {symbol} latest bar is {data_age_days} days old "
+                    f"(last: {latest_bar_time.date()})"
+                )
             
             atr = None
             risk_per_share = None
@@ -119,6 +139,11 @@ class PriceMomentumFeature(BaseFeature):
                 momentum = 0.0
                 trend = "unknown"
 
+            # Build quality flags
+            quality_flags = []
+            if is_stale:
+                quality_flags.append("stale_data")
+            
             result = FeatureResult(
                 feature_name="price_momentum",
                 symbol=symbol,
@@ -131,12 +156,13 @@ class PriceMomentumFeature(BaseFeature):
                     "risk_per_share": risk_per_share,
                     "stop_price": stop_price,
                     "latest_close": latest_close,
+                    "data_age_days": data_age_days,
                 },
                 metadata={
                     "earliest_time": sorted_records[0].event_time.isoformat(),
                     "latest_time": sorted_records[-1].event_time.isoformat(),
                 },
-                quality_flags=[],
+                quality_flags=quality_flags,
             )
             results.append(result)
         
