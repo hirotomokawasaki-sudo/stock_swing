@@ -36,7 +36,7 @@ def _load_env(env_path: Path) -> None:
 _load_env(project_root / ".env")
 
 from stock_swing.core.runtime import read_runtime_mode
-from stock_swing.sources.broker_client import BrokerClient
+from stock_swing.reporting.performance_snapshot import build_snapshot
 from stock_swing.tracking.pnl_tracker import PnLTracker
 
 
@@ -67,79 +67,7 @@ def _next_report_schedule_text(today_utc: date | None = None) -> str:
     return f"次回レポート予定: {next_date.isoformat()} 09:00 JST"
 
 
-def _load_broker_snapshot(tracker_open_positions: list[dict]) -> dict[str, object]:
-    equity = 100_000.0
-    buying_power = 100_000.0
-    account_status = "UNKNOWN"
-    current_prices: dict[str, float] = {}
-    open_positions: list[dict] = [dict(pos) for pos in tracker_open_positions]
-    unrealized_pnl = 0.0
-    positions_source = "tracker"
 
-    broker = BrokerClient(
-        api_key=os.environ["BROKER_API_KEY"],
-        api_secret=os.environ["BROKER_API_SECRET"],
-        paper_mode=True,
-        base_url=os.environ["BROKER_BASE_URL"],
-    )
-    acct = broker.fetch_account().payload
-    equity = float(acct.get("equity", equity))
-    buying_power = float(acct.get("buying_power", buying_power))
-    account_status = acct.get("status", "UNKNOWN")
-
-    broker_positions = broker.fetch_positions().payload
-    normalized_positions: list[dict] = []
-    for pos in broker_positions or []:
-        symbol = str(pos.get("symbol") or "").strip()
-        if not symbol:
-            continue
-        qty = float(pos.get("qty") or 0.0)
-        entry_price = float(pos.get("avg_entry_price") or 0.0)
-        current_price = float(pos.get("current_price") or 0.0)
-        position_unrealized = float(pos.get("unrealized_pl") or 0.0)
-        current_prices[symbol] = current_price
-        unrealized_pnl += position_unrealized
-        normalized_positions.append(
-            {
-                "symbol": symbol,
-                "qty": int(qty) if qty.is_integer() else qty,
-                "entry_price": entry_price,
-                "current_price": current_price,
-                "unrealized_pnl": position_unrealized,
-                "unrealized_pnl_pct": float(pos.get("unrealized_plpc") or 0.0),
-                "side": pos.get("side") or "long",
-                "market_value": float(pos.get("market_value") or 0.0),
-                "cost_basis": float(pos.get("cost_basis") or 0.0),
-            }
-        )
-
-    if normalized_positions:
-        open_positions = normalized_positions
-        positions_source = "broker"
-    else:
-        for pos in open_positions:
-            sym = pos.get("symbol")
-            if not sym:
-                continue
-            try:
-                q = broker.fetch_latest_quote(sym).payload
-                quote = q.get("quote", q)
-                bid = quote.get("bp", 0) or 0
-                ask = quote.get("ap", 0) or 0
-                if bid and ask:
-                    current_prices[sym] = round((bid + ask) / 2, 4)
-            except Exception:
-                pass
-
-    return {
-        "equity": equity,
-        "buying_power": buying_power,
-        "account_status": account_status,
-        "current_prices": current_prices,
-        "open_positions": open_positions,
-        "unrealized_pnl": round(unrealized_pnl, 2),
-        "positions_source": positions_source,
-    }
 
 
 def _load_latest_decision_sizing() -> list[dict]:
@@ -182,55 +110,18 @@ def main() -> int:
 
 def _main_impl(args) -> int:
 
-    tracker = PnLTracker(project_root)
-    open_pos = tracker.get_open_positions()
-
-    # Fetch live account equity from broker
-    equity = 100_000.0
-    buying_power = 100_000.0
-    account_status = "UNKNOWN"
-    unrealized_pnl = 0.0
-    positions_source = "tracker"
+    # Build unified snapshot
     try:
-        broker_snapshot = _load_broker_snapshot(open_pos)
-        equity = float(broker_snapshot["equity"])
-        buying_power = float(broker_snapshot["buying_power"])
-        account_status = str(broker_snapshot["account_status"])
-        current_prices = dict(broker_snapshot["current_prices"])
-        open_pos = list(broker_snapshot["open_positions"])
-        unrealized_pnl = float(broker_snapshot["unrealized_pnl"])
-        positions_source = str(broker_snapshot["positions_source"])
-
-        # Record daily snapshot
-        today_audit = project_root / "data" / "audits"
-        today_audit.mkdir(parents=True, exist_ok=True)
-        tracker.record_daily_snapshot(
-            equity=equity,
-            current_prices=current_prices,
-        )
+        snapshot = build_snapshot(project_root)
     except Exception as exc:
-        current_prices = {}
-        print(f"[WARN] Broker fetch failed: {exc}", file=sys.stderr)
-
-    tracker.state = tracker._load_state()
-    summary = tracker.get_summary()
-    recent = tracker.get_recent_trades(5)
+        print(f"[ERROR] Failed to build performance snapshot: {exc}", file=sys.stderr)
+        raise
 
     # Account-specific summaries
+    tracker = PnLTracker(project_root)
+    tracker.state = tracker._load_state()
     accounts = tracker.list_accounts()
     account_summaries = {acc: tracker.get_summary_by_account(acc) for acc in accounts}
-
-    if positions_source != "broker":
-        unrealized_pnl = round(
-            sum(
-                ((float(current_prices.get(pos.get("symbol"), 0.0)) - float(pos.get("entry_price") or 0.0)) * float(pos.get("qty") or 0.0))
-                for pos in open_pos
-                if pos.get("symbol") in current_prices and float(pos.get("entry_price") or 0.0) > 0
-            ),
-            2,
-        )
-
-    total_pnl = round(float(summary.get("cumulative_realized_pnl") or 0.0) + unrealized_pnl, 2)
 
     today = datetime.now(timezone.utc).date().isoformat()
     runtime_mode = "?"
@@ -246,17 +137,28 @@ def _main_impl(args) -> int:
             "report_date": today,
             "runtime_mode": runtime_mode,
             "account": {
-                "status": account_status,
-                "equity": equity,
-                "buying_power": buying_power,
+                "status": snapshot.account_status,
+                "equity": snapshot.equity,
+                "buying_power": snapshot.buying_power,
             },
-            "performance": summary,
-            "unrealized_pnl": unrealized_pnl,
-            "total_pnl": total_pnl,
-            "positions_source": positions_source,
-            "open_positions": open_pos,
-            "recent_trades": recent,
+            "performance": {
+                "cumulative_realized_pnl": snapshot.cumulative_realized_pnl,
+                "closed_trades": snapshot.closed_trades,
+                "winning_trades": snapshot.winning_trades,
+                "losing_trades": snapshot.losing_trades,
+                "win_rate": snapshot.win_rate,
+                "avg_return_per_trade": snapshot.avg_return_per_trade,
+                "avg_pnl_per_trade": snapshot.avg_pnl_per_trade,
+                "max_drawdown_pct": snapshot.max_drawdown_pct,
+                "trading_days": snapshot.trading_days,
+            },
+            "unrealized_pnl": snapshot.unrealized_pnl,
+            "total_pnl": snapshot.total_pnl,
+            "positions_source": snapshot.positions_source,
+            "open_positions": snapshot.open_positions,
+            "recent_trades": snapshot.recent_trades,
             "latest_sizing": latest_sizing,
+            "alerts": snapshot.alerts,
         }
         print(json.dumps(out, indent=2, ensure_ascii=False))
         return 0
@@ -265,18 +167,9 @@ def _main_impl(args) -> int:
     lines = _build_report(
         today=today,
         runtime_mode=runtime_mode,
-        account_status=account_status,
-        equity=equity,
-        buying_power=buying_power,
-        summary=summary,
-        unrealized_pnl=unrealized_pnl,
-        total_pnl=total_pnl,
-        open_pos=open_pos,
-        recent=recent,
-        current_prices=current_prices,
+        snapshot=snapshot,
         latest_sizing=latest_sizing,
         account_summaries=account_summaries,
-        positions_source=positions_source,
         mode=args.mode,
     )
     report_text = "\n".join(lines)
@@ -304,18 +197,9 @@ def _main_impl(args) -> int:
 def _build_report(
     today: str,
     runtime_mode: str,
-    account_status: str,
-    equity: float,
-    buying_power: float,
-    summary: dict,
-    unrealized_pnl: float,
-    total_pnl: float,
-    open_pos: list,
-    recent: list,
-    current_prices: dict,
+    snapshot: Any,
     latest_sizing: list,
     account_summaries: dict | None = None,
-    positions_source: str = "tracker",
     mode: str = "full",
 ) -> list[str]:
     lines = []
@@ -327,30 +211,37 @@ def _build_report(
 
     # Account
     lines.append(f"💰 口座情報 ({_format_runtime_mode(runtime_mode)})")
-    lines.append(f"  ステータス    : {account_status}")
-    lines.append(f"  資産総額      : ${equity:>12,.2f}")
-    lines.append(f"  買付余力      : ${buying_power:>12,.2f}")
-    lines.append(f"  確定損益(累積): ${summary['cumulative_realized_pnl']:>+12,.2f}")
-    lines.append(f"  含み損益(現在): ${unrealized_pnl:>+12,.2f}")
-    lines.append(f"  合計損益(現在): ${total_pnl:>+12,.2f}")
+    lines.append(f"  ステータス    : {snapshot.account_status}")
+    lines.append(f"  資産総額      : ${snapshot.equity:>12,.2f}")
+    lines.append(f"  買付余力      : ${snapshot.buying_power:>12,.2f}")
+    lines.append(f"  確定損益(累積): ${snapshot.cumulative_realized_pnl:>+12,.2f}")
+    lines.append(f"  含み損益(現在): ${snapshot.unrealized_pnl:>+12,.2f}")
+    lines.append(f"  合計損益(現在): ${snapshot.total_pnl:>+12,.2f}")
     lines.append("")
+
+    # Alerts
+    if snapshot.alerts:
+        lines.append("⚠️  アラート")
+        for alert in snapshot.alerts:
+            lines.append(f"  • {alert['message']}")
+        lines.append("")
 
     # Performance
     lines.append("📊 パフォーマンス (運用開始以降)")
     if mode == "brief":
-        lines.append(f"  決済取引数    : {summary['closed_trades']}")
-        wr = summary['win_rate']
+        lines.append(f"  決済取引数    : {snapshot.closed_trades}")
+        wr = snapshot.win_rate
         lines.append(f"  勝率          : {wr:.1%}" + (" 🔥" if wr >= 0.6 else (" ⚠️" if wr < 0.4 else "")))
     else:
-        lines.append(f"  決済取引数    : {summary['closed_trades']}")
-        lines.append(f"  勝 / 負       : {summary['winning_trades']} / {summary['losing_trades']}")
-        wr = summary['win_rate']
+        lines.append(f"  決済取引数    : {snapshot.closed_trades}")
+        lines.append(f"  勝 / 負       : {snapshot.winning_trades} / {snapshot.losing_trades}")
+        wr = snapshot.win_rate
         lines.append(f"  勝率          : {wr:.1%}" + (" 🔥" if wr >= 0.6 else (" ⚠️" if wr < 0.4 else "")))
-        avg_return = summary.get('avg_return_per_trade')
+        avg_return = snapshot.avg_return_per_trade
         lines.append(f"  平均リターン  : {avg_return:>+.2%}" if avg_return is not None else "  平均リターン  : 取得不可")
-        lines.append(f"  平均損益/取引 : ${summary['avg_pnl_per_trade']:>+,.2f}")
-        lines.append(f"  最大DD        : {summary['max_drawdown_pct']:.2%}")
-        lines.append(f"  取引日数      : {summary['trading_days']}")
+        lines.append(f"  平均損益/取引 : ${snapshot.avg_pnl_per_trade:>+,.2f}")
+        lines.append(f"  最大DD        : {snapshot.max_drawdown_pct:.2%}")
+        lines.append(f"  取引日数      : {snapshot.trading_days}")
     lines.append("")
     
     # Account-specific summaries (if multiple accounts)
@@ -364,8 +255,9 @@ def _build_report(
         lines.append("")
 
     # Open positions
+    open_pos = snapshot.open_positions
     if open_pos:
-        source_label = "ブローカー" if positions_source == "broker" else "トラッカー"
+        source_label = "ブローカー" if snapshot.positions_source == "broker" else "トラッカー"
         lines.append(f"📂 保有ポジション ({len(open_pos)}件 / ソース: {source_label})")
         if mode == "brief":
             # Brief mode: just list symbols
@@ -377,7 +269,7 @@ def _build_report(
                 sym = pos["symbol"]
                 entry = float(pos.get("entry_price") or pos.get("avg_entry_price") or 0.0)
                 qty = pos.get("qty")
-                curr = pos.get("current_price") or current_prices.get(sym)
+                curr = pos.get("current_price") or snapshot.current_prices.get(sym)
                 unreal = pos.get("unrealized_pnl")
                 unreal_pct = pos.get("unrealized_pnl_pct")
                 if curr:
@@ -400,6 +292,7 @@ def _build_report(
         lines.append("")
 
     # Recent trades
+    recent = snapshot.recent_trades
     if recent:
         display_count = 3 if mode == "brief" else len(recent)
         lines.append(f"🔄 最近の決済取引 (直近{display_count}件)")
@@ -460,7 +353,7 @@ def _format_for_telegram(lines: list[str]) -> str:
         if line.startswith("─"):
             continue
         # Bold headers (lines with emoji)
-        if any(emoji in line for emoji in ["📈", "💰", "📊", "📂", "🔄"]):
+        if any(emoji in line for emoji in ["📈", "💰", "📊", "📂", "🔄", "📏", "⚠️"]):
             html_lines.append(f"<b>{line}</b>")
         # Monospace for data lines (indented)
         elif line.startswith("  "):
