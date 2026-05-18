@@ -108,11 +108,47 @@ def fetch_all_filled_orders(broker: BrokerClient) -> list:
     return filled_orders
 
 
-def match_buy_sell_orders(filled_orders: list) -> list:
+def fetch_broker_open_positions(broker: BrokerClient) -> dict[str, dict]:
+    """Fetch current open positions from broker.
+    
+    Returns:
+        Dictionary mapping symbol -> position info with qty and avg_entry_price.
+    """
+    print("Fetching current open positions from broker...")
+    try:
+        positions_env = broker.fetch_positions()
+        positions = positions_env.payload if hasattr(positions_env, 'payload') else positions_env
+        
+        if not isinstance(positions, list):
+            print("  WARN: broker.fetch_positions() did not return a list")
+            return {}
+        
+        position_map = {}
+        for pos in positions:
+            symbol = pos.get('symbol')
+            qty = float(pos.get('qty', 0) or 0)
+            avg_price = float(pos.get('avg_entry_price', 0) or 0)
+            
+            if symbol and qty > 0 and avg_price > 0:
+                position_map[symbol] = {
+                    'qty': qty,
+                    'avg_entry_price': avg_price,
+                    'asset_id': pos.get('asset_id'),
+                }
+        
+        print(f"  Found {len(position_map)} open positions at broker")
+        return position_map
+        
+    except Exception as e:
+        print(f"  WARN: Failed to fetch broker positions: {e}")
+        return {}
+
+
+def match_buy_sell_orders(filled_orders: list) -> tuple[list, list]:
     """Match buy and sell orders to create closed trades.
     
     Uses FIFO (First In, First Out) matching.
-    Returns list of closed trade dictionaries.
+    Returns tuple of (closed_trades, open_positions_from_fills).
     """
     by_symbol = defaultdict(lambda: {'buy': [], 'sell': []})
     
@@ -223,6 +259,114 @@ def match_buy_sell_orders(filled_orders: list) -> list:
     return trades, open_positions
 
 
+def reconcile_open_positions(
+    open_from_fills: list,
+    broker_positions: dict[str, dict],
+    trade_num_offset: int,
+) -> list:
+    """Reconcile open positions from filled orders with broker truth.
+    
+    Broker positions are the source of truth. This function:
+    1. Uses broker positions as baseline
+    2. Enriches with order metadata from fills when available
+    3. Creates new entries for broker positions not in fills
+    
+    Args:
+        open_from_fills: Open positions calculated from filled orders.
+        broker_positions: Current open positions from broker API.
+        trade_num_offset: Starting trade number for new broker-only positions.
+    
+    Returns:
+        Reconciled list of open position trades.
+    """
+    print("\nReconciling open positions with broker truth...")
+    
+    # Map fills by symbol
+    fills_by_symbol = {}
+    for pos in open_from_fills:
+        symbol = pos['symbol']
+        if symbol not in fills_by_symbol:
+            fills_by_symbol[symbol] = []
+        fills_by_symbol[symbol].append(pos)
+    
+    reconciled = []
+    trade_num = trade_num_offset
+    
+    # Process each broker position
+    for symbol in sorted(broker_positions.keys()):
+        broker_pos = broker_positions[symbol]
+        broker_qty = broker_pos['qty']
+        broker_price = broker_pos['avg_entry_price']
+        
+        fills = fills_by_symbol.get(symbol, [])
+        
+        if fills:
+            # Have fill history for this symbol - use it but verify qty
+            total_fill_qty = sum(f['qty'] for f in fills)
+            
+            if abs(total_fill_qty - broker_qty) < 0.01:
+                # Quantities match - use fill history as-is
+                print(f"  ✓ {symbol:6} {int(broker_qty):>4}株 matched from fills")
+                reconciled.extend(fills)
+            else:
+                # Quantity mismatch - trust broker and create new entry
+                print(f"  ⚠ {symbol:6} qty mismatch: fills={int(total_fill_qty)} broker={int(broker_qty)} - using broker")
+                trade_num += 1
+                reconciled.append({
+                    'trade_id': f"broker_open_{trade_num:04d}_{symbol}",
+                    'symbol': symbol,
+                    'strategy_id': 'broker_reconstructed',
+                    'side': 'buy',
+                    'qty': int(broker_qty),
+                    'entry_price': round(broker_price, 2),
+                    'exit_price': None,
+                    'entry_time': None,  # Unknown from broker position
+                    'exit_time': None,
+                    'pnl': None,
+                    'return_pct': None,
+                    'status': 'open',
+                    'account_id': None,
+                    'strategy_version_id': 'broker_reconstructed',
+                    'broker_order_id': None,
+                    'original_strategy_id': 'broker_reconstructed',
+                    'exit_strategy_id': None,
+                    'exit_reason': None,
+                })
+        else:
+            # No fill history - this is a broker-only position (likely filled after last rebuild)
+            print(f"  + {symbol:6} {int(broker_qty):>4}株 broker-only position @ ${broker_price:.2f}")
+            trade_num += 1
+            reconciled.append({
+                'trade_id': f"broker_open_{trade_num:04d}_{symbol}",
+                'symbol': symbol,
+                'strategy_id': 'broker_reconstructed',
+                'side': 'buy',
+                'qty': int(broker_qty),
+                'entry_price': round(broker_price, 2),
+                'exit_price': None,
+                'entry_time': None,
+                'exit_time': None,
+                'pnl': None,
+                'return_pct': None,
+                'status': 'open',
+                'account_id': None,
+                'strategy_version_id': 'broker_reconstructed',
+                'broker_order_id': None,
+                'original_strategy_id': 'broker_reconstructed',
+                'exit_strategy_id': None,
+                'exit_reason': None,
+            })
+    
+    # Warn about positions in fills but not at broker (already closed)
+    for symbol in fills_by_symbol:
+        if symbol not in broker_positions:
+            fill_qty = sum(f['qty'] for f in fills_by_symbol[symbol])
+            print(f"  ⚠ {symbol:6} {int(fill_qty):>4}株 in fills but NOT at broker (likely closed)")
+    
+    print(f"  Result: {len(reconciled)} open positions after reconciliation")
+    return reconciled
+
+
 def calculate_summary(trades: list, open_positions: list) -> dict:
     """Calculate summary statistics."""
     closed_trades = [t for t in trades if t['status'] == 'closed']
@@ -248,9 +392,14 @@ def rebuild_pnl_state(
     broker: BrokerClient,
     tracking_metadata: dict[str, Any] | None = None,
 ) -> dict:
-    """Rebuild pnl_state.json from broker order history."""
+    """Rebuild pnl_state.json from broker order history and current positions."""
     filled_orders = fetch_all_filled_orders(broker)
-    closed_trades, open_positions = match_buy_sell_orders(filled_orders)
+    closed_trades, open_from_fills = match_buy_sell_orders(filled_orders)
+    
+    # Fetch current broker positions and reconcile
+    broker_positions = fetch_broker_open_positions(broker)
+    trade_num_offset = len(closed_trades) + len(open_from_fills)
+    open_positions = reconcile_open_positions(open_from_fills, broker_positions, trade_num_offset)
 
     all_trades = closed_trades + open_positions
     summary = calculate_summary(closed_trades, open_positions)

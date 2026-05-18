@@ -497,6 +497,12 @@ class Console {
 
         return `
         ${this.renderPipelineFunnel()}
+        <div class="grid" style="margin-bottom:16px">
+            <div class="card" style="grid-column: 1 / -1;">
+                <h3>📋 取引履歴</h3>
+                ${this.renderRecentTrades(recent)}
+            </div>
+        </div>
         <div class="grid">
             <div class="card">
                 <h3>トラッキング範囲</h3>
@@ -523,10 +529,6 @@ class Console {
                 <div class="metric"><span class="label">勝率</span><span class="value ${wr_cls}">${fmt.pct(winRate)}</span></div>
                 <div class="metric"><span class="label">平均リターン</span><span class="value ${(s.avg_return_per_trade ?? 0) >= 0 ? 'success':'danger'}">${s.avg_return_per_trade == null ? '—' : fmt.pctSigned(s.avg_return_per_trade)}</span></div>
                 <div class="metric"><span class="label">有効return取引数</span><span class="value">${s.valid_return_trade_count||0}</span></div>
-            </div>
-            <div class="card">
-                <h3>取引履歴</h3>
-                ${this.renderRecentTrades(recent)}
             </div>
             <div class="card">
                 <h3>パフォーマンス推移</h3>
