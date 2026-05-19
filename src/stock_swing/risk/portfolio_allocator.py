@@ -156,13 +156,16 @@ class PortfolioAllocator:
     ) -> List[Any]:
         """Filter and prioritize buy decisions based on portfolio allocation.
         
+        Enforces hard limits: blocks buy decisions for the asset class that exceeds
+        its target allocation by more than the rebalance threshold.
+        
         Args:
             decisions: List of decision objects with .proposed_order.symbol.
             current_positions: Dict of current positions.
             etf_symbols: Set of ETF symbols.
             
         Returns:
-            Reordered list of decisions with prioritized asset class first.
+            Filtered and reordered list of decisions.
         """
         if not decisions:
             return []
@@ -172,13 +175,63 @@ class PortfolioAllocator:
         sell_decisions = [d for d in decisions if d.proposed_order.side == 'sell']
         
         if not buy_decisions:
-            return decisions  # No buys to prioritize
+            return decisions  # No buys to filter
         
-        # Separate ETF and Stock buy decisions
+        # Calculate current allocation
+        etf_value, stock_value, total_value = self._calculate_current_allocation(
+            current_positions, etf_symbols
+        )
+        
+        if total_value > 0:
+            current_etf_pct = etf_value / total_value
+            current_stock_pct = stock_value / total_value
+            
+            # Check if any asset class is significantly over-allocated
+            etf_excess = current_etf_pct - self.target_etf_pct
+            stock_excess = current_stock_pct - self.target_stock_pct
+            
+            # Filter out buys for over-allocated asset classes
+            filtered_buys = []
+            blocked_etf = 0
+            blocked_stock = 0
+            
+            for d in buy_decisions:
+                symbol = d.proposed_order.symbol
+                is_etf = symbol in etf_symbols
+                
+                # Block ETF buys if ETF allocation exceeds target + threshold
+                if is_etf and etf_excess > self.rebalance_threshold_pct:
+                    blocked_etf += 1
+                    logger.info(
+                        f"Blocking ETF buy {symbol}: allocation {current_etf_pct:.1%} "
+                        f"exceeds target {self.target_etf_pct:.1%} by {etf_excess:.1%}"
+                    )
+                    continue
+                
+                # Block Stock buys if Stock allocation exceeds target + threshold
+                if not is_etf and stock_excess > self.rebalance_threshold_pct:
+                    blocked_stock += 1
+                    logger.info(
+                        f"Blocking Stock buy {symbol}: allocation {current_stock_pct:.1%} "
+                        f"exceeds target {self.target_stock_pct:.1%} by {stock_excess:.1%}"
+                    )
+                    continue
+                
+                filtered_buys.append(d)
+            
+            if blocked_etf > 0 or blocked_stock > 0:
+                logger.warning(
+                    f"Portfolio allocation enforcement: blocked {blocked_etf} ETF buys, "
+                    f"{blocked_stock} Stock buys (ETF: {current_etf_pct:.1%}, Stock: {current_stock_pct:.1%})"
+                )
+            
+            buy_decisions = filtered_buys
+        
+        # Separate remaining buys by type
         etf_buys = [d for d in buy_decisions if d.proposed_order.symbol in etf_symbols]
         stock_buys = [d for d in buy_decisions if d.proposed_order.symbol not in etf_symbols]
         
-        # Determine prioritization
+        # Determine prioritization for remaining buys
         prioritize_etf = self.should_prioritize_etf(current_positions, etf_symbols)
         prioritize_stock = self.should_prioritize_stock(current_positions, etf_symbols)
         

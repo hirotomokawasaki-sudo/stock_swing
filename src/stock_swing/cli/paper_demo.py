@@ -874,10 +874,22 @@ def main() -> int:  # noqa: C901
 
     _save_decisions(decisions, store, ts_tag)
 
-    # 10. Reconciliation
+    # 10. Record daily snapshot (before reconciliation to avoid SIGTERM issues)
+    try:
+        if not args.dry_run:
+            pnl_tracker.record_daily_snapshot(
+                equity=equity,
+                signals_generated=len(all_signals),
+                orders_submitted=len([s for s in submissions if s.status == "submitted"]),
+            )
+            print("  ✓ Daily snapshot recorded")
+    except Exception as e:
+        print(f"  WARN: Daily snapshot failed: {e}")
+
+    # 11. Reconciliation
     submitted = [s for s in submissions if s.broker_order_id]
     if submitted:
-        _section("10. Reconciliation")
+        _section("11. Reconciliation")
         for sub in submitted:
             try:
                 result = reconciler.reconcile(sub)
@@ -925,17 +937,6 @@ def main() -> int:  # noqa: C901
                 print(f"  WARN: {sub.symbol} reconcile failed: {exc}")
 
     audit_log.log_system_event("paper_demo_complete", details=f"decisions={len(decisions)} submitted={len(submissions)}")
-
-    # Record daily P&L snapshot
-    try:
-        if not args.dry_run:
-            pnl_tracker.record_daily_snapshot(
-                equity=equity,
-                signals_generated=len(all_signals),
-                orders_submitted=len([s for s in submissions if s.status == "submitted"]),
-            )
-    except Exception:
-        pass
 
     _print_summary(decisions, submissions, equity, args.dry_run)
     
