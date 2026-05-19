@@ -41,6 +41,7 @@ class DashboardService:
         self._tracker = PnLTracker(project_root) if _HAS_TRACKER else None
         self._broker = self._init_broker() if _HAS_TRACKER and BrokerClient else None
         self._broker_orders_cache: list[dict[str, Any]] | None = None
+        self._price_overrides = self._load_price_overrides()
 
     def _init_broker(self):
         """Initialize broker client if credentials available."""
@@ -53,6 +54,39 @@ class DashboardService:
             return BrokerClient(api_key=api_key, api_secret=api_secret, paper_mode=True)
         except Exception:
             return None
+    
+    def _load_price_overrides(self) -> Dict[str, Any]:
+        """Load price overrides from data/price_overrides.json.
+        
+        Returns dict mapping symbol -> {fresh_price, broker_price, deviation_pct, ...}
+        """
+        try:
+            override_path = self.project_root / "data" / "price_overrides.json"
+            if override_path.exists():
+                override_data = json.loads(override_path.read_text())
+                overrides = override_data.get("overrides", {})
+                if overrides:
+                    print(f"✓ Loaded {len(overrides)} price overrides from {override_path}")
+                return overrides
+        except Exception as e:
+            print(f"⚠️  Failed to load price overrides: {e}")
+        return {}
+    
+    def _apply_price_override(self, symbol: str, broker_price: float) -> float:
+        """Apply price override if available for this symbol.
+        
+        Args:
+            symbol: Symbol to check
+            broker_price: Original price from broker positions API
+            
+        Returns:
+            Fresh price from Massive API if override exists, otherwise broker_price
+        """
+        if symbol in self._price_overrides:
+            override = self._price_overrides[symbol]
+            fresh_price = float(override.get("fresh_price", broker_price))
+            return fresh_price
+        return broker_price
 
     def get_dashboard(self, period: str = 'month') -> Dict[str, Any]:
         trading = self.get_trading()
@@ -1606,10 +1640,15 @@ class DashboardService:
         symbol = broker_pos.get('symbol', '')
         qty = int(float(broker_pos.get('qty', 0)))
         avg_entry = float(broker_pos.get('avg_entry_price', 0))
-        current_price = float(broker_pos.get('current_price', 0))
-        market_value = float(broker_pos.get('market_value', 0))
-        unrealized_pl = float(broker_pos.get('unrealized_pl', 0))
-        unrealized_plpc = float(broker_pos.get('unrealized_plpc', 0))
+        broker_current_price = float(broker_pos.get('current_price', 0))
+        
+        # Apply price override if available (fixes stale Alpaca positions API prices)
+        current_price = self._apply_price_override(symbol, broker_current_price)
+        
+        # Recalculate market_value and unrealized_pl with fresh price
+        market_value = current_price * qty
+        unrealized_pl = (current_price - avg_entry) * qty if avg_entry > 0 else 0
+        unrealized_plpc = (current_price - avg_entry) / avg_entry if avg_entry > 0 else 0
 
         entry_time, holding_days = self._get_position_entry_context(symbol, float(broker_pos.get('qty', 0)))
 

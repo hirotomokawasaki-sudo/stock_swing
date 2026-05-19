@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 project_root = Path(__file__).resolve().parents[3]
@@ -50,6 +51,69 @@ def load_recent_submissions(audits_dir: Path, limit: int = 100):
     return items
 
 
+def reconcile_filled_buys(broker: BrokerClient, tracker: PnLTracker) -> int:
+    """Reconcile broker open positions with tracker open trades.
+    
+    For each broker position that is missing from tracker, record it as an open trade.
+    Uses broker's avg_entry_price and current qty.
+    
+    Returns the count of newly recorded entries.
+    """
+    try:
+        positions_env = broker.fetch_positions()
+        positions = positions_env.payload if hasattr(positions_env, "payload") else positions_env
+        if not isinstance(positions, list):
+            print("WARN: broker.fetch_positions() did not return a list", file=sys.stderr)
+            return 0
+    except Exception as e:
+        print(f"WARN: Failed to fetch broker positions: {e}", file=sys.stderr)
+        return 0
+    
+    # Build tracker open symbols map
+    tracker_open = {}
+    for trade in tracker.state.trades:
+        if trade.get("status") == "open":
+            symbol = trade.get("symbol", "").upper()
+            qty = int(trade.get("qty", 0))
+            tracker_open.setdefault(symbol, 0)
+            tracker_open[symbol] += qty
+    
+    newly_recorded = 0
+    for pos in positions:
+        symbol = str(pos.get("symbol", "")).upper()
+        broker_qty = abs(int(float(pos.get("qty", 0) or 0)))
+        avg_price = float(pos.get("avg_entry_price", 0) or 0)
+        
+        if broker_qty <= 0 or avg_price <= 0:
+            continue
+        
+        tracker_qty = tracker_open.get(symbol, 0)
+        missing_qty = broker_qty - tracker_qty
+        
+        if missing_qty > 0:
+            # Record the missing quantity as a new open trade
+            try:
+                trade_id = tracker.record_submission(
+                    symbol=symbol,
+                    strategy_id="breakout_momentum_v1",  # default strategy
+                    side="buy",
+                    qty=missing_qty,
+                    price=avg_price,
+                    broker_order_id=None,  # unknown
+                    decision_id=f"reconcile-{symbol}-{datetime.now(timezone.utc).isoformat()}",
+                    original_strategy_id="reconciled_from_broker",
+                    strategy_version_id="reconciled_from_broker",
+                    account_id=tracker.state.broker_account_id,
+                )
+                if trade_id:
+                    newly_recorded += 1
+                    print(f"INFO: Recorded missing broker position: {symbol} qty={missing_qty} @ ${avg_price:.2f}", file=sys.stderr)
+            except Exception as e:
+                print(f"WARN: Failed to record {symbol}: {e}", file=sys.stderr)
+    
+    return newly_recorded
+
+
 def main() -> int:
     _load_env(project_root / ".env")
     api_key = os.environ.get("BROKER_API_KEY", "")
@@ -62,19 +126,47 @@ def main() -> int:
     tracker = PnLTracker(project_root)
     tracker.state = tracker._load_state()
 
+    # Step 1: Reconcile filled buys (broker-only positions)
+    newly_recorded_buys = reconcile_filled_buys(broker, tracker)
+
+    # Step 2: Reconcile filled sells (existing logic)
     orders_env = broker.fetch_orders(status="all", limit=500)
     orders = orders_env.payload if hasattr(orders_env, "payload") else orders_env
     if not isinstance(orders, list):
         print("broker.fetch_orders() did not return a list")
         return 1
 
+    # Group sell orders by symbol and keep only the most recent filled one
     latest_sell_orders_by_symbol = {}
     for order in orders:
         symbol = str(order.get("symbol", "")).upper()
         side = str(order.get("side", "")).lower()
         if side != "sell" or not symbol:
             continue
-        latest_sell_orders_by_symbol.setdefault(symbol, order)
+        
+        # Only track filled/partially_filled orders
+        status = str(order.get("status", "")).lower()
+        if status not in {"filled", "partially_filled"}:
+            continue
+        
+        # Keep the most recent (by filled_at or created_at)
+        filled_at = order.get("filled_at") or order.get("created_at") or ""
+        existing = latest_sell_orders_by_symbol.get(symbol)
+        if not existing:
+            latest_sell_orders_by_symbol[symbol] = order
+        else:
+            existing_filled_at = existing.get("filled_at") or existing.get("created_at") or ""
+            if filled_at > existing_filled_at:
+                latest_sell_orders_by_symbol[symbol] = order
+
+    # Build set of already-closed symbols to avoid duplicate exits
+    already_closed_symbols = set()
+    for trade in tracker.state.trades:
+        if trade.get("status") == "closed":
+            symbol = trade.get("symbol", "").upper()
+            broker_order_id = trade.get("broker_order_id")
+            if broker_order_id:  # Track by order ID for precise matching
+                already_closed_symbols.add((symbol, broker_order_id))
 
     submissions = load_recent_submissions(project_root / "data" / "audits")
     filled_exits = 0
@@ -88,6 +180,13 @@ def main() -> int:
             match = latest_sell_orders_by_symbol.get(sub["symbol"])
             if not match:
                 continue
+            
+            broker_order_id = match.get("id")
+            
+            # Skip if this exit was already recorded
+            if (sub["symbol"], broker_order_id) in already_closed_symbols:
+                continue
+            
             status = str(match.get("status", "")).lower()
             filled_qty = float(match.get("filled_qty", 0) or 0)
             avg_price = match.get("filled_avg_price")
@@ -130,13 +229,23 @@ def main() -> int:
                     continue
                     
                 # Pass filled_qty to support partial fills
+                # Check if there's an open trade for this symbol before recording exit
+                has_open_trade = any(
+                    t.get("symbol") == sub["symbol"] and t.get("status") == "open"
+                    for t in tracker.state.trades
+                )
+                
+                if not has_open_trade:
+                    print(f"WARN: Skipping exit for {sub['symbol']}: no open trade found", file=sys.stderr)
+                    continue
+                
                 updated = tracker.record_exit(
                     symbol=sub["symbol"], 
                     exit_price=avg_price_float, 
                     exit_qty=int(filled_qty),
-                    broker_order_id=match.get("id"),
-                    exit_strategy_id="simple_exit_v1",
-                    exit_reason="strategy_exit"
+                    broker_order_id=broker_order_id,
+                    exit_strategy_id="reconciled_from_broker",  # Mark as reconciled, not from strategy
+                    exit_reason="broker_filled"
                 )
                 if updated:
                     filled_exits += 1
@@ -145,6 +254,7 @@ def main() -> int:
             continue
 
     print(json.dumps({
+        "newly_recorded_buys": newly_recorded_buys,
         "checked_sell_submissions": checked,
         "filled_exits_recorded": filled_exits,
         "summary": tracker.get_summary(),

@@ -63,11 +63,41 @@ class SimpleExitV2Strategy(BaseStrategy):
             List of sell signals for positions that meet exit criteria.
         """
         import logging
+        import json
+        from pathlib import Path
         logger = logging.getLogger(__name__)
         
         if not current_positions:
             logger.warning("SimpleExitV2: No current_positions provided")
             return []
+        
+        # Load price overrides to fix stale broker prices
+        price_overrides = {}
+        try:
+            override_path = Path(__file__).parent.parent.parent.parent / "data" / "price_overrides.json"
+            if override_path.exists():
+                override_data = json.loads(override_path.read_text())
+                price_overrides = override_data.get("overrides", {})
+                if price_overrides:
+                    logger.info(f"SimpleExitV2: Loaded {len(price_overrides)} price overrides")
+        except Exception as e:
+            logger.warning(f"SimpleExitV2: Failed to load price overrides: {e}")
+        
+        # Apply price overrides to current_positions
+        overrides_applied = 0
+        for symbol in current_positions:
+            if symbol in price_overrides:
+                fresh_price = price_overrides[symbol]["fresh_price"]
+                old_price = current_positions[symbol].get("current_price", 0)
+                current_positions[symbol]["current_price"] = fresh_price
+                overrides_applied += 1
+                logger.info(
+                    f"SimpleExitV2: Applied price override for {symbol}: "
+                    f"${old_price:.2f} → ${fresh_price:.2f}"
+                )
+        
+        if overrides_applied > 0:
+            logger.info(f"SimpleExitV2: Applied {overrides_applied} price overrides")
         
         logger.info(f"SimpleExitV2: Checking {len(current_positions)} positions")
         

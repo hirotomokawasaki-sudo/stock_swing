@@ -15,7 +15,8 @@ from urllib.parse import urlparse, parse_qs
 # Add project root to path
 ROOT = Path(__file__).resolve().parent
 PROJECT_ROOT = ROOT.parent
-sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "src"))  # For stock_swing module
+sys.path.insert(0, str(PROJECT_ROOT))  # For console module
 
 # Load environment variables from .env
 def load_env():
