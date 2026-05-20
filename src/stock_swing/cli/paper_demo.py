@@ -438,13 +438,15 @@ def main() -> int:  # noqa: C901
             f"{len(intraday_candidates)} intraday candidate(s)"
         )
 
+        _intraday_normalizer = BrokerNormalizer()
+
         def fetch_intraday_bars(symbol: str) -> tuple[str, list[CanonicalRecord], int, str | None]:
             """Fetch 5-minute bars for intraday momentum analysis."""
             try:
                 # Fetch ~8 hours of 5-minute bars (100 bars = 500 minutes ≈ 8.3 hours)
                 raw = broker.fetch_bars(symbol, timeframe="5Min", limit=100)
                 bar_count = len(raw.payload.get("bars", []))
-                records = normalizer.normalize(raw)
+                records = _intraday_normalizer.normalize(raw)
                 return (symbol, records, bar_count, None)
             except Exception as exc:
                 return (symbol, [], 0, str(exc))

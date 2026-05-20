@@ -87,8 +87,8 @@ class SimpleExitV2Strategy(BaseStrategy):
         overrides_applied = 0
         for symbol in current_positions:
             if symbol in price_overrides:
-                fresh_price = price_overrides[symbol]["fresh_price"]
-                old_price = current_positions[symbol].get("current_price", 0)
+                fresh_price = float(price_overrides[symbol]["fresh_price"])
+                old_price = float(current_positions[symbol].get("current_price") or 0)
                 current_positions[symbol]["current_price"] = fresh_price
                 overrides_applied += 1
                 logger.info(
