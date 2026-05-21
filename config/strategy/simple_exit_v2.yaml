@@ -8,5 +8,5 @@ trailing_activation_pct: 0.08
 # Pullback percentage from peak to trigger exit (e.g., 0.04 = 4%)
 # Increased from 3% to 4% to allow more room for volatility (2026-05-18)
 trailing_stop_pct: 0.04
-# Maximum holding period in days (9 days to allow for variance from winning trade avg of 6.4 days)
-max_hold_days: 9
+# Maximum holding period in days (20 days to allow strong momentum trades to develop)
+max_hold_days: 20

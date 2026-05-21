@@ -1,0 +1,6 @@
+{
+  "schema_version": "v1",
+  "generated_at": "2026-05-20T22:00:57.970990",
+  "note": "Fresh prices from Massive API to override stale Alpaca positions API prices",
+  "overrides": {}
+}

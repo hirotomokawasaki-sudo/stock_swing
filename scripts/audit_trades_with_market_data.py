@@ -110,13 +110,13 @@ def analyze_tracker_integrity(trades: list[dict], broker_positions: list[dict]) 
     tracker_symbols = set(tracker_positions.keys())
     broker_symbols = set(broker_map.keys())
     mismatches = []
-    duplicate_symbols = []
+    multi_lot_symbols = []
     consistent = []
 
     for symbol in sorted(tracker_symbols):
         tracker_pos = tracker_positions[symbol]
         if tracker_pos.get("trade_count", 0) > 1:
-            duplicate_symbols.append({
+            multi_lot_symbols.append({
                 "symbol": symbol,
                 "trade_count": tracker_pos["trade_count"],
                 "tracker_qty": tracker_pos["qty"],
@@ -142,7 +142,7 @@ def analyze_tracker_integrity(trades: list[dict], broker_positions: list[dict]) 
     return {
         "tracker_positions": tracker_positions,
         "broker_positions": broker_map,
-        "duplicate_symbols": duplicate_symbols,
+        "multi_lot_symbols": multi_lot_symbols,
         "mismatches": mismatches,
         "tracker_only": sorted(tracker_symbols - broker_symbols),
         "broker_only": sorted(broker_symbols - tracker_symbols),
@@ -296,25 +296,26 @@ def main():
     print(f"  Both anomalous:            {both_anomalies}")
 
     integrity_issue_count = 0
+    broker_check_failed = False
     print("\n" + "="*100)
     print("TRACKER INTEGRITY SUMMARY")
     print("="*100)
     try:
         broker_positions = load_broker_positions(project_root)
         integrity = analyze_tracker_integrity(trades, broker_positions)
-        duplicate_symbols = integrity["duplicate_symbols"]
+        multi_lot_symbols = integrity["multi_lot_symbols"]
         mismatches = integrity["mismatches"]
         tracker_only = integrity["tracker_only"]
         broker_only = integrity["broker_only"]
-        integrity_issue_count = len(duplicate_symbols) + len(mismatches) + len(tracker_only) + len(broker_only)
+        integrity_issue_count = len(mismatches) + len(tracker_only) + len(broker_only)
 
         print(f"Broker positions: {len(broker_positions)}")
         print(f"Tracker open symbols: {len(integrity['tracker_positions'])}")
         print(f"Integrity issue count: {integrity_issue_count}")
 
-        if duplicate_symbols:
-            print("\n⚠️  DUPLICATE TRACKER OPEN POSITIONS")
-            for row in duplicate_symbols:
+        if multi_lot_symbols:
+            print("\nℹ️  MULTI-LOT TRACKER OPEN POSITIONS (aggregate matched broker)")
+            for row in multi_lot_symbols:
                 print(f"  {row['symbol']}: {row['trade_count']} tracker lots / qty={row['tracker_qty']}")
 
         if mismatches:
@@ -337,22 +338,28 @@ def main():
         if integrity_issue_count == 0:
             print("\n✅ Tracker open positions match broker positions.")
     except Exception as e:
+        broker_check_failed = True
         print(f"WARN: Could not run broker/tracker integrity check: {e}", file=sys.stderr)
 
-    if total_anomalies > 0 or integrity_issue_count > 0:
+    if total_anomalies > 0 or integrity_issue_count > 0 or broker_check_failed:
         print("\n⚠️  ACTION REQUIRED:")
         if total_anomalies > 0:
             print(f"   Review {total_anomalies} anomalous trade(s) above")
         if integrity_issue_count > 0:
             print(f"   Review {integrity_issue_count} tracker integrity issue(s) above")
+        if broker_check_failed:
+            print("   Fix broker integrity check environment/credentials and rerun audit")
         print("\nNext steps:")
         print("  1. Backup pnl_state.json")
         if total_anomalies > 0:
             print("  2. Investigate price anomalies against market data")
-        else:
+        elif integrity_issue_count > 0:
             print("  2. Rebuild pnl_state from broker fills to repair tracker state")
-        print("  3. Run: python scripts/rebuild_pnl_state_from_broker.py --backup")
-        print("  4. Restart console to clear cache")
+            print("  3. Run: python scripts/rebuild_pnl_state_from_broker.py --backup")
+            print("  4. Restart console to clear cache")
+        else:
+            print("  2. Fix the broker check environment (virtualenv/dependencies/credentials)")
+            print("  3. Rerun: python scripts/audit_trades_with_market_data.py")
         return 1
 
     print("\n✅ No price anomalies or tracker integrity issues detected.")

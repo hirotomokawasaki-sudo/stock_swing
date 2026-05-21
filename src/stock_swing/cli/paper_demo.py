@@ -572,7 +572,7 @@ def main() -> int:  # noqa: C901
             stop_loss_pct=-0.07,
             trailing_activation_pct=0.05,
             trailing_stop_pct=0.03,
-            max_hold_days=9,  # 9 days to allow for variance from winning trade avg of 6.4 days
+            max_hold_days=20,  # 20 days to allow strong momentum trades to develop
         )
     exit_signals = exit_strat.generate(all_features, current_positions_full)
     
