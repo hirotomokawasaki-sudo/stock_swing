@@ -145,6 +145,22 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
         
+        if p == "/api/dashboard/symbol_overview":
+            try:
+                pipeline = dashboard.get_pipeline_summary()
+                data = pipeline.get('symbol_overview', [])
+                return self._json(data)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+        
+        if p == "/api/dashboard/strategy_overview":
+            try:
+                pipeline = dashboard.get_pipeline_summary()
+                data = pipeline.get('by_strategy', [])
+                return self._json(data)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+        
         if p == "/api/overview":
             try:
                 data = dashboard.get_overview()
