@@ -519,18 +519,96 @@
 
 ---
 
-## 優先順位まとめ（2026-05-15 更新）
+## Phase 3 — ニュース感情フィーチャー
 
-### 今夜〜明日（最優先）
-1. **T23**: Massive API 運用監視（今夜 23:00 JST から）
-2. **T15**: premarket cron 完走性確認
-3. **T20**: sizing 改善 + Massive API の live 効果確認
+### T25. ニュース感情フィーチャーの実装・評価（3ステップ計画）
+**目的**: 収集中のニュースデータを取引判断に実際に活用し、成績向上を検証する
+
+#### Step 1: 株式44銘柄データ蓄積・相関評価（〜2026-06-15 目安）
+**前提**: 2026-05-25 より news_collection cron を 8銘柄 → 44銘柄へ拡張済み
+
+**作業**
+- [ ] 2〜3週間のニュースデータを蓄積（自動）
+- [ ] `scripts/analyze_news_impact.py` を再実行し統計的有効性を確認
+  - 相関係数 |r| > 0.3 かつ サンプル数 n ≥ 30 を合格基準とする
+- [ ] 有効性なし → T25 を中断（コスト対効果が見合わない）
+- [ ] 有効性あり → Step 2 へ進む
+
+**完了条件**
+- [ ] analyze_news_impact.py が n≥30 で実行できる
+- [ ] 結果を `docs/daily_logs/` に記録
+
+#### Step 2: ETF ニュースマッピング追加（Step 1 通過後）
+**背景**: ETF は個社ニュースを持たないが、構成株式のニュース感情を集約することでセンチメントを近似できる  
+**追加APIコスト**: ゼロ（構成株式のニュースを Step 1 で既に収集済み）  
+**実装コスト**: 約半日
+
+**ETF → 代表銘柄マッピング案**
+```python
+ETF_SECTOR_MAP = {
+    # 半導体ETF
+    "SOXX":  ["NVDA","AMD","INTC","QCOM","AMAT","LRCX","MU","MRVL","AVGO","ARM"],
+    "SOXQ":  ["NVDA","AMD","INTC","QCOM","AMAT","LRCX","MU","MRVL","AVGO","ARM"],
+    "SMH":   ["NVDA","ASML","TSM","AVGO","AMD","QCOM","AMAT","INTC","LRCX","MU"],
+    "SMHX":  ["NVDA","AMD","INTC","QCOM","AMAT","LRCX","MU","MRVL","ARM"],
+    "FTXL":  ["NVDA","AMD","AVGO","QCOM","AMAT","LRCX","KLAC","MU"],
+    # ブロードテックETF
+    "PSCT":  ["HPE","DELL","CSCO","IBM","ANET","SNPS","CDNS","HPQ"],
+    "QTEC":  ["NVDA","MSFT","GOOGL","AMAT","LRCX","SNPS","CDNS","KLAC"],
+    "PTF":   ["NVDA","AMD","AVGO","QCOM","AMAT","ARM","MU"],
+    # クラウド・ソフトウェア
+    "SKYY":  ["CRM","SNOW","MDB","DDOG","ORCL","NOW","MSFT","GOOGL"],
+    # 量子・AI特化
+    "QTUM":  ["GOOGL","IBM","MSFT","NVDA","INTC","AMZN"],
+    "CHPS":  ["NVDA","AMD","INTC","QCOM","AMAT","MU","ARM","AVGO"],
+    "CHPX":  ["NVDA","AMD","INTC","QCOM","AMAT","MU","ARM","AVGO"],
+    # その他
+    "TTEQ":  ["NVDA","MSFT","GOOGL","AMZN","META","AVGO","AMD"],
+    "GTOP":  ["NVDA","MSFT","GOOGL","AMZN","META","TSLA","AVGO"],
+    "FRWD":  ["NVDA","AMD","AVGO","QCOM","AMAT","ARM","KLAC"],
+    "TDIV":  ["MSFT","AVGO","CSCO","IBM","QCOM","INTC","HPE"],
+    "SHOC":  ["NVDA","AMD","AVGO","QCOM","AMAT","KLAC","MU"],
+}
+```
+
+**作業**
+- [ ] `analyze_news_impact.py` に ETF_SECTOR_MAP を追加
+- [ ] ETF の感情スコアを構成銘柄の加重平均で算出
+- [ ] ETF トレードを含めて相関分析を再実行
+
+**完了条件**
+- [ ] ETF を含む全クローズトレードに感情スコアが付与できる
+- [ ] 相関分析の対象が 77件以上に拡大
+
+#### Step 3: NewsFeature の実装と paper_demo への組み込み（Step 2 通過後）
+**作業**
+- [ ] `feature_engine/news_sentiment_feature.py` を実装
+  - 直近24hのニュース感情スコアを特徴量として出力
+  - ETF は ETF_SECTOR_MAP 経由で集約
+- [ ] `breakout_momentum_strategy.py` に news_sentiment を入力として追加
+  - negative news 時は buy を抑制 or confidence を下げる
+- [ ] paper_demo の `--dry-run` で動作確認
+- [ ] 回帰テスト追加
+
+**完了条件**
+- [ ] decision ファイルの `feature_refs` に `news_sentiment` が含まれる
+- [ ] 既存テストがすべて通る
+
+**優先度**: 中（Step 1 の評価結果次第）
+**開始条件**: Step 1 で有効性確認後
+
+---
+
+## 優先順位まとめ（2026-05-25 更新）
 
 ### 今週中
-4. **T23**: Massive API の安定運用確認（連続3営業日）
-5. **T20**: 数営業日の運用監視で sizing 効果測定
+1. **T15 / T20 / T23**: 平日 cron の安定完走監視を継続
 
-### 中期（2-4週間）
-6. **T24**: Massive WebSocket 実装（Phase 2）
-7. その他の既存 task の進行
+### 2〜3週間後（〜6/15）
+2. **T25 Step 1**: analyze_news_impact.py で株式44銘柄の相関評価
+
+### Step 1 通過後（順次）
+3. **T25 Step 2**: ETF ニュースマッピング追加
+4. **T25 Step 3**: NewsFeature 実装・paper_demo 組み込み
+5. **T24**: Massive WebSocket 実装（Phase 2）
 
