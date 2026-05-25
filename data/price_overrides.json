@@ -1,39 +1,6 @@
 {
   "schema_version": "v1",
-  "generated_at": "2026-05-21T12:06:31.328336",
-  "note": "Fresh prices from Massive API to override stale Alpaca positions API prices",
-  "overrides": {
-    "CHPS": {
-      "fresh_price": 82.3413,
-      "broker_price": 73.89,
-      "deviation_pct": 11.43767762890784,
-      "date": "2026-05-20",
-      "source": "massive",
-      "updated_at": "2026-05-21T12:06:18.508062"
-    },
-    "CHPX": {
-      "fresh_price": 90.225,
-      "broker_price": 56.4,
-      "deviation_pct": 59.97340425531914,
-      "date": "2026-05-20",
-      "source": "massive",
-      "updated_at": "2026-05-21T12:06:18.849778"
-    },
-    "QTEC": {
-      "fresh_price": 296.36,
-      "broker_price": 259.55,
-      "deviation_pct": 14.182238489693702,
-      "date": "2026-05-20",
-      "source": "massive",
-      "updated_at": "2026-05-21T12:06:27.531975"
-    },
-    "SMHX": {
-      "fresh_price": 57.54,
-      "broker_price": 53.78,
-      "deviation_pct": 6.991446634436589,
-      "date": "2026-05-20",
-      "source": "massive",
-      "updated_at": "2026-05-21T12:06:29.597203"
-    }
-  }
+  "generated_at": "2026-05-24T13:01:04.519031+00:00",
+  "note": "Fresh prices from Massive API to override stale broker positions API prices",
+  "overrides": {}
 }

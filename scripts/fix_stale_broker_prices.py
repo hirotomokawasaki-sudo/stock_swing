@@ -1,117 +1,132 @@
 #!/usr/bin/env python3
-"""
-Fix stale broker prices with fresh Massive API data.
+"""Generate price overrides for stale broker position prices.
 
-Problem: Alpaca positions API returns stale prices for some symbols (CHPX, QTEC).
-Solution: Fetch fresh prices from Massive API and create a price override map.
-
-This script generates a JSON file that can be used by SimpleExitV2Strategy
-to override stale broker prices.
+Uses Massive daily bars as the primary fresh-price source and writes
+`data/price_overrides.json` for downstream consumers such as SimpleExitV2Strategy.
 """
 
+from __future__ import annotations
+
+import argparse
+import json
 import os
 import sys
-import json
+from datetime import UTC, datetime
 from pathlib import Path
-from datetime import datetime
+from typing import Any
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+PROJECT_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from stock_swing.sources.hybrid_data_fetcher import HybridDataFetcher
 from stock_swing.sources.broker_client import BrokerClient
-from stock_swing.cli.paper_demo import ETF_SYMBOLS
+from stock_swing.sources.massive_client import MassiveClient
+from stock_swing.utils.stale_price import apply_empty_override_guard, compute_stale_price_overrides
 
 
-def load_env():
-    """Load environment variables from .env file."""
-    env_path = Path(__file__).parent.parent / ".env"
-    for line in env_path.read_text().splitlines():
+def load_env() -> None:
+    env_path = PROJECT_ROOT / ".env"
+    if not env_path.exists():
+        return
+    for line in env_path.read_text(encoding="utf-8").splitlines():
         line = line.strip()
-        if '=' in line and not line.startswith('#'):
-            k, v = line.split('=', 1)
-            os.environ[k.strip()] = v.strip().strip('"').strip("'")
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        os.environ[k.strip()] = v.strip().strip('"').strip("'")
 
 
-def main():
+def load_existing_overrides(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {"overrides": {}}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {"overrides": {}}
+
+
+def build_overrides(
+    *,
+    broker: BrokerClient,
+    massive: MassiveClient,
+    min_deviation_pct: float,
+    previous_overrides: dict[str, Any] | None = None,
+) -> tuple[dict[str, Any], list[str], list[str]]:
+    positions_env = broker.fetch_positions()
+    positions = positions_env.payload if hasattr(positions_env, "payload") else positions_env
+    return compute_stale_price_overrides(
+        positions,
+        massive,
+        min_deviation_pct=min_deviation_pct,
+        previous_overrides=previous_overrides,
+    )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--min-deviation-pct", type=float, default=5.0)
+    parser.add_argument("--dry-run", action="store_true")
+    args = parser.parse_args()
+
     load_env()
-    
+
     broker = BrokerClient(
         api_key=os.environ["BROKER_API_KEY"],
         api_secret=os.environ["BROKER_API_SECRET"],
-        paper_mode=True
+        paper_mode=True,
     )
-    
-    fetcher = HybridDataFetcher(
-        broker_client=broker,
-        etf_symbols=ETF_SYMBOLS,
-        massive_api_key=os.environ.get("MASSIVE_API_KEY")
-    )
-    
-    # Get all positions
-    positions_env = broker.fetch_positions()
-    positions = positions_env.payload if hasattr(positions_env, "payload") else positions_env
-    
-    symbols = [pos.get("symbol") for pos in positions]
-    
-    print(f"Fetching fresh prices for {len(symbols)} symbols from Massive API...")
-    
-    fresh_prices = {}
-    stale_count = 0
-    
-    for symbol in symbols:
-        try:
-            records, source = fetcher.fetch_bars(symbol=symbol, timeframe="1Day", limit=3)
-            
-            if records and len(records) > 0:
-                latest = records[-1]
-                latest_close = latest.payload.get("close")
-                latest_date = str(latest.event_time)[:10]
-                
-                if latest_close:
-                    broker_pos = next((p for p in positions if p.get("symbol") == symbol), None)
-                    broker_price = float(broker_pos.get("current_price", 0)) if broker_pos else 0
-                    
-                    # Check for >5% deviation
-                    if broker_price > 0:
-                        deviation = abs((latest_close - broker_price) / broker_price) * 100
-                        if deviation > 5.0:
-                            fresh_prices[symbol] = {
-                                "fresh_price": float(latest_close),
-                                "broker_price": broker_price,
-                                "deviation_pct": deviation,
-                                "date": latest_date,
-                                "source": source,
-                                "updated_at": datetime.now().isoformat()
-                            }
-                            stale_count += 1
-                            print(f"  ⚠️  {symbol}: Broker ${broker_price:.2f} → Fresh ${latest_close:.2f} ({deviation:+.2f}%)")
-        except Exception as e:
-            print(f"  ✗ {symbol}: {e}")
-    
-    # Save to JSON
-    output_path = Path(__file__).parent.parent / "data" / "price_overrides.json"
+    massive = MassiveClient(api_key=os.environ.get("MASSIVE_API_KEY"))
+
+    output_path = PROJECT_ROOT / "data" / "price_overrides.json"
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    output = {
+    previous = load_existing_overrides(output_path)
+    previous_overrides = previous.get("overrides", {}) if isinstance(previous, dict) else {}
+
+    new_overrides, logs, errors = build_overrides(
+        broker=broker,
+        massive=massive,
+        min_deviation_pct=args.min_deviation_pct,
+        previous_overrides=previous_overrides,
+    )
+
+    generated_at = datetime.now(UTC).isoformat()
+    final_overrides, guard_applied, clear_pending, clear_pending_since = apply_empty_override_guard(
+        new_overrides=new_overrides,
+        previous_payload=previous,
+        generated_at=generated_at,
+    )
+
+    print("Fetching fresh prices for broker positions from Massive API...")
+    for line in logs:
+        print(line)
+    if guard_applied:
+        print("  🛡️  Empty override write guard preserved previous overrides; a second consecutive empty run is required to clear them")
+
+    output: dict[str, Any] = {
         "schema_version": "v1",
-        "generated_at": datetime.now().isoformat(),
-        "note": "Fresh prices from Massive API to override stale Alpaca positions API prices",
-        "overrides": fresh_prices
+        "generated_at": generated_at,
+        "note": "Fresh prices from Massive API to override stale broker positions API prices",
+        "overrides": final_overrides,
     }
-    
-    output_path.write_text(json.dumps(output, indent=2))
-    
-    print(f"\n✓ Generated price overrides for {stale_count} symbols")
+    if clear_pending:
+        output["clear_pending"] = True
+        output["clear_pending_since"] = clear_pending_since
+
+    if not args.dry_run:
+        output_path.write_text(json.dumps(output, indent=2), encoding="utf-8")
+
+    print(f"\n✓ Generated price overrides for {len(final_overrides)} symbols")
     print(f"  Saved to: {output_path}")
-    
-    if stale_count > 0:
-        print(f"\n⚠️  Recommendation:")
-        print(f"  - Update SimpleExitV2Strategy to load price_overrides.json")
-        print(f"  - Apply fresh prices before calculating exit signals")
+    if errors:
+        print(f"  Errors: {len(errors)}")
+        for err in errors[:20]:
+            print(f"    - {err}")
     else:
-        print(f"\n✓ All broker prices are fresh (no overrides needed)")
+        print("  Errors: none")
+
+    if args.dry_run:
+        print("\n(dry-run: file not written)")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
