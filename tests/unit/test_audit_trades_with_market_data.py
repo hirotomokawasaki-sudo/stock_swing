@@ -29,7 +29,7 @@ def test_analyze_tracker_integrity_detects_duplicate_and_tracker_only_symbols():
 
     result = analyze_tracker_integrity(trades, broker_positions)
 
-    assert result["duplicate_symbols"] == [{"symbol": "AAPL", "trade_count": 2, "tracker_qty": 20}]
+    assert result["multi_lot_symbols"] == [{"symbol": "AAPL", "trade_count": 2, "tracker_qty": 20}]
     assert result["tracker_only"] == ["TSLA"]
     assert result["broker_only"] == ["NVDA"]
     assert result["mismatches"][0]["symbol"] == "AAPL"
@@ -47,7 +47,7 @@ def test_analyze_tracker_integrity_returns_clean_result_when_positions_match():
 
     result = analyze_tracker_integrity(trades, broker_positions)
 
-    assert result["duplicate_symbols"] == []
+    assert result["multi_lot_symbols"] == []
     assert result["mismatches"] == []
     assert result["tracker_only"] == []
     assert result["broker_only"] == []

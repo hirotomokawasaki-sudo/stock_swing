@@ -63,6 +63,7 @@ from stock_swing.strategy_engine.simple_exit_v2_strategy import SimpleExitV2Stra
 from stock_swing.tracking.pnl_tracker import PnLTracker
 from stock_swing.utils.market_calendar import MarketCalendar
 from stock_swing.utils.signal_prioritization import prioritize_buy_signals, prioritize_buy_signals_v2
+from stock_swing.utils.stale_price import apply_price_overrides, compute_stale_price_overrides
 
 
 def _infer_price_based_regime(momentum_results: list) -> str:
@@ -388,19 +389,58 @@ def main() -> int:  # noqa: C901
     # 7. Strategy signals
     _section("7. Strategy Signals")
 
+    pnl_tracker = PnLTracker(project_root)
+
     # First, get current positions for exit strategy
     current_positions_full: dict[str, dict] = {}
     current_positions: dict[str, int] = {}
     try:
         pos_env = broker.fetch_positions()
         pos_data = pos_env.payload
+        position_prices: dict[str, float] = {}
         if isinstance(pos_data, list):
             for pos in pos_data:
                 sym = pos.get("symbol")
                 qty = int(float(pos.get("qty", 0)))
                 if sym and qty > 0:
                     current_positions[sym] = qty
-                    current_positions_full[sym] = pos
+                    current_positions_full[sym] = dict(pos)
+                    current_price = float(pos.get("current_price", 0) or 0)
+                    if current_price > 0:
+                        position_prices[sym] = current_price
+
+        if current_positions_full:
+            try:
+                from stock_swing.sources.massive_client import MassiveClient
+                massive_client = MassiveClient(api_key=os.environ.get("MASSIVE_API_KEY"))
+                runtime_overrides, _, runtime_override_errors = compute_stale_price_overrides(
+                    list(current_positions_full.values()),
+                    massive_client,
+                    min_deviation_pct=5.0,
+                )
+                overrides_applied = apply_price_overrides(current_positions_full, runtime_overrides)
+                if overrides_applied > 0:
+                    print(f"  Applied {overrides_applied} runtime fresh-price overrides for exit strategy")
+                if runtime_override_errors:
+                    print(f"  WARN: runtime fresh-price checks had {len(runtime_override_errors)} error(s)")
+            except Exception as exc:
+                print(f"  WARN: Could not compute runtime fresh-price overrides: {exc}")
+
+            position_prices = {
+                sym: float(pos.get("current_price", 0) or 0)
+                for sym, pos in current_positions_full.items()
+                if float(pos.get("current_price", 0) or 0) > 0
+            }
+            pnl_tracker.update_open_trade_peaks(position_prices)
+            tracker_position_context = pnl_tracker.get_open_position_context_by_symbol()
+            for sym, pos in current_positions_full.items():
+                tracker_ctx = tracker_position_context.get(sym)
+                if not tracker_ctx:
+                    continue
+                if tracker_ctx.get("created_at") and not pos.get("created_at"):
+                    pos["created_at"] = tracker_ctx["created_at"]
+                if tracker_ctx.get("peak_price") is not None and not pos.get("peak_price"):
+                    pos["peak_price"] = tracker_ctx["peak_price"]
     except Exception as exc:
         print(f"  WARN: Could not fetch positions for exit strategy: {exc}")
 
@@ -762,7 +802,6 @@ def main() -> int:  # noqa: C901
 
     executor = PaperExecutor(runtime_mode=runtime_mode, broker_client=broker)
     reconciler = Reconciler(broker_client=broker)
-    pnl_tracker = PnLTracker(project_root)
     submissions: list[OrderSubmission] = []
     
     # Symbol-level position size limit.

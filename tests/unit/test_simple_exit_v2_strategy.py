@@ -156,6 +156,24 @@ def test_time_based_exit(strategy, price_features):
     assert "Max hold period reached" in signals[0].reasoning
 
 
+def test_time_based_exit_uses_entry_time_fallback(strategy, price_features):
+    """Test that time-based exit works when only entry_time is present."""
+    current_positions = {
+        "AAPL": {
+            "qty": 100,
+            "avg_entry_price": 145.0,
+            "current_price": 150.0,
+            "entry_time": (datetime.now(timezone.utc) - timedelta(days=11)).isoformat(),
+        }
+    }
+
+    signals = strategy.generate(price_features, current_positions)
+
+    assert len(signals) == 1
+    assert signals[0].symbol == "AAPL"
+    assert "Max hold period reached" in signals[0].reasoning
+
+
 def test_multiple_positions(strategy, price_features):
     """Test handling multiple positions with different exit criteria."""
     current_positions = {

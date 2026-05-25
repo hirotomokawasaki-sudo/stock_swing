@@ -179,14 +179,18 @@ def main():
         return 1
 
     state = json.loads(state_file.read_text(encoding="utf-8"))
-    trades = state.get("trades", [])
+    all_trades = state.get("trades", [])
 
     if args.symbols:
-        trades = [t for t in trades if t.get("symbol") in args.symbols]
+        all_trades = [t for t in all_trades if t.get("symbol") in args.symbols]
 
+    trades = all_trades
     if args.recent_days:
         cutoff = (datetime.now() - timedelta(days=args.recent_days)).isoformat()
-        trades = [t for t in trades if t.get("entry_time", "") > cutoff]
+        trades = [
+            t for t in all_trades
+            if t.get("status") != "closed" or t.get("entry_time", "") > cutoff
+        ]
 
     closed_trades = [t for t in trades if t.get("status") == "closed"]
 
@@ -302,7 +306,7 @@ def main():
     print("="*100)
     try:
         broker_positions = load_broker_positions(project_root)
-        integrity = analyze_tracker_integrity(trades, broker_positions)
+        integrity = analyze_tracker_integrity(all_trades, broker_positions)
         multi_lot_symbols = integrity["multi_lot_symbols"]
         mismatches = integrity["mismatches"]
         tracker_only = integrity["tracker_only"]

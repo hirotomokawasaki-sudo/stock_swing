@@ -175,7 +175,7 @@ class SimpleExitV2Strategy(BaseStrategy):
             
             # Check holding period
             hold_days = None
-            created_at_str = position_data.get("created_at")
+            created_at_str = position_data.get("created_at") or position_data.get("entry_time")
             if created_at_str:
                 try:
                     created_at = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))

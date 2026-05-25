@@ -40,6 +40,7 @@ class TradeEntry:
     pnl: float | None  # realized P&L in USD
     return_pct: float | None  # return %
     status: str  # "open" | "closed"
+    peak_price: float | None = None
     account_id: str | None = None  # Broker account ID
     strategy_version_id: str | None = None
     broker_order_id: str | None = None
@@ -170,6 +171,7 @@ class PnLTracker:
             exit_time=None,
             pnl=None,
             return_pct=None,
+            peak_price=price,
             status="open",
             account_id=account_id,
             broker_order_id=broker_order_id,
@@ -466,6 +468,74 @@ class PnLTracker:
 
     def get_open_positions(self) -> list[dict[str, Any]]:
         return [t for t in self.state.trades if t["status"] == "open"]
+
+    def update_open_trade_peaks(self, current_prices: dict[str, float]) -> int:
+        """Update persisted peak_price for open trades using latest market prices."""
+        if not current_prices:
+            return 0
+
+        updates = 0
+        for trade in self.get_open_positions():
+            symbol = str(trade.get("symbol") or "")
+            if not symbol or symbol not in current_prices:
+                continue
+
+            try:
+                current_price = float(current_prices[symbol])
+                if current_price <= 0:
+                    continue
+                entry_price = float(trade.get("entry_price") or 0)
+                stored_peak = trade.get("peak_price")
+                peak_price = float(stored_peak) if stored_peak is not None else entry_price
+            except (TypeError, ValueError):
+                continue
+
+            new_peak = max(peak_price, current_price)
+            if stored_peak is None or abs(new_peak - peak_price) > 1e-9:
+                trade["peak_price"] = new_peak
+                updates += 1
+
+        if updates:
+            self.state.last_updated = datetime.now(timezone.utc).isoformat()
+            self._save_state()
+        return updates
+
+    def get_open_position_context_by_symbol(self) -> dict[str, dict[str, Any]]:
+        """Return symbol-level exit context derived from open tracker trades."""
+        grouped: dict[str, dict[str, Any]] = {}
+
+        for trade in self.get_open_positions():
+            symbol = str(trade.get("symbol") or "")
+            if not symbol:
+                continue
+
+            entry_time = trade.get("entry_time")
+            try:
+                peak_price = float(trade.get("peak_price") or trade.get("entry_price") or 0)
+            except (TypeError, ValueError):
+                peak_price = 0.0
+
+            row = grouped.setdefault(symbol, {"created_at": None, "peak_price": None})
+
+            if entry_time:
+                existing = row.get("created_at")
+                if existing is None:
+                    row["created_at"] = entry_time
+                else:
+                    try:
+                        existing_dt = datetime.fromisoformat(str(existing).replace("Z", "+00:00"))
+                        entry_dt = datetime.fromisoformat(str(entry_time).replace("Z", "+00:00"))
+                        if entry_dt < existing_dt:
+                            row["created_at"] = entry_time
+                    except (TypeError, ValueError):
+                        if str(entry_time) < str(existing):
+                            row["created_at"] = entry_time
+
+            existing_peak = row.get("peak_price")
+            if existing_peak is None or peak_price > float(existing_peak):
+                row["peak_price"] = peak_price
+
+        return grouped
 
     def get_recent_trades(self, n: int = 10) -> list[dict[str, Any]]:
         closed = [t for t in self.state.trades if t["status"] == "closed"]
