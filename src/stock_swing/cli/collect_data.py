@@ -8,6 +8,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -125,7 +126,13 @@ def collect_finnhub(symbols, store):
     from_date = (datetime.now(timezone.utc).date() - timedelta(days=3)).isoformat()
     coverage_status = []
 
-    for i, symbol in enumerate(symbols[:20]):
+    # Finnhub Basic plan: 60 req/min. With ~2 calls/symbol, 44 symbols = ~88 calls.
+    # 0.8s delay keeps us safely under the limit.
+    INTER_SYMBOL_DELAY = 0.8
+
+    for i, symbol in enumerate(symbols):
+        if i > 0:
+            time.sleep(INTER_SYMBOL_DELAY)
         payload = {
             "symbol": symbol,
             "metric": {
