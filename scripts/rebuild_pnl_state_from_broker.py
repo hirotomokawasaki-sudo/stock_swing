@@ -54,6 +54,9 @@ def load_existing_tracking_metadata(state_file: Path) -> dict[str, Any]:
         'archived_from_account_id': data.get('archived_from_account_id'),
         'archive_path': data.get('archive_path'),
         'migration_note_path': data.get('migration_note_path'),
+        # Preserve chart history — do NOT reset on rebuild
+        'daily_snapshots': data.get('daily_snapshots', []),
+        'strategy_daily_snapshots': data.get('strategy_daily_snapshots', []),
     }
 
 
@@ -420,8 +423,8 @@ def rebuild_pnl_state(
         'created_at': tracking_metadata.get('created_at') or now,
         'last_updated': now,
         'trades': all_trades,
-        'daily_snapshots': [],
-        'strategy_daily_snapshots': [],
+        'daily_snapshots': tracking_metadata.get('daily_snapshots', []),
+        'strategy_daily_snapshots': tracking_metadata.get('strategy_daily_snapshots', []),
         'cumulative_realized_pnl': summary['cumulative_realized_pnl'],
         'total_trades': len(all_trades),
         'winning_trades': summary['winning_trades'],
