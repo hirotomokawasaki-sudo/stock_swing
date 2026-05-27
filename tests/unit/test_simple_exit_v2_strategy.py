@@ -13,6 +13,7 @@ def strategy():
     """Create SimpleExitV2Strategy with default parameters."""
     return SimpleExitV2Strategy(
         stop_loss_pct=-0.07,
+        breakeven_activation_pct=0.03,
         trailing_activation_pct=0.05,
         trailing_stop_pct=0.03,
         max_hold_days=10,
@@ -52,6 +53,138 @@ def test_no_exit_when_within_range(strategy, price_features):
     signals = strategy.generate(price_features, current_positions)
     
     assert len(signals) == 0, "Should not generate exit signal for +3.4% profit (below trailing activation)"
+
+
+# ── Breakeven stop tests ────────────────────────────────────────────────────
+
+def test_breakeven_stop_not_triggered_while_in_profit():
+    """Breakeven mode active but price still above entry → no signal."""
+    strat = SimpleExitV2Strategy(
+        stop_loss_pct=-0.07,
+        breakeven_activation_pct=0.03,
+        trailing_activation_pct=0.08,
+        trailing_stop_pct=0.04,
+        max_hold_days=20,
+    )
+    # Position reached +3% (activates breakeven), currently at +1% (still positive)
+    current_positions = {
+        "AAPL": {
+            "qty": 100,
+            "avg_entry_price": 100.0,
+            "current_price": 101.0,    # +1%
+            "peak_price": 103.5,        # reached +3.5% → breakeven activated
+            "created_at": (datetime.now(timezone.utc) - timedelta(days=3)).isoformat(),
+        }
+    }
+    features = [
+        FeatureResult(
+            feature_name="price_momentum",
+            symbol="AAPL",
+            computed_at=datetime.now(timezone.utc),
+            values={"latest_close": 101.0},
+        )
+    ]
+    signals = strat.generate(features, current_positions)
+    assert len(signals) == 0, "Still in profit — breakeven stop should not fire"
+
+
+def test_breakeven_stop_triggers_when_return_goes_negative():
+    """Breakeven mode active and price falls to 0% return → sell signal."""
+    strat = SimpleExitV2Strategy(
+        stop_loss_pct=-0.07,
+        breakeven_activation_pct=0.03,
+        trailing_activation_pct=0.08,
+        trailing_stop_pct=0.04,
+        max_hold_days=20,
+    )
+    # Position reached +3.5% (activates breakeven), now back to -0.5%
+    current_positions = {
+        "AAPL": {
+            "qty": 100,
+            "avg_entry_price": 100.0,
+            "current_price": 99.5,      # -0.5%
+            "peak_price": 103.5,        # reached +3.5% → breakeven active
+            "created_at": (datetime.now(timezone.utc) - timedelta(days=3)).isoformat(),
+        }
+    }
+    features = [
+        FeatureResult(
+            feature_name="price_momentum",
+            symbol="AAPL",
+            computed_at=datetime.now(timezone.utc),
+            values={"latest_close": 99.5},
+        )
+    ]
+    signals = strat.generate(features, current_positions)
+    assert len(signals) == 1
+    assert signals[0].symbol == "AAPL"
+    assert signals[0].action == "sell"
+    assert "Breakeven stop triggered" in signals[0].reasoning
+    assert signals[0].metadata["breakeven_active"] is True
+
+
+def test_breakeven_stop_not_active_when_below_activation():
+    """Position never reached breakeven_activation → breakeven stop inactive, hard stop governs."""
+    strat = SimpleExitV2Strategy(
+        stop_loss_pct=-0.07,
+        breakeven_activation_pct=0.03,
+        trailing_activation_pct=0.08,
+        trailing_stop_pct=0.04,
+        max_hold_days=20,
+    )
+    # Position peaked at +2% (below breakeven_activation_pct=3%), now at -1%
+    current_positions = {
+        "AAPL": {
+            "qty": 100,
+            "avg_entry_price": 100.0,
+            "current_price": 99.0,     # -1%
+            "peak_price": 102.0,       # only +2% peak — breakeven NOT activated
+            "created_at": (datetime.now(timezone.utc) - timedelta(days=3)).isoformat(),
+        }
+    }
+    features = [
+        FeatureResult(
+            feature_name="price_momentum",
+            symbol="AAPL",
+            computed_at=datetime.now(timezone.utc),
+            values={"latest_close": 99.0},
+        )
+    ]
+    signals = strat.generate(features, current_positions)
+    # -1% is within hard stop (-7%), so no exit
+    assert len(signals) == 0
+
+
+def test_hard_stop_still_fires_when_below_breakeven_activation():
+    """Position never reached breakeven zone → hard stop fires at -7%."""
+    strat = SimpleExitV2Strategy(
+        stop_loss_pct=-0.07,
+        breakeven_activation_pct=0.03,
+        trailing_activation_pct=0.08,
+        trailing_stop_pct=0.04,
+        max_hold_days=20,
+    )
+    current_positions = {
+        "AAPL": {
+            "qty": 100,
+            "avg_entry_price": 100.0,
+            "current_price": 92.0,     # -8%
+            "peak_price": 100.5,       # peak only +0.5% — never in breakeven zone
+            "created_at": (datetime.now(timezone.utc) - timedelta(days=3)).isoformat(),
+        }
+    }
+    features = [
+        FeatureResult(
+            feature_name="price_momentum",
+            symbol="AAPL",
+            computed_at=datetime.now(timezone.utc),
+            values={"latest_close": 92.0},
+        )
+    ]
+    signals = strat.generate(features, current_positions)
+    assert len(signals) == 1
+    assert "Stop loss triggered" in signals[0].reasoning
+    assert signals[0].signal_strength == 1.0
 
 
 def test_stop_loss_trigger(strategy, price_features):

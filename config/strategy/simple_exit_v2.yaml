@@ -1,12 +1,21 @@
 enabled: true
 name: simple_exit_v2
-# Stop loss threshold (negative value, e.g., -0.07 = -7%)
+
+# Hard stop loss threshold (negative value, e.g., -0.07 = -7%)
 stop_loss_pct: -0.07
-# Profit threshold to activate trailing stop (e.g., 0.08 = 8%)
+
+# Breakeven protection: once return reaches this level, effective floor = 0%
+# (never let a position that was +3% become a loser)
+# Added 2026-05-27
+breakeven_activation_pct: 0.03
+
+# Trailing stop activation threshold (e.g., 0.08 = +8%)
 # Increased from 5% to 8% to reduce early profit-taking (2026-05-18)
 trailing_activation_pct: 0.08
-# Pullback percentage from peak to trigger exit (e.g., 0.04 = 4%)
+
+# Pullback from peak to trigger trailing exit (e.g., 0.04 = 4%)
 # Increased from 3% to 4% to allow more room for volatility (2026-05-18)
 trailing_stop_pct: 0.04
-# Maximum holding period in days (20 days to allow strong momentum trades to develop)
+
+# Maximum holding period in calendar days
 max_hold_days: 20

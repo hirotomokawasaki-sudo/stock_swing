@@ -644,17 +644,19 @@ def main() -> int:  # noqa: C901
             exit_config = yaml.safe_load(f)
         exit_strat = SimpleExitV2Strategy(
             stop_loss_pct=exit_config.get('stop_loss_pct', -0.07),
-            trailing_activation_pct=exit_config.get('trailing_activation_pct', 0.05),
-            trailing_stop_pct=exit_config.get('trailing_stop_pct', 0.03),
-            max_hold_days=exit_config.get('max_hold_days', 2),
+            breakeven_activation_pct=exit_config.get('breakeven_activation_pct', 0.03),
+            trailing_activation_pct=exit_config.get('trailing_activation_pct', 0.08),
+            trailing_stop_pct=exit_config.get('trailing_stop_pct', 0.04),
+            max_hold_days=exit_config.get('max_hold_days', 20),
         )
     else:
         # Fallback to default values
         exit_strat = SimpleExitV2Strategy(
             stop_loss_pct=-0.07,
-            trailing_activation_pct=0.05,
-            trailing_stop_pct=0.03,
-            max_hold_days=20,  # 20 days to allow strong momentum trades to develop
+            breakeven_activation_pct=0.03,
+            trailing_activation_pct=0.08,
+            trailing_stop_pct=0.04,
+            max_hold_days=20,
         )
     exit_signals = exit_strat.generate(all_features, current_positions_full)
     

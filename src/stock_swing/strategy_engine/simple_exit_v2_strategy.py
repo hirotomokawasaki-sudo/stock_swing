@@ -17,31 +17,39 @@ from stock_swing.strategy_engine.base_strategy import BaseStrategy, CandidateSig
 
 
 class SimpleExitV2Strategy(BaseStrategy):
-    """Simple exit strategy V2 with trailing stop.
+    """Simple exit strategy V2 with trailing stop and breakeven protection.
     
-    New features:
-    - Trailing stop after profit threshold
-    - Dynamic exit based on price movement
+    Exit rules (evaluated in priority order):
+    1. Trailing stop  – once peak_return >= trailing_activation_pct,
+       exit if price drops trailing_stop_pct from peak.
+    2. Breakeven stop – once return_pct >= breakeven_activation_pct (but
+       not yet in trailing mode), exit immediately if return falls to 0%.
+    3. Initial stop loss – exit if return_pct <= stop_loss_pct.
+    4. Time-based exit  – exit after max_hold_days.
     """
     
     strategy_id = "simple_exit_v2"
     
     def __init__(
         self,
-        stop_loss_pct: float = -0.07,  # -7% initial stop loss
-        trailing_activation_pct: float = 0.05,  # 5% profit to activate trailing
-        trailing_stop_pct: float = 0.03,  # 3% pullback from peak to exit
-        max_hold_days: int = 20,  # 20 days to allow strong momentum trades to develop
+        stop_loss_pct: float = -0.07,        # -7% hard stop
+        breakeven_activation_pct: float = 0.03,  # +3% → protect entry price
+        trailing_activation_pct: float = 0.08,  # +8% → activate trailing
+        trailing_stop_pct: float = 0.04,         # 4% pullback from peak
+        max_hold_days: int = 20,
     ):
         """Initialize simple exit V2 strategy.
         
         Args:
-            stop_loss_pct: Initial stop loss threshold (negative value).
-            trailing_activation_pct: Profit threshold to activate trailing stop.
-            trailing_stop_pct: Pullback percentage from peak to trigger exit.
-            max_hold_days: Maximum holding period in days.
+            stop_loss_pct: Hard stop loss threshold (negative value, e.g. -0.07).
+            breakeven_activation_pct: Once return reaches this level, move
+                effective stop to breakeven (0%).  Must be < trailing_activation_pct.
+            trailing_activation_pct: Return level at which trailing stop activates.
+            trailing_stop_pct: Pullback from peak price that triggers trailing exit.
+            max_hold_days: Maximum holding period in calendar days.
         """
         self.stop_loss_pct = stop_loss_pct
+        self.breakeven_activation_pct = breakeven_activation_pct
         self.trailing_activation_pct = trailing_activation_pct
         self.trailing_stop_pct = trailing_stop_pct
         self.max_hold_days = max_hold_days
@@ -184,31 +192,41 @@ class SimpleExitV2Strategy(BaseStrategy):
                 except (ValueError, AttributeError):
                     hold_days = None
             
-            # Exit criteria
+            # Exit criteria (evaluated in priority order)
             exit_reason = None
             signal_strength = 0.0
-            
-            # 1. Trailing stop (if activated)
+
+            # 1. Trailing stop (highest priority once activated)
             if peak_return_pct >= self.trailing_activation_pct:
-                # Trailing stop is active
                 trailing_stop_price = peak_price * (1 - self.trailing_stop_pct)
                 pullback_from_peak_pct = (peak_price - current_price) / peak_price
-                
                 if current_price <= trailing_stop_price:
                     exit_reason = (
                         f"Trailing stop triggered: price ${current_price:.2f} "
                         f"<= ${trailing_stop_price:.2f} "
                         f"(peak ${peak_price:.2f}, {pullback_from_peak_pct:.2%} pullback)"
                     )
-                    signal_strength = 0.95  # High priority
-            
-            # 2. Initial stop loss (if not in trailing mode)
+                    signal_strength = 0.95
+
+            # 2. Breakeven stop (protect profits once PEAK return >= breakeven_activation_pct)
+            elif peak_return_pct >= self.breakeven_activation_pct:
+                # Peak ever reached the activation threshold — never let it
+                # turn into a loss.  Exit as soon as current return falls to or below 0%.
+                if return_pct <= 0.0:
+                    exit_reason = (
+                        f"Breakeven stop triggered: return {return_pct:.2%} <= 0% "
+                        f"(had reached breakeven_activation={self.breakeven_activation_pct:.0%})"
+                    )
+                    signal_strength = 0.95
+                # else: still in profit but not yet at trailing level → hold
+
+            # 3. Initial stop loss (position never reached breakeven zone)
             elif return_pct <= self.stop_loss_pct:
                 exit_reason = f"Stop loss triggered: {return_pct:.2%} <= {self.stop_loss_pct:.2%}"
-                signal_strength = 1.0  # Highest urgency
-            
-            # 3. Time-based exit
-            elif hold_days is not None and hold_days >= self.max_hold_days:
+                signal_strength = 1.0
+
+            # 4. Time-based exit
+            if exit_reason is None and hold_days is not None and hold_days >= self.max_hold_days:
                 exit_reason = f"Max hold period reached: {hold_days} days >= {self.max_hold_days} days"
                 signal_strength = 0.7
             
@@ -221,7 +239,7 @@ class SimpleExitV2Strategy(BaseStrategy):
                     signal_strength=signal_strength,
                     generated_at=now,
                     time_horizon="immediate",
-                    confidence=0.90,  # High confidence in rule-based exits with trailing
+                    confidence=0.90,
                     reasoning=exit_reason,
                     feature_refs=["position_tracking"],
                     metadata={
@@ -234,6 +252,10 @@ class SimpleExitV2Strategy(BaseStrategy):
                         "qty": qty,
                         "exit_trigger": exit_reason.split(":")[0].strip(),
                         "trailing_active": peak_return_pct >= self.trailing_activation_pct,
+                        "breakeven_active": (
+                            peak_return_pct >= self.breakeven_activation_pct
+                            and peak_return_pct < self.trailing_activation_pct
+                        ),
                         "price_source": price_source,
                         "stale_data_skipped": symbol in stale_symbols,
                     },
