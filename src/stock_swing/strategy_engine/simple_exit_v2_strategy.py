@@ -30,21 +30,38 @@ class SimpleExitV2Strategy(BaseStrategy):
     
     strategy_id = "simple_exit_v2"
     
+    # Signal-strength tiers for dynamic threshold adjustment
+    # High conviction (strength >= HIGH_THRESHOLD): more room to breathe
+    # Low conviction  (strength <  LOW_THRESHOLD):  tighter early exit
+    HIGH_STRENGTH_THRESHOLD: float = 0.85
+    LOW_STRENGTH_THRESHOLD:  float = 0.65
+
     def __init__(
         self,
-        stop_loss_pct: float = -0.07,        # -7% hard stop
-        breakeven_activation_pct: float = 0.03,  # +3% → protect entry price
+        stop_loss_pct: float = -0.07,          # -7% hard stop (standard)
+        breakeven_activation_pct: float = 0.03, # +3% → protect entry price
         trailing_activation_pct: float = 0.08,  # +8% → activate trailing
         trailing_stop_pct: float = 0.04,         # 4% pullback from peak
         max_hold_days: int = 20,
     ):
         """Initialize simple exit V2 strategy.
-        
+
+        Per-position exit thresholds are adjusted dynamically at runtime
+        based on the position’s ``entry_signal_strength``:
+
+        +-----------------+------------+-------------------+
+        | Strength tier   | stop_loss  | trailing_activation|
+        +-----------------+------------+-------------------+
+        | High (>=0.85)   | -9%        | +6%               |
+        | Standard        | -7%        | +8%               |
+        | Low  (< 0.65)   | -5%        | +10%              |
+        +-----------------+------------+-------------------+
+
         Args:
-            stop_loss_pct: Hard stop loss threshold (negative value, e.g. -0.07).
-            breakeven_activation_pct: Once return reaches this level, move
-                effective stop to breakeven (0%).  Must be < trailing_activation_pct.
-            trailing_activation_pct: Return level at which trailing stop activates.
+            stop_loss_pct: Baseline hard stop loss threshold (negative value).
+            breakeven_activation_pct: Once peak return reaches this level, move
+                effective floor to breakeven (0%). Must be < trailing_activation_pct.
+            trailing_activation_pct: Baseline return level at which trailing activates.
             trailing_stop_pct: Pullback from peak price that triggers trailing exit.
             max_hold_days: Maximum holding period in calendar days.
         """
@@ -53,6 +70,22 @@ class SimpleExitV2Strategy(BaseStrategy):
         self.trailing_activation_pct = trailing_activation_pct
         self.trailing_stop_pct = trailing_stop_pct
         self.max_hold_days = max_hold_days
+
+    def _resolve_thresholds(
+        self, entry_signal_strength: float | None
+    ) -> tuple[float, float]:
+        """Return (stop_loss_pct, trailing_activation_pct) adjusted for signal strength."""
+        if entry_signal_strength is None:
+            return self.stop_loss_pct, self.trailing_activation_pct
+        s = float(entry_signal_strength)
+        if s >= self.HIGH_STRENGTH_THRESHOLD:
+            # High conviction: wider stop, earlier trailing activation
+            return -0.09, 0.06
+        if s < self.LOW_STRENGTH_THRESHOLD:
+            # Low conviction: tighter stop, later trailing activation
+            return -0.05, 0.10
+        # Standard
+        return self.stop_loss_pct, self.trailing_activation_pct
     
     def generate(
         self,
@@ -192,12 +225,25 @@ class SimpleExitV2Strategy(BaseStrategy):
                 except (ValueError, AttributeError):
                     hold_days = None
             
+            # Resolve dynamic thresholds from entry signal strength
+            entry_signal_strength = position_data.get("entry_signal_strength")
+            eff_stop_loss_pct, eff_trailing_activation_pct = self._resolve_thresholds(
+                entry_signal_strength
+            )
+
+            logger.info(
+                f"SimpleExitV2: {symbol} "
+                f"entry_strength={entry_signal_strength} "
+                f"eff_stop={eff_stop_loss_pct:.0%} "
+                f"eff_trailing_act={eff_trailing_activation_pct:.0%}"
+            )
+
             # Exit criteria (evaluated in priority order)
             exit_reason = None
             signal_strength = 0.0
 
             # 1. Trailing stop (highest priority once activated)
-            if peak_return_pct >= self.trailing_activation_pct:
+            if peak_return_pct >= eff_trailing_activation_pct:
                 trailing_stop_price = peak_price * (1 - self.trailing_stop_pct)
                 pullback_from_peak_pct = (peak_price - current_price) / peak_price
                 if current_price <= trailing_stop_price:
@@ -221,8 +267,12 @@ class SimpleExitV2Strategy(BaseStrategy):
                 # else: still in profit but not yet at trailing level → hold
 
             # 3. Initial stop loss (position never reached breakeven zone)
-            elif return_pct <= self.stop_loss_pct:
-                exit_reason = f"Stop loss triggered: {return_pct:.2%} <= {self.stop_loss_pct:.2%}"
+            elif return_pct <= eff_stop_loss_pct:
+                exit_reason = (
+                    f"Stop loss triggered: {return_pct:.2%} <= {eff_stop_loss_pct:.2%}"
+                    + (f" (strength-adjusted from {self.stop_loss_pct:.0%})"
+                       if eff_stop_loss_pct != self.stop_loss_pct else "")
+                )
                 signal_strength = 1.0
 
             # 4. Time-based exit
@@ -251,11 +301,14 @@ class SimpleExitV2Strategy(BaseStrategy):
                         "peak_price": peak_price,
                         "qty": qty,
                         "exit_trigger": exit_reason.split(":")[0].strip(),
-                        "trailing_active": peak_return_pct >= self.trailing_activation_pct,
+                        "trailing_active": peak_return_pct >= eff_trailing_activation_pct,
                         "breakeven_active": (
                             peak_return_pct >= self.breakeven_activation_pct
-                            and peak_return_pct < self.trailing_activation_pct
+                            and peak_return_pct < eff_trailing_activation_pct
                         ),
+                        "entry_signal_strength": entry_signal_strength,
+                        "eff_stop_loss_pct": eff_stop_loss_pct,
+                        "eff_trailing_activation_pct": eff_trailing_activation_pct,
                         "price_source": price_source,
                         "stale_data_skipped": symbol in stale_symbols,
                     },

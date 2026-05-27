@@ -483,6 +483,8 @@ def main() -> int:  # noqa: C901
                     pos["created_at"] = tracker_ctx["created_at"]
                 if tracker_ctx.get("peak_price") is not None and not pos.get("peak_price"):
                     pos["peak_price"] = tracker_ctx["peak_price"]
+                if tracker_ctx.get("entry_signal_strength") is not None:
+                    pos["entry_signal_strength"] = tracker_ctx["entry_signal_strength"]
     except Exception as exc:
         print(f"  WARN: Could not fetch positions for exit strategy: {exc}")
 
@@ -960,6 +962,7 @@ def main() -> int:  # noqa: C901
                             original_strategy_id=decision.strategy_id,
                             strategy_version_id=decision.strategy_version_id,
                             account_id=os.environ.get("BROKER_ACCOUNT_ID"),
+                            signal_strength=getattr(decision, "signal_strength", None),
                         )
                     else:
                         print(f"WARN: Skipped P&L tracking for {o.symbol} (entry_price unavailable)")

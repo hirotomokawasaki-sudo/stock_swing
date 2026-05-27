@@ -155,6 +155,143 @@ def test_breakeven_stop_not_active_when_below_activation():
     assert len(signals) == 0
 
 
+# ── Entry signal strength dynamic threshold tests ────────────────────────
+
+def test_high_strength_entry_gets_wider_stop():
+    """High conviction entry (strength=0.90) should have -9% stop, not -7%."""
+    strat = SimpleExitV2Strategy(stop_loss_pct=-0.07)
+    # -8% loss: fires with standard stop (-7%) but should NOT fire with high-strength stop (-9%)
+    pos = {
+        "qty": 100,
+        "avg_entry_price": 100.0,
+        "current_price": 92.0,   # -8%
+        "peak_price": 100.5,
+        "entry_signal_strength": 0.90,  # high conviction
+        "created_at": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
+    }
+    features = [FeatureResult(
+        feature_name="price_momentum", symbol="AAPL",
+        computed_at=datetime.now(timezone.utc),
+        values={"latest_close": 92.0},
+    )]
+    signals = strat.generate(features, {"AAPL": pos})
+    # -8% is within -9% threshold → should NOT exit
+    assert len(signals) == 0, "High-strength entry should survive -8% (stop is -9%)"
+
+
+def test_high_strength_entry_fires_at_minus_9pct():
+    """High conviction entry fires stop at -9%."""
+    strat = SimpleExitV2Strategy(stop_loss_pct=-0.07)
+    pos = {
+        "qty": 100,
+        "avg_entry_price": 100.0,
+        "current_price": 90.5,   # -9.5%
+        "peak_price": 100.5,
+        "entry_signal_strength": 0.90,
+        "created_at": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
+    }
+    features = [FeatureResult(
+        feature_name="price_momentum", symbol="AAPL",
+        computed_at=datetime.now(timezone.utc),
+        values={"latest_close": 90.5},
+    )]
+    signals = strat.generate(features, {"AAPL": pos})
+    assert len(signals) == 1
+    assert "Stop loss triggered" in signals[0].reasoning
+    assert signals[0].metadata["eff_stop_loss_pct"] == -0.09
+
+
+def test_low_strength_entry_gets_tighter_stop():
+    """Low conviction entry (strength=0.55) fires stop at -5%."""
+    strat = SimpleExitV2Strategy(stop_loss_pct=-0.07)
+    pos = {
+        "qty": 100,
+        "avg_entry_price": 100.0,
+        "current_price": 94.5,   # -5.5%
+        "peak_price": 100.5,
+        "entry_signal_strength": 0.55,  # low conviction
+        "created_at": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
+    }
+    features = [FeatureResult(
+        feature_name="price_momentum", symbol="AAPL",
+        computed_at=datetime.now(timezone.utc),
+        values={"latest_close": 94.5},
+    )]
+    signals = strat.generate(features, {"AAPL": pos})
+    # -5.5% exceeds -5% low-strength threshold → should exit
+    assert len(signals) == 1
+    assert "Stop loss triggered" in signals[0].reasoning
+    assert signals[0].metadata["eff_stop_loss_pct"] == -0.05
+
+
+def test_no_strength_uses_standard_thresholds():
+    """No entry_signal_strength → standard thresholds apply."""
+    strat = SimpleExitV2Strategy(stop_loss_pct=-0.07)
+    pos = {
+        "qty": 100,
+        "avg_entry_price": 100.0,
+        "current_price": 94.0,   # -6%: within standard -7% stop
+        "peak_price": 100.5,
+        "entry_signal_strength": None,
+        "created_at": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
+    }
+    features = [FeatureResult(
+        feature_name="price_momentum", symbol="AAPL",
+        computed_at=datetime.now(timezone.utc),
+        values={"latest_close": 94.0},
+    )]
+    signals = strat.generate(features, {"AAPL": pos})
+    assert len(signals) == 0, "Standard stop (-7%) should not fire at -6%"
+
+
+def test_high_strength_trailing_activates_earlier():
+    """High conviction entry activates trailing at +6% (vs standard +8%)."""
+    strat = SimpleExitV2Strategy(
+        stop_loss_pct=-0.07,
+        trailing_activation_pct=0.08,
+        trailing_stop_pct=0.04,
+    )
+    # peak_return = +7%: below standard +8% threshold but above high-strength +6%
+    pos = {
+        "qty": 100,
+        "avg_entry_price": 100.0,
+        "current_price": 104.0,  # +4%
+        "peak_price": 107.0,     # +7% peak → trailing active for high strength
+        "entry_signal_strength": 0.90,
+        "created_at": (datetime.now(timezone.utc) - timedelta(days=3)).isoformat(),
+    }
+    features = [FeatureResult(
+        feature_name="price_momentum", symbol="AAPL",
+        computed_at=datetime.now(timezone.utc),
+        values={"latest_close": 104.0},
+    )]
+    # trailing_stop_price = 107 * 0.96 = 102.72, current=104 > 102.72 → NOT triggered
+    signals = strat.generate(features, {"AAPL": pos})
+    assert len(signals) == 0, "Trailing active (high strength) but not pulled back enough"
+
+
+def test_resolve_thresholds_standard():
+    """_resolve_thresholds returns base values for standard strength."""
+    strat = SimpleExitV2Strategy(stop_loss_pct=-0.07, trailing_activation_pct=0.08)
+    sl, ta = strat._resolve_thresholds(0.75)
+    assert sl == -0.07
+    assert ta == 0.08
+
+
+def test_resolve_thresholds_high():
+    strat = SimpleExitV2Strategy(stop_loss_pct=-0.07, trailing_activation_pct=0.08)
+    sl, ta = strat._resolve_thresholds(0.90)
+    assert sl == -0.09
+    assert ta == 0.06
+
+
+def test_resolve_thresholds_low():
+    strat = SimpleExitV2Strategy(stop_loss_pct=-0.07, trailing_activation_pct=0.08)
+    sl, ta = strat._resolve_thresholds(0.50)
+    assert sl == -0.05
+    assert ta == 0.10
+
+
 def test_hard_stop_still_fires_when_below_breakeven_activation():
     """Position never reached breakeven zone → hard stop fires at -7%."""
     strat = SimpleExitV2Strategy(

@@ -41,6 +41,7 @@ class TradeEntry:
     return_pct: float | None  # return %
     status: str  # "open" | "closed"
     peak_price: float | None = None
+    entry_signal_strength: float | None = None  # 0.0–1.0; used for dynamic exit thresholds
     account_id: str | None = None  # Broker account ID
     strategy_version_id: str | None = None
     broker_order_id: str | None = None
@@ -137,6 +138,7 @@ class PnLTracker:
         original_strategy_id: str | None = None,
         strategy_version_id: str | None = None,
         account_id: str | None = None,
+        signal_strength: float | None = None,
     ) -> str:
         """Record a new buy submission as an open trade.
 
@@ -172,6 +174,7 @@ class PnLTracker:
             pnl=None,
             return_pct=None,
             peak_price=price,
+            entry_signal_strength=round(float(signal_strength), 4) if signal_strength is not None else None,
             status="open",
             account_id=account_id,
             broker_order_id=broker_order_id,
@@ -515,7 +518,11 @@ class PnLTracker:
             except (TypeError, ValueError):
                 peak_price = 0.0
 
-            row = grouped.setdefault(symbol, {"created_at": None, "peak_price": None})
+            row = grouped.setdefault(symbol, {
+                "created_at": None,
+                "peak_price": None,
+                "entry_signal_strength": None,
+            })
 
             if entry_time:
                 existing = row.get("created_at")
@@ -534,6 +541,17 @@ class PnLTracker:
             existing_peak = row.get("peak_price")
             if existing_peak is None or peak_price > float(existing_peak):
                 row["peak_price"] = peak_price
+
+            # Aggregate entry_signal_strength: use max across lots (most bullish conviction)
+            ess = trade.get("entry_signal_strength")
+            if ess is not None:
+                try:
+                    ess_f = float(ess)
+                    existing_ess = row.get("entry_signal_strength")
+                    if existing_ess is None or ess_f > float(existing_ess):
+                        row["entry_signal_strength"] = ess_f
+                except (TypeError, ValueError):
+                    pass
 
         return grouped
 
