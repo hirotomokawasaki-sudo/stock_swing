@@ -1,6 +1,9 @@
 from types import SimpleNamespace
 
-from stock_swing.cli.paper_demo import _select_intraday_candidate_symbols
+from stock_swing.cli.paper_demo import (
+    _prefilter_actionable_buys_for_submission,
+    _select_intraday_candidate_symbols,
+)
 
 
 def _signal(symbol: str, strength: float, confidence: float = 0.7):
@@ -39,3 +42,41 @@ def test_select_intraday_candidates_respects_limit():
 
 def test_select_intraday_candidates_returns_empty_for_no_signals():
     assert _select_intraday_candidate_symbols([], limit=5) == []
+
+
+def test_prefilter_actionable_buys_drops_zero_share_buys_before_submission():
+    sell = SimpleNamespace(
+        decision_id="sell-1",
+        symbol="NBIS",
+        proposed_order=SimpleNamespace(side="sell"),
+        evidence={},
+    )
+    buy_blocked = SimpleNamespace(
+        decision_id="buy-1",
+        symbol="AMD",
+        proposed_order=SimpleNamespace(side="buy"),
+        evidence={"market_regime": "neutral"},
+    )
+    buy_allowed = SimpleNamespace(
+        decision_id="buy-2",
+        symbol="NVDA",
+        proposed_order=SimpleNamespace(side="buy"),
+        evidence={"market_regime": "neutral"},
+    )
+
+    class FakeExecutor:
+        def _calculate_position_size(self, decision, market_regime="neutral"):
+            if decision.decision_id == "buy-1":
+                return 0, {"skip_reason": "insufficient_remaining_exposure"}
+            return 12, {"skip_reason": None, "shares_by_exposure": 12}
+
+    filtered, preview_cache, skipped_by_reason, skipped_symbols = _prefilter_actionable_buys_for_submission(
+        [sell, buy_blocked, buy_allowed],
+        FakeExecutor(),
+    )
+
+    assert filtered == [sell, buy_allowed]
+    assert preview_cache["buy-1"][0] == 0
+    assert preview_cache["buy-2"][0] == 12
+    assert skipped_by_reason == {"insufficient_remaining_exposure": 1}
+    assert skipped_symbols == [("AMD", "insufficient_remaining_exposure")]

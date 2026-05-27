@@ -119,6 +119,48 @@ def _select_intraday_candidate_symbols(
             break
     return symbols
 
+
+def _prefilter_actionable_buys_for_submission(
+    actionable: list,
+    executor: PaperExecutor,
+) -> tuple[list, dict[str, tuple[int, dict[str, object]]], dict[str, int], list[tuple[str, str]]]:
+    """Drop BUY decisions that size to zero before entering broker submission.
+
+    The decision engine does not know account exposure. Without this preflight,
+    paper_demo can churn through many BUY attempts that deterministically size to
+    zero because the portfolio is already at its exposure cap.
+    """
+    filtered: list = []
+    preview_cache: dict[str, tuple[int, dict[str, object]]] = {}
+    skipped_by_reason: dict[str, int] = {}
+    skipped_symbols: list[tuple[str, str]] = []
+
+    for decision in actionable:
+        order = decision.proposed_order
+        if order is None or order.side != "buy":
+            filtered.append(decision)
+            continue
+
+        market_regime = "neutral"
+        if isinstance(decision.evidence, dict):
+            market_regime = decision.evidence.get("market_regime") or "neutral"
+
+        preview_qty, preview_sizing = executor._calculate_position_size(
+            decision,
+            market_regime=market_regime,
+        )
+        preview_cache[decision.decision_id] = (preview_qty, preview_sizing)
+
+        if preview_qty >= 1:
+            filtered.append(decision)
+            continue
+
+        reason = str(preview_sizing.get("skip_reason") or "final_shares_below_1")
+        skipped_by_reason[reason] = skipped_by_reason.get(reason, 0) + 1
+        skipped_symbols.append((decision.symbol, reason))
+
+    return filtered, preview_cache, skipped_by_reason, skipped_symbols
+
 # Unified paper-demo / monitoring universe
 # Stocks: existing core AI stocks + approved additional normal stocks
 # ETFs: approved normal ETFs only (no leveraged / inverse / bear / short / yield-enhanced ETFs)
@@ -784,14 +826,6 @@ def main() -> int:  # noqa: C901
         rebal_type = 'ETF' if alloc_status['etf_deficit'] > 0 else 'Stock'
         print(f"    ⚠️  Rebalancing needed: Prioritizing {rebal_type} purchases")
     
-    _section("9. Paper Order Submission")
-    print(f"  Actionable: {len(actionable)}  Denied/held: {len(decisions) - len(actionable)}")
-
-    if not actionable:
-        print("\n  No actionable decisions.")
-        _print_summary(decisions, [], equity, args.dry_run)
-        return 0
-
     if args.dry_run:
         print("\n  DRY RUN - would submit:")
         for d in actionable:
@@ -802,6 +836,29 @@ def main() -> int:  # noqa: C901
 
     executor = PaperExecutor(runtime_mode=runtime_mode, broker_client=broker)
     reconciler = Reconciler(broker_client=broker)
+    actionable, preview_cache, skipped_buy_reasons, skipped_buy_symbols = _prefilter_actionable_buys_for_submission(
+        actionable,
+        executor,
+    )
+
+    _section("9. Paper Order Submission")
+    print(f"  Actionable: {len(actionable)}  Denied/held: {len(decisions) - len(actionable)}")
+    if skipped_buy_reasons:
+        total_skipped_buys = sum(skipped_buy_reasons.values())
+        print(f"  Preflight skipped buys: {total_skipped_buys}")
+        for reason, count in sorted(skipped_buy_reasons.items(), key=lambda item: (-item[1], item[0])):
+            print(f"    {reason}: {count}")
+        sample_skips = ", ".join(f"{symbol} ({reason})" for symbol, reason in skipped_buy_symbols[:5])
+        if sample_skips:
+            print(f"    examples: {sample_skips}")
+        if total_skipped_buys > 5:
+            print(f"    ... and {total_skipped_buys - 5} more")
+
+    if not actionable:
+        print("\n  No actionable decisions after exposure preflight.")
+        _print_summary(decisions, [], equity, args.dry_run)
+        return 0
+
     submissions: list[OrderSubmission] = []
     
     # Symbol-level position size limit.
@@ -811,6 +868,8 @@ def main() -> int:  # noqa: C901
     for decision in actionable:
         o = decision.proposed_order
         try:
+            preview_qty, preview_sizing = preview_cache.get(decision.decision_id, (None, None))
+
             # Check symbol-level position size limit for BUY orders
             if o.side == "buy" and o.symbol in current_positions_full:
                 existing_pos = current_positions_full[o.symbol]
@@ -823,10 +882,11 @@ def main() -> int:  # noqa: C901
                 max_position_value = equity * position_limit_pct
                 
                 # Get estimated order value
-                preview_qty, preview_sizing = executor._calculate_position_size(
-                    decision,
-                    market_regime=(decision.evidence.get("market_regime") if isinstance(decision.evidence, dict) else "neutral") or "neutral",
-                )
+                if preview_qty is None or preview_sizing is None:
+                    preview_qty, preview_sizing = executor._calculate_position_size(
+                        decision,
+                        market_regime=(decision.evidence.get("market_regime") if isinstance(decision.evidence, dict) else "neutral") or "neutral",
+                    )
                 
                 # Estimate order value (qty * current_price)
                 current_price = get_mid_price(o.symbol)
@@ -842,10 +902,11 @@ def main() -> int:  # noqa: C901
                     print(f"\n  SKIP {o.side.upper()} {preview_qty} {o.symbol} ({asset_type}): Position limit (${existing_value:.0f} + ${estimated_order_value:.0f} = ${total_value:.0f} > ${max_position_value:.0f} [{position_limit_pct:.0%}])")
                     continue
             
-            preview_qty, preview_sizing = executor._calculate_position_size(
-                decision,
-                market_regime=(decision.evidence.get("market_regime") if isinstance(decision.evidence, dict) else "neutral") or "neutral",
-            )
+            if preview_qty is None or preview_sizing is None:
+                preview_qty, preview_sizing = executor._calculate_position_size(
+                    decision,
+                    market_regime=(decision.evidence.get("market_regime") if isinstance(decision.evidence, dict) else "neutral") or "neutral",
+                )
             preview_basis = ""
             if preview_sizing:
                 preview_basis = (
@@ -857,6 +918,8 @@ def main() -> int:  # noqa: C901
             sub = executor.submit(
                 decision,
                 current_qty=current_positions.get(o.symbol) if o.side == "sell" else None,
+                precomputed_qty=preview_qty,
+                precomputed_sizing=preview_sizing,
             )
             submissions.append(sub)
             if sub.status == "submitted":

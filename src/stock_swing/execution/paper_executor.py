@@ -126,6 +126,8 @@ class PaperExecutor:
         self,
         decision: DecisionRecord,
         current_qty: int | None = None,
+        precomputed_qty: int | None = None,
+        precomputed_sizing: dict[str, Any] | None = None,
     ) -> OrderSubmission:
         """Submit order from decision record.
         
@@ -133,6 +135,8 @@ class PaperExecutor:
             decision: Decision record with proposed order.
             current_qty: Optional current broker position quantity for SELL orders.
                 When provided, avoids an extra broker positions fetch.
+            precomputed_qty: Optional preflight quantity to reuse.
+            precomputed_sizing: Optional preflight sizing details to reuse.
             
         Returns:
             OrderSubmission record.
@@ -159,7 +163,14 @@ class PaperExecutor:
         market_regime = None
         if isinstance(decision.evidence, dict):
             market_regime = decision.evidence.get("market_regime")
-        sized_qty, sizing_details = self._calculate_position_size(decision, market_regime=market_regime or "neutral")
+        if precomputed_qty is not None and precomputed_sizing is not None:
+            sized_qty = precomputed_qty
+            sizing_details = dict(precomputed_sizing)
+        else:
+            sized_qty, sizing_details = self._calculate_position_size(
+                decision,
+                market_regime=market_regime or "neutral",
+            )
 
         # For SELL orders, prioritize risk reduction over entry sizing constraints
         if proposed.side == "sell":
