@@ -60,6 +60,7 @@ from stock_swing.strategy_engine.breakout_momentum_strategy import BreakoutMomen
 from stock_swing.strategy_engine.event_swing_strategy import EventSwingStrategy
 from stock_swing.strategy_engine.simple_exit_strategy import SimpleExitStrategy
 from stock_swing.strategy_engine.simple_exit_v2_strategy import SimpleExitV2Strategy
+from stock_swing.tracking.exit_reason_store import write_exit_reason
 from stock_swing.tracking.pnl_tracker import PnLTracker
 from stock_swing.utils.market_calendar import MarketCalendar
 from stock_swing.utils.signal_prioritization import prioritize_buy_signals, prioritize_buy_signals_v2
@@ -936,6 +937,33 @@ def main() -> int:  # noqa: C901
                     )
                 else:
                     print(f"OK broker_id={sub.broker_order_id} qty={sub.qty}")
+
+                # Persist exit reason for sell orders so reconcile_orders can
+                # retrieve it when the fill is detected later.
+                if o.side == "sell" and sub.broker_order_id:
+                    notes = " ".join((decision.evidence or {}).get("notes") or []).lower()
+                    if "trailing stop" in notes:
+                        _exit_trigger, _exit_reason = "Trailing stop triggered", "trailing_stop"
+                    elif "breakeven stop" in notes:
+                        _exit_trigger, _exit_reason = "Breakeven stop triggered", "breakeven_stop"
+                    elif "stop loss" in notes:
+                        _exit_trigger, _exit_reason = "Stop loss triggered", "stop_loss"
+                    elif "max hold" in notes:
+                        _exit_trigger, _exit_reason = "Max hold period reached", "time_based"
+                    else:
+                        _exit_trigger, _exit_reason = "Strategy exit", "strategy_exit"
+                    write_exit_reason(
+                        project_root=project_root,
+                        broker_order_id=sub.broker_order_id,
+                        symbol=o.symbol,
+                        exit_trigger=_exit_trigger,
+                        exit_reason=_exit_reason,
+                        metadata={
+                            "signal_strength": getattr(decision, "signal_strength", None),
+                            "return_pct": decision.evidence.get("return_pct") if isinstance(decision.evidence, dict) else None,
+                        },
+                    )
+
                 if o.side == "buy":
                     # Only buy submissions create new open trades in the P&L tracker.
                     # Sell submissions are exits and must be recorded only after actual fills

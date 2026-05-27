@@ -14,6 +14,7 @@ sys.path.insert(0, str(project_root / "src"))
 
 from stock_swing.cli.paper_demo import _load_env
 from stock_swing.sources.broker_client import BrokerClient
+from stock_swing.tracking.exit_reason_store import delete_exit_reason, purge_old_entries, read_exit_reason
 from stock_swing.tracking.pnl_tracker import PnLTracker
 
 
@@ -114,6 +115,74 @@ def reconcile_filled_buys(broker: BrokerClient, tracker: PnLTracker) -> int:
     return newly_recorded
 
 
+def cancel_stale_buy_orders(broker: BrokerClient) -> list[dict]:
+    """Detect and cancel stale open buy orders from previous trading sessions.
+
+    A buy order is considered stale when:
+    - side == 'buy'
+    - status in {accepted, new, pending_new, held}
+    - time_in_force == 'day'
+    - submitted_at is before today's market open (09:30 ET = 13:30 UTC)
+
+    Returns a list of cancelled order dicts.
+    """
+    try:
+        orders_env = broker.fetch_orders(status="open", limit=200)
+        orders = orders_env.payload if hasattr(orders_env, "payload") else orders_env
+        if not isinstance(orders, list):
+            print("WARN: fetch_orders(open) did not return a list", file=sys.stderr)
+            return []
+    except Exception as e:
+        print(f"WARN: Failed to fetch open orders for stale check: {e}", file=sys.stderr)
+        return []
+
+    now_utc = datetime.now(timezone.utc)
+    # Market open = 13:30 UTC (09:30 ET). Use today's date; if before open, use yesterday.
+    market_open_today = now_utc.replace(hour=13, minute=30, second=0, microsecond=0)
+    if now_utc < market_open_today:
+        # Before today's open → cutoff is yesterday's open
+        from datetime import timedelta
+        market_open_today -= timedelta(days=1)
+
+    stale_statuses = {"accepted", "new", "pending_new", "held"}
+    cancelled = []
+
+    for order in orders:
+        side = str(order.get("side", "")).lower()
+        status = str(order.get("status", "")).lower()
+        tif = str(order.get("time_in_force", "")).lower()
+        submitted_at_str = order.get("submitted_at") or ""
+        order_id = order.get("id", "")
+        symbol = order.get("symbol", "")
+
+        if side != "buy" or status not in stale_statuses or tif != "day":
+            continue
+        if not submitted_at_str or not order_id:
+            continue
+
+        try:
+            submitted_at = datetime.fromisoformat(submitted_at_str.replace("Z", "+00:00"))
+        except ValueError:
+            continue
+
+        if submitted_at >= market_open_today:
+            continue  # submitted today → not stale
+
+        # Stale day buy order → cancel
+        try:
+            broker.cancel_order(order_id)
+            cancelled.append({"order_id": order_id, "symbol": symbol, "submitted_at": submitted_at_str})
+            print(
+                f"INFO: Cancelled stale buy order {order_id} {symbol} "
+                f"submitted {submitted_at_str}",
+                file=sys.stderr,
+            )
+        except Exception as e:
+            print(f"WARN: Failed to cancel stale order {order_id} {symbol}: {e}", file=sys.stderr)
+
+    return cancelled
+
+
 def main() -> int:
     _load_env(project_root / ".env")
     api_key = os.environ.get("BROKER_API_KEY", "")
@@ -125,6 +194,9 @@ def main() -> int:
     broker = BrokerClient(api_key=api_key, api_secret=api_secret, paper_mode=True)
     tracker = PnLTracker(project_root)
     tracker.state = tracker._load_state()
+
+    # Step 0: Cancel stale open buy orders from previous sessions
+    cancelled_stale = cancel_stale_buy_orders(broker)
 
     # Step 1: Reconcile filled buys (broker-only positions)
     newly_recorded_buys = reconcile_filled_buys(broker, tracker)
@@ -239,21 +311,41 @@ def main() -> int:
                     print(f"WARN: Skipping exit for {sub['symbol']}: no open trade found", file=sys.stderr)
                     continue
                 
+                # Look up the exit reason written by paper_demo at submission time
+                stored = read_exit_reason(project_root, broker_order_id) if broker_order_id else None
+                resolved_exit_reason = (stored or {}).get("exit_reason", "broker_fill")
+                resolved_exit_strategy = (
+                    f"simple_exit_v2:{(stored or {}).get('exit_trigger', 'unknown')}"
+                    if stored else "reconciled_from_broker"
+                )
+
                 updated = tracker.record_exit(
-                    symbol=sub["symbol"], 
-                    exit_price=avg_price_float, 
+                    symbol=sub["symbol"],
+                    exit_price=avg_price_float,
                     exit_qty=int(filled_qty),
                     broker_order_id=broker_order_id,
-                    exit_strategy_id="reconciled_from_broker",  # Mark as reconciled, not from strategy
-                    exit_reason="broker_filled"
+                    exit_strategy_id=resolved_exit_strategy,
+                    exit_reason=resolved_exit_reason,
                 )
                 if updated:
                     filled_exits += 1
-                    print(f"INFO: Recorded exit for {sub['symbol']}: {int(filled_qty)} @ ${avg_price_float:.2f}", file=sys.stderr)
+                    print(
+                        f"INFO: Recorded exit for {sub['symbol']}: {int(filled_qty)} @ "
+                        f"${avg_price_float:.2f} reason={resolved_exit_reason}",
+                        file=sys.stderr,
+                    )
+                    # Clean up the stored exit reason after successful recording
+                    if broker_order_id and stored:
+                        delete_exit_reason(project_root, broker_order_id)
         except Exception:
             continue
 
+    # Purge exit_reason entries older than 7 days
+    purge_old_entries(project_root, max_age_days=7)
+
     print(json.dumps({
+        "cancelled_stale_buy_orders": len(cancelled_stale),
+        "cancelled_stale_details": cancelled_stale,
         "newly_recorded_buys": newly_recorded_buys,
         "checked_sell_submissions": checked,
         "filled_exits_recorded": filled_exits,

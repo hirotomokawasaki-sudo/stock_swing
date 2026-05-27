@@ -325,6 +325,16 @@ class BrokerClient(SourceClient):
         """
         return self.fetch_order(order_id)
     
+    def cancel_order(self, order_id: str) -> dict[str, Any]:
+        """Cancel an open order by ID (paper mode only).
+
+        Returns the broker response dict, or raises on error.
+        """
+        if not self.paper_mode:
+            raise ValueError("Live order cancellation is blocked. Use paper_mode=True.")
+        envelope = self.fetch(endpoint=f"v2/orders/{order_id}", method="DELETE")
+        return envelope.payload if hasattr(envelope, "payload") else envelope
+
     def submit_order(
         self,
         symbol: str,
