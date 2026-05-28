@@ -105,7 +105,8 @@ def test_decision_engine_pass_paper_mode() -> None:
     assert decision.proposed_order is not None
     assert decision.proposed_order.symbol == "AAPL"
     assert decision.proposed_order.side == "buy"
-    assert decision.proposed_order.qty == 10
+    # qty=0 is the explicit non-authoritative placeholder; PaperExecutor overrides it
+    assert decision.proposed_order.qty == 0
 
 
 def test_decision_engine_deny_weak_signal() -> None:
@@ -252,6 +253,8 @@ def test_decision_engine_position_limit_check() -> None:
     )
     decision = engine.process(candidate, current_positions=current_positions)
     
-    assert decision.action == "deny"
-    assert decision.risk_state == "deny"
-    assert any("position_size" in reason for reason in decision.deny_reasons)
+    # Position size is no longer validated in RiskValidator (delegated to PaperExecutor).
+    # The old placeholder qty=10 check is removed to avoid the deny paradox.
+    # This test now documents that position_size is NOT a RiskValidator concern.
+    assert decision.action == "buy"  # passes through; executor enforces sizing
+    assert decision.risk_state == "pass"

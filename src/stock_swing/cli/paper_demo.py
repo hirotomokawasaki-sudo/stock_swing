@@ -246,8 +246,11 @@ def main() -> int:  # noqa: C901
                         help="Predefined symbol universe: default (10 tech) / full (14 tech+ETF)")
     parser.add_argument("--timeframe", type=str, default="1Day")
     parser.add_argument("--bar-limit", type=int, default=20)
-    parser.add_argument("--min-momentum", type=float, default=0.025)
-    parser.add_argument("--min-signal-strength", type=float, default=0.52)
+    # NOTE: These defaults align with BreakoutMomentumStrategy class defaults.
+    # Previous values (0.025 / 0.52) were looser and produced different behaviour
+    # in interactive use vs cron runs (which passed --min-momentum 0.05 explicitly).
+    parser.add_argument("--min-momentum", type=float, default=0.05)
+    parser.add_argument("--min-signal-strength", type=float, default=0.65)
     parser.add_argument("--intraday-candidate-limit", type=int, default=0,
                         help="Max symbols to fetch 5-minute intraday bars for after daily screening (0 = all daily breakout candidates)")
     parser.add_argument("--dry-run", action="store_true")
@@ -532,6 +535,7 @@ def main() -> int:  # noqa: C901
     breakout_strat = BreakoutMomentumStrategy(
         min_momentum=args.min_momentum,
         min_signal_strength=args.min_signal_strength,
+        etf_symbols=ETF_SYMBOLS,  # Tag ETF signals with ETF_STRATEGY_ID for PF attribution
     )
     event_strat = EventSwingStrategy()
     breakout_signals = breakout_strat.generate(daily_features)

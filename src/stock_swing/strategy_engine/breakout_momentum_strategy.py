@@ -25,20 +25,27 @@ class BreakoutMomentumStrategy(BaseStrategy):
     """
     
     strategy_id = "breakout_momentum_v1"
-    
+    # Separate strategy_id for ETF entries, enabling clean PF attribution per asset class.
+    # ETF PF was 0.168 vs Stock PF 1.731 (2026-05-28 analysis).
+    ETF_STRATEGY_ID = "breakout_momentum_v1_etf"
+
     def __init__(
         self,
-        min_momentum: float = 0.05,  # 5% minimum momentum
+        min_momentum: float = 0.05,
         min_signal_strength: float = 0.65,
+        etf_symbols: set | None = None,
     ):
         """Initialize breakout momentum strategy.
-        
+
         Args:
             min_momentum: Minimum momentum threshold for breakout.
             min_signal_strength: Minimum signal strength threshold.
+            etf_symbols: Set of ETF symbols for strategy_id tagging.
+                Signals for ETF symbols use ETF_STRATEGY_ID for clean PF attribution.
         """
         self.min_momentum = min_momentum
         self.min_signal_strength = min_signal_strength
+        self.etf_symbols: set = etf_symbols or set()
     
     def generate(
         self,
@@ -96,7 +103,11 @@ class BreakoutMomentumStrategy(BaseStrategy):
                 if signal_strength >= self.min_signal_strength:
                     # Generate candidate signal
                     signal = CandidateSignal(
-                        strategy_id=self.strategy_id,
+                        strategy_id=(
+                            self.ETF_STRATEGY_ID
+                            if symbol in self.etf_symbols
+                            else self.strategy_id
+                        ),
                         symbol=symbol,
                         action="buy",
                         signal_strength=signal_strength,

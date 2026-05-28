@@ -187,9 +187,12 @@ class DecisionEngine:
         if action in {"buy", "sell"} and risk_result.risk_state == RiskState.PASS:
             proposed_order = ProposedOrder(
                 symbol=candidate.symbol,
-                side=action,  # buy or sell
-                order_type="market",  # Default to market for now
-                qty=10,  # Placeholder - would come from position sizing
+                side=action,
+                order_type="market",
+                # qty=0 is an explicit NON-AUTHORITATIVE placeholder.
+                # PaperExecutor MUST override this via position sizing before submission.
+                # A submitted order with qty=0 must be rejected by preflight.
+                qty=0,
                 time_in_force="day",
             )
         
