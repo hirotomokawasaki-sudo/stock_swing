@@ -39,6 +39,10 @@ from console.services.summary_service import SummaryService
 from console.services.parameter_service import ParameterService
 from console.services.benchmark_service import BenchmarkService
 from console.utils.time_utils import now_iso
+from console.services.console_self_check_service import run_self_check
+from console.services.guardrail_service import get_guardrail_status
+from console.services.performance_breakdown_service import get_performance_breakdown
+from console.services.position_risk_service import get_open_position_risk
 
 HOST = "0.0.0.0"
 PORT = int(os.environ.get("CONSOLE_PORT", "3333"))
@@ -240,6 +244,33 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             try:
                 exit_strategy = q.get('exit_strategy', [None])[0]
                 data = dashboard.get_exit_reason_summary(exit_strategy=exit_strategy)
+                # C4: Augment with pending exit reasons
+                try:
+                    pending_path = PROJECT_ROOT / "data/tracking/pending_exit_reasons.json"
+                    pending_raw = json.loads(pending_path.read_text()) if pending_path.exists() else {}
+                    _REASON_MAP = {
+                        "trailing_stop": "trail_stop", "trail_stop": "trail_stop",
+                        "breakeven_stop": "trail_stop",
+                        "stop_loss": "risk_stop",
+                        "take_profit": "take_profit",
+                        "time_based": "weakening_momentum", "max_hold": "weakening_momentum",
+                        "strategy_exit": "weakening_momentum",
+                        "manual": "manual",
+                    }
+                    pending_list = [
+                        {
+                            "symbol": v.get("symbol", "?"),
+                            "reason": _REASON_MAP.get(v.get("exit_reason", ""), "unknown"),
+                            "raw_reason": v.get("exit_reason", "unknown"),
+                            "source": "pending_exit_reasons",
+                        }
+                        for v in pending_raw.values()
+                    ]
+                    data["pending"] = pending_list
+                    data["pending_count"] = len(pending_list)
+                except Exception:
+                    data["pending"] = []
+                    data["pending_count"] = 0
                 return self._json(data)
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
@@ -314,9 +345,37 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
         
+        # C0: Console self-check
+        if p == "/api/console/self_check":
+            try:
+                return self._json(run_self_check(PROJECT_ROOT))
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+
+        # C1: Risk guardrails
+        if p == "/api/risk_guardrails":
+            try:
+                return self._json(get_guardrail_status(PROJECT_ROOT))
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+
+        # C2: Performance breakdown (ETF vs Stock vs Sector)
+        if p == "/api/performance_breakdown":
+            try:
+                return self._json(get_performance_breakdown(PROJECT_ROOT))
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+
+        # C3: Open position risk
+        if p == "/api/open_position_risk":
+            try:
+                return self._json(get_open_position_risk(PROJECT_ROOT))
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+
         # 404
         return self._json({"error": "not found"}, status=404)
-    
+
     def do_POST(self):
         """Handle POST requests."""
         u = urlparse(self.path)
@@ -362,7 +421,7 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                 return self._json({"error": str(e)}, status=400)
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
-        
+
         return self._json({"error": "not found"}, status=404)
 
 
