@@ -506,6 +506,7 @@ def main():
         return 0
     
     # Backup if requested
+    backup_file = None
     if args.backup and state_file.exists():
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_file = state_file.parent / f"pnl_state_backup_{timestamp}.json"
@@ -516,9 +517,30 @@ def main():
     state_file.write_text(json.dumps(pnl_state, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"✅ Wrote pnl_state.json: {state_file}")
     print()
+
+    # --- Post-rebuild integrity check (auto-fix if backup was created) ---
+    print("Running post-rebuild integrity check...")
+    try:
+        import subprocess
+        verify_args = [sys.executable, str(PROJECT_ROOT / "scripts" / "verify_rebuild_integrity.py")]
+        if backup_file and backup_file.exists():
+            verify_args += ["--backup", str(backup_file), "--fix"]
+        else:
+            verify_args += ["--fix"]
+        result = subprocess.run(verify_args, capture_output=True, text=True)
+        print(result.stdout)
+        if result.returncode != 0:
+            print(f"⚠️  Post-check detected issues — auto-fix applied.")
+            if result.stderr:
+                print(result.stderr)
+        else:
+            print("✅ Post-rebuild integrity check passed.")
+    except Exception as e:
+        print(f"WARN: Could not run post-rebuild check: {e}")
+
     print("Next: Restart console to see accurate data")
     print()
-    
+
     return 0
 
 
