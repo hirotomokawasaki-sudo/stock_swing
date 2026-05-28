@@ -361,10 +361,19 @@ class PaperExecutor:
         if not current_price or current_price <= 0:
             current_price = float(proposed.limit_price or 0)
         if not current_price or current_price <= 0:
-            return proposed.qty, {
+            # Fallback: try latest_close from decision evidence (set by strategy)
+            if isinstance(decision.evidence, dict):
+                decision_latest_close = float(decision.evidence.get("latest_close") or 0)
+                if decision_latest_close > 0:
+                    current_price = decision_latest_close
+                    price_source = "decision_latest_close"
+        if not current_price or current_price <= 0:
+            # Safety: never submit a placeholder-sized order without a real price
+            return 0, {
                 "fallback": True,
                 "reason": "missing_current_price",
-                "final_shares": proposed.qty,
+                "final_shares": 0,
+                "price_source": "none",
             }
 
         explicit_risk_per_share = None

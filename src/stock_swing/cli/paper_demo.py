@@ -121,6 +121,45 @@ def _select_intraday_candidate_symbols(
     return symbols
 
 
+def _filter_etf_buys_by_guardrail(
+    decisions: list,
+    etf_symbols: set,
+) -> tuple[list, list]:
+    """Block new ETF buy orders unless PAPER_DEMO_ALLOW_ETF_BUYS=true.
+
+    Sell/exit orders for existing ETF positions are never blocked.
+    ETF-to-stock PF gap: ETF 0.168 vs Stock 1.731 (2026-05-28 analysis).
+    Re-enable: export PAPER_DEMO_ALLOW_ETF_BUYS=true
+    """
+    import os
+    if os.environ.get("PAPER_DEMO_ALLOW_ETF_BUYS", "").lower() == "true":
+        return decisions, []
+
+    allowed, blocked = [], []
+    for d in decisions:
+        if d.action == "buy" and d.symbol in etf_symbols:
+            blocked.append(d.symbol)
+        else:
+            allowed.append(d)
+    return allowed, blocked
+
+
+def _classify_exit_reason_from_notes(notes_text: str) -> tuple[str, str]:
+    """Derive (exit_trigger, exit_reason) from decision notes text."""
+    t = notes_text.lower()
+    if "trailing stop" in t:
+        return "Trailing stop triggered", "trailing_stop"
+    if "breakeven stop" in t:
+        return "Breakeven stop triggered", "breakeven_stop"
+    if "stop loss" in t:
+        return "Stop loss triggered", "stop_loss"
+    if "take profit" in t:
+        return "Take profit triggered", "take_profit"
+    if "max hold" in t:
+        return "Max hold period reached", "time_based"
+    return "Strategy exit", "strategy_exit"
+
+
 def _prefilter_actionable_buys_for_submission(
     actionable: list,
     executor: PaperExecutor,
@@ -818,7 +857,13 @@ def main() -> int:  # noqa: C901
         current_positions=current_positions_full,
         etf_symbols=ETF_SYMBOLS
     )
-    
+
+    # ETF buy guardrail: block new ETF buys by default (PF 0.168 vs Stock 1.731)
+    # Set PAPER_DEMO_ALLOW_ETF_BUYS=true to re-enable for experiments
+    actionable, blocked_etf_buys = _filter_etf_buys_by_guardrail(actionable, ETF_SYMBOLS)
+    if blocked_etf_buys:
+        print(f"  ETF buy guardrail: blocked {len(blocked_etf_buys)} new ETF buy(s): {', '.join(blocked_etf_buys)}")
+
     # Log allocation status
     alloc_status = portfolio_allocator.get_allocation_status(
         current_positions=current_positions_full,
@@ -941,17 +986,8 @@ def main() -> int:  # noqa: C901
                 # Persist exit reason for sell orders so reconcile_orders can
                 # retrieve it when the fill is detected later.
                 if o.side == "sell" and sub.broker_order_id:
-                    notes = " ".join((decision.evidence or {}).get("notes") or []).lower()
-                    if "trailing stop" in notes:
-                        _exit_trigger, _exit_reason = "Trailing stop triggered", "trailing_stop"
-                    elif "breakeven stop" in notes:
-                        _exit_trigger, _exit_reason = "Breakeven stop triggered", "breakeven_stop"
-                    elif "stop loss" in notes:
-                        _exit_trigger, _exit_reason = "Stop loss triggered", "stop_loss"
-                    elif "max hold" in notes:
-                        _exit_trigger, _exit_reason = "Max hold period reached", "time_based"
-                    else:
-                        _exit_trigger, _exit_reason = "Strategy exit", "strategy_exit"
+                    notes = " ".join((decision.evidence or {}).get("notes") or [])
+                    _exit_trigger, _exit_reason = _classify_exit_reason_from_notes(notes)
                     write_exit_reason(
                         project_root=project_root,
                         broker_order_id=sub.broker_order_id,
@@ -1027,6 +1063,9 @@ def main() -> int:  # noqa: C901
     submitted = [s for s in submissions if s.broker_order_id]
     if submitted:
         _section("11. Reconciliation")
+        # Build decision lookup so each submission maps to its own decision,
+        # not to whichever 'decision' variable happens to be in outer scope.
+        decision_by_id = {d.decision_id: d for d in decisions}
         for sub in submitted:
             try:
                 result = reconciler.reconcile(sub)
@@ -1052,20 +1091,18 @@ def main() -> int:  # noqa: C901
                     
                     # Only record if we have actual fill data
                     if exit_price and exit_price > 0:
-                        exit_reason = "strategy_exit"
-                        notes = " ".join((decision.evidence or {}).get("notes") or []).lower() if getattr(decision, 'evidence', None) else ""
-                        if "stop loss" in notes:
-                            exit_reason = "stop_loss"
-                        elif "take profit" in notes:
-                            exit_reason = "take_profit"
-                        elif "max hold" in notes:
-                            exit_reason = "max_hold"
+                        # Use the correct decision for THIS submission (not outer-scope variable)
+                        decision_for_sub = decision_by_id.get(sub.decision_id)
+                        notes_text = " ".join(
+                            (getattr(decision_for_sub, 'evidence', None) or {}).get("notes") or []
+                        ) if decision_for_sub else ""
+                        _exit_trigger, exit_reason = _classify_exit_reason_from_notes(notes_text)
                         pnl_tracker.record_exit(
                             symbol=sub.symbol,
                             exit_price=exit_price,
                             exit_qty=exit_qty,
                             broker_order_id=sub.broker_order_id,
-                            exit_strategy_id=decision.strategy_id,
+                            exit_strategy_id=getattr(decision_for_sub, 'strategy_id', 'unknown'),
                             exit_reason=exit_reason,
                         )
 

@@ -52,7 +52,8 @@ def test_position_sizing_applies_smaller_notional_cap_to_etfs():
     ))
 
     assert stock_result.max_position_notional_usd == 60000.0
-    assert etf_result.max_position_notional_usd == 42000.0
-    assert etf_result.shares_by_notional == 420
+    # P0: ETF_POSITION_SIZE_MULTIPLIER reduced 0.70 -> 0.35 (ETF PF was 0.168)
+    assert etf_result.max_position_notional_usd == 21000.0
+    assert etf_result.shares_by_notional == 210
     assert stock_result.shares_by_notional == 600
     assert etf_result.final_shares <= stock_result.final_shares

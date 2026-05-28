@@ -74,10 +74,18 @@ class SimpleExitV2Strategy(BaseStrategy):
     def _resolve_thresholds(
         self, entry_signal_strength: float | None
     ) -> tuple[float, float]:
-        """Return (stop_loss_pct, trailing_activation_pct) adjusted for signal strength."""
+        """Return (stop_loss_pct, trailing_activation_pct) adjusted for signal strength.
+
+        Missing or invalid strength is treated as LOW conviction (-5% stop, +10% trailing)
+        because broker-reconstructed positions have no signal provenance.
+        """
         if entry_signal_strength is None:
-            return self.stop_loss_pct, self.trailing_activation_pct
-        s = float(entry_signal_strength)
+            # Unknown conviction: use conservative/low thresholds to protect capital
+            return -0.05, 0.10
+        try:
+            s = float(entry_signal_strength)
+        except (TypeError, ValueError):
+            return -0.05, 0.10
         if s >= self.HIGH_STRENGTH_THRESHOLD:
             # High conviction: wider stop, earlier trailing activation
             return -0.09, 0.06

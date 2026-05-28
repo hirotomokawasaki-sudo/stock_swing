@@ -224,13 +224,17 @@ def test_low_strength_entry_gets_tighter_stop():
     assert signals[0].metadata["eff_stop_loss_pct"] == -0.05
 
 
-def test_no_strength_uses_standard_thresholds():
-    """No entry_signal_strength → standard thresholds apply."""
+def test_no_strength_uses_low_conviction_thresholds():
+    """No entry_signal_strength → conservative LOW-conviction thresholds (-5% stop, +10% trailing).
+
+    Broker-reconstructed positions have no signal provenance; treat as low conviction.
+    P0 change: None was previously treated as standard (-7%). Now uses -5% to protect capital.
+    """
     strat = SimpleExitV2Strategy(stop_loss_pct=-0.07)
     pos = {
         "qty": 100,
         "avg_entry_price": 100.0,
-        "current_price": 94.0,   # -6%: within standard -7% stop
+        "current_price": 94.0,   # -6%: within standard -7% but OUTSIDE low-conviction -5%
         "peak_price": 100.5,
         "entry_signal_strength": None,
         "created_at": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
@@ -241,7 +245,18 @@ def test_no_strength_uses_standard_thresholds():
         values={"latest_close": 94.0},
     )]
     signals = strat.generate(features, {"AAPL": pos})
-    assert len(signals) == 0, "Standard stop (-7%) should not fire at -6%"
+    # With low-conviction -5% stop: -6% should FIRE (position beyond stop)
+    assert len(signals) == 1, "Low-conviction stop (-5%) should fire at -6%"
+    assert signals[0].action == "sell"
+    assert "stop loss" in signals[0].reasoning.lower()
+
+
+def test_resolve_thresholds_missing_strength_is_conservative():
+    """_resolve_thresholds returns low-conviction values for None and invalid inputs."""
+    strat = SimpleExitV2Strategy(stop_loss_pct=-0.07, trailing_activation_pct=0.08)
+    stop, trail = strat._resolve_thresholds(None)
+    assert stop == -0.05, f"Expected -0.05, got {stop}"
+    assert trail == 0.10, f"Expected 0.10, got {trail}"
 
 
 def test_high_strength_trailing_activates_earlier():

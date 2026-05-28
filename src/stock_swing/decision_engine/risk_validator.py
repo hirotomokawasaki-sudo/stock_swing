@@ -101,22 +101,22 @@ class RiskValidator:
         if candidate.action not in {"buy", "sell", "hold"}:
             deny_reasons.append(f"invalid action: {candidate.action}")
         
-        # Check 4: Position size (placeholder - would need proposed qty)
-        # For now, assume 10 shares per signal (basic check)
-        checks_performed.append("position_size")
-        current_qty = current_positions.get(candidate.symbol, 0)
-        proposed_qty = 10  # Placeholder - would come from position sizing logic
-        
-        if candidate.action == "buy":
-            new_total = current_qty + proposed_qty
-            if new_total > self.max_position_size:
+        # Check 4: Data quality — block signals from stale or insufficient price data
+        checks_performed.append("data_quality")
+        BLOCKING_QUALITY_FLAGS = {"stale_data", "insufficient_bars", "insufficient_price_data"}
+        if isinstance(candidate.metadata, dict):
+            signal_flags = set(candidate.metadata.get("quality_flags") or [])
+            blocking = signal_flags & BLOCKING_QUALITY_FLAGS
+            if blocking:
                 deny_reasons.append(
-                    f"position_size would exceed limit: {new_total} > {self.max_position_size}"
+                    f"data_quality: blocking quality flags present: {sorted(blocking)}"
                 )
-        
-        # Check 5: Symbol validity (basic check)
+
+        # Check 5: Symbol validity
+        # NOTE: max_position_size is a deprecated argument; actual sizing is handled
+        # by PositionSizingPolicy in PaperExecutor, not here.
         checks_performed.append("symbol_validity")
-        if not candidate.symbol or len(candidate.symbol) < 1 or len(candidate.symbol) > 5:
+        if not candidate.symbol or len(candidate.symbol) < 1 or len(candidate.symbol) > 10:
             deny_reasons.append(f"invalid symbol: {candidate.symbol}")
         
         # Determine risk state

@@ -71,12 +71,20 @@ class BreakoutMomentumStrategy(BaseStrategy):
         signals = []
         now = datetime.now(timezone.utc)
         
+        BLOCKING_QUALITY_FLAGS = {"stale_data", "insufficient_bars", "insufficient_price_data"}
+
         for momentum_feature in momentum_features:
             symbol = momentum_feature.symbol
+            quality_flags = set(momentum_feature.quality_flags or [])
+
+            # Skip features with blocking quality flags (stale / insufficient data)
+            if quality_flags & BLOCKING_QUALITY_FLAGS:
+                continue
+
             momentum = momentum_feature.values.get("momentum", 0.0)
             trend = momentum_feature.values.get("trend", "unknown")
             bars_used = momentum_feature.values.get("bars_used", 0)
-            
+
             # Strategy logic: strong bullish momentum = breakout
             if momentum >= self.min_momentum and trend == "bullish":
                 # Calculate signal strength
@@ -106,6 +114,7 @@ class BreakoutMomentumStrategy(BaseStrategy):
                             "stop_price": momentum_feature.values.get("stop_price"),
                             "latest_close": momentum_feature.values.get("latest_close"),
                             "atr": momentum_feature.values.get("atr"),
+                            "quality_flags": list(quality_flags),
                         },
                     )
                     signals.append(signal)
