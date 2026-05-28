@@ -3120,7 +3120,7 @@ class DashboardService:
             pos_summary = positions.get('summary', {})
             snapshots = trading.get('daily_snapshots', [])
             trades = trading.get('closed_trades', [])
-            current_positions = positions.get('current', [])
+            current_positions = positions.get('positions') or positions.get('current', [])
             
             # Equity curve
             equity_curve = [s.get('equity', 0) for s in snapshots if s.get('equity')]

@@ -557,6 +557,7 @@ class PnLTracker:
 
     def get_recent_trades(self, n: int = 10) -> list[dict[str, Any]]:
         closed = [t for t in self.state.trades if t["status"] == "closed"]
+        closed.sort(key=lambda t: t.get("exit_time") or t.get("entry_time") or "")
         return closed[-n:]
 
     def _record_strategy_daily_snapshots(self, today: str, current_prices: dict[str, float]) -> None:

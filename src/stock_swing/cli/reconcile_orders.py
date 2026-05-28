@@ -208,28 +208,32 @@ def main() -> int:
         print("broker.fetch_orders() did not return a list")
         return 1
 
-    # Group sell orders by symbol and keep only the most recent filled one
-    latest_sell_orders_by_symbol = {}
+    # Build a lookup: symbol → list of filled sell orders (sorted most-recent first)
+    # We keep ALL filled sells per symbol so we can do timestamp-based matching.
+    filled_sells_by_symbol: dict[str, list[dict]] = {}
     for order in orders:
         symbol = str(order.get("symbol", "")).upper()
         side = str(order.get("side", "")).lower()
         if side != "sell" or not symbol:
             continue
-        
-        # Only track filled/partially_filled orders
         status = str(order.get("status", "")).lower()
         if status not in {"filled", "partially_filled"}:
             continue
-        
-        # Keep the most recent (by filled_at or created_at)
-        filled_at = order.get("filled_at") or order.get("created_at") or ""
-        existing = latest_sell_orders_by_symbol.get(symbol)
-        if not existing:
-            latest_sell_orders_by_symbol[symbol] = order
-        else:
-            existing_filled_at = existing.get("filled_at") or existing.get("created_at") or ""
-            if filled_at > existing_filled_at:
-                latest_sell_orders_by_symbol[symbol] = order
+        filled_sells_by_symbol.setdefault(symbol, []).append(order)
+
+    # Sort each symbol's list newest-first
+    for sym in filled_sells_by_symbol:
+        filled_sells_by_symbol[sym].sort(
+            key=lambda o: o.get("submitted_at") or o.get("created_at") or "",
+            reverse=True,
+        )
+
+    # Compat alias used below for "most-recent" fallback
+    latest_sell_orders_by_symbol = {
+        sym: orders_list[0] for sym, orders_list in filled_sells_by_symbol.items()
+    }
+
+    MATCH_WINDOW_SECONDS = 600  # ±10 min between log submission and broker submitted_at
 
     # Build set of already-closed symbols to avoid duplicate exits
     already_closed_symbols = set()
@@ -249,7 +253,30 @@ def main() -> int:
             continue
         checked += 1
         try:
-            match = latest_sell_orders_by_symbol.get(sub["symbol"])
+            # --- Timestamp-based matching ---
+            # Prefer a broker order whose submitted_at is within MATCH_WINDOW_SECONDS
+            # of the log submission timestamp.  Fall back to the most-recent fill only
+            # when no time-proximate match exists.
+            sub_ts_str = sub.get("ts", "")
+            best_match = None
+            try:
+                sub_ts = datetime.fromisoformat(sub_ts_str.replace("Z", "+00:00")) if sub_ts_str else None
+            except ValueError:
+                sub_ts = None
+
+            if sub_ts and sub["symbol"] in filled_sells_by_symbol:
+                for candidate in filled_sells_by_symbol[sub["symbol"]]:
+                    cand_ts_str = candidate.get("submitted_at") or candidate.get("created_at") or ""
+                    try:
+                        cand_ts = datetime.fromisoformat(cand_ts_str.replace("Z", "+00:00"))
+                        if abs((cand_ts - sub_ts).total_seconds()) <= MATCH_WINDOW_SECONDS:
+                            best_match = candidate
+                            break
+                    except ValueError:
+                        continue
+
+            # If no time-proximate match found, use most-recent filled sell as fallback
+            match = best_match or latest_sell_orders_by_symbol.get(sub["symbol"])
             if not match:
                 continue
             
@@ -342,6 +369,30 @@ def main() -> int:
 
     # Purge exit_reason entries older than 7 days
     purge_old_entries(project_root, max_age_days=7)
+
+    # --- Clean up pending_exit_reasons for exits already recorded in tracker ---
+    # paper_demo may record exits directly without going through reconcile_orders.
+    # In that case the pending_exit_reasons entries are never cleaned up here.
+    # We do it now by checking which broker_order_ids are already fully closed.
+    try:
+        from stock_swing.tracking.exit_reason_store import _store_path
+        store_path = _store_path(project_root)
+        if store_path.exists():
+            import json as _json
+            store_data = _json.loads(store_path.read_text(encoding="utf-8"))
+            closed_order_ids = {
+                t.get("broker_order_id")
+                for t in tracker.state.trades
+                if t.get("status") == "closed" and t.get("broker_order_id")
+            }
+            stale_keys = [k for k in store_data if k in closed_order_ids]
+            if stale_keys:
+                for k in stale_keys:
+                    del store_data[k]
+                store_path.write_text(_json.dumps(store_data, indent=2, ensure_ascii=False), encoding="utf-8")
+                print(f"INFO: Cleaned up {len(stale_keys)} stale pending_exit_reasons entries", file=sys.stderr)
+    except Exception as e:
+        print(f"WARN: Failed to clean up pending_exit_reasons: {e}", file=sys.stderr)
 
     print(json.dumps({
         "cancelled_stale_buy_orders": len(cancelled_stale),
