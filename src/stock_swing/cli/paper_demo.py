@@ -144,6 +144,57 @@ def _filter_etf_buys_by_guardrail(
     return allowed, blocked
 
 
+def _filter_buys_by_risk_budget(
+    decisions: list,
+    project_root: "Path",
+    equity: float,
+) -> tuple[list, list[str], dict]:
+    """Block all new BUY decisions when portfolio open risk exceeds BLOCK_PCT.
+
+    Open risk = sum of (qty × entry_price × stop_loss_pct) for all open trades.
+    Thresholds: WARN=5%, BLOCK=8% of equity.  Sell decisions are never blocked.
+    Override: export PAPER_DEMO_SKIP_RISK_BUDGET=true
+    """
+    import os
+    from stock_swing.risk.risk_budget import compute_open_risk
+
+    if os.environ.get("PAPER_DEMO_SKIP_RISK_BUDGET", "").lower() == "true":
+        return decisions, [], {}
+
+    risk = compute_open_risk(project_root, equity)
+
+    if risk.get("error"):
+        print(f"  ⚠️  Risk budget: could not compute ({risk['error']}) — skipping guard")
+        return decisions, [], risk
+
+    pct = risk["pct_of_equity"]
+    total = risk["total_open_risk"]
+
+    if risk["is_blocked"]:
+        allowed = [d for d in decisions if d.action != "buy"]
+        blocked = [d.symbol for d in decisions if d.action == "buy"]
+        print(
+            f"  🚫 Risk budget BLOCK: open risk ${total:,.0f} = {pct:.1%} of equity "
+            f"(limit {risk['block_threshold']:,.0f} / 8%) — "
+            f"blocked {len(blocked)} new buy(s): {', '.join(blocked[:5])}"
+            + (f" +{len(blocked)-5} more" if len(blocked) > 5 else "")
+        )
+        return allowed, blocked, risk
+
+    if risk["is_warn"]:
+        print(
+            f"  ⚠️  Risk budget WARN: open risk ${total:,.0f} = {pct:.1%} of equity "
+            f"(warn at 5%, block at 8%) — buys allowed"
+        )
+    else:
+        print(
+            f"  ✅ Risk budget OK: open risk ${total:,.0f} = {pct:.1%} of equity "
+            f"(warn at 5%, block at 8%)"
+        )
+
+    return decisions, [], risk
+
+
 def _classify_exit_reason_from_notes(notes_text: str) -> tuple[str, str]:
     """Derive (exit_trigger, exit_reason) from decision notes text."""
     t = notes_text.lower()
@@ -867,6 +918,12 @@ def main() -> int:  # noqa: C901
     actionable, blocked_etf_buys = _filter_etf_buys_by_guardrail(actionable, ETF_SYMBOLS)
     if blocked_etf_buys:
         print(f"  ETF buy guardrail: blocked {len(blocked_etf_buys)} new ETF buy(s): {', '.join(blocked_etf_buys)}")
+
+    # Risk budget guardrail: block all new buys when open risk >= 8% of equity
+    # Warn at 5%. Override: export PAPER_DEMO_SKIP_RISK_BUDGET=true
+    actionable, blocked_risk_budget, risk_budget_result = _filter_buys_by_risk_budget(
+        actionable, project_root, equity
+    )
 
     # Log allocation status
     alloc_status = portfolio_allocator.get_allocation_status(
