@@ -82,29 +82,49 @@ class TestComputeOpenRiskCalculation:
         # qty=100, entry=100, stop=9% → max_loss=900
         root = _make_project_root([
             {"status": "open", "symbol": "NVDA", "qty": 100, "entry_price": 100.0,
-             "signal_strength": 0.90},
+             "entry_signal_strength": 0.90},
+        ])
+        result = compute_open_risk(root, equity=1_000_000)
+        assert result["total_open_risk"] == pytest.approx(900.0)
+
+    def test_legacy_signal_strength_fallback(self):
+        """Old pnl_state.json entries using 'signal_strength' key still work."""
+        root = _make_project_root([
+            {"status": "open", "symbol": "NVDA", "qty": 100, "entry_price": 100.0,
+             "signal_strength": 0.90},  # legacy key
+        ])
+        result = compute_open_risk(root, equity=1_000_000)
+        assert result["total_open_risk"] == pytest.approx(900.0)
+
+    def test_entry_signal_strength_takes_priority_over_legacy(self):
+        """entry_signal_strength takes priority over legacy signal_strength."""
+        root = _make_project_root([
+            {"status": "open", "symbol": "X", "qty": 100, "entry_price": 100.0,
+             "entry_signal_strength": 0.90,  # high conviction: 9%
+             "signal_strength": 0.50},        # low conviction: 5% — should be ignored
         ])
         result = compute_open_risk(root, equity=1_000_000)
         assert result["total_open_risk"] == pytest.approx(900.0)
 
     def test_warn_threshold_triggered(self):
-        # open risk = 5.1% of equity → warn
+        # open risk = 4.1% of equity (WARN at 4%) → warn
         equity = 1_000_000
-        # qty × entry × 0.05 = 51_000  →  qty × entry = 1_020_000
-        # entry=1000, qty=1020, stop=5%
+        # qty × entry × 0.05 = 41_000  →  qty × entry = 820_000
+        # entry=1000, qty=820, stop=5%  →  max_loss=41_000 (4.1%)
         root = _make_project_root([
-            {"status": "open", "symbol": "X", "qty": 1020, "entry_price": 1000.0},
+            {"status": "open", "symbol": "X", "qty": 820, "entry_price": 1000.0},
         ])
         result = compute_open_risk(root, equity=equity)
         assert result["is_warn"] is True
         assert result["is_blocked"] is False
 
     def test_block_threshold_triggered(self):
-        # open risk = 8.5% of equity → blocked
+        # open risk = 6.5% of equity (BLOCK at 6%) → blocked
         equity = 1_000_000
-        # qty × entry × 0.05 = 85_000  →  qty × entry = 1_700_000
+        # qty × entry × 0.05 = 65_000  →  qty × entry = 1_300_000
+        # entry=1000, qty=1300, stop=5%  →  max_loss=65_000 (6.5%)
         root = _make_project_root([
-            {"status": "open", "symbol": "X", "qty": 1700, "entry_price": 1000.0},
+            {"status": "open", "symbol": "X", "qty": 1300, "entry_price": 1000.0},
         ])
         result = compute_open_risk(root, equity=equity)
         assert result["is_warn"] is True

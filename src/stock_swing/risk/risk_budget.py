@@ -25,8 +25,11 @@ from pathlib import Path
 from typing import Any
 
 # ── Thresholds ─────────────────────────────────────────────────────────────────
-WARN_PCT  = 0.05  # 5% of equity — emit warning
-BLOCK_PCT = 0.08  # 8% of equity — block all new buys
+# NOTE: All open trades without entry_signal_strength default to conservative 5%
+# stop, which underestimates true max-loss by ~1.6x vs the 8% standard stop.
+# Thresholds are set tighter than nominal to compensate for this underestimation.
+WARN_PCT  = 0.04  # 4% of equity — emit warning  (≈ 6.4% true risk at 8% stop)
+BLOCK_PCT = 0.06  # 6% of equity — block all new buys (≈ 9.6% true risk at 8% stop)
 
 
 def _stop_loss_pct(signal_strength: float | None) -> float:
@@ -95,7 +98,7 @@ def compute_open_risk(project_root: Path, equity: float) -> dict[str, Any]:
         sym = t.get("symbol", "?")
         qty = float(t.get("qty", 0))
         entry = float(t.get("entry_price", 0))
-        sig = t.get("signal_strength", None)
+        sig = t.get("entry_signal_strength", t.get("signal_strength", None))  # entry_signal_strength preferred; signal_strength kept for backward compat
         if sig is not None:
             try:
                 sig = float(sig)
