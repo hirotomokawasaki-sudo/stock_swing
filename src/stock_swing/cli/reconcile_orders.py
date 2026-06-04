@@ -52,14 +52,20 @@ def load_recent_submissions(audits_dir: Path, limit: int = 100):
     return items
 
 
-def reconcile_filled_buys(broker: BrokerClient, tracker: PnLTracker) -> int:
+def reconcile_filled_buys(broker: BrokerClient, tracker: PnLTracker, recently_sold_symbols: set[str] | None = None) -> int:
     """Reconcile broker open positions with tracker open trades.
     
     For each broker position that is missing from tracker, record it as an open trade.
     Uses broker's avg_entry_price and current qty.
+
+    recently_sold_symbols: symbols that had a filled sell order in the current reconcile
+        cycle.  Positions for these symbols are skipped to avoid creating a ghost open
+        trade that immediately gets closed by the same sell fill (duplicate-close loop).
     
     Returns the count of newly recorded entries.
     """
+    skip_symbols = recently_sold_symbols or set()
+
     try:
         positions_env = broker.fetch_positions()
         positions = positions_env.payload if hasattr(positions_env, "payload") else positions_env
@@ -92,6 +98,16 @@ def reconcile_filled_buys(broker: BrokerClient, tracker: PnLTracker) -> int:
         missing_qty = broker_qty - tracker_qty
         
         if missing_qty > 0:
+            # Skip symbols that were just sold — broker position may lag the fill,
+            # and creating an open here would trigger an immediate duplicate close.
+            if symbol in skip_symbols:
+                print(
+                    f"INFO: Skipping reconcile_filled_buys for {symbol}: "
+                    f"recently sold (broker position may lag)",
+                    file=sys.stderr,
+                )
+                continue
+
             # Record the missing quantity as a new open trade
             try:
                 trade_id = tracker.record_submission(
@@ -198,10 +214,9 @@ def main() -> int:
     # Step 0: Cancel stale open buy orders from previous sessions
     cancelled_stale = cancel_stale_buy_orders(broker)
 
-    # Step 1: Reconcile filled buys (broker-only positions)
-    newly_recorded_buys = reconcile_filled_buys(broker, tracker)
-
-    # Step 2: Reconcile filled sells (existing logic)
+    # Step 1a: Fetch orders first to know which symbols were recently sold.
+    # This allows reconcile_filled_buys to skip positions that may still show
+    # in the broker API despite a sell having been executed (lag window).
     orders_env = broker.fetch_orders(status="all", limit=500)
     orders = orders_env.payload if hasattr(orders_env, "payload") else orders_env
     if not isinstance(orders, list):
@@ -221,6 +236,15 @@ def main() -> int:
             continue
         filled_sells_by_symbol.setdefault(symbol, []).append(order)
 
+    # Symbols with a filled sell in the broker order history — pass to reconcile_filled_buys
+    # so it does not re-open positions that were just exited.
+    recently_sold_symbols: set[str] = set(filled_sells_by_symbol.keys())
+
+    # Step 1b: Reconcile filled buys (broker-only positions)
+    newly_recorded_buys = reconcile_filled_buys(broker, tracker, recently_sold_symbols)
+
+    # Step 2: Reconcile filled sells (existing logic)
+
     # Sort each symbol's list newest-first
     for sym in filled_sells_by_symbol:
         filled_sells_by_symbol[sym].sort(
@@ -235,7 +259,8 @@ def main() -> int:
 
     MATCH_WINDOW_SECONDS = 600  # ±10 min between log submission and broker submitted_at
 
-    # Build set of already-closed symbols to avoid duplicate exits
+    # Build set of already-closed symbols to avoid duplicate exits.
+    # Tracks (symbol, buy_broker_order_id) for trades closed via their original buy order ID.
     already_closed_symbols = set()
     for trade in tracker.state.trades:
         if trade.get("status") == "closed":
@@ -243,6 +268,10 @@ def main() -> int:
             broker_order_id = trade.get("broker_order_id")
             if broker_order_id:  # Track by order ID for precise matching
                 already_closed_symbols.add((symbol, broker_order_id))
+
+    # Also track which SELL order IDs have already been used to close trades,
+    # to prevent the same sell fill from closing multiple reconcile-created open trades.
+    used_sell_order_ids: set[str] = set()
 
     submissions = load_recent_submissions(project_root / "data" / "audits")
     filled_exits = 0
@@ -282,8 +311,13 @@ def main() -> int:
             
             broker_order_id = match.get("id")
             
-            # Skip if this exit was already recorded
+            # Skip if this exit was already recorded (by buy order ID)
             if (sub["symbol"], broker_order_id) in already_closed_symbols:
+                continue
+
+            # Skip if this sell order was already used to close another open trade
+            # this run (prevents the same fill from closing reconcile-created duplicates).
+            if broker_order_id and broker_order_id in used_sell_order_ids:
                 continue
             
             status = str(match.get("status", "")).lower()
@@ -356,6 +390,9 @@ def main() -> int:
                 )
                 if updated:
                     filled_exits += 1
+                    # Mark this sell order as used to prevent re-use within same run
+                    if broker_order_id:
+                        used_sell_order_ids.add(broker_order_id)
                     print(
                         f"INFO: Recorded exit for {sub['symbol']}: {int(filled_qty)} @ "
                         f"${avg_price_float:.2f} reason={resolved_exit_reason}",
