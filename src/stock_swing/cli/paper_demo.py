@@ -121,6 +121,40 @@ def _select_intraday_candidate_symbols(
     return symbols
 
 
+def _filter_buys_outside_regular_hours(
+    decisions: list,
+    now: "datetime | None" = None,
+) -> tuple[list, list]:
+    """Block new BUY orders when US market is outside regular hours (9:30–16:00 ET).
+
+    Market orders with extended_hours=False cannot fill during pre-market or
+    after-hours sessions.  Submitting them then creates phantom 'accepted'
+    orders that carry over to the next session and pollute the PnL tracker
+    with fake open trades (ORCL/QCOM batch incident 2026-06-03).
+
+    Sell/exit orders are NEVER blocked — trailing stops and exits are urgent
+    and must be processed regardless of session.
+
+    Override: export PAPER_DEMO_ALLOW_OFFHOURS_BUYS=true
+    """
+    import os
+
+    if os.environ.get("PAPER_DEMO_ALLOW_OFFHOURS_BUYS", "").lower() == "true":
+        return decisions, []
+
+    is_regular, status = MarketCalendar.is_regular_market_hours(now)
+    if is_regular:
+        return decisions, []
+
+    allowed, blocked = [], []
+    for d in decisions:
+        if d.action == "buy":
+            blocked.append((d.symbol, status))
+        else:
+            allowed.append(d)
+    return allowed, blocked
+
+
 def _filter_etf_buys_by_guardrail(
     decisions: list,
     etf_symbols: set,
@@ -912,6 +946,18 @@ def main() -> int:  # noqa: C901
         current_positions=current_positions_full,
         etf_symbols=ETF_SYMBOLS
     )
+
+    # Off-hours buy guardrail: block new BUY orders outside regular market hours
+    # (9:30-16:00 ET). Market orders with extended_hours=False cannot fill during
+    # pre-market or after-hours, creating phantom accepted orders (2026-06-03 incident).
+    # Override: export PAPER_DEMO_ALLOW_OFFHOURS_BUYS=true
+    now_for_filter = datetime.now()
+    actionable, blocked_offhours_buys = _filter_buys_outside_regular_hours(actionable, now_for_filter)
+    if blocked_offhours_buys:
+        _, offhours_status = MarketCalendar.is_regular_market_hours(now_for_filter)
+        print(f"  Off-hours buy guardrail [{offhours_status}]: blocked {len(blocked_offhours_buys)} buy(s)")
+        sample = ", ".join(sym for sym, _ in blocked_offhours_buys[:5])
+        print(f"    blocked: {sample}{' ...' if len(blocked_offhours_buys) > 5 else ''}")
 
     # ETF buy guardrail: block new ETF buys by default (PF 0.168 vs Stock 1.731)
     # Set PAPER_DEMO_ALLOW_ETF_BUYS=true to re-enable for experiments

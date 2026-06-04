@@ -132,13 +132,25 @@ def reconcile_filled_buys(broker: BrokerClient, tracker: PnLTracker, recently_so
 
 
 def cancel_stale_buy_orders(broker: BrokerClient) -> list[dict]:
-    """Detect and cancel stale open buy orders from previous trading sessions.
+    """Detect and cancel stale open buy orders.
 
-    A buy order is considered stale when:
+    An order is considered stale when ANY of the following is true:
+
+    Case A — previous-session orders (original logic):
     - side == 'buy'
     - status in {accepted, new, pending_new, held}
     - time_in_force == 'day'
     - submitted_at is before today's market open (09:30 ET = 13:30 UTC)
+
+    Case B — after-hours zero-fill orders (new, 2026-06-03 incident):
+    - side == 'buy' OR sell
+    - status in {accepted, new, pending_new, held}
+    - filled_qty == 0
+    - extended_hours == False
+    - submitted_at falls inside the after-hours window (16:00–20:00 ET = UTC+3/4h)
+      i.e., 19:00–23:00 UTC (standard time) or 20:00–00:00 UTC (DST)
+    - The order is older than 30 minutes (avoids cancelling freshly submitted orders
+      that might still be routing)
 
     Returns a list of cancelled order dicts.
     """
@@ -184,17 +196,89 @@ def cancel_stale_buy_orders(broker: BrokerClient) -> list[dict]:
         if submitted_at >= market_open_today:
             continue  # submitted today → not stale
 
-        # Stale day buy order → cancel
+        # Case A: stale previous-session order → cancel
         try:
             broker.cancel_order(order_id)
-            cancelled.append({"order_id": order_id, "symbol": symbol, "submitted_at": submitted_at_str})
+            cancelled.append({"order_id": order_id, "symbol": symbol, "submitted_at": submitted_at_str, "reason": "previous_session"})
             print(
                 f"INFO: Cancelled stale buy order {order_id} {symbol} "
-                f"submitted {submitted_at_str}",
+                f"submitted {submitted_at_str} (previous session)",
                 file=sys.stderr,
             )
         except Exception as e:
             print(f"WARN: Failed to cancel stale order {order_id} {symbol}: {e}", file=sys.stderr)
+
+    # --- Case B: after-hours zero-fill orders (extended_hours=False) ---
+    # These were submitted after the regular close (16:00 ET) but before midnight ET.
+    # With extended_hours=False they cannot fill and will carry over to the next
+    # regular session, causing phantom accepted orders in the PnL tracker.
+    #
+    # After-hours window in UTC:
+    #   DST  (Mar–Nov): 20:00–00:00 UTC  (16:00–20:00 ET + 4h)
+    #   Standard (Nov–Mar): 21:00–01:00 UTC  (16:00–20:00 ET + 5h)
+    # We use a conservative range: submitted between 19:00–01:00 UTC is a candidate.
+    #
+    # Guard: only cancel if the order is older than 30 minutes to avoid
+    # cancelling freshly submitted orders still being routed by the broker.
+    try:
+        orders_env_all = broker.fetch_orders(status="open", limit=500)
+        orders_all = orders_env_all.payload if hasattr(orders_env_all, "payload") else orders_env_all
+        if not isinstance(orders_all, list):
+            orders_all = []
+    except Exception:
+        orders_all = []
+
+    AFTER_HOURS_STALE_STATUSES = {"accepted", "new", "pending_new", "held"}
+    MIN_AGE_MINUTES = 30  # don't cancel orders younger than this
+
+    for order in orders_all:
+        status = str(order.get("status", "")).lower()
+        tif = str(order.get("time_in_force", "")).lower()
+        submitted_at_str = order.get("submitted_at") or ""
+        order_id = order.get("id", "")
+        symbol = order.get("symbol", "")
+        filled_qty = float(order.get("filled_qty", 0) or 0)
+        extended_hours = order.get("extended_hours", True)  # assume safe unless explicitly False
+
+        if status not in AFTER_HOURS_STALE_STATUSES or tif != "day":
+            continue
+        if filled_qty > 0:
+            continue  # partially filled — do not cancel
+        if extended_hours is not False:
+            continue  # extended_hours=True orders can fill — leave them alone
+        if not submitted_at_str or not order_id:
+            continue
+        # Skip already-cancelled orders from Case A
+        if any(c["order_id"] == order_id for c in cancelled):
+            continue
+
+        try:
+            submitted_at = datetime.fromisoformat(submitted_at_str.replace("Z", "+00:00"))
+        except ValueError:
+            continue
+
+        age_minutes = (now_utc - submitted_at).total_seconds() / 60
+        if age_minutes < MIN_AGE_MINUTES:
+            continue  # too fresh — may still be routing
+
+        # Check if submitted during after-hours UTC window (19:00–01:00 UTC next day)
+        # We accept any hour from 19 to 23 or 0 (midnight) as after-hours-candidate.
+        submitted_hour_utc = submitted_at.hour
+        in_after_hours_window = submitted_hour_utc >= 19 or submitted_hour_utc == 0
+        if not in_after_hours_window:
+            continue
+
+        # Case B: after-hours zero-fill non-extended order → cancel
+        try:
+            broker.cancel_order(order_id)
+            cancelled.append({"order_id": order_id, "symbol": symbol, "submitted_at": submitted_at_str, "reason": "after_hours_zero_fill"})
+            print(
+                f"INFO: Cancelled after-hours zero-fill order {order_id} {symbol} "
+                f"submitted {submitted_at_str} (age {age_minutes:.0f}m, extended_hours=False)",
+                file=sys.stderr,
+            )
+        except Exception as e:
+            print(f"WARN: Failed to cancel after-hours order {order_id} {symbol}: {e}", file=sys.stderr)
 
     return cancelled
 
