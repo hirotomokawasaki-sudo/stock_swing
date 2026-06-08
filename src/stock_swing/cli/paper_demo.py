@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 import yaml
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -47,6 +48,7 @@ from stock_swing.decision_engine.decision_engine import DecisionEngine, Decision
 from stock_swing.decision_engine.risk_validator import RiskValidator
 from stock_swing.execution.paper_executor import OrderSubmission, PaperExecutor
 from stock_swing.execution.reconciler import Reconciler
+from stock_swing.risk.open_shock_cooldown import apply_open_shock_cooldown
 from stock_swing.risk.portfolio_allocator import PortfolioAllocator
 from stock_swing.feature_engine.macro_regime_feature import MacroRegimeFeature
 from stock_swing.feature_engine.price_momentum_feature import PriceMomentumFeature
@@ -121,6 +123,113 @@ def _select_intraday_candidate_symbols(
     return symbols
 
 
+def _filter_buys_outside_regular_hours(
+    decisions: list,
+    now: "datetime | None" = None,
+) -> tuple[list, list]:
+    """Block new BUY orders when US market is outside regular hours (9:30–16:00 ET).
+
+    Market orders with extended_hours=False cannot fill during pre-market or
+    after-hours sessions.  Submitting them then creates phantom 'accepted'
+    orders that carry over to the next session and pollute the PnL tracker
+    with fake open trades (ORCL/QCOM batch incident 2026-06-03).
+
+    Sell/exit orders are NEVER blocked — trailing stops and exits are urgent
+    and must be processed regardless of session.
+
+    Override: export PAPER_DEMO_ALLOW_OFFHOURS_BUYS=true
+    """
+    import os
+
+    if os.environ.get("PAPER_DEMO_ALLOW_OFFHOURS_BUYS", "").lower() == "true":
+        return decisions, []
+
+    is_regular, status = MarketCalendar.is_regular_market_hours(now)
+    if is_regular:
+        return decisions, []
+
+    allowed, blocked = [], []
+    for d in decisions:
+        if d.action == "buy":
+            blocked.append((d.symbol, status))
+        else:
+            allowed.append(d)
+    return allowed, blocked
+
+
+def _extract_return_pct_from_notes(notes_text: str) -> float | None:
+    """Extract the primary return percentage from exit notes when present."""
+    if not notes_text:
+        return None
+
+    match = re.search(r"return\s+([+-]?\d+(?:\.\d+)?)%", notes_text, re.IGNORECASE)
+    if match:
+        return float(match.group(1)) / 100.0
+
+    match = re.search(r":\s*([+-]?\d+(?:\.\d+)?)%\s*<=", notes_text)
+    if match:
+        return float(match.group(1)) / 100.0
+
+    return None
+
+
+def _filter_sells_outside_regular_hours(
+    decisions: list,
+    now: "datetime | None" = None,
+    force_sell_return_pct: float = -0.12,
+) -> tuple[list, list[tuple[str, str, float | None]]]:
+    """Defer non-catastrophic SELL orders outside regular market hours.
+
+    Market SELL orders submitted outside regular hours become queued day orders and
+    can execute at the next regular-session open. That is precisely the behavior we
+    want to avoid for moderate exit signals during broad Monday panic conditions.
+
+    We therefore keep only catastrophic exits (default: return <= -12%) actionable
+    outside regular hours and defer the rest for re-evaluation in the next session.
+    """
+    if os.environ.get("PAPER_DEMO_ALLOW_OFFHOURS_SELLS", "").lower() == "true":
+        return decisions, []
+
+    is_regular, _ = MarketCalendar.is_regular_market_hours(now)
+    if is_regular:
+        return decisions, []
+
+    allowed: list = []
+    deferred: list[tuple[str, str, float | None]] = []
+    for decision in decisions:
+        if decision.action != "sell":
+            allowed.append(decision)
+            continue
+
+        notes = " ".join((decision.evidence or {}).get("notes") or [])
+        _exit_trigger, exit_reason = _classify_exit_reason_from_notes(notes)
+        return_pct = None
+        if isinstance(decision.evidence, dict):
+            raw_return = decision.evidence.get("return_pct")
+            if raw_return is not None:
+                try:
+                    return_pct = float(raw_return)
+                except (TypeError, ValueError):
+                    return_pct = None
+        if return_pct is None:
+            return_pct = _extract_return_pct_from_notes(notes)
+
+        if return_pct is not None and return_pct <= force_sell_return_pct:
+            allowed.append(decision)
+            continue
+
+        deferred.append((decision.symbol, exit_reason, return_pct))
+
+    deferred_symbols = {symbol for symbol, _, _ in deferred}
+    for decision in decisions:
+        if decision.action == "sell" and decision.symbol in deferred_symbols:
+            continue
+        if decision not in allowed:
+            allowed.append(decision)
+
+    return allowed, deferred
+
+
 def _filter_etf_buys_by_guardrail(
     decisions: list,
     etf_symbols: set,
@@ -142,6 +251,57 @@ def _filter_etf_buys_by_guardrail(
         else:
             allowed.append(d)
     return allowed, blocked
+
+
+def _filter_buys_by_risk_budget(
+    decisions: list,
+    project_root: "Path",
+    equity: float,
+) -> tuple[list, list[str], dict]:
+    """Block all new BUY decisions when portfolio open risk exceeds BLOCK_PCT.
+
+    Open risk = sum of (qty × entry_price × stop_loss_pct) for all open trades.
+    Thresholds: WARN=5%, BLOCK=8% of equity.  Sell decisions are never blocked.
+    Override: export PAPER_DEMO_SKIP_RISK_BUDGET=true
+    """
+    import os
+    from stock_swing.risk.risk_budget import compute_open_risk
+
+    if os.environ.get("PAPER_DEMO_SKIP_RISK_BUDGET", "").lower() == "true":
+        return decisions, [], {}
+
+    risk = compute_open_risk(project_root, equity)
+
+    if risk.get("error"):
+        print(f"  ⚠️  Risk budget: could not compute ({risk['error']}) — skipping guard")
+        return decisions, [], risk
+
+    pct = risk["pct_of_equity"]
+    total = risk["total_open_risk"]
+
+    if risk["is_blocked"]:
+        allowed = [d for d in decisions if d.action != "buy"]
+        blocked = [d.symbol for d in decisions if d.action == "buy"]
+        print(
+            f"  🚫 Risk budget BLOCK: open risk ${total:,.0f} = {pct:.1%} of equity "
+            f"(limit {risk['block_threshold']:,.0f} / 8%) — "
+            f"blocked {len(blocked)} new buy(s): {', '.join(blocked[:5])}"
+            + (f" +{len(blocked)-5} more" if len(blocked) > 5 else "")
+        )
+        return allowed, blocked, risk
+
+    if risk["is_warn"]:
+        print(
+            f"  ⚠️  Risk budget WARN: open risk ${total:,.0f} = {pct:.1%} of equity "
+            f"(warn at 5%, block at 8%) — buys allowed"
+        )
+    else:
+        print(
+            f"  ✅ Risk budget OK: open risk ${total:,.0f} = {pct:.1%} of equity "
+            f"(warn at 5%, block at 8%)"
+        )
+
+    return decisions, [], risk
 
 
 def _classify_exit_reason_from_notes(notes_text: str) -> tuple[str, str]:
@@ -705,6 +865,20 @@ def main() -> int:  # noqa: C901
             max_hold_days=20,
         )
     exit_signals = exit_strat.generate(all_features, current_positions_full)
+
+    cooldown_config_path = project_root / "config" / "strategy" / "open_shock_cooldown.yaml"
+    cooldown_result = None
+    if cooldown_config_path.exists():
+        with open(cooldown_config_path) as f:
+            cooldown_config = yaml.safe_load(f) or {}
+        cooldown_result = apply_open_shock_cooldown(
+            exit_signals=exit_signals,
+            features=all_features,
+            get_mid_price=get_mid_price,
+            now_utc=datetime.now(timezone.utc),
+            config=cooldown_config,
+        )
+        exit_signals = cooldown_result.filtered_signals
     
     # Prioritize buy signals for sector diversification (V2 with dynamic allocation)
     entry_signals = breakout_signals + event_signals
@@ -725,6 +899,35 @@ def main() -> int:  # noqa: C901
     print()
     print(f"  Exit Signals:")
     print(f"    SimpleExitV2:     {len(exit_signals)} signal(s) (with trailing stop)")
+    if cooldown_result:
+        metrics = cooldown_result.metrics
+        if metrics.in_window:
+            status = "ACTIVE" if metrics.active else "INACTIVE"
+            def _fmt_pct(value: float | None) -> str:
+                return "n/a" if value is None else f"{value:+.2%}"
+            print(
+                "    OpenShockCooldown:"
+                f" {status}"
+                f" hits={metrics.signals_hit}"
+                f" SPY={_fmt_pct(metrics.spy_gap_pct)}"
+                f" QQQ={_fmt_pct(metrics.qqq_gap_pct)}"
+                f" losers={_fmt_pct(metrics.losers_ratio)}"
+                f" avg_gap={_fmt_pct(metrics.avg_gap_pct)}"
+            )
+            if metrics.active:
+                print(
+                    "      "
+                    f"held={cooldown_result.held_count} forced_sell={cooldown_result.forced_sell_count}"
+                )
+                audit_log.log_system_event(
+                    "open_shock_cooldown_active",
+                    details=(
+                        f"hits={metrics.signals_hit} held={cooldown_result.held_count} "
+                        f"forced_sell={cooldown_result.forced_sell_count} "
+                        f"spy_gap={metrics.spy_gap_pct} qqq_gap={metrics.qqq_gap_pct} "
+                        f"losers_ratio={metrics.losers_ratio} avg_gap={metrics.avg_gap_pct}"
+                    ),
+                )
     
     # Exit signal analysis
     if current_positions_full:
@@ -862,11 +1065,42 @@ def main() -> int:  # noqa: C901
         etf_symbols=ETF_SYMBOLS
     )
 
+    # Off-hours buy guardrail: block new BUY orders outside regular market hours
+    # (9:30-16:00 ET). Market orders with extended_hours=False cannot fill during
+    # pre-market or after-hours, creating phantom accepted orders (2026-06-03 incident).
+    # Override: export PAPER_DEMO_ALLOW_OFFHOURS_BUYS=true
+    now_for_filter = datetime.now()
+    actionable, blocked_offhours_buys = _filter_buys_outside_regular_hours(actionable, now_for_filter)
+    if blocked_offhours_buys:
+        _, offhours_status = MarketCalendar.is_regular_market_hours(now_for_filter)
+        print(f"  Off-hours buy guardrail [{offhours_status}]: blocked {len(blocked_offhours_buys)} buy(s)")
+        sample = ", ".join(sym for sym, _ in blocked_offhours_buys[:5])
+        print(f"    blocked: {sample}{' ...' if len(blocked_offhours_buys) > 5 else ''}")
+
+    actionable, deferred_offhours_sells = _filter_sells_outside_regular_hours(actionable, now_for_filter)
+    if deferred_offhours_sells:
+        _, offhours_status = MarketCalendar.is_regular_market_hours(now_for_filter)
+        print(
+            f"  Off-hours sell guardrail [{offhours_status}]: deferred "
+            f"{len(deferred_offhours_sells)} non-catastrophic sell(s)"
+        )
+        sample = ", ".join(
+            f"{symbol} ({reason})" for symbol, reason, _ in deferred_offhours_sells[:5]
+        )
+        if sample:
+            print(f"    deferred: {sample}{' ...' if len(deferred_offhours_sells) > 5 else ''}")
+
     # ETF buy guardrail: block new ETF buys by default (PF 0.168 vs Stock 1.731)
     # Set PAPER_DEMO_ALLOW_ETF_BUYS=true to re-enable for experiments
     actionable, blocked_etf_buys = _filter_etf_buys_by_guardrail(actionable, ETF_SYMBOLS)
     if blocked_etf_buys:
         print(f"  ETF buy guardrail: blocked {len(blocked_etf_buys)} new ETF buy(s): {', '.join(blocked_etf_buys)}")
+
+    # Risk budget guardrail: block all new buys when open risk >= 8% of equity
+    # Warn at 5%. Override: export PAPER_DEMO_SKIP_RISK_BUDGET=true
+    actionable, blocked_risk_budget, risk_budget_result = _filter_buys_by_risk_budget(
+        actionable, project_root, equity
+    )
 
     # Log allocation status
     alloc_status = portfolio_allocator.get_allocation_status(

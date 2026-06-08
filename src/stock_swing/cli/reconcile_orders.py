@@ -16,6 +16,7 @@ from stock_swing.cli.paper_demo import _load_env
 from stock_swing.sources.broker_client import BrokerClient
 from stock_swing.tracking.exit_reason_store import delete_exit_reason, purge_old_entries, read_exit_reason
 from stock_swing.tracking.pnl_tracker import PnLTracker
+from stock_swing.utils.market_calendar import MarketCalendar
 
 
 def parse_submission_line(line: str):
@@ -52,14 +53,20 @@ def load_recent_submissions(audits_dir: Path, limit: int = 100):
     return items
 
 
-def reconcile_filled_buys(broker: BrokerClient, tracker: PnLTracker) -> int:
+def reconcile_filled_buys(broker: BrokerClient, tracker: PnLTracker, recently_sold_symbols: set[str] | None = None) -> int:
     """Reconcile broker open positions with tracker open trades.
     
     For each broker position that is missing from tracker, record it as an open trade.
     Uses broker's avg_entry_price and current qty.
+
+    recently_sold_symbols: symbols that had a filled sell order in the current reconcile
+        cycle.  Positions for these symbols are skipped to avoid creating a ghost open
+        trade that immediately gets closed by the same sell fill (duplicate-close loop).
     
     Returns the count of newly recorded entries.
     """
+    skip_symbols = recently_sold_symbols or set()
+
     try:
         positions_env = broker.fetch_positions()
         positions = positions_env.payload if hasattr(positions_env, "payload") else positions_env
@@ -92,6 +99,16 @@ def reconcile_filled_buys(broker: BrokerClient, tracker: PnLTracker) -> int:
         missing_qty = broker_qty - tracker_qty
         
         if missing_qty > 0:
+            # Skip symbols that were just sold — broker position may lag the fill,
+            # and creating an open here would trigger an immediate duplicate close.
+            if symbol in skip_symbols:
+                print(
+                    f"INFO: Skipping reconcile_filled_buys for {symbol}: "
+                    f"recently sold (broker position may lag)",
+                    file=sys.stderr,
+                )
+                continue
+
             # Record the missing quantity as a new open trade
             try:
                 trade_id = tracker.record_submission(
@@ -116,13 +133,25 @@ def reconcile_filled_buys(broker: BrokerClient, tracker: PnLTracker) -> int:
 
 
 def cancel_stale_buy_orders(broker: BrokerClient) -> list[dict]:
-    """Detect and cancel stale open buy orders from previous trading sessions.
+    """Detect and cancel stale open buy orders.
 
-    A buy order is considered stale when:
+    An order is considered stale when ANY of the following is true:
+
+    Case A — previous-session orders (original logic):
     - side == 'buy'
     - status in {accepted, new, pending_new, held}
     - time_in_force == 'day'
     - submitted_at is before today's market open (09:30 ET = 13:30 UTC)
+
+    Case B — after-hours zero-fill orders (new, 2026-06-03 incident):
+    - side == 'buy' OR sell
+    - status in {accepted, new, pending_new, held}
+    - filled_qty == 0
+    - extended_hours == False
+    - submitted_at falls inside the after-hours window (16:00–20:00 ET = UTC+3/4h)
+      i.e., 19:00–23:00 UTC (standard time) or 20:00–00:00 UTC (DST)
+    - The order is older than 30 minutes (avoids cancelling freshly submitted orders
+      that might still be routing)
 
     Returns a list of cancelled order dicts.
     """
@@ -168,17 +197,175 @@ def cancel_stale_buy_orders(broker: BrokerClient) -> list[dict]:
         if submitted_at >= market_open_today:
             continue  # submitted today → not stale
 
-        # Stale day buy order → cancel
+        # Case A: stale previous-session order → cancel
         try:
             broker.cancel_order(order_id)
-            cancelled.append({"order_id": order_id, "symbol": symbol, "submitted_at": submitted_at_str})
+            cancelled.append({"order_id": order_id, "symbol": symbol, "submitted_at": submitted_at_str, "reason": "previous_session"})
             print(
                 f"INFO: Cancelled stale buy order {order_id} {symbol} "
-                f"submitted {submitted_at_str}",
+                f"submitted {submitted_at_str} (previous session)",
                 file=sys.stderr,
             )
         except Exception as e:
             print(f"WARN: Failed to cancel stale order {order_id} {symbol}: {e}", file=sys.stderr)
+
+    # --- Case B: after-hours zero-fill orders (extended_hours=False) ---
+    # These were submitted after the regular close (16:00 ET) but before midnight ET.
+    # With extended_hours=False they cannot fill and will carry over to the next
+    # regular session, causing phantom accepted orders in the PnL tracker.
+    #
+    # After-hours window in UTC:
+    #   DST  (Mar–Nov): 20:00–00:00 UTC  (16:00–20:00 ET + 4h)
+    #   Standard (Nov–Mar): 21:00–01:00 UTC  (16:00–20:00 ET + 5h)
+    # We use a conservative range: submitted between 19:00–01:00 UTC is a candidate.
+    #
+    # Guard: only cancel if the order is older than 30 minutes to avoid
+    # cancelling freshly submitted orders still being routed by the broker.
+    try:
+        orders_env_all = broker.fetch_orders(status="open", limit=500)
+        orders_all = orders_env_all.payload if hasattr(orders_env_all, "payload") else orders_env_all
+        if not isinstance(orders_all, list):
+            orders_all = []
+    except Exception:
+        orders_all = []
+
+    AFTER_HOURS_STALE_STATUSES = {"accepted", "new", "pending_new", "held"}
+    MIN_AGE_MINUTES = 30  # don't cancel orders younger than this
+
+    for order in orders_all:
+        status = str(order.get("status", "")).lower()
+        tif = str(order.get("time_in_force", "")).lower()
+        submitted_at_str = order.get("submitted_at") or ""
+        order_id = order.get("id", "")
+        symbol = order.get("symbol", "")
+        filled_qty = float(order.get("filled_qty", 0) or 0)
+        extended_hours = order.get("extended_hours", True)  # assume safe unless explicitly False
+
+        if status not in AFTER_HOURS_STALE_STATUSES or tif != "day":
+            continue
+        if filled_qty > 0:
+            continue  # partially filled — do not cancel
+        if extended_hours is not False:
+            continue  # extended_hours=True orders can fill — leave them alone
+        if not submitted_at_str or not order_id:
+            continue
+        # Skip already-cancelled orders from Case A
+        if any(c["order_id"] == order_id for c in cancelled):
+            continue
+
+        try:
+            submitted_at = datetime.fromisoformat(submitted_at_str.replace("Z", "+00:00"))
+        except ValueError:
+            continue
+
+        age_minutes = (now_utc - submitted_at).total_seconds() / 60
+        if age_minutes < MIN_AGE_MINUTES:
+            continue  # too fresh — may still be routing
+
+        # Check if submitted during after-hours UTC window (19:00–01:00 UTC next day)
+        # We accept any hour from 19 to 23 or 0 (midnight) as after-hours-candidate.
+        submitted_hour_utc = submitted_at.hour
+        in_after_hours_window = submitted_hour_utc >= 19 or submitted_hour_utc == 0
+        if not in_after_hours_window:
+            continue
+
+        # Case B: after-hours zero-fill non-extended order → cancel
+        try:
+            broker.cancel_order(order_id)
+            cancelled.append({"order_id": order_id, "symbol": symbol, "submitted_at": submitted_at_str, "reason": "after_hours_zero_fill"})
+            print(
+                f"INFO: Cancelled after-hours zero-fill order {order_id} {symbol} "
+                f"submitted {submitted_at_str} (age {age_minutes:.0f}m, extended_hours=False)",
+                file=sys.stderr,
+            )
+        except Exception as e:
+            print(f"WARN: Failed to cancel after-hours order {order_id} {symbol}: {e}", file=sys.stderr)
+
+    return cancelled
+
+
+def cancel_stale_sell_orders(
+    broker: BrokerClient,
+    project_root: Path,
+    force_sell_return_pct: float = -0.12,
+) -> list[dict]:
+    """Cancel queued off-hours SELL orders that are not catastrophic exits.
+
+    These orders are typically submitted during after-hours/weekends and then sit as
+    day orders until the next regular-session open, which can bypass the Monday open
+    shock cooldown entirely. We only keep catastrophic exits active.
+    """
+    try:
+        orders_env = broker.fetch_orders(status="open", limit=500)
+        orders = orders_env.payload if hasattr(orders_env, "payload") else orders_env
+        if not isinstance(orders, list):
+            return []
+    except Exception as e:
+        print(f"WARN: Failed to fetch open orders for sell stale check: {e}", file=sys.stderr)
+        return []
+
+    stale_statuses = {"accepted", "new", "pending_new", "held"}
+    now_utc = datetime.now(timezone.utc)
+    cancelled: list[dict] = []
+
+    for order in orders:
+        side = str(order.get("side", "")).lower()
+        status = str(order.get("status", "")).lower()
+        tif = str(order.get("time_in_force", "")).lower()
+        submitted_at_str = order.get("submitted_at") or ""
+        order_id = order.get("id", "")
+        symbol = str(order.get("symbol", "")).upper()
+        filled_qty = float(order.get("filled_qty", 0) or 0)
+
+        if side != "sell" or status not in stale_statuses or tif != "day":
+            continue
+        if filled_qty > 0 or not order_id or not submitted_at_str:
+            continue
+
+        try:
+            submitted_at = datetime.fromisoformat(submitted_at_str.replace("Z", "+00:00"))
+        except ValueError:
+            continue
+
+        is_regular_submission, _ = MarketCalendar.is_regular_market_hours(submitted_at)
+        if is_regular_submission:
+            continue
+
+        age_minutes = (now_utc - submitted_at).total_seconds() / 60
+        if age_minutes < 30:
+            continue
+
+        stored = read_exit_reason(project_root, order_id)
+        if not stored:
+            continue
+
+        return_pct = stored.get("return_pct")
+        try:
+            return_pct = float(return_pct) if return_pct is not None else None
+        except (TypeError, ValueError):
+            return_pct = None
+
+        if return_pct is not None and return_pct <= force_sell_return_pct:
+            continue
+
+        try:
+            broker.cancel_order(order_id)
+            delete_exit_reason(project_root, order_id)
+            cancelled.append(
+                {
+                    "order_id": order_id,
+                    "symbol": symbol,
+                    "submitted_at": submitted_at_str,
+                    "reason": "offhours_moderate_sell",
+                }
+            )
+            print(
+                f"INFO: Cancelled queued off-hours sell order {order_id} {symbol} "
+                f"submitted {submitted_at_str} (non-catastrophic carry-over)",
+                file=sys.stderr,
+            )
+        except Exception as e:
+            print(f"WARN: Failed to cancel queued sell order {order_id} {symbol}: {e}", file=sys.stderr)
 
     return cancelled
 
@@ -195,13 +382,14 @@ def main() -> int:
     tracker = PnLTracker(project_root)
     tracker.state = tracker._load_state()
 
-    # Step 0: Cancel stale open buy orders from previous sessions
-    cancelled_stale = cancel_stale_buy_orders(broker)
+    # Step 0: Cancel stale open orders from previous sessions.
+    cancelled_stale_buys = cancel_stale_buy_orders(broker)
+    cancelled_stale_sells = cancel_stale_sell_orders(broker, project_root)
+    cancelled_stale = cancelled_stale_buys + cancelled_stale_sells
 
-    # Step 1: Reconcile filled buys (broker-only positions)
-    newly_recorded_buys = reconcile_filled_buys(broker, tracker)
-
-    # Step 2: Reconcile filled sells (existing logic)
+    # Step 1a: Fetch orders first to know which symbols were recently sold.
+    # This allows reconcile_filled_buys to skip positions that may still show
+    # in the broker API despite a sell having been executed (lag window).
     orders_env = broker.fetch_orders(status="all", limit=500)
     orders = orders_env.payload if hasattr(orders_env, "payload") else orders_env
     if not isinstance(orders, list):
@@ -221,6 +409,15 @@ def main() -> int:
             continue
         filled_sells_by_symbol.setdefault(symbol, []).append(order)
 
+    # Symbols with a filled sell in the broker order history — pass to reconcile_filled_buys
+    # so it does not re-open positions that were just exited.
+    recently_sold_symbols: set[str] = set(filled_sells_by_symbol.keys())
+
+    # Step 1b: Reconcile filled buys (broker-only positions)
+    newly_recorded_buys = reconcile_filled_buys(broker, tracker, recently_sold_symbols)
+
+    # Step 2: Reconcile filled sells (existing logic)
+
     # Sort each symbol's list newest-first
     for sym in filled_sells_by_symbol:
         filled_sells_by_symbol[sym].sort(
@@ -234,15 +431,6 @@ def main() -> int:
     }
 
     MATCH_WINDOW_SECONDS = 600  # ±10 min between log submission and broker submitted_at
-
-    # Build set of already-closed symbols to avoid duplicate exits
-    already_closed_symbols = set()
-    for trade in tracker.state.trades:
-        if trade.get("status") == "closed":
-            symbol = trade.get("symbol", "").upper()
-            broker_order_id = trade.get("broker_order_id")
-            if broker_order_id:  # Track by order ID for precise matching
-                already_closed_symbols.add((symbol, broker_order_id))
 
     submissions = load_recent_submissions(project_root / "data" / "audits")
     filled_exits = 0
@@ -281,10 +469,6 @@ def main() -> int:
                 continue
             
             broker_order_id = match.get("id")
-            
-            # Skip if this exit was already recorded
-            if (sub["symbol"], broker_order_id) in already_closed_symbols:
-                continue
             
             status = str(match.get("status", "")).lower()
             filled_qty = float(match.get("filled_qty", 0) or 0)
@@ -395,7 +579,8 @@ def main() -> int:
         print(f"WARN: Failed to clean up pending_exit_reasons: {e}", file=sys.stderr)
 
     print(json.dumps({
-        "cancelled_stale_buy_orders": len(cancelled_stale),
+        "cancelled_stale_buy_orders": len(cancelled_stale_buys),
+        "cancelled_stale_sell_orders": len(cancelled_stale_sells),
         "cancelled_stale_details": cancelled_stale,
         "newly_recorded_buys": newly_recorded_buys,
         "checked_sell_submissions": checked,

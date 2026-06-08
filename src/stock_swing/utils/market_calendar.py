@@ -139,6 +139,52 @@ class MarketCalendar:
         }
 
     @staticmethod
+    def is_regular_market_hours(dt: datetime = None) -> Tuple[bool, str]:
+        """Check if US market is in REGULAR trading hours (9:30–16:00 ET).
+
+        Unlike is_market_open(), this returns False during pre-market and
+        after-hours sessions.  Use this to gate new buy-order submission:
+        market orders with extended_hours=False cannot fill outside regular
+        hours, so submitting them then just creates phantom accepted orders
+        that carry over to the next session.
+
+        Args:
+            dt: DateTime to check (defaults to now in Asia/Tokyo)
+
+        Returns:
+            Tuple of (is_regular, status_message)
+        """
+        if dt is None:
+            dt = datetime.now(ZoneInfo("Asia/Tokyo"))
+
+        # Normalise to JST so dt.time() is comparable with get_market_hours_jst() output.
+        jst = ZoneInfo("Asia/Tokyo")
+        dt_jst = dt.astimezone(jst) if dt.tzinfo is not None else dt
+
+        is_holiday, holiday_name = MarketCalendar.is_us_holiday(dt_jst)
+        if is_holiday:
+            return False, f"Regular market closed: {holiday_name}"
+
+        if dt_jst.weekday() >= 5:
+            return False, "Regular market closed: Weekend"
+
+        market_hours = MarketCalendar.get_market_hours_jst(dt_jst)
+        current_time = dt_jst.time()
+        regular_start, regular_end = market_hours["regular"]
+        # JST regular hours wrap midnight (e.g., 22:30–05:00).
+        # When end < start we must use OR logic instead of AND.
+        if regular_end < regular_start:
+            # wraps midnight: open if current >= start OR current < end
+            in_regular = current_time >= regular_start or current_time < regular_end
+        else:
+            in_regular = regular_start <= current_time < regular_end
+
+        if in_regular:
+            return True, "Regular market open (9:30–16:00 ET)"
+
+        return False, "Regular market closed (pre-market or after-hours)"
+
+    @staticmethod
     def is_market_open(dt: datetime = None) -> Tuple[bool, str]:
         """Check if US market is currently open.
 
@@ -164,19 +210,24 @@ class MarketCalendar:
         market_hours = MarketCalendar.get_market_hours_jst(dt)
         current_time = dt.time()
 
+        def _in_window(start: time, end: time) -> bool:
+            if end < start:
+                return current_time >= start or current_time < end
+            return start <= current_time < end
+
         # Check regular hours
         regular_start, regular_end = market_hours["regular"]
-        if regular_start <= current_time < regular_end:
+        if _in_window(regular_start, regular_end):
             return True, "Market open: Regular hours"
 
         # Check pre-market
         pre_start, pre_end = market_hours["pre_market"]
-        if pre_start <= current_time < pre_end:
+        if _in_window(pre_start, pre_end):
             return True, "Market open: Pre-market"
 
         # Check after-hours
         after_start, after_end = market_hours["after_hours"]
-        if after_start <= current_time < after_end:
+        if _in_window(after_start, after_end):
             return True, "Market open: After-hours"
 
         return False, "Market closed: Outside trading hours"
@@ -187,6 +238,12 @@ def is_market_open(dt: datetime = None) -> bool:
     """Check if market is open (convenience function)."""
     is_open, _ = MarketCalendar.is_market_open(dt)
     return is_open
+
+
+def is_regular_market_hours(dt: datetime = None) -> bool:
+    """Check if market is in regular hours 9:30–16:00 ET (convenience function)."""
+    is_regular, _ = MarketCalendar.is_regular_market_hours(dt)
+    return is_regular
 
 
 def is_us_holiday(date: datetime = None) -> bool:
