@@ -66,6 +66,49 @@ def load_env(env_file: Path) -> None:
             os.environ.setdefault(key.strip(), value.strip())
 
 
+def normalize_timestamp(value) -> str:
+    """Return a comparable timestamp string for optional datetime fields."""
+    return value if isinstance(value, str) else ""
+
+
+def normalize_position_price(
+    symbol: str,
+    price: float,
+    market_cache: dict[str, dict[str, tuple[float, float, float]]],
+) -> float:
+    """Correct obvious 10x/100x broker position price anomalies using recent market data."""
+    if price <= 0:
+        return price
+
+    bars = market_cache.get(symbol)
+    if bars is None:
+        bars = fetch_yahoo_finance_bars(symbol, "", "")
+        market_cache[symbol] = bars
+    if not bars:
+        return price
+
+    latest_day = max(bars)
+    recent = list(sorted(bars.items())[-5:])
+    lows = [bar[0] for _, bar in recent]
+    highs = [bar[1] for _, bar in recent]
+    closes = [bar[2] for _, bar in recent]
+    recent_low = min(lows)
+    recent_high = max(highs)
+    latest_close = bars[latest_day][2]
+
+    if recent_low <= price <= recent_high:
+        return round(price, 4)
+
+    for factor in (10, 100):
+        candidate = price / factor
+        if (recent_low * 0.9) <= candidate <= (recent_high * 1.1):
+            return round(candidate, 4)
+        if latest_close > 0 and abs(candidate - latest_close) / latest_close <= 0.20:
+            return round(candidate, 4)
+
+    return round(price, 4)
+
+
 def build_tracker_open_positions(trades: list[dict]) -> dict[str, dict]:
     """Aggregate tracker open positions by symbol."""
     positions: dict[str, dict] = {}
@@ -97,14 +140,17 @@ def analyze_tracker_integrity(trades: list[dict], broker_positions: list[dict]) 
     """Compare tracker open positions with broker positions."""
     tracker_positions = build_tracker_open_positions(trades)
     broker_map = {}
+    market_cache: dict[str, dict[str, tuple[float, float, float]]] = {}
     for pos in broker_positions:
         symbol = str(pos.get("symbol") or "").upper()
         if not symbol:
             continue
+        raw_avg_entry = float(pos.get("avg_entry_price") or 0)
         broker_map[symbol] = {
             "symbol": symbol,
             "qty": int(float(pos.get("qty") or 0)),
-            "avg_entry_price": float(pos.get("avg_entry_price") or 0),
+            "avg_entry_price": normalize_position_price(symbol, raw_avg_entry, market_cache),
+            "raw_avg_entry_price": raw_avg_entry,
         }
 
     tracker_symbols = set(tracker_positions.keys())
@@ -134,6 +180,7 @@ def analyze_tracker_integrity(trades: list[dict], broker_positions: list[dict]) 
                 "broker_qty": broker_pos["qty"],
                 "tracker_entry": tracker_pos["avg_entry_price"],
                 "broker_entry": round(broker_pos["avg_entry_price"], 4),
+                "broker_raw_entry": round(broker_pos["raw_avg_entry_price"], 4),
                 "tracker_trade_count": tracker_pos["trade_count"],
             })
         else:
@@ -189,7 +236,7 @@ def main():
         cutoff = (datetime.now() - timedelta(days=args.recent_days)).isoformat()
         trades = [
             t for t in all_trades
-            if t.get("status") != "closed" or t.get("entry_time", "") > cutoff
+            if t.get("status") != "closed" or normalize_timestamp(t.get("entry_time")) > cutoff
         ]
 
     closed_trades = [t for t in trades if t.get("status") == "closed"]
@@ -215,10 +262,12 @@ def main():
 
         all_dates = set()
         for t in symbol_trades:
-            entry_date = t.get("entry_time", "")[:10]
-            exit_date = t.get("exit_time", "")[:10]
-            all_dates.add(entry_date)
-            all_dates.add(exit_date)
+            entry_date = normalize_timestamp(t.get("entry_time"))[:10]
+            exit_date = normalize_timestamp(t.get("exit_time"))[:10]
+            if entry_date:
+                all_dates.add(entry_date)
+            if exit_date:
+                all_dates.add(exit_date)
 
         if not all_dates:
             continue
@@ -229,16 +278,27 @@ def main():
             print(f"WARN: No market data available for {symbol}, skipping", file=sys.stderr)
             continue
 
-        for t in sorted(symbol_trades, key=lambda x: x.get("entry_time", "")):
+        for t in sorted(
+            symbol_trades,
+            key=lambda x: (
+                normalize_timestamp(x.get("entry_time")),
+                normalize_timestamp(x.get("exit_time")),
+                x.get("trade_id", ""),
+            ),
+        ):
             trade_id = t.get("trade_id", "unknown")
-            entry_time = t.get("entry_time", "")[:19]
-            exit_time = t.get("exit_time", "")[:19]
+            entry_time = normalize_timestamp(t.get("entry_time"))[:19]
+            exit_time = normalize_timestamp(t.get("exit_time"))[:19]
             entry_date = entry_time[:10]
             exit_date = exit_time[:10]
             entry_price = t.get("entry_price", 0)
             exit_price = t.get("exit_price", 0)
             ret = t.get("return_pct", 0)
             pnl = t.get("pnl", 0)
+
+            if not entry_date or not exit_date:
+                print(f"SKIP: {trade_id} (missing entry_time or exit_time)")
+                continue
 
             entry_market = market_bars.get(entry_date)
             exit_market = market_bars.get(exit_date)

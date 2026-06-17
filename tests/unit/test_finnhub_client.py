@@ -15,10 +15,17 @@ from stock_swing.sources.errors import (
     SourceValidationError,
 )
 from stock_swing.sources.finnhub_client import FinnhubClient
+from stock_swing.sources.retry import RetryConfig
 
 
 # Skip tests if httpx is not installed
 pytest.importorskip("httpx")
+
+TEST_RETRY = RetryConfig(max_attempts=1, initial_delay=0.01, max_delay=0.01)
+
+
+def create_client(api_key: str = "test_key") -> FinnhubClient:
+    return FinnhubClient(api_key=api_key, retry_config=TEST_RETRY)
 
 
 def test_finnhub_client_requires_api_key() -> None:
@@ -29,7 +36,7 @@ def test_finnhub_client_requires_api_key() -> None:
 
 def test_finnhub_client_initialization() -> None:
     """Test FinnhubClient initialization."""
-    client = FinnhubClient(api_key="test_key")
+    client = create_client()
     
     assert client.name == "finnhub"
     assert client.api_key == "test_key"
@@ -54,7 +61,7 @@ def test_fetch_basic_financials_success(mock_client_class: Mock) -> None:
     mock_client_class.return_value = mock_client
     
     # Fetch
-    client = FinnhubClient(api_key="test_key")
+    client = create_client()
     envelope = client.fetch_basic_financials("AAPL")
     
     # Verify
@@ -82,7 +89,7 @@ def test_fetch_earnings_calendar_success(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FinnhubClient(api_key="test_key")
+    client = create_client()
     envelope = client.fetch_earnings_calendar(symbol="AAPL")
     
     assert envelope.endpoint == "calendar/earnings"
@@ -111,7 +118,7 @@ def test_fetch_insider_transactions_success(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FinnhubClient(api_key="test_key")
+    client = create_client()
     envelope = client.fetch_insider_transactions("AAPL")
     
     assert envelope.endpoint == "stock/insider-transactions"
@@ -133,7 +140,7 @@ def test_fetch_filing_sentiment_success(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FinnhubClient(api_key="test_key")
+    client = create_client()
     envelope = client.fetch_filing_sentiment("0000320193-26-000012")
     
     assert envelope.endpoint == "stock/filings-sentiment"
@@ -152,7 +159,7 @@ def test_fetch_authentication_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FinnhubClient(api_key="invalid_key")
+    client = create_client(api_key="invalid_key")
     
     with pytest.raises(SourceAuthenticationError, match="invalid or missing API key"):
         client.fetch_basic_financials("AAPL")
@@ -170,7 +177,7 @@ def test_fetch_permission_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FinnhubClient(api_key="test_key")
+    client = create_client()
     
     with pytest.raises(SourceAuthenticationError, match="does not have permission"):
         client.fetch_basic_financials("AAPL")
@@ -188,7 +195,7 @@ def test_fetch_not_found_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FinnhubClient(api_key="test_key")
+    client = create_client()
     
     with pytest.raises(SourceNotFoundError, match="resource not found"):
         client.fetch_basic_financials("INVALID")
@@ -207,7 +214,7 @@ def test_fetch_rate_limit_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FinnhubClient(api_key="test_key")
+    client = create_client()
     
     with pytest.raises(SourceRateLimitError) as exc_info:
         client.fetch_basic_financials("AAPL")
@@ -227,7 +234,7 @@ def test_fetch_server_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FinnhubClient(api_key="test_key")
+    client = create_client()
     
     with pytest.raises(SourceServerError, match="server error: 500"):
         client.fetch_basic_financials("AAPL")
@@ -244,7 +251,7 @@ def test_fetch_timeout_error(mock_client_class: Mock) -> None:
     mock_client.get.side_effect = httpx.TimeoutException("timeout")
     mock_client_class.return_value = mock_client
     
-    client = FinnhubClient(api_key="test_key")
+    client = create_client()
     
     with pytest.raises(SourceTimeoutError, match="request timeout"):
         client.fetch_basic_financials("AAPL")
@@ -261,7 +268,7 @@ def test_fetch_connection_error(mock_client_class: Mock) -> None:
     mock_client.get.side_effect = httpx.ConnectError("connection failed")
     mock_client_class.return_value = mock_client
     
-    client = FinnhubClient(api_key="test_key")
+    client = create_client()
     
     with pytest.raises(SourceConnectionError, match="connection failed"):
         client.fetch_basic_financials("AAPL")
@@ -280,7 +287,7 @@ def test_fetch_json_parse_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FinnhubClient(api_key="test_key")
+    client = create_client()
     
     with pytest.raises(SourceResponseError, match="failed to parse JSON"):
         client.fetch_basic_financials("AAPL")
@@ -288,7 +295,7 @@ def test_fetch_json_parse_error(mock_client_class: Mock) -> None:
 
 def test_fetch_missing_endpoint() -> None:
     """Test that fetch requires endpoint parameter."""
-    client = FinnhubClient(api_key="test_key")
+    client = create_client()
     
     with pytest.raises(SourceValidationError, match="endpoint parameter is required"):
         client.fetch(symbol="AAPL")

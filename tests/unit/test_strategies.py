@@ -33,7 +33,7 @@ def test_event_swing_strategy_buy_signal() -> None:
             symbol="AAPL",
             computed_at=now,
             values={
-                "momentum": 0.08,  # 8%
+                "momentum": 0.12,  # 12%
                 "trend": "bullish",
             },
             metadata={},
@@ -241,7 +241,7 @@ def test_multiple_symbols_event_swing() -> None:
             feature_name="price_momentum",
             symbol="AAPL",
             computed_at=now,
-            values={"momentum": 0.06, "trend": "bullish"},
+            values={"momentum": 0.12, "trend": "bullish"},
             metadata={},
             quality_flags=[],
         ),

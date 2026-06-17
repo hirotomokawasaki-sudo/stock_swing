@@ -18,6 +18,7 @@ from enum import Enum
 from stock_swing.core.runtime import RuntimeMode
 from stock_swing.decision_engine.decision_engine import DecisionRecord
 from stock_swing.execution.paper_executor import OrderSubmission, PaperExecutor
+from stock_swing.risk.position_sizing import PositionSizingPolicy
 from stock_swing.sources.broker_client import BrokerClient
 
 
@@ -96,6 +97,7 @@ class LiveGuardedExecutor(PaperExecutor):
         # Override runtime check since we support LIVE_GUARDED
         self.runtime_mode = runtime_mode
         self.broker_client = broker_client
+        self.position_sizing = PositionSizingPolicy()
         
         # Track submissions (inherited from PaperExecutor)
         self.submissions: dict[str, OrderSubmission] = {}
@@ -244,6 +246,9 @@ class LiveGuardedExecutor(PaperExecutor):
     def submit(
         self,
         decision: DecisionRecord,
+        current_qty: int | None = None,
+        precomputed_qty: int | None = None,
+        precomputed_sizing: dict | None = None,
     ) -> OrderSubmission:
         """Submit order from approved decision.
         
@@ -257,7 +262,7 @@ class LiveGuardedExecutor(PaperExecutor):
             ValueError: If pre-submission checks fail or approval not granted.
         """
         # Pre-submission checks (inherited from PaperExecutor)
-        self._check_runtime_mode_guarded()
+        self._check_runtime_mode()
         self._check_risk_pass(decision)
         self._check_schema_valid(decision)
         self._check_duplicate(decision)
@@ -268,7 +273,12 @@ class LiveGuardedExecutor(PaperExecutor):
             self._check_approval(decision)
         
         # Submit order (use parent method)
-        return super(LiveGuardedExecutor, self).submit(decision)
+        return super(LiveGuardedExecutor, self).submit(
+            decision,
+            current_qty=current_qty,
+            precomputed_qty=precomputed_qty,
+            precomputed_sizing=precomputed_sizing,
+        )
     
     def get_approval_request(self, request_id: str) -> ApprovalRequest | None:
         """Get approval request by ID.
@@ -281,8 +291,8 @@ class LiveGuardedExecutor(PaperExecutor):
         """
         return self.approval_requests.get(request_id)
     
-    def _check_runtime_mode_guarded(self) -> None:
-        """Check runtime mode is LIVE_GUARDED or PAPER."""
+    def _check_runtime_mode(self) -> None:
+        """Allow the paper-safe submission flow in LIVE_GUARDED and PAPER modes."""
         if self.runtime_mode not in {RuntimeMode.LIVE_GUARDED, RuntimeMode.PAPER}:
             raise ValueError(
                 f"LiveGuardedExecutor requires LIVE_GUARDED or PAPER mode, got {self.runtime_mode.value}"

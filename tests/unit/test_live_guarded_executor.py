@@ -10,6 +10,15 @@ from stock_swing.decision_engine.decision_engine import DecisionRecord, Proposed
 from stock_swing.execution import ApprovalStatus, LiveGuardedExecutor
 
 
+def create_broker_mock() -> MagicMock:
+    broker = MagicMock()
+    broker.fetch_account.return_value.payload = {"equity": 100_000}
+    broker.fetch_positions.return_value.payload = []
+    broker.fetch_bars.return_value.payload = {"bars": [{"c": 100.0}]}
+    broker.submit_order.return_value = {"id": "broker-order-123", "status": "accepted"}
+    return broker
+
+
 def create_test_decision(
     requires_approval: bool = True,
     action: str = "buy",
@@ -22,6 +31,7 @@ def create_test_decision(
         generated_at=datetime.now(timezone.utc),
         mode="live_guarded",
         strategy_id="event_swing_v1",
+        strategy_version_id="event_swing_v1@2026-06-07T00:00:00+00:00",
         symbol="AAPL",
         action=action,
         confidence=0.75,
@@ -43,7 +53,7 @@ def create_test_decision(
 
 def test_live_guarded_executor_init() -> None:
     """Test live-guarded executor initialization."""
-    broker = MagicMock()
+    broker = create_broker_mock()
     executor = LiveGuardedExecutor(
         runtime_mode=RuntimeMode.LIVE_GUARDED,
         broker_client=broker,
@@ -55,7 +65,7 @@ def test_live_guarded_executor_init() -> None:
 
 def test_live_guarded_executor_init_rejects_research() -> None:
     """Test live-guarded executor rejects research mode."""
-    broker = MagicMock()
+    broker = create_broker_mock()
     
     with pytest.raises(ValueError, match="only supports LIVE_GUARDED or PAPER"):
         LiveGuardedExecutor(
@@ -66,7 +76,7 @@ def test_live_guarded_executor_init_rejects_research() -> None:
 
 def test_request_approval() -> None:
     """Test approval request creation."""
-    broker = MagicMock()
+    broker = create_broker_mock()
     executor = LiveGuardedExecutor(
         runtime_mode=RuntimeMode.LIVE_GUARDED,
         broker_client=broker,
@@ -86,7 +96,7 @@ def test_request_approval() -> None:
 
 def test_request_approval_no_approval_required() -> None:
     """Test approval request fails when approval not required."""
-    broker = MagicMock()
+    broker = create_broker_mock()
     executor = LiveGuardedExecutor(
         runtime_mode=RuntimeMode.LIVE_GUARDED,
         broker_client=broker,
@@ -100,7 +110,7 @@ def test_request_approval_no_approval_required() -> None:
 
 def test_request_approval_non_actionable() -> None:
     """Test approval request fails for non-actionable decision."""
-    broker = MagicMock()
+    broker = create_broker_mock()
     executor = LiveGuardedExecutor(
         runtime_mode=RuntimeMode.LIVE_GUARDED,
         broker_client=broker,
@@ -114,7 +124,7 @@ def test_request_approval_non_actionable() -> None:
 
 def test_approve_request() -> None:
     """Test approving an approval request."""
-    broker = MagicMock()
+    broker = create_broker_mock()
     executor = LiveGuardedExecutor(
         runtime_mode=RuntimeMode.LIVE_GUARDED,
         broker_client=broker,
@@ -134,7 +144,7 @@ def test_approve_request() -> None:
 
 def test_reject_request() -> None:
     """Test rejecting an approval request."""
-    broker = MagicMock()
+    broker = create_broker_mock()
     executor = LiveGuardedExecutor(
         runtime_mode=RuntimeMode.LIVE_GUARDED,
         broker_client=broker,
@@ -157,7 +167,7 @@ def test_reject_request() -> None:
 
 def test_approve_already_approved() -> None:
     """Test approving an already-approved request fails."""
-    broker = MagicMock()
+    broker = create_broker_mock()
     executor = LiveGuardedExecutor(
         runtime_mode=RuntimeMode.LIVE_GUARDED,
         broker_client=broker,
@@ -176,7 +186,7 @@ def test_approve_already_approved() -> None:
 
 def test_submit_without_approval_fails() -> None:
     """Test submit fails without approval in live-guarded mode."""
-    broker = MagicMock()
+    broker = create_broker_mock()
     executor = LiveGuardedExecutor(
         runtime_mode=RuntimeMode.LIVE_GUARDED,
         broker_client=broker,
@@ -191,7 +201,7 @@ def test_submit_without_approval_fails() -> None:
 
 def test_submit_with_pending_approval_fails() -> None:
     """Test submit fails with pending approval."""
-    broker = MagicMock()
+    broker = create_broker_mock()
     executor = LiveGuardedExecutor(
         runtime_mode=RuntimeMode.LIVE_GUARDED,
         broker_client=broker,
@@ -207,8 +217,7 @@ def test_submit_with_pending_approval_fails() -> None:
 
 def test_submit_with_approval_succeeds() -> None:
     """Test submit succeeds after approval."""
-    broker = MagicMock()
-    broker.submit_order.return_value = {"id": "broker-order-123", "status": "accepted"}
+    broker = create_broker_mock()
     
     executor = LiveGuardedExecutor(
         runtime_mode=RuntimeMode.LIVE_GUARDED,
@@ -230,8 +239,7 @@ def test_submit_with_approval_succeeds() -> None:
 
 def test_submit_paper_mode_no_approval_needed() -> None:
     """Test submit in paper mode doesn't require approval."""
-    broker = MagicMock()
-    broker.submit_order.return_value = {"id": "broker-order-123", "status": "accepted"}
+    broker = create_broker_mock()
     
     executor = LiveGuardedExecutor(
         runtime_mode=RuntimeMode.PAPER,
@@ -249,7 +257,7 @@ def test_submit_paper_mode_no_approval_needed() -> None:
 
 def test_get_approval_request() -> None:
     """Test retrieving approval request by ID."""
-    broker = MagicMock()
+    broker = create_broker_mock()
     executor = LiveGuardedExecutor(
         runtime_mode=RuntimeMode.LIVE_GUARDED,
         broker_client=broker,
@@ -268,7 +276,7 @@ def test_get_approval_request() -> None:
 
 def test_duplicate_approval_request() -> None:
     """Test duplicate approval request returns existing request."""
-    broker = MagicMock()
+    broker = create_broker_mock()
     executor = LiveGuardedExecutor(
         runtime_mode=RuntimeMode.LIVE_GUARDED,
         broker_client=broker,

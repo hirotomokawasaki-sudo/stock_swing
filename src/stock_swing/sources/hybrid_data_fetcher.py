@@ -8,6 +8,8 @@ by using Massive API as a fallback for ETF symbols.
 from __future__ import annotations
 
 import os
+import json
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 import logging
@@ -27,7 +29,8 @@ class HybridDataFetcher:
     
     Strategy:
     - Try Massive first for ALL symbols
-    - Fallback to Broker only if Massive fails
+    - Fallback to Yahoo daily bars for 1Day requests if Massive fails
+    - Fallback to Broker only as a last resort
     - Broker positions API still works (used for entry prices and exit strategy)
     """
     
@@ -93,7 +96,18 @@ class HybridDataFetcher:
             except Exception as exc:
                 logger.warning(f"Massive fetch failed for {symbol}: {exc}, falling back to broker")
         
-        # Fallback to broker (but will have stale data as of 2026-04-22)
+        # Yahoo is a safer fallback for daily bars than broker bars, which have
+        # occasionally shown split/scale anomalies in paper mode.
+        if timeframe.lower() in {"1day", "day", "daily"}:
+            try:
+                records = self._fetch_from_yahoo(symbol, limit)
+                if records:
+                    logger.warning(f"Using Yahoo fallback for {symbol} after Massive failure")
+                    return (records, "yahoo")
+            except Exception as exc:
+                logger.warning(f"Yahoo fallback failed for {symbol}: {exc}, falling back to broker")
+
+        # Fallback to broker (may be stale or malformed, use sparingly)
         try:
             records = self._fetch_from_broker(symbol, timeframe, limit)
             logger.warning(f"Using broker data for {symbol} - may be stale (Alpaca stopped 2026-04-22)")
@@ -154,6 +168,60 @@ class HybridDataFetcher:
             records.append(record)
         
         logger.info(f"Fetched {len(records)} bars for {symbol} from Massive")
+        return records
+
+    def _fetch_from_yahoo(self, symbol: str, limit: int) -> list[CanonicalRecord]:
+        """Fetch recent daily bars from Yahoo Finance."""
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=1mo"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+
+        result = data.get("chart", {}).get("result", [{}])[0]
+        timestamps = result.get("timestamp", [])
+        quote = result.get("indicators", {}).get("quote", [{}])[0]
+
+        records: list[CanonicalRecord] = []
+        for ts, open_, high, low, close, volume in zip(
+            timestamps,
+            quote.get("open", []),
+            quote.get("high", []),
+            quote.get("low", []),
+            quote.get("close", []),
+            quote.get("volume", []),
+        ):
+            if open_ is None or high is None or low is None or close is None:
+                continue
+            event_time = datetime.fromtimestamp(ts, tz=timezone.utc)
+            records.append(
+                CanonicalRecord(
+                    record_id=f"yahoo_{symbol}_{event_time.isoformat()}",
+                    schema_version="v1",
+                    source="yahoo",
+                    source_type="price",
+                    symbol=symbol,
+                    event_type="bar_daily",
+                    event_time=event_time,
+                    as_of=event_time.isoformat(),
+                    ingested_at=datetime.now(timezone.utc),
+                    timezone="UTC",
+                    payload_version="v1",
+                    payload={
+                        "open": float(open_),
+                        "high": float(high),
+                        "low": float(low),
+                        "close": float(close),
+                        "volume": int(volume or 0),
+                        "vwap": None,
+                        "transactions": None,
+                    },
+                    quality_flags=[],
+                )
+            )
+
+        if limit > 0:
+            records = records[-limit:]
+        logger.info(f"Fetched {len(records)} bars for {symbol} from Yahoo")
         return records
     
     def _fetch_from_broker(

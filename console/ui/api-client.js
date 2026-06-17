@@ -158,4 +158,104 @@ class RobustAPIClient {
 // グローバルインスタンス
 const apiClient = new RobustAPIClient();
 
+// ─────────────────────────────────────────────────────────────────────────────
+// fetchJsonStable — CF-2 安定 fetch wrapper
+//   - AbortController 8秒タイムアウト
+//   - 指数バックオフリトライ (最大3回)
+//   - inflight Map で同一 URL の重複リクエスト排除
+//   - lastGood Map で最後の成功レスポンスをキャッシュ
+//   - 失敗時は { data: lastGood, stale: true, error } を返す (UI を白くしない)
+// ─────────────────────────────────────────────────────────────────────────────
+const _stableFetch = (() => {
+  /** @type {Map<string, Promise>} */
+  const inflight = new Map();
+  /** @type {Map<string, any>} */
+  const lastGood = new Map();
+
+  const TIMEOUT_MS   = 8000;
+  const MAX_RETRIES  = 3;
+  const BASE_DELAY   = 500; // ms, doubles each retry
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  /**
+   * Single attempt with AbortController timeout.
+   * @param {string} url
+   * @param {RequestInit} options
+   * @returns {Promise<any>} Parsed JSON
+   */
+  async function attemptFetch(url, options) {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    try {
+      const resp = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(tid);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+      return await resp.json();
+    } catch (err) {
+      clearTimeout(tid);
+      throw err;
+    }
+  }
+
+  /**
+   * Fetch with retries + exponential backoff.
+   * @param {string} url
+   * @param {RequestInit} options
+   * @returns {Promise<any>}
+   */
+  async function fetchWithRetry(url, options) {
+    let lastErr;
+    for (let i = 0; i < MAX_RETRIES; i++) {
+      try {
+        return await attemptFetch(url, options);
+      } catch (err) {
+        lastErr = err;
+        const delay = BASE_DELAY * Math.pow(2, i);
+        console.warn(`[fetchJsonStable] attempt ${i + 1}/${MAX_RETRIES} failed for ${url}: ${err.message}. Retrying in ${delay}ms...`);
+        if (i < MAX_RETRIES - 1) await sleep(delay);
+      }
+    }
+    throw lastErr;
+  }
+
+  /**
+   * Public stable fetch entry point.
+   * Returns { data, stale, error } — data is always present (falls back to last good).
+   * @param {string} url
+   * @param {RequestInit} [options]
+   * @returns {Promise<{ data: any, stale: boolean, error: string|null }>}
+   */
+  async function fetchJsonStable(url, options = {}) {
+    // Dedup: if same URL is already in flight, reuse the same promise
+    if (inflight.has(url)) {
+      return inflight.get(url);
+    }
+
+    const promise = (async () => {
+      try {
+        const data = await fetchWithRetry(url, options);
+        lastGood.set(url, data);
+        return { data, stale: false, error: null };
+      } catch (err) {
+        const cached = lastGood.get(url) ?? null;
+        const msg = err.name === 'AbortError' ? 'Request timed out' : err.message;
+        console.error(`[fetchJsonStable] all retries failed for ${url}: ${msg}`);
+        return { data: cached, stale: true, error: msg };
+      } finally {
+        inflight.delete(url);
+      }
+    })();
+
+    inflight.set(url, promise);
+    return promise;
+  }
+
+  /** Expose lastGood for testing / diagnostics */
+  fetchJsonStable._lastGood = lastGood;
+  fetchJsonStable._inflight = inflight;
+
+  return fetchJsonStable;
+})();
+
 console.log('✅ api-client.js loaded successfully');

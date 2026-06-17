@@ -210,19 +210,24 @@ class MarketCalendar:
         market_hours = MarketCalendar.get_market_hours_jst(dt)
         current_time = dt.time()
 
+        def _in_window(start: time, end: time) -> bool:
+            if end < start:
+                return current_time >= start or current_time < end
+            return start <= current_time < end
+
         # Check regular hours
         regular_start, regular_end = market_hours["regular"]
-        if regular_start <= current_time < regular_end:
+        if _in_window(regular_start, regular_end):
             return True, "Market open: Regular hours"
 
         # Check pre-market
         pre_start, pre_end = market_hours["pre_market"]
-        if pre_start <= current_time < pre_end:
+        if _in_window(pre_start, pre_end):
             return True, "Market open: Pre-market"
 
         # Check after-hours
         after_start, after_end = market_hours["after_hours"]
-        if after_start <= current_time < after_end:
+        if _in_window(after_start, after_end):
             return True, "Market open: After-hours"
 
         return False, "Market closed: Outside trading hours"

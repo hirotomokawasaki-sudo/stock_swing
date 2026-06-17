@@ -27,6 +27,15 @@ class AuditLevel(Enum):
     CRITICAL = "critical"  # Critical events (system safety)
 
 
+_LEVEL_ORDER = {
+    AuditLevel.DEBUG: 10,
+    AuditLevel.INFO: 20,
+    AuditLevel.WARNING: 30,
+    AuditLevel.ERROR: 40,
+    AuditLevel.CRITICAL: 50,
+}
+
+
 @dataclass
 class AuditEvent:
     """Audit event record.
@@ -106,7 +115,7 @@ class AuditLogger:
             Created AuditEvent.
         """
         # Check level threshold
-        if level.value < self.min_level.value:
+        if _LEVEL_ORDER[level] < _LEVEL_ORDER[self.min_level]:
             # Below threshold, skip
             return None
         
@@ -322,6 +331,7 @@ class AuditLogger:
         category: str | None = None,
         level: AuditLevel | None = None,
         actor: str | None = None,
+        action: str | None = None,
         limit: int | None = None,
     ) -> list[AuditEvent]:
         """Query audit events.
@@ -330,6 +340,7 @@ class AuditLogger:
             category: Filter by category.
             level: Filter by level.
             actor: Filter by actor.
+            action: Filter by action.
             limit: Maximum events to return (most recent first).
             
         Returns:
@@ -344,6 +355,8 @@ class AuditLogger:
             events = [e for e in events if e.level == level]
         if actor:
             events = [e for e in events if e.actor == actor]
+        if action:
+            events = [e for e in events if e.action == action]
         
         # Sort by timestamp descending (most recent first)
         events = sorted(events, key=lambda e: e.timestamp, reverse=True)

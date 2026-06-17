@@ -11,6 +11,15 @@ from stock_swing.execution import ProductionExecutor
 from stock_swing.safety import AuditLogger, KillSwitch
 
 
+def create_broker_mock() -> MagicMock:
+    broker = MagicMock()
+    broker.fetch_account.return_value.payload = {"equity": 100_000}
+    broker.fetch_positions.return_value.payload = []
+    broker.fetch_bars.return_value.payload = {"bars": [{"c": 100.0}]}
+    broker.submit_order.return_value = {"id": "broker-123", "status": "accepted"}
+    return broker
+
+
 def create_test_decision() -> DecisionRecord:
     """Create test decision record."""
     return DecisionRecord(
@@ -19,6 +28,7 @@ def create_test_decision() -> DecisionRecord:
         generated_at=datetime.now(timezone.utc),
         mode="live_guarded",
         strategy_id="event_swing_v1",
+        strategy_version_id="event_swing_v1@2026-06-07T00:00:00+00:00",
         symbol="AAPL",
         action="buy",
         confidence=0.75,
@@ -40,7 +50,7 @@ def create_test_decision() -> DecisionRecord:
 
 def test_production_executor_init() -> None:
     """Test production executor initialization."""
-    broker = MagicMock()
+    broker = create_broker_mock()
     kill_switch = KillSwitch()
     audit_logger = AuditLogger()
     
@@ -57,7 +67,7 @@ def test_production_executor_init() -> None:
 
 def test_production_executor_kill_switch_blocks_approval() -> None:
     """Test kill switch blocks approval request."""
-    broker = MagicMock()
+    broker = create_broker_mock()
     kill_switch = KillSwitch()
     
     executor = ProductionExecutor(
@@ -78,7 +88,7 @@ def test_production_executor_kill_switch_blocks_approval() -> None:
 
 def test_production_executor_kill_switch_blocks_submission() -> None:
     """Test kill switch blocks submission."""
-    broker = MagicMock()
+    broker = create_broker_mock()
     kill_switch = KillSwitch()
     
     executor = ProductionExecutor(
@@ -103,7 +113,7 @@ def test_production_executor_kill_switch_blocks_submission() -> None:
 
 def test_production_executor_audit_logs_approval() -> None:
     """Test audit logging of approval."""
-    broker = MagicMock()
+    broker = create_broker_mock()
     audit_logger = AuditLogger()
     
     executor = ProductionExecutor(
@@ -133,8 +143,7 @@ def test_production_executor_audit_logs_approval() -> None:
 
 def test_production_executor_audit_logs_submission() -> None:
     """Test audit logging of submission."""
-    broker = MagicMock()
-    broker.submit_order.return_value = {"id": "broker-123", "status": "accepted"}
+    broker = create_broker_mock()
     audit_logger = AuditLogger()
     
     executor = ProductionExecutor(
@@ -163,7 +172,7 @@ def test_production_executor_audit_logs_submission() -> None:
 
 def test_production_executor_audit_logs_rejection() -> None:
     """Test audit logging of rejection."""
-    broker = MagicMock()
+    broker = create_broker_mock()
     audit_logger = AuditLogger()
     
     executor = ProductionExecutor(
@@ -188,8 +197,7 @@ def test_production_executor_audit_logs_rejection() -> None:
 
 def test_production_executor_full_workflow() -> None:
     """Test full workflow with safety controls."""
-    broker = MagicMock()
-    broker.submit_order.return_value = {"id": "broker-123", "status": "accepted"}
+    broker = create_broker_mock()
     kill_switch = KillSwitch()
     audit_logger = AuditLogger()
     

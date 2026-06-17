@@ -73,7 +73,7 @@ def test_reconciler_status_mismatch() -> None:
     assert result.status_matched is False
     assert result.broker_status == "filled"
     assert result.internal_status == "submitted"
-    assert any("status_mismatch" in d for d in result.discrepancies)
+    assert any("status_mismatch" in d for d in result.discrepancies_legacy)
 
 
 def test_reconciler_fills_detected() -> None:
@@ -114,7 +114,7 @@ def test_reconciler_order_not_found() -> None:
     
     assert result.status_matched is False
     assert result.broker_status == "not_found"
-    assert any("order_not_found_at_broker" in d for d in result.discrepancies)
+    assert any("order_not_found_at_broker" in d for d in result.discrepancies_legacy)
 
 
 def test_reconciler_symbol_mismatch() -> None:
@@ -135,7 +135,7 @@ def test_reconciler_symbol_mismatch() -> None:
     
     result = reconciler.reconcile(submission)
     
-    assert any("symbol_mismatch" in d for d in result.discrepancies)
+    assert any("symbol_mismatch" in d for d in result.discrepancies_legacy)
 
 
 def test_reconciler_qty_mismatch() -> None:
@@ -156,7 +156,7 @@ def test_reconciler_qty_mismatch() -> None:
     
     result = reconciler.reconcile(submission)
     
-    assert any("qty_mismatch" in d for d in result.discrepancies)
+    assert any("qty_mismatch" in d for d in result.discrepancies_legacy)
 
 
 def test_reconciler_no_broker_order_id() -> None:

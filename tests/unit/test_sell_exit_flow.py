@@ -102,6 +102,7 @@ def test_reconciliation_triggers_record_exit():
         )
         
         assert updated is not None, "Exit should be recorded"
+        assert updated.exit_broker_order_id == "sell-order-123"
         
         # Verify position is closed
         open_positions = tracker.get_open_positions()
@@ -282,6 +283,7 @@ def test_sell_exit_e2e_flow():
             broker_order_id="sell-order-123",
         )
         assert updated is not None
+        assert updated.exit_broker_order_id == "sell-order-123"
         
         # Step 5: Verify closed state
         open_pos = tracker.get_open_positions()
@@ -290,3 +292,41 @@ def test_sell_exit_e2e_flow():
         summary = tracker.get_summary()
         assert summary["closed_trades"] == 1
         assert summary["cumulative_realized_pnl"] == (185.0 - 180.0) * 10
+
+
+def test_partial_exit_persists_sell_order_id_only_on_closed_portion():
+    """Partial closes should persist the sell order ID on the exited lot only."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        project_root = Path(tmpdir)
+        tracker = PnLTracker(project_root)
+
+        tracker.record_submission(
+            symbol="AAPL",
+            strategy_id="test_strategy",
+            side="buy",
+            qty=10,
+            price=180.0,
+            broker_order_id="buy-order-123",
+            decision_id="decision-buy-1",
+        )
+
+        updated = tracker.record_exit(
+            symbol="AAPL",
+            exit_price=185.0,
+            exit_qty=4,
+            broker_order_id="sell-order-456",
+        )
+
+        assert updated is not None
+        assert updated.qty == 4
+        assert updated.exit_broker_order_id == "sell-order-456"
+
+        open_positions = tracker.get_open_positions()
+        assert len(open_positions) == 1
+        assert open_positions[0]["qty"] == 6
+        assert open_positions[0].get("exit_broker_order_id") is None
+
+        closed_trades = [t for t in tracker.state.trades if t["status"] == "closed"]
+        assert len(closed_trades) == 1
+        assert closed_trades[0]["qty"] == 4
+        assert closed_trades[0]["exit_broker_order_id"] == "sell-order-456"

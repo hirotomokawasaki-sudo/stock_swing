@@ -42,11 +42,11 @@ class JobSpec:
 JOBS: List[JobSpec] = [
     JobSpec(
         key="reconciliation",
-        job_id="73410e77-5a22-40f5-9b90-d2c6d286434e",
-        label="stock_swing_order_reconciliation",
+        job_id="32c3be71-3e86-470f-92e1-f50d8c77d533",
+        label="stock_swing_order_reconciliation_market_hours",
         thresholds=Thresholds(
-            stale_warn_minutes=30,
-            stale_critical_minutes=60,
+            stale_warn_minutes=45,
+            stale_critical_minutes=90,
             duration_warn_seconds=180,
             duration_critical_seconds=300,
             consecutive_fail_warn=2,
@@ -65,7 +65,7 @@ JOBS: List[JobSpec] = [
             consecutive_fail_warn=1,
             consecutive_fail_critical=2,
         ),
-        expect_delivery=True,
+        expect_delivery=False,
     ),
     JobSpec(
         key="news_collection",
@@ -286,10 +286,14 @@ def evaluate_job(job: JobSpec, entries: List[Dict]) -> Dict:
         level = bump(level, "critical")
 
     latest_age_minutes = age_minutes(latest_run_ms)
-    if latest_age_minutes is not None and th.stale_warn_minutes is not None and latest_age_minutes >= th.stale_warn_minutes:
+    # Only flag stale if next run is overdue (nextRunAtMs in the past)
+    next_run_ms = latest.get("nextRunAtMs")
+    now_ms = datetime.now(timezone.utc).timestamp() * 1000
+    is_overdue = next_run_ms is None or next_run_ms < now_ms
+    if is_overdue and latest_age_minutes is not None and th.stale_warn_minutes is not None and latest_age_minutes >= th.stale_warn_minutes:
         level = bump(level, "warn")
         issues.append(f"last run is stale ({latest_age_minutes:.1f}m ago)")
-    if latest_age_minutes is not None and th.stale_critical_minutes is not None and latest_age_minutes >= th.stale_critical_minutes:
+    if is_overdue and latest_age_minutes is not None and th.stale_critical_minutes is not None and latest_age_minutes >= th.stale_critical_minutes:
         level = bump(level, "critical")
 
     if job.expect_delivery and latest_status == "ok" and latest_delivery not in {"delivered", "none", None}:

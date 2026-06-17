@@ -56,6 +56,46 @@ def _latest_backup() -> Path | None:
     return backups[0] if backups else None
 
 
+def _needs_peak_price_fix(trade: dict) -> bool:
+    """Detect missing or obviously mis-scaled peak prices on open trades."""
+    if trade.get("status") != "open":
+        return False
+    peak = float(trade.get("peak_price") or 0)
+    entry = float(trade.get("entry_price") or 0)
+    if peak <= 0:
+        return True
+    if entry <= 0:
+        return False
+    ratio = peak / entry
+    return ratio > 5 or ratio < 0.2
+
+
+def _normalize_peak_price(peak: float | None, backup_entry: float, current_entry: float) -> float | None:
+    """Scale a restored peak_price if the rebuilt entry was corrected by /10 or /100."""
+    if peak is None:
+        return None
+    if peak <= 0 or backup_entry <= 0 or current_entry <= 0:
+        if current_entry > 0:
+            for factor in (10, 100):
+                candidate = peak / factor
+                if current_entry * 0.95 <= candidate <= current_entry * 3:
+                    return round(candidate, 4)
+        return peak
+
+    entry_ratio = backup_entry / current_entry
+    for factor in (10, 100):
+        if abs(entry_ratio - factor) / factor > 0.05:
+            continue
+        candidate = peak / factor
+        if candidate >= current_entry * 0.95:
+            return round(candidate, 4)
+    for factor in (10, 100):
+        candidate = peak / factor
+        if current_entry * 0.95 <= candidate <= current_entry * 3:
+            return round(candidate, 4)
+    return peak
+
+
 # ---------------------------------------------------------------------------
 # Check functions (return list of issue strings, empty = OK)
 # ---------------------------------------------------------------------------
@@ -72,9 +112,9 @@ def check_daily_snapshots(state: dict, backup: dict | None) -> list[str]:
 
 def check_peak_prices(state: dict) -> list[str]:
     open_trades = [t for t in state.get("trades", []) if t.get("status") == "open"]
-    missing = [t.get("symbol", "?") for t in open_trades if not t.get("peak_price")]
-    if missing:
-        return [f"peak_price missing on {len(missing)}/{len(open_trades)} open trades: {', '.join(dict.fromkeys(missing))}"]
+    bad = [t.get("symbol", "?") for t in open_trades if _needs_peak_price_fix(t)]
+    if bad:
+        return [f"peak_price missing or mis-scaled on {len(bad)}/{len(open_trades)} open trades: {', '.join(dict.fromkeys(bad))}"]
     return []
 
 
@@ -112,18 +152,22 @@ def fix_peak_prices(state: dict, backup: dict) -> int:
     fixed = 0
 
     for trade in state.get("trades", []):
-        if trade.get("status") != "open" or trade.get("peak_price"):
+        if not _needs_peak_price_fix(trade):
             continue
         sym = trade.get("symbol", "")
         idx = cursor[sym]
         bak_lots = backup_open.get(sym, [])
         peak = None
+        backup_entry = 0.0
         if idx < len(bak_lots):
             peak = bak_lots[idx].get("peak_price")
+            backup_entry = float(bak_lots[idx].get("entry_price") or 0)
         cursor[sym] += 1
 
-        trade["peak_price"] = peak if peak else trade.get("entry_price", 0)
-        source = "backup" if peak else "entry_price"
+        entry_price = float(trade.get("entry_price") or 0)
+        normalized_peak = _normalize_peak_price(peak, backup_entry, entry_price)
+        trade["peak_price"] = normalized_peak if normalized_peak else trade.get("entry_price", 0)
+        source = "backup" if normalized_peak else "entry_price"
         print(f"  ✓ {sym}: peak_price = {trade['peak_price']:.2f} (from {source})")
         fixed += 1
 

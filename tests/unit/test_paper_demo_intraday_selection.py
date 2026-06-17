@@ -1,6 +1,9 @@
+from datetime import datetime
 from types import SimpleNamespace
+from zoneinfo import ZoneInfo
 
 from stock_swing.cli.paper_demo import (
+    _filter_sells_outside_regular_hours,
     _prefilter_actionable_buys_for_submission,
     _select_intraday_candidate_symbols,
 )
@@ -80,3 +83,38 @@ def test_prefilter_actionable_buys_drops_zero_share_buys_before_submission():
     assert preview_cache["buy-2"][0] == 12
     assert skipped_by_reason == {"insufficient_remaining_exposure": 1}
     assert skipped_symbols == [("AMD", "insufficient_remaining_exposure")]
+
+
+def test_filter_sells_outside_regular_hours_defers_non_catastrophic_sell(monkeypatch):
+    monkeypatch.delenv("PAPER_DEMO_ALLOW_OFFHOURS_SELLS", raising=False)
+    moderate_sell = SimpleNamespace(
+        action="sell",
+        symbol="AMD",
+        evidence={"notes": ["Breakeven stop triggered: return -7.62% <= 0%"]},
+    )
+    buy = SimpleNamespace(action="buy", symbol="NVDA", evidence={})
+
+    filtered, deferred = _filter_sells_outside_regular_hours(
+        [moderate_sell, buy],
+        now=datetime(2026, 6, 6, 10, 0, tzinfo=ZoneInfo("Asia/Tokyo")),
+    )
+
+    assert filtered == [buy]
+    assert deferred == [("AMD", "breakeven_stop", -0.0762)]
+
+
+def test_filter_sells_outside_regular_hours_keeps_catastrophic_sell(monkeypatch):
+    monkeypatch.delenv("PAPER_DEMO_ALLOW_OFFHOURS_SELLS", raising=False)
+    catastrophic_sell = SimpleNamespace(
+        action="sell",
+        symbol="MU",
+        evidence={"notes": ["Breakeven stop triggered: return -12.25% <= 0%"]},
+    )
+
+    filtered, deferred = _filter_sells_outside_regular_hours(
+        [catastrophic_sell],
+        now=datetime(2026, 6, 6, 10, 0, tzinfo=ZoneInfo("Asia/Tokyo")),
+    )
+
+    assert filtered == [catastrophic_sell]
+    assert deferred == []

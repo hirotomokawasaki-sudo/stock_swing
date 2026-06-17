@@ -70,6 +70,7 @@ def test_signal_to_decision_flow(tmp_path: Path) -> None:
         generated_at=datetime(2026, 3, 6, 15, 5, 0),
         mode="paper",
         strategy_id="event_swing_v1",
+        strategy_version_id="event_swing_v1",
         symbol="AAPL",
         action="buy",
         confidence=0.72,

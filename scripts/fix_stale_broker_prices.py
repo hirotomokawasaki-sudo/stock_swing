@@ -70,8 +70,8 @@ def main() -> int:
     load_env()
 
     broker = BrokerClient(
-        api_key=os.environ["BROKER_API_KEY"],
-        api_secret=os.environ["BROKER_API_SECRET"],
+        api_key=os.environ.get("BROKER_API_KEY", ""),
+        api_secret=os.environ.get("BROKER_API_SECRET", ""),
         paper_mode=True,
     )
     massive = MassiveClient(api_key=os.environ.get("MASSIVE_API_KEY"))

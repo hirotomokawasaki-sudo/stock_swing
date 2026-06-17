@@ -8,15 +8,19 @@ Provides access to:
 - Options data and Greeks
 """
 
-from typing import List, Optional, Iterator
+from typing import Any, List, Optional
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 import os
 
-from massive import RESTClient
 import logging
 
 logger = logging.getLogger(__name__)
+
+try:
+    from massive import RESTClient as _MassiveRESTClient
+except ImportError:  # pragma: no cover - exercised via constructor path
+    _MassiveRESTClient = None
 
 
 @dataclass
@@ -52,8 +56,14 @@ class MassiveClient:
         self.api_key = api_key or os.environ.get("MASSIVE_API_KEY")
         if not self.api_key:
             raise ValueError("MASSIVE_API_KEY not found in environment")
-        
-        self.client = RESTClient(api_key=self.api_key)
+
+        if _MassiveRESTClient is None:
+            raise ImportError(
+                "massive SDK is required for MassiveClient. "
+                "Install with: pip install massive"
+            )
+
+        self.client = _MassiveRESTClient(api_key=self.api_key)
         logger.info("Massive client initialized")
     
     def fetch_minute_bars(

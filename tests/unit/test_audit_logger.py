@@ -125,6 +125,12 @@ def test_audit_logger_query_events() -> None:
     
     submissions = logger.query_events(category="submission")
     assert len(submissions) == 1
+
+    generated = logger.query_events(category="decision", action="generated")
+    assert len(generated) == 2
+
+    actor_filtered = logger.query_events(category="decision", action="generated", actor="strategy:s1")
+    assert len(actor_filtered) == 2
     
     # Query with limit
     limited = logger.query_events(limit=1)

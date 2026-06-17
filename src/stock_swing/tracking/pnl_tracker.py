@@ -45,6 +45,7 @@ class TradeEntry:
     account_id: str | None = None  # Broker account ID
     strategy_version_id: str | None = None
     broker_order_id: str | None = None
+    exit_broker_order_id: str | None = None
     original_strategy_id: str | None = None
     exit_strategy_id: str | None = None
     exit_reason: str | None = None
@@ -252,6 +253,8 @@ class PnLTracker:
                 return_pct = (exit_price - entry_price) / entry_price if entry_price else 0.0
                 closed_portion["pnl"] = round(pnl, 2)
                 closed_portion["return_pct"] = round(return_pct, 4)
+                if broker_order_id:
+                    closed_portion["exit_broker_order_id"] = broker_order_id
                 if exit_strategy_id:
                     closed_portion["exit_strategy_id"] = exit_strategy_id
                 if exit_reason:
@@ -280,6 +283,8 @@ class PnLTracker:
                 "return_pct": round(return_pct, 4),
                 "status": "closed",
             })
+            if broker_order_id:
+                trade_dict["exit_broker_order_id"] = broker_order_id
             if exit_strategy_id:
                 trade_dict["exit_strategy_id"] = exit_strategy_id
             if exit_reason:

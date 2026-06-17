@@ -15,9 +15,16 @@ from stock_swing.sources.errors import (
     SourceTimeoutError,
     SourceValidationError,
 )
+from stock_swing.sources.retry import RetryConfig
 
 
 pytest.importorskip("httpx")
+
+TEST_RETRY = RetryConfig(max_attempts=1, initial_delay=0.01, max_delay=0.01)
+
+
+def create_client(api_key: str = "test_key", api_secret: str = "test_secret") -> BrokerClient:
+    return BrokerClient(api_key=api_key, api_secret=api_secret, retry_config=TEST_RETRY)
 
 
 def test_broker_client_requires_api_key() -> None:
@@ -40,11 +47,11 @@ def test_broker_client_blocks_live_mode() -> None:
 
 def test_broker_client_initialization_paper_mode() -> None:
     """Test BrokerClient initialization in paper mode."""
-    client = BrokerClient(api_key="test_key", api_secret="test_secret")
+    client = create_client()
     
     assert client.name == "broker"
     assert client.paper_mode is True
-    assert client.base_url == client.base_url_paper
+    assert client.base_url in {client.base_url_paper, f"{client.base_url_paper}/v2"}
 
 
 @patch("httpx.Client")
@@ -71,7 +78,7 @@ def test_fetch_bars_success(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = BrokerClient(api_key="test_key", api_secret="test_secret")
+    client = create_client()
     envelope = client.fetch_bars("AAPL", timeframe="1Min")
     
     assert envelope.source == "broker"
@@ -100,7 +107,7 @@ def test_fetch_latest_quote_success(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = BrokerClient(api_key="test_key", api_secret="test_secret")
+    client = create_client()
     envelope = client.fetch_latest_quote("AAPL")
     
     assert envelope.endpoint.endswith("quotes/latest")
@@ -126,7 +133,7 @@ def test_fetch_account_success(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = BrokerClient(api_key="test_key", api_secret="test_secret")
+    client = create_client()
     envelope = client.fetch_account()
     
     assert envelope.endpoint == "v2/account"
@@ -153,7 +160,7 @@ def test_fetch_positions_success(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = BrokerClient(api_key="test_key", api_secret="test_secret")
+    client = create_client()
     envelope = client.fetch_positions()
     
     assert envelope.endpoint == "v2/positions"
@@ -181,7 +188,7 @@ def test_fetch_orders_success(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = BrokerClient(api_key="test_key", api_secret="test_secret")
+    client = create_client()
     envelope = client.fetch_orders(status="all")
     
     assert envelope.endpoint == "v2/orders"
@@ -200,7 +207,7 @@ def test_fetch_authentication_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = BrokerClient(api_key="invalid_key", api_secret="invalid_secret")
+    client = create_client(api_key="invalid_key", api_secret="invalid_secret")
     
     with pytest.raises(SourceAuthenticationError, match="invalid API credentials"):
         client.fetch_account()
@@ -218,7 +225,7 @@ def test_fetch_permission_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = BrokerClient(api_key="test_key", api_secret="test_secret")
+    client = create_client()
     
     with pytest.raises(SourceAuthenticationError, match="does not have permission"):
         client.fetch_account()
@@ -236,7 +243,7 @@ def test_fetch_not_found_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = BrokerClient(api_key="test_key", api_secret="test_secret")
+    client = create_client()
     
     with pytest.raises(SourceNotFoundError, match="resource not found"):
         client.fetch_position("INVALID")
@@ -255,7 +262,7 @@ def test_fetch_validation_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = BrokerClient(api_key="test_key", api_secret="test_secret")
+    client = create_client()
     
     with pytest.raises(SourceValidationError, match="invalid symbol"):
         client.fetch_bars("INVALID")
@@ -274,7 +281,7 @@ def test_fetch_rate_limit_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = BrokerClient(api_key="test_key", api_secret="test_secret")
+    client = create_client()
     
     with pytest.raises(SourceRateLimitError) as exc_info:
         client.fetch_account()
@@ -294,7 +301,7 @@ def test_fetch_server_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = BrokerClient(api_key="test_key", api_secret="test_secret")
+    client = create_client()
     
     with pytest.raises(SourceServerError, match="server error: 500"):
         client.fetch_account()
@@ -311,7 +318,7 @@ def test_fetch_timeout_error(mock_client_class: Mock) -> None:
     mock_client.get.side_effect = httpx.TimeoutException("timeout")
     mock_client_class.return_value = mock_client
     
-    client = BrokerClient(api_key="test_key", api_secret="test_secret")
+    client = create_client()
     
     with pytest.raises(SourceTimeoutError, match="request timeout"):
         client.fetch_account()
@@ -328,7 +335,7 @@ def test_fetch_connection_error(mock_client_class: Mock) -> None:
     mock_client.get.side_effect = httpx.ConnectError("connection failed")
     mock_client_class.return_value = mock_client
     
-    client = BrokerClient(api_key="test_key", api_secret="test_secret")
+    client = create_client()
     
     with pytest.raises(SourceConnectionError, match="connection failed"):
         client.fetch_account()

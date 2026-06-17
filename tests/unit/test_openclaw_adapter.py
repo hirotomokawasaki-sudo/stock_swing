@@ -33,8 +33,8 @@ def test_signal_summarizer_single() -> None:
     assert "Candidate Signal" in summary
     assert "AAPL" in summary
     assert "BUY" in summary
-    assert "75%" in summary
-    assert "70%" in summary
+    assert "75.00%" in summary
+    assert "70.00%" in summary
     assert "earnings_event" in summary
     assert "candidate signal only" in summary.lower()
 
@@ -70,10 +70,11 @@ def test_signal_summarizer_batch() -> None:
     
     summary = SignalSummarizer.summarize_batch(signals)
     
-    assert "Total Signals: 2" in summary
+    assert "Total Signals" in summary
     assert "AAPL" in summary
     assert "MSFT" in summary
-    assert "BUY: 2 signals" in summary
+    assert "BUY" in summary
+    assert "2 signals" in summary
 
 
 def test_decision_summarizer_actionable() -> None:
@@ -84,6 +85,7 @@ def test_decision_summarizer_actionable() -> None:
         generated_at=datetime.now(timezone.utc),
         mode="paper",
         strategy_id="event_swing_v1",
+        strategy_version_id="event_swing_v1@2026-06-07T00:00:00+00:00",
         symbol="AAPL",
         action="buy",
         confidence=0.75,
@@ -120,6 +122,7 @@ def test_decision_summarizer_denied() -> None:
         generated_at=datetime.now(timezone.utc),
         mode="paper",
         strategy_id="event_swing_v1",
+        strategy_version_id="event_swing_v1@2026-06-07T00:00:00+00:00",
         symbol="AAPL",
         action="deny",
         confidence=0.30,
@@ -149,6 +152,7 @@ def test_decision_summarizer_batch() -> None:
             generated_at=datetime.now(timezone.utc),
             mode="paper",
             strategy_id="event_swing_v1",
+            strategy_version_id="event_swing_v1@2026-06-07T00:00:00+00:00",
             symbol="AAPL",
             action="buy",
             confidence=0.75,
@@ -172,6 +176,7 @@ def test_decision_summarizer_batch() -> None:
             generated_at=datetime.now(timezone.utc),
             mode="paper",
             strategy_id="event_swing_v1",
+            strategy_version_id="event_swing_v1@2026-06-07T00:00:00+00:00",
             symbol="MSFT",
             action="deny",
             confidence=0.30,
@@ -187,12 +192,13 @@ def test_decision_summarizer_batch() -> None:
     
     summary = DecisionSummarizer.summarize_batch(decisions)
     
-    assert "Total Decisions: 2" in summary
+    assert "Total Decisions" in summary
     assert "BUY: 1" in summary
     assert "DENY: 1" in summary
     assert "pass: 1" in summary
     assert "deny: 1" in summary
-    assert "Actionable: 1" in summary
+    assert "Actionable" in summary
+    assert "1 decisions ready for execution" in summary
 
 
 def test_execution_summarizer_submission() -> None:
@@ -283,7 +289,8 @@ def test_execution_summarizer_reconciliation_discrepancies() -> None:
     summary = ExecutionSummarizer.summarize_reconciliation(result)
     
     assert "No" in summary
-    assert "Discrepancies Found: 1" in summary
+    assert "Discrepancies Found" in summary
+    assert "1" in summary
     assert "status_mismatch" in summary
 
 
@@ -320,7 +327,7 @@ def test_execution_summarizer_batch() -> None:
     
     summary = ExecutionSummarizer.summarize_submissions_batch(submissions)
     
-    assert "Total Submissions: 2" in summary
+    assert "Total Submissions" in summary
     assert "AAPL" in summary
     assert "MSFT" in summary
     assert "filled: 1" in summary

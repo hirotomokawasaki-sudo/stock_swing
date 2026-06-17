@@ -63,25 +63,24 @@ class Console {
     }
 
     async loadData() {
-        try {
-            // Fetch raw data using relative path (works from any port)
-            const response = await fetch(`/api/dashboard?period=${encodeURIComponent(this.currentPeriod)}`);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            const jsonData = await response.json();
-            
+        const url = `/api/dashboard?period=${encodeURIComponent(this.currentPeriod)}`;
+        const { data: jsonData, stale, error } = await _stableFetch(url);
+
+        if (jsonData) {
             // Normalize first (before validation)
             this.normalizeData(jsonData);
-            console.log('Fetched Data (normalized):', jsonData);
             this.data = jsonData;
-            this.updateStatusBar();
-        } catch (error) {
-            console.error('Failed to load data:', error);
-            // Show error but keep trying
-            errorHandler.showError(`Failed to load data: ${error.message}`);
-            this.data = { error: error.message };
+        } else if (!this.data) {
+            // First load, no cache — show error state
+            this.data = { error: error || 'Failed to load data' };
         }
+        // else: keep previous data intact (stale, but visible)
+
+        this.isStale = stale;
+        if (stale && error) {
+            console.warn(`[loadData] stale data: ${error}`);
+        }
+        this.updateStatusBar();
     }
 
     // Normalize API payload so UI rendering code can rely on consistent keys
@@ -131,6 +130,7 @@ class Console {
         if (!this.data) return;
         const systemStatus = document.getElementById('system-status');
         const lastUpdate = document.getElementById('last-update');
+        const staleBadge = document.getElementById('stale-badge');
         if (this.data.system) {
             const status = this.data.system.status || 'unknown';
             const mode = this.data.system.runtime_mode || '?';
@@ -138,6 +138,14 @@ class Console {
         }
         if (this.data.time) {
             lastUpdate.textContent = `更新: ${fmt.dt(this.data.time)}`;
+        }
+        // Stale badge — 非ブロッキング表示
+        if (staleBadge) {
+            if (this.isStale) {
+                staleBadge.style.display = 'inline-flex';
+            } else {
+                staleBadge.style.display = 'none';
+            }
         }
     }
 
@@ -500,6 +508,7 @@ class Console {
         <div class="grid" style="margin-bottom:16px">
             <div class="card" style="grid-column: 1 / -1;">
                 <h3>📋 取引履歴</h3>
+                <div class="small muted" style="margin-bottom:8px">直近48時間を優先表示。件数が少ない場合は直近50件まで補完。現在表示: ${recent.length}件</div>
                 ${this.renderRecentTrades(recent)}
             </div>
         </div>
@@ -2034,40 +2043,65 @@ class Console {
     }
 
     startAutoRefresh() {
-        // 市場時間を判定して更新頻度を調整
+        // 市場時間を判定して更新頻度を調整 (CF-3)
         const getRefreshInterval = () => {
             const now = new Date();
             const hour = now.getHours();
             const day = now.getDay(); // 0=日曜, 6=土曜
-            
+
             // 週末
             if (day === 0 || day === 6) {
                 return 3600000; // 1時間
             }
-            
-            // 平日の市場時間外 (23:30-9:30 JST)
+
+            // 平日の市場時間外 (23:30-9:30 JST ≈ US市場外)
             if (hour >= 23 || hour < 9) {
                 return 3600000; // 1時間
             }
-            
+
             // 平日の市場時間中 (9:30-16:00 JST)
             if (hour >= 9 && hour < 16) {
                 return 300000; // 5分
             }
-            
+
             // その他の時間 (16:00-23:30 JST)
             return 1800000; // 30分
         };
-        
+
+        // CF-3: タブ非表示時はポーリングを停止、再表示時に即度再開
+        let pendingRefresh = null;
+
+        const scheduleNext = () => {
+            const interval = getRefreshInterval();
+            pendingRefresh = setTimeout(refresh, interval);
+        };
+
         const refresh = async () => {
+            pendingRefresh = null;
+            // タブ非表示中は skip — 次回は表示後に visibilitychange ハンドラで起動
+            if (document.visibilityState === 'hidden') {
+                return;
+            }
             await this.loadData();
             if (this.currentTab !== 'alerts') this.render();
-            
-            // 次の更新をスケジュール（動的にintervalを変更）
-            const interval = getRefreshInterval();
-            setTimeout(refresh, interval);
+            scheduleNext();
         };
-        
+
+        // タブが再表示されたとき: 待機中なら即度再開、リフレッシュ完了待ちなら次回スケジュール
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                if (pendingRefresh === null) {
+                    // refresh実行中に戳った場合は次回の setTimeout で対応済み
+                    scheduleNext();
+                } else {
+                    // 停止中なら遷延をキャンセルして即度実行
+                    clearTimeout(pendingRefresh);
+                    pendingRefresh = null;
+                    refresh();
+                }
+            }
+        });
+
         // 初回実行
         refresh();
     }

@@ -1,6 +1,6 @@
 from argparse import Namespace
 
-from scripts.rebuild_pnl_state_from_broker import resolve_tracking_metadata
+from scripts.rebuild_pnl_state_from_broker import match_buy_sell_orders, resolve_tracking_metadata
 
 
 def test_resolve_tracking_metadata_prefers_cli_over_existing_state():
@@ -60,3 +60,33 @@ def test_resolve_tracking_metadata_falls_back_to_existing_state():
     resolved = resolve_tracking_metadata(args, existing, '2026-05-15T00:00:00+00:00')
 
     assert resolved == existing
+
+
+def test_match_buy_sell_orders_preserves_buy_and_sell_order_ids():
+    filled_orders = [
+        {
+            'id': 'buy-order-1',
+            'symbol': 'ORCL',
+            'side': 'buy',
+            'status': 'filled',
+            'filled_qty': 18,
+            'filled_avg_price': 181.35,
+            'filled_at': '2026-06-04T13:00:00+00:00',
+        },
+        {
+            'id': 'sell-order-1',
+            'symbol': 'ORCL',
+            'side': 'sell',
+            'status': 'filled',
+            'filled_qty': 18,
+            'filled_avg_price': 228.92,
+            'filled_at': '2026-06-04T14:15:00+00:00',
+        },
+    ]
+
+    trades, open_positions = match_buy_sell_orders(filled_orders)
+
+    assert open_positions == []
+    assert len(trades) == 1
+    assert trades[0]['broker_order_id'] == 'buy-order-1'
+    assert trades[0]['exit_broker_order_id'] == 'sell-order-1'

@@ -22,6 +22,19 @@ class BenchmarkService:
             return json.loads(benchmark_file.read_text())
         except:
             return []
+
+    def _normalize_daily_snapshots(
+        self,
+        portfolio_snapshots: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """Return one portfolio snapshot per date, using the latest row seen."""
+        by_date: Dict[str, Dict[str, Any]] = {}
+        for snap in portfolio_snapshots:
+            date = snap.get('date')
+            if date and snap.get('equity') is not None:
+                by_date[str(date)] = snap
+
+        return [by_date[date] for date in sorted(by_date)]
     
     def calculate_alpha(
         self,
@@ -34,6 +47,7 @@ class BenchmarkService:
         benchmark_data = self.load_benchmark_data(benchmark)
         if not benchmark_data:
             return {"available": False, "error": "No benchmark data"}
+        portfolio_snapshots = self._normalize_daily_snapshots(portfolio_snapshots)
         
         # Build benchmark price map
         benchmark_map = {d['date']: d['close'] for d in benchmark_data}
@@ -99,6 +113,7 @@ class BenchmarkService:
         benchmark_data = self.load_benchmark_data(benchmark)
         if not benchmark_data:
             return {"available": False, "error": "No benchmark data"}
+        portfolio_snapshots = self._normalize_daily_snapshots(portfolio_snapshots)
         
         # Build benchmark price map
         benchmark_map = {d['date']: d['close'] for d in benchmark_data}
@@ -167,6 +182,8 @@ class BenchmarkService:
     ) -> Dict[str, Any]:
         """Calculate Sharpe ratio (risk-adjusted return)."""
         
+        portfolio_snapshots = self._normalize_daily_snapshots(portfolio_snapshots)
+
         if len(portfolio_snapshots) < 2:
             return {"available": False, "error": "Not enough data"}
         

@@ -13,6 +13,7 @@ dependencies = [
   "PyYAML>=6.0.1",
   "httpx>=0.27",
   "python-dateutil>=2.9.0",
+  "tzdata>=2025.2",
 ]
 
 [tool.pytest.ini_options]

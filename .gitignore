@@ -80,3 +80,11 @@ data/risk_monitor_state.json
 data/tracking/pnl_state.json
 data/tracking/pnl_state.backfill_backup_*.json
 data/tracking/pnl_state.strategy_snapshot_backup_*.json
+data/tracking/pending_exit_reasons.json
+data/tracking/pnl_state_backup_*.json
+data/tracking/pnl_state_peak_backfill_backup_*.json
+data/tracking/pnl_state_backup_before_peak_init_*.json
+
+# Generated analysis / cache artifacts
+artifacts/
+data/backtest_price_cache/

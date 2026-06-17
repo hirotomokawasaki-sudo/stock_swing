@@ -219,7 +219,15 @@ class Reconciler:
         """
         try:
             response = self.broker_client.get_order(broker_order_id)
-            return response.payload
+            if response is None:
+                return None
+            if hasattr(response, "payload"):
+                payload = response.payload
+            elif isinstance(response, dict) and "payload" in response:
+                payload = response.get("payload")
+            else:
+                payload = response
+            return payload if isinstance(payload, dict) else None
         except Exception:
             return None
     

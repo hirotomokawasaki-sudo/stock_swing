@@ -14,6 +14,7 @@ import json
 import os
 import shutil
 import sys
+import urllib.request
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -23,6 +24,74 @@ PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from stock_swing.sources.broker_client import BrokerClient
+
+
+def fetch_yahoo_daily_bars(symbol: str) -> dict[str, tuple[float, float, float]]:
+    """Fetch recent daily bars from Yahoo Finance keyed by date."""
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=1mo"
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+    except Exception:
+        return {}
+
+    try:
+        result = data.get("chart", {}).get("result", [{}])[0]
+        timestamps = result.get("timestamp", [])
+        quote = result.get("indicators", {}).get("quote", [{}])[0]
+        highs = quote.get("high", [])
+        lows = quote.get("low", [])
+        closes = quote.get("close", [])
+    except Exception:
+        return {}
+
+    bars: dict[str, tuple[float, float, float]] = {}
+    for ts, high, low, close in zip(timestamps, highs, lows, closes):
+        if high is None or low is None or close is None:
+            continue
+        day = datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d")
+        bars[day] = (float(low), float(high), float(close))
+    return bars
+
+
+def maybe_correct_scaled_price(
+    symbol: str,
+    price: float,
+    fill_time: str,
+    market_cache: dict[str, dict[str, tuple[float, float, float]]],
+) -> tuple[float, int | None]:
+    """Correct obvious scale errors in broker fill prices using market data.
+
+    Some broker paper fills have been observed at 10x/100x market price.
+    If dividing by 10 or 100 places the fill back near the day's market range,
+    apply that correction.
+    """
+    if price <= 0 or not fill_time:
+        return price, None
+
+    day = fill_time[:10]
+    bars = market_cache.get(symbol)
+    if bars is None:
+        bars = fetch_yahoo_daily_bars(symbol)
+        market_cache[symbol] = bars
+    market_bar = bars.get(day) if bars else None
+    if not market_bar:
+        return price, None
+
+    low, high, close = market_bar
+    if low <= price <= high:
+        return price, None
+
+    for factor in (10, 100):
+        candidate = price / factor
+        # Allow a small cushion around the daily range to tolerate minute-level fills.
+        if (low * 0.97) <= candidate <= (high * 1.03):
+            return round(candidate, 4), factor
+        if close > 0 and abs(candidate - close) / close <= 0.08:
+            return round(candidate, 4), factor
+
+    return price, None
 
 
 def load_env(env_file: Path):
@@ -154,15 +223,28 @@ def match_buy_sell_orders(filled_orders: list) -> tuple[list, list]:
     Returns tuple of (closed_trades, open_positions_from_fills).
     """
     by_symbol = defaultdict(lambda: {'buy': [], 'sell': []})
+    market_cache: dict[str, dict[str, tuple[float, float, float]]] = {}
     
     for order in filled_orders:
         symbol = order.get('symbol')
         side = order.get('side')
         filled_qty = float(order.get('filled_qty', 0))
-        filled_price = float(order.get('filled_avg_price', 0))
+        raw_filled_price = float(order.get('filled_avg_price', 0))
         filled_at = order.get('filled_at', '')
         order_id = order.get('id')
-        
+
+        filled_price, correction_factor = maybe_correct_scaled_price(
+            symbol,
+            raw_filled_price,
+            filled_at,
+            market_cache,
+        )
+        if correction_factor:
+            print(
+                f"  ↺ {symbol:6} corrected {side} fill price "
+                f"${raw_filled_price:.4f} -> ${filled_price:.4f} (/ {correction_factor})"
+            )
+
         if filled_qty > 0 and filled_price > 0:
             by_symbol[symbol][side].append({
                 'qty': filled_qty,
@@ -213,7 +295,8 @@ def match_buy_sell_orders(filled_orders: list) -> tuple[list, list]:
                 'status': 'closed',
                 'account_id': None,
                 'strategy_version_id': 'broker_reconstructed',
-                'broker_order_id': sell['order_id'],
+                'broker_order_id': buy['order_id'],
+                'exit_broker_order_id': sell['order_id'],
                 'original_strategy_id': 'broker_reconstructed',
                 'exit_strategy_id': 'broker_reconstructed',
                 'exit_reason': 'broker_fill',

@@ -15,9 +15,16 @@ from stock_swing.sources.errors import (
     SourceValidationError,
 )
 from stock_swing.sources.fred_client import FredClient
+from stock_swing.sources.retry import RetryConfig
 
 
 pytest.importorskip("httpx")
+
+TEST_RETRY = RetryConfig(max_attempts=1, initial_delay=0.01, max_delay=0.01)
+
+
+def create_client(api_key: str = "test_key") -> FredClient:
+    return FredClient(api_key=api_key, retry_config=TEST_RETRY)
 
 
 def test_fred_client_requires_api_key() -> None:
@@ -28,7 +35,7 @@ def test_fred_client_requires_api_key() -> None:
 
 def test_fred_client_initialization() -> None:
     """Test FredClient initialization."""
-    client = FredClient(api_key="test_key")
+    client = create_client()
     
     assert client.name == "fred"
     assert client.api_key == "test_key"
@@ -53,7 +60,7 @@ def test_fetch_series_observations_success(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FredClient(api_key="test_key")
+    client = create_client()
     envelope = client.fetch_series_observations("CPIAUCSL")
     
     assert envelope.source == "fred"
@@ -76,7 +83,7 @@ def test_fetch_series_observations_with_dates(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FredClient(api_key="test_key")
+    client = create_client()
     envelope = client.fetch_series_observations(
         "GDP",
         observation_start="2025-01-01",
@@ -111,7 +118,7 @@ def test_fetch_series_info_success(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FredClient(api_key="test_key")
+    client = create_client()
     envelope = client.fetch_series_info("CPIAUCSL")
     
     assert envelope.endpoint == "series"
@@ -136,7 +143,7 @@ def test_fetch_series_search_success(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FredClient(api_key="test_key")
+    client = create_client()
     envelope = client.fetch_series_search("inflation")
     
     assert envelope.endpoint == "series/search"
@@ -158,7 +165,7 @@ def test_fetch_authentication_error_via_400(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FredClient(api_key="invalid_key")
+    client = create_client(api_key="invalid_key")
     
     with pytest.raises(SourceAuthenticationError, match="API key error"):
         client.fetch_series_observations("CPIAUCSL")
@@ -179,7 +186,7 @@ def test_fetch_not_found_error_via_400(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FredClient(api_key="test_key")
+    client = create_client()
     
     with pytest.raises(SourceNotFoundError, match="Series not found"):
         client.fetch_series_observations("INVALID")
@@ -200,7 +207,7 @@ def test_fetch_validation_error_via_400(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FredClient(api_key="test_key")
+    client = create_client()
     
     with pytest.raises(SourceValidationError, match="Missing required parameter"):
         client.fetch_series_observations("CPIAUCSL")
@@ -222,7 +229,7 @@ def test_fetch_error_in_200_response(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FredClient(api_key="test_key")
+    client = create_client()
     
     with pytest.raises(SourceValidationError, match="Invalid series_id"):
         client.fetch_series_observations("INVALID")
@@ -241,7 +248,7 @@ def test_fetch_rate_limit_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FredClient(api_key="test_key")
+    client = create_client()
     
     with pytest.raises(SourceRateLimitError) as exc_info:
         client.fetch_series_observations("CPIAUCSL")
@@ -261,7 +268,7 @@ def test_fetch_server_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FredClient(api_key="test_key")
+    client = create_client()
     
     with pytest.raises(SourceServerError, match="server error: 500"):
         client.fetch_series_observations("CPIAUCSL")
@@ -278,7 +285,7 @@ def test_fetch_timeout_error(mock_client_class: Mock) -> None:
     mock_client.get.side_effect = httpx.TimeoutException("timeout")
     mock_client_class.return_value = mock_client
     
-    client = FredClient(api_key="test_key")
+    client = create_client()
     
     with pytest.raises(SourceTimeoutError, match="request timeout"):
         client.fetch_series_observations("CPIAUCSL")
@@ -295,7 +302,7 @@ def test_fetch_connection_error(mock_client_class: Mock) -> None:
     mock_client.get.side_effect = httpx.ConnectError("connection failed")
     mock_client_class.return_value = mock_client
     
-    client = FredClient(api_key="test_key")
+    client = create_client()
     
     with pytest.raises(SourceConnectionError, match="connection failed"):
         client.fetch_series_observations("CPIAUCSL")
@@ -314,7 +321,7 @@ def test_fetch_json_parse_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = FredClient(api_key="test_key")
+    client = create_client()
     
     with pytest.raises(SourceResponseError, match="failed to parse JSON"):
         client.fetch_series_observations("CPIAUCSL")

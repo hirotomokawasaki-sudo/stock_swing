@@ -157,6 +157,45 @@ port_listener_pids() {
   lsof -tiTCP:"$port" -sTCP:LISTEN 2>/dev/null || true
 }
 
+single_port_listener_pid() {
+  local port="$1"
+  local listeners listener_count
+  listeners="$(port_listener_pids "$port")"
+  listener_count="$(printf '%s\n' "$listeners" | sed '/^$/d' | wc -l | tr -d '[:space:]')"
+  if [ "$listener_count" = "1" ]; then
+    printf '%s\n' "$listeners" | sed '/^$/d' | head -n 1
+  fi
+}
+
+is_websocket_process() {
+  local pid="$1"
+  local command
+  command="$(ps -p "$pid" -o command= 2>/dev/null || true)"
+  case "$command" in
+    *"websocket_server.py"*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+adopt_ws_pidfile() {
+  cleanup_pidfile "$WS_PID_FILE"
+
+  local pid listener
+  pid="$(read_pid "$WS_PID_FILE" || true)"
+  if pid_running "$pid"; then
+    return 0
+  fi
+
+  listener="$(single_port_listener_pid "$CONSOLE_WS_PORT")"
+  if [ -n "$listener" ] && pid_running "$listener" && is_websocket_process "$listener"; then
+    echo "$listener" > "$WS_PID_FILE"
+    echo "ℹ️  WebSocket server already running without pidfile; adopted pid=$listener"
+    return 0
+  fi
+
+  return 1
+}
+
 port_listening() {
   local port="$1"
   lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1
@@ -207,6 +246,12 @@ start_ws() {
   cleanup_pidfile "$WS_PID_FILE"
 
   local pid
+  if adopt_ws_pidfile; then
+    pid="$(read_pid "$WS_PID_FILE" || true)"
+    echo "ℹ️  WebSocket server already running (pid=$pid, port=$CONSOLE_WS_PORT)"
+    return 0
+  fi
+
   pid="$(read_pid "$WS_PID_FILE" || true)"
   if pid_running "$pid"; then
     echo "ℹ️  WebSocket server already running (pid=$pid, port=$CONSOLE_WS_PORT)"
@@ -322,8 +367,13 @@ restart_http() {
   start_http
 }
 
-restart_ws() {
+stop_ws() {
+  adopt_ws_pidfile >/dev/null 2>&1 || true
   stop_pidfile "WebSocket server" "$WS_PID_FILE"
+}
+
+restart_ws() {
+  stop_ws
   start_ws
 }
 
@@ -438,14 +488,12 @@ case "${1:-start}" in
     ;;
   stop)
     stop_pidfile "Watchdog" "$WATCHDOG_PID_FILE"
-    stop_pidfile "WebSocket server" "$WS_PID_FILE"
+    stop_ws
     stop_pidfile "HTTP console" "$HTTP_PID_FILE"
     ;;
   restart)
-    stop_pidfile "WebSocket server" "$WS_PID_FILE"
-    stop_pidfile "HTTP console" "$HTTP_PID_FILE"
-    start_http
-    start_ws
+    restart_ws
+    restart_http
     ;;
   status)
     show_status_line "HTTP console" "$HTTP_PID_FILE" "$CONSOLE_PORT"

@@ -8,7 +8,9 @@ the stock_swing trading system.
 import json
 import os
 import sys
-from http.server import BaseHTTPRequestHandler, HTTPServer
+import threading
+import time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 
@@ -52,6 +54,68 @@ dashboard = DashboardService(PROJECT_ROOT)
 summary_service = SummaryService(PROJECT_ROOT)
 parameter_service = ParameterService(PROJECT_ROOT)
 benchmark_service = BenchmarkService(PROJECT_ROOT)
+
+# In-memory response cache with single-flight pattern (thread-safe).
+# Only one goroutine computes a given key; all others wait for the result.
+_cache_lock = threading.Lock()
+_cache: dict = {}       # key -> {"data": ..., "ts": float, "ttl": float}
+_in_flight: dict = {}   # key -> threading.Event  (set when result is ready)
+
+
+def _get_cached(key: str):
+    """Return cached data if still valid, else None."""
+    with _cache_lock:
+        entry = _cache.get(key)
+        if entry and (time.time() - entry["ts"]) < entry["ttl"]:
+            return entry["data"]
+    return None
+
+
+def _set_cached(key: str, data, ttl: float = 60.0):
+    """Store data in cache with TTL seconds."""
+    with _cache_lock:
+        _cache[key] = {"data": data, "ts": time.time(), "ttl": ttl}
+
+
+def _compute_once(key: str, fn, ttl: float = 60.0):
+    """Single-flight fetch: run fn() once per key; concurrent callers wait.
+
+    Returns the computed (or cached) value.
+    """
+    # Fast path: already cached
+    cached = _get_cached(key)
+    if cached is not None:
+        return cached
+
+    with _cache_lock:
+        # Re-check after acquiring lock (may have been set while waiting)
+        entry = _cache.get(key)
+        if entry and (time.time() - entry["ts"]) < entry["ttl"]:
+            return entry["data"]
+
+        # Are we already computing this key?
+        if key in _in_flight:
+            ev = _in_flight[key]
+        else:
+            ev = threading.Event()
+            _in_flight[key] = ev
+            ev = None  # We are the primary; no event to wait on
+
+    if ev is not None:
+        # Wait for the primary thread to finish (max 30s)
+        ev.wait(timeout=30)
+        return _get_cached(key)
+
+    # We are the primary: compute and store
+    try:
+        result = fn()
+        _set_cached(key, result, ttl=ttl)
+        return result
+    finally:
+        with _cache_lock:
+            ev2 = _in_flight.pop(key, None)
+        if ev2 is not None:
+            ev2.set()
 
 
 class ConsoleHandler(BaseHTTPRequestHandler):
@@ -144,7 +208,12 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         if p == "/api/dashboard":
             try:
                 period = q.get('period', ['month'])[0]
-                data = dashboard.get_dashboard(period=period)
+                cache_key = f"dashboard:{period}"
+                data = _compute_once(
+                    cache_key,
+                    lambda: dashboard.get_dashboard(period=period),
+                    ttl=60.0,
+                )
                 return self._json(data)
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
@@ -174,7 +243,11 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         
         if p == "/api/cron_jobs":
             try:
+                cached = _get_cached("cron_jobs")
+                if cached is not None:
+                    return self._json(cached)
                 data = dashboard.get_cron_jobs()
+                _set_cached("cron_jobs", data, ttl=30.0)
                 return self._json(data)
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
@@ -427,7 +500,8 @@ class ConsoleHandler(BaseHTTPRequestHandler):
 
 def main():
     """Start the console server."""
-    server = HTTPServer((HOST, PORT), ConsoleHandler)
+    server = ThreadingHTTPServer((HOST, PORT), ConsoleHandler)
+    server.daemon_threads = True
     
     print("=" * 60)
     print("🤖 Stock Swing Web Console")

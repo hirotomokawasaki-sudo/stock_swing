@@ -32,6 +32,9 @@ class DashboardService:
 
     DEFAULT_CURRENT_ACCOUNT_CUTOFF = datetime.fromisoformat("2026-05-01T19:32:00+09:00")
     NEWS_COLLECTION_JOB_NAME = "stock_swing_news_collection"
+    RECENT_TRADES_WINDOW_HOURS = 48
+    RECENT_TRADES_MIN_COUNT = 50
+    RECENT_TRADES_MAX_COUNT = 200
 
     def __init__(self, project_root: Path):
         self.project_root = project_root
@@ -41,7 +44,16 @@ class DashboardService:
         self._tracker = PnLTracker(project_root) if _HAS_TRACKER else None
         self._broker = self._init_broker() if _HAS_TRACKER and BrokerClient else None
         self._broker_orders_cache: list[dict[str, Any]] | None = None
+        self._broker_positions_cache: list[dict[str, Any]] | None = None
+        self._broker_positions_cache_ts: float = 0.0
+        self._broker_account_cache: dict[str, Any] | None = None
+        self._broker_account_cache_ts: float = 0.0
+        self._broker_orders_cache_ts: float = 0.0
+        self._BROKER_CACHE_TTL: float = 120.0  # 2 minutes
         self._price_overrides = self._load_price_overrides()
+        # Cache for values that are stable within a request / across requests
+        self._tracking_state_meta_cache: Dict[str, Any] | None = None
+        self._current_account_cutoff_cache: datetime | None = None
 
     def _init_broker(self):
         """Initialize broker client if credentials available."""
@@ -71,6 +83,32 @@ class DashboardService:
         except Exception as e:
             print(f"⚠️  Failed to load price overrides: {e}")
         return {}
+
+    @classmethod
+    def _select_recent_closed_trades(cls, trades: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Prefer closed trades from the last 48 hours, with a minimum fallback count."""
+        closed_trades = [dict(t) for t in trades if t.get("status") == "closed"]
+        if not closed_trades:
+            return []
+
+        def _trade_dt(trade: Dict[str, Any]) -> datetime:
+            value = trade.get("exit_time") or trade.get("entry_time")
+            if not value:
+                return datetime.min.replace(tzinfo=timezone.utc)
+            try:
+                return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+            except ValueError:
+                return datetime.min.replace(tzinfo=timezone.utc)
+
+        sorted_trades = sorted(closed_trades, key=_trade_dt, reverse=True)
+        cutoff_ts = datetime.now(timezone.utc).timestamp() - (cls.RECENT_TRADES_WINDOW_HOURS * 3600)
+        recent_window = [t for t in sorted_trades if _trade_dt(t).timestamp() >= cutoff_ts]
+
+        if len(recent_window) >= cls.RECENT_TRADES_MIN_COUNT:
+            return recent_window[:cls.RECENT_TRADES_MAX_COUNT]
+
+        fallback_count = min(len(sorted_trades), cls.RECENT_TRADES_MIN_COUNT)
+        return sorted_trades[:fallback_count]
     
     def _apply_price_override(self, symbol: str, broker_price: float) -> float:
         """Apply price override if available for this symbol.
@@ -368,12 +406,39 @@ class DashboardService:
         try:
             self._tracker.state = self._tracker._load_state()
             open_positions = self._tracker.get_open_positions()
-            current_prices = self._fetch_current_prices([p.get("symbol") for p in open_positions])
+            # Build current_prices from broker API (fresh, cached) instead of
+            # stale broker raw files which may be months old.
+            broker_pos_list = self._get_broker_positions()
+            current_prices: Dict[str, float] = {}
+            for bp in broker_pos_list:
+                sym = str(bp.get("symbol") or "").upper()
+                cp = bp.get("current_price")
+                if sym and cp is not None:
+                    try:
+                        current_prices[sym] = float(cp)
+                    except (TypeError, ValueError):
+                        pass
+            # Fallback to raw files for any symbols not in broker positions
+            missing = [p.get("symbol") for p in open_positions if str(p.get("symbol") or "").upper() not in current_prices]
+            if missing:
+                fallback = self._fetch_current_prices(missing)
+                current_prices.update(fallback)
+            # Enrich open_positions with current_price, return_pct
+            for p in open_positions:
+                sym = str(p.get("symbol") or "").upper()
+                cp = current_prices.get(sym)
+                if cp is not None:
+                    p["current_price"] = cp
+                    entry = float(p.get("entry_price") or 0.0)
+                    qty = float(p.get("qty") or 0.0)
+                    if entry > 0:
+                        p["return_pct"] = round((cp - entry) / entry, 4)
+                        p["unrealized_pnl"] = round((cp - entry) * qty, 2)
             summary = self._tracker.get_summary()
             position_snapshot = self.get_positions()
             if position_snapshot.get("available"):
                 summary["open_trades"] = max(int(summary.get("open_trades") or 0), int(position_snapshot.get("count") or 0))
-            recent = self._tracker.get_recent_trades(10)
+            recent = self._select_recent_closed_trades(list(self._tracker.state.trades))
             daily_snapshots = self._enrich_daily_snapshots(list(self._tracker.state.daily_snapshots), list(self._tracker.state.trades), position_snapshot)
             if daily_snapshots:
                 latest = dict(daily_snapshots[-1])
@@ -415,8 +480,8 @@ class DashboardService:
         # Try broker first (source of truth)
         if self._broker:
             try:
-                broker_positions = self._broker.fetch_positions()
-                broker_data = broker_positions.payload if hasattr(broker_positions, 'payload') else broker_positions
+                broker_positions = self._get_broker_positions()
+                broker_data = broker_positions
                 
                 if broker_data:
                     enriched_positions = [self._enrich_broker_position(p) for p in broker_data]
@@ -491,9 +556,8 @@ class DashboardService:
             return {"available": False, "error": "Broker or Tracker not available"}
         
         try:
-            # Get broker positions
-            broker_resp = self._broker.fetch_positions()
-            broker_positions = broker_resp.payload if hasattr(broker_resp, 'payload') else broker_resp
+            # Get broker positions (cached)
+            broker_positions = self._get_broker_positions()
             broker_map = {p.get('symbol'): p for p in broker_positions}
             
             # Get tracker positions and aggregate by symbol so duplicate open lots
@@ -1327,9 +1391,8 @@ class DashboardService:
             return pending_orders
 
         try:
-            # Fetch broker orders directly
-            broker_orders_env = self._broker.fetch_orders(status="all", limit=100)
-            broker_orders = broker_orders_env.payload if hasattr(broker_orders_env, "payload") else []
+            # Fetch broker orders (cached)
+            broker_orders = self._get_broker_orders()
             broker_map = {}
             for order in broker_orders:
                 symbol = str(order.get("symbol") or "").upper()
@@ -1615,8 +1678,7 @@ class DashboardService:
             }
         
         try:
-            account = self._broker.fetch_account()
-            acc_data = account.payload if hasattr(account, 'payload') else account
+            acc_data = self._get_broker_account()
             
             return {
                 "available": True,
@@ -1840,7 +1902,9 @@ class DashboardService:
         return lots[0][1] if lots else None
 
     def _get_broker_orders(self) -> list[dict[str, Any]]:
-        if self._broker_orders_cache is not None:
+        import time as _time
+        now = _time.time()
+        if self._broker_orders_cache is not None and (now - self._broker_orders_cache_ts) < self._BROKER_CACHE_TTL:
             return self._broker_orders_cache
         self._broker_orders_cache = []
         if not self._broker:
@@ -1852,7 +1916,46 @@ class DashboardService:
                 self._broker_orders_cache = [o for o in payload if isinstance(o, dict)]
         except Exception:
             self._broker_orders_cache = []
+        self._broker_orders_cache_ts = _time.time()
         return self._broker_orders_cache
+
+    def _get_broker_positions(self) -> list[dict[str, Any]]:
+        """Fetch broker positions with TTL cache to avoid repeated API calls."""
+        import time as _time
+        now = _time.time()
+        if self._broker_positions_cache is not None and (now - self._broker_positions_cache_ts) < self._BROKER_CACHE_TTL:
+            return self._broker_positions_cache
+        self._broker_positions_cache = []
+        if not self._broker:
+            return self._broker_positions_cache
+        try:
+            pos_envelope = self._broker.fetch_positions()
+            payload = pos_envelope.payload if hasattr(pos_envelope, "payload") else pos_envelope
+            if isinstance(payload, list):
+                self._broker_positions_cache = [p for p in payload if isinstance(p, dict)]
+        except Exception:
+            self._broker_positions_cache = []
+        self._broker_positions_cache_ts = _time.time()
+        return self._broker_positions_cache
+
+    def _get_broker_account(self) -> dict[str, Any]:
+        """Fetch broker account with TTL cache."""
+        import time as _time
+        now = _time.time()
+        if self._broker_account_cache is not None and (now - self._broker_account_cache_ts) < self._BROKER_CACHE_TTL:
+            return self._broker_account_cache
+        self._broker_account_cache = {}
+        if not self._broker:
+            return self._broker_account_cache
+        try:
+            acc_envelope = self._broker.fetch_account()
+            payload = acc_envelope.payload if hasattr(acc_envelope, "payload") else acc_envelope
+            if isinstance(payload, dict):
+                self._broker_account_cache = payload
+        except Exception:
+            self._broker_account_cache = {}
+        self._broker_account_cache_ts = _time.time()
+        return self._broker_account_cache
 
     def _order_sort_key(self, order: Dict[str, Any]) -> datetime | None:
         for key in ("filled_at", "submitted_at", "created_at", "updated_at"):
@@ -1969,7 +2072,38 @@ class DashboardService:
         if not raw_dir.exists():
             return []
         grouped: Dict[str, List[Dict[str, Any]]] = {}
-        paths = sorted(raw_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+        # Use os.scandir for faster directory enumeration (avoids repeated stat
+        # calls that glob triggers). Only keep the most recent 5 days by
+        # comparing the date prefix embedded in the filename
+        # (e.g. "finnhub_cien_news_2026-06-02_...").
+        import os as _os
+        from datetime import timedelta
+        cutoff_dates = {
+            (datetime.now().astimezone() - timedelta(days=i)).strftime("%Y-%m-%d")
+            for i in range(5)  # today + 4 days back
+        }
+        candidate_names = []
+        try:
+            with _os.scandir(raw_dir) as it:
+                for entry in it:
+                    if not entry.name.endswith(".json"):
+                        continue
+                    # Quick date check: file names contain YYYY-MM-DD
+                    # Accept any file if date extraction fails (safety fallback)
+                    parts = entry.name.split("_")
+                    date_part = next(
+                        (p for p in parts if len(p) == 10 and p[4] == "-" and p[7] == "-"),
+                        None,
+                    )
+                    if date_part is None or date_part in cutoff_dates:
+                        candidate_names.append(entry.name)
+        except OSError:
+            candidate_names = [p.name for p in raw_dir.glob("*.json")]
+
+        paths = [
+            raw_dir / name
+            for name in sorted(candidate_names, reverse=True)[:500]
+        ]
         for path in paths:
             try:
                 obj = json.loads(path.read_text(encoding="utf-8"))
@@ -2458,13 +2592,16 @@ class DashboardService:
         return runs
 
     def _load_tracking_state_metadata(self) -> Dict[str, Any]:
+        if self._tracking_state_meta_cache is not None:
+            return self._tracking_state_meta_cache
         state_path = self.project_root / "data" / "tracking" / "pnl_state.json"
         if not state_path.exists():
             return {}
         try:
-            return json.loads(state_path.read_text(encoding="utf-8"))
+            self._tracking_state_meta_cache = json.loads(state_path.read_text(encoding="utf-8"))
         except Exception:
-            return {}
+            self._tracking_state_meta_cache = {}
+        return self._tracking_state_meta_cache
 
     def _get_current_account_decision_freshness(self) -> Dict[str, Any]:
         current_decisions = [d for d in self._load_recent_decisions(limit=500) if self._is_current_account_decision(d)]
@@ -2543,19 +2680,25 @@ class DashboardService:
         return {symbol: dt.isoformat() for symbol, dt in latest_by_symbol.items()}
 
     def _current_account_cutoff(self) -> datetime:
+        if self._current_account_cutoff_cache is not None:
+            return self._current_account_cutoff_cache
         tracking_meta = self._load_tracking_state_metadata()
         created_at = self._parse_iso_datetime(tracking_meta.get("created_at"))
         if created_at:
+            self._current_account_cutoff_cache = created_at
             return created_at
 
         baseline_date = tracking_meta.get("baseline_date")
         if baseline_date:
             local_tz = datetime.now().astimezone().tzinfo
             try:
-                return datetime.fromisoformat(f"{baseline_date}T00:00:00").replace(tzinfo=local_tz)
+                result = datetime.fromisoformat(f"{baseline_date}T00:00:00").replace(tzinfo=local_tz)
+                self._current_account_cutoff_cache = result
+                return result
             except Exception:
                 pass
 
+        self._current_account_cutoff_cache = self.DEFAULT_CURRENT_ACCOUNT_CUTOFF
         return self.DEFAULT_CURRENT_ACCOUNT_CUTOFF
 
     def _is_current_account_decision(self, decision: Dict[str, Any]) -> bool:

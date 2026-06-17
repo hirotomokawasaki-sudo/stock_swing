@@ -80,6 +80,53 @@ class TestBenchmarkService:
             assert 'alpha' in result
             assert 'portfolio' in result
             assert 'benchmark' in result
+
+    def test_calculate_alpha_uses_latest_snapshot_per_date(self, monkeypatch):
+        """Alpha should use one daily equity value, not intraday duplicate rows."""
+        monkeypatch.setattr(self.service, 'load_benchmark_data', lambda benchmark: [
+            {'date': '2026-05-01', 'close': 100.0},
+            {'date': '2026-05-02', 'close': 110.0},
+        ])
+        snapshots = [
+            {'date': '2026-05-01', 'equity': 100000},
+            {'date': '2026-05-01', 'equity': 110000},
+            {'date': '2026-05-02', 'equity': 121000},
+        ]
+
+        result = self.service.calculate_alpha(snapshots, 'SPY')
+
+        assert result['available'] is True
+        assert result['period']['days'] == 2
+        assert result['portfolio']['start_equity'] == 110000
+        assert result['portfolio']['return_pct'] == pytest.approx(10.0)
+        assert result['benchmark']['return_pct'] == pytest.approx(10.0)
+        assert result['alpha'] == pytest.approx(0.0)
+
+    def test_calculate_beta_uses_daily_unique_snapshots(self, monkeypatch):
+        """Beta should require real daily returns after date de-duplication."""
+        monkeypatch.setattr(self.service, 'load_benchmark_data', lambda benchmark: [
+            {'date': '2026-05-01', 'close': 100.0},
+            {'date': '2026-05-02', 'close': 102.0},
+            {'date': '2026-05-03', 'close': 101.0},
+            {'date': '2026-05-04', 'close': 103.0},
+            {'date': '2026-05-05', 'close': 104.0},
+            {'date': '2026-05-06', 'close': 106.0},
+        ])
+        snapshots = [
+            {'date': '2026-05-01', 'equity': 90000},
+            {'date': '2026-05-01', 'equity': 100000},
+            {'date': '2026-05-02', 'equity': 104000},
+            {'date': '2026-05-03', 'equity': 102000},
+            {'date': '2026-05-04', 'equity': 106000},
+            {'date': '2026-05-05', 'equity': 108000},
+            {'date': '2026-05-06', 'equity': 112000},
+        ]
+
+        result = self.service.calculate_beta(snapshots, 'SPY')
+
+        assert result['available'] is True
+        assert result['data_points'] == 5
+        assert result['beta'] != pytest.approx(0.0)
     
     def test_calculate_sharpe_ratio(self):
         """Test Sharpe ratio calculation."""

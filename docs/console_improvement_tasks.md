@@ -351,11 +351,25 @@
 - [x] `simple_exit_v1` の現行成績を継続監視
 - [x] `simple_exit_v2` の改善案を定義（可変 stop / take profit / max hold）
 - [x] trailing stop 実装（Priority 1）
+- [x] breakeven stop 実装（2026-05-27: peak +3% で stop を 0% に移動）
+- [x] peak_price 永続化（2026-05-27: セッション間トレイリングが機能するよう）
+- [x] エントリー強度連動 Exit 閾値（2026-05-27: 高/標準/低確信で stop・trailing を動的変更）
+- [x] exit_reason 追跡改善（2026-05-27: pending_exit_reasons.json でセッション間引き継ぎ）
 
 **完了条件**
 - [x] exit reason ごとの件数・勝率・損益が見える
 - [x] `simple_exit_v2` の改善案が文書化されている
 - [x] trailing stop が実装されテスト済み
+- [x] breakeven stop 実装済み
+- [x] エントリー強度連動閾値 実装済み
+- [ ] 数営業日後に Profit Factor が改善されているか再測定（現状 0.47x）
+
+**2026-05-27 分析結果**:
+- Profit Factor: **0.47x**（危険水域 — 期待値マイナス）
+- Trade Expectancy: **-$331/trade**
+- 全 77 closed trades が exit_reason=`broker_fill`（Exit 戦略が一度も機能していなかった）
+- 今日の実装により次回以降は exit_reason が正確に記録される
+- MDB(-7.7%) / CHPS(-9.8%) が hard stop 圏内 → 今夜の paper_demo で sell シグナル予定
 
 **完了日**: 2026-04-28 (Phase 3 Priority 1 完了)
 **成果物**:
@@ -444,23 +458,21 @@
    - Business plan 向け正しい設定を文書化
    - 実装ガイド作成: `docs/massive_websocket_implementation.md`
 
-### T23. Massive API 運用監視（新規）
+### T23. Massive API 運用監視
 **目的**: Massive API の安定運用と最適化
 
 **作業**
-- [ ] 今夜 23:00 JST の paper_demo cron で Massive API 動作確認
-- [ ] Massive API rate limit の監視（Basic plan: ~5 req/min）
-- [ ] Parallel fetching (64 symbols) のパフォーマンス測定
-- [ ] 必要に応じて `PAPER_DEMO_MAX_WORKERS` を調整
-- [ ] Massive API エラーハンドリングの強化
+- [x] paper_demo cron で Massive API 動作確認
+- [x] Rate limit 超過なし
+- [x] paper_demo 実行時間が許容範囲内（各約5分）
 - [ ] Broker fallback 時のアラート設定
 
 **完了条件**
-- [ ] 連続3営業日、すべての symbols で fresh data 取得を確認
-- [ ] Rate limit 超過なし
-- [ ] paper_demo 実行時間が許容範囲内（< 60分）
+- [x] 連続営業日、すべての symbols で fresh data 取得を確認
+- [x] Rate limit 超過なし
+- [x] paper_demo 実行時間が許容範内（< 60分）
 
-**優先度**: 高（今夜から監視開始）
+**完了日**: 2026-05-27（基本的に安定運用を確認）
 
 ### T24. Massive WebSocket 実装（Phase 2）
 **目的**: Real-time price data でコンソールと取引判断を強化
@@ -488,34 +500,73 @@
 **優先度**: 中（Massive API REST 運用が安定してから）
 **参考**: `docs/massive_websocket_implementation.md`
 
-### T15. paper_demo cron 完走性確認（継続中）
-**進捗更新**: 2026-05-15 (21:30)
-- premarket timeout 対策として二段階 intraday 取得を実装済み (`af87ab6`)
-- Massive API 統合により data collection の信頼性向上
-- **次回確認**: 今夜 23:00 JST の premarket 実行
-  - Massive API の動作確認
-  - timeout 解消確認
-  - 実行時間測定
+### T25. Corporate Action / Stock Split 正規対応
+**目的**: KLAC のような stock split 発生時に、価格・数量・監査・再構築を一貫して扱えるようにする
 
-**完了条件（変更なし）**:
-- [ ] 連続3営業日、4ジョブすべて完走
-- [ ] premarket が 60分以内に完了
-- [ ] decision count / submitted count が妥当
+**背景**
+- 2026-06-12 に KLAC が 10-for-1 split-adjusted 取引へ移行
+- broker の paper data / order history / position API で split 前後の倍率差が混在し、`entry_price`・`avg_entry_price`・`peak_price`・監査結果に歪みが出た
+- 現在は Yahoo 突合ベースの暫定補正で運用継続中だが、heuristic 依存のため恒久対応が必要
+
+**作業**
+- [ ] `corporate_actions` 台帳を追加
+  - `symbol`, `action_type`, `factor`, `effective_at`, `source`, `verified_at`
+  - 一次ソースは IR / SEC / 公式 corporate action を優先
+- [ ] raw 値と normalized 値の責務を整理
+  - broker 約定・position の生値を保持
+  - split-adjusted の計算用フィールドを別管理
+- [ ] open position の split 適用処理を実装
+  - `qty`, `entry_price`, `peak_price`, `stop_price`, `risk_per_share` を効力日で変換
+- [ ] closed trade の前後跨ぎ split 正規化
+  - entry と exit が異なる基準のまま計算されないように統一
+- [ ] データ取得層に adjusted/unadjusted メタデータを追加
+  - `HybridDataFetcher`, `MassiveClient`, broker fallback の混在検知
+- [ ] `rebuild_pnl_state_from_broker.py` / `audit_trades_with_market_data.py` / reconciliation を corporate action 優先へ変更
+  - heuristic 補正は fallback 扱いに縮小
+- [ ] runbook とテスト追加
+  - split 検知時の手順
+  - KLAC ケースの回帰テスト
+
+**完了条件**
+- [ ] split 発生銘柄で tracker / broker / audit の整合が手補正なしで保たれる
+- [ ] rebuild 後に `peak_price` や `avg_entry_price` の倍率異常が再発しない
+- [ ] broker fallback と adjusted daily bars の混在時も監査誤検知が出ない
+- [ ] runbook に沿って月次運用で再現可能
+
+**優先度**: 中
+**実施タイミング**: 2026-06 月末から 2026-07 前半で対応
+**暫定対処**:
+- Yahoo / market data 突合による倍率補正
+- broker daily bar より Yahoo fallback を優先
+- rebuild / audit / peak_price 復元の局所補正
+**備考**: 実装前に KLAC 以外の split 履歴も 1-2 銘柄サンプルで確認する
+
+### T15. paper_demo cron 完走性確認（継続中）
+**進捗更新**: 2026-05-27
+- 4ジョブとも `status=ok` が継続中（last duration 各約5分）
+- premarket timeout は実質解消済み（二段階取得 + Massive API）
+- **引き続き**: 数営業日の安定継続を確認中
+
+**完了条件**:
+- [x] premarket が 60分以内に完了
+- [ ] 連続3営業日、4ジョブすべて完走（継続監視）
+- [x] decision count / submitted count が妥当
 
 ### T20. paper_demo 運用モード最適化（継続中）
-**進捗更新**: 2026-05-15 (21:30)
-- sizing 改善案A 実装完了 (`4ec3aba`)
-- Massive API 統合により **15-40% price deviation を完全解消**
-- **重要**: 今後の ETF 取引は fresh data ベースで正常動作
-- 数営業日の運用監視で sizing 効果を確認
+**進捗更新**: 2026-05-27
+- sizing 改善案A 実装完了・Massive API 統合完了
+- **2026-05-27 追加実装**:
+  - exposure 上限到達時に zero-sized buy を preflight で除外 (`4c362cc`)
+  - PaperExecutor precomputed sizing 再利用
+  - stale open buy order 自動キャンセル機能を reconcile_orders に追加 (`61b5df1`)
+- **残課題**: SIGTERM 問題は解消せず（snapshot は early write で保護済み）
 
-**完了条件（更新）**:
-- [ ] live cron 安定完走（3営業日連続）
-- [ ] sizing 改善が意図どおり効く（集中リスク・過大ポジション抑制）
-- [ ] Massive API 経由で price deviation がない
-- [ ] 副作用（過剰 skip など）が許容範囲
-
-**優先度**: 高（今夜から本格運用開始）
+**完了条件**:
+- [x] Massive API 経由で price deviation がない
+- [x] zero-sized buy の無駄な broker submit を排除
+- [x] stale day order の翌日自動キャンセル
+- [ ] live cron 安定完走（3営業日連続 / 継続監視）
+- [ ] sizing 改善効果の数営業日検証
 
 ---
 
@@ -599,16 +650,164 @@ ETF_SECTOR_MAP = {
 
 ---
 
-## 優先順位まとめ（2026-05-25 更新）
+---
+
+## Console Fetch Stability — 実装済み（2026-05-28 完了）
+
+> **完了**: 2026-05-28 午後に Batch 1〜2 を全て実装・テスト済み（37/37 PASSED）。
+> 以下は Batch 3 + Frontend 改善として残っているタスク（ペンディング）。
+> 現状は TTL キャッシュ・ThreadingHTTPServer・atomic write で安定化済み。
+
+### ✅ 完了済み（2026-05-28）
+- [x] `src/stock_swing/storage/atomic_json.py` — atomic_write_json / read_json_with_retry
+- [x] `pnl_tracker.py` / `exit_reason_store.py` — atomic write / retry read に変更
+- [x] `console/services/response_cache.py` — スレッドセーフ TTL キャッシュ
+- [x] `console/services/safe_file_reader.py` — last-known-good フォールバック付き JSON リーダー
+- [x] `console/app.py` — ThreadingHTTPServer + RLock + TTL キャッシュ + `_timed_json`（timing + request_id）
+- [x] Unit tests: 37/37 PASSED
+
+### 残タスク（ペンディング）
+
+### CF-1. Batch 3: スナップショット方式（長期最適化）
+**優先度**: 低（現状の TTL キャッシュで同等効果が得られているため）
+
+**概要**: paper_demo / reconcile が実行のたびに `data/console/dashboard_snapshot.json` を書き出し、コンソールはそれを読むだけにする。
+
+**作業**
+- [ ] `src/stock_swing/console_snapshot/build_snapshot.py` を新規作成
+  - atomic write で `data/console/dashboard_snapshot.json` を出力
+  - schema: `generated_at / source / summary / positions / trading / risk_guardrails / data_quality / warnings`
+- [ ] `paper_demo.py` および `reconcile_orders.py` の末尾から `build_snapshot()` を呼び出す
+- [ ] `console/app.py` に `GET /api/dashboard_snapshot` エンドポイントを追加
+  - スナップショットを読むだけ（broker 不呼び出し、重い計算なし）
+  - 目標レイテンシ: < 100ms
+  - ファイル不在時は `available: false` を返す
+
+**メリット**: コンソールと trading プロセスが完全疎結合。レイテンシが数秒→数十ms。
+**デメリット**: データ鮮度がスナップショット更新タイミング依存（最大 15〜30 分ラグ）。trading コード変更が発生。
+
+**開始条件**: T15/T20 が安定完走確認後、かつ Failed to Fetch が再発した場合に優先度を上げる。
+
+---
+
+### CF-2. Task F1: フロントエンド stable fetch wrapper
+**優先度**: 中（サーバー側は安定化済み。残る一時的 Failed to Fetch をユーザーから隠せる）
+
+**概要**: `console/ui/app.js` のポーリング fetch を AbortController タイムアウト + リトライ + 重複排除 + stale バッジ付きの中央 wrapper に置き換える。
+
+**作業**
+- [ ] `console/ui/api-client.js` に `fetchJsonStable(url, options)` を実装
+  - `AbortController` で 8 秒タイムアウト
+  - 指数バックオフリトライ（最大 3 回）
+  - `inflight` Map で同一エンドポイントの重複リクエスト排除
+  - `lastGood` Map で最後の成功レスポンスをキャッシュ
+  - 失敗時は `{ data: lastGood, stale: true, error }` を返す（UI を白くしない）
+- [ ] `app.js` の各 `fetch()` 呼び出しを `fetchJsonStable()` に置き換え
+- [ ] stale 時に UI に非ブロッキングな「データ古い」バッジを表示
+
+**メリット**: 偶発的な Failed to Fetch がユーザーに見えなくなる。実装コスト半日程度。
+**デメリット**: `app.js` の全面改修が必要。テストがブラウザ依存で書きにくい。
+
+---
+
+### CF-3. Task F2: ポーリング間隔の最適化
+**優先度**: 中（工数小・リスク小・即効性あり。CF-2 と組み合わせると効果倍増）
+
+**概要**: 重いエンドポイントのポーリング間隔を伸ばし、タブ非表示時は停止する。
+
+**推奨間隔**
+```
+/api/dashboard_snapshot  10〜30 秒
+/api/live_metrics        10〜15 秒
+/api/positions           15〜30 秒
+/api/decision_reasons    60 秒
+/api/strategy_analysis   60〜300 秒
+/api/exit_reasons        60 秒
+```
+
+**作業**
+- [ ] `app.js` の各 `setInterval` を上記推奨値に変更
+- [ ] `document.visibilityState === 'hidden'` 時はポーリングを一時停止
+- [ ] WebSocket 接続中は重いエンドポイントのポーリングをスキップ
+
+**メリット**: 実装 30 分程度。サーバー負荷が単純に減る（strategy_analysis を 60s→300s にするだけでリクエスト数 5 分の 1）。副作用リスクほぼゼロ。
+**デメリット**: リアルタイム感がわずかに下がる。根本的な解決にはならない。
+
+---
+
+---
+
+## Analytics Batch 1 — 実装済み（2026-05-28 完了）
+
+> **完了**: 2026-05-28 午後に P1 4件を全て実装・テスト済み（51/51 PASSED）。
+> 全エンドポイントは broker 資格情報不要・TTL キャッシュ付き。
+
+### ✅ 完了済み（2026-05-28）
+- [x] `src/stock_swing/analytics/strategy_attribution.py` — ETF/Stock/戦略/exit_reason 別 PF・損益分析
+  - ETF PF=0.168 / Stock PF=1.731 を実データで確認済み
+- [x] `src/stock_swing/analytics/data_quality_audit.py` — signal_strength 欠損・price override・quality_flags 検出
+  - open 53件全て signal_strength 欠損 / price overrides 4シンボルをアクティブ確認
+- [x] `src/stock_swing/risk/risk_budget.py` — 総・銘柄・セクター・ETF 別リスク予算 + buy 候補拒否ロジック
+  - **注意**: 現在 open risk 6.6%（ポリシー上限 3% の 2.2 倍）。paper_demo 組み込み前に閾値チューニング必須
+- [x] `src/stock_swing/analytics/exit_replay.py` — 7種類の exit ポリシー比較（推定値・peak_price 近似）
+  - `tighter_stop_4pct` が最良（+$1,012 改善）。全 85 trades で peak_price 欠損のため breakeven/trail は測定不能
+- [x] コンソールエンドポイント 4本追加（`/api/strategy_attribution` / `/api/data_quality` / `/api/risk_budget` / `/api/exit_replay`）
+- [x] Unit tests: 51/51 PASSED（合計 60/60）
+
+### 残タスク（Analytics Batch 2 以降）
+- [ ] **P2: Entry Quality Scoring** — buy 候補のエントリー品質スコアリング
+- [ ] **P2: ETF Strategy Separation** — ETF 専用戦略・独立メトリクス
+- [ ] **P2: Paper Trade Audit Trail** — 全 buy/sell/deny を外部監査可能な形式で記録
+- [ ] **P2: Backtest vs Paper Drift Monitor** — ライブ挙動とバックテスト想定の乖離検出
+- [ ] **P2: Benchmark Attribution Maintenance** — SPY benchmark 更新を cron / daily report 前処理へ組み込み、α/β のデータ鮮度を維持
+- [ ] **P3: Capital Heatmap** — セクター・銘柄・資産クラス別集中リスク可視化
+- [ ] **P3: Promotion Gate** — ペーパーデモ卒業基準の定義・コンソール表示
+- [ ] **Risk Budget 閾値チューニング** — 現 6.6% open risk を踏まえたポリシー値の見直し
+
+---
+
+## Analytics Maintenance — Benchmark Attribution（2026-06-01 追加）
+
+### 完了済み
+- [x] SPY benchmark を `venv/bin/python scripts/update_benchmark_data.py` で更新
+  - 更新後: 2026-04-02〜2026-05-29、40営業日
+- [x] α/β/Sharpe 計算前に、同日複数 `daily_snapshots` を日次最終 snapshot へ正規化
+  - 対象: `console/services/benchmark_service.py`
+- [x] 回帰テスト追加
+  - `tests/test_console_services.py::TestBenchmarkService`
+
+### 状態
+- αは表示可能: 実データで `+1.21%`
+- βは現時点では未表示が正しい
+  - 正規化後に SPY と一致するユニーク日次 snapshot が 3営業日分のみ
+  - `BenchmarkService.calculate_beta()` は最低5本の return、つまり6営業日分の一致データを要求
+
+### 後日対応
+- [ ] SPY benchmark 更新を cron または `daily_report_morning` 前処理に組み込む
+- [ ] 6営業日分以上の一致データがたまった後、分析タブでβが自然表示されることを確認
+- [ ] `scripts/fetch_benchmark.py` は broker rate limit を受けやすいため、運用経路は `scripts/update_benchmark_data.py` を優先する
+
+---
+
+## 優先順位まとめ（2026-05-28 更新）
 
 ### 今週中
 1. **T15 / T20 / T23**: 平日 cron の安定完走監視を継続
+2. **Risk Budget 閾値チューニング**: 現在 open risk 6.6%（ポリシー上限 3% の 2.2 倍）→ 実態に合った上限値を検討。deny ロジックを paper_demo に組み込む前に必須
 
 ### 2〜3週間後（〜6/15）
-2. **T25 Step 1**: analyze_news_impact.py で株式44銘柄の相関評価
+3. **T25 Step 1**: analyze_news_impact.py で株式 44 銘柄の感情相関評価
 
 ### Step 1 通過後（順次）
-3. **T25 Step 2**: ETF ニュースマッピング追加
-4. **T25 Step 3**: NewsFeature 実装・paper_demo 組み込み
-5. **T24**: Massive WebSocket 実装（Phase 2）
+4. **T25 Step 2**: ETF ニュースマッピング追加
+5. **T25 Step 3**: NewsFeature 実装・paper_demo 組み込み
+6. **T24**: Massive WebSocket 実装（Phase 2）
 
+### Analytics Batch 2（並行対応可）
+7. **Entry Quality Scoring**: buy 候補のエントリー品質スコアリング（P2）
+8. **ETF Strategy Separation**: ETF 専用戦略・独立メトリクス（P2）
+9. **Paper Trade Audit Trail**: 全 buy/sell/deny の外部監査可能な記録（P2）
+10. **Backtest vs Paper Drift Monitor**: ライブ挙動とバックテスト想定の乖離検出（P2）
+11. **Benchmark Attribution Maintenance**: SPY benchmark 更新の定期化とβ表示確認（P2）
+12. **Capital Heatmap**: セクター・銘柄・資産クラス別集中リスク可視化（P3）
+13. **Promotion Gate**: ペーパーデモ卒業基準の定義・コンソール表示（P3）

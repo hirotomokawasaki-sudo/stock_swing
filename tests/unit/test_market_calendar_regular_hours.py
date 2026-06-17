@@ -56,6 +56,15 @@ class TestRegularHoursReturnsTrue:
         is_regular, _ = MarketCalendar.is_regular_market_hours(_utc(2026, 6, 3, 14, 5))
         assert is_regular, "14:05 UTC = 10:05 ET should be regular"
 
+    def test_market_open_matches_regular_hours_for_jst_cron_window(self):
+        """23:25/23:35 JST cron windows should be seen as regular-hours open."""
+        dt = datetime(2026, 6, 9, 23, 25, tzinfo=ZoneInfo("Asia/Tokyo"))
+        is_regular, _ = MarketCalendar.is_regular_market_hours(dt)
+        is_open, msg = MarketCalendar.is_market_open(dt)
+        assert is_regular
+        assert is_open
+        assert msg == "Market open: Regular hours"
+
 
 # ---------------------------------------------------------------------------
 # Non-regular hours (should return False)
@@ -102,3 +111,12 @@ class TestNonRegularHoursReturnsFalse:
         is_regular, msg = MarketCalendar.is_regular_market_hours(_et(2026, 6, 4, 17, 0))
         assert not is_regular
         assert msg  # must have a non-empty reason string
+
+    def test_market_close_cron_window_is_after_hours_open(self):
+        """05:55 JST market_close cron should be after-hours, not regular."""
+        dt = datetime(2026, 6, 10, 5, 55, tzinfo=ZoneInfo("Asia/Tokyo"))
+        is_regular, _ = MarketCalendar.is_regular_market_hours(dt)
+        is_open, msg = MarketCalendar.is_market_open(dt)
+        assert not is_regular
+        assert is_open
+        assert msg == "Market open: After-hours"

@@ -14,9 +14,16 @@ from stock_swing.sources.errors import (
     SourceValidationError,
 )
 from stock_swing.sources.sec_client import SecClient
+from stock_swing.sources.retry import RetryConfig
 
 
 pytest.importorskip("httpx")
+
+TEST_RETRY = RetryConfig(max_attempts=1, initial_delay=0.01, max_delay=0.01)
+
+
+def create_client(user_agent: str = "Test test@example.com") -> SecClient:
+    return SecClient(user_agent=user_agent, retry_config=TEST_RETRY)
 
 
 def test_sec_client_requires_user_agent() -> None:
@@ -27,7 +34,7 @@ def test_sec_client_requires_user_agent() -> None:
 
 def test_sec_client_initialization() -> None:
     """Test SecClient initialization."""
-    client = SecClient(user_agent="Test Company test@example.com")
+    client = create_client("Test Company test@example.com")
     
     assert client.name == "sec"
     assert client.user_agent == "Test Company test@example.com"
@@ -36,7 +43,7 @@ def test_sec_client_initialization() -> None:
 
 def test_format_cik() -> None:
     """Test CIK formatting helper."""
-    client = SecClient(user_agent="Test test@example.com")
+    client = create_client()
     
     # Various input formats
     assert client._format_cik("320193") == "0000320193"
@@ -69,7 +76,7 @@ def test_fetch_company_submissions_success(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = SecClient(user_agent="Test test@example.com")
+    client = create_client()
     envelope = client.fetch_company_submissions("320193")
     
     assert envelope.source == "sec"
@@ -99,7 +106,7 @@ def test_fetch_company_concept_success(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = SecClient(user_agent="Test test@example.com")
+    client = create_client()
     envelope = client.fetch_company_concept("320193", "us-gaap", "Revenue")
     
     assert envelope.endpoint.endswith("us-gaap/Revenue.json")
@@ -119,7 +126,7 @@ def test_fetch_user_agent_header_sent(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = SecClient(user_agent="MyCompany contact@example.com")
+    client = create_client("MyCompany contact@example.com")
     client.fetch_company_submissions("320193")
     
     # Verify User-Agent was sent
@@ -140,7 +147,7 @@ def test_fetch_missing_user_agent_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = SecClient(user_agent="Test test@example.com")
+    client = create_client()
     
     with pytest.raises(SourceValidationError, match="User-Agent"):
         client.fetch_company_submissions("320193")
@@ -158,7 +165,7 @@ def test_fetch_not_found_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = SecClient(user_agent="Test test@example.com")
+    client = create_client()
     
     with pytest.raises(SourceNotFoundError, match="resource not found"):
         client.fetch_company_submissions("9999999999")
@@ -177,7 +184,7 @@ def test_fetch_rate_limit_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = SecClient(user_agent="Test test@example.com")
+    client = create_client()
     
     with pytest.raises(SourceRateLimitError) as exc_info:
         client.fetch_company_submissions("320193")
@@ -198,7 +205,7 @@ def test_fetch_server_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = SecClient(user_agent="Test test@example.com")
+    client = create_client()
     
     with pytest.raises(SourceServerError, match="server error: 500"):
         client.fetch_company_submissions("320193")
@@ -215,7 +222,7 @@ def test_fetch_timeout_error(mock_client_class: Mock) -> None:
     mock_client.get.side_effect = httpx.TimeoutException("timeout")
     mock_client_class.return_value = mock_client
     
-    client = SecClient(user_agent="Test test@example.com")
+    client = create_client()
     
     with pytest.raises(SourceTimeoutError, match="request timeout"):
         client.fetch_company_submissions("320193")
@@ -232,7 +239,7 @@ def test_fetch_connection_error(mock_client_class: Mock) -> None:
     mock_client.get.side_effect = httpx.ConnectError("connection failed")
     mock_client_class.return_value = mock_client
     
-    client = SecClient(user_agent="Test test@example.com")
+    client = create_client()
     
     with pytest.raises(SourceConnectionError, match="connection failed"):
         client.fetch_company_submissions("320193")
@@ -251,7 +258,7 @@ def test_fetch_json_parse_error(mock_client_class: Mock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value = mock_client
     
-    client = SecClient(user_agent="Test test@example.com")
+    client = create_client()
     
     with pytest.raises(SourceResponseError, match="failed to parse JSON"):
         client.fetch_company_submissions("320193")
@@ -259,7 +266,7 @@ def test_fetch_json_parse_error(mock_client_class: Mock) -> None:
 
 def test_fetch_missing_endpoint() -> None:
     """Test that fetch requires endpoint parameter."""
-    client = SecClient(user_agent="Test test@example.com")
+    client = create_client()
     
     with pytest.raises(SourceValidationError, match="endpoint parameter is required"):
         client.fetch(cik="320193")

@@ -1,6 +1,25 @@
 {
   "schema_version": "v1",
-  "generated_at": "2026-05-24T13:01:04.519031+00:00",
+  "generated_at": "2026-06-03T13:00:28.316586+00:00",
   "note": "Fresh prices from Massive API to override stale broker positions API prices",
-  "overrides": {}
+  "overrides": {
+    "HPE": {
+      "fresh_price": 47.0,
+      "broker_price": 60.0,
+      "deviation_pct": 21.666666666666668,
+      "date": "2026-06-01",
+      "source": "massive_direct",
+      "updated_at": "2026-06-02T13:00:23.579918+00:00"
+    },
+    "RBRK": {
+      "fresh_price": 85.07,
+      "broker_price": 80.95,
+      "deviation_pct": 5.08956145768992,
+      "date": "2026-06-01",
+      "source": "massive_direct",
+      "updated_at": "2026-06-02T13:00:25.542886+00:00"
+    }
+  },
+  "clear_pending": true,
+  "clear_pending_since": "2026-06-03T13:00:28.316586+00:00"
 }

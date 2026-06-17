@@ -752,6 +752,27 @@ canvas {
     border: 1px solid #6b7280;
 }
 
+/* CF-2: Stale data badge — 接続失敗時に非ブロッキング表示 */
+#stale-badge {
+    display: none; /* JS で制御 */
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(245, 158, 11, 0.18);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    cursor: default;
+    animation: stale-pulse 2s ease-in-out infinite;
+}
+
+@keyframes stale-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.55; }
+}
+
 /* Progress Bar */
 .progress-bar-container {
     margin-top: 15px;
