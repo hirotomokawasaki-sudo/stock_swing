@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 import yaml
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -43,10 +44,12 @@ _load_env(project_root / ".env")
 from stock_swing.core.path_manager import PathManager
 from stock_swing.core.runtime import RuntimeMode, RuntimeModeError, read_runtime_mode
 from stock_swing.core.types import CanonicalRecord
+from stock_swing.cli.cron_summary import emit_cron_summary
 from stock_swing.decision_engine.decision_engine import DecisionEngine, DecisionRecord
 from stock_swing.decision_engine.risk_validator import RiskValidator
 from stock_swing.execution.paper_executor import OrderSubmission, PaperExecutor
 from stock_swing.execution.reconciler import Reconciler
+from stock_swing.risk.open_shock_cooldown import apply_open_shock_cooldown
 from stock_swing.risk.portfolio_allocator import PortfolioAllocator
 from stock_swing.feature_engine.macro_regime_feature import MacroRegimeFeature
 from stock_swing.feature_engine.price_momentum_feature import PriceMomentumFeature
@@ -153,6 +156,79 @@ def _filter_buys_outside_regular_hours(
         else:
             allowed.append(d)
     return allowed, blocked
+
+
+def _extract_return_pct_from_notes(notes_text: str) -> float | None:
+    """Extract the primary return percentage from exit notes when present."""
+    if not notes_text:
+        return None
+
+    match = re.search(r"return\s+([+-]?\d+(?:\.\d+)?)%", notes_text, re.IGNORECASE)
+    if match:
+        return float(match.group(1)) / 100.0
+
+    match = re.search(r":\s*([+-]?\d+(?:\.\d+)?)%\s*<=", notes_text)
+    if match:
+        return float(match.group(1)) / 100.0
+
+    return None
+
+
+def _filter_sells_outside_regular_hours(
+    decisions: list,
+    now: "datetime | None" = None,
+    force_sell_return_pct: float = -0.12,
+) -> tuple[list, list[tuple[str, str, float | None]]]:
+    """Defer non-catastrophic SELL orders outside regular market hours.
+
+    Market SELL orders submitted outside regular hours become queued day orders and
+    can execute at the next regular-session open. That is precisely the behavior we
+    want to avoid for moderate exit signals during broad Monday panic conditions.
+
+    We therefore keep only catastrophic exits (default: return <= -12%) actionable
+    outside regular hours and defer the rest for re-evaluation in the next session.
+    """
+    if os.environ.get("PAPER_DEMO_ALLOW_OFFHOURS_SELLS", "").lower() == "true":
+        return decisions, []
+
+    is_regular, _ = MarketCalendar.is_regular_market_hours(now)
+    if is_regular:
+        return decisions, []
+
+    allowed: list = []
+    deferred: list[tuple[str, str, float | None]] = []
+    for decision in decisions:
+        if decision.action != "sell":
+            allowed.append(decision)
+            continue
+
+        notes = " ".join((decision.evidence or {}).get("notes") or [])
+        _exit_trigger, exit_reason = _classify_exit_reason_from_notes(notes)
+        return_pct = None
+        if isinstance(decision.evidence, dict):
+            raw_return = decision.evidence.get("return_pct")
+            if raw_return is not None:
+                try:
+                    return_pct = float(raw_return)
+                except (TypeError, ValueError):
+                    return_pct = None
+        if return_pct is None:
+            return_pct = _extract_return_pct_from_notes(notes)
+
+        if return_pct is not None and return_pct <= force_sell_return_pct:
+            allowed.append(decision)
+            continue
+
+        deferred.append((decision.symbol, exit_reason, return_pct))
+
+    deferred_symbols = {symbol for symbol, _, _ in deferred}
+    for decision in decisions:
+        if decision.action == "sell" and decision.symbol in deferred_symbols:
+            continue
+        if decision not in allowed:
+            allowed.append(decision)
+
+    return allowed, deferred
 
 
 def _filter_etf_buys_by_guardrail(
@@ -342,6 +418,7 @@ def main() -> int:  # noqa: C901
     parser.add_argument("--allow-outside-hours", action="store_true")
     parser.add_argument("--telegram", action="store_true", help="Send summary to Telegram")
     parser.add_argument("--silent", action="store_true", help="Send Telegram notification silently")
+    parser.add_argument("--cron-summary-json", action="store_true", help="Emit one compact CRON_SUMMARY_JSON line at the end")
     args = parser.parse_args()
 
     # Resolve symbol universe (--symbols overrides --universe)
@@ -352,6 +429,27 @@ def main() -> int:  # noqa: C901
         symbols = TECH_UNIVERSE_FULL
     else:
         symbols = DEFAULT_SYMBOLS
+
+    def finish(
+        exit_code: int,
+        decisions: list[DecisionRecord] | None = None,
+        submissions: list[OrderSubmission] | None = None,
+        equity_value: float = 0.0,
+        extra: dict | None = None,
+    ) -> int:
+        if args.cron_summary_json:
+            emit_cron_summary(
+                _build_cron_summary(
+                    symbols=symbols,
+                    decisions=decisions or [],
+                    submissions=submissions or [],
+                    equity=equity_value,
+                    dry_run=args.dry_run,
+                    exit_code=exit_code,
+                    extra=extra or {},
+                )
+            )
+        return exit_code
 
     _banner("stock_swing Paper Trading Demo")
     print(f"  Symbols   : {', '.join(symbols)}")
@@ -370,7 +468,7 @@ def main() -> int:  # noqa: C901
         print(f"To resume trading, remove the file:")
         print(f"  rm {MANUAL_KILL_SWITCH_FILE}")
         print("=" * 60)
-        return 1
+        return finish(1)
 
     # 1. Runtime mode
     _section("1. Runtime Mode")
@@ -378,11 +476,11 @@ def main() -> int:  # noqa: C901
         runtime_mode_str = read_runtime_mode(project_root)
     except (FileNotFoundError, RuntimeModeError) as exc:
         print(f"  ERROR: {exc}")
-        return 1
+        return finish(1)
 
     if runtime_mode_str != "paper":
         print(f"  ERROR: Must be 'paper', got '{runtime_mode_str}'")
-        return 1
+        return finish(1)
 
     runtime_mode = RuntimeMode.PAPER
     print(f"  OK: runtime_mode={runtime_mode_str}")
@@ -396,7 +494,7 @@ def main() -> int:  # noqa: C901
         print("  OK: Kill switch ACTIVE (execution allowed)")
     except RuntimeError as exc:
         print(f"  ERROR: {exc}")
-        return 1
+        return finish(1)
 
     # 3. Market hours
     _section("3. Market Hours")
@@ -412,7 +510,7 @@ def main() -> int:  # noqa: C901
     missing_env = [v for v in required_env if not os.getenv(v)]
     if missing_env:
         print(f"  ERROR: Missing env vars: {', '.join(missing_env)}")
-        return 1
+        return finish(1)
 
     broker = BrokerClient(
         api_key=os.environ["BROKER_API_KEY"],
@@ -447,7 +545,7 @@ def main() -> int:  # noqa: C901
         print(f"  OK: status={acct.get('status')} equity=${equity:,.2f} bp=${buying_power:,.2f}")
     except Exception as exc:
         print(f"  ERROR: Account fetch failed: {exc}")
-        return 1
+        return finish(1)
 
     # Infrastructure
     paths = PathManager(project_root)
@@ -491,22 +589,26 @@ def main() -> int:  # noqa: C901
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(fetch_single_symbol, symbol): symbol for symbol in symbols}
-        source_counts = {"massive": 0, "broker": 0, "failed": 0}
+        source_counts = {"massive": 0, "yahoo": 0, "broker": 0, "failed": 0}
         for future in as_completed(futures):
             symbol, records, bar_count, error, source = future.result()
+            source_counts.setdefault(source, 0)
             source_counts[source] += 1
             if error:
                 print(f"  WARN: {symbol:<6} fetch failed: {error}")
             else:
                 all_records.extend(records)
-                source_icon = "📊" if source == "massive" else "📈"
+                source_icon = "📊" if source == "massive" else "🟨" if source == "yahoo" else "📈"
                 print(f"  OK: {symbol:<6} {bar_count:3d} bars -> {len(records):3d} records [{source_icon} {source}]")
 
     if not all_records:
         print("\n  ERROR: No data fetched. Cannot proceed.")
-        return 1
+        return finish(1, equity_value=equity if 'equity' in locals() else 0.0)
     print(f"\n  Total records: {len(all_records)}")
-    print(f"  Sources: Massive={source_counts['massive']}, Broker={source_counts['broker']}, Failed={source_counts['failed']}")
+    print(
+        f"  Sources: Massive={source_counts['massive']}, Yahoo={source_counts['yahoo']}, "
+        f"Broker={source_counts['broker']}, Failed={source_counts['failed']}"
+    )
     print(f"  Workers: {max_workers} parallel")
 
     # 6. Features (daily pass on full universe)
@@ -790,6 +892,20 @@ def main() -> int:  # noqa: C901
             max_hold_days=20,
         )
     exit_signals = exit_strat.generate(all_features, current_positions_full)
+
+    cooldown_config_path = project_root / "config" / "strategy" / "open_shock_cooldown.yaml"
+    cooldown_result = None
+    if cooldown_config_path.exists():
+        with open(cooldown_config_path) as f:
+            cooldown_config = yaml.safe_load(f) or {}
+        cooldown_result = apply_open_shock_cooldown(
+            exit_signals=exit_signals,
+            features=all_features,
+            get_mid_price=get_mid_price,
+            now_utc=datetime.now(timezone.utc),
+            config=cooldown_config,
+        )
+        exit_signals = cooldown_result.filtered_signals
     
     # Prioritize buy signals for sector diversification (V2 with dynamic allocation)
     entry_signals = breakout_signals + event_signals
@@ -810,6 +926,35 @@ def main() -> int:  # noqa: C901
     print()
     print(f"  Exit Signals:")
     print(f"    SimpleExitV2:     {len(exit_signals)} signal(s) (with trailing stop)")
+    if cooldown_result:
+        metrics = cooldown_result.metrics
+        if metrics.in_window:
+            status = "ACTIVE" if metrics.active else "INACTIVE"
+            def _fmt_pct(value: float | None) -> str:
+                return "n/a" if value is None else f"{value:+.2%}"
+            print(
+                "    OpenShockCooldown:"
+                f" {status}"
+                f" hits={metrics.signals_hit}"
+                f" SPY={_fmt_pct(metrics.spy_gap_pct)}"
+                f" QQQ={_fmt_pct(metrics.qqq_gap_pct)}"
+                f" losers={_fmt_pct(metrics.losers_ratio)}"
+                f" avg_gap={_fmt_pct(metrics.avg_gap_pct)}"
+            )
+            if metrics.active:
+                print(
+                    "      "
+                    f"held={cooldown_result.held_count} forced_sell={cooldown_result.forced_sell_count}"
+                )
+                audit_log.log_system_event(
+                    "open_shock_cooldown_active",
+                    details=(
+                        f"hits={metrics.signals_hit} held={cooldown_result.held_count} "
+                        f"forced_sell={cooldown_result.forced_sell_count} "
+                        f"spy_gap={metrics.spy_gap_pct} qqq_gap={metrics.qqq_gap_pct} "
+                        f"losers_ratio={metrics.losers_ratio} avg_gap={metrics.avg_gap_pct}"
+                    ),
+                )
     
     # Exit signal analysis
     if current_positions_full:
@@ -846,7 +991,7 @@ def main() -> int:  # noqa: C901
     if not all_signals:
         print(f"\n  No signals. Try --min-momentum 0.01 to lower threshold.")
         _print_summary([], [], equity, args.dry_run)
-        return 0
+        return finish(0, equity_value=equity, extra={"reason": "no_signals"})
 
     # 8. Decisions
     _section("8. Decision Engine")
@@ -959,6 +1104,19 @@ def main() -> int:  # noqa: C901
         sample = ", ".join(sym for sym, _ in blocked_offhours_buys[:5])
         print(f"    blocked: {sample}{' ...' if len(blocked_offhours_buys) > 5 else ''}")
 
+    actionable, deferred_offhours_sells = _filter_sells_outside_regular_hours(actionable, now_for_filter)
+    if deferred_offhours_sells:
+        _, offhours_status = MarketCalendar.is_regular_market_hours(now_for_filter)
+        print(
+            f"  Off-hours sell guardrail [{offhours_status}]: deferred "
+            f"{len(deferred_offhours_sells)} non-catastrophic sell(s)"
+        )
+        sample = ", ".join(
+            f"{symbol} ({reason})" for symbol, reason, _ in deferred_offhours_sells[:5]
+        )
+        if sample:
+            print(f"    deferred: {sample}{' ...' if len(deferred_offhours_sells) > 5 else ''}")
+
     # ETF buy guardrail: block new ETF buys by default (PF 0.168 vs Stock 1.731)
     # Set PAPER_DEMO_ALLOW_ETF_BUYS=true to re-enable for experiments
     actionable, blocked_etf_buys = _filter_etf_buys_by_guardrail(actionable, ETF_SYMBOLS)
@@ -989,7 +1147,7 @@ def main() -> int:  # noqa: C901
             o = d.proposed_order
             print(f"    {o.side.upper()} {o.qty} {o.symbol} type={o.order_type} tif={o.time_in_force}")
         _print_summary(decisions, [], equity, args.dry_run)
-        return 0
+        return finish(0, decisions=decisions, equity_value=equity, extra={"reason": "dry_run"})
 
     executor = PaperExecutor(runtime_mode=runtime_mode, broker_client=broker)
     reconciler = Reconciler(broker_client=broker)
@@ -1014,7 +1172,7 @@ def main() -> int:  # noqa: C901
     if not actionable:
         print("\n  No actionable decisions after exposure preflight.")
         _print_summary(decisions, [], equity, args.dry_run)
-        return 0
+        return finish(0, decisions=decisions, equity_value=equity, extra={"reason": "no_actionable_decisions"})
 
     submissions: list[OrderSubmission] = []
     
@@ -1231,8 +1389,8 @@ def main() -> int:  # noqa: C901
             dry_run=args.dry_run,
             silent=args.silent,
         )
-    
-    return 0
+
+    return finish(0, decisions=decisions, submissions=submissions, equity_value=equity)
 
 
 def _save_decisions(decisions: list[DecisionRecord], store: StageStore, ts_tag: str) -> None:
@@ -1378,6 +1536,38 @@ def _print_summary(decisions: list[DecisionRecord], submissions: list[OrderSubmi
     print(f"  Equity    : ${equity:,.2f}")
     print(f"  Decisions saved to data/decisions/")
     print("=" * 60)
+
+
+def _build_cron_summary(
+    symbols: list[str],
+    decisions: list[DecisionRecord],
+    submissions: list[OrderSubmission],
+    equity: float,
+    dry_run: bool,
+    exit_code: int,
+    extra: dict | None = None,
+) -> dict:
+    actionable = [d for d in decisions if d.action in {"buy", "sell"} and d.risk_state == "pass"]
+    denied = [d for d in decisions if d.action == "deny"]
+    held = [d for d in decisions if d.action in {"hold", "review"}]
+    submitted_orders = [s for s in submissions if s.status == "submitted"]
+    summary = {
+        "job": "paper_demo",
+        "status": "ok" if exit_code == 0 else "error",
+        "exit_code": exit_code,
+        "dry_run": dry_run,
+        "symbols": len(symbols),
+        "decisions": len(decisions),
+        "actionable": len(actionable),
+        "denied": len(denied),
+        "held": len(held),
+        "submitted_orders": len(submitted_orders),
+        "attempted_submissions": len(submissions),
+        "equity": round(float(equity or 0.0), 2),
+    }
+    if extra:
+        summary.update(extra)
+    return summary
 
 
 if __name__ == "__main__":

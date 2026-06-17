@@ -1,8 +1,8 @@
 #!/bin/bash
 # Description: Data collection wrapper for cron jobs
-# Usage: ./collect_data.sh [--symbols SYMBOL1,SYMBOL2]
+# Usage: ./collect_data.sh [collect_data args...]
 
-set -e  # Exit on error
+set -euo pipefail
 
 # Project root
 PROJECT_ROOT="$HOME/stock_swing"
@@ -12,55 +12,51 @@ cd "$PROJECT_ROOT"
 LOG_DIR="$PROJECT_ROOT/logs"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/collect_data_$(date +%Y%m%d_%H%M%S).log"
-
-# Default symbols
-DEFAULT_SYMBOLS="NVDA,MSFT,GOOGL,AMZN,META,TSLA,AVGO,AMD,TSM,ASML,INTC,MU,ARM,AMAT,LRCX,KLAC,QCOM,MRVL,PLTR,ADBE,CRM,ORCL,NOW,SNOW,MDB,DDOG,PATH,FICO,SMCI,PANW,CRWD,FTNT,ANET,CSCO,IBM,HPE,DELL,HPQ,SNPS,CDNS,V,MA,INTU,NBIS,CRDO,RBRK,CIEN,SHOC,SOXQ,SOXX,SMH,FTXL,PTF,SMHX,FRWD,TTEQ,GTOP,CHPX,CHPS,PSCT,QTEC,TDIV,SKYY,QTUM"
-
-# Parse arguments
-SYMBOLS="${1:-$DEFAULT_SYMBOLS}"
-
-echo "================================================" | tee -a "$LOG_FILE"
-echo "📡 stock_swing Data Collection" | tee -a "$LOG_FILE"
-echo "⏰ Started at: $(date '+%Y-%m-%d %H:%M:%S %Z')" | tee -a "$LOG_FILE"
-echo "📊 Symbols: $SYMBOLS" | tee -a "$LOG_FILE"
-echo "================================================" | tee -a "$LOG_FILE"
-echo "" | tee -a "$LOG_FILE"
+RUN_LOG="$(mktemp "$LOG_DIR/collect_data_run.XXXXXX.log")"
 
 # Activate venv
 if [ -d "$PROJECT_ROOT/venv" ]; then
-    echo "✅ Activating virtual environment..." | tee -a "$LOG_FILE"
     source "$PROJECT_ROOT/venv/bin/activate"
 else
-    echo "❌ Virtual environment not found at $PROJECT_ROOT/venv" | tee -a "$LOG_FILE"
+    echo "Virtual environment not found at $PROJECT_ROOT/venv" >> "$LOG_FILE"
+    printf '%s\n' "CRON_SUMMARY_JSON={\"job\":\"collect_data\",\"status\":\"error\",\"exit_code\":1,\"reason\":\"missing_venv\",\"log_file\":\"$LOG_FILE\"}"
     exit 1
 fi
 
 # Check if API keys are configured
 if ! grep -q "FINNHUB_API_KEY=your_key_here" "$PROJECT_ROOT/.env" 2>/dev/null; then
-    echo "✅ API keys appear to be configured" | tee -a "$LOG_FILE"
+    true
 else
-    echo "⚠️  WARNING: API keys not configured in .env" | tee -a "$LOG_FILE"
-    echo "   Data collection will fail without API keys" | tee -a "$LOG_FILE"
+    echo "API keys not configured in .env" >> "$LOG_FILE"
 fi
 
-echo "" | tee -a "$LOG_FILE"
+set +e
+python -m stock_swing.cli.collect_data --cron-summary-json "$@" >"$RUN_LOG" 2>&1
+EXIT_CODE=$?
+set -e
 
-# Run collection
-echo "🚀 Running data collection..." | tee -a "$LOG_FILE"
-python -m stock_swing.cli.collect_data --symbols "$SYMBOLS" 2>&1 | tee -a "$LOG_FILE"
-EXIT_CODE=${PIPESTATUS[0]}
+{
+    echo "================================================"
+    echo "📡 stock_swing Data Collection"
+    echo "⏰ Started at: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+    echo "🧩 Args: $*"
+    echo "================================================"
+    cat "$RUN_LOG"
+    echo "================================================"
+    echo "⏰ Completed at: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+    echo "📝 Log file: $LOG_FILE"
+    echo "================================================"
+} >> "$LOG_FILE"
 
-echo "" | tee -a "$LOG_FILE"
-echo "================================================" | tee -a "$LOG_FILE"
-echo "⏰ Completed at: $(date '+%Y-%m-%d %H:%M:%S %Z')" | tee -a "$LOG_FILE"
-
-if [ $EXIT_CODE -eq 0 ]; then
-    echo "✅ Collection completed successfully" | tee -a "$LOG_FILE"
+SUMMARY_LINE="$(grep '^CRON_SUMMARY_JSON=' "$RUN_LOG" | tail -n 1 || true)"
+if [ -n "$SUMMARY_LINE" ]; then
+    printf '%s\n' "$SUMMARY_LINE"
+elif [ $EXIT_CODE -eq 0 ]; then
+    printf '%s\n' "CRON_SUMMARY_JSON={\"job\":\"collect_data\",\"status\":\"ok\",\"exit_code\":0,\"log_file\":\"$LOG_FILE\"}"
 else
-    echo "❌ Collection failed with exit code $EXIT_CODE" | tee -a "$LOG_FILE"
+    printf '%s\n' "CRON_SUMMARY_JSON={\"job\":\"collect_data\",\"status\":\"error\",\"exit_code\":$EXIT_CODE,\"log_file\":\"$LOG_FILE\"}"
 fi
 
-echo "📝 Log file: $LOG_FILE" | tee -a "$LOG_FILE"
-echo "================================================" | tee -a "$LOG_FILE"
+rm -f "$RUN_LOG"
 
 exit $EXIT_CODE

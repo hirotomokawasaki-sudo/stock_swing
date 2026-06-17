@@ -17,6 +17,7 @@ sys.path.insert(0, str(project_root))
 
 from stock_swing.core.path_manager import PathManager
 from stock_swing.core.types import RawEnvelope
+from stock_swing.cli.cron_summary import emit_cron_summary
 from stock_swing.storage.stage_store import StageStore
 from stock_swing.sources.finnhub_client import FinnhubClient
 from stock_swing.sources.massive_client import MassiveClient
@@ -33,6 +34,13 @@ def main():
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--days", type=int, default=30, help="Days of historical data to collect (for massive)")
     parser.add_argument("--timeframe", type=str, default="daily", help="Timeframe for bars: daily, 5min, 15min, 1min (for massive)")
+    parser.add_argument(
+        "--max-runtime-seconds",
+        type=int,
+        default=int(os.environ.get("COLLECT_DATA_MAX_RUNTIME_SECONDS", "0") or 0),
+        help="Best-effort runtime ceiling for finnhub collection (0 disables)",
+    )
+    parser.add_argument("--cron-summary-json", action="store_true", help="Emit one compact CRON_SUMMARY_JSON line at the end")
     args = parser.parse_args()
 
     sources = [s.strip() for s in args.sources.split(",") if s.strip()]
@@ -48,15 +56,31 @@ def main():
 
     if args.dry_run:
         print("🧪 DRY RUN MODE - no files written")
+        if args.cron_summary_json:
+            emit_cron_summary({
+                "job": "collect_data",
+                "status": "ok",
+                "dry_run": True,
+                "sources": sources,
+                "symbols_requested": len(symbols),
+                "snapshot_count": 0,
+            })
         return 0
 
     paths = PathManager(project_root)
     store = StageStore(paths, allow_raw_overwrite=False)
     written = []
+    timed_out = False
 
     for source in sources:
         if source == "finnhub":
-            written.extend(collect_finnhub(symbols, store))
+            source_written, source_timed_out = collect_finnhub(
+                symbols,
+                store,
+                max_runtime_seconds=args.max_runtime_seconds,
+            )
+            written.extend(source_written)
+            timed_out = timed_out or source_timed_out
         elif source == "fred":
             written.extend(collect_fred(store))
         elif source == "sec":
@@ -77,6 +101,18 @@ def main():
     if len(written) > 10:
         print(f"  ... and {len(written) - 10} more")
     print(f"📅 Completed at: {datetime.now().isoformat()}")
+    if args.cron_summary_json:
+        emit_cron_summary({
+            "job": "collect_data",
+            "status": "ok",
+            "dry_run": False,
+            "sources": sources,
+            "symbols_requested": len(symbols),
+            "snapshot_count": len(written),
+            "timeframe": args.timeframe,
+            "days": args.days,
+            "timed_out": timed_out,
+        })
     return 0
 
 
@@ -99,7 +135,7 @@ def _write_raw_snapshot(store, source, identifier, endpoint, payload, request_pa
     })
 
 
-def collect_finnhub(symbols, store):
+def collect_finnhub(symbols, store, max_runtime_seconds=0):
     written = []
     try:
         from stock_swing.cli.paper_demo import _load_env, project_root as demo_project_root
@@ -125,12 +161,21 @@ def collect_finnhub(symbols, store):
     today = datetime.now(timezone.utc).date().isoformat()
     from_date = (datetime.now(timezone.utc).date() - timedelta(days=3)).isoformat()
     coverage_status = []
+    start_monotonic = time.monotonic()
+    timed_out = False
 
     # Finnhub Basic plan: 60 req/min. With ~2 calls/symbol, 44 symbols = ~88 calls.
     # 0.8s delay keeps us safely under the limit.
     INTER_SYMBOL_DELAY = 0.8
 
     for i, symbol in enumerate(symbols):
+        if max_runtime_seconds and (time.monotonic() - start_monotonic) >= max_runtime_seconds:
+            print(
+                f"⚠️ Reached max runtime ({max_runtime_seconds}s); stopping Finnhub collection early",
+                file=sys.stderr,
+            )
+            timed_out = True
+            break
         if i > 0:
             time.sleep(INTER_SYMBOL_DELAY)
         payload = {
@@ -201,9 +246,10 @@ def collect_finnhub(symbols, store):
     status_path.parent.mkdir(parents=True, exist_ok=True)
     status_path.write_text(json.dumps({
         'time': datetime.now(timezone.utc).isoformat(),
+        'timed_out': timed_out,
         'symbols': coverage_status,
     }, ensure_ascii=False, indent=2), encoding='utf-8')
-    return written
+    return written, timed_out
 
 
 def collect_fred(store):
