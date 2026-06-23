@@ -315,6 +315,7 @@ class PaperExecutor:
         self,
         decision: DecisionRecord,
         market_regime: str = "neutral",
+        exposure_cap_override: float | None = None,
     ) -> tuple[int, dict[str, Any]]:
         """Calculate hybrid position size using account equity and current exposure.
 
@@ -389,6 +390,7 @@ class PaperExecutor:
             symbol=proposed.symbol,
             risk_per_share=explicit_risk_per_share,
             confidence=decision.confidence,
+            exposure_cap_override=exposure_cap_override,
         ))
         values = {
             "risk": result.shares_by_risk,

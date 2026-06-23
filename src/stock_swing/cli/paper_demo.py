@@ -324,6 +324,7 @@ def _classify_exit_reason_from_notes(notes_text: str) -> tuple[str, str]:
 def _prefilter_actionable_buys_for_submission(
     actionable: list,
     executor: PaperExecutor,
+    exposure_cap_override: float | None = None,
 ) -> tuple[list, dict[str, tuple[int, dict[str, object]]], dict[str, int], list[tuple[str, str]]]:
     """Drop BUY decisions that size to zero before entering broker submission.
 
@@ -349,6 +350,7 @@ def _prefilter_actionable_buys_for_submission(
         preview_qty, preview_sizing = executor._calculate_position_size(
             decision,
             market_regime=market_regime,
+            exposure_cap_override=exposure_cap_override,
         )
         preview_cache[decision.decision_id] = (preview_qty, preview_sizing)
 
@@ -917,6 +919,25 @@ def main() -> int:  # noqa: C901
     )
     all_signals = prioritized_entry + exit_signals
 
+    # --- Dynamic Exposure Cap (signal-count × regime hybrid) ---
+    # base_cap=68%  +  min(strong_buys × 5%, 20%)  [cautious: bonus capped at 10%]
+    # Result range: cautious 68–78%, non-cautious 68–88%
+    _STRONG_SIGNAL_THRESHOLD = 0.85
+    _BASE_EXPOSURE_CAP = 0.68
+    _SIGNAL_STEP = 0.05
+    _MAX_BONUS = 0.20
+    _CAUTIOUS_BONUS_CAP = 0.10
+    _strong_buy_count = sum(
+        1 for s in all_signals
+        if getattr(s, 'action', None) == 'buy'
+        and float(getattr(s, 'signal_strength', 0) or 0) >= _STRONG_SIGNAL_THRESHOLD
+    )
+    _bonus = min(_strong_buy_count * _SIGNAL_STEP, _MAX_BONUS)
+    if price_based_regime == 'cautious':
+        _bonus = min(_bonus, _CAUTIOUS_BONUS_CAP)
+    dynamic_exposure_cap = _BASE_EXPOSURE_CAP + _bonus
+    # -----------------------------------------------------------
+
     print(f"  Entry Signals:")
     print(f"    BreakoutMomentum: {len(breakout_signals)} signal(s)")
     if intraday_results:
@@ -1002,11 +1023,9 @@ def main() -> int:  # noqa: C901
         total_unrealized_pl = sum(float(p.get('unrealized_pl', 0)) for p in current_positions_full.values())
         exposure_pct = (total_position_value / equity * 100) if equity > 0 else 0
         
-        # Get max exposure for current regime
-        from stock_swing.risk.position_sizing import REGIME_LIMITS
-        regime_for_limit = (decision.evidence.get("market_regime") if isinstance(decision.evidence, dict) else "neutral") if 'decision' in locals() else "neutral"
-        max_exposure_pct = REGIME_LIMITS.get(regime_for_limit, 0.70) * 100
-        max_exposure_value = equity * REGIME_LIMITS.get(regime_for_limit, 0.70)
+        # Dynamic exposure cap (signal-count × regime hybrid)
+        max_exposure_pct = dynamic_exposure_cap * 100
+        max_exposure_value = equity * dynamic_exposure_cap
         available_capacity = max_exposure_value - total_position_value
         
         # Calculate sector breakdown
@@ -1022,7 +1041,8 @@ def main() -> int:  # noqa: C901
         print(f"    Total Positions:      {len(current_positions_full)}")
         print(f"    Total Value:          ${total_position_value:>12,.2f}")
         print(f"    Total Unrealized P&L: ${total_unrealized_pl:>12,.2f}")
-        print(f"    Exposure:             {exposure_pct:>12.1f}% (max: {max_exposure_pct:.0f}%)")
+        _cap_detail = f"base 68%+{int((_bonus)*100)}% ({_strong_buy_count} strong signals, {price_based_regime})"
+        print(f"    Exposure:             {exposure_pct:>12.1f}% (max: {max_exposure_pct:.0f}% [{_cap_detail}])")
         print(f"    Available Capacity:   ${available_capacity:>12,.2f} ({available_capacity/equity*100:.1f}%)")
         print()
         
@@ -1132,15 +1152,16 @@ def main() -> int:  # noqa: C901
     # Log allocation status
     alloc_status = portfolio_allocator.get_allocation_status(
         current_positions=current_positions_full,
-        etf_symbols=ETF_SYMBOLS
+        etf_symbols=ETF_SYMBOLS,
+        account_equity=equity,
     )
-    print(f"\n  Portfolio Allocation:")
-    print(f"    ETF:   {alloc_status['current_etf_pct']:>6.1%} (target: {alloc_status['target_etf_pct']:.1%}) = ${alloc_status['etf_value']:>10,.0f}")
-    print(f"    Stock: {alloc_status['current_stock_pct']:>6.1%} (target: {alloc_status['target_stock_pct']:.1%}) = ${alloc_status['stock_value']:>10,.0f}")
-    if alloc_status['needs_rebalance']:
-        rebal_type = 'ETF' if alloc_status['etf_deficit'] > 0 else 'Stock'
-        print(f"    ⚠️  Rebalancing needed: Prioritizing {rebal_type} purchases")
-    
+    _etf_cap_indicator = " ⚠️ CAP HIT" if alloc_status["etf_cap_hit"] else ""
+    print(f"\n  Portfolio Allocation (ETF cap = {alloc_status['target_etf_pct']:.0%} of equity = ${alloc_status['etf_cap_usd']:,.0f}):")
+    print(f"    ETF:   {alloc_status['current_etf_pct']:>6.1%} of equity = ${alloc_status['etf_value']:>10,.0f}{_etf_cap_indicator}")
+    print(f"    Stock: ${alloc_status['stock_value']:>10,.0f} (unrestricted)")
+    if alloc_status["needs_rebalance"]:
+        print(f"    ℹ️  ETF below target ({alloc_status['target_etf_pct']:.0%}): ETF buys prioritized")
+
     if args.dry_run:
         print("\n  DRY RUN - would submit:")
         for d in actionable:
@@ -1154,6 +1175,7 @@ def main() -> int:  # noqa: C901
     actionable, preview_cache, skipped_buy_reasons, skipped_buy_symbols = _prefilter_actionable_buys_for_submission(
         actionable,
         executor,
+        exposure_cap_override=dynamic_exposure_cap,
     )
 
     _section("9. Paper Order Submission")
@@ -1201,8 +1223,9 @@ def main() -> int:  # noqa: C901
                     preview_qty, preview_sizing = executor._calculate_position_size(
                         decision,
                         market_regime=(decision.evidence.get("market_regime") if isinstance(decision.evidence, dict) else "neutral") or "neutral",
+                        exposure_cap_override=dynamic_exposure_cap,
                     )
-                
+
                 # Estimate order value (qty * current_price)
                 current_price = get_mid_price(o.symbol)
                 if current_price > 0:
@@ -1221,6 +1244,7 @@ def main() -> int:  # noqa: C901
                 preview_qty, preview_sizing = executor._calculate_position_size(
                     decision,
                     market_regime=(decision.evidence.get("market_regime") if isinstance(decision.evidence, dict) else "neutral") or "neutral",
+                    exposure_cap_override=dynamic_exposure_cap,
                 )
             preview_basis = ""
             if preview_sizing:

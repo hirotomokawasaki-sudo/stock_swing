@@ -217,11 +217,32 @@ def is_blocked_ok(entry: Dict) -> bool:
     )
 
 
+def is_command_tool_unavailable_ok(entry: Dict) -> bool:
+    summary = (entry.get("summary") or "").lower()
+    return (
+        "no `exec`" in summary
+        or "no `process`" in summary
+        or "exec/process" in summary
+        or "terminal tool was exposed" in summary
+        or "terminal tools were not available" in summary
+        or "command tools were not available" in summary
+        or "command-runner tool is exposed" in summary
+        or "could not be executed" in summary
+        or "could not be run" in summary
+        or "did not execute" in summary
+    )
+
+
 def consecutive_failures(entries: List[Dict]) -> int:
     count = 0
     for entry in entries:
         status = entry.get("status")
-        if status == "ok" and not is_incomplete_ok(entry) and not is_blocked_ok(entry):
+        if (
+            status == "ok"
+            and not is_incomplete_ok(entry)
+            and not is_blocked_ok(entry)
+            and not is_command_tool_unavailable_ok(entry)
+        ):
             break
         count += 1
     return count
@@ -267,6 +288,10 @@ def evaluate_job(job: JobSpec, entries: List[Dict]) -> Dict:
     if is_blocked_ok(latest):
         level = bump(level, "critical")
         issues.append("latest run was marked ok but blocked by exec approval / non-execution")
+
+    if is_command_tool_unavailable_ok(latest):
+        level = bump(level, "critical")
+        issues.append("latest run was marked ok but no exec/process command tool was exposed")
 
     if is_incomplete_ok(latest):
         level = bump(level, "warn")

@@ -21,6 +21,9 @@ else
     exit 1
 fi
 
+# Allow ETF buys (guardrail disabled: actual ETF PF=2.776 vs Stock PF=0.740 per broker data)
+export PAPER_DEMO_ALLOW_ETF_BUYS=true
+
 # Run paper demo with outside-hours allowed (will queue orders).
 # Keep cron stdout tiny; detailed logs go to the log file.
 set +e

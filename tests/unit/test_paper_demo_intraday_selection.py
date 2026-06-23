@@ -68,7 +68,7 @@ def test_prefilter_actionable_buys_drops_zero_share_buys_before_submission():
     )
 
     class FakeExecutor:
-        def _calculate_position_size(self, decision, market_regime="neutral"):
+        def _calculate_position_size(self, decision, market_regime="neutral", exposure_cap_override=None):
             if decision.decision_id == "buy-1":
                 return 0, {"skip_reason": "insufficient_remaining_exposure"}
             return 12, {"skip_reason": None, "shares_by_exposure": 12}

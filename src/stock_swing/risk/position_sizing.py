@@ -22,7 +22,7 @@ REGIME_LIMITS = {
 
 DEFAULT_MAX_POSITION_NOTIONAL_PCT = 0.06
 DEFAULT_MAX_SECTOR_EXPOSURE_PCT = 0.55
-ETF_POSITION_SIZE_MULTIPLIER = 0.35  # Reduced from 0.70: ETF PF was 0.168; keep exposure small until ETF quality proven
+ETF_POSITION_SIZE_MULTIPLIER = 0.70  # Restored to 0.70: actual ETF PF=2.776 (broker data); earlier 0.35 was based on erroneous pre-rebuild data
 
 ETF_SYMBOLS = {
     'SHOC','SOXQ','SOXX','SMH','FTXL','PTF','SMHX','FRWD','TTEQ','GTOP','CHPX','CHPS','PSCT','QTEC','TDIV','SKYY','QTUM'
@@ -50,6 +50,7 @@ class PositionSizingInputs:
     current_sector_exposure: float = 0.0
     max_sector_exposure_pct: float = DEFAULT_MAX_SECTOR_EXPOSURE_PCT
     confidence: float | None = None
+    exposure_cap_override: float | None = None  # Dynamic cap override (0.0–1.0); if set, supersedes REGIME_LIMITS
 
 
 @dataclass
@@ -92,7 +93,7 @@ class PositionSizingPolicy:
         price = max(float(inputs.current_price or 0), 0.0)
         exposure = max(float(inputs.current_total_exposure or 0), 0.0)
         regime = (inputs.market_regime or "neutral").lower()
-        regime_limit = REGIME_LIMITS.get(regime, REGIME_LIMITS["neutral"])
+        regime_limit = inputs.exposure_cap_override if inputs.exposure_cap_override is not None else REGIME_LIMITS.get(regime, REGIME_LIMITS["neutral"])
         symbol = (inputs.symbol or '').upper()
         asset_class = classify_asset_class(symbol, inputs.asset_class)
         sector = SYMBOL_SECTORS.get(symbol)

@@ -152,18 +152,23 @@ class PortfolioAllocator:
         self, 
         decisions: List[Any],
         current_positions: Dict[str, Any],
-        etf_symbols: Set[str]
+        etf_symbols: Set[str],
+        account_equity: float | None = None,
     ) -> List[Any]:
         """Filter and prioritize buy decisions based on portfolio allocation.
-        
-        Enforces hard limits: blocks buy decisions for the asset class that exceeds
-        its target allocation by more than the rebalance threshold.
-        
+
+        ETF hard cap: blocks ETF buys when ETF market value exceeds
+        ``target_etf_pct`` of *total account equity* (A-definition).
+        Stock buys are unrestricted here; overall exposure is governed by the
+        dynamic exposure cap in PositionSizingPolicy.
+
         Args:
             decisions: List of decision objects with .proposed_order.symbol.
             current_positions: Dict of current positions.
             etf_symbols: Set of ETF symbols.
-            
+            account_equity: Total account equity for ETF cap calculation.
+                If None, falls back to invested-value percentage (legacy).
+
         Returns:
             Filtered and reordered list of decisions.
         """
@@ -182,50 +187,42 @@ class PortfolioAllocator:
             current_positions, etf_symbols
         )
         
-        if total_value > 0:
-            current_etf_pct = etf_value / total_value
-            current_stock_pct = stock_value / total_value
-            
-            # Check if any asset class is significantly over-allocated
-            etf_excess = current_etf_pct - self.target_etf_pct
-            stock_excess = current_stock_pct - self.target_stock_pct
-            
-            # Filter out buys for over-allocated asset classes
-            filtered_buys = []
-            blocked_etf = 0
-            blocked_stock = 0
-            
-            for d in buy_decisions:
-                symbol = d.proposed_order.symbol
-                is_etf = symbol in etf_symbols
-                
-                # Block ETF buys if ETF allocation exceeds target + threshold
-                if is_etf and etf_excess > self.rebalance_threshold_pct:
-                    blocked_etf += 1
-                    logger.info(
-                        f"Blocking ETF buy {symbol}: allocation {current_etf_pct:.1%} "
-                        f"exceeds target {self.target_etf_pct:.1%} by {etf_excess:.1%}"
-                    )
-                    continue
-                
-                # Block Stock buys if Stock allocation exceeds target + threshold
-                if not is_etf and stock_excess > self.rebalance_threshold_pct:
-                    blocked_stock += 1
-                    logger.info(
-                        f"Blocking Stock buy {symbol}: allocation {current_stock_pct:.1%} "
-                        f"exceeds target {self.target_stock_pct:.1%} by {stock_excess:.1%}"
-                    )
-                    continue
-                
-                filtered_buys.append(d)
-            
-            if blocked_etf > 0 or blocked_stock > 0:
-                logger.warning(
-                    f"Portfolio allocation enforcement: blocked {blocked_etf} ETF buys, "
-                    f"{blocked_stock} Stock buys (ETF: {current_etf_pct:.1%}, Stock: {current_stock_pct:.1%})"
+        # ETF hard cap: block ETF buys when ETF value exceeds 15% of total equity
+        # (A-definition: denominator = account_equity, not invested value)
+        # Stock buys are unrestricted; exposure is managed by dynamic cap in sizing.
+        filtered_buys = []
+        blocked_etf = 0
+
+        if account_equity and account_equity > 0:
+            etf_cap_usd = account_equity * self.target_etf_pct
+            etf_over_cap = etf_value > etf_cap_usd
+        else:
+            # Legacy fallback: use invested-value percentage
+            etf_cap_usd = total_value * self.target_etf_pct if total_value > 0 else 0.0
+            current_etf_pct_legacy = etf_value / total_value if total_value > 0 else 0.0
+            etf_over_cap = current_etf_pct_legacy > (self.target_etf_pct + self.rebalance_threshold_pct)
+
+        for d in buy_decisions:
+            symbol = d.proposed_order.symbol
+            is_etf = symbol in etf_symbols
+
+            if is_etf and etf_over_cap:
+                blocked_etf += 1
+                logger.info(
+                    f"Blocking ETF buy {symbol}: ETF value ${etf_value:,.0f} "
+                    f">= cap ${etf_cap_usd:,.0f} ({self.target_etf_pct:.0%} of equity)"
                 )
-            
-            buy_decisions = filtered_buys
+                continue
+
+            filtered_buys.append(d)
+
+        if blocked_etf > 0:
+            logger.warning(
+                f"Portfolio allocation enforcement: blocked {blocked_etf} ETF buys "
+                f"(ETF ${etf_value:,.0f} vs cap ${etf_cap_usd:,.0f})"
+            )
+
+        buy_decisions = filtered_buys
         
         # Separate remaining buys by type
         etf_buys = [d for d in buy_decisions if d.proposed_order.symbol in etf_symbols]
@@ -251,28 +248,31 @@ class PortfolioAllocator:
     def get_allocation_status(
         self,
         current_positions: Dict[str, Any],
-        etf_symbols: Set[str]
+        etf_symbols: Set[str],
+        account_equity: float | None = None,
     ) -> Dict[str, Any]:
         """Get current allocation status for monitoring.
-        
+
         Args:
             current_positions: Dict of current positions.
             etf_symbols: Set of ETF symbols.
-            
+            account_equity: Total account equity for ETF cap calculation.
+
         Returns:
             Dict with allocation status details.
         """
         etf_value, stock_value, total_value = self._calculate_current_allocation(
             current_positions, etf_symbols
         )
-        
-        if total_value > 0:
-            current_etf_pct = etf_value / total_value
-            current_stock_pct = stock_value / total_value
-        else:
-            current_etf_pct = 0.0
-            current_stock_pct = 0.0
-        
+
+        # ETF % shown relative to account equity (A-definition)
+        denom = account_equity if (account_equity and account_equity > 0) else (total_value or 1.0)
+        current_etf_pct = etf_value / denom
+        current_stock_pct = stock_value / denom
+
+        etf_cap_usd = denom * self.target_etf_pct
+        etf_cap_hit = etf_value >= etf_cap_usd
+
         return {
             'total_value': total_value,
             'etf_value': etf_value,
@@ -281,7 +281,9 @@ class PortfolioAllocator:
             'current_stock_pct': current_stock_pct,
             'target_etf_pct': self.target_etf_pct,
             'target_stock_pct': self.target_stock_pct,
+            'etf_cap_usd': etf_cap_usd,
+            'etf_cap_hit': etf_cap_hit,
             'etf_deficit': self.target_etf_pct - current_etf_pct,
             'stock_deficit': self.target_stock_pct - current_stock_pct,
-            'needs_rebalance': abs(self.target_etf_pct - current_etf_pct) > self.rebalance_threshold_pct,
+            'needs_rebalance': current_etf_pct < (self.target_etf_pct - self.rebalance_threshold_pct),
         }

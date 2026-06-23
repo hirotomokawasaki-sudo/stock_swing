@@ -118,18 +118,20 @@ def get_guardrail_status(project_root: Path) -> dict[str, Any]:
     audit, audit_warns = _open_position_audit(project_root)
     warnings.extend(audit_warns)
 
+    # ETF buys are now intentionally enabled (ETF PF=2.776 per broker data, 2026-06-23)
+    # Guard against accidental disablement instead
     if not etf_buys_enabled:
         warnings.append(
-            "ETF buys are blocked by default. "
-            "Set PAPER_DEMO_ALLOW_ETF_BUYS=true only after ETF strategy validation."
+            "ETF buys are disabled. "
+            "Intentional? Set PAPER_DEMO_ALLOW_ETF_BUYS=true to re-enable "
+            "(actual ETF PF=2.776, validated 2026-06-23)."
         )
 
     # Overall status
     risks = []
-    if etf_buys_enabled:
-        risks.append("ETF buys are ENABLED — ETF PF was 0.168")
-    if multiplier > 0.35:
-        risks.append(f"ETF position multiplier {multiplier} > 0.35 — higher than P0 target")
+    # ETF cap: warn if multiplier significantly exceeds restored baseline of 0.70
+    if multiplier > 1.0:
+        risks.append(f"ETF position multiplier {multiplier} > 1.0 — unusually high")
     status = "at_risk" if risks else "guarded"
 
     return {
