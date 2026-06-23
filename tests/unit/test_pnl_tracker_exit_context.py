@@ -66,3 +66,51 @@ def test_update_open_trade_peaks_seeds_missing_peak_price(tmp_path: Path):
 
     assert updates == 1
     assert tracker.get_open_positions()[0]["peak_price"] == 250.0
+
+
+def test_entry_signal_strength_saved_and_preserved_through_exit(tmp_path: Path):
+    """S1: entry_signal_strength is persisted at buy and survives through close."""
+    tracker = PnLTracker(tmp_path)
+
+    tracker.record_submission(
+        symbol="NVDA",
+        strategy_id="breakout_momentum_v1",
+        side="buy",
+        qty=10,
+        price=800.0,
+        broker_order_id="buy-s1",
+        decision_id="decision-s1abc",
+        signal_strength=0.94,
+    )
+
+    # Open trade has the strength
+    open_pos = tracker.get_open_positions()
+    assert open_pos[0]["entry_signal_strength"] == 0.94
+
+    # Context propagation
+    ctx = tracker.get_open_position_context_by_symbol()
+    assert ctx["NVDA"]["entry_signal_strength"] == 0.94
+
+    # Strength survives close
+    tracker.record_exit(symbol="NVDA", exit_price=850.0, exit_reason="trailing_stop")
+    closed = [t for t in tracker.state.trades if t["status"] == "closed"]
+    assert closed[0]["entry_signal_strength"] == 0.94
+
+
+def test_entry_signal_strength_none_when_not_passed(tmp_path: Path):
+    """Omitting signal_strength (rebuild/legacy case) stores None gracefully."""
+    tracker = PnLTracker(tmp_path)
+
+    tracker.record_submission(
+        symbol="AMAT",
+        strategy_id="broker_reconstructed",
+        side="buy",
+        qty=5,
+        price=500.0,
+        broker_order_id="buy-legacy",
+        decision_id="decision-legacy",
+        # signal_strength not passed
+    )
+
+    open_pos = tracker.get_open_positions()
+    assert open_pos[0]["entry_signal_strength"] is None
