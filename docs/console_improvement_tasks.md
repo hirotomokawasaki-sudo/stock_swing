@@ -865,6 +865,31 @@ ETF_SECTOR_MAP = {
 
 ---
 
+---
+
+## Signal Strength 診断（2026-06-23）
+
+### 現状の問題
+
+| 項目 | 内容 |
+|---|---|
+| 分布の偏り | BUY シグナルの **73%が strength=1.0** （mean=0.94）|
+| 閘別化不十分 | 現在の閾値 0.85 は全 BUY シグナルの 86% を包含し、「強い」の判別力がたい |
+| intraday_enhanced の 隣陛い | intraday enhanced は 100% が 0.85 以上、閾値が実質無効 |
+| 実績データなし | `entry_signal_strength` が trade レコードに保存されていない（0/190 件） |
+
+### 改善タスク（改善計画リストに登録）
+
+- [ ] **S1. `entry_signal_strength` を trade レコードに保存** — 将来の強度 vs 勝率・損益分析の前提条件
+- [ ] **S2. シグナル強度の粒度化** — breakout_momentum で一律 1.0 になる原因を調査し、動流・ボラティリティ・コンファーメーション等を囍み込んで 0.5–1.0 の広い分布に改善
+- [ ] **S3. 動的 cap 閾値の再評価** — S2 完了後、実帾データで 0.85 閾値の山笲が適切か確認（現状は 86% 記録 → 識別力不足）
+- [ ] **S4. 強度 vs パフォーマンス分析** — S1+S2 完了後、strength 分布別の勝率・ PF を計測し閾値を根拠に基づかせる
+
+### 現時点の繊ぎ起ぎ対応
+現在の動的 cap（0.85 閾値）は「市場シグナルが多いか少ないか」をカウントする設計としては機能する（山笲は高すぎるが、シグナル少数 = cap 下がりの意図は維持される）。S2 の完成までは現行のまま運用。
+
+---
+
 ## 優先順位まとめ（2026-05-28 更新）
 
 ### 今週中
@@ -882,10 +907,14 @@ ETF_SECTOR_MAP = {
 ### Analytics Batch 2（並行対応可）
 7. **反実仮想検証（Counterfactual Hold Analysis）**: 短期クローズされた負けトレードを仮に保有し続けた場合の損益を推計し、「短期カットが損失の原因か／生存バイアスか」を定量評価する（P1 — T26 の前提条件）
 8. **T26 Exit戦略の高度化（一時的下落 vs トレンド崩壊の区別）**: 反実仮想検証の結果を受けて実施。MA20確認＋連続ウィンドウを優先実装（P1）
-9. **Entry Quality Scoring**: buy 候補のエントリー品質スコアリング（P2）
-9. **ETF Strategy Separation**: ETF 専用戦略・独立メトリクス（P2）
-10. **Paper Trade Audit Trail**: 全 buy/sell/deny の外部監査可能な記録（P2）
-11. **Backtest vs Paper Drift Monitor**: ライブ挙動とバックテスト想定の乖離検出（P2）
-12. **Benchmark Attribution Maintenance**: SPY benchmark 更新の定期化とβ表示確認（P2）
-13. **Capital Heatmap**: セクター・銘柄・資産クラス別集中リスク可視化（P3）
-14. **Promotion Gate**: ペーパーデモ卒業基準の定義・コンソール表示（P3）
+9. **S1. `entry_signal_strength` を trade レコードに保存** — 実績 vs 強度分析の前提（P1）
+10. **S2. シグナル強度の粒度化** — breakout_momentum 一律 1.0 問題を解消し、0.5〜1.0 の広い分布に（P2）
+11. **S3. 動的 cap 閾値再評価** — S2 完了後、実績データで 0.85 閾値の適切性を検証（P2）
+12. **S4. 強度 vs パフォーマンス分析** — 分布別勝率・PF で閾値を根拠に定める（P2）
+13. **Entry Quality Scoring**: buy 候補のエントリー品質スコアリング（P2）
+14. **ETF Strategy Separation**: ETF 専用戦略・独立メトリクス（P2）
+15. **Paper Trade Audit Trail**: 全 buy/sell/deny の外部監査可能な記録（P2）
+16. **Backtest vs Paper Drift Monitor**: ライブ挙動とバックテスト想定の乖離検出（P2）
+17. **Benchmark Attribution Maintenance**: SPY benchmark 更新の定期化とβ表示確認（P2）
+18. **Capital Heatmap**: セクター・銘柄・資産クラス別集中リスク可視化（P3）
+19. **Promotion Gate**: ペーパーデモ卒業基準の定義・コンソール表示（P3）
