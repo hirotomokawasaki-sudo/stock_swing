@@ -890,6 +890,239 @@ ETF_SECTOR_MAP = {
 
 ---
 
+---
+
+---
+
+## 実装フェーズ管理（P0〜P12）
+
+実装の進捗を P-フェーズ単位で管理する。各フェーズは独立デプロイ可能な単位。
+
+### ✅ P0: 基礎ガードレール（2026-05-28 完了）
+
+| サブタスク | 内容 | 状態 |
+|---|---|---|
+| P0-A | ETF buy ガードレール（後に解除・条件変更） | ✅ |
+| P0-B | Exit quality 改善（peak_price 永続化・breakeven stop） | ✅ |
+| P0-C | Risk budget ガードレール（warn 5% / block 8%） | ✅ |
+| P0-D | Parameter alignment / qty contract 整理 | ✅ |
+
+### ✅ P1: Analytics Batch 1（2026-05-28 完了）
+
+| サブタスク | 内容 | 状態 |
+|---|---|---|
+| P1-A | `strategy_attribution.py` — ETF/Stock 別 PF・損益分析 | ✅ |
+| P1-B | `data_quality_audit.py` — signal_strength 欠損・price override 検出 | ✅ |
+| P1-C | `risk_budget.py` — 総・銘柄・セクター・ETF 別リスク予算 | ✅ |
+| P1-D | `exit_replay.py` — 7 種類の exit ポリシー比較 | ✅ |
+
+### ✅ P2: Console Fetch Stability（2026-05-28 完了）
+
+| サブタスク | 内容 | 状態 |
+|---|---|---|
+| P2-A | `atomic_json.py` — atomic write + retry read | ✅ |
+| P2-B | `response_cache.py` + `safe_file_reader.py` | ✅ |
+| P2-C | `console/app.py` — ThreadingHTTPServer + RLock + TTL キャッシュ | ✅ |
+
+### ✅ P3: Exit 戦略強化（2026-05-27 完了）
+
+| サブタスク | 内容 | 状態 |
+|---|---|---|
+| P3-A | Breakeven stop（peak +3% → return ≤0% で売却） | ✅ |
+| P3-B | peak_price 永続化（57件 open trades を初期化） | ✅ |
+| P3-C | Entry 強度連動 exit 閾値（高/標準/低確信 3段階） | ✅ |
+| P3-D | exit_reason 追跡（`pending_exit_reasons.json` でセッション間引き継ぎ） | ✅ |
+
+### ✅ P4: リスク高度化（2026-06-23 完了）
+
+| サブタスク | 内容 | 状態 |
+|---|---|---|
+| P4-A | Walk-Forward Exit Validation (`walkforward_exit_analysis.py`) | ✅ |
+| P4-B | Correlation Cluster Risk Cap (`correlation_cluster.py` + paper_demo 統合) | ✅ |
+| P4-C | Structured Console Summary (`console_summary.py` + `emit()`) | ✅ |
+| P4-D | Staged AI Context Packs (`context_budget.py` — minimal/normal/expanded/emergency) | ✅ |
+
+### ✅ P5: CI ガードレール + Signal Strength 計測基盤（2026-06-23 完了）
+
+| サブタスク | 内容 | 状態 |
+|---|---|---|
+| P5-A | `scripts/secret_scan.py` — CI 用シークレットスキャン | ✅ |
+| P5-B | S1: `entry_signal_strength` を trade レコードに保存 | ✅ |
+
+---
+
+### 🔲 P6: Console Stability 完成 + Analytics Batch 2 基盤
+
+**目的**: フロントエンド安定化と Analytics 第2弾の基礎的計測を揃える
+
+| サブタスク | 内容 | 優先度 | 依存 |
+|---|---|---|---|
+| P6-A | CF-2: フロントエンド stable fetch wrapper (`api-client.js`) | 中 | なし |
+| P6-B | CF-3: ポーリング間隔最適化（重い EP を 60〜300 秒へ） | 中 | なし |
+| P6-C | Risk Budget 閾値チューニング（6.6% open risk を実態に合わせ調整） | 高 | なし |
+| P6-D | SPY Benchmark 更新を cron/daily_report_morning 前処理に組み込み | 中 | なし |
+
+**完了条件**
+- [ ] `fetchJsonStable()` wrapper 実装済み・stale バッジ動作確認
+- [ ] ポーリング間隔変更後のサーバー負荷低減を確認
+- [ ] Risk Budget deny ロジックが paper_demo に組み込まれた
+- [ ] β表示に必要な 6 営業日分以上のデータが自動蓄積される仕組みが稼働
+
+---
+
+### 🔲 P7: 反実仮想検証 + Exit 戦略高度化 (T26)
+
+**目的**: 「短期カットが原因か生存バイアスか」を定量評価し、Exit 戦略を根拠に基づいて高度化する
+
+**前提**: S1（P5-B）完了済み → 実績データ蓄積を待って実施
+
+| サブタスク | 内容 | 優先度 | 依存 |
+|---|---|---|---|
+| P7-A | 反実仮想検証スクリプト — 短期クローズ負けトレードを仮保有した場合の推計 | 高 | P5-B |
+| P7-B | T26-A: 連続確認ウィンドウ（N 日連続 -7% 未満でカット）| 高 | P7-A |
+| P7-C | T26-B: MA20 割り込み確認（MA20 割り込み + return<-5% + 2日継続）| 高 | P7-A |
+| P7-D | A+B 組み合わせ条件を `SimpleExitV2Strategy` に統合 | 高 | P7-B, P7-C |
+| P7-E | T26-C: ATR ベース動的ストップ（ボラティリティ適応） | 中 | P7-D 評価後 |
+
+**完了条件**
+- [ ] 反実仮想検証の結果が「早期カット回避が有効」であることを確認
+- [ ] T26 A+B 実装済み・テスト通過
+- [ ] exit_reason の多様化（`ma20_stop` / `consecutive_stop` が記録される）
+- [ ] 数営業日後に Profit Factor の変化を再測定
+
+---
+
+### 🔲 P8: シグナル強度の粒度化 (S2〜S4)
+
+**目的**: 一律 1.0 問題を解消し、強度に基づいたフィルタリングを機能させる
+
+**前提**: P5-B（S1）完了 → 実績データが一定量蓄積された後に実施
+
+| サブタスク | 内容 | 優先度 | 依存 |
+|---|---|---|---|
+| P8-A | S2: `breakout_momentum` 強度算出ロジック改修（momentum / volatility / confirmation 組み込み） | 高 | P5-B |
+| P8-B | S3: 動的 cap 閾値の再評価（実績データで 0.85 閾値の識別力を検証） | 中 | P8-A |
+| P8-C | S4: strength 分布別 勝率・PF 計測 → 閾値を根拠に定める | 中 | P8-A, P8-B |
+
+**完了条件**
+- [ ] BUY シグナルの strength 分布が 0.5〜1.0 に広がっている（現在 73% が 1.0）
+- [ ] 動的 cap の 0.85 閾値に識別力があることを実績データで確認
+- [ ] strength 別 PF が定量化され、次フェーズの判断基準として使える
+
+---
+
+### 🔲 P9: Corporate Action 対応 (T25-struct)
+
+**目的**: KLAC のような stock split 発生時に、price/qty/audit を一貫して扱えるようにする
+
+**目安**: 2026-07 前半
+
+| サブタスク | 内容 | 優先度 | 依存 |
+|---|---|---|---|
+| P9-A | `corporate_actions` 台帳追加（symbol / action_type / factor / effective_at） | 中 | なし |
+| P9-B | open position の split 適用（qty / entry_price / peak_price / stop_price 変換） | 中 | P9-A |
+| P9-C | closed trade の前後跨ぎ split 正規化 | 中 | P9-A |
+| P9-D | `rebuild_pnl_state` / `audit` / reconciliation を corporate action 優先に変更 | 中 | P9-A〜C |
+| P9-E | Runbook + KLAC ケース回帰テスト | 中 | P9-D |
+
+**完了条件**
+- [ ] split 発生銘柄で tracker / broker / audit の整合が手補正なしで保たれる
+- [ ] rebuild 後に peak_price / avg_entry_price の倍率異常が再発しない
+
+---
+
+### 🔲 P10: ニュース感情フィーチャー (T25-feature)
+
+**目的**: 収集中のニュースデータを取引判断に実際に活用し、成績向上を検証する
+
+**前提**: 2026-06-15 目安にデータ蓄積完了 → Step 1 評価を先に実施
+
+| サブタスク | 内容 | 優先度 | 依存 |
+|---|---|---|---|
+| P10-A | Step 1: `analyze_news_impact.py` で n≥30 / \|r\|>0.3 を確認 | 中 | データ蓄積 |
+| P10-B | Step 2: ETF_SECTOR_MAP を追加して ETF の感情スコアを近似 | 中 | P10-A 通過 |
+| P10-C | Step 3: `news_sentiment_feature.py` 実装 + paper_demo 組み込み | 中 | P10-B |
+
+**完了条件**
+- [ ] analyze_news_impact.py が n≥30 で相関係数基準を通過
+- [ ] decision ファイルの `feature_refs` に `news_sentiment` が含まれる
+- [ ] 既存テストが全て通る
+
+---
+
+### 🔲 P11: Analytics Batch 2 + 高度可視化
+
+**目的**: 運用分析の深度を高め、ペーパーデモ卒業判断を可能にする
+
+| サブタスク | 内容 | 優先度 | 依存 |
+|---|---|---|---|
+| P11-A | Entry Quality Scoring — buy 候補のエントリー品質スコアリング | 中 | P8-A |
+| P11-B | ETF Strategy Separation — ETF 専用戦略・独立メトリクス | 中 | なし |
+| P11-C | Paper Trade Audit Trail — 全 buy/sell/deny を外部監査可能な形式で記録 | 中 | なし |
+| P11-D | Backtest vs Paper Drift Monitor — ライブ挙動とバックテスト想定の乖離検出 | 中 | なし |
+| P11-E | Capital Heatmap — セクター・銘柄・クラス別集中リスク可視化 | 低 | なし |
+| P11-F | Promotion Gate — ペーパーデモ卒業基準の定義・コンソール表示 | 低 | P11-A〜D |
+
+**完了条件**
+- [ ] entry quality score が decision ファイルに記録される
+- [ ] ETF 専用メトリクスがコンソールに独立して表示される
+- [ ] paper → live 昇格の定量基準が定義されコンソールに表示される
+
+---
+
+### 🔲 P12: リアルタイム配信 + 高度インフラ (T24)
+
+**目的**: Massive WebSocket による real-time 価格でコンソールと exit 判断を強化する
+
+**前提**: Massive API REST 運用が安定した後
+
+| サブタスク | 内容 | 優先度 | 依存 |
+|---|---|---|---|
+| P12-A | `MassiveWebSocketClient` — 接続・認証・subscribe・再接続 | 中 | なし |
+| P12-B | Console 統合 — real-time 価格表示・unrealized PnL live update | 中 | P12-A |
+| P12-C | Trading system 統合 — intraday exit signal に real-time data を使用 | 中 | P12-A |
+
+**完了条件**
+- [ ] WebSocket client が stable（reconnection 含む）
+- [ ] Console で real-time prices 表示
+- [ ] Intraday exit signal が real-time data を参照している
+
+---
+
+### 🔲 P13: ML シグナル分類器 + 戦略進化（長期）
+
+**目的**: データ蓄積後に機械学習で signal quality を予測し、Sharpe・Win rate を大幅改善する
+
+**前提**: P8 完了 + 1000 件以上のラベル済みシグナル（2〜3ヶ月のデータ）
+
+| サブタスク | 内容 | 優先度 | 依存 |
+|---|---|---|---|
+| P13-A | XGBoost シグナル品質分類器（momentum / ATR / sector / regime を入力、勝敗を予測） | 低 | 1000件+ data |
+| P13-B | Regime-adaptive 戦略（Bull/Neutral/Bear でパラメータ自動切替） | 低 | P8 |
+| P13-C | Kelly Criterion ポジションサイジング最適化 | 低 | P13-A |
+| P13-D | 統計的裁定（cointegrated pairs の mean-reversion） | 低 | なし |
+
+**完了条件**
+- [ ] シグナル分類器の精度が 60%+ を達成
+- [ ] Regime 切替が自動で動作し、Sharpe が改善
+- [ ] Kelly sizing が paper_demo で適用されている
+
+---
+
+## フェーズロードマップ（2026年6月〜）
+
+```
+2026-06  P5 ✅ → P6（CF-2/3 + Risk Budget）
+2026-07  P7（反実仮想 + T26 Exit 高度化）, P9（Corporate Action）
+         P8（Signal Strength 粒度化）並行
+2026-08  P10（ニュース感情 Step 1 評価 → 実装）
+         P11（Analytics Batch 2 + 可視化）並行
+2026-09  P12（Massive WebSocket）
+2026-10+ P13（ML 分類器・長期戦略進化）
+```
+
+---
+
 ## 優先順位まとめ（2026-05-28 更新）
 
 ### 今週中
