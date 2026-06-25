@@ -14,9 +14,11 @@ sys.path.insert(0, str(project_root / "src"))
 
 from stock_swing.cli.cron_summary import emit_cron_summary
 from stock_swing.cli.paper_demo import _load_env
+from stock_swing.core.run_context import RunContext
 from stock_swing.sources.broker_client import BrokerClient
 from stock_swing.tracking.exit_reason_store import delete_exit_reason, purge_old_entries, read_exit_reason
 from stock_swing.tracking.pnl_tracker import PnLTracker
+from stock_swing.tracking.trade_event_store import TradeEvent
 from stock_swing.utils.market_calendar import MarketCalendar
 
 
@@ -52,6 +54,285 @@ def load_recent_submissions(audits_dir: Path, limit: int = 100):
                 if len(items) >= limit:
                     return items
     return items
+
+
+# ---------------------------------------------------------------------------
+# Split / reverse-split detection helpers
+# ---------------------------------------------------------------------------
+
+#: Ratios tried when looking for a clean split.  Forward splits dominate;
+#: reverse splits are listed as their decimal equivalents.
+_SPLIT_CANDIDATE_RATIOS: list[float] = [
+    2, 3, 4, 5, 6, 7, 8, 10, 15, 20, 25, 50,          # common forward splits
+    0.5, 1 / 3, 0.25, 0.2, 0.125, 0.1,                # common reverse splits
+]
+
+
+def _find_split_ratio(broker_qty: int, tracker_qty: int) -> float | None:
+    """Return the split ratio (broker/tracker) if it matches a common split, else None.
+
+    Tolerance is intentionally tight (0.5 %).  A real integer-share split always
+    produces an *exact* ratio (e.g. 8\u00d731 = 248, ratio = 8.000).  A new-buy
+    coincidence like 100/33 = 3.030 is >1 % off and should NOT be detected as
+    a split.
+    """
+    if tracker_qty <= 0:
+        return None
+    ratio = broker_qty / tracker_qty
+    for r in _SPLIT_CANDIDATE_RATIOS:
+        if abs(ratio - r) / r < 0.005:   # 0.5 % \u2014 tight to avoid false positives
+            return r
+    return None
+
+
+def reconcile_split_adjusted_positions(
+    broker: BrokerClient,
+    tracker: PnLTracker,
+    cost_basis_tolerance: float = 0.10,
+) -> int:
+    """Detect and correct open positions affected by stock splits or reverse splits.
+
+    Detection (ALL conditions must be satisfied):
+
+    1. ``broker_qty / tracker_total_qty`` is close to a common split ratio (\u00b12 %).
+    2. The **cost basis** is approximately preserved after the ratio adjustment:
+       ``|tracker_cost \u2212 broker_cost| / tracker_cost < cost_basis_tolerance``.
+       Genuine new buys *increase* cost basis; a split leaves it unchanged.
+    3. The **price ratio** moves in the expected direction:
+       ``tracker_weighted_avg / broker_avg \u2248 split_ratio``.
+
+    Correction applied per lot:
+
+    * ``qty``          \u2192 ``round(old_qty \u00d7 ratio)``
+    * ``entry_price``  \u2192 ``old_entry / ratio``
+    * ``peak_price``   \u2192 ``old_peak / ratio``
+
+    Returns the number of lots corrected.
+    """
+    # ---- fetch broker positions ----------------------------------------
+    try:
+        pos_env = broker.fetch_positions()
+        broker_positions = pos_env.payload if hasattr(pos_env, "payload") else pos_env
+        if not isinstance(broker_positions, list):
+            return 0
+    except Exception as exc:
+        print(f"WARN: reconcile_split_adjusted_positions: failed to fetch positions: {exc}",
+              file=sys.stderr)
+        return 0
+
+    broker_by_symbol: dict[str, dict] = {
+        str(p.get("symbol", "")).upper(): p for p in broker_positions
+    }
+
+    # ---- group tracker lots by symbol ----------------------------------
+    lots_by_symbol: dict[str, list[dict]] = {}
+    for trade in tracker.get_open_positions():
+        sym = str(trade.get("symbol") or "").upper()
+        if sym:
+            lots_by_symbol.setdefault(sym, []).append(trade)
+
+    corrected_lots = 0
+    corrections: list[str] = []
+
+    for sym, lots in lots_by_symbol.items():
+        broker_pos = broker_by_symbol.get(sym)
+        if not broker_pos:
+            continue
+
+        broker_qty = int(abs(float(broker_pos.get("qty", 0) or 0)))
+        broker_avg = float(broker_pos.get("avg_entry_price", 0) or 0)
+
+        tracker_total_qty = sum(int(t.get("qty", 0) or 0) for t in lots)
+
+        if tracker_total_qty == broker_qty or tracker_total_qty == 0:
+            continue  # qtys match \u2014 no split needed
+
+        # --- Condition 1: clean split ratio? ---
+        ratio = _find_split_ratio(broker_qty, tracker_total_qty)
+        if ratio is None:
+            continue
+
+        # --- Condition 2: cost basis approximately preserved? ---
+        tracker_cost = sum(
+            int(t.get("qty", 0) or 0) * float(t.get("entry_price", 0) or 0)
+            for t in lots
+        )
+        broker_cost = broker_qty * broker_avg
+        if tracker_cost > 0 and abs(tracker_cost - broker_cost) / tracker_cost > cost_basis_tolerance:
+            continue
+
+        # --- Condition 3: price ratio matches qty ratio? ---
+        tracker_avg = tracker_cost / tracker_total_qty if tracker_total_qty else 0
+        if tracker_avg > 0 and broker_avg > 0:
+            price_ratio = tracker_avg / broker_avg
+            if abs(price_ratio - ratio) / ratio > 0.10:   # 10% tolerance
+                continue
+
+        # ---- Apply correction ------------------------------------------
+        direction = "forward" if ratio >= 1 else "reverse"
+        for trade in lots:
+            old_qty = int(trade.get("qty", 0) or 0)
+            old_entry = float(trade.get("entry_price", 0) or 0)
+            old_peak = float(trade.get("peak_price") or old_entry or 0)
+
+            new_qty = max(1, round(old_qty * ratio))
+            new_entry = round(old_entry / ratio, 6) if old_entry > 0 else broker_avg
+            new_peak = round(old_peak / ratio, 6) if old_peak > 0 else new_entry
+
+            trade["qty"] = new_qty
+            trade["entry_price"] = new_entry
+            trade["peak_price"] = new_peak
+            corrected_lots += 1
+
+        corrections.append(
+            f"  {sym}: {direction} split ratio={ratio:.4g} "
+            f"qty {tracker_total_qty}\u2192{broker_qty} "
+            f"avg_entry ${tracker_avg:.4f}\u2192${broker_avg:.4f}"
+        )
+
+    if corrected_lots:
+        tracker._save_state()
+        print(
+            f"INFO: reconcile_split_adjusted_positions: corrected {len(corrections)} symbol(s) "
+            f"({corrected_lots} lot(s)):",
+            file=sys.stderr,
+        )
+        for msg in corrections:
+            print(msg, file=sys.stderr)
+
+    return corrected_lots
+
+
+def reconcile_stale_entry_prices(
+    broker: BrokerClient,
+    tracker: PnLTracker,
+    deviation_threshold: float = 0.05,
+) -> int:
+    """Correct open trade entry prices from broker fills or broker position avg."""
+
+    def _get_order_payload(order_id: str):
+        if hasattr(broker, "get_order"):
+            response = broker.get_order(order_id)
+        else:
+            response = broker.fetch_order(order_id)
+        return response.payload if hasattr(response, "payload") else response
+
+    broker_positions: dict[str, float] = {}
+    try:
+        pos_env = broker.fetch_positions()
+        positions = pos_env.payload if hasattr(pos_env, "payload") else pos_env
+        if isinstance(positions, list):
+            for pos in positions:
+                sym = str(pos.get("symbol", "")).upper()
+                avg = float(pos.get("avg_entry_price", 0) or 0)
+                if sym and avg > 0:
+                    broker_positions[sym] = avg
+    except Exception as exc:
+        print(
+            f"WARN: reconcile_stale_entry_prices: could not fetch broker positions: {exc}",
+            file=sys.stderr,
+        )
+
+    lots_by_symbol: dict[str, list[dict]] = {}
+    for trade in tracker.get_open_positions():
+        sym = str(trade.get("symbol") or "").upper()
+        if sym:
+            lots_by_symbol.setdefault(sym, []).append(trade)
+
+    corrections = 0
+    for symbol, lots in lots_by_symbol.items():
+        total_qty = sum(int(trade.get("qty", 0) or 0) for trade in lots)
+        if total_qty <= 0:
+            continue
+
+        weighted_entry_notional = sum(
+            int(trade.get("qty", 0) or 0) * float(trade.get("entry_price", 0) or 0)
+            for trade in lots
+        )
+        recorded_entry = weighted_entry_notional / total_qty if weighted_entry_notional > 0 else 0.0
+        if recorded_entry <= 0:
+            continue
+
+        corrected_price: float | None = None
+        correction_source = ""
+
+        fill_notional = 0.0
+        fill_qty = 0
+        for trade in lots:
+            broker_order_id = trade.get("broker_order_id")
+            if not broker_order_id or str(broker_order_id).startswith("reconcile-"):
+                continue
+            try:
+                order = _get_order_payload(str(broker_order_id))
+                if not isinstance(order, dict):
+                    continue
+                status = str(order.get("status", "")).lower()
+                if status not in {"filled", "partially_filled"}:
+                    continue
+                filled_avg_price = float(order.get("filled_avg_price") or 0)
+                qty = int(trade.get("qty", 0) or 0)
+                if filled_avg_price > 0 and qty > 0:
+                    fill_notional += qty * filled_avg_price
+                    fill_qty += qty
+            except Exception:
+                continue
+
+        weighted_fill = fill_notional / fill_qty if fill_qty > 0 else 0.0
+        if weighted_fill > 0:
+            deviation = abs(weighted_fill - recorded_entry) / recorded_entry
+            if deviation > deviation_threshold:
+                corrected_price = weighted_fill
+                correction_source = "broker_fill"
+
+        pos_avg = broker_positions.get(symbol, 0.0)
+        if corrected_price is None and pos_avg > 0:
+            deviation = abs(pos_avg - recorded_entry) / recorded_entry
+            if deviation > deviation_threshold:
+                corrected_price = pos_avg
+                correction_source = "broker_position_avg"
+
+        if corrected_price is None or corrected_price <= 0:
+            continue
+
+        scale = corrected_price / recorded_entry if recorded_entry > 0 else 1.0
+        for trade in lots:
+            old_entry = float(trade.get("entry_price", 0) or 0)
+            old_peak = float(trade.get("peak_price") or old_entry or 0)
+            trade["entry_price"] = (
+                round(old_entry * scale, 6) if old_entry > 0 else round(corrected_price, 6)
+            )
+            if old_peak < trade["entry_price"]:
+                trade["peak_price"] = round(trade["entry_price"], 6)
+            elif old_peak > 0 and old_entry > 0:
+                new_peak = round(old_peak * scale, 6)
+                trade["peak_price"] = max(new_peak, trade["entry_price"])
+
+        corrections += 1
+        print(
+            f"INFO: reconcile_stale_entry_prices: corrected {symbol} "
+            f"entry ${recorded_entry:.4f} -> ${corrected_price:.4f} "
+            f"(source={correction_source}, "
+            f"deviation={abs(corrected_price - recorded_entry) / recorded_entry:.1%})",
+            file=sys.stderr,
+        )
+        if hasattr(tracker, "event_store"):
+            tracker.event_store.append(TradeEvent.create(
+                "entry_price_corrected",
+                symbol=symbol,
+                payload={
+                    "old_entry": recorded_entry,
+                    "new_entry": corrected_price,
+                    "source": correction_source,
+                },
+            ))
+
+    if corrections:
+        tracker._save_state()
+        print(
+            f"INFO: reconcile_stale_entry_prices: {corrections} correction(s) applied",
+            file=sys.stderr,
+        )
+    return corrections
 
 
 def reconcile_filled_buys(broker: BrokerClient, tracker: PnLTracker, recently_sold_symbols: set[str] | None = None) -> int:
@@ -373,6 +654,7 @@ def cancel_stale_sell_orders(
 
 def main() -> int:
     _load_env(project_root / ".env")
+    run_context = RunContext.create("reconcile_orders")
     api_key = os.environ.get("BROKER_API_KEY", "")
     api_secret = os.environ.get("BROKER_API_SECRET", "")
     if not api_key or not api_secret:
@@ -417,6 +699,17 @@ def main() -> int:
     # Step 1b: Reconcile filled buys (broker-only positions)
     newly_recorded_buys = reconcile_filled_buys(broker, tracker, recently_sold_symbols)
 
+    # Step 1c: Detect and correct stock splits / reverse splits.
+    # Must run BEFORE reconcile_stale_entry_prices so that split-corrected
+    # entry prices are not overwritten with pre-split fill prices.
+    reconcile_split_adjusted_positions(broker, tracker)
+
+    # Step 1d: Correct stale entry prices from actual broker fills.
+    # paper_demo records entry_price at submission time when the order may be
+    # pending (filled_avg_price=null), falling back to the Massive estimate.
+    # Once the fill is confirmed, we patch any divergent entry_prices here.
+    reconcile_stale_entry_prices(broker, tracker)
+
     # Step 2: Reconcile filled sells (existing logic)
 
     # Sort each symbol's list newest-first
@@ -445,6 +738,19 @@ def main() -> int:
     # Also track which SELL order IDs have already been used to close trades,
     # to prevent the same sell fill from closing multiple reconcile-created open trades.
     used_sell_order_ids: set[str] = set(processed_sell_order_ids)
+
+    # Build map: exit_broker_order_id → total qty already recorded on closed trades.
+    # Used by the partial-fill completion logic: when the inline paper_demo reconciler
+    # records a partial fill and then the broker completes the order, the cron reconciler
+    # uses this map to detect and record the remaining unrecorded shares.
+    recorded_qty_by_order_id: dict[str, int] = {}
+    for _trade in tracker.state.trades:
+        if _trade.get("status") == "closed":
+            _eid = _trade.get("exit_broker_order_id")
+            if _eid:
+                recorded_qty_by_order_id[_eid] = (
+                    recorded_qty_by_order_id.get(_eid, 0) + int(_trade.get("qty", 0) or 0)
+                )
 
     submissions = load_recent_submissions(project_root / "data" / "audits")
     filled_exits = 0
@@ -484,14 +790,34 @@ def main() -> int:
             
             broker_order_id = match.get("id")
             
-            # Skip if this sell order was already recorded on a prior run or earlier
-            # in this run. The fill itself is the stable dedupe key.
+            # Dedupe / partial-fill completion guard.
+            # A sell order whose broker_order_id is already in used_sell_order_ids was
+            # previously recorded (at least partially).  Before skipping, check whether
+            # the broker's total filled_qty exceeds what has been recorded so far.
+            # If it does, the inline paper_demo reconciler caught only an early partial
+            # fill; we process the unrecorded remainder here rather than skipping.
+            remaining_fill_qty: int | None = None
             if broker_order_id and broker_order_id in used_sell_order_ids:
-                continue
-            
+                broker_filled_total = int(float(match.get("filled_qty", 0) or 0))
+                already_recorded = recorded_qty_by_order_id.get(broker_order_id, 0)
+                remaining = broker_filled_total - already_recorded
+                if remaining <= 0:
+                    continue  # fully recorded — true duplicate, skip
+                # Unrecorded shares remain from a partial fill: complete the recording
+                remaining_fill_qty = remaining
+                print(
+                    f"INFO: partial-fill completion: {sub['symbol']} "
+                    f"order={broker_order_id[:8]} broker_total={broker_filled_total} "
+                    f"recorded={already_recorded} remaining={remaining}",
+                    file=sys.stderr,
+                )
+
             status = str(match.get("status", "")).lower()
             filled_qty = float(match.get("filled_qty", 0) or 0)
             avg_price = match.get("filled_avg_price")
+            # For partial-fill completion use only the unrecorded remainder;
+            # for normal (first-time) processing use the full broker filled qty.
+            effective_fill_qty = remaining_fill_qty if remaining_fill_qty is not None else int(filled_qty)
             
             # Sanity check: reject obviously wrong prices
             if avg_price is not None:
@@ -552,7 +878,7 @@ def main() -> int:
                 updated = tracker.record_exit(
                     symbol=sub["symbol"],
                     exit_price=avg_price_float,
-                    exit_qty=int(filled_qty),
+                    exit_qty=effective_fill_qty,
                     broker_order_id=broker_order_id,
                     exit_strategy_id=resolved_exit_strategy,
                     exit_reason=resolved_exit_reason,
@@ -562,6 +888,10 @@ def main() -> int:
                     # Mark this sell order as used to prevent re-use within same run
                     if broker_order_id:
                         used_sell_order_ids.add(broker_order_id)
+                        # Update running total so intra-run dedup stays accurate
+                        recorded_qty_by_order_id[broker_order_id] = (
+                            recorded_qty_by_order_id.get(broker_order_id, 0) + effective_fill_qty
+                        )
                     print(
                         f"INFO: Recorded exit for {sub['symbol']}: {int(filled_qty)} @ "
                         f"${avg_price_float:.2f} reason={resolved_exit_reason}",

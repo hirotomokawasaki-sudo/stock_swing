@@ -113,6 +113,187 @@ def test_reconcile_orders_skips_sell_fill_already_persisted(monkeypatch, capsys)
         assert closed_trades[0]["exit_broker_order_id"] == "sell-order-123"
 
 
+def test_partial_fill_completion_records_remaining_qty(monkeypatch, capsys):
+    """When a sell order was partially filled and the partial was already recorded,
+    the cron reconciler must complete the recording of the remaining shares.
+
+    Scenario (mirrors the 2026-06-24 CRDO incident):
+      - 3 open lots totalling 254 shares
+      - Inline paper_demo reconciler recorded 51 shares at the time of initial partial fill
+      - Broker subsequently filled all 254 shares under the same order ID
+      - Cron reconciler should detect and record the remaining 203 shares
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        project_root = Path(tmpdir)
+        tracker = PnLTracker(project_root)
+
+        # Set up 3 open lots (86 + 84 + 84 = 254 shares)
+        tracker.record_submission(
+            symbol="CRDO", strategy_id="test_strategy", side="buy",
+            qty=86, price=273.98, broker_order_id="buy-1", decision_id="d-1",
+        )
+        tracker.record_submission(
+            symbol="CRDO", strategy_id="test_strategy", side="buy",
+            qty=84, price=273.50, broker_order_id="buy-2", decision_id="d-2",
+        )
+        tracker.record_submission(
+            symbol="CRDO", strategy_id="test_strategy", side="buy",
+            qty=84, price=272.83, broker_order_id="buy-3", decision_id="d-3",
+        )
+
+        # Inline reconciler already recorded a partial fill of 51 shares
+        tracker.record_exit(
+            symbol="CRDO",
+            exit_price=271.56,
+            exit_qty=51,
+            broker_order_id="sell-order-254",
+            exit_reason="breakeven_stop",
+        )
+
+        # After partial close: 35 + 84 + 84 = 203 shares remain open
+        open_before = sum(
+            t["qty"] for t in tracker.state.trades
+            if t["status"] == "open" and t["symbol"] == "CRDO"
+        )
+        assert open_before == 203
+
+        class StubBroker:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def fetch_orders(self, status="all", limit=500):
+                return SimpleNamespace(payload=[{
+                    "id": "sell-order-254",
+                    "symbol": "CRDO",
+                    "side": "sell",
+                    "status": "filled",
+                    "filled_qty": 254,     # broker shows full fill
+                    "filled_avg_price": 271.56,
+                    "submitted_at": "2026-06-24T16:00:20+00:00",
+                }])
+
+            def fetch_latest_quote(self, symbol):
+                return SimpleNamespace(payload={"quote": {"bp": 270.0, "ap": 272.0}})
+
+        monkeypatch.setattr(reconcile_orders, "project_root", project_root)
+        monkeypatch.setattr(reconcile_orders, "_load_env", lambda path: None)
+        monkeypatch.setattr(reconcile_orders, "BrokerClient", StubBroker)
+        monkeypatch.setattr(reconcile_orders, "PnLTracker", lambda root: tracker)
+        monkeypatch.setattr(reconcile_orders, "cancel_stale_buy_orders", lambda broker: [])
+        monkeypatch.setattr(reconcile_orders, "cancel_stale_sell_orders", lambda broker, root, **kw: [])
+        monkeypatch.setattr(reconcile_orders, "reconcile_filled_buys", lambda broker, tracker, recently_sold_symbols: 0)
+        monkeypatch.setattr(
+            reconcile_orders,
+            "load_recent_submissions",
+            lambda audits_dir, limit=100: [{
+                "ts": "2026-06-24T16:00:20+00:00",
+                "submission_id": "sub-1",
+                "side": "sell",
+                "qty": 254,
+                "symbol": "CRDO",
+            }],
+        )
+        monkeypatch.setattr(reconcile_orders, "read_exit_reason", lambda root, broker_order_id: None)
+        monkeypatch.setattr(reconcile_orders, "delete_exit_reason", lambda root, broker_order_id: None)
+        monkeypatch.setattr(reconcile_orders, "purge_old_entries", lambda root, max_age_days=7: None)
+
+        monkeypatch.setenv("BROKER_API_KEY", "key")
+        monkeypatch.setenv("BROKER_API_SECRET", "secret")
+
+        assert reconcile_orders.main() == 0
+        out = capsys.readouterr().out
+        summary_line = [ln for ln in out.splitlines() if ln.startswith(CRON_SUMMARY_PREFIX)][-1]
+        payload = json.loads(summary_line.split("=", 1)[1])
+        assert payload["status"] == "ok"
+        assert payload["filled_exits_recorded"] == 1
+
+        # All 254 shares must now be closed
+        open_after = sum(
+            t["qty"] for t in tracker.state.trades
+            if t["status"] == "open" and t["symbol"] == "CRDO"
+        )
+        assert open_after == 0, f"Expected 0 open shares, got {open_after}"
+
+        # All 3 lots plus the 51-share partial close should be recorded as closed
+        closed = [t for t in tracker.state.trades if t["status"] == "closed" and t["symbol"] == "CRDO"]
+        closed_qty = sum(t["qty"] for t in closed)
+        assert closed_qty == 254, f"Expected 254 closed shares, got {closed_qty}"
+
+
+def test_partial_fill_already_complete_is_not_replayed(monkeypatch, capsys):
+    """If the broker fill was already fully recorded (partial-fill completion done),
+    a subsequent reconcile run must not replay it."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        project_root = Path(tmpdir)
+        tracker = PnLTracker(project_root)
+
+        # Open 100 shares, then record a full exit of 100 shares
+        tracker.record_submission(
+            symbol="NVDA", strategy_id="test_strategy", side="buy",
+            qty=100, price=500.0, broker_order_id="buy-nvda", decision_id="d-nvda",
+        )
+        tracker.record_exit(
+            symbol="NVDA",
+            exit_price=510.0,
+            exit_qty=100,
+            broker_order_id="sell-nvda-100",
+            exit_reason="trailing_stop",
+        )
+
+        class StubBroker:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def fetch_orders(self, status="all", limit=500):
+                return SimpleNamespace(payload=[{
+                    "id": "sell-nvda-100",
+                    "symbol": "NVDA",
+                    "side": "sell",
+                    "status": "filled",
+                    "filled_qty": 100,
+                    "filled_avg_price": 510.0,
+                    "submitted_at": "2026-06-24T15:00:00+00:00",
+                }])
+
+            def fetch_latest_quote(self, symbol):
+                return SimpleNamespace(payload={"quote": {"bp": 509.0, "ap": 511.0}})
+
+        monkeypatch.setattr(reconcile_orders, "project_root", project_root)
+        monkeypatch.setattr(reconcile_orders, "_load_env", lambda path: None)
+        monkeypatch.setattr(reconcile_orders, "BrokerClient", StubBroker)
+        monkeypatch.setattr(reconcile_orders, "PnLTracker", lambda root: tracker)
+        monkeypatch.setattr(reconcile_orders, "cancel_stale_buy_orders", lambda broker: [])
+        monkeypatch.setattr(reconcile_orders, "cancel_stale_sell_orders", lambda broker, root, **kw: [])
+        monkeypatch.setattr(reconcile_orders, "reconcile_filled_buys", lambda broker, tracker, recently_sold_symbols: 0)
+        monkeypatch.setattr(
+            reconcile_orders,
+            "load_recent_submissions",
+            lambda audits_dir, limit=100: [{
+                "ts": "2026-06-24T15:00:00+00:00",
+                "submission_id": "sub-nvda",
+                "side": "sell",
+                "qty": 100,
+                "symbol": "NVDA",
+            }],
+        )
+        monkeypatch.setattr(reconcile_orders, "read_exit_reason", lambda root, broker_order_id: None)
+        monkeypatch.setattr(reconcile_orders, "delete_exit_reason", lambda root, broker_order_id: None)
+        monkeypatch.setattr(reconcile_orders, "purge_old_entries", lambda root, max_age_days=7: None)
+
+        monkeypatch.setenv("BROKER_API_KEY", "key")
+        monkeypatch.setenv("BROKER_API_SECRET", "secret")
+
+        assert reconcile_orders.main() == 0
+        out = capsys.readouterr().out
+        summary_line = [ln for ln in out.splitlines() if ln.startswith(CRON_SUMMARY_PREFIX)][-1]
+        payload = json.loads(summary_line.split("=", 1)[1])
+        assert payload["filled_exits_recorded"] == 0  # nothing new to record
+
+        closed = [t for t in tracker.state.trades if t["status"] == "closed" and t["symbol"] == "NVDA"]
+        assert len(closed) == 1
+        assert closed[0]["qty"] == 100
+
+
 def test_cancel_stale_sell_orders_cancels_non_catastrophic_offhours_exit():
     with tempfile.TemporaryDirectory() as tmpdir:
         project_root = Path(tmpdir)
