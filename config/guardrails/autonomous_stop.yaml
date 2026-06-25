@@ -1,0 +1,63 @@
+rules:
+  stale_price_events:
+    metric: stale_price_event_count
+    operator: ">="
+    threshold: 3
+    action: block_buys
+    severity: high
+
+  broker_tracker_mismatch:
+    metric: broker_tracker_mismatch_count
+    operator: ">="
+    threshold: 1
+    action: halt
+    severity: critical
+
+  daily_realized_loss_pct:
+    metric: daily_realized_loss_pct
+    operator: "<="
+    threshold: -2.0
+    action: block_buys
+    severity: high
+
+  daily_total_loss_pct:
+    metric: daily_total_loss_pct
+    operator: "<="
+    threshold: -3.5
+    action: halt
+    severity: critical
+
+  weekly_total_loss_pct:
+    metric: weekly_total_loss_pct
+    operator: "<="
+    threshold: -6.0
+    action: halt
+    severity: critical
+
+  consecutive_losing_trades:
+    metric: consecutive_losing_trades
+    operator: ">="
+    threshold: 5
+    action: reduce_size
+    severity: medium
+
+  api_error_rate_pct:
+    metric: api_error_rate_pct
+    operator: ">="
+    threshold: 20.0
+    action: ai_pause
+    severity: high
+
+  order_rejection_rate_pct:
+    metric: order_rejection_rate_pct
+    operator: ">="
+    threshold: 10.0
+    action: block_buys
+    severity: high
+
+  token_spend_spike_pct:
+    metric: token_spend_spike_pct
+    operator: ">="
+    threshold: 200.0
+    action: ai_pause
+    severity: medium
