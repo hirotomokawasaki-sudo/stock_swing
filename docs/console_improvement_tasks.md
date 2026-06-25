@@ -951,22 +951,28 @@ ETF_SECTOR_MAP = {
 
 ---
 
-### 🔲 P6: Console Stability 完成 + Analytics Batch 2 基盤
+### ✅ P6: 実験管理基盤（2026-06-25 完了）
 
-**目的**: フロントエンド安定化と Analytics 第2弾の基礎的計測を揃える
+**目的**: 全決定に実験ID・run_id・commit・config_hash を付与し、A/B バケット・特徴量・プロンプトをバージョン管理する
 
-| サブタスク | 内容 | 優先度 | 依存 |
-|---|---|---|---|
-| P6-A | CF-2: フロントエンド stable fetch wrapper (`api-client.js`) | 中 | なし |
-| P6-B | CF-3: ポーリング間隔最適化（重い EP を 60〜300 秒へ） | 中 | なし |
-| P6-C | Risk Budget 閾値チューニング（6.6% open risk を実態に合わせ調整） | 高 | なし |
-| P6-D | SPY Benchmark 更新を cron/daily_report_morning 前処理に組み込み | 中 | なし |
+| サブタスク | 内容 | 状態 |
+|---|---|---|
+| P6-A | ExperimentContext + ExperimentRegistry（実験ID・config_hash 永続化） | ✅ |
+| P6-B | PromptRegistry（プロンプト SHA-256 追跡・バージョン管理）+ ai_runtime.yaml | ✅ |
+| P6-C | FeatureSnapshotStore（AI 判断前の特徴量を gzip 圧縮で不変保存） | ✅ |
+| P6-D | BucketAssigner（symbol→A/B バケット安定割り当て、capital cap 付き） | ✅ |
+| P6-E | report_experiment_performance.py（実験・バケット・戦略別 PF/勝率レポート） | ✅ |
 
-**完了条件**
-- [ ] `fetchJsonStable()` wrapper 実装済み・stale バッジ動作確認
-- [ ] ポーリング間隔変更後のサーバー負荷低減を確認
-- [ ] Risk Budget deny ロジックが paper_demo に組み込まれた
-- [ ] β表示に必要な 6 営業日分以上のデータが自動蓄積される仕組みが稼働
+**成果物**
+- `src/stock_swing/experiments/` モジュール（5ファイル）
+- `config/experiments/default_experiment.yaml`, `ab_buckets.yaml`
+- `config/ai/ai_runtime.yaml`
+- `prompts/stock_swing/decision_prompt_v1.md`, `exit_prompt_v1.md`
+- `scripts/start_experiment.py`, `scripts/report_experiment_performance.py`
+- Tests: 14 passed
+
+**完了日**: 2026-06-25  
+**commit**: `2fb494f`
 
 ---
 
@@ -1011,19 +1017,42 @@ ETF_SECTOR_MAP = {
 
 ---
 
-### 🔲 P9: Corporate Action 対応 (T25-struct)
+### ✅ P9: 自律停止ガード（2026-06-25 完了）
+
+**目的**: YAML 定義のルールで GuardAction を自動決定し、halt 状態をセッション間永続化・手動リセットを要求する
+
+| サブタスク | 内容 | 状態 |
+|---|---|---|
+| P9-A | GuardrailEngine（YAML ルール → GuardAction: allow/reduce/block/ai_pause/halt） | ✅ |
+| P9-B | CircuitBreakerStore（halt 永続化・手動リセットに note 12 文字以上必須） | ✅ |
+| P9-C | pre_trade_check.py（startup/AI前/buy前/run後 統合ヘルパー） | ✅ |
+| P9-D | report_guardrails.py（breaker 状態とトリガールールを可視化） | ✅ |
+| P9-E | build_flatten_plan（緊急フラットニングプラン、最大損失ポジション優先） | ✅ |
+
+**成果物**
+- `src/stock_swing/guardrails/` モジュール（5ファイル）
+- `config/guardrails/autonomous_stop.yaml`（9 ルール）
+- `scripts/report_guardrails.py`, `scripts/reset_circuit_breaker.py`
+- Tests: 21 passed
+
+**完了日**: 2026-06-25  
+**commit**: `2fb494f`
+
+---
+
+### 🔲 P17: Corporate Action 対応 (T25-struct)（旧 P9）
 
 **目的**: KLAC のような stock split 発生時に、price/qty/audit を一貫して扱えるようにする
 
-**目安**: 2026-07 前半
+**目安**: 2026-07 後半
 
 | サブタスク | 内容 | 優先度 | 依存 |
 |---|---|---|---|
-| P9-A | `corporate_actions` 台帳追加（symbol / action_type / factor / effective_at） | 中 | なし |
-| P9-B | open position の split 適用（qty / entry_price / peak_price / stop_price 変換） | 中 | P9-A |
-| P9-C | closed trade の前後跨ぎ split 正規化 | 中 | P9-A |
-| P9-D | `rebuild_pnl_state` / `audit` / reconciliation を corporate action 優先に変更 | 中 | P9-A〜C |
-| P9-E | Runbook + KLAC ケース回帰テスト | 中 | P9-D |
+| P17-A | `corporate_actions` 台帳追加（symbol / action_type / factor / effective_at） | 中 | なし |
+| P17-B | open position の split 適用（qty / entry_price / peak_price / stop_price 変換） | 中 | P17-A |
+| P17-C | closed trade の前後跨ぎ split 正規化 | 中 | P17-A |
+| P17-D | `rebuild_pnl_state` / `audit` / reconciliation を corporate action 優先に変更 | 中 | P17-A〜C |
+| P17-E | Runbook + KLAC ケース回帰テスト | 中 | P17-D |
 
 **完了条件**
 - [ ] split 発生銘柄で tracker / broker / audit の整合が手補正なしで保たれる
@@ -1089,6 +1118,25 @@ ETF_SECTOR_MAP = {
 
 ---
 
+### 🔲 P16: Console Stability 完成 + Analytics Batch 2 基盤（旧 P6）
+
+**目的**: フロントエンド安定化と Analytics 第2弾の基礎的計測を揃える
+
+| サブタスク | 内容 | 優先度 | 依存 |
+|---|---|---|---|
+| P16-A | CF-2: フロントエンド stable fetch wrapper (`api-client.js`) | 中 | なし |
+| P16-B | CF-3: ポーリング間隔最適化（重い EP を 60〜300 秒へ） | 中 | なし |
+| P16-C | Risk Budget deny ロジックを paper_demo に組み込み | 高 | なし |
+| P16-D | SPY Benchmark 更新を cron/daily_report_morning 前処理に組み込み | 中 | なし |
+
+**完了条件**
+- [ ] `fetchJsonStable()` wrapper 実装済み・stale バッジ動作確認
+- [ ] ポーリング間隔変更後のサーバー負荷低減を確認
+- [ ] Risk Budget deny ロジックが paper_demo に組み込まれた
+- [ ] β表示に必要な 6 営業日分以上のデータが自動蓄積される仕組みが稼働
+
+---
+
 ### 🔲 P13: ML シグナル分類器 + 戦略進化（長期）
 
 **目的**: データ蓄積後に機械学習で signal quality を予測し、Sharpe・Win rate を大幅改善する
@@ -1112,22 +1160,25 @@ ETF_SECTOR_MAP = {
 ## フェーズロードマップ（2026年6月〜）
 
 ```
-2026-06  P5 ✅ → P6（CF-2/3 + Risk Budget）
-2026-07  P7（反実仮想 + T26 Exit 高度化）, P9（Corporate Action）
+2026-06  P5 ✅ → P6 ✅（実験管理）→ P9 ✅（自律停止ガード）
+2026-07  P7（反実仮想 + T26 Exit 高度化）
          P8（Signal Strength 粒度化）並行
+         P16（Console Stability CF-2/3 + Risk Budget + Benchmark）
 2026-08  P10（ニュース感情 Step 1 評価 → 実装）
          P11（Analytics Batch 2 + 可視化）並行
 2026-09  P12（Massive WebSocket）
+         P17（Corporate Action 対応）並行
 2026-10+ P13（ML 分類器・長期戦略進化）
 ```
 
 ---
 
-## 優先順位まとめ（2026-05-28 更新）
+## 優先順位まとめ（2026-06-25 更新）
 
 ### 今週中
 1. **T15 / T20 / T23**: 平日 cron の安定完走監視を継続
-2. **Risk Budget 閾値チューニング**: 現在 open risk 6.6%（ポリシー上限 3% の 2.2 倍）→ 実態に合った上限値を検討。deny ロジックを paper_demo に組み込む前に必須
+2. **P9 統合**: GuardrailEngine / CircuitBreakerStore を paper_demo の startup ・ buy 処理・ run 後に接続（`pre_trade_check.py` 実装済み、実際の呢び出しは次ラン）
+3. **Risk Budget 閾値チューニング**: 現在 open risk 6.6%（ポリシー上限 3% の 2.2 倍）→ P16-C として実潜化済み
 
 ### 2〜3週間後（〜6/15）
 3. **T25 Step 1**: analyze_news_impact.py で株式 44 銘柄の感情相関評価
