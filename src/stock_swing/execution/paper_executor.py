@@ -15,6 +15,7 @@ from typing import Any
 
 from stock_swing.core.runtime import RuntimeMode
 from stock_swing.decision_engine.decision_engine import DecisionRecord
+from stock_swing.pricing import PriceResolver
 from stock_swing.risk.position_sizing import PositionSizingInputs, PositionSizingPolicy
 from stock_swing.sources.broker_client import BrokerClient
 
@@ -348,33 +349,33 @@ class PaperExecutor:
             current_total_exposure = 0.0
             current_sector_exposure = 0.0
 
-        current_price = None
-        try:
-            latest_env = self.broker_client.fetch_bars(proposed.symbol, timeframe="1Day", limit=1)
-            latest = latest_env.payload if hasattr(latest_env, 'payload') else latest_env
-            bars = latest.get("bars", []) if isinstance(latest, dict) else latest
-            if bars:
-                bar = bars[-1]
-                current_price = float(bar.get("c") or bar.get("close") or 0)
-        except Exception:
-            current_price = None
-
+        resolver = PriceResolver(
+            broker_client=self.broker_client,
+            now_fn=lambda: datetime.now(timezone.utc),
+        )
+        resolution = resolver.resolve_entry_sizing_price(
+            proposed.symbol,
+            decision=decision,
+            limit_price=float(proposed.limit_price or 0) or None,
+        )
+        current_price = resolution.price
+        price_source = resolution.source
+        price_timestamp = resolution.timestamp.isoformat() if resolution.timestamp else None
+        price_age_seconds = None
+        if resolution.timestamp:
+            price_age_seconds = round(
+                (datetime.now(timezone.utc) - resolution.timestamp).total_seconds(),
+                1,
+            )
         if not current_price or current_price <= 0:
-            current_price = float(proposed.limit_price or 0)
-        if not current_price or current_price <= 0:
-            # Fallback: try latest_close from decision evidence (set by strategy)
-            if isinstance(decision.evidence, dict):
-                decision_latest_close = float(decision.evidence.get("latest_close") or 0)
-                if decision_latest_close > 0:
-                    current_price = decision_latest_close
-                    price_source = "decision_latest_close"
-        if not current_price or current_price <= 0:
-            # Safety: never submit a placeholder-sized order without a real price
             return 0, {
                 "fallback": True,
                 "reason": "missing_current_price",
                 "final_shares": 0,
                 "price_source": "none",
+                "price_timestamp": None,
+                "price_age_seconds": None,
+                "price_warnings": resolution.warnings,
             }
 
         explicit_risk_per_share = None
@@ -421,6 +422,12 @@ class PaperExecutor:
             "confidence": decision.confidence,
             "applied_constraint": applied_constraint,
             "skip_reason": result.skip_reason,
+            "price_source": price_source,
+            "price_timestamp": price_timestamp,
+            "price_age_seconds": (
+                round(price_age_seconds, 1) if price_age_seconds is not None else None
+            ),
+            "price_warnings": list(resolution.warnings),
         }
         if isinstance(decision.evidence, dict):
             decision.evidence["sizing"] = details

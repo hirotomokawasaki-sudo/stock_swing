@@ -54,8 +54,8 @@ data/archive/account_PA3K84BB63MJ_20260501/
 ### 1. Environment Variables (`.env`)
 ```bash
 # Updated (not committed to git):
-BROKER_API_KEY=PKOMHC5E5GCMU67ATYNRVRYAMT
-BROKER_API_SECRET=HFUJryjshJFU3QhZZuKuaDwBi71AytP5J1wFH1ZuQj1d
+BROKER_API_KEY=***REDACTED***
+BROKER_API_SECRET=***REDACTED***
 BROKER_ACCOUNT_ID=2bf02097-8ccd-4f4f-93ce-1e2f5c33c5ed
 ```
 

@@ -1,15 +1,65 @@
 {
   "schema_version": "v1",
-  "generated_at": "2026-06-22T13:00:07.280784+00:00",
+  "generated_at": "2026-06-24T13:00:06.989609+00:00",
   "note": "Fresh prices from Massive API to override stale broker positions API prices",
   "overrides": {
-    "CRDO": {
-      "fresh_price": 271.83,
-      "broker_price": 287.1,
-      "deviation_pct": 5.318704284221538,
-      "date": "2026-06-18",
+    "AMAT": {
+      "fresh_price": 640.18,
+      "broker_price": 590.44,
+      "deviation_pct": 8.424226000948428,
+      "date": "2026-06-22",
       "source": "massive_direct",
-      "updated_at": "2026-06-22T13:00:05.498584+00:00"
+      "updated_at": "2026-06-23T13:00:04.147816+00:00"
+    },
+    "ANET": {
+      "fresh_price": 174.56,
+      "broker_price": 165.55,
+      "deviation_pct": 5.442464512231949,
+      "date": "2026-06-22",
+      "source": "massive_direct",
+      "updated_at": "2026-06-23T13:00:04.331176+00:00"
+    },
+    "ASML": {
+      "fresh_price": 1929.25,
+      "broker_price": 1782.23,
+      "deviation_pct": 8.249215870005553,
+      "date": "2026-06-22",
+      "source": "massive_direct",
+      "updated_at": "2026-06-23T13:00:04.514410+00:00"
+    },
+    "DELL": {
+      "fresh_price": 418.71,
+      "broker_price": 395.8,
+      "deviation_pct": 5.788276907529047,
+      "date": "2026-06-22",
+      "source": "massive_direct",
+      "updated_at": "2026-06-23T13:00:05.141976+00:00"
+    },
+    "LRCX": {
+      "fresh_price": 409.54,
+      "broker_price": 379.25,
+      "deviation_pct": 7.9868160843770655,
+      "date": "2026-06-22",
+      "source": "massive_direct",
+      "updated_at": "2026-06-23T13:00:05.544342+00:00"
+    },
+    "MU": {
+      "fresh_price": 1211.38,
+      "broker_price": 1096.83,
+      "deviation_pct": 10.443733304158364,
+      "date": "2026-06-22",
+      "source": "massive_direct",
+      "updated_at": "2026-06-23T13:00:05.723289+00:00"
+    },
+    "NBIS": {
+      "fresh_price": 283.61,
+      "broker_price": 258.97,
+      "deviation_pct": 9.51461559253967,
+      "date": "2026-06-22",
+      "source": "massive_direct",
+      "updated_at": "2026-06-23T13:00:05.914023+00:00"
     }
-  }
+  },
+  "clear_pending": true,
+  "clear_pending_since": "2026-06-24T13:00:06.989609+00:00"
 }

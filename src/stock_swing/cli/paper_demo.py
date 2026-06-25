@@ -42,6 +42,7 @@ def _load_env(env_path: Path) -> None:
 _load_env(project_root / ".env")
 
 from stock_swing.core.path_manager import PathManager
+from stock_swing.core.run_context import RunContext, attach_run_context
 from stock_swing.core.runtime import RuntimeMode, RuntimeModeError, read_runtime_mode
 from stock_swing.core.types import CanonicalRecord
 from stock_swing.cli.cron_summary import emit_cron_summary
@@ -65,6 +66,7 @@ from stock_swing.strategy_engine.simple_exit_strategy import SimpleExitStrategy
 from stock_swing.strategy_engine.simple_exit_v2_strategy import SimpleExitV2Strategy
 from stock_swing.tracking.exit_reason_store import write_exit_reason
 from stock_swing.tracking.pnl_tracker import PnLTracker
+from stock_swing.utils.latency_tracker import LatencyTracker
 from stock_swing.utils.market_calendar import MarketCalendar
 from stock_swing.utils.signal_prioritization import prioritize_buy_signals, prioritize_buy_signals_v2
 from stock_swing.utils.stale_price import apply_price_overrides, compute_stale_price_overrides
@@ -305,6 +307,34 @@ def _filter_buys_by_risk_budget(
     return decisions, [], risk
 
 
+def _filter_buys_by_cluster_cap(
+    decisions: list,
+    current_positions_full: dict[str, dict],
+    equity: float,
+) -> tuple[list, list[tuple[str, str]]]:
+    """Block BUY decisions that would exceed a correlation cluster cap (P4-B)."""
+    import os
+    from stock_swing.risk.correlation_cluster import is_buy_blocked_by_cluster_cap
+
+    if os.environ.get("PAPER_DEMO_SKIP_CLUSTER_CAP", "").lower() == "true":
+        return decisions, []
+
+    positions_list = list(current_positions_full.values())
+    allowed, blocked = [], []
+    for d in decisions:
+        if d.action != "buy":
+            allowed.append(d)
+            continue
+        is_blocked, reason = is_buy_blocked_by_cluster_cap(
+            d.symbol, positions_list, equity
+        )
+        if is_blocked:
+            blocked.append((d.symbol, reason))
+        else:
+            allowed.append(d)
+    return allowed, blocked
+
+
 def _classify_exit_reason_from_notes(notes_text: str) -> tuple[str, str]:
     """Derive (exit_trigger, exit_reason) from decision notes text."""
     t = notes_text.lower()
@@ -432,6 +462,8 @@ def main() -> int:  # noqa: C901
     else:
         symbols = DEFAULT_SYMBOLS
 
+    latency_tracker: LatencyTracker | None = None
+
     def finish(
         exit_code: int,
         decisions: list[DecisionRecord] | None = None,
@@ -439,6 +471,8 @@ def main() -> int:  # noqa: C901
         equity_value: float = 0.0,
         extra: dict | None = None,
     ) -> int:
+        if latency_tracker is not None:
+            latency_tracker.flush()
         if args.cron_summary_json:
             emit_cron_summary(
                 _build_cron_summary(
@@ -454,9 +488,11 @@ def main() -> int:  # noqa: C901
         return exit_code
 
     _banner("stock_swing Paper Trading Demo")
+    run_context = RunContext.create("paper_demo")
     print(f"  Symbols   : {', '.join(symbols)}")
     print(f"  Timeframe : {args.timeframe} x {args.bar_limit} bars")
     print(f"  Dry run   : {args.dry_run}")
+    print(f"  Run ID    : {run_context.run_id}")
     print()
 
     # 0. Manual Kill Switch Check (GW emergency stop)
@@ -520,6 +556,9 @@ def main() -> int:  # noqa: C901
         paper_mode=True,
         base_url=os.environ["BROKER_BASE_URL"],
     )
+    latency_tracker = LatencyTracker(
+        project_root / "data" / "analysis" / "api_latency.csv"
+    )
     print(f"  URL: {broker.base_url}")
 
     latest_quote_cache: dict[str, float] = {}
@@ -539,8 +578,79 @@ def main() -> int:  # noqa: C901
         latest_quote_cache[symbol] = price
         return price
 
+    def _normalize_fill_price(raw_price: float, reference_prices: list[float]) -> float:
+        """Scale broker fill anomalies back near the live reference price set.
+
+        Alpaca paper data has occasionally returned 10x/100x prices around split
+        events. If dividing by 10 or 100 lands near a trusted live reference,
+        record the corrected fill instead of the raw broker value.
+        """
+        if raw_price <= 0:
+            return 0.0
+
+        refs = [float(price) for price in reference_prices if price and float(price) > 0]
+        if not refs:
+            return round(raw_price, 6)
+
+        for factor in (1, 10, 100):
+            candidate = raw_price / factor
+            if any(abs(candidate - ref) / ref <= 0.12 for ref in refs):
+                return round(candidate, 6)
+
+        return round(raw_price, 6)
+
+    def resolve_recorded_entry_price(submission: OrderSubmission, symbol: str, limit_price: float | None) -> float:
+        """Prefer broker truth for tracking, then fall back to local estimates.
+
+        Stale-fill guard:
+        Alpaca paper bars have been frozen since 2026-04-22, causing
+        get_order().filled_avg_price to return the frozen bar price rather
+        than the actual market fill price.  When the broker fill deviates
+        by more than 20 % from sizing_price (which now comes from Massive
+        via decision.evidence["latest_close"]), we treat the fill as stale
+        and record sizing_price as the entry price instead.
+        This keeps the tracker consistent with the price basis used for
+        position sizing, stop-loss, and trailing-stop calculations.
+        """
+        sizing_price = float((submission.sizing_details or {}).get("current_price") or 0)
+        quote_price = get_mid_price(symbol)
+        reference_prices = [sizing_price, quote_price, float(limit_price or 0)]
+
+        if submission.broker_order_id:
+            try:
+                order_resp = broker.get_order(submission.broker_order_id)
+                order_payload = order_resp.payload if hasattr(order_resp, "payload") else order_resp
+                filled_avg_price = float(order_payload.get("filled_avg_price") or 0)
+                if filled_avg_price > 0:
+                    normalized = _normalize_fill_price(filled_avg_price, reference_prices)
+                    # Stale-fill guard: if the normalised fill still deviates
+                    # > 20 % from sizing_price (Massive-backed), the broker
+                    # is returning a stale paper fill.  Fall back to
+                    # sizing_price, which reflects the real market price.
+                    if sizing_price > 0:
+                        deviation = abs(normalized - sizing_price) / sizing_price
+                        if deviation > 0.15:
+                            import logging
+                            logging.getLogger(__name__).warning(
+                                f"resolve_recorded_entry_price: stale broker fill for {symbol}: "
+                                f"fill=${normalized:.4f} deviates {deviation:.1%} from "
+                                f"sizing_price=${sizing_price:.4f} — "
+                                f"using sizing_price (Massive-backed) as entry"
+                            )
+                            return round(sizing_price, 6)
+                    return normalized
+            except Exception:
+                pass
+
+        for candidate in (sizing_price, quote_price, float(limit_price or 0)):
+            if candidate > 0:
+                return round(candidate, 6)
+
+        return 0.0
+
     try:
-        account_env = broker.fetch_account()
+        with latency_tracker.track("broker.fetch_account"):
+            account_env = broker.fetch_account()
         acct = account_env.payload
         equity = float(acct.get("equity", 100_000))
         buying_power = float(acct.get("buying_power", 100_000))
@@ -669,7 +779,8 @@ def main() -> int:  # noqa: C901
     current_positions_full: dict[str, dict] = {}
     current_positions: dict[str, int] = {}
     try:
-        pos_env = broker.fetch_positions()
+        with latency_tracker.track("broker.fetch_positions"):
+            pos_env = broker.fetch_positions()
         pos_data = pos_env.payload
         position_prices: dict[str, float] = {}
         if isinstance(pos_data, list):
@@ -699,6 +810,21 @@ def main() -> int:  # noqa: C901
                     print(f"  WARN: runtime fresh-price checks had {len(runtime_override_errors)} error(s)")
             except Exception as exc:
                 print(f"  WARN: Could not compute runtime fresh-price overrides: {exc}")
+                # Override computation failed. Scan raw broker prices for obvious anomalies
+                # (e.g. 10x split glitch) and warn so the operator can investigate.
+                for sym, pos in current_positions_full.items():
+                    try:
+                        broker_cp = float(pos.get("current_price") or 0)
+                        broker_ep = float(pos.get("avg_entry_price") or 0)
+                        if broker_ep > 0 and broker_cp > broker_ep * 2.5:
+                            print(
+                                f"  WARN: Possible price anomaly for {sym}: "
+                                f"broker current_price=${broker_cp:.2f} is {broker_cp/broker_ep:.1f}x "
+                                f"avg_entry_price=${broker_ep:.2f}. "
+                                f"Peak update skipped by anomaly guard."
+                            )
+                    except (TypeError, ValueError):
+                        pass
 
             position_prices = {
                 sym: float(pos.get("current_price", 0) or 0)
@@ -761,7 +887,8 @@ def main() -> int:  # noqa: C901
             """Fetch 5-minute bars for intraday momentum analysis."""
             try:
                 # Fetch ~8 hours of 5-minute bars (100 bars = 500 minutes ≈ 8.3 hours)
-                raw = broker.fetch_bars(symbol, timeframe="5Min", limit=100)
+                with latency_tracker.track("broker.fetch_bars", symbol=symbol):
+                    raw = broker.fetch_bars(symbol, timeframe="5Min", limit=100)
                 bar_count = len(raw.payload.get("bars", []))
                 records = _intraday_normalizer.normalize(raw)
                 return (symbol, records, bar_count, None)
@@ -1093,6 +1220,9 @@ def main() -> int:  # noqa: C901
             decision.evidence["macro_regime_raw"] = detected_regime
             decision.evidence["price_regime_raw"] = price_based_regime
         decisions.append(decision)
+    attach_run_context(decisions, run_context)
+
+    for decision in decisions:
         status = "PASS" if decision.action in {"buy", "sell"} and decision.risk_state == "pass" else "SKIP"
         print(f"  [{status}] {decision.symbol}: action={decision.action} risk={decision.risk_state} conf={decision.confidence:.2f}")
         for r in decision.deny_reasons[:2]:
@@ -1148,6 +1278,16 @@ def main() -> int:  # noqa: C901
     actionable, blocked_risk_budget, risk_budget_result = _filter_buys_by_risk_budget(
         actionable, project_root, equity
     )
+    actionable, blocked_cluster_cap = _filter_buys_by_cluster_cap(
+        actionable, current_positions_full, equity
+    )
+    if blocked_cluster_cap:
+        for sym, reason in blocked_cluster_cap:
+            print(f"  🚫 Cluster cap block: {sym} — {reason}")
+        audit_log.log_system_event(
+            "cluster_cap_blocked_buys",
+            details=f"{len(blocked_cluster_cap)} buy(s): {[s for s, _ in blocked_cluster_cap[:5]]}",
+        )
 
     # Log allocation status
     alloc_status = portfolio_allocator.get_allocation_status(
@@ -1293,15 +1433,7 @@ def main() -> int:  # noqa: C901
                     # Only buy submissions create new open trades in the P&L tracker.
                     # Sell submissions are exits and must be recorded only after actual fills
                     # are confirmed during reconciliation.
-                    entry_price = get_mid_price(o.symbol)
-
-                    if entry_price <= 0:
-                        sizing_price = float((sub.sizing_details or {}).get("current_price") or 0)
-                        if sizing_price > 0:
-                            entry_price = round(sizing_price, 4)
-
-                    if entry_price <= 0 and o.limit_price:
-                        entry_price = round(float(o.limit_price), 4)
+                    entry_price = resolve_recorded_entry_price(sub, o.symbol, o.limit_price)
 
                     if entry_price > 0:
                         pnl_tracker.record_submission(
@@ -1402,6 +1534,33 @@ def main() -> int:  # noqa: C901
     audit_log.log_system_event("paper_demo_complete", details=f"decisions={len(decisions)} submitted={len(submissions)}")
 
     _print_summary(decisions, submissions, equity, args.dry_run)
+    from stock_swing.reporting.console_summary import ConsoleSummary
+
+    unrealized = (
+        sum(float(p.get("unrealized_pl", 0) or 0) for p in current_positions_full.values())
+        if current_positions_full else 0.0
+    )
+    ps_sources: dict[str, int] = {}
+    for s in submissions:
+        src = (s.sizing_details or {}).get("price_source", "unknown")
+        ps_sources[src] = ps_sources.get(src, 0) + 1
+
+    console_summary = ConsoleSummary.build(
+        run_id=run_context.run_id if "run_context" in dir() else "unknown",
+        equity=equity,
+        open_position_count=len(current_positions_full),
+        realized_pnl=float(pnl_tracker.state.cumulative_realized_pnl or 0),
+        unrealized_pnl=unrealized,
+        decisions=decisions,
+        submissions=submissions,
+        cluster_blocks=[sym for sym, _ in blocked_cluster_cap] if "blocked_cluster_cap" in dir() else [],
+        risk_budget_pct=risk_budget_result.get("pct_of_equity", 0) if "risk_budget_result" in dir() else 0,
+        stale_symbols=list(stale_symbols) if "stale_symbols" in dir() else [],
+        price_sources=ps_sources,
+        market_regime=regime_for_sizing if "regime_for_sizing" in dir() else "unknown",
+        warnings=[],
+    )
+    console_summary.emit()
     
     # Send Telegram notification if requested
     if args.telegram:

@@ -13,6 +13,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from stock_swing.feature_engine.base_feature import FeatureResult
+from stock_swing.pricing import PriceResolver
 from stock_swing.strategy_engine.base_strategy import BaseStrategy, CandidateSignal
 
 
@@ -149,9 +150,10 @@ class SimpleExitV2Strategy(BaseStrategy):
             logger.info(f"SimpleExitV2: Applied {overrides_applied} price overrides")
         
         logger.info(f"SimpleExitV2: Checking {len(current_positions)} positions")
-        
+
         signals = []
         now = datetime.now(timezone.utc)
+        resolver = PriceResolver()
         
         # Get current prices from features (excluding stale data)
         price_map = {}
@@ -182,33 +184,61 @@ class SimpleExitV2Strategy(BaseStrategy):
             
             avg_entry_price = float(position_data.get("avg_entry_price", 0))
             
-            # Price fallback priority:
-            # 1. Position current_price (fresh from broker)
-            # 2. Feature price_map (only if not stale)
-            # This prevents using stale historical bars when fresh position data exists.
             position_current_price = float(position_data.get("current_price", 0))
             feature_price = price_map.get(symbol)
-            
-            if position_current_price > 0:
-                current_price = position_current_price
-                price_source = "position"
-            elif feature_price:
-                current_price = feature_price
-                price_source = "feature"
-            else:
-                current_price = 0
-                price_source = "none"
+            exit_resolution = resolver.resolve_exit_price(
+                symbol,
+                position_current_price=position_current_price,
+                feature_price=feature_price,
+            )
+            current_price = exit_resolution.price
+            price_source = exit_resolution.source
+            if exit_resolution.warnings:
+                for w in exit_resolution.warnings:
+                    logger.warning(f"SimpleExitV2: {symbol}: {w}")
             
             if avg_entry_price <= 0 or current_price <= 0:
                 continue  # Skip if missing price data
-            
+
+            # --- Entry-price split guard --------------------------------
+            # If avg_entry_price is more than 3x the current_price the entry
+            # is almost certainly a PRE-SPLIT price that has not yet been
+            # corrected by reconcile_split_adjusted_positions.
+            # Acting on it would produce a massive negative return_pct and
+            # fire the stop-loss immediately.
+            # Suppress exit evaluation for this position and log a warning
+            # so the operator knows to run a rebuild / reconcile.
+            if avg_entry_price > current_price * 3.0:
+                logger.warning(
+                    f"SimpleExitV2: SKIPPING {symbol} — avg_entry_price "
+                    f"${avg_entry_price:.2f} is {avg_entry_price / current_price:.1f}x "
+                    f"current_price ${current_price:.2f}. "
+                    f"Likely pre-split entry; reconcile will correct. "
+                    f"No exit signal generated."
+                )
+                continue
+
             # Calculate current return
             return_pct = (current_price - avg_entry_price) / avg_entry_price
-            
+
             # Get or estimate peak price
             peak_price = float(position_data.get("peak_price", current_price))
+
+            # --- Anomaly guard for peak_price ---
+            # If peak_price is >2.5x the entry price AND >2.5x the current price, it is almost
+            # certainly a split-related feed glitch (e.g. Alpaca paper returning 10x prices).
+            # Reset to max(entry, current) to prevent an immediate spurious trailing-stop exit.
+            if avg_entry_price > 0 and peak_price > avg_entry_price * 2.5 and peak_price > current_price * 2.5:
+                logger.warning(
+                    f"SimpleExitV2: ANOMALOUS peak_price detected for {symbol}: "
+                    f"${peak_price:.2f} vs entry=${avg_entry_price:.2f} current=${current_price:.2f} "
+                    f"(ratio {peak_price / avg_entry_price:.1f}x entry) — "
+                    f"resetting to max(entry, current) to suppress spurious trailing stop"
+                )
+                peak_price = max(avg_entry_price, current_price)
+
             peak_return_pct = (peak_price - avg_entry_price) / avg_entry_price
-            
+
             # Update peak if current price is higher
             if current_price > peak_price:
                 peak_price = current_price

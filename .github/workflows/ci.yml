@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "dev"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e . pytest
+
+      - name: Secret scan
+        run: python scripts/secret_scan.py
+
+      - name: Unit tests (core P0-P3 suite)
+        run: |
+          python -m pytest -p no:cacheprovider \
+            tests/unit/test_price_resolver.py \
+            tests/unit/test_incident_replay_klac.py \
+            tests/unit/test_run_context.py \
+            tests/unit/test_trade_event_store.py \
+            tests/unit/test_pnl_tracker_atomic.py \
+            tests/unit/test_reconcile_stale_entry.py \
+            tests/unit/test_p0c_p0d.py \
+            tests/unit/test_paper_executor.py \
+            tests/unit/test_simple_exit_v2_strategy.py \
+            tests/unit/test_reconcile_orders.py \
+            -v

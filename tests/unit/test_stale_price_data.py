@@ -209,5 +209,5 @@ def test_simple_exit_v2_uses_position_price_priority():
     assert len(signals) == 1
     signal = signals[0]
     assert signal.action == "sell"
-    assert signal.metadata["price_source"] == "position"
+    assert signal.metadata["price_source"] == "position_current_price"
     assert signal.metadata["current_price"] == 248.00  # Used position price

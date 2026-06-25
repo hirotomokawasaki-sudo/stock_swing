@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from stock_swing.tracking.trade_event_store import TradeEvent, TradeEventStore
 from stock_swing.utils.strategy_versioning import normalize_strategy_id
 
 logger = logging.getLogger(__name__)
@@ -123,6 +124,7 @@ class PnLTracker:
         self.project_root = project_root
         self.state_path = project_root / self.STATE_FILE
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
+        self.event_store = TradeEventStore(project_root)
         self.state = self._load_state()
 
     # ── Public API ────────────────────────────────────────────────────────────
@@ -185,6 +187,13 @@ class PnLTracker:
         self.state.total_trades += 1
         self.state.last_updated = now
         self._save_state()
+        self.event_store.append(TradeEvent.create(
+            "trade_opened",
+            symbol=symbol,
+            trade_id=trade_id,
+            broker_order_id=broker_order_id,
+            payload={"entry_price": price, "qty": qty, "strategy_id": strategy_id},
+        ))
         return trade_id
 
     def record_exit(
@@ -300,6 +309,19 @@ class PnLTracker:
 
         self.state.last_updated = now
         self._save_state()
+        if closed_trade:
+            self.event_store.append(TradeEvent.create(
+                "trade_closed",
+                symbol=symbol,
+                trade_id=closed_trade.trade_id,
+                broker_order_id=broker_order_id,
+                payload={
+                    "exit_price": exit_price,
+                    "exit_qty": exit_qty,
+                    "exit_reason": exit_reason,
+                    "pnl": closed_trade.pnl,
+                },
+            ))
         return closed_trade
 
     def record_daily_snapshot(
@@ -478,11 +500,19 @@ class PnLTracker:
         return [t for t in self.state.trades if t["status"] == "open"]
 
     def update_open_trade_peaks(self, current_prices: dict[str, float]) -> int:
-        """Update persisted peak_price for open trades using latest market prices."""
+        """Update persisted peak_price for open trades using latest market prices.
+
+        Anomaly guard: if the incoming price is more than 3x the entry_price
+        (or more than 3x the stored peak), the value is likely a data artifact
+        from a split-event feed glitch and is skipped rather than written.
+        This prevents a single bad data point from permanently poisoning
+        peak_price and triggering an immediate trailing-stop exit.
+        """
         if not current_prices:
             return 0
 
         updates = 0
+        skipped_anomalies = 0
         for trade in self.get_open_positions():
             symbol = str(trade.get("symbol") or "")
             if not symbol or symbol not in current_prices:
@@ -499,6 +529,23 @@ class PnLTracker:
                 continue
 
             new_peak = max(peak_price, current_price)
+
+            # --- Anomaly guard ---
+            # A price > 2x entry AND > 2x stored peak almost certainly indicates
+            # a split-related feed error (e.g. Alpaca paper returning 10x price).
+            # Skip the update rather than locking in an impossible peak.
+            reference = max(entry_price, peak_price) if entry_price > 0 else peak_price
+            if reference > 0 and new_peak > reference * 2.5:
+                import logging
+                logging.getLogger(__name__).warning(
+                    f"update_open_trade_peaks: SKIPPED anomalous price for {symbol}: "
+                    f"new_peak=${new_peak:.2f} vs reference=${reference:.2f} "
+                    f"(entry=${entry_price:.2f}, stored_peak=${peak_price:.2f}) — "
+                    f"likely split-feed glitch, not persisted"
+                )
+                skipped_anomalies += 1
+                continue
+
             if stored_peak is None or abs(new_peak - peak_price) > 1e-9:
                 trade["peak_price"] = new_peak
                 updates += 1
@@ -728,7 +775,23 @@ class PnLTracker:
         )
 
     def _save_state(self) -> None:
-        self.state_path.write_text(
-            json.dumps(asdict(self.state), indent=2, ensure_ascii=False),
-            encoding="utf-8",
+        import tempfile
+
+        content = json.dumps(asdict(self.state), indent=2, ensure_ascii=False)
+        dir_path = self.state_path.parent
+        fd, tmp_path_str = tempfile.mkstemp(
+            dir=str(dir_path), prefix=".pnl_state.", suffix=".tmp"
         )
+        tmp_path = Path(tmp_path_str)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as fh:
+                fh.write(content)
+                fh.flush()
+                os.fsync(fh.fileno())
+            tmp_path.replace(self.state_path)
+        except Exception:
+            try:
+                tmp_path.unlink(missing_ok=True)
+            except Exception:
+                pass
+            raise
