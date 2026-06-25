@@ -1,14 +1,50 @@
-"""Structured console summary builder for paper_demo (P4-C)."""
+"""Structured console summary builder and alert system (C0/C1)."""
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
+import os
+import tempfile
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 
 @dataclass
+class ConsoleAlert:
+    severity: str  # "critical" | "warning" | "info"
+    code: str
+    message: str
+    symbol: str | None = None
+    details: dict[str, Any] = field(default_factory=dict)
+
+
+def _compute_run_status(
+    alerts: list[ConsoleAlert],
+    guardrail_status: str,
+    broker_tracker_mismatch_count: int,
+    stale_price_count: int,
+    api_error_count: int,
+) -> str:
+    """Determine HALTED / DEGRADED / OK."""
+    has_critical = any(a.severity == "critical" for a in alerts)
+    if (
+        guardrail_status == "halted"
+        or broker_tracker_mismatch_count > 0
+        or has_critical
+    ):
+        return "HALTED"
+    if stale_price_count > 0 or api_error_count > 0:
+        return "DEGRADED"
+    warning_count = sum(1 for a in alerts if a.severity == "warning")
+    if warning_count > 0:
+        return "DEGRADED"
+    return "OK"
+
+
+@dataclass
 class ConsoleSummary:
+    # --- core (backward compat) ---
     run_id: str
     timestamp: str
     equity: float
@@ -28,39 +64,106 @@ class ConsoleSummary:
     market_regime: str = "unknown"
     warnings: list[str] = field(default_factory=list)
 
+    # --- C0/C1 additions ---
+    experiment_id: str = "unknown"
+    run_status: str = "OK"  # OK / DEGRADED / HALTED
+    guardrail_status: str = "unknown"
+    duration_seconds: float | None = None
+    alerts: list[ConsoleAlert] = field(default_factory=list)
+    missing_metrics: list[str] = field(default_factory=list)
+
+    # --- C2 additions ---
+    price_integrity: dict[str, Any] = field(default_factory=dict)
+    api_metrics: dict[str, Any] = field(default_factory=dict)
+    ai_metrics: dict[str, Any] = field(default_factory=dict)
+
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "run_id": self.run_id,
-            "timestamp": self.timestamp,
-            "equity": round(self.equity, 2),
-            "open_position_count": self.open_position_count,
-            "realized_pnl": round(self.realized_pnl, 2),
-            "unrealized_pnl": round(self.unrealized_pnl, 2),
-            "signals": {
-                "total": self.signals_total,
+        base = {
+            "run": {
+                "mode": "paper",
+                "status": self.run_status,
+                "run_id": self.run_id,
+                "experiment_id": self.experiment_id,
+                "timestamp": self.timestamp,
+                "duration_seconds": self.duration_seconds,
+                "guardrail_status": self.guardrail_status,
+            },
+            "health": {
+                "status": self.run_status,
+                "critical_count": sum(1 for a in self.alerts if a.severity == "critical"),
+                "warning_count": sum(1 for a in self.alerts if a.severity == "warning"),
+                "stale_price_count": len(self.stale_symbols),
+                "broker_tracker_mismatch_count": 0,
+                "api_error_count": self.api_metrics.get("error_count", 0),
+                "guardrail_status": self.guardrail_status,
+            },
+            "portfolio": {
+                "equity": round(self.equity, 2),
+                "realized_pnl": round(self.realized_pnl, 2),
+                "unrealized_pnl": round(self.unrealized_pnl, 2),
+                "total_pnl": round(self.realized_pnl + self.unrealized_pnl, 2),
+                "open_positions": self.open_position_count,
+            },
+            "decision_funnel": {
+                "candidates": self.signals_total,
                 "buy": self.signals_buy,
                 "sell": self.signals_sell,
                 "deny": self.signals_deny,
-            },
-            "orders": {
                 "submitted": self.orders_submitted,
                 "rejected": self.orders_rejected,
+                "blocked": len(self.cluster_blocks),
             },
             "risk": {
                 "cluster_blocks": self.cluster_blocks,
                 "risk_budget_pct": round(self.risk_budget_pct, 3),
+                "market_regime": self.market_regime,
             },
-            "data_quality": {
-                "stale_symbols": self.stale_symbols,
-                "price_sources": self.price_sources,
+            "price_integrity": self.price_integrity
+            or {
+                "fresh_price_count": len(self.price_sources),
+                "stale_price_count": len(self.stale_symbols),
+                "top_stale_symbols": self.stale_symbols[:5],
+                "price_source_breakdown": self.price_sources,
             },
-            "market_regime": self.market_regime,
-            "warnings": self.warnings,
+            "api": self.api_metrics,
+            "ai": self.ai_metrics,
+            "alerts": [asdict(a) for a in self.alerts],
+            "missing_metrics": self.missing_metrics,
         }
+        return base
 
-    def emit(self) -> None:
-        """Print machine-readable block to stdout."""
+    def save_json(self, path: Path) -> None:
+        """Atomically save summary JSON to path."""
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = json.dumps(self.to_dict(), ensure_ascii=False, indent=2)
+        fd, tmp = tempfile.mkstemp(
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            dir=str(path.parent),
+        )
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(payload)
+                fh.write("\n")
+                fh.flush()
+                os.fsync(fh.fileno())
+            os.replace(tmp, path)
+        finally:
+            if os.path.exists(tmp):
+                os.unlink(tmp)
+
+    def emit(self, save_path: Path | None = None) -> None:
+        """Print machine-readable block + render text. Optionally save JSON."""
+        from stock_swing.reporting.console_renderer import ConsoleRenderer
+
+        renderer = ConsoleRenderer()
+        print(renderer.render(self))
         print("\nCONSOLE_SUMMARY_JSON " + json.dumps(self.to_dict(), ensure_ascii=False))
+        if save_path is not None:
+            try:
+                self.save_json(save_path)
+            except Exception as exc:
+                print(f"  WARN: console summary save failed: {exc}")
 
     @classmethod
     def build(
@@ -79,14 +182,90 @@ class ConsoleSummary:
         price_sources: dict[str, int] | None = None,
         market_regime: str = "unknown",
         warnings: list[str] | None = None,
+        # C0/C1 additions (all optional)
+        experiment_id: str = "unknown",
+        guardrail_status: str = "unknown",
+        duration_seconds: float | None = None,
+        extra_alerts: list[ConsoleAlert] | None = None,
+        # C2 additions (all optional)
+        price_integrity: dict[str, Any] | None = None,
+        api_metrics: dict[str, Any] | None = None,
+        ai_metrics: dict[str, Any] | None = None,
     ) -> "ConsoleSummary":
         decisions = decisions or []
         submissions = submissions or []
+        stale_symbols = stale_symbols or []
+        extra_alerts = extra_alerts or []
+
         buy_dec = sum(1 for d in decisions if getattr(d, "action", "") == "buy")
         sell_dec = sum(1 for d in decisions if getattr(d, "action", "") == "sell")
         deny_dec = sum(1 for d in decisions if getattr(d, "action", "") == "deny")
         submitted = sum(1 for s in submissions if getattr(s, "status", "") == "submitted")
         rejected = sum(1 for s in submissions if getattr(s, "status", "") == "rejected")
+
+        # Auto-generate alerts
+        alerts: list[ConsoleAlert] = list(extra_alerts)
+        missing: list[str] = []
+
+        if stale_symbols:
+            alerts.append(
+                ConsoleAlert(
+                    severity="warning",
+                    code="stale_price_detected",
+                    message=f"{len(stale_symbols)} symbol(s) had stale price data",
+                    details={"symbols": stale_symbols[:10]},
+                )
+            )
+
+        api_err = (api_metrics or {}).get("error_count", 0)
+        if api_err > 0:
+            alerts.append(
+                ConsoleAlert(
+                    severity="warning",
+                    code="api_errors",
+                    message=f"{api_err} API error(s) during run",
+                    details={"error_count": api_err},
+                )
+            )
+
+        token_used = (ai_metrics or {}).get("input_tokens", 0) + (ai_metrics or {}).get("output_tokens", 0)
+        token_budget = (ai_metrics or {}).get("daily_token_budget", 300_000)
+        if token_budget and token_used / max(token_budget, 1) > 0.80:
+            alerts.append(
+                ConsoleAlert(
+                    severity="warning",
+                    code="token_budget_high",
+                    message=f"Token usage {token_used}/{token_budget} exceeds 80%",
+                )
+            )
+
+        if guardrail_status == "halted":
+            alerts.append(
+                ConsoleAlert(
+                    severity="critical",
+                    code="guardrail_halted",
+                    message="Guardrail circuit breaker is HALTED",
+                )
+            )
+
+        # Keep a stable severity-first order for tests and downstream consumers.
+        order = {"critical": 0, "warning": 1, "info": 2}
+        alerts = sorted(alerts, key=lambda alert: order.get(alert.severity, 9))
+
+        # Track missing metrics
+        if equity == 0.0:
+            missing.append("equity")
+        if market_regime == "unknown":
+            missing.append("market_regime")
+
+        status = _compute_run_status(
+            alerts=alerts,
+            guardrail_status=guardrail_status,
+            broker_tracker_mismatch_count=0,
+            stale_price_count=len(stale_symbols),
+            api_error_count=api_err,
+        )
+
         return cls(
             run_id=run_id,
             timestamp=datetime.now(timezone.utc).isoformat(),
@@ -102,8 +281,17 @@ class ConsoleSummary:
             orders_rejected=rejected,
             cluster_blocks=cluster_blocks or [],
             risk_budget_pct=risk_budget_pct,
-            stale_symbols=stale_symbols or [],
+            stale_symbols=stale_symbols,
             price_sources=price_sources or {},
             market_regime=market_regime,
             warnings=warnings or [],
+            experiment_id=experiment_id,
+            run_status=status,
+            guardrail_status=guardrail_status,
+            duration_seconds=duration_seconds,
+            alerts=alerts,
+            missing_metrics=missing,
+            price_integrity=price_integrity or {},
+            api_metrics=api_metrics or {},
+            ai_metrics=ai_metrics or {},
         )

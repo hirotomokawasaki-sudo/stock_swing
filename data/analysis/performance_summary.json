@@ -1,0 +1,28 @@
+{
+  "generated_at": "2026-06-24T08:14:43.535483+00:00",
+  "semantics": {
+    "realized_pnl": "sum of pnl from all closed trades in tracker",
+    "unrealized_pnl": "sum of unrealized_pl from broker positions",
+    "total_pnl": "realized_pnl + unrealized_pnl",
+    "account_equity": "broker account.equity (includes cash + open positions)",
+    "baseline_equity": "equity at tracking start"
+  },
+  "baseline_equity": 1000000.0,
+  "account_equity": 1010443.23,
+  "realized_pnl": 26055.49,
+  "unrealized_pnl": 39547.47,
+  "total_pnl": 65602.96,
+  "pnl_vs_baseline": 10443.23,
+  "closed_trades": 192,
+  "open_trades": 17,
+  "winning_trades": 99,
+  "losing_trades": 92,
+  "win_rate": 0.5156,
+  "profit_factor": 1.1837,
+  "gross_win": 167869.85,
+  "gross_loss": 141814.36,
+  "consistency_check": {
+    "realized_matches_tracker": true,
+    "note": "account_equity != baseline + total_pnl is normal due to cash flows and timing"
+  }
+}

@@ -1408,6 +1408,34 @@ def main() -> int:  # noqa: C901
             o = d.proposed_order
             print(f"    {o.side.upper()} {o.qty} {o.symbol} type={o.order_type} tif={o.time_in_force}")
         _print_summary(decisions, [], equity, args.dry_run)
+        from stock_swing.reporting.console_summary import ConsoleSummary
+
+        console_summary = ConsoleSummary.build(
+            run_id=run_context.run_id if "run_context" in dir() else "unknown",
+            equity=equity,
+            open_position_count=len(current_positions_full),
+            realized_pnl=float(pnl_tracker.state.cumulative_realized_pnl or 0),
+            unrealized_pnl=(
+                sum(float(p.get("unrealized_pl", 0) or 0) for p in current_positions_full.values())
+                if current_positions_full else 0.0
+            ),
+            decisions=decisions,
+            submissions=[],
+            cluster_blocks=[sym for sym, _ in blocked_cluster_cap] if "blocked_cluster_cap" in dir() else [],
+            risk_budget_pct=risk_budget_result.get("pct_of_equity", 0) if "risk_budget_result" in dir() else 0,
+            stale_symbols=list(stale_symbols) if "stale_symbols" in dir() else [],
+            price_sources={},
+            market_regime=regime_for_sizing if "regime_for_sizing" in dir() else "unknown",
+            warnings=[],
+            experiment_id=experiment_context.experiment_id if experiment_context is not None else "unknown",
+            guardrail_status=_breaker_state.status if "_breaker_state" in dir() and _breaker_state is not None else "unknown",
+            api_metrics=_build_api_metrics(latency_tracker),
+            price_integrity=_build_price_integrity(
+                stale_symbols if "stale_symbols" in dir() else [],
+                {},
+            ),
+        )
+        console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
         return finish(0, decisions=decisions, equity_value=equity, extra={"reason": "dry_run"})
 
     executor = PaperExecutor(runtime_mode=runtime_mode, broker_client=broker)
@@ -1676,8 +1704,15 @@ def main() -> int:  # noqa: C901
         price_sources=ps_sources,
         market_regime=regime_for_sizing if "regime_for_sizing" in dir() else "unknown",
         warnings=[],
+        experiment_id=experiment_context.experiment_id if experiment_context is not None else "unknown",
+        guardrail_status=_breaker_state.status if "_breaker_state" in dir() and _breaker_state is not None else "unknown",
+        api_metrics=_build_api_metrics(latency_tracker),
+        price_integrity=_build_price_integrity(
+            stale_symbols if "stale_symbols" in dir() else [],
+            ps_sources,
+        ),
     )
-    console_summary.emit()
+    console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
     
     # Send Telegram notification if requested
     if args.telegram:
@@ -1691,6 +1726,65 @@ def main() -> int:  # noqa: C901
         )
 
     return finish(0, decisions=decisions, submissions=submissions, equity_value=equity)
+
+
+def _build_api_metrics(latency_tracker) -> dict:
+    """Build API metrics dict from LatencyTracker records."""
+    if latency_tracker is None:
+        return {}
+    records = getattr(latency_tracker, "_records", [])
+    if not records:
+        return {}
+    durations = [r.duration_ms for r in records if r.status == "ok"]
+    errors = [r for r in records if r.status == "error"]
+    durations_sorted = sorted(durations)
+    n = len(durations_sorted)
+    p50 = durations_sorted[int(n * 0.5)] if n > 0 else None
+    p95 = durations_sorted[int(n * 0.95)] if n > 0 else None
+
+    # Slowest endpoints
+    from collections import defaultdict
+
+    ep_max: dict[str, float] = defaultdict(float)
+    for r in records:
+        ep_max[r.endpoint] = max(ep_max[r.endpoint], r.duration_ms)
+    slowest = sorted(
+        [{"endpoint": ep, "duration_ms": ms} for ep, ms in ep_max.items()],
+        key=lambda x: -x["duration_ms"],
+    )[:3]
+
+    return {
+        "call_count": len(records),
+        "error_count": len(errors),
+        "p50_latency_ms": round(p50, 1) if p50 is not None else None,
+        "p95_latency_ms": round(p95, 1) if p95 is not None else None,
+        "slowest_endpoints": slowest,
+    }
+
+
+def _build_price_integrity(
+    stale_symbols: set | list,
+    price_sources: dict[str, int],
+    momentum_results: list | None = None,
+) -> dict:
+    """Build price integrity dict for ConsoleSummary."""
+    del momentum_results
+
+    stale_list = list(stale_symbols) if stale_symbols else []
+    total = sum(price_sources.values()) if price_sources else 0
+    stale_count = len(stale_list)
+    fresh_count = max(total - stale_count, 0)
+
+    # Count fallback sources (anything that isn't "massive")
+    fallback_count = sum(v for k, v in (price_sources or {}).items() if k != "massive")
+
+    return {
+        "fresh_price_count": fresh_count,
+        "stale_price_count": stale_count,
+        "fallback_price_count": fallback_count,
+        "top_stale_symbols": stale_list[:5],
+        "price_source_breakdown": price_sources or {},
+    }
 
 
 def _save_decisions(decisions: list[DecisionRecord], store: StageStore, ts_tag: str) -> None:

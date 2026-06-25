@@ -1,0 +1,81 @@
+{
+  "run": {
+    "mode": "paper",
+    "status": "DEGRADED",
+    "run_id": "paper_demo-20260625T021104Z-38e9f0b0",
+    "experiment_id": "exp-20260625-swing-v1-prompt-v1-a2057e74-63890d53",
+    "timestamp": "2026-06-25T02:11:17.336230+00:00",
+    "duration_seconds": null,
+    "guardrail_status": "ok"
+  },
+  "health": {
+    "status": "DEGRADED",
+    "critical_count": 0,
+    "warning_count": 1,
+    "stale_price_count": 0,
+    "broker_tracker_mismatch_count": 0,
+    "api_error_count": 5,
+    "guardrail_status": "ok"
+  },
+  "portfolio": {
+    "equity": 1022168.9,
+    "realized_pnl": 25577.73,
+    "unrealized_pnl": 51388.04,
+    "total_pnl": 76965.77,
+    "open_positions": 13
+  },
+  "decision_funnel": {
+    "candidates": 17,
+    "buy": 16,
+    "sell": 1,
+    "deny": 0,
+    "submitted": 0,
+    "rejected": 0,
+    "blocked": 0
+  },
+  "risk": {
+    "cluster_blocks": [],
+    "risk_budget_pct": 0.029,
+    "market_regime": "neutral"
+  },
+  "price_integrity": {
+    "fresh_price_count": 0,
+    "stale_price_count": 0,
+    "fallback_price_count": 0,
+    "top_stale_symbols": [],
+    "price_source_breakdown": {}
+  },
+  "api": {
+    "call_count": 18,
+    "error_count": 5,
+    "p50_latency_ms": 1992.1,
+    "p95_latency_ms": 2016.3,
+    "slowest_endpoints": [
+      {
+        "endpoint": "broker.fetch_bars",
+        "duration_ms": 4475.6
+      },
+      {
+        "endpoint": "broker.fetch_account",
+        "duration_ms": 488.3
+      },
+      {
+        "endpoint": "broker.fetch_positions",
+        "duration_ms": 485.6
+      }
+    ]
+  },
+  "ai": {},
+  "alerts": [
+    {
+      "severity": "warning",
+      "code": "api_errors",
+      "message": "5 API error(s) during run",
+      "symbol": null,
+      "details": {
+        "error_count": 5
+      }
+    }
+  ],
+  "missing_metrics": []
+}
