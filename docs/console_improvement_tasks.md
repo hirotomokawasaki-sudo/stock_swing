@@ -17,7 +17,7 @@
 | 個別株 PF | **0.777**（123 trades, WR 44%） |
 | 全体 PF | 1.180 |
 | 稼働 cron | 12本 全 consecutiveErrors=0 |
-| テスト | 480 passed / 1 known fail |
+| テスト | 496 passed / 1 known fail |
 
 ---
 
@@ -38,34 +38,46 @@
 | **R0** | **2026-06-25** | **ExperimentContext + GuardrailEngine を paper_demo に接続。warning_only モード稼働開始** |
 | **R1-A** | **2026-06-25** | **exit_signal_fired / exit_check ログを追加。次回 run で Case A-D を判定可能** |
 | **R2-C** | **2026-06-25** | **個別株 size_multiplier = 0.5x 適用（env: STOCK_POSITION_SIZE_MULTIPLIER）** |
+| **R6-A/B/C/D(partial)** | **2026-06-25** | **Console C1+C2: Run Health・text renderer・Price Integrity・API/Token Monitor。テキスト表示・JSON 保存・alert 体系** |
 
 ---
 
 ## スケジュール概要
 
 ```
-2026-06-25（本日）  ✅ R0 完了（P6/P9 接続）
-                   ✅ R1-A 完了（exit ログ追加）
-                   ✅ R2-C 完了（個別株サイズ 0.5x）
+2026-06-25（本日）  ✅ R0   paper_demo に P6/P9 接続（guardrail + experiment tracking）
+                   ✅ R1-A exit シグナル発火ログ追加
+                   ✅ R2-C 個別株 size_multiplier = 0.5x 適用
+                   ✅ R6 C1 Console Run Health + text renderer + alert 体系
+                   ✅ R6 C2 Price Integrity + API/Token Monitor
 
-2026-06-26〜27     🔲 R1-A 結果確認（次の paper_demo run でログを確認 → Case 特定）
+2026-06-26〜27     🔲 R1-A 結果確認（次の paper_demo run でログ確認 → Case 特定）
                    🔲 R1-B 着手（exit_reason ライフサイクル修復）
 
 2026-06-28〜07-04  🔲 R1 完了（R1-C レポート + R1-D E2E テスト）
                    🔲 R2-A 着手（asset_class フィールド付与）
 
+2026-07-07〜07-09  🔲 Guardrail warning ログ 2 週間確認完了 → 閾値調整
+                   🔲 R6 C3 着手（Decision Funnel deny_reasons + Broker/Tracker パネル）
+
 2026-07-07〜07-14  🔲 R2 完了（R2-A/B/D：ETF/株 完全分離 + 別メトリクス）
                    🔲 R3-A 着手（反実仮想スクリプト ← R1 完了が前提）
-                   🔲 R6-A/B 着手（Run Health / Price Integrity パネル）
+                   🔲 R6 C3 完了（Decision Funnel + Broker/Tracker パネル）
 
-2026-07-15〜07-21  🔲 R3 完了（反実仮想検証 + exit 改善案評価）
+2026-07-14〜07-18  🔲 R6 C4 着手（Attribution パネル ← R1 完了が前提）
                    🔲 R4-A 着手（signal_strength 飽和の根本原因調査）
 
+2026-07-15〜07-21  🔲 R3 完了（反実仮想検証 + exit 改善案評価）
+                   🔲 R6 C6 着手（Remote Web 読み取り専用ダッシュボード）
+
+2026-07-21〜07-28  🔲 R6 C6 完了（スマートフォン読み取り専用アクセス）
+
 2026-07-22〜08-04  🔲 R4 完了（signal_strength サブコンポーネント実装 + 分布改善）
-                   🔲 R6 完了（コンソール全パネル + リモート読み取り専用）
+                   🔲 R6 C4 完了（Attribution パネル） → R6 全体完了
 
 2026-08-05〜08-18  🔲 R5 着手（昇格・降格ゲート定義 ← R2/R4 完了が前提）
-                   🔲 Guardrail warning_only → hard-halt 有効化（2週間キャリブレーション完了後）
+                   🔲 Guardrail warning_only → hard-halt 有効化（07-09 キャリブレーション完了後）
+                   🔲 R6 C5 着手（Risk Dashboard ← R2/R4 完了が前提）
 
 2026-09            🔲 R7（Corporate Action / WebSocket 検討 / ニュース感情評価）
 
@@ -270,18 +282,49 @@ experiment_id が全 run に付与
 
 ---
 
-### 🟡 R6: コンソール・リモート監視（2026-07-07〜08-04 並行）
+### 🟡 R6: コンソール・リモート監視（C-batch 対応）
 
-**設計原則**: 読み取り専用のみ。遠隔 buy/sell/cancel は実装しない
+**設計原則**: 読み取り専用のみ。遠隔 buy/sell/cancel は実装しない  
+**C-batch 対応表**: C1=R6-A/D、C2=R6-B/C、C3=R6-D完成、C4=R6-E、C5=R5連携、C6=R6-F
 
-| サブタスク | 内容 | 状態 | 目標日 |
-|---|---|---|---|
-| R6-A | Run Health パネル（guardrail 状態 / cron 実行時間 / attribution %） | 🔲 | 07-07〜07-11 |
-| R6-B | Price Integrity パネル（stale price 件数 / broker 乖離 / override 一覧） | 🔲 | 07-07〜07-11 |
-| R6-C | Token / API モニター（呼び出し数 / コスト / context_pack 分布） | 🔲 | 07-14〜07-18 |
-| R6-D | Decision Funnel パネル（scanned→buy/deny/hold の件数 + deny 理由分布） | 🔲 | 07-14〜07-18 |
-| R6-E | Attribution パネル（ETF/Stock 別 PF・exit reason 別 PF）← R1/R4 完了後 | 🔲 | 08-01〜08-04 |
-| R6-F | リモート読み取り専用アクセス（トークン認証 + レート制限） | 🔲 | 07-21〜07-28 |
+| サブタスク | C-batch | 内容 | 状態 | 目標日 |
+|---|---|---|---|---|
+| **R6-A** | **C1** | **Run Health テキスト表示（✅/⚠️/🚨 + experiment_id + guardrail）** | **✅ 2026-06-25** | — |
+| **R6-B** | **C2** | **Price Integrity パネル（fresh/stale/fallback カウント + sources breakdown）** | **✅ 2026-06-25** | — |
+| **R6-C** | **C2** | **API/Token モニター（p50/p95 latency + error_count + context_pack 分布）** | **✅ 2026-06-25** | — |
+| R6-D | C3 | Decision Funnel（deny_reasons 集計 + Broker/Tracker 差分パネル） | 🔲 | 07-07〜07-14 |
+| R6-E | C4 | Attribution パネル（ETF/Stock 別 PF・exit reason 別 PF）← R1 完了後 | 🔲 | 07-14〜08-04 |
+| R6-F | C6 | Remote Web 読み取り専用（スマートフォン対応・トークン認証） | 🔲 | 07-15〜07-28 |
+| — | C5 | Risk Dashboard（ETF/株 別昇格状態）← R5 と並行 | 🔲 | 08-05〜 |
+
+**C1 + C2 完了確認（2026-06-25）**
+- `ConsoleSummary`: ConsoleAlert / OK・DEGRADED・HALTED ステータス / save_json() 追加
+- `ConsoleRenderer`: 6セクション（RUN HEALTH / ALERTS / PORTFOLIO / PRICE INTEGRITY / DECISION FUNNEL / API・AI COST）
+- paper_demo: experiment_id / guardrail_status / api_metrics / price_integrity を自動収集・渡す
+- 出力先: `reports/console/latest_console_summary.json`（毎 run アトミック更新）
+- commit: `b27716e` / 19 new tests
+
+**dry-run 確認済み出力サンプル**
+```
+⚠️  RUN HEALTH  DEGRADED
+────────────────────────────────────────────────────────
+  run_id    = paper_demo-20260625T021104Z-38e9f0b0
+  exp_id    = exp-20260625-swing-v1-prompt-v1-...
+  guardrail = ok
+
+PORTFOLIO
+  equity        = $1,022,168.90
+  open_positions= 17
+
+PRICE INTEGRITY
+  fresh=0  stale=0  fallback=0
+
+DECISION FUNNEL
+  candidates=17  buy=16  sell=1  deny=0  blocked=0
+
+API / AI COST
+  api_calls=18  errors=5  p50=1992ms  p95=2016ms
+```
 
 ---
 
@@ -317,9 +360,11 @@ experiment_id が全 run に付与
 
 ```
 今日中（済み）:
-  ✅ R0  paper_demo に ExperimentContext + GuardrailEngine 接続
+  ✅ R0   paper_demo に P6/P9 接続
   ✅ R1-A exit シグナル発火ログ追加
   ✅ R2-C 個別株 size_multiplier = 0.5x 適用
+  ✅ R6 C1 Console text renderer + alert 体系（Run Health / Portfolio / Funnel）
+  ✅ R6 C2 Price Integrity + API/Token Monitor パネル
 
 明日（06-26）:
   🔲 次の本番 paper_demo run のログを確認 → Case A/B/C/D を特定
@@ -331,8 +376,9 @@ experiment_id が全 run に付与
 
 来週（07-07〜07-14）:
   🔲 R2 完了（ETF/Stock 完全分離）
-  🔲 R3-A 着手（反実仮想スクリプト）
-  🔲 R6-A/B 着手（Run Health + Price Integrity パネル）
+  🔲 R3-A 着手（反実仮想スクリプト ← R1 完了次第）
+  🔲 R6 C3 着手（Decision Funnel deny_reasons + Broker/Tracker パネル）
+  🔲 Guardrail 閾値キャリブレーション完了確認（07-09 目安）
 ```
 
 ---
@@ -360,6 +406,6 @@ experiment_id が全 run に付与
 | 🟠 高（R1後） | R3 | 🔲 未着手 | 07-07〜07-14 |
 | 🟠 高 | R4 | 🔲 未着手 | 07-15〜08-04 |
 | 🟡 中〜高 | R5 | 🔲 未着手 | R2/R4 完了後（08-05〜） |
-| 🟡 中〜高 | R6 | 🔲 未着手 | 07-07〜08-04（R2/R4 と並行） |
+| 🟡 中〜高 | R6 | 🔲 C1/C2 ✅ / C3〜C6 残り | C3: 07-07〜、C4: R1後、C6: 07-21〜 |
 | 🟢 中 | R7 | 🔲 未着手 | 09 月 |
 | 🔵 長期 | R8 | 🔲 未着手 | 10 月以降 |
