@@ -88,7 +88,7 @@ def test_paper_executor_submit_success() -> None:
     assert submission.decision_id == "test-decision-1"
     assert submission.symbol == "AAPL"
     assert submission.side == "buy"
-    assert submission.qty == 60
+    assert submission.qty == 30
     assert submission.status == "submitted"
     assert submission.broker_order_id == "broker-order-123"
     
@@ -97,7 +97,7 @@ def test_paper_executor_submit_success() -> None:
         symbol="AAPL",
         side="buy",
         order_type="market",
-        qty=60,
+        qty=30,
         time_in_force="day",
         limit_price=None,
     )

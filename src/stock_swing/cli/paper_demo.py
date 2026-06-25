@@ -15,6 +15,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 import re
 import sys
@@ -26,6 +27,7 @@ from pathlib import Path
 
 project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root / "src"))
+logger = logging.getLogger(__name__)
 
 
 def _load_env(env_path: Path) -> None:
@@ -489,11 +491,38 @@ def main() -> int:  # noqa: C901
 
     _banner("stock_swing Paper Trading Demo")
     run_context = RunContext.create("paper_demo")
+    experiment_context = None
     print(f"  Symbols   : {', '.join(symbols)}")
     print(f"  Timeframe : {args.timeframe} x {args.bar_limit} bars")
     print(f"  Dry run   : {args.dry_run}")
     print(f"  Run ID    : {run_context.run_id}")
     print()
+
+    # --- R0-A: ExperimentContext ---
+    _section("ExperimentContext")
+    try:
+        import yaml as _yaml
+        from stock_swing.experiments import ExperimentRegistry, build_experiment_context
+
+        _exp_config_path = project_root / "config" / "experiments" / "default_experiment.yaml"
+        _exp_raw = _yaml.safe_load(_exp_config_path.read_text(encoding="utf-8")) if _exp_config_path.exists() else {}
+        experiment_context = build_experiment_context(
+            repo_root=project_root,
+            run_id=run_context.run_id,
+            strategy_version=str(_exp_raw.get("strategy_version", "swing-v1")),
+            prompt_version=str(_exp_raw.get("prompt_version", "prompt-v1")),
+            feature_schema_version=str(_exp_raw.get("feature_schema_version", "features-v1")),
+            config_payload=_exp_raw,
+            mode=str(_exp_raw.get("mode", "paper")),
+        )
+        _exp_registry = ExperimentRegistry(project_root / "data" / "experiments")
+        _exp_registry.register(experiment_context)
+        print(f"  experiment_id : {experiment_context.experiment_id}")
+        print(f"  config_hash   : {experiment_context.config_hash}")
+    except Exception as _exc:
+        logger.warning("ExperimentContext setup failed (non-fatal): %s", _exc)
+        experiment_context = None
+    # --- end R0-A ---
 
     # 0. Manual Kill Switch Check (GW emergency stop)
     MANUAL_KILL_SWITCH_FILE = project_root / "data" / "kill_switch_manual.txt"
@@ -533,6 +562,40 @@ def main() -> int:  # noqa: C901
     except RuntimeError as exc:
         print(f"  ERROR: {exc}")
         return finish(1)
+
+    # --- R0-B: Guardrail startup check ---
+    _section("Guardrail")
+    _breaker_path = project_root / "data" / "guardrails" / "circuit_breaker.json"
+    try:
+        import yaml as _gyaml
+        from stock_swing.guardrails.rule_engine import GuardrailEngine, load_rules_from_dict
+        from stock_swing.guardrails.circuit_breaker import CircuitBreakerStore
+        from stock_swing.guardrails.pre_trade_check import check_startup, should_skip_ai, apply_to_buy_candidate, post_run_update
+
+        _guardrail_config_path = project_root / "config" / "guardrails" / "autonomous_stop.yaml"
+        _guardrail_raw = _gyaml.safe_load(_guardrail_config_path.read_text(encoding="utf-8")) if _guardrail_config_path.exists() else {}
+        _warning_only = bool(_guardrail_raw.get("paper_warning_only", True))
+        _guardrail_rules = load_rules_from_dict(_guardrail_raw)
+        _guard_engine = GuardrailEngine(_guardrail_rules, warning_only=_warning_only)
+        _breaker_store = CircuitBreakerStore(_breaker_path)
+        _breaker_state = check_startup(_breaker_store)
+
+        if _warning_only:
+            print("  OK: Guardrail ACTIVE (warning_only=True — no hard blocks yet)")
+        elif _breaker_state.is_halted:
+            print(f"  🚨 Guardrail HALTED: {_breaker_state.reason} — buys will be blocked")
+        else:
+            print(f"  OK: Guardrail status={_breaker_state.status}")
+    except Exception as _exc:
+        logger.warning("Guardrail setup failed (non-fatal): %s", _exc)
+        _guard_engine = None
+        _breaker_store = None
+        _breaker_state = None
+        _warning_only = True
+        should_skip_ai = None
+        apply_to_buy_candidate = None
+        post_run_update = None
+    # --- end R0-B startup ---
 
     # 3. Market hours
     _section("3. Market Hours")
@@ -1074,6 +1137,20 @@ def main() -> int:  # noqa: C901
     print()
     print(f"  Exit Signals:")
     print(f"    SimpleExitV2:     {len(exit_signals)} signal(s) (with trailing stop)")
+    for _es in exit_signals:
+        _notes = " ".join((_es.evidence or {}).get("notes") or []) if hasattr(_es, "evidence") and isinstance(_es.evidence, dict) else ""
+        if not _notes:
+            _notes = str(getattr(_es, "reasoning", "") or "")
+        _trigger, _reason = _classify_exit_reason_from_notes(_notes)
+        logger.info(
+            "exit_signal_generated symbol=%s trigger=%s reason=%s strength=%.2f",
+            _es.symbol,
+            _trigger,
+            _reason,
+            float(getattr(_es, "signal_strength", 0) or 0),
+        )
+    if not exit_signals:
+        logger.info("exit_signals_none: no positions triggered exit criteria this run")
     if cooldown_result:
         metrics = cooldown_result.metrics
         if metrics.in_window:
@@ -1221,6 +1298,11 @@ def main() -> int:  # noqa: C901
             decision.evidence["price_regime_raw"] = price_based_regime
         decisions.append(decision)
     attach_run_context(decisions, run_context)
+    if experiment_context is not None:
+        for _d in decisions:
+            if isinstance(getattr(_d, "evidence", None), dict):
+                _d.evidence.setdefault("experiment_id", experiment_context.experiment_id)
+                _d.evidence.setdefault("config_hash", experiment_context.config_hash)
 
     for decision in decisions:
         status = "PASS" if decision.action in {"buy", "sell"} and decision.risk_state == "pass" else "SKIP"
@@ -1281,6 +1363,24 @@ def main() -> int:  # noqa: C901
     actionable, blocked_cluster_cap = _filter_buys_by_cluster_cap(
         actionable, current_positions_full, equity
     )
+    if _guard_engine is not None and apply_to_buy_candidate is not None and not _warning_only:
+        _guard_metrics_now = {
+            "stale_price_event_count": len(stale_symbols) if "stale_symbols" in dir() else 0,
+            "broker_tracker_mismatch_count": 0,
+        }
+        _guard_decision_now = _guard_engine.evaluate(_guard_metrics_now)
+        _guardrail_blocked = []
+        _new_actionable = []
+        for _cand in actionable:
+            _cand_dict = {"symbol": getattr(_cand, "symbol", ""), "action": getattr(_cand, "action", "")}
+            _result = apply_to_buy_candidate(_cand_dict, _guard_decision_now, _breaker_state)
+            if _result.get("action") == "deny" and _cand_dict.get("action") == "buy":
+                _guardrail_blocked.append(_cand_dict["symbol"])
+            else:
+                _new_actionable.append(_cand)
+        if _guardrail_blocked:
+            print(f"  🛡 Guardrail blocked {len(_guardrail_blocked)} buy(s): {', '.join(_guardrail_blocked[:5])}")
+        actionable = _new_actionable
     if blocked_cluster_cap:
         for sym, reason in blocked_cluster_cap:
             print(f"  🚫 Cluster cap block: {sym} — {reason}")
@@ -1530,6 +1630,23 @@ def main() -> int:  # noqa: C901
                 audit_log.log_reconciliation(sub.submission_id, sub.broker_order_id, result.status_matched, result.discrepancies)
             except Exception as exc:
                 print(f"  WARN: {sub.symbol} reconcile failed: {exc}")
+
+    if _guard_engine is not None and _breaker_store is not None and post_run_update is not None:
+        try:
+            _post_metrics = {
+                "stale_price_event_count": len(stale_symbols) if "stale_symbols" in dir() else 0,
+                "broker_tracker_mismatch_count": 0,
+                "api_error_rate_pct": 0.0,
+                "order_rejection_rate_pct": (
+                    len([s for s in submissions if s.status not in {"submitted", "accepted", "filled", "partially_filled"}])
+                    / max(len(submissions), 1) * 100
+                ) if "submissions" in dir() else 0.0,
+            }
+            _post_state = post_run_update(_post_metrics, _guard_engine, _breaker_store)
+            if _post_state.status != "ok":
+                logger.warning("guardrail_post_run status=%s action=%s", _post_state.status, _post_state.action)
+        except Exception as _exc:
+            logger.warning("Guardrail post-run update failed (non-fatal): %s", _exc)
 
     audit_log.log_system_event("paper_demo_complete", details=f"decisions={len(decisions)} submitted={len(submissions)}")
 

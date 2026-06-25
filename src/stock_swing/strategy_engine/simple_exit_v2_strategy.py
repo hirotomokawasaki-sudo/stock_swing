@@ -269,6 +269,22 @@ class SimpleExitV2Strategy(BaseStrategy):
                 entry_signal_strength
             )
 
+            logger.debug(
+                "exit_check symbol=%s return_pct=%s peak_return=%s hold_days=%s "
+                "stop_threshold=%s breakeven_active=%s trail_active=%s",
+                symbol,
+                f"{return_pct:.4f}" if return_pct is not None else "None",
+                f"{peak_return_pct:.4f}" if peak_return_pct is not None else "None",
+                hold_days,
+                eff_stop_loss_pct,
+                return_pct is not None
+                and peak_return_pct is not None
+                and peak_return_pct >= self.breakeven_activation_pct,
+                return_pct is not None
+                and peak_return_pct is not None
+                and peak_return_pct >= eff_trailing_activation_pct,
+            )
+
             logger.info(
                 f"SimpleExitV2: {symbol} "
                 f"entry_strength={entry_signal_strength} "
@@ -320,6 +336,17 @@ class SimpleExitV2Strategy(BaseStrategy):
             
             # Generate sell signal if any exit criteria met
             if exit_reason:
+                import logging as _logging
+
+                _logging.getLogger(__name__).info(
+                    "exit_signal_fired symbol=%s exit_reason=%s return_pct=%.4f peak_return=%.4f "
+                    "stop_loss_threshold=%.4f",
+                    symbol,
+                    exit_reason.split(":")[0].strip(),
+                    return_pct if return_pct is not None else float("nan"),
+                    peak_return_pct if peak_return_pct is not None else float("nan"),
+                    eff_stop_loss_pct,
+                )
                 signal = CandidateSignal(
                     strategy_id=self.strategy_id,
                     symbol=symbol,

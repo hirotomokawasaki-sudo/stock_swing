@@ -9,6 +9,7 @@ Initial implementation uses:
 
 from __future__ import annotations
 
+import os as _os
 from dataclasses import dataclass
 from math import floor
 
@@ -23,6 +24,7 @@ REGIME_LIMITS = {
 DEFAULT_MAX_POSITION_NOTIONAL_PCT = 0.06
 DEFAULT_MAX_SECTOR_EXPOSURE_PCT = 0.55
 ETF_POSITION_SIZE_MULTIPLIER = 0.70  # Restored to 0.70: actual ETF PF=2.776 (broker data); earlier 0.35 was based on erroneous pre-rebuild data
+STOCK_POSITION_SIZE_MULTIPLIER: float = float(_os.environ.get("STOCK_POSITION_SIZE_MULTIPLIER", "0.5"))
 
 ETF_SYMBOLS = {
     'SHOC','SOXQ','SOXX','SMH','FTXL','PTF','SMHX','FRWD','TTEQ','GTOP','CHPX','CHPS','PSCT','QTEC','TDIV','SKYY','QTUM'
@@ -77,11 +79,17 @@ def classify_asset_class(symbol: str | None, asset_class: str | None = None) -> 
     return asset_class or ('etf' if symbol in ETF_SYMBOLS else 'stock')
 
 
+def _resolve_asset_class(symbol: str | None, asset_class: str | None = None) -> str:
+    return classify_asset_class(symbol, asset_class)
+
+
 def effective_position_notional_pct(symbol: str | None, asset_class: str | None = None, base_pct: float = DEFAULT_MAX_POSITION_NOTIONAL_PCT) -> float:
-    resolved_asset_class = classify_asset_class(symbol, asset_class)
+    resolved_asset_class = _resolve_asset_class(symbol, asset_class)
     pct = float(base_pct)
     if resolved_asset_class == 'etf':
         pct *= ETF_POSITION_SIZE_MULTIPLIER
+    elif resolved_asset_class == 'stock':
+        pct *= STOCK_POSITION_SIZE_MULTIPLIER
     return round(pct, 6)
 
 

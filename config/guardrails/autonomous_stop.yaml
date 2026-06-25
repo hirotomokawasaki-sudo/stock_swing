@@ -1,3 +1,5 @@
+paper_warning_only: true
+
 rules:
   stale_price_events:
     metric: stale_price_event_count
