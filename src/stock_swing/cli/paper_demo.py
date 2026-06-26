@@ -66,7 +66,8 @@ from stock_swing.strategy_engine.breakout_momentum_strategy import BreakoutMomen
 from stock_swing.strategy_engine.event_swing_strategy import EventSwingStrategy
 from stock_swing.strategy_engine.simple_exit_strategy import SimpleExitStrategy
 from stock_swing.strategy_engine.simple_exit_v2_strategy import SimpleExitV2Strategy
-from stock_swing.tracking.exit_reason_store import write_exit_reason
+from stock_swing.tracking.exit_reason_store import delete_exit_reason, write_exit_reason
+from stock_swing.tracking.trade_event_store import TradeEvent
 from stock_swing.tracking.pnl_tracker import PnLTracker
 from stock_swing.utils.latency_tracker import LatencyTracker
 from stock_swing.utils.market_calendar import MarketCalendar
@@ -1567,6 +1568,25 @@ def main() -> int:  # noqa: C901
                             "return_pct": decision.evidence.get("return_pct") if isinstance(decision.evidence, dict) else None,
                         },
                     )
+                    # R1-B: record exit_signal event in the durable event store so
+                    # audit tooling can trace signal → submission → fill.
+                    pnl_tracker.event_store.append(TradeEvent.create(
+                        "exit_signal",
+                        symbol=o.symbol,
+                        broker_order_id=sub.broker_order_id,
+                        run_id=run_context.run_id,
+                        payload={
+                            "exit_trigger": _exit_trigger,
+                            "exit_reason": _exit_reason,
+                            "signal_strength": getattr(decision, "signal_strength", None),
+                            "return_pct": decision.evidence.get("return_pct") if isinstance(decision.evidence, dict) else None,
+                            "source": "SimpleExitV2",
+                        },
+                    ))
+                    logger.info(
+                        "exit_signal_submitted symbol=%s broker_order_id=%s exit_reason=%s",
+                        o.symbol, sub.broker_order_id, _exit_reason,
+                    )
 
                 if o.side == "buy":
                     # Only buy submissions create new open trades in the P&L tracker.
@@ -1665,6 +1685,10 @@ def main() -> int:  # noqa: C901
                             exit_strategy_id=getattr(decision_for_sub, 'strategy_id', 'unknown'),
                             exit_reason=exit_reason,
                         )
+                        # R1-B: inline reconcile consumed this fill; remove from
+                        # pending_exit_reasons so cron reconcile doesn't re-process.
+                        if sub.broker_order_id:
+                            delete_exit_reason(project_root, sub.broker_order_id)
 
                 audit_log.log_reconciliation(sub.submission_id, sub.broker_order_id, result.status_matched, result.discrepancies)
             except Exception as exc:

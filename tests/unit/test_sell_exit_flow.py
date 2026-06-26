@@ -330,3 +330,48 @@ def test_partial_exit_persists_sell_order_id_only_on_closed_portion():
         assert len(closed_trades) == 1
         assert closed_trades[0]["qty"] == 4
         assert closed_trades[0]["exit_broker_order_id"] == "sell-order-456"
+
+
+# ---------------------------------------------------------------------------
+# R1-B: exit_signal event written to trade_event_store
+# ---------------------------------------------------------------------------
+
+def test_exit_signal_event_appended_to_event_store(tmp_path):
+    """When paper_demo records an exit_signal submission, the event_store
+    must contain an 'exit_signal' event with the correct payload."""
+    import json
+    import sys
+    sys.path.insert(0, str(tmp_path / "src"))
+
+    from stock_swing.tracking.pnl_tracker import PnLTracker
+    from stock_swing.tracking.trade_event_store import TradeEvent
+
+    tracker = PnLTracker(tmp_path)
+
+    # Simulate what paper_demo does after a sell submission
+    event = TradeEvent.create(
+        "exit_signal",
+        symbol="TSLA",
+        broker_order_id="broker-sell-abc",
+        run_id="run-test-001",
+        payload={
+            "exit_trigger": "Trailing stop triggered",
+            "exit_reason": "trailing_stop",
+            "signal_strength": 0.95,
+            "return_pct": -0.021,
+            "source": "SimpleExitV2",
+        },
+    )
+    tracker.event_store.append(event)
+
+    # Verify it's persisted in the JSONL file
+    event_file = tmp_path / "data" / "tracking" / "trade_events.jsonl"
+    assert event_file.exists(), "trade_events.jsonl should be created"
+    lines = [json.loads(l) for l in event_file.read_text().splitlines() if l.strip()]
+    exit_signal_events = [e for e in lines if e.get("event_type") == "exit_signal"]
+    assert len(exit_signal_events) == 1
+    ev = exit_signal_events[0]
+    assert ev["symbol"] == "TSLA"
+    assert ev["broker_order_id"] == "broker-sell-abc"
+    assert ev["payload"]["exit_reason"] == "trailing_stop"
+    assert ev["payload"]["source"] == "SimpleExitV2"

@@ -869,7 +869,7 @@ def main() -> int:
                 
                 # Look up the exit reason written by paper_demo at submission time
                 stored = read_exit_reason(project_root, broker_order_id) if broker_order_id else None
-                resolved_exit_reason = (stored or {}).get("exit_reason", "broker_fill")
+                resolved_exit_reason = (stored or {}).get("exit_reason", "broker_fill_unknown")
                 resolved_exit_strategy = (
                     f"simple_exit_v2:{(stored or {}).get('exit_trigger', 'unknown')}"
                     if stored else "reconciled_from_broker"
