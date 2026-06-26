@@ -455,6 +455,17 @@ def main() -> int:  # noqa: C901
     parser.add_argument("--cron-summary-json", action="store_true", help="Emit one compact CRON_SUMMARY_JSON line at the end")
     args = parser.parse_args()
 
+    # Configure logging so logger.info() messages (exit_signal_fired, exit_signal_generated,
+    # exit_signals_none, exit_check) are captured in the cron log file.
+    # Suppress noisy third-party libraries; keep stock_swing at INFO.
+    logging.basicConfig(
+        level=logging.WARNING,
+        format="%(levelname)s %(name)s: %(message)s",
+        stream=__import__("sys").stderr,
+        force=True,
+    )
+    logging.getLogger("stock_swing").setLevel(logging.INFO)
+
     # Resolve symbol universe (--symbols overrides --universe)
     if args.symbols != ",".join(DEFAULT_SYMBOLS):
         # User explicitly passed --symbols
