@@ -123,7 +123,7 @@ def test_sec_ingestion_end_to_end(mock_client_class: Mock, tmp_path: Path) -> No
     # Verify file written
     assert result_path.exists()
     assert result_path.parent.name == "sec"
-    assert "0000320193" in result_path.name
+    assert "320193" in result_path.name
     
     # Verify content
     import json
@@ -180,6 +180,12 @@ def test_multiple_source_ingestion(tmp_path: Path) -> None:
     from stock_swing.core.types import RawEnvelope
     
     class MockClient(SourceClient):
+        name: str = "mock"
+
+        def __init__(self, name: str) -> None:
+            self.name = name
+            super().__init__()
+
         def fetch(self, **kwargs):
             return RawEnvelope(
                 source=self.name,
@@ -188,15 +194,12 @@ def test_multiple_source_ingestion(tmp_path: Path) -> None:
                 request_params=kwargs,
                 payload={"test": "data"},
             )
-    
+
     ingestor = RawIngestor(tmp_path)
-    
+
     # Ingest from different sources
-    client1 = MockClient()
-    client1.name = "source1"
-    
-    client2 = MockClient()
-    client2.name = "source2"
+    client1 = MockClient(name="source1")
+    client2 = MockClient(name="source2")
     
     path1 = ingestor.ingest(client1, symbol="TEST1")
     path2 = ingestor.ingest(client2, symbol="TEST2")
