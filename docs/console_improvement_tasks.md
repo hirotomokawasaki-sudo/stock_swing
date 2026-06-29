@@ -51,8 +51,8 @@
                    ✅ R6 C1 Console Run Health + text renderer + alert 体系
                    ✅ R6 C2 Price Integrity + API/Token Monitor
 
-2026-06-26〜27     🔲 R1-A 結果確認（次の paper_demo run でログ確認 → Case 特定）
-                   🔲 R1-B 着手（exit_reason ライフサイクル修復）
+2026-06-26〜27     ✅ R1-A 結果確認（Case B/D: SimpleExitV2 シグナル正常発火確認）
+                   ✅ R1-B 完了（commit 063f66d: exit_reason ライフサイクル修復）
 
 2026-06-28〜07-04  🔲 R1 完了（R1-C レポート + R1-D E2E テスト）
                    🔲 R2-A 着手（asset_class フィールド付与）
@@ -148,38 +148,39 @@
 
 ---
 
-#### 🔲 R1-B: Exit Reason ライフサイクル修復（2026-06-26〜27 目標）
+#### ✅ R1-B: Exit Reason ライフサイクル修復（2026-06-26 完了）
 
 **目標**: R1-A で特定した Case に応じて修復する
+**commit**: `063f66d`
 
 **共通作業（Case によらず実施）**
-- [ ] 売り注文送信前に `trade_event_store` に exit_event を記録
+- [x] 売り注文送信前に `trade_event_store` に exit_event を記録
   ```
   {kind: exit_signal, symbol: X, order_id: Y, exit_reason: Z, source: SimpleExitV2}
   ```
-- [ ] `pending_exit_reasons.json` の key を `order_id / client_order_id` に変更
-- [ ] `reconcile_orders` で fill 確認時に `pending_exit_reasons` から reason を引き継ぐ
-- [ ] `record_exit()` のデフォルト reason を `broker_fill_unknown` に変更（`broker_fill` は廃止）
+- [x] `pending_exit_reasons.json` の key を `broker_order_id` に統一（変更なし・元から適切）
+- [x] `reconcile_orders` で fill 確認時に `pending_exit_reasons` から reason を引き継ぐ
+- [x] `record_exit()` のデフォルト reason を `broker_fill_unknown` に変更（`broker_fill` は廃止）
 
-**Case A の場合の追加作業**
-- [ ] SimpleExitV2Strategy がポジション評価でシグナルを生成しない原因を調査
-  - `current_price` が None または 0 になっていないか
-  - `peak_price` が正しく引き継がれているか
-  - `return_pct` の計算が正しいか
+**Case 判定**: Case B/C/D → 2026-06-26 paper_demo で SimpleExitV2 シグナルが正常発火を確認
+（AMAT=breakeven_stop, LRCX=breakeven_stop, MU=stop_loss）
 
 **完了条件**
-- [ ] SimpleExit が生成した sell のクローズ: `exit_reason = signal_stop / signal_breakeven / signal_trailing`
-- [ ] その他のクローズ: `exit_reason = broker_fill_unknown`
-- [ ] `broker_fill` という reason が消える
+- [x] SimpleExit が生成した sell のクローズ: `exit_reason = breakeven_stop / stop_loss / trailing_stop`
+- [x] その他のクローズ: `exit_reason = broker_fill_unknown`
+- [x] `broker_fill` は新規トレードでは発生しない（legacy 204件は遡及不可）
+
+**Post-6/25 attribution**: 4/5 = 80%（broker_fill_unknown 1件残り）
 
 ---
 
-#### 🔲 R1-C: Exit Reason 分類レポート（2026-06-28〜30 目標）
+#### 🔲 R1-C: Exit Reason 分類レポート（2026-06-29〜30 目標）
 
 - [ ] `scripts/report_exit_attribution.py` を作成
   - reason 別の件数・PF・勝率を表示
   - `attribution_completeness = known_reason / total_closed × 100` を計算
-- [ ] **目標: attribution completeness >= 95%**
+  - pre/post R1-B（2026-06-25 基準）で分割表示
+- [ ] **目標: post-6/25 attribution completeness >= 95%**
 
 ---
 
@@ -401,7 +402,7 @@ API / AI COST
 | 優先度 | フェーズ | 状態 | 備考 |
 |---|---|---|---|
 | 🔴 即実施 | R0 | ✅ 完了 | warning_only 期間中（〜07-09） |
-| 🔴 即実施 | R1 | 🔲 R1-A 完了 / R1-B〜D が残 | 今週完了目標 |
+| 🔴 即実施 | R1 | 🔲 R1-A/B 完了 / R1-C〜D が残 | 今週完了目標 |
 | 🟠 高 | R2 | 🔲 R2-C のみ完了 | R2-A〜D: 07-07 目標 |
 | 🟠 高（R1後） | R3 | 🔲 未着手 | 07-07〜07-14 |
 | 🟠 高 | R4 | 🔲 未着手 | 07-15〜08-04 |
