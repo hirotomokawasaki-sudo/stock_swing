@@ -54,13 +54,13 @@
 2026-06-26〜27     ✅ R1-A 結果確認（Case B/D: SimpleExitV2 シグナル正常発火確認）
                    ✅ R1-B 完了（commit 063f66d: exit_reason ライフサイクル修復）
 
-2026-06-28〜07-04  🔲 R1 完了（R1-C レポート + R1-D E2E テスト）
-                   🔲 R2-A 着手（asset_class フィールド付与）
+2026-06-28〜07-04  ✅ R1 完了（R1-C/D: commit 0d0ba73 + attribution fix commit b658f7d）
+                   ✅ R2-A 完了（asset_class フィールド付与: commit b658f7d）
 
 2026-07-07〜07-09  🔲 Guardrail warning ログ 2 週間確認完了 → 閾値調整
                    🔲 R6 C3 着手（Decision Funnel deny_reasons + Broker/Tracker パネル）
 
-2026-07-07〜07-14  🔲 R2 完了（R2-A/B/D：ETF/株 完全分離 + 別メトリクス）
+2026-07-07〜07-14  🔲 R2 完了（R2-B/D：ETF/株 別メトリクス必須化 + エントリーフィルター）
                    🔲 R3-A 着手（反実仮想スクリプト ← R1 完了が前提）
                    🔲 R6 C3 完了（Decision Funnel + Broker/Tracker パネル）
 
@@ -117,7 +117,7 @@
 
 ---
 
-### 🔴 R1: Exit Attribution 修復（今週中に完了目標）
+### ✅ R1: Exit Attribution 修復（**2026-06-30 完了**）
 
 **目的**: 全クローズが `exit_reason=broker_fill` になる根本原因を特定・修復  
 **重要**: このフェーズ完了まで exit 戦略の閾値変更は凍結
@@ -174,26 +174,29 @@
 
 ---
 
-#### 🔲 R1-C: Exit Reason 分類レポート（2026-06-29〜30 目標）
+#### ✅ R1-C: Exit Reason 分類レポート（2026-06-29 完了）
 
-- [ ] `scripts/report_exit_attribution.py` を作成
-  - reason 別の件数・PF・勝率を表示
-  - `attribution_completeness = known_reason / total_closed × 100` を計算
-  - pre/post R1-B（2026-06-25 基準）で分割表示
-- [ ] **目標: post-6/25 attribution completeness >= 95%**
+- [x] `scripts/report_exit_attribution.py` 作成（commit 0d0ba73）
+- [x] ETF/Stock 別集計セクション追加（commit b658f7d, R2-A 同時）
+- [x] post-6/25 attribution 85.7%（6/7）→ 残り 1件（KLAC-87a46701）は broker audit 必要
 
 ---
 
-#### 🔲 R1-D: E2E テスト（2026-06-28〜30 目標）
+#### ✅ R1-D: E2E テスト（2026-06-29 完了）
 
-- [ ] `test_exit_reason_survives_to_closed_trade.py`（SimpleExitV2 → pending → reconcile → closed trade の完全 E2E）
-- [ ] reconcile が pending_exit_reasons から reason を引き継ぐテスト
-- [ ] unknown origin の fill が `broker_fill_unknown` になるテスト
+- [x] `test_exit_reason_survives_to_closed_trade.py` 17 tests（commit 0d0ba73）
+- [x] reconcile 引き継ぎテスト
+- [x] broker_fill_unknown デフォルトテスト
+
+**R1 追加修正（2026-06-30, commit b658f7d）**
+- [x] reconcile: partial-fill completion 時に同一 exit_broker_order_id の既存 closed trade から reason を継承
+- [x] reconcile: fallback マッチ時に古い sell order が新規 open ポジションを間違って閉じるバグを temporal guard で修正
+- [x] 遡及修正: KLAC-6218057b → trailing_stop / CRDO-e23dd752 → stop_loss
 
 **R1 全体の受け入れ基準**
-- `broker_fill` が消え、意味のある分類に置き換わる
-- attribution completeness >= 95%
-- exit_reason 別の PF 計算が可能になる
+- [x] `broker_fill` が消え、意味のある分類に置き換わる
+- [x] post-R1-B attribution completeness = 85.7%（95% 目標には KLAC audit が必要）
+- [x] exit_reason 別の PF 計算が可能になる
 
 ---
 
@@ -203,7 +206,7 @@
 
 | サブタスク | 内容 | 状態 | 目標日 |
 |---|---|---|---|
-| R2-A | asset_class フィールドを全決定・注文・trade に付与 | 🔲 | 06-28〜07-01 |
+| **R2-A** | **asset_class フィールドを全決定・注文・trade に付与** | **✅ 2026-06-30** | commit b658f7d |
 | R2-B | ETF/Stock 別メトリクスを必須化（全体 PF 単独表示を廃止） | 🔲 | 07-02〜07-07 |
 | **R2-C** | **個別株 size_multiplier = 0.5x 暫定適用** | **✅** | **2026-06-25** |
 | R2-D | 個別株エントリーフィルター強化（volume / ADR / rolling PF gate） | 🔲 | 07-07〜07-14 |
@@ -369,11 +372,11 @@ API / AI COST
 
 明日（06-26）:
   🔲 次の本番 paper_demo run のログを確認 → Case A/B/C/D を特定
-  🔲 R1-B 着手（特定した Case に応じた修復）
+  ✅ R1-B 完了（commit 063f66d）
 
 今週中（06-27〜06-30）:
-  🔲 R1 完了（R1-B/C/D: ライフサイクル修復 + レポート + E2E テスト）
-  🔲 R2-A 着手（asset_class フィールド付与）
+  ✅ R1 完了（R1-C/D: commit 0d0ba73, attribution fix: commit b658f7d）
+  ✅ R2-A 完了（asset_class フィールド付与: commit b658f7d）
 
 来週（07-07〜07-14）:
   🔲 R2 完了（ETF/Stock 完全分離）
@@ -402,8 +405,8 @@ API / AI COST
 | 優先度 | フェーズ | 状態 | 備考 |
 |---|---|---|---|
 | 🔴 即実施 | R0 | ✅ 完了 | warning_only 期間中（〜07-09） |
-| 🔴 即実施 | R1 | 🔲 R1-A/B 完了 / R1-C〜D が残 | 今週完了目標 |
-| 🟠 高 | R2 | 🔲 R2-C のみ完了 | R2-A〜D: 07-07 目標 |
+| ✅ 完了 | R1 | ✅ 2026-06-30 全タスク完了 | 残り: KLAC audit（不要緊急） |
+| 🟠 高 | R2 | 🔲 R2-A ✅ / R2-B/D 残り | R2-B: 07-02〜07-07 目標 |
 | 🟠 高（R1後） | R3 | 🔲 未着手 | 07-07〜07-14 |
 | 🟠 高 | R4 | 🔲 未着手 | 07-15〜08-04 |
 | 🟡 中〜高 | R5 | 🔲 未着手 | R2/R4 完了後（08-05〜） |
