@@ -783,8 +783,42 @@ def main() -> int:
                     except ValueError:
                         continue
 
-            # If no time-proximate match found, use most-recent filled sell as fallback
-            match = best_match or latest_sell_orders_by_symbol.get(sub["symbol"])
+            # If no time-proximate match found, use most-recent filled sell as fallback.
+            # Temporal guard: when using the fallback (not time-proximate), verify that
+            # the sell order was submitted AFTER every open position was entered.  If the
+            # sell was submitted before the position was opened we cannot legitimately
+            # close that position with this order — skip to avoid phantom closures.
+            fallback = latest_sell_orders_by_symbol.get(sub["symbol"]) if not best_match else None
+            if fallback and not best_match:
+                fallback_ts_str = fallback.get("submitted_at") or fallback.get("created_at") or ""
+                try:
+                    fallback_ts = datetime.fromisoformat(fallback_ts_str.replace("Z", "+00:00")) if fallback_ts_str else None
+                    if fallback_ts:
+                        open_positions = [
+                            t for t in tracker.state.trades
+                            if t.get("symbol") == sub["symbol"] and t.get("status") == "open"
+                        ]
+                        if open_positions:
+                            latest_entry_ts_str = max(
+                                (t.get("entry_time", "") for t in open_positions), default=""
+                            )
+                            try:
+                                latest_entry_ts = datetime.fromisoformat(
+                                    latest_entry_ts_str.replace("Z", "+00:00")
+                                )
+                                if fallback_ts < latest_entry_ts:
+                                    print(
+                                        f"WARN: Skipping stale fallback sell for {sub['symbol']}: "
+                                        f"order submitted {fallback_ts.date()} before position entry "
+                                        f"{latest_entry_ts.date()}",
+                                        file=sys.stderr,
+                                    )
+                                    continue
+                            except ValueError:
+                                pass
+                except ValueError:
+                    pass
+            match = best_match or fallback
             if not match:
                 continue
             
@@ -869,11 +903,38 @@ def main() -> int:
                 
                 # Look up the exit reason written by paper_demo at submission time
                 stored = read_exit_reason(project_root, broker_order_id) if broker_order_id else None
-                resolved_exit_reason = (stored or {}).get("exit_reason", "broker_fill_unknown")
-                resolved_exit_strategy = (
-                    f"simple_exit_v2:{(stored or {}).get('exit_trigger', 'unknown')}"
-                    if stored else "reconciled_from_broker"
-                )
+                if stored:
+                    resolved_exit_reason = stored.get("exit_reason", "broker_fill_unknown")
+                    resolved_exit_strategy = (
+                        f"simple_exit_v2:{stored.get('exit_trigger', 'unknown')}"
+                    )
+                elif remaining_fill_qty is not None and broker_order_id:
+                    # Partial-fill completion: paper_demo already consumed and deleted the
+                    # pending reason for the first portion.  Inherit the reason from the
+                    # already-recorded closed trades that share this exit_broker_order_id.
+                    inherited_reason = next(
+                        (
+                            t.get("exit_reason")
+                            for t in tracker.state.trades
+                            if t.get("exit_broker_order_id") == broker_order_id
+                            and t.get("status") == "closed"
+                            and t.get("exit_reason") not in (
+                                "broker_fill_unknown", "broker_fill", None
+                            )
+                        ),
+                        None,
+                    )
+                    resolved_exit_reason = inherited_reason or "broker_fill_unknown"
+                    resolved_exit_strategy = "reconciled_from_broker"
+                    if inherited_reason:
+                        print(
+                            f"INFO: partial-fill reason inherited from first portion: "
+                            f"{sub['symbol']} order={broker_order_id[:8]} reason={inherited_reason}",
+                            file=sys.stderr,
+                        )
+                else:
+                    resolved_exit_reason = "broker_fill_unknown"
+                    resolved_exit_strategy = "reconciled_from_broker"
 
                 updated = tracker.record_exit(
                     symbol=sub["symbol"],

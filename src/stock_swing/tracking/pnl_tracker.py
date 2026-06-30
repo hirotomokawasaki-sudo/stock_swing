@@ -50,6 +50,7 @@ class TradeEntry:
     original_strategy_id: str | None = None
     exit_strategy_id: str | None = None
     exit_reason: str | None = None
+    asset_class: str | None = None  # "etf" | "stock" | None
 
 
 @dataclass
@@ -142,6 +143,7 @@ class PnLTracker:
         strategy_version_id: str | None = None,
         account_id: str | None = None,
         signal_strength: float | None = None,
+        asset_class: str | None = None,
     ) -> str:
         """Record a new buy submission as an open trade.
 
@@ -163,6 +165,9 @@ class PnLTracker:
 
         normalized_strategy_id = strategy_version_id or normalize_strategy_id(strategy_id, now)
 
+        from stock_swing.risk.position_sizing import classify_asset_class
+        resolved_asset_class = classify_asset_class(symbol, asset_class)
+
         trade = TradeEntry(
             trade_id=trade_id,
             symbol=symbol,
@@ -182,6 +187,7 @@ class PnLTracker:
             account_id=account_id,
             broker_order_id=broker_order_id,
             original_strategy_id=original_strategy_id or strategy_id,
+            asset_class=resolved_asset_class,
         )
         self.state.trades.append(asdict(trade))
         self.state.total_trades += 1

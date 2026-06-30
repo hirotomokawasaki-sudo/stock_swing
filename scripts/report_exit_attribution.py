@@ -159,6 +159,28 @@ def main() -> None:
     target_ok = "✅" if post_ac >= 95.0 else "🔲"
     print(f"\n  Attribution completeness (post):    {post_ac:>6.1f}%  {target_ok} (target ≥ 95%)")
 
+    # ─── R2-A: ETF vs Stock breakdown (post-R1-B) ───────────────────────────
+    from stock_swing.risk.position_sizing import classify_asset_class
+
+    def _ac(t: dict) -> str:
+        return t.get("asset_class") or classify_asset_class(t.get("symbol"))
+
+    etf_post = [t for t in post_rb if _ac(t) == "etf"]
+    stk_post = [t for t in post_rb if _ac(t) == "stock"]
+
+    if etf_post or stk_post:
+        print("\n" + "=" * 72)
+        print("  R2-A: ETF vs Stock breakdown (post-R1-B)")
+        print("=" * 72)
+        for label, subset in (("ETF", etf_post), ("Stock", stk_post)):
+            if not subset:
+                continue
+            stats_sub = build_reason_stats(subset)
+            ac_sub = attribution_completeness(subset)
+            target_sub = "✅" if ac_sub >= 95.0 else "🔲"
+            print_reason_table(stats_sub, f"  {label} (n={len(subset)})")
+            print(f"\n    Attribution completeness ({label}): {ac_sub:>6.1f}%  {target_sub}")
+
     # ─── Summary ─────────────────────────────────────────────────────────────
     print("\n" + "=" * 72)
     print("  SUMMARY")

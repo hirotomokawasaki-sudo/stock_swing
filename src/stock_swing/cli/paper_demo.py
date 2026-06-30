@@ -1607,6 +1607,7 @@ def main() -> int:  # noqa: C901
                             strategy_version_id=decision.strategy_version_id,
                             account_id=os.environ.get("BROKER_ACCOUNT_ID"),
                             signal_strength=getattr(decision, "signal_strength", None),
+                            asset_class=getattr(decision.sizing, "asset_class_used", None) if decision.sizing else None,
                         )
                     else:
                         print(f"WARN: Skipped P&L tracking for {o.symbol} (entry_price unavailable)")
