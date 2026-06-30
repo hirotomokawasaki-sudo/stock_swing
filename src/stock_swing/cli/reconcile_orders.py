@@ -837,6 +837,38 @@ def main() -> int:
                 remaining = broker_filled_total - already_recorded
                 if remaining <= 0:
                     continue  # fully recorded — true duplicate, skip
+                # Temporal guard for partial-fill completion: the unrecorded remainder
+                # must not close a position that was opened AFTER this sell order was
+                # submitted.  Without this guard a new position can be incorrectly closed
+                # by leftover qty from an old fill.
+                order_ts_str = match.get("submitted_at") or match.get("created_at") or ""
+                try:
+                    order_ts = datetime.fromisoformat(order_ts_str.replace("Z", "+00:00")) if order_ts_str else None
+                    if order_ts:
+                        open_for_symbol = [
+                            t for t in tracker.state.trades
+                            if t.get("symbol") == sub["symbol"] and t.get("status") == "open"
+                        ]
+                        if open_for_symbol:
+                            newest_entry_str = max(
+                                t.get("entry_time", "") for t in open_for_symbol
+                            )
+                            try:
+                                newest_entry_ts = datetime.fromisoformat(
+                                    newest_entry_str.replace("Z", "+00:00")
+                                )
+                                if order_ts < newest_entry_ts:
+                                    print(
+                                        f"INFO: partial-fill completion skipped for {sub['symbol']}: "
+                                        f"sell order {broker_order_id[:8]} submitted {order_ts.date()} "
+                                        f"is older than open position entry {newest_entry_ts.date()}",
+                                        file=sys.stderr,
+                                    )
+                                    continue
+                            except ValueError:
+                                pass
+                except ValueError:
+                    pass
                 # Unrecorded shares remain from a partial fill: complete the recording
                 remaining_fill_qty = remaining
                 print(

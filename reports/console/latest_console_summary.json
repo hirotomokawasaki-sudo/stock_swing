@@ -2,9 +2,9 @@
   "run": {
     "mode": "paper",
     "status": "OK",
-    "run_id": "paper_demo-20260629T133504Z-008321fb",
-    "experiment_id": "exp-20260629-swing-v1-prompt-v1-84531553-63890d53",
-    "timestamp": "2026-06-29T13:36:23.097684+00:00",
+    "run_id": "paper_demo-20260630T133503Z-eefcfe5f",
+    "experiment_id": "exp-20260630-swing-v1-prompt-v1-6ce6662d-63890d53",
+    "timestamp": "2026-06-30T13:35:19.801764+00:00",
     "duration_seconds": null,
     "guardrail_status": "ok"
   },
@@ -18,49 +18,48 @@
     "guardrail_status": "ok"
   },
   "portfolio": {
-    "equity": 1049784.79,
-    "realized_pnl": 71524.1,
-    "unrealized_pnl": -21342.46,
-    "total_pnl": 50181.64,
-    "open_positions": 20
+    "equity": 1085469.05,
+    "realized_pnl": 68040.5,
+    "unrealized_pnl": 16944.81,
+    "total_pnl": 84985.31,
+    "open_positions": 25
   },
   "decision_funnel": {
-    "candidates": 13,
-    "buy": 12,
+    "candidates": 35,
+    "buy": 34,
     "sell": 1,
     "deny": 0,
-    "submitted": 7,
+    "submitted": 1,
     "rejected": 0,
     "blocked": 0
   },
   "risk": {
     "cluster_blocks": [],
-    "risk_budget_pct": 0.057,
-    "market_regime": "neutral"
+    "risk_budget_pct": 0.066,
+    "market_regime": "bullish"
   },
   "price_integrity": {
-    "fresh_price_count": 7,
+    "fresh_price_count": 1,
     "stale_price_count": 0,
-    "fallback_price_count": 7,
+    "fallback_price_count": 1,
     "top_stale_symbols": [],
     "price_source_breakdown": {
-      "none": 1,
-      "decision_latest_close": 6
+      "none": 1
     }
   },
   "api": {
     "call_count": 2,
     "error_count": 0,
-    "p50_latency_ms": 585.7,
-    "p95_latency_ms": 585.7,
+    "p50_latency_ms": 744.8,
+    "p95_latency_ms": 744.8,
     "slowest_endpoints": [
       {
-        "endpoint": "broker.fetch_positions",
-        "duration_ms": 585.7
+        "endpoint": "broker.fetch_account",
+        "duration_ms": 744.8
       },
       {
-        "endpoint": "broker.fetch_account",
-        "duration_ms": 560.9
+        "endpoint": "broker.fetch_positions",
+        "duration_ms": 589.4
       }
     ]
   },

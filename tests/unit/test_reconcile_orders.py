@@ -200,6 +200,14 @@ def test_partial_fill_completion_records_remaining_qty(monkeypatch, capsys):
         monkeypatch.setenv("BROKER_API_KEY", "key")
         monkeypatch.setenv("BROKER_API_SECRET", "secret")
 
+        # Backdate entry_time so positions appear to have been opened BEFORE the sell order
+        # (sell order submitted_at=2026-06-24T16:00:20). Temporal guard requires that
+        # the sell was submitted after the newest open position was entered.
+        for t in tracker.state.trades:
+            if t.get("symbol") == "CRDO" and t.get("status") == "open":
+                t["entry_time"] = "2026-06-23T10:00:00+00:00"
+        tracker._save_state()
+
         assert reconcile_orders.main() == 0
         out = capsys.readouterr().out
         summary_line = [ln for ln in out.splitlines() if ln.startswith(CRON_SUMMARY_PREFIX)][-1]
