@@ -1,4 +1,4 @@
-paper_warning_only: true
+paper_warning_only: false  # hard-halt enabled 2026-07-01 (6-day calibration confirmed zero false positives)
 
 rules:
   stale_price_events:
