@@ -207,7 +207,7 @@
 | サブタスク | 内容 | 状態 | 目標日 |
 |---|---|---|---|
 | **R2-A** | **asset_class フィールドを全決定・注文・trade に付与** | **✅ 2026-06-30** | commit b658f7d |
-| R2-B | ETF/Stock 別メトリクスを必須化（全体 PF 単独表示を廃止） | 🔲 | 07-02〜07-07 |
+| **R2-B** | **ETF/Stock 別メトリクスを必須化（全体 PF 単独表示を廃止）** | **✅ 2026-07-01** | commit TBD |
 | **R2-C** | **個別株 size_multiplier = 0.5x 暫定適用** | **✅** | **2026-06-25** |
 | R2-D | 個別株エントリーフィルター強化（volume / ADR / rolling PF gate） | 🔲 | 07-07〜07-14 |
 
@@ -360,29 +360,47 @@ API / AI COST
 
 ---
 
-## 次のアクション（直近）
+## 次のアクション（直近）— リアルトレード移行計画 08-01 確定版
+
+> **⚠️ 2026-08-01 よりリアルトレード移行決定。以下スケジュールは前倒し版。**
 
 ```
-今日中（済み）:
+✅ 完了済み（〜07-01）:
   ✅ R0   paper_demo に P6/P9 接続
-  ✅ R1-A exit シグナル発火ログ追加
+  ✅ R1   全タスク完了（post-R1-B attribution 100%）
+  ✅ R2-A asset_class フィールド付与
+  ✅ R2-B ETF/Stock 別メトリクス必須化（本日完了 commit TBD）
   ✅ R2-C 個別株 size_multiplier = 0.5x 適用
-  ✅ R6 C1 Console text renderer + alert 体系（Run Health / Portfolio / Funnel）
-  ✅ R6 C2 Price Integrity + API/Token Monitor パネル
+  ✅ R6 C1/C2 Console 表示・Price Integrity・API Monitor
 
-明日（06-26）:
-  🔲 次の本番 paper_demo run のログを確認 → Case A/B/C/D を特定
-  ✅ R1-B 完了（commit 063f66d）
+Week 1（07-02〜07-07）🔴 BLOCKING:
+  🔲 R2-D entry フィルター強化（volume + rolling PF gate）
 
-今週中（06-27〜06-30）:
-  ✅ R1 完了（R1-C/D: commit 0d0ba73, attribution fix: commit b658f7d）
-  ✅ R2-A 完了（asset_class フィールド付与: commit b658f7d）
+Week 2（07-07〜07-14）🔴 BLOCKING:
+  🔲 07-09  Guardrail 閾値調整 → hard-halt 有効化（CRITICAL GATE）
+  🔲 R3-A   反実仮想スクリプト作成・実行
+  🔲 R3-B   exit replay 評価 + 結論
+  🔲 R6-D   Decision Funnel パネル（deny_reasons + Broker/Tracker）
 
-来週（07-07〜07-14）:
-  🔲 R2 完了（ETF/Stock 完全分離）
-  🔲 R3-A 着手（反実仮想スクリプト ← R1 完了次第）
-  🔲 R6 C3 着手（Decision Funnel deny_reasons + Broker/Tracker パネル）
-  🔲 Guardrail 閾値キャリブレーション完了確認（07-09 目安）
+Week 3（07-14〜07-21）🟠 STRONGLY RECOMMENDED:
+  🔲 R4-A   signal strength 飽和原因調査
+  🔲 R6-F   リモート Web 監視（スマホ対応）
+  🔲        緊急停止ランブック作成
+
+Week 4（07-21〜07-31）🔴 BLOCKING:
+  🔲 07-21  Go/No-Go チェックリスト定義・確認
+  🔲 07-25  ライブ切替手順書作成（mode: paper → live）
+  🔲 07-28〜07-30  hard-halt 環境でのペーパー最終確認
+  🔲 07-31  Go/No-Go 最終判定
+
+08-01 🚀 リアルトレード開始（初期2週間は50%サイズ）
+
+Post-Launch:
+  🔲 R4-B/C signal strength 完全修復
+  🔲 R5     昇格・降格ゲート本格版
+  🔲 R6-E   Attribution パネル
+  🔲 R7     09月
+  🔲 R8     10月以降
 ```
 
 ---
@@ -406,7 +424,7 @@ API / AI COST
 |---|---|---|---|
 | 🔴 即実施 | R0 | ✅ 完了 | warning_only 期間中（〜07-09） |
 | ✅ 完了 | R1 | ✅ 2026-06-30 全タスク完了 | 残り: KLAC audit（不要緊急） |
-| 🟠 高 | R2 | 🔲 R2-A ✅ / R2-B/D 残り | R2-B: 07-02〜07-07 目標 |
+| 🟠 高 | R2 | 🔲 R2-A/B/C ✅ / R2-D 残り | R2-D: 07-02〜07-07 目標 |
 | 🟠 高（R1後） | R3 | 🔲 未着手 | 07-07〜07-14 |
 | 🟠 高 | R4 | 🔲 未着手 | 07-15〜08-04 |
 | 🟡 中〜高 | R5 | 🔲 未着手 | R2/R4 完了後（08-05〜） |

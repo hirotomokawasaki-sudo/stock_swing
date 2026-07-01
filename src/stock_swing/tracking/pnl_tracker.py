@@ -435,6 +435,57 @@ class PnLTracker:
             },
         }
 
+    def get_asset_class_breakdown(self) -> dict[str, dict[str, Any]]:
+        """Return ETF vs Stock performance breakdown.
+
+        Returns a dict with keys 'etf', 'stock', 'all', each containing:
+          count, wins, losses, win_rate, profit_factor (None=inf),
+          net_pnl, gross_profit, gross_loss.
+        """
+        from stock_swing.risk.position_sizing import classify_asset_class
+
+        closed = [t for t in self.state.trades if t["status"] == "closed"]
+
+        def _metrics(trades: list) -> dict[str, Any]:
+            wins = [t for t in trades if (t.get("pnl") or 0) > 0]
+            losses = [t for t in trades if (t.get("pnl") or 0) < 0]
+            gross_profit = sum(t["pnl"] for t in wins)
+            gross_loss = abs(sum(t["pnl"] for t in losses))
+            pf: float | None
+            if gross_loss > 0:
+                pf = round(gross_profit / gross_loss, 3)
+            elif gross_profit > 0:
+                pf = None  # infinity
+            else:
+                pf = 0.0
+            net_pnl = sum(t.get("pnl") or 0 for t in trades)
+            win_rate = len(wins) / len(trades) if trades else 0.0
+            return {
+                "count": len(trades),
+                "wins": len(wins),
+                "losses": len(losses),
+                "win_rate": round(win_rate, 4),
+                "profit_factor": pf,
+                "net_pnl": round(net_pnl, 2),
+                "gross_profit": round(gross_profit, 2),
+                "gross_loss": round(gross_loss, 2),
+            }
+
+        etf_trades: list = []
+        stock_trades: list = []
+        for t in closed:
+            ac = t.get("asset_class") or classify_asset_class(t.get("symbol") or "")
+            if ac == "etf":
+                etf_trades.append(t)
+            else:
+                stock_trades.append(t)
+
+        return {
+            "etf": _metrics(etf_trades),
+            "stock": _metrics(stock_trades),
+            "all": _metrics(closed),
+        }
+
     def get_summary_by_account(self, account_id: str | None = None) -> dict[str, Any]:
         """Return performance summary for a specific account.
         

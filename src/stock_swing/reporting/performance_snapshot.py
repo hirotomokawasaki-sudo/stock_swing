@@ -7,7 +7,7 @@ to prevent drift between daily_report and dashboard_service.
 from __future__ import annotations
 
 import os
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -53,6 +53,9 @@ class PerformanceSnapshot:
     
     # Alerts
     alerts: list[dict[str, Any]]
+
+    # R2-B: ETF vs Stock breakdown
+    asset_class_breakdown: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
@@ -200,6 +203,9 @@ def build_snapshot(
             "threshold": alert_total_pnl_pct_threshold,
         })
 
+    # R2-B: ETF vs Stock breakdown
+    asset_class_breakdown = tracker.get_asset_class_breakdown()
+
     return PerformanceSnapshot(
         equity=equity,
         buying_power=buying_power,
@@ -222,4 +228,5 @@ def build_snapshot(
         recent_trades=recent_trades,
         tracking_context=dict(summary.get("tracking_context") or {}),
         alerts=alerts,
+        asset_class_breakdown=asset_class_breakdown,
     )

@@ -1446,6 +1446,7 @@ def main() -> int:  # noqa: C901
                 stale_symbols if "stale_symbols" in dir() else [],
                 {},
             ),
+            asset_class_breakdown=pnl_tracker.get_asset_class_breakdown(),
         )
         console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
         return finish(0, decisions=decisions, equity_value=equity, extra={"reason": "dry_run"})
@@ -1747,6 +1748,7 @@ def main() -> int:  # noqa: C901
             stale_symbols if "stale_symbols" in dir() else [],
             ps_sources,
         ),
+        asset_class_breakdown=pnl_tracker.get_asset_class_breakdown(),
     )
     console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
     

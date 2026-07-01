@@ -77,6 +77,9 @@ class ConsoleSummary:
     api_metrics: dict[str, Any] = field(default_factory=dict)
     ai_metrics: dict[str, Any] = field(default_factory=dict)
 
+    # --- R2-B: ETF vs Stock breakdown ---
+    asset_class_breakdown: dict[str, Any] = field(default_factory=dict)
+
     def to_dict(self) -> dict[str, Any]:
         base = {
             "run": {
@@ -103,6 +106,7 @@ class ConsoleSummary:
                 "unrealized_pnl": round(self.unrealized_pnl, 2),
                 "total_pnl": round(self.realized_pnl + self.unrealized_pnl, 2),
                 "open_positions": self.open_position_count,
+                "asset_class_breakdown": self.asset_class_breakdown,
             },
             "decision_funnel": {
                 "candidates": self.signals_total,
@@ -191,6 +195,8 @@ class ConsoleSummary:
         price_integrity: dict[str, Any] | None = None,
         api_metrics: dict[str, Any] | None = None,
         ai_metrics: dict[str, Any] | None = None,
+        # R2-B: ETF vs Stock breakdown (optional)
+        asset_class_breakdown: dict[str, Any] | None = None,
     ) -> "ConsoleSummary":
         decisions = decisions or []
         submissions = submissions or []
@@ -294,4 +300,5 @@ class ConsoleSummary:
             price_integrity=price_integrity or {},
             api_metrics=api_metrics or {},
             ai_metrics=ai_metrics or {},
+            asset_class_breakdown=asset_class_breakdown or {},
         )

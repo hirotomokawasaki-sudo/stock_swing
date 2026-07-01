@@ -94,6 +94,23 @@ class ConsoleRenderer:
             f"  total_pnl     = ${p.get('total_pnl', 0):+,.2f}",
             f"  open_positions= {p.get('open_positions', 0)}",
         ]
+        # R2-B: ETF vs Stock breakdown
+        breakdown = p.get("asset_class_breakdown", {})
+        if breakdown:
+            lines.append("")
+            lines.append("  ETF vs STOCK  (closed trades)")
+            for ac in ("etf", "stock"):
+                m = breakdown.get(ac, {})
+                if not m or m.get("count", 0) == 0:
+                    continue
+                pf = m.get("profit_factor")
+                pf_str = f"{pf:.3f}" if pf is not None else "∞"
+                wr = m.get("win_rate", 0)
+                net = m.get("net_pnl", 0)
+                cnt = m.get("count", 0)
+                lines.append(
+                    f"  {ac.upper():<6} n={cnt:<4} PF={pf_str:<7} WR={wr*100:.1f}%  net=${net:+,.0f}"
+                )
         risk = d.get("risk", {})
         regime = risk.get("market_regime", "unknown")
         budget = risk.get("risk_budget_pct")

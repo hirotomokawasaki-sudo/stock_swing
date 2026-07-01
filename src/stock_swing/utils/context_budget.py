@@ -99,15 +99,22 @@ class TokenUsageTracker:
 
 def compact_trading_context(snapshot: dict[str, Any]) -> dict[str, Any]:
     """Return a compact context pack for normal AI calls."""
-    return {
+    ctx: dict[str, Any] = {
         "equity": snapshot.get("equity"),
         "open_positions": snapshot.get("open_position_count"),
         "realized_pnl": snapshot.get("realized_pnl"),
         "win_rate": snapshot.get("win_rate"),
-        "profit_factor": snapshot.get("profit_factor"),
         "regime": snapshot.get("market_regime"),
         "stale_warnings": snapshot.get("stale_warnings", [])[:5],
     }
+    # R2-B: ETF vs Stock PF (replaces single profit_factor)
+    breakdown = snapshot.get("asset_class_breakdown") or {}
+    if breakdown:
+        ctx["etf_pf"] = (breakdown.get("etf") or {}).get("profit_factor")
+        ctx["stock_pf"] = (breakdown.get("stock") or {}).get("profit_factor")
+    else:
+        ctx["profit_factor"] = snapshot.get("profit_factor")
+    return ctx
 
 
 def select_context_mode(
@@ -145,12 +152,22 @@ def build_context_pack(
     if mode == MODE_MINIMAL:
         return base
 
+    # R2-B: ETF vs Stock PF (replaces single profit_factor)
+    breakdown = snapshot.get("asset_class_breakdown") or {}
+    pf_ctx: dict[str, Any]
+    if breakdown:
+        pf_ctx = {
+            "etf_pf": (breakdown.get("etf") or {}).get("profit_factor"),
+            "stock_pf": (breakdown.get("stock") or {}).get("profit_factor"),
+        }
+    else:
+        pf_ctx = {"profit_factor": snapshot.get("profit_factor")}
     base.update(
         {
             "realized_pnl": snapshot.get("realized_pnl"),
             "unrealized_pnl": snapshot.get("unrealized_pnl"),
             "win_rate": snapshot.get("win_rate"),
-            "profit_factor": snapshot.get("profit_factor"),
+            **pf_ctx,
         }
     )
 
