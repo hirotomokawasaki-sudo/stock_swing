@@ -1478,6 +1478,10 @@ def main() -> int:  # noqa: C901
                 {},
             ),
             asset_class_breakdown=pnl_tracker.get_asset_class_breakdown(),
+            broker_tracker_diff=_build_broker_tracker_diff(
+                list(current_positions_full.values()) if current_positions_full else [],
+                pnl_tracker.get_open_positions(),
+            ),
         )
         console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
         return finish(0, decisions=decisions, equity_value=equity, extra={"reason": "dry_run"})
@@ -1780,6 +1784,10 @@ def main() -> int:  # noqa: C901
             ps_sources,
         ),
         asset_class_breakdown=pnl_tracker.get_asset_class_breakdown(),
+        broker_tracker_diff=_build_broker_tracker_diff(
+            list(current_positions_full.values()) if current_positions_full else [],
+            pnl_tracker.get_open_positions(),
+        ),
     )
     console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
     
@@ -1828,6 +1836,46 @@ def _build_api_metrics(latency_tracker) -> dict:
         "p50_latency_ms": round(p50, 1) if p50 is not None else None,
         "p95_latency_ms": round(p95, 1) if p95 is not None else None,
         "slowest_endpoints": slowest,
+    }
+
+
+def _build_broker_tracker_diff(
+    broker_positions: list[dict],
+    tracker_open: list[dict],
+) -> dict:
+    """R6-D: Compute diff between broker positions and tracker open trades."""
+    broker_map: dict[str, float] = {}
+    for pos in broker_positions:
+        sym = str(pos.get("symbol") or "").strip()
+        qty = float(pos.get("qty") or 0)
+        if sym:
+            broker_map[sym] = broker_map.get(sym, 0) + qty
+
+    tracker_map: dict[str, float] = {}
+    for t in tracker_open:
+        sym = str(t.get("symbol") or "").strip()
+        qty = float(t.get("qty") or 0)
+        if sym:
+            tracker_map[sym] = tracker_map.get(sym, 0) + qty
+
+    broker_syms = set(broker_map)
+    tracker_syms = set(tracker_map)
+    broker_only = sorted(broker_syms - tracker_syms)
+    tracker_only = sorted(tracker_syms - broker_syms)
+    qty_mismatches = [
+        {"symbol": sym, "broker_qty": broker_map[sym], "tracker_qty": tracker_map[sym]}
+        for sym in sorted(broker_syms & tracker_syms)
+        if abs(broker_map[sym] - tracker_map[sym]) > 0.5
+    ]
+    mismatch_count = len(broker_only) + len(tracker_only) + len(qty_mismatches)
+
+    return {
+        "broker_count": len(broker_map),
+        "tracker_count": len(tracker_map),
+        "mismatch_count": mismatch_count,
+        "broker_only": broker_only,
+        "tracker_only": tracker_only,
+        "qty_mismatches": qty_mismatches,
     }
 
 

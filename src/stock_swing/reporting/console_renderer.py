@@ -36,6 +36,7 @@ class ConsoleRenderer:
             self._portfolio(d),
             self._price_integrity(d),
             self._decision_funnel(d),
+            self._broker_tracker_diff(d),
             self._api_ai(d),
             self._missing_metrics(d),
         ]
@@ -164,11 +165,40 @@ class ConsoleRenderer:
             f"  submitted={f.get('submitted', 0)}"
             f"  rejected={f.get('rejected', 0)}",
         ]
+        # R6-D: deny_reasons breakdown
         deny_reasons = f.get("deny_reasons", {})
         if deny_reasons:
             lines.append("  deny_reasons:")
-            for reason, count in sorted(deny_reasons.items(), key=lambda x: -x[1])[:5]:
-                lines.append(f"    {reason}: {count}")
+            for reason, count in sorted(deny_reasons.items(), key=lambda x: -x[1])[:8]:
+                bar = "▪" * min(count, 10)
+                lines.append(f"    {reason:<40s} {count:>3}  {bar}")
+        return "\n".join(lines)
+
+    def _broker_tracker_diff(self, d: dict) -> str:
+        """R6-D: Broker vs Tracker position diff panel."""
+        diff = d.get("broker_tracker_diff", {})
+        if not diff:
+            return ""
+        lines = ["BROKER / TRACKER", _SEP]
+        mismatch_count = diff.get("mismatch_count", 0)
+        broker_only = diff.get("broker_only", [])
+        tracker_only = diff.get("tracker_only", [])
+        qty_mismatches = diff.get("qty_mismatches", [])
+
+        status = "✅ OK" if mismatch_count == 0 else f"🚨 {mismatch_count} mismatch(es)"
+        lines.append(f"  status         = {status}")
+        lines.append(f"  broker_pos     = {diff.get('broker_count', '?')}")
+        lines.append(f"  tracker_open   = {diff.get('tracker_count', '?')}")
+
+        if broker_only:
+            lines.append(f"  broker_only    = {', '.join(broker_only[:8])}")
+        if tracker_only:
+            lines.append(f"  tracker_only   = {', '.join(tracker_only[:8])}")
+        if qty_mismatches:
+            for m in qty_mismatches[:5]:
+                lines.append(
+                    f"  qty_mismatch   = {m['symbol']} broker={m['broker_qty']} tracker={m['tracker_qty']}"
+                )
         return "\n".join(lines)
 
     def _api_ai(self, d: dict) -> str:

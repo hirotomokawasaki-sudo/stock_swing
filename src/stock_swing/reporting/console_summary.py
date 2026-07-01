@@ -80,6 +80,10 @@ class ConsoleSummary:
     # --- R2-B: ETF vs Stock breakdown ---
     asset_class_breakdown: dict[str, Any] = field(default_factory=dict)
 
+    # --- R6-D: Decision Funnel detail + Broker/Tracker diff ---
+    deny_reason_counts: dict[str, int] = field(default_factory=dict)
+    broker_tracker_diff: dict[str, Any] = field(default_factory=dict)
+
     def to_dict(self) -> dict[str, Any]:
         base = {
             "run": {
@@ -116,7 +120,9 @@ class ConsoleSummary:
                 "submitted": self.orders_submitted,
                 "rejected": self.orders_rejected,
                 "blocked": len(self.cluster_blocks),
+                "deny_reasons": self.deny_reason_counts,
             },
+            "broker_tracker_diff": self.broker_tracker_diff,
             "risk": {
                 "cluster_blocks": self.cluster_blocks,
                 "risk_budget_pct": round(self.risk_budget_pct, 3),
@@ -197,6 +203,8 @@ class ConsoleSummary:
         ai_metrics: dict[str, Any] | None = None,
         # R2-B: ETF vs Stock breakdown (optional)
         asset_class_breakdown: dict[str, Any] | None = None,
+        # R6-D: Broker/Tracker diff (optional)
+        broker_tracker_diff: dict[str, Any] | None = None,
     ) -> "ConsoleSummary":
         decisions = decisions or []
         submissions = submissions or []
@@ -208,6 +216,13 @@ class ConsoleSummary:
         deny_dec = sum(1 for d in decisions if getattr(d, "action", "") == "deny")
         submitted = sum(1 for s in submissions if getattr(s, "status", "") == "submitted")
         rejected = sum(1 for s in submissions if getattr(s, "status", "") == "rejected")
+
+        # R6-D: Aggregate deny reasons from denied decisions
+        deny_reason_counts: dict[str, int] = {}
+        for d in decisions:
+            if getattr(d, "action", "") == "deny":
+                for reason in (getattr(d, "deny_reasons", None) or []):
+                    deny_reason_counts[reason] = deny_reason_counts.get(reason, 0) + 1
 
         # Auto-generate alerts
         alerts: list[ConsoleAlert] = list(extra_alerts)
@@ -301,4 +316,6 @@ class ConsoleSummary:
             api_metrics=api_metrics or {},
             ai_metrics=ai_metrics or {},
             asset_class_breakdown=asset_class_breakdown or {},
+            deny_reason_counts=deny_reason_counts,
+            broker_tracker_diff=broker_tracker_diff or {},
         )
