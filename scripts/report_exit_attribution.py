@@ -34,6 +34,7 @@ ATTRIBUTED_REASONS = {
     "signal_trailing",
     "manual",
     "target_reached",
+    "time_based",  # Max hold period reached (SimpleExitV2)
 }
 
 # Reasons that are legacy / unknown attribution
