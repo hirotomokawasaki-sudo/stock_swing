@@ -52,6 +52,7 @@ from stock_swing.decision_engine.decision_engine import DecisionEngine, Decision
 from stock_swing.decision_engine.risk_validator import RiskValidator
 from stock_swing.execution.paper_executor import OrderSubmission, PaperExecutor
 from stock_swing.execution.reconciler import Reconciler
+from stock_swing.risk.entry_filter import EntryFilterConfig, EntryFilterEngine
 from stock_swing.risk.open_shock_cooldown import apply_open_shock_cooldown
 from stock_swing.risk.portfolio_allocator import PortfolioAllocator
 from stock_swing.feature_engine.macro_regime_feature import MacroRegimeFeature
@@ -1375,6 +1376,36 @@ def main() -> int:  # noqa: C901
     actionable, blocked_cluster_cap = _filter_buys_by_cluster_cap(
         actionable, current_positions_full, equity
     )
+
+    # R2-D: Entry quality filters (volume / ADR / rolling PF gate)
+    _records_by_symbol: dict[str, list] = {}
+    for _rec in all_records:
+        _sym = getattr(_rec, "symbol", None) or ""
+        if _sym:
+            _records_by_symbol.setdefault(_sym, []).append(_rec)
+    _entry_filter = EntryFilterEngine(EntryFilterConfig.from_env())
+    _ef_result = _entry_filter.filter(
+        decisions=actionable,
+        records_by_symbol=_records_by_symbol,
+        closed_trades=pnl_tracker.state.trades,
+        etf_symbols=set(ETF_SYMBOLS),
+    )
+    actionable = _ef_result.passed
+    if _ef_result.blocked:
+        _vol_n = len(_ef_result.stats.get("volume_blocked", []))
+        _adr_n = len(_ef_result.stats.get("adr_blocked", []))
+        _pf_n  = len(_ef_result.stats.get("rolling_pf_blocked", []))
+        print(
+            f"  🔎 Entry filter blocked {len(_ef_result.blocked)} buy(s) "
+            f"(volume={_vol_n} adr={_adr_n} pf_gate={_pf_n}): "
+            + ", ".join(f"{sym}[{rsn.split(':')[0]}]" for sym, rsn in _ef_result.blocked[:5])
+            + (" ..." if len(_ef_result.blocked) > 5 else "")
+        )
+        audit_log.log_system_event(
+            "entry_filter_blocked_buys",
+            details=f"{len(_ef_result.blocked)} buy(s): {[s for s, _ in _ef_result.blocked[:5]]}",
+        )
+
     if _guard_engine is not None and apply_to_buy_candidate is not None and not _warning_only:
         _guard_metrics_now = {
             "stale_price_event_count": len(stale_symbols) if "stale_symbols" in dir() else 0,

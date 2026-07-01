@@ -1,0 +1,30 @@
+# R2-D: Entry Filter Configuration
+# Applied to BUY decisions before order submission.
+# ETF symbols are exempt from volume and ADR gates.
+#
+# All values can be overridden by environment variables:
+#   ENTRY_FILTER_MIN_VOLUME
+#   ENTRY_FILTER_MIN_ADR_PCT
+#   ENTRY_FILTER_ROLLING_PF_GATE
+#   ENTRY_FILTER_MIN_TRADES_FOR_GATE
+#   ENTRY_FILTER_DISABLED  (set "true" to bypass all)
+
+# --- Gate 1: Volume (stocks only) ---
+# Minimum average daily volume (shares). Blocks illiquid names.
+# Rationale: <500K avg volume → wide spreads, slippage risk for swing sizes
+min_volume: 500000
+
+# --- Gate 2: ADR - Average Daily Range (stocks only) ---
+# Minimum avg (high-low)/close * 100.
+# Rationale: <1.0% → stock barely moves; swing profit unlikely to cover spread
+min_adr_pct: 1.0
+
+# --- Gate 3: Rolling PF gate (all asset classes) ---
+# Per-symbol profit factor gate. Triggered only when >= min_trades_for_gate
+# closed trades exist for the symbol.
+# Rationale: If we've traded a symbol ≥5 times and PF < 0.70, stop adding.
+rolling_pf_gate: 0.70
+min_trades_for_gate: 5
+
+# Set to true to disable all entry filters (for debugging/research)
+disabled: false
