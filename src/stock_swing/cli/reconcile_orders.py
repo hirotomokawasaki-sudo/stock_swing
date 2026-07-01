@@ -923,16 +923,35 @@ def main() -> int:
                     continue
                     
                 # Pass filled_qty to support partial fills
+                # Re-read fresh state to detect exits recorded by a concurrent paper_demo
+                # run (TOCTOU guard: paper_demo may have recorded the exit between when
+                # reconcile loaded state and now).
+                tracker.state = tracker._load_state()
+
                 # Check if there's an open trade for this symbol before recording exit
                 has_open_trade = any(
                     t.get("symbol") == sub["symbol"] and t.get("status") == "open"
                     for t in tracker.state.trades
                 )
-                
+
                 if not has_open_trade:
-                    print(f"WARN: Skipping exit for {sub['symbol']}: no open trade found", file=sys.stderr)
+                    # Already closed — check whether paper_demo gave it a valid reason.
+                    already_attributed = any(
+                        t.get("symbol") == sub["symbol"]
+                        and t.get("status") == "closed"
+                        and t.get("exit_reason") not in ("broker_fill_unknown", "broker_fill", None, "")
+                        for t in tracker.state.trades
+                    )
+                    if already_attributed:
+                        print(
+                            f"INFO: Skipping exit for {sub['symbol']}: already closed with"
+                            " attributed reason by paper_demo (TOCTOU guard)",
+                            file=sys.stderr,
+                        )
+                    else:
+                        print(f"WARN: Skipping exit for {sub['symbol']}: no open trade found", file=sys.stderr)
                     continue
-                
+
                 # Look up the exit reason written by paper_demo at submission time
                 stored = read_exit_reason(project_root, broker_order_id) if broker_order_id else None
                 if stored:
