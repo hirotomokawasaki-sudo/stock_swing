@@ -275,6 +275,13 @@
       return `${Number(v).toFixed(1)}%`;
     }
 
+    function fmtDate(v) {
+      if (!v) return "--";
+      const d = new Date(v);
+      if (Number.isNaN(d.getTime())) return "--";
+      return d.toLocaleDateString(undefined, {month: "2-digit", day: "2-digit"});
+    }
+
     function clsNum(v) {
       return Number(v || 0) >= 0 ? "pos" : "neg";
     }
@@ -412,7 +419,7 @@
         <div class="list-row">
           <div class="stack">
             <span class="symbol">${t.symbol || "--"}</span>
-            <span class="reason-meta">${t.exit_reason || "--"} / ${t.strategy_id || "--"}</span>
+            <span class="reason-meta">buy=${fmtDate(t.entry_time)} sell=${fmtDate(t.exit_time)} / ${t.exit_reason || "--"} / ${t.strategy_id || "--"}</span>
           </div>
           <div class="${clsNum(t.pnl)}">${fmtMoney(t.pnl)}</div>
         </div>`).join("") : `<div class="muted">No recent trades</div>`;
