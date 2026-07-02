@@ -60,3 +60,79 @@ def test_load_go_no_go_reads_markdown(tmp_path: Path, monkeypatch) -> None:
 
     assert payload["available"] is True
     assert "Decision: TBD" in payload["content"]
+
+
+def test_load_recent_trades_sorts_closed_by_exit_time(tmp_path: Path, monkeypatch) -> None:
+    state_path = tmp_path / "pnl_state.json"
+    state_path.write_text(
+        json.dumps(
+            {
+                "trades": [
+                    {
+                        "symbol": "OLD",
+                        "status": "closed",
+                        "entry_time": "2025-12-31T00:00:00+00:00",
+                        "exit_time": "2026-01-01T00:00:00+00:00",
+                        "pnl": 1,
+                    },
+                    {
+                        "symbol": "NEW",
+                        "status": "closed",
+                        "entry_time": "2026-01-31T00:00:00+00:00",
+                        "exit_time": "2026-02-01T00:00:00+00:00",
+                        "pnl": 2,
+                    },
+                    {"symbol": "OPEN", "status": "open", "entry_time": "2026-03-01T00:00:00+00:00"},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(remote, "PNL_STATE_PATH", state_path)
+
+    payload = remote.load_recent_trades(limit=2)
+
+    assert payload["count"] == 2
+    assert [row["symbol"] for row in payload["trades"]] == ["NEW", "OLD"]
+    assert payload["trades"][0]["hold_days"] == 1.0
+
+
+def test_query_limit_clamps_bad_values() -> None:
+    assert remote._query_limit({"limit": ["abc"]}, default=25, minimum=1, maximum=100) == 25
+    assert remote._query_limit({"limit": ["0"]}, default=25, minimum=1, maximum=100) == 1
+    assert remote._query_limit({"limit": ["999"]}, default=25, minimum=1, maximum=100) == 100
+
+
+def test_load_at_risk_positions_flags_loss(monkeypatch) -> None:
+    monkeypatch.setattr(
+        remote,
+        "load_positions",
+        lambda limit=200: {
+            "source": "test",
+            "warnings": [],
+            "positions": [
+                {"symbol": "BAD", "return_pct": -0.06, "entry_price": 100, "peak_price": 101},
+                {"symbol": "OK", "return_pct": 0.02, "entry_price": 100, "peak_price": 101},
+            ],
+        },
+    )
+
+    payload = remote.load_at_risk_positions()
+
+    assert payload["count"] == 1
+    assert payload["positions"][0]["symbol"] == "BAD"
+    assert payload["positions"][0]["risk_reason"] == "loss <= -5%"
+
+
+def test_load_broker_tracker_detail_uses_console_summary(tmp_path: Path, monkeypatch) -> None:
+    summary_path = tmp_path / "latest_console_summary.json"
+    summary_path.write_text(
+        json.dumps({"broker_tracker_diff": {"mismatch_count": 2, "broker_only": ["A"], "tracker_only": ["B"]}}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(remote, "SUMMARY_PATH", summary_path)
+
+    payload = remote.load_broker_tracker_detail()
+
+    assert payload["available"] is True
+    assert payload["mismatch_count"] == 2

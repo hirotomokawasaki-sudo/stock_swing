@@ -108,8 +108,29 @@ All `/api/*` endpoints require `Authorization: Bearer <token>`.
 | `GET /api/status` | Summary availability and freshness |
 | `GET /api/console_summary` | Latest `reports/console/latest_console_summary.json` |
 | `GET /api/go_no_go` | `docs/runbooks/go_no_go_checklist.md` |
+| `GET /api/positions` | Open positions list |
+| `GET /api/recent_trades?limit=25` | Recent closed trades |
+| `GET /api/at_risk_positions` | Positions near stop / loss / giveback conditions |
+| `GET /api/operational_health` | Cron, guardrail, circuit breaker health |
+| `GET /api/broker_tracker_detail` | Broker-only / tracker-only / qty mismatch detail |
 
 Mutation methods return `405 read_only`.
+
+## Smartphone Panels
+
+The mobile UI intentionally stays dense and read-only. As of 2026-07-02 it
+shows:
+
+- Portfolio / Run Health
+- Operational Health
+- At-risk Positions
+- Open Positions
+- Recent Trades
+- Exit Attribution
+- Broker / Tracker summary and detail
+- Decision Funnel
+- Alerts
+- Go / No-Go checklist
 
 ---
 

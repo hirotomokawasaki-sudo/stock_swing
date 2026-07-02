@@ -143,7 +143,7 @@
     .muted { color: var(--muted); }
 
     .full { grid-column: 1 / -1; }
-    .reason-row, .alert-row {
+    .reason-row, .alert-row, .list-row {
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 8px;
@@ -151,8 +151,10 @@
       border-bottom: 1px solid rgba(255,255,255,.06);
       font-size: 13px;
     }
-    .reason-row:last-child, .alert-row:last-child { border-bottom: 0; }
+    .reason-row:last-child, .alert-row:last-child, .list-row:last-child { border-bottom: 0; }
     .reason-meta { color: var(--muted); margin-top: 2px; }
+    .stack { display: grid; gap: 2px; min-width: 0; }
+    .symbol { font-weight: 800; }
 
     pre {
       white-space: pre-wrap;
@@ -199,6 +201,26 @@
       </section>
 
       <section class="full">
+        <h2>Operational Health</h2>
+        <div id="operationalHealth"></div>
+      </section>
+
+      <section class="full">
+        <h2>At-risk Positions</h2>
+        <div id="atRisk"></div>
+      </section>
+
+      <section class="full">
+        <h2>Open Positions</h2>
+        <div id="positions"></div>
+      </section>
+
+      <section class="full">
+        <h2>Recent Trades</h2>
+        <div id="recentTrades"></div>
+      </section>
+
+      <section class="full">
         <h2>Exit Attribution</h2>
         <div id="attribution"></div>
       </section>
@@ -206,6 +228,11 @@
       <section>
         <h2>Broker / Tracker</h2>
         <div id="brokerTracker"></div>
+      </section>
+
+      <section class="full">
+        <h2>Broker / Tracker Detail</h2>
+        <div id="brokerTrackerDetail"></div>
       </section>
 
       <section>
@@ -252,6 +279,18 @@
       return Number(v || 0) >= 0 ? "pos" : "neg";
     }
 
+    function positionValue(p) {
+      if (p.unrealized_pnl !== null && p.unrealized_pnl !== undefined) return fmtMoney(p.unrealized_pnl);
+      if (p.return_pct !== null && p.return_pct !== undefined) return fmtPct(Number(p.return_pct) * 100);
+      return "--";
+    }
+
+    function positionValueClass(p) {
+      if (p.unrealized_pnl !== null && p.unrealized_pnl !== undefined) return clsNum(p.unrealized_pnl);
+      if (p.return_pct !== null && p.return_pct !== undefined) return clsNum(p.return_pct);
+      return "muted";
+    }
+
     function metric(label, value, valueClass = "") {
       return `<div class="metric"><span class="label">${label}</span><span class="value ${valueClass}">${value}</span></div>`;
     }
@@ -271,6 +310,11 @@
       $("health").innerHTML = html;
       $("attribution").innerHTML = html;
       $("brokerTracker").innerHTML = html;
+      $("brokerTrackerDetail").innerHTML = html;
+      $("operationalHealth").innerHTML = html;
+      $("positions").innerHTML = html;
+      $("recentTrades").innerHTML = html;
+      $("atRisk").innerHTML = html;
       $("funnel").innerHTML = html;
       $("alerts").innerHTML = html;
       $("goNoGo").textContent = msg;
@@ -337,13 +381,84 @@
         : `<div class="muted">No alerts</div>`;
     }
 
+    function renderOperationalHealth(d) {
+      const cron = d.cron || {};
+      const guard = d.guardrail || {};
+      const cb = d.circuit_breaker || {};
+      const badJobs = cron.bad_jobs || [];
+      $("operationalHealth").innerHTML = [
+        metric("Cron jobs", `${cron.enabled_stock_swing_jobs ?? 0}/${cron.total_stock_swing_jobs ?? 0}`),
+        metric("Bad cron jobs", badJobs.length, badJobs.length ? "neg" : "pos"),
+        metric("Guardrail", guard.latest_console_status || guard.service_status || "--"),
+        metric("Circuit breaker", cb.status || "--"),
+      ].join("") + (badJobs.length ? badJobs.slice(0, 5).map(j => `<div class="alert-row"><span>${j.name}</span><span class="neg">${j.status}</span></div>`).join("") : "");
+    }
+
+    function renderPositions(payload) {
+      const rows = payload.positions || [];
+      $("positions").innerHTML = rows.length ? rows.slice(0, 30).map(p => `
+        <div class="list-row">
+          <div class="stack">
+            <span class="symbol">${p.symbol || "--"}</span>
+            <span class="reason-meta">qty=${p.qty ?? "--"} entry=${p.entry_price ?? "--"} current=${p.current_price ?? "--"} hold=${p.hold_days ?? "--"}d</span>
+          </div>
+          <div class="${positionValueClass(p)}">${positionValue(p)}</div>
+        </div>`).join("") : `<div class="muted">No open positions</div>`;
+    }
+
+    function renderRecentTrades(payload) {
+      const rows = payload.trades || [];
+      $("recentTrades").innerHTML = rows.length ? rows.slice(0, 25).map(t => `
+        <div class="list-row">
+          <div class="stack">
+            <span class="symbol">${t.symbol || "--"}</span>
+            <span class="reason-meta">${t.exit_reason || "--"} / ${t.strategy_id || "--"}</span>
+          </div>
+          <div class="${clsNum(t.pnl)}">${fmtMoney(t.pnl)}</div>
+        </div>`).join("") : `<div class="muted">No recent trades</div>`;
+    }
+
+    function renderAtRisk(payload) {
+      const rows = payload.positions || [];
+      $("atRisk").innerHTML = rows.length ? rows.slice(0, 20).map(p => `
+        <div class="list-row">
+          <div class="stack">
+            <span class="symbol">${p.symbol || "--"}</span>
+            <span class="reason-meta">${p.risk_reason || "--"} / return=${p.return_pct !== null && p.return_pct !== undefined ? fmtPct(Number(p.return_pct) * 100) : "--"} peak=${p.peak_gain_pct !== null && p.peak_gain_pct !== undefined ? fmtPct(Number(p.peak_gain_pct) * 100) : "--"}</span>
+          </div>
+          <div class="${positionValueClass(p)}">${positionValue(p)}</div>
+        </div>`).join("") : `<div class="muted">No at-risk positions</div>`;
+    }
+
+    function renderBrokerTrackerDetail(d) {
+      const brokerOnly = d.broker_only || [];
+      const trackerOnly = d.tracker_only || [];
+      const qty = d.qty_mismatches || [];
+      const chunks = [];
+      chunks.push(metric("Mismatch count", d.mismatch_count ?? 0, Number(d.mismatch_count || 0) ? "neg" : "pos"));
+      if (brokerOnly.length) chunks.push(`<div class="metric"><span class="label">Broker only</span><span class="value neg">${brokerOnly.slice(0, 8).join(", ")}</span></div>`);
+      if (trackerOnly.length) chunks.push(`<div class="metric"><span class="label">Tracker only</span><span class="value neg">${trackerOnly.slice(0, 8).join(", ")}</span></div>`);
+      if (qty.length) chunks.push(qty.slice(0, 8).map(m => `<div class="alert-row"><span>${m.symbol}</span><span class="neg">${m.broker_qty} / ${m.tracker_qty}</span></div>`).join(""));
+      $("brokerTrackerDetail").innerHTML = chunks.join("");
+    }
+
     async function refresh() {
       try {
-        const [summary, go] = await Promise.all([
+        const [summary, go, positions, trades, atRisk, opHealth, diff] = await Promise.all([
           api("/api/console_summary"),
           api("/api/go_no_go"),
+          api("/api/positions"),
+          api("/api/recent_trades?limit=25"),
+          api("/api/at_risk_positions"),
+          api("/api/operational_health"),
+          api("/api/broker_tracker_detail"),
         ]);
         renderSummary(summary);
+        renderPositions(positions);
+        renderRecentTrades(trades);
+        renderAtRisk(atRisk);
+        renderOperationalHealth(opHealth);
+        renderBrokerTrackerDetail(diff);
         $("goNoGo").textContent = go.content ? go.content.split("\n").slice(0, 32).join("\n") : "--";
       } catch (err) {
         $("runStatus").textContent = "AUTH";

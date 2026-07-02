@@ -302,6 +302,13 @@ experiment_id が全 run に付与
 | R6-F-GW | C6 | R6-F 実運用公開方式: OpenClaw gateway ルート設計・検証 | 🔲 | 08-01 まで |
 | — | C5 | Risk Dashboard（ETF/株 別昇格状態）← R5 と並行 | 🔲 | 08-05〜 |
 
+**R6-F 詳細パネル拡張（2026-07-02）**
+- Open Positions: open trade の symbol / qty / entry / current / hold / unrealized または return
+- Recent Trades: 直近 closed trade の exit_reason / strategy / PnL
+- At-risk Positions: -5% 以下、利益剥落、current 不明の高ピーク銘柄
+- Cron / Guardrail Health: stock_swing cron、guardrail、circuit breaker
+- Broker/Tracker diff detail: broker_only / tracker_only / qty_mismatches
+
 **C1 + C2 完了確認（2026-06-25）**
 - `ConsoleSummary`: ConsoleAlert / OK・DEGRADED・HALTED ステータス / save_json() 追加
 - `ConsoleRenderer`: 6セクション（RUN HEALTH / ALERTS / PORTFOLIO / PRICE INTEGRITY / DECISION FUNNEL / API・AI COST）
@@ -389,6 +396,7 @@ Week 1-2（07-02〜07-14）🟠 推奨:
 
 Week 3（07-14〜07-21）🟠 STRONGLY RECOMMENDED:
   ✅ R6-F   リモート Web 監視（スマホ対応）（**07-02 前倒し完了**）
+  ✅ R6-F   スマホ詳細パネル拡張（Open Positions / Recent Trades / At-risk / Cron・Guardrail / Broker diff）
   🔲 R6-F-GW OpenClaw gateway 経由の実運用ルート設計・検証
 
 Week 4（07-21〜07-31）🔴 BLOCKING:
