@@ -6,6 +6,22 @@
 This monitor is separate from `console/app.py`. The full console has parameter
 mutation endpoints, so it must not be exposed remotely as the R6-F surface.
 
+## Current Exposure Plan
+
+| Phase | Choice | Status |
+|---|---|---|
+| Same-day verification | LAN/local | Verified on 2026-07-02 |
+| Production candidate before 2026-08-01 | OpenClaw gateway | Pending gateway route design |
+
+2026-07-02 LAN verification:
+
+- Mac LAN IP: `192.168.0.190`
+- Server bind: `0.0.0.0:3340`
+- `GET /health` via localhost: `200`
+- `GET /health` via LAN IP: `200`
+- authenticated `GET /api/status` via LAN IP: `200`
+- unauthenticated `GET /api/status` via LAN IP: `401`
+
 ---
 
 ## Start Locally

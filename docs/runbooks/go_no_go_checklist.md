@@ -40,7 +40,7 @@ Any critical item marked `NO-GO` blocks live trading until resolved.
 | Gate | Requirement | Result |
 |---|---|---|
 | Initial size | 2026-08-01 to 2026-08-14 uses 50% size | TBD |
-| Remote monitoring | R6-F or documented substitute available | TBD |
+| Remote monitoring | R6-F read-only monitor available; OpenClaw gateway route before live preferred | GO for LAN/local, gateway TBD |
 | Manual stop access | Operator can execute emergency stop steps | TBD |
 | Telegram/notification path | Trade and halt notifications visible | TBD |
 | Rollback path | Paper rollback command verified | TBD |
@@ -56,7 +56,7 @@ Any critical item marked `NO-GO` blocks live trading until resolved.
 | R2 ETF/Stock split | DONE | separate console metrics and entry filters |
 | R3 Exit replay | DONE | staged trailing was best first-pass variant |
 | R4 Signal strength | PARTIAL | Option A deployed; R4-C decile validation remains |
-| R6 Console | PARTIAL | C1/C2/D/E done; R6-F remote web remains |
+| R6 Console | DONE | C1/C2/D/E/F done; C5 Risk Dashboard is R5-linked post-launch work |
 
 ---
 
