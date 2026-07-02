@@ -298,7 +298,8 @@ experiment_id が全 run に付与
 | **R6-C** | **C2** | **API/Token モニター（p50/p95 latency + error_count + context_pack 分布）** | **✅ 2026-06-25** | — |
 | R6-D | C3 | Decision Funnel（deny_reasons 集計 + Broker/Tracker 差分パネル） | ✅ 2026-07-01 | — |
 | R6-E | C4 | Attribution パネル（ETF/Stock 別 PF・exit reason 別 PF）← R1 完了後 | ✅ 2026-07-02 | — |
-| R6-F | C6 | Remote Web 読み取り専用（スマートフォン対応・トークン認証） | ✅ 2026-07-02 | — |
+| R6-F | C6 | Remote Web 読み取り専用（スマートフォン対応・トークン認証） | ✅ 2026-07-02 | LAN/local 確認済み |
+| R6-F-GW | C6 | R6-F 実運用公開方式: OpenClaw gateway ルート設計・検証 | 🔲 | 08-01 まで |
 | — | C5 | Risk Dashboard（ETF/株 別昇格状態）← R5 と並行 | 🔲 | 08-05〜 |
 
 **C1 + C2 完了確認（2026-06-25）**
@@ -388,9 +389,11 @@ Week 1-2（07-02〜07-14）🟠 推奨:
 
 Week 3（07-14〜07-21）🟠 STRONGLY RECOMMENDED:
   ✅ R6-F   リモート Web 監視（スマホ対応）（**07-02 前倒し完了**）
+  🔲 R6-F-GW OpenClaw gateway 経由の実運用ルート設計・検証
 
 Week 4（07-21〜07-31）🔴 BLOCKING:
   ✅ 07-21  Go/No-Go チェックリスト定義・確認（定義は07-02前倒し完了、07-31に最終記入）
+  🔲 R6-F-GW OpenClaw gateway 経由の最終接続確認
   🔲 07-28〜07-30  hard-halt 環境でのペーパー最終確認
   🔲 07-31  Go/No-Go 最終判定
 
@@ -428,6 +431,6 @@ Post-Launch:
 | ✅ 完了 | R3 | ✅ R3-A + R3-B 全完了 | 2026-07-02 |
 | 🟠 高 | R4 | 🔲 R4-A/B ✅ / R4-C 残り | 07-28〜08-04 |
 | 🟡 中〜高 | R5 | 🔲 未着手 | R2/R4 完了後（08-05〜） |
-| ✅ 完了 | R6 | ✅ C1/C2/D/E/F 完了 | C5 Risk Dashboard はR5連携で08月 |
+| 🟡 中〜高 | R6 | ✅ C1/C2/D/E/F 完了 / 🔲 R6-F-GW 残り | 実運用候補は OpenClaw gateway |
 | 🟢 中 | R7 | 🔲 未着手 | 09 月 |
 | 🔵 長期 | R8 | 🔲 未着手 | 10 月以降 |
