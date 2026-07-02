@@ -447,7 +447,7 @@ def main() -> int:  # noqa: C901
     # Previous values (0.025 / 0.52) were looser and produced different behaviour
     # in interactive use vs cron runs (which passed --min-momentum 0.05 explicitly).
     parser.add_argument("--min-momentum", type=float, default=0.05)
-    parser.add_argument("--min-signal-strength", type=float, default=0.65)
+    parser.add_argument("--min-signal-strength", type=float, default=0.40)  # R4-B: recalibrated from 0.65 (0.10 saturation) → 0.40 (0.20 saturation)
     parser.add_argument("--intraday-candidate-limit", type=int, default=0,
                         help="Max symbols to fetch 5-minute intraday bars for after daily screening (0 = all daily breakout candidates)")
     parser.add_argument("--dry-run", action="store_true")

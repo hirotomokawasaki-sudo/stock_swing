@@ -32,7 +32,7 @@ class BreakoutMomentumStrategy(BaseStrategy):
     def __init__(
         self,
         min_momentum: float = 0.05,
-        min_signal_strength: float = 0.65,
+        min_signal_strength: float = 0.40,  # Recalibrated 2026-07-02 (R4-B): was 0.65 for 0.10 saturation; now 0.40 for 0.20 saturation (maintains ~same effective momentum floor ~7-8% in expansion)
         etf_symbols: set | None = None,
     ):
         """Initialize breakout momentum strategy.
@@ -147,8 +147,11 @@ class BreakoutMomentumStrategy(BaseStrategy):
             Signal strength [0.0, 1.0].
         """
         # Base strength from momentum magnitude
-        # Linear scaling: 5% momentum = 0.5, 10% momentum = 1.0
-        strength = min(momentum / 0.10, 1.0)
+        # Linear scaling: 10% momentum = 0.5, 20% momentum = 1.0
+        # Changed 2026-07-02 (R4-B Option A): raised saturation threshold 0.10 -> 0.20
+        # to reduce strength=1.0 saturation from ~73% to ~30% in current bull market.
+        # See: docs/r4a_signal_strength_investigation.md
+        strength = min(momentum / 0.20, 1.0)
         
         # Adjust for macro regime
         if macro_regime == "expansion":

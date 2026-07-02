@@ -135,7 +135,13 @@ def test_event_swing_strategy_no_signal_no_event() -> None:
 
 
 def test_breakout_momentum_strategy_buy_signal() -> None:
-    """Test breakout momentum strategy generates buy signal."""
+    """Test breakout momentum strategy generates buy signal.
+
+    R4-B 2026-07-02: saturation threshold raised 0.10 -> 0.20 and min_signal_strength
+    recalibrated from 0.65 -> 0.40. Test momentum updated to 0.10 (was 0.07) so the
+    signal still passes the new default threshold.
+      new strength = min(0.10/0.20, 1.0) * 1.1 (expansion) = 0.55  >= 0.40  OK
+    """
     now = datetime.now(timezone.utc)
     
     features = [
@@ -144,7 +150,7 @@ def test_breakout_momentum_strategy_buy_signal() -> None:
             symbol="AAPL",
             computed_at=now,
             values={
-                "momentum": 0.07,  # 7%
+                "momentum": 0.10,  # 10% — passes new 0.40 threshold in expansion
                 "trend": "bullish",
                 "bars_used": 10,
             },
@@ -171,7 +177,7 @@ def test_breakout_momentum_strategy_buy_signal() -> None:
     assert signal.strategy_id == "breakout_momentum_v1"
     assert signal.symbol == "AAPL"
     assert signal.action == "buy"
-    assert signal.signal_strength >= 0.65
+    assert signal.signal_strength >= 0.40  # recalibrated from 0.65 (R4-B)
     assert signal.time_horizon == "2d"
 
 

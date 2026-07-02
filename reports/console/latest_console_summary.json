@@ -2,9 +2,9 @@
   "run": {
     "mode": "paper",
     "status": "OK",
-    "run_id": "paper_demo-20260630T133503Z-eefcfe5f",
-    "experiment_id": "exp-20260630-swing-v1-prompt-v1-6ce6662d-63890d53",
-    "timestamp": "2026-06-30T13:35:19.801764+00:00",
+    "run_id": "paper_demo-20260701T160003Z-3488d9ac",
+    "experiment_id": "exp-20260701-swing-v1-prompt-v1-5cc4fbbb-63890d53",
+    "timestamp": "2026-07-01T16:01:27.522577+00:00",
     "duration_seconds": null,
     "guardrail_status": "ok"
   },
@@ -18,48 +18,112 @@
     "guardrail_status": "ok"
   },
   "portfolio": {
-    "equity": 1085469.05,
-    "realized_pnl": 68040.5,
-    "unrealized_pnl": 16944.81,
-    "total_pnl": 84985.31,
-    "open_positions": 25
+    "equity": 1073371.64,
+    "realized_pnl": 78310.51,
+    "unrealized_pnl": -7384.01,
+    "total_pnl": 70926.5,
+    "open_positions": 18,
+    "asset_class_breakdown": {
+      "etf": {
+        "count": 72,
+        "wins": 45,
+        "losses": 26,
+        "win_rate": 0.625,
+        "profit_factor": 2.27,
+        "net_pnl": 48733.28,
+        "gross_profit": 87100.64,
+        "gross_loss": 38367.36
+      },
+      "stock": {
+        "count": 156,
+        "wins": 81,
+        "losses": 75,
+        "win_rate": 0.5192,
+        "profit_factor": 1.285,
+        "net_pnl": 31716.21,
+        "gross_profit": 143130.61,
+        "gross_loss": 111414.4
+      },
+      "all": {
+        "count": 228,
+        "wins": 126,
+        "losses": 101,
+        "win_rate": 0.5526,
+        "profit_factor": 1.537,
+        "net_pnl": 80449.49,
+        "gross_profit": 230231.25,
+        "gross_loss": 149781.76
+      }
+    }
   },
   "decision_funnel": {
-    "candidates": 35,
-    "buy": 34,
+    "candidates": 20,
+    "buy": 19,
     "sell": 1,
     "deny": 0,
-    "submitted": 1,
+    "submitted": 15,
     "rejected": 0,
-    "blocked": 0
+    "blocked": 0,
+    "deny_reasons": {}
+  },
+  "broker_tracker_diff": {
+    "broker_count": 18,
+    "tracker_count": 30,
+    "mismatch_count": 15,
+    "broker_only": [
+      "TSM"
+    ],
+    "tracker_only": [
+      "AMAT",
+      "AMD",
+      "DDOG",
+      "DELL",
+      "IBM",
+      "INTC",
+      "KLAC",
+      "LRCX",
+      "META",
+      "PATH",
+      "RBRK",
+      "SNOW",
+      "TSLA"
+    ],
+    "qty_mismatches": [
+      {
+        "symbol": "NBIS",
+        "broker_qty": 91.0,
+        "tracker_qty": 155.0
+      }
+    ]
   },
   "risk": {
     "cluster_blocks": [],
-    "risk_budget_pct": 0.066,
-    "market_regime": "bullish"
+    "risk_budget_pct": 0.053,
+    "market_regime": "neutral"
   },
   "price_integrity": {
-    "fresh_price_count": 1,
+    "fresh_price_count": 15,
     "stale_price_count": 0,
-    "fallback_price_count": 1,
+    "fallback_price_count": 15,
     "top_stale_symbols": [],
     "price_source_breakdown": {
-      "none": 1
+      "none": 1,
+      "decision_latest_close": 14
     }
   },
   "api": {
     "call_count": 2,
     "error_count": 0,
-    "p50_latency_ms": 744.8,
-    "p95_latency_ms": 744.8,
+    "p50_latency_ms": 858.8,
+    "p95_latency_ms": 858.8,
     "slowest_endpoints": [
       {
         "endpoint": "broker.fetch_account",
-        "duration_ms": 744.8
+        "duration_ms": 858.8
       },
       {
         "endpoint": "broker.fetch_positions",
-        "duration_ms": 589.4
+        "duration_ms": 484.8
       }
     ]
   },

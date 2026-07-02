@@ -38,9 +38,9 @@ APPROVED_PARAMETER_RANGES = {
     # Strategy thresholds
     "min_signal_strength": ParameterRange(
         parameter_name="min_signal_strength",
-        min_value=0.4,
+        min_value=0.3,   # R4-B 2026-07-02: lowered from 0.4 to accommodate 0.20 saturation scale
         max_value=0.9,
-        default_value=0.6,
+        default_value=0.40,
         increment=0.05,
         value_type=float,
     ),

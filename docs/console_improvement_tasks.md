@@ -57,15 +57,15 @@
 2026-06-28〜07-04  ✅ R1 完了（R1-C/D: commit 0d0ba73 + attribution fix commit b658f7d）
                    ✅ R2-A 完了（asset_class フィールド付与: commit b658f7d）
 
-2026-07-07〜07-09  🔲 Guardrail warning ログ 2 週間確認完了 → 閾値調整
-                   🔲 R6 C3 着手（Decision Funnel deny_reasons + Broker/Tracker パネル）
+2026-07-07〜07-09  ✅ Guardrail hard-halt 有効化（**07-01 前倒し完了** · 6日間誤発動ゼロ確認済み）
+                   ✅ R6-D 完了（Decision Funnel deny_reasons + Broker/Tracker パネル）（**07-01 前倒し**）
 
-2026-07-07〜07-14  🔲 R2 完了（R2-B/D：ETF/株 別メトリクス必須化 + エントリーフィルター）
-                   🔲 R3-A 着手（反実仮想スクリプト ← R1 完了が前提）
-                   🔲 R6 C3 完了（Decision Funnel + Broker/Tracker パネル）
+2026-07-07〜07-14  ✅ R2 全完了（R2-B/D：ETF/株 別メトリクス必須化 + エントリーフィルター）（**07-01 前倒し**）
+                   ✅ R3-A 完了（反実仮想スクリプト作成・実行）（**07-01 前倒し**）
+                   🔲 R3-B 着手（exit replay 評価 + 結論）
 
-2026-07-14〜07-18  🔲 R6 C4 着手（Attribution パネル ← R1 完了が前提）
-                   🔲 R4-A 着手（signal_strength 飽和の根本原因調査）
+2026-07-14〜07-18  🔲 R6 C4 着手（Attribution パネル ← R1 完了後）
+                   ✅ R4-A 完了（signal_strength 飽和原因調査）（**07-01 前倒し**）
 
 2026-07-15〜07-21  🔲 R3 完了（反実仮想検証 + exit 改善案評価）
                    🔲 R6 C6 着手（Remote Web 読み取り専用ダッシュボード）
@@ -76,7 +76,7 @@
                    🔲 R6 C4 完了（Attribution パネル） → R6 全体完了
 
 2026-08-05〜08-18  🔲 R5 着手（昇格・降格ゲート定義 ← R2/R4 完了が前提）
-                   🔲 Guardrail warning_only → hard-halt 有効化（07-09 キャリブレーション完了後）
+                   ✅ Guardrail hard-halt 有効化（07-01 完了済み）
                    🔲 R6 C5 着手（Risk Dashboard ← R2/R4 完了が前提）
 
 2026-09            🔲 R7（Corporate Action / WebSocket 検討 / ニュース感情評価）
@@ -111,9 +111,9 @@
 ```
 
 **残タスク**
-- [ ] 2週間後（2026-07-09 目安）に warning ログの頻度を確認し閾値を調整
+- [x] 2週間後（2026-07-09 目安）に warning ログの頻度を確認し閾値を調整（**07-01 前倒し完了** · 6日間誤発動ゼロ）
 - [ ] `docs/runbooks/guardrail_calibration.md` に閾値の根拠を記録
-- [ ] キャリブレーション完了後に `paper_warning_only: false` に変更 → hard-halt 有効化
+- [x] キャリブレーション完了後に `paper_warning_only: false` に変更 → hard-halt 有効化（**2026-07-01 完了**）
 
 ---
 
@@ -237,8 +237,8 @@
 
 | サブタスク | 内容 | 状態 | 目標日 |
 |---|---|---|---|
-| R3-A | `scripts/counterfactual_hold_analysis.py`（仮想保有 +1/3/5/10日の損益推計） | 🔲 | 07-07〜07-10 |
-| R3-B | exit 改善案 A/B/C の `exit_replay.py` 拡張 + walk-forward 比較 | 🔲 | 07-10〜07-14 |
+| R3-A | `scripts/counterfactual_hold_analysis.py`（仮想保有 +1/3/5/10日の損益推計） | ✅ 2026-07-01 | — |
+| R3-B | exit 改善案 A/B/C の `exit_replay.py` 拡張 + walk-forward 比較 | 🔲 | 07-09〜07-14 |
 
 **R3 全体の受け入れ基準**
 - 「短期クローズ = 損失の原因」か「生存バイアス」かが数値で判定されている
@@ -253,7 +253,7 @@
 
 | サブタスク | 内容 | 状態 | 目標日 |
 |---|---|---|---|
-| R4-A | 飽和原因の調査（ハードコード / 未実装 / スケーリング不足） | 🔲 | 07-15〜07-18 |
+| R4-A | 飽和原因の調査（ハードコード / 未実装 / スケーリング不足） | ✅ 2026-07-01 | — |
 | R4-B | サブコンポーネント追加（momentum / volume / volatility / trend / regime） | 🔲 | 07-18〜07-28 |
 | R4-C | デサイル別 PF 計測スクリプト + コンソール表示 | 🔲 | 07-28〜08-04 |
 
@@ -296,7 +296,7 @@ experiment_id が全 run に付与
 | **R6-A** | **C1** | **Run Health テキスト表示（✅/⚠️/🚨 + experiment_id + guardrail）** | **✅ 2026-06-25** | — |
 | **R6-B** | **C2** | **Price Integrity パネル（fresh/stale/fallback カウント + sources breakdown）** | **✅ 2026-06-25** | — |
 | **R6-C** | **C2** | **API/Token モニター（p50/p95 latency + error_count + context_pack 分布）** | **✅ 2026-06-25** | — |
-| R6-D | C3 | Decision Funnel（deny_reasons 集計 + Broker/Tracker 差分パネル） | 🔲 | 07-07〜07-14 |
+| R6-D | C3 | Decision Funnel（deny_reasons 集計 + Broker/Tracker 差分パネル） | ✅ 2026-07-01 | — |
 | R6-E | C4 | Attribution パネル（ETF/Stock 別 PF・exit reason 別 PF）← R1 完了後 | 🔲 | 07-14〜08-04 |
 | R6-F | C6 | Remote Web 読み取り専用（スマートフォン対応・トークン認証） | 🔲 | 07-15〜07-28 |
 | — | C5 | Risk Dashboard（ETF/株 別昇格状態）← R5 と並行 | 🔲 | 08-05〜 |
@@ -369,27 +369,25 @@ API / AI COST
   ✅ R0   paper_demo に P6/P9 接続
   ✅ R1   全タスク完了（post-R1-B attribution 100%）
   ✅ R2-A asset_class フィールド付与
-  ✅ R2-B ETF/Stock 別メトリクス必須化（本日完了 commit TBD）
+  ✅ R2-B ETF/Stock 別メトリクス必須化（07-01 前倒し完了）
   ✅ R2-C 個別株 size_multiplier = 0.5x 適用
+  ✅ R2-D entry フィルター強化（volume + rolling PF gate）（07-01 前倒し完了）
+  ✅ R3-A 反実仮想スクリプト作成・実行（07-01 前倒し完了）
+  ✅ R4-A signal strength 飽和原因調査（07-01 前倒し完了）
   ✅ R6 C1/C2 Console 表示・Price Integrity・API Monitor
+  ✅ R6-D Decision Funnel パネル（deny_reasons + Broker/Tracker）（07-01 前倒し完了）
+  ✅ Guardrail hard-halt 有効化（07-01 前倒し完了 · 6日間誤発動ゼロ確認済み）
+  ✅ 緊急停止ランブック作成（07-01）
+  ✅ ライブ切替手順書作成（07-01）
 
-Week 1（07-02〜07-07）🔴 BLOCKING:
-  🔲 R2-D entry フィルター強化（volume + rolling PF gate）
-
-Week 2（07-07〜07-14）🔴 BLOCKING:
-  🔲 07-09  Guardrail 閾値調整 → hard-halt 有効化（CRITICAL GATE）
-  🔲 R3-A   反実仮想スクリプト作成・実行
-  🔲 R3-B   exit replay 評価 + 結論
-  🔲 R6-D   Decision Funnel パネル（deny_reasons + Broker/Tracker）
+Week 1-2（07-02〜07-14）🟠 推奨:
+  🔲 R3-B   exit replay 評価 + 結論（07-09〜07-14）
 
 Week 3（07-14〜07-21）🟠 STRONGLY RECOMMENDED:
-  🔲 R4-A   signal strength 飽和原因調査
   🔲 R6-F   リモート Web 監視（スマホ対応）
-  🔲        緊急停止ランブック作成
 
 Week 4（07-21〜07-31）🔴 BLOCKING:
   🔲 07-21  Go/No-Go チェックリスト定義・確認
-  🔲 07-25  ライブ切替手順書作成（mode: paper → live）
   🔲 07-28〜07-30  hard-halt 環境でのペーパー最終確認
   🔲 07-31  Go/No-Go 最終判定
 
@@ -422,12 +420,12 @@ Post-Launch:
 
 | 優先度 | フェーズ | 状態 | 備考 |
 |---|---|---|---|
-| 🔴 即実施 | R0 | ✅ 完了 | warning_only 期間中（〜07-09） |
+| ✅ 完了 | R0 | ✅ 完了 | hard-halt 有効化済み（07-01〜30日検証中） |
 | ✅ 完了 | R1 | ✅ 2026-06-30 全タスク完了 | 残り: KLAC audit（不要緊急） |
 | ✅ 完了 | R2 | ✅ R2-A/B/C/D 全完了 | 2026-07-01 |
-| 🟠 高（R1後） | R3 | 🔲 未着手 | 07-07〜07-14 |
-| 🟠 高 | R4 | 🔲 未着手 | 07-15〜08-04 |
+| 🟠 高（R1後） | R3 | 🔲 R3-A ✅ / R3-B 残り | 07-09〜07-14 |
+| 🟠 高 | R4 | 🔲 R4-A ✅ / R4-B/C 残り | 07-18〜08-04 |
 | 🟡 中〜高 | R5 | 🔲 未着手 | R2/R4 完了後（08-05〜） |
-| 🟡 中〜高 | R6 | 🔲 C1/C2 ✅ / C3〜C6 残り | C3: 07-07〜、C4: R1後、C6: 07-21〜 |
+| 🟡 中〜高 | R6 | 🔲 C1/C2/D ✅ / C4〜C6 残り | C4: R1後、C6: 07-14〜 |
 | 🟢 中 | R7 | 🔲 未着手 | 09 月 |
 | 🔵 長期 | R8 | 🔲 未着手 | 10 月以降 |
