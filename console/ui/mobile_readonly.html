@@ -228,6 +228,12 @@
   <script>
     const $ = (id) => document.getElementById(id);
     const tokenInput = $("token");
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get("token");
+    if (urlToken) {
+      localStorage.setItem("remoteReadonlyToken", urlToken);
+      history.replaceState({}, "", window.location.pathname);
+    }
     tokenInput.value = localStorage.getItem("remoteReadonlyToken") || "";
 
     function fmtMoney(v) {
@@ -252,9 +258,22 @@
 
     async function api(path) {
       const token = tokenInput.value.trim();
+      if (!token) throw new Error("token required");
       const res = await fetch(path, {headers: {"Authorization": `Bearer ${token}`}});
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
       return res.json();
+    }
+
+    function renderFetchError(err) {
+      const msg = String(err.message || err);
+      const html = `<div class="muted">Data unavailable: ${msg}</div>`;
+      $("portfolio").innerHTML = html;
+      $("health").innerHTML = html;
+      $("attribution").innerHTML = html;
+      $("brokerTracker").innerHTML = html;
+      $("funnel").innerHTML = html;
+      $("alerts").innerHTML = html;
+      $("goNoGo").textContent = msg;
     }
 
     function renderSummary(d) {
@@ -330,6 +349,7 @@
         $("runStatus").textContent = "AUTH";
         $("runStatus").className = "status bad";
         $("lastUpdate").textContent = String(err.message || err);
+        renderFetchError(err);
       }
     }
 

@@ -60,6 +60,42 @@ Then open:
 http://<mac-mini-lan-ip>:3340/
 ```
 
+For phone setup, this URL stores the token in the browser and then removes it
+from the address bar:
+
+```text
+http://<mac-mini-lan-ip>:3340/?token=<REMOTE_READONLY_TOKEN>
+```
+
+## Persistent LAN Mode with launchctl
+
+2026-07-02 verification uses a user LaunchAgent:
+
+```text
+~/Library/LaunchAgents/com.hirotomookawasaki.stock_swing.remote_readonly.plist
+```
+
+Check:
+
+```bash
+launchctl print gui/$(id -u)/com.hirotomookawasaki.stock_swing.remote_readonly
+lsof -nP -iTCP:3340 -sTCP:LISTEN
+curl -s http://192.168.0.190:3340/health | python3 -m json.tool
+```
+
+Stop:
+
+```bash
+launchctl bootout gui/$(id -u)/com.hirotomookawasaki.stock_swing.remote_readonly
+```
+
+Logs:
+
+```bash
+tail -f logs/remote_readonly.log
+tail -f logs/remote_readonly.err
+```
+
 ---
 
 ## Read-Only Endpoints
