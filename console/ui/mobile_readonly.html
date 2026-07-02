@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stock Swing Monitor</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111318;
+      --panel: #1b1f27;
+      --panel-2: #242a34;
+      --line: #363f4d;
+      --text: #eef2f6;
+      --muted: #a7b0bd;
+      --green: #2fd17c;
+      --amber: #f3bd4e;
+      --red: #ff6b6b;
+      --cyan: #6fd3ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .shell {
+      width: min(100%, 920px);
+      margin: 0 auto;
+      padding: 14px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 0 14px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.1;
+      font-weight: 750;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .status {
+      min-width: 92px;
+      text-align: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--panel);
+    }
+
+    .status.ok { border-color: rgba(47, 209, 124, .7); color: var(--green); }
+    .status.warn { border-color: rgba(243, 189, 78, .7); color: var(--amber); }
+    .status.bad { border-color: rgba(255, 107, 107, .8); color: var(--red); }
+
+    .auth {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    input, button {
+      height: 40px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      font: inherit;
+    }
+
+    input {
+      min-width: 0;
+      color: var(--text);
+      background: var(--panel);
+      padding: 0 10px;
+    }
+
+    button {
+      color: var(--text);
+      background: var(--panel-2);
+      padding: 0 12px;
+      font-weight: 700;
+    }
+
+    button:active { transform: translateY(1px); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: var(--cyan);
+      text-transform: uppercase;
+    }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      font-size: 14px;
+    }
+
+    .metric:last-child { border-bottom: 0; }
+    .label { color: var(--muted); }
+    .value { font-weight: 750; text-align: right; overflow-wrap: anywhere; }
+    .pos { color: var(--green); }
+    .neg { color: var(--red); }
+    .muted { color: var(--muted); }
+
+    .full { grid-column: 1 / -1; }
+    .reason-row, .alert-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      padding: 9px 0;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      font-size: 13px;
+    }
+    .reason-row:last-child, .alert-row:last-child { border-bottom: 0; }
+    .reason-meta { color: var(--muted); margin-top: 2px; }
+
+    pre {
+      white-space: pre-wrap;
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 720px) {
+      .shell { padding: 10px; }
+      header { align-items: flex-start; }
+      .grid { grid-template-columns: 1fr; }
+      .auth { grid-template-columns: 1fr; }
+      button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div>
+        <h1>Stock Swing Monitor</h1>
+        <div id="lastUpdate" class="sub">--</div>
+      </div>
+      <div id="runStatus" class="status warn">LOADING</div>
+    </header>
+
+    <div class="auth">
+      <input id="token" type="password" autocomplete="current-password" placeholder="Token">
+      <button id="saveToken" type="button">Save</button>
+      <button id="refresh" type="button">Refresh</button>
+    </div>
+
+    <div class="grid">
+      <section>
+        <h2>Portfolio</h2>
+        <div id="portfolio"></div>
+      </section>
+
+      <section>
+        <h2>Run Health</h2>
+        <div id="health"></div>
+      </section>
+
+      <section class="full">
+        <h2>Exit Attribution</h2>
+        <div id="attribution"></div>
+      </section>
+
+      <section>
+        <h2>Broker / Tracker</h2>
+        <div id="brokerTracker"></div>
+      </section>
+
+      <section>
+        <h2>Decision Funnel</h2>
+        <div id="funnel"></div>
+      </section>
+
+      <section class="full">
+        <h2>Alerts</h2>
+        <div id="alerts"></div>
+      </section>
+
+      <section class="full">
+        <h2>Go / No-Go</h2>
+        <pre id="goNoGo">--</pre>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const tokenInput = $("token");
+    tokenInput.value = localStorage.getItem("remoteReadonlyToken") || "";
+
+    function fmtMoney(v) {
+      if (v === null || v === undefined || Number.isNaN(Number(v))) return "--";
+      const n = Number(v);
+      const sign = n > 0 ? "+" : "";
+      return `${sign}$${n.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+    }
+
+    function fmtPct(v) {
+      if (v === null || v === undefined || Number.isNaN(Number(v))) return "--";
+      return `${Number(v).toFixed(1)}%`;
+    }
+
+    function clsNum(v) {
+      return Number(v || 0) >= 0 ? "pos" : "neg";
+    }
+
+    function metric(label, value, valueClass = "") {
+      return `<div class="metric"><span class="label">${label}</span><span class="value ${valueClass}">${value}</span></div>`;
+    }
+
+    async function api(path) {
+      const token = tokenInput.value.trim();
+      const res = await fetch(path, {headers: {"Authorization": `Bearer ${token}`}});
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return res.json();
+    }
+
+    function renderSummary(d) {
+      const run = d.run || {};
+      const health = d.health || {};
+      const p = d.portfolio || {};
+      const status = String(run.status || "UNKNOWN").toUpperCase();
+      const runStatus = $("runStatus");
+      runStatus.textContent = status;
+      runStatus.className = `status ${status === "OK" ? "ok" : status === "HALTED" ? "bad" : "warn"}`;
+
+      const meta = d._remote_meta || {};
+      $("lastUpdate").textContent = meta.mtime ? `updated ${meta.mtime} / age ${Math.round(meta.age_seconds || 0)}s` : "--";
+
+      $("portfolio").innerHTML = [
+        metric("Equity", fmtMoney(p.equity)),
+        metric("Realized", fmtMoney(p.realized_pnl), clsNum(p.realized_pnl)),
+        metric("Unrealized", fmtMoney(p.unrealized_pnl), clsNum(p.unrealized_pnl)),
+        metric("Open positions", p.open_positions ?? "--"),
+      ].join("");
+
+      $("health").innerHTML = [
+        metric("Guardrail", run.guardrail_status || "--"),
+        metric("Critical", health.critical_count ?? 0),
+        metric("Warnings", health.warning_count ?? 0),
+        metric("API errors", health.api_error_count ?? 0),
+      ].join("");
+
+      const attr = ((p.exit_attribution_breakdown || {}).by_reason) || {};
+      const rows = Object.entries(attr)
+        .sort((a, b) => Math.abs((b[1].net_pnl || 0)) - Math.abs((a[1].net_pnl || 0)))
+        .slice(0, 8)
+        .map(([reason, m]) => `
+          <div class="reason-row">
+            <div>
+              <div class="value" style="text-align:left">${reason}</div>
+              <div class="reason-meta">n=${m.count} PF=${m.profit_factor ?? "∞"} WR=${fmtPct((m.win_rate || 0) * 100)}</div>
+            </div>
+            <div class="${clsNum(m.net_pnl)}">${fmtMoney(m.net_pnl)}</div>
+          </div>`);
+      $("attribution").innerHTML = rows.length ? rows.join("") : `<div class="muted">No attribution data yet</div>`;
+
+      const diff = d.broker_tracker_diff || {};
+      $("brokerTracker").innerHTML = [
+        metric("Mismatch", diff.mismatch_count ?? 0, Number(diff.mismatch_count || 0) ? "neg" : "pos"),
+        metric("Broker positions", diff.broker_count ?? "--"),
+        metric("Tracker open", diff.tracker_count ?? "--"),
+      ].join("");
+
+      const f = d.decision_funnel || {};
+      $("funnel").innerHTML = [
+        metric("Candidates", f.candidates ?? 0),
+        metric("Buy / Sell", `${f.buy ?? 0} / ${f.sell ?? 0}`),
+        metric("Deny", f.deny ?? 0),
+        metric("Submitted", f.submitted ?? 0),
+      ].join("");
+
+      const alerts = d.alerts || [];
+      $("alerts").innerHTML = alerts.length
+        ? alerts.slice(0, 8).map(a => `<div class="alert-row"><span>${a.code}</span><span class="${a.severity === "critical" ? "neg" : "muted"}">${a.severity}</span></div>`).join("")
+        : `<div class="muted">No alerts</div>`;
+    }
+
+    async function refresh() {
+      try {
+        const [summary, go] = await Promise.all([
+          api("/api/console_summary"),
+          api("/api/go_no_go"),
+        ]);
+        renderSummary(summary);
+        $("goNoGo").textContent = go.content ? go.content.split("\n").slice(0, 32).join("\n") : "--";
+      } catch (err) {
+        $("runStatus").textContent = "AUTH";
+        $("runStatus").className = "status bad";
+        $("lastUpdate").textContent = String(err.message || err);
+      }
+    }
+
+    $("saveToken").addEventListener("click", () => {
+      localStorage.setItem("remoteReadonlyToken", tokenInput.value.trim());
+      refresh();
+    });
+    $("refresh").addEventListener("click", refresh);
+    refresh();
+    setInterval(refresh, 60000);
+  </script>
+</body>
+</html>

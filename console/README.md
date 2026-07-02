@@ -44,7 +44,24 @@ open http://localhost:3335
 ### Ports
 - **HTTP Console**: `http://localhost:3335` (default via `manage.sh`)
 - **WebSocket**: `ws://localhost:3334`
+- **Remote Read-Only Monitor**: `http://127.0.0.1:3340` (separate R6-F server)
 - `app.py` 単体実行時の既定値は `3333` のままです。`manage.sh` は運用用に `3335` を使います。
+
+### Remote Read-Only Monitor
+
+Use this for smartphone-friendly monitoring. It is intentionally separate from
+the full console because the full console includes parameter mutation endpoints.
+
+```bash
+cd /Users/hirotomookawasaki/stock_swing
+export REMOTE_READONLY_TOKEN="$(openssl rand -hex 24)"
+export REMOTE_READONLY_HOST=127.0.0.1
+export REMOTE_READONLY_PORT=3340
+venv/bin/python console/remote_readonly_app.py
+```
+
+Open `http://127.0.0.1:3340/` and enter the token. See
+`docs/runbooks/remote_readonly_monitor.md` for LAN/VPN guidance.
 
 ---
 
@@ -122,6 +139,12 @@ open http://localhost:3335
 - `GET /api/parameters` - Parameter list with ranges
 - `GET /api/parameters/<NAME>/validate?value=X` - Validate parameter value
 - `GET /api/archives` - account migration / archive history
+
+### Remote Read-Only
+- `GET /health` - Remote monitor health
+- `GET /api/status` - Summary freshness
+- `GET /api/console_summary` - Latest console summary JSON
+- `GET /api/go_no_go` - Go/No-Go checklist markdown
 
 ---
 
