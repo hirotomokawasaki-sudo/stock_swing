@@ -297,7 +297,7 @@ experiment_id が全 run に付与
 | **R6-B** | **C2** | **Price Integrity パネル（fresh/stale/fallback カウント + sources breakdown）** | **✅ 2026-06-25** | — |
 | **R6-C** | **C2** | **API/Token モニター（p50/p95 latency + error_count + context_pack 分布）** | **✅ 2026-06-25** | — |
 | R6-D | C3 | Decision Funnel（deny_reasons 集計 + Broker/Tracker 差分パネル） | ✅ 2026-07-01 | — |
-| R6-E | C4 | Attribution パネル（ETF/Stock 別 PF・exit reason 別 PF）← R1 完了後 | 🔲 | 07-14〜08-04 |
+| R6-E | C4 | Attribution パネル（ETF/Stock 別 PF・exit reason 別 PF）← R1 完了後 | ✅ 2026-07-02 | — |
 | R6-F | C6 | Remote Web 読み取り専用（スマートフォン対応・トークン認証） | 🔲 | 07-15〜07-28 |
 | — | C5 | Risk Dashboard（ETF/株 別昇格状態）← R5 と並行 | 🔲 | 08-05〜 |
 
@@ -382,21 +382,23 @@ API / AI COST
 
 Week 1-2（07-02〜07-14）🟠 推奨:
   ✅ R3-B   exit replay 評価 + 結論（**07-02 前倒し完了**）
+  ✅ Variant D staged trailing 実装（feature flag: `staged_trailing_enabled`）
+  ✅ R6-E   Attribution パネル（exit_reason 別 PF）
+  ✅ 07-21  Go/No-Go チェックリスト定義（**07-02 前倒し完了**）
 
 Week 3（07-14〜07-21）🟠 STRONGLY RECOMMENDED:
   🔲 R6-F   リモート Web 監視（スマホ対応）
 
 Week 4（07-21〜07-31）🔴 BLOCKING:
-  🔲 07-21  Go/No-Go チェックリスト定義・確認
+  ✅ 07-21  Go/No-Go チェックリスト定義・確認（定義は07-02前倒し完了、07-31に最終記入）
   🔲 07-28〜07-30  hard-halt 環境でのペーパー最終確認
   🔲 07-31  Go/No-Go 最終判定
 
 08-01 🚀 リアルトレード開始（初期2週間は50%サイズ）
 
 Post-Launch:
-  🔲 R4-B/C signal strength 完全修復
+  🔲 R4-C   signal strength デサイル検証
   🔲 R5     昇格・降格ゲート本格版
-  🔲 R6-E   Attribution パネル
   🔲 R7     09月
   🔲 R8     10月以降
 ```
@@ -426,6 +428,6 @@ Post-Launch:
 | ✅ 完了 | R3 | ✅ R3-A + R3-B 全完了 | 2026-07-02 |
 | 🟠 高 | R4 | 🔲 R4-A/B ✅ / R4-C 残り | 07-28〜08-04 |
 | 🟡 中〜高 | R5 | 🔲 未着手 | R2/R4 完了後（08-05〜） |
-| 🟡 中〜高 | R6 | 🔲 C1/C2/D ✅ / C4〜C6 残り | C4: R1後、C6: 07-14〜 |
+| 🟡 中〜高 | R6 | 🔲 C1/C2/D/E ✅ / C6 残り | C6: 07-14〜 |
 | 🟢 中 | R7 | 🔲 未着手 | 09 月 |
 | 🔵 長期 | R8 | 🔲 未着手 | 10 月以降 |

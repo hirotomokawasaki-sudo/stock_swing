@@ -15,12 +15,12 @@
 [ ] Guardrail: 直近7日間で false positive（誤 halt）ゼロ
 [ ] ETF/Stock 別メトリクス: コンソールに表示されている ← R2-B 2026-07-01 ✅
 [ ] entry フィルター: 稼働中（volume/ADR/rolling PF gate）← R2-D 2026-07-01 ✅
-[ ] 反実仮想検証: R3 完了・exit 戦略の合理性を確認 ← R3-A 完了, R3-B TBD
+[ ] 反実仮想検証: R3 完了・exit 戦略の合理性を確認 ← R3-A/R3-B 2026-07-02 ✅
 [ ] attribution completeness (post-R1-B): ≥ 95% ← 100% 確認済み ✅
 [ ] Broker/Tracker mismatch: 0 件
 [ ] circuit_breaker.json: status=ok（halted でない）
 [ ] 緊急停止ランブック: 確認・手順を把握 ← docs/runbooks/emergency_stop.md ✅
-[ ] signal strength 飽和: 原因把握済み ← R4-A 2026-07-01 ✅
+[ ] signal strength 飽和: 原因把握・Option A 適用済み ← R4-A 2026-07-01 / R4-B 2026-07-02 ✅
 [ ] Overall PF ≥ 1.20（直近スナップショット）
 [ ] Post-R1-B closed trades ≥ 20 件（統計的信頼性）
 [ ] リモート監視（R6-F）または代替の監視手段が整っている

@@ -80,6 +80,9 @@ class ConsoleSummary:
     # --- R2-B: ETF vs Stock breakdown ---
     asset_class_breakdown: dict[str, Any] = field(default_factory=dict)
 
+    # --- R6-E: Exit attribution breakdown ---
+    exit_attribution_breakdown: dict[str, Any] = field(default_factory=dict)
+
     # --- R6-D: Decision Funnel detail + Broker/Tracker diff ---
     deny_reason_counts: dict[str, int] = field(default_factory=dict)
     broker_tracker_diff: dict[str, Any] = field(default_factory=dict)
@@ -111,6 +114,7 @@ class ConsoleSummary:
                 "total_pnl": round(self.realized_pnl + self.unrealized_pnl, 2),
                 "open_positions": self.open_position_count,
                 "asset_class_breakdown": self.asset_class_breakdown,
+                "exit_attribution_breakdown": self.exit_attribution_breakdown,
             },
             "decision_funnel": {
                 "candidates": self.signals_total,
@@ -203,6 +207,8 @@ class ConsoleSummary:
         ai_metrics: dict[str, Any] | None = None,
         # R2-B: ETF vs Stock breakdown (optional)
         asset_class_breakdown: dict[str, Any] | None = None,
+        # R6-E: exit attribution breakdown (optional)
+        exit_attribution_breakdown: dict[str, Any] | None = None,
         # R6-D: Broker/Tracker diff (optional)
         broker_tracker_diff: dict[str, Any] | None = None,
     ) -> "ConsoleSummary":
@@ -316,6 +322,7 @@ class ConsoleSummary:
             api_metrics=api_metrics or {},
             ai_metrics=ai_metrics or {},
             asset_class_breakdown=asset_class_breakdown or {},
+            exit_attribution_breakdown=exit_attribution_breakdown or {},
             deny_reason_counts=deny_reason_counts,
             broker_tracker_diff=broker_tracker_diff or {},
         )

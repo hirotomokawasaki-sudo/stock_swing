@@ -486,6 +486,66 @@ class PnLTracker:
             "all": _metrics(closed),
         }
 
+    def get_exit_attribution_breakdown(self) -> dict[str, Any]:
+        """Return performance grouped by exit reason.
+
+        Returns:
+          {
+            "by_reason": {
+              "trailing_stop": {count, wins, losses, win_rate, profit_factor, net_pnl, ...},
+              ...
+            },
+            "unknown_count": int,
+          }
+        """
+        closed = [t for t in self.state.trades if t["status"] == "closed"]
+
+        def _metrics(trades: list) -> dict[str, Any]:
+            wins = [t for t in trades if (t.get("pnl") or 0) > 0]
+            losses = [t for t in trades if (t.get("pnl") or 0) < 0]
+            gross_profit = sum(t.get("pnl") or 0 for t in wins)
+            gross_loss = abs(sum(t.get("pnl") or 0 for t in losses))
+            if gross_loss > 0:
+                pf: float | None = round(gross_profit / gross_loss, 3)
+            elif gross_profit > 0:
+                pf = None
+            else:
+                pf = 0.0
+            net_pnl = sum(t.get("pnl") or 0 for t in trades)
+            win_rate = len(wins) / len(trades) if trades else 0.0
+            return {
+                "count": len(trades),
+                "wins": len(wins),
+                "losses": len(losses),
+                "win_rate": round(win_rate, 4),
+                "profit_factor": pf,
+                "net_pnl": round(net_pnl, 2),
+                "gross_profit": round(gross_profit, 2),
+                "gross_loss": round(gross_loss, 2),
+            }
+
+        grouped: dict[str, list] = {}
+        unknown_count = 0
+        for trade in closed:
+            reason = str(trade.get("exit_reason") or "unknown")
+            if reason in {"", "None"}:
+                reason = "unknown"
+            if reason in {"unknown", "broker_fill", "broker_fill_unknown"}:
+                unknown_count += 1
+            grouped.setdefault(reason, []).append(trade)
+
+        return {
+            "by_reason": {
+                reason: _metrics(trades)
+                for reason, trades in sorted(
+                    grouped.items(),
+                    key=lambda item: sum(t.get("pnl") or 0 for t in item[1]),
+                    reverse=True,
+                )
+            },
+            "unknown_count": unknown_count,
+        }
+
     def get_summary_by_account(self, account_id: str | None = None) -> dict[str, Any]:
         """Return performance summary for a specific account.
         

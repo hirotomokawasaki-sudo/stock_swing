@@ -121,6 +121,32 @@ def test_console_summary_dict_has_breakdown(tmp_path: Path) -> None:
     assert d["portfolio"]["asset_class_breakdown"]["stock"]["count"] == 3
 
 
+def test_exit_attribution_breakdown_by_reason(tmp_path: Path) -> None:
+    tracker = _make_tracker(tmp_path)
+    bd = tracker.get_exit_attribution_breakdown()
+
+    assert bd["unknown_count"] == 0
+    assert bd["by_reason"]["trailing_stop"]["count"] == 3
+    assert bd["by_reason"]["trailing_stop"]["net_pnl"] == pytest.approx(600.0)
+    assert bd["by_reason"]["stop_loss"]["count"] == 3
+    assert bd["by_reason"]["stop_loss"]["net_pnl"] == pytest.approx(-50.0)
+
+
+def test_console_renderer_shows_exit_attribution(tmp_path: Path) -> None:
+    tracker = _make_tracker(tmp_path)
+    cs = ConsoleSummary.build(
+        run_id="test",
+        equity=100_000.0,
+        open_position_count=0,
+        exit_attribution_breakdown=tracker.get_exit_attribution_breakdown(),
+    )
+    output = ConsoleRenderer().render(cs)
+
+    assert "EXIT ATTRIBUTION" in output
+    assert "trailing_stop" in output
+    assert "stop_loss" in output
+
+
 def test_empty_breakdown_no_crash(tmp_path: Path) -> None:
     tracker = PnLTracker(tmp_path)
     bd = tracker.get_asset_class_breakdown()

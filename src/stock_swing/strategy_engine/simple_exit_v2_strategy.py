@@ -11,6 +11,7 @@ Current implementation: simple_exit_v2
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Any
 
 from stock_swing.feature_engine.base_feature import FeatureResult
 from stock_swing.pricing import PriceResolver
@@ -44,6 +45,8 @@ class SimpleExitV2Strategy(BaseStrategy):
         trailing_activation_pct: float = 0.08,  # +8% → activate trailing
         trailing_stop_pct: float = 0.04,         # 4% pullback from peak
         max_hold_days: int = 20,
+        staged_trailing_enabled: bool = False,
+        staged_trailing_levels: list[dict[str, float]] | None = None,
     ):
         """Initialize simple exit V2 strategy.
 
@@ -65,12 +68,19 @@ class SimpleExitV2Strategy(BaseStrategy):
             trailing_activation_pct: Baseline return level at which trailing activates.
             trailing_stop_pct: Pullback from peak price that triggers trailing exit.
             max_hold_days: Maximum holding period in calendar days.
+            staged_trailing_enabled: Enable R3-B staged trailing levels.
+            staged_trailing_levels: Ordered list of activation/pullback thresholds.
         """
         self.stop_loss_pct = stop_loss_pct
         self.breakeven_activation_pct = breakeven_activation_pct
         self.trailing_activation_pct = trailing_activation_pct
         self.trailing_stop_pct = trailing_stop_pct
         self.max_hold_days = max_hold_days
+        self.staged_trailing_enabled = staged_trailing_enabled
+        self.staged_trailing_levels = sorted(
+            staged_trailing_levels or [],
+            key=lambda row: float(row.get("activation_pct", 0.0)),
+        )
 
     def _resolve_thresholds(
         self, entry_signal_strength: float | None
@@ -95,6 +105,37 @@ class SimpleExitV2Strategy(BaseStrategy):
             return -0.05, 0.10
         # Standard
         return self.stop_loss_pct, self.trailing_activation_pct
+
+    def _resolve_trailing_rule(
+        self,
+        peak_return_pct: float,
+        eff_trailing_activation_pct: float,
+    ) -> tuple[bool, float, float, dict[str, Any] | None]:
+        """Return active status, activation pct, stop pct, and optional staged level."""
+        if not self.staged_trailing_enabled or not self.staged_trailing_levels:
+            return (
+                peak_return_pct >= eff_trailing_activation_pct,
+                eff_trailing_activation_pct,
+                self.trailing_stop_pct,
+                None,
+            )
+
+        active_level: dict[str, Any] | None = None
+        for level in self.staged_trailing_levels:
+            activation_pct = float(level.get("activation_pct", 0.0))
+            if peak_return_pct >= activation_pct:
+                active_level = level
+
+        if active_level is None:
+            first_activation = float(self.staged_trailing_levels[0].get("activation_pct", eff_trailing_activation_pct))
+            return False, first_activation, self.trailing_stop_pct, None
+
+        return (
+            True,
+            float(active_level.get("activation_pct", eff_trailing_activation_pct)),
+            float(active_level.get("trailing_stop_pct", self.trailing_stop_pct)),
+            active_level,
+        )
     
     def generate(
         self,
@@ -282,7 +323,7 @@ class SimpleExitV2Strategy(BaseStrategy):
                 and peak_return_pct >= self.breakeven_activation_pct,
                 return_pct is not None
                 and peak_return_pct is not None
-                and peak_return_pct >= eff_trailing_activation_pct,
+                and self._resolve_trailing_rule(peak_return_pct, eff_trailing_activation_pct)[0],
             )
 
             logger.info(
@@ -295,16 +336,27 @@ class SimpleExitV2Strategy(BaseStrategy):
             # Exit criteria (evaluated in priority order)
             exit_reason = None
             signal_strength = 0.0
+            trailing_active, active_trailing_activation_pct, active_trailing_stop_pct, staged_level = (
+                self._resolve_trailing_rule(peak_return_pct, eff_trailing_activation_pct)
+            )
 
             # 1. Trailing stop (highest priority once activated)
-            if peak_return_pct >= eff_trailing_activation_pct:
-                trailing_stop_price = peak_price * (1 - self.trailing_stop_pct)
+            if trailing_active:
+                trailing_stop_price = peak_price * (1 - active_trailing_stop_pct)
                 pullback_from_peak_pct = (peak_price - current_price) / peak_price
                 if current_price <= trailing_stop_price:
+                    trigger_label = "Staged trailing stop" if staged_level is not None else "Trailing stop"
+                    stage_text = (
+                        f", stage activation={active_trailing_activation_pct:.0%}, "
+                        f"stage stop={active_trailing_stop_pct:.1%}"
+                        if staged_level is not None
+                        else ""
+                    )
                     exit_reason = (
-                        f"Trailing stop triggered: price ${current_price:.2f} "
+                        f"{trigger_label} triggered: price ${current_price:.2f} "
                         f"<= ${trailing_stop_price:.2f} "
-                        f"(peak ${peak_price:.2f}, {pullback_from_peak_pct:.2%} pullback)"
+                        f"(peak ${peak_price:.2f}, {pullback_from_peak_pct:.2%} pullback"
+                        f"{stage_text})"
                     )
                     signal_strength = 0.95
 
@@ -366,10 +418,14 @@ class SimpleExitV2Strategy(BaseStrategy):
                         "peak_price": peak_price,
                         "qty": qty,
                         "exit_trigger": exit_reason.split(":")[0].strip(),
-                        "trailing_active": peak_return_pct >= eff_trailing_activation_pct,
+                        "trailing_active": trailing_active,
+                        "staged_trailing_enabled": self.staged_trailing_enabled,
+                        "staged_trailing_level": staged_level,
+                        "active_trailing_activation_pct": active_trailing_activation_pct,
+                        "active_trailing_stop_pct": active_trailing_stop_pct,
                         "breakeven_active": (
                             peak_return_pct >= self.breakeven_activation_pct
-                            and peak_return_pct < eff_trailing_activation_pct
+                            and not trailing_active
                         ),
                         "entry_signal_strength": entry_signal_strength,
                         "eff_stop_loss_pct": eff_stop_loss_pct,

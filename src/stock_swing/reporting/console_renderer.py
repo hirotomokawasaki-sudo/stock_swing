@@ -34,6 +34,7 @@ class ConsoleRenderer:
             self._run_health(d),
             self._alerts(d),
             self._portfolio(d),
+            self._exit_attribution(d),
             self._price_integrity(d),
             self._decision_funnel(d),
             self._broker_tracker_diff(d),
@@ -121,6 +122,34 @@ class ConsoleRenderer:
         blocks = risk.get("cluster_blocks", [])
         if blocks:
             lines.append(f"  cluster_blocks= {', '.join(blocks[:5])}")
+        return "\n".join(lines)
+
+    def _exit_attribution(self, d: dict) -> str:
+        attribution = d.get("portfolio", {}).get("exit_attribution_breakdown", {})
+        by_reason = attribution.get("by_reason", {})
+        if not by_reason:
+            return ""
+
+        lines = ["EXIT ATTRIBUTION", _SEP]
+        unknown_count = attribution.get("unknown_count", 0)
+        if unknown_count:
+            lines.append(f"  unknown/unattributed = {unknown_count}")
+
+        for reason, m in sorted(
+            by_reason.items(),
+            key=lambda item: abs(float(item[1].get("net_pnl", 0) or 0)),
+            reverse=True,
+        )[:8]:
+            cnt = m.get("count", 0)
+            if cnt == 0:
+                continue
+            pf = m.get("profit_factor")
+            pf_str = "∞" if pf is None else f"{float(pf):.3f}"
+            wr = float(m.get("win_rate", 0) or 0) * 100
+            net = float(m.get("net_pnl", 0) or 0)
+            lines.append(
+                f"  {reason:<24s} n={cnt:<4} PF={pf_str:<7} WR={wr:.1f}%  net=${net:+,.0f}"
+            )
         return "\n".join(lines)
 
     def _price_integrity(self, d: dict) -> str:

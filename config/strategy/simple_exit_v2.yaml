@@ -17,5 +17,17 @@ trailing_activation_pct: 0.08
 # Increased from 3% to 4% to allow more room for volatility (2026-05-18)
 trailing_stop_pct: 0.04
 
+# R3-B staged trailing rollout (2026-07-02)
+# Backtest/replay result: staged trailing improved first-pass replay by +$5,089 vs baseline.
+# Disable quickly by setting staged_trailing_enabled: false.
+staged_trailing_enabled: true
+staged_trailing_levels:
+  - activation_pct: 0.05
+    trailing_stop_pct: 0.035
+  - activation_pct: 0.08
+    trailing_stop_pct: 0.03
+  - activation_pct: 0.12
+    trailing_stop_pct: 0.025
+
 # Maximum holding period in calendar days
 max_hold_days: 20

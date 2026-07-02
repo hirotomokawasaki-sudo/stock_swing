@@ -403,6 +403,48 @@ def test_trailing_stop_trigger(strategy, price_features):
     assert signals[0].metadata["trailing_active"] is True
 
 
+def test_staged_trailing_uses_tighter_stage_before_baseline_stop():
+    """R3-B staged trailing exits when the active stage stop is hit."""
+    strat = SimpleExitV2Strategy(
+        stop_loss_pct=-0.07,
+        breakeven_activation_pct=0.03,
+        trailing_activation_pct=0.08,
+        trailing_stop_pct=0.04,
+        max_hold_days=20,
+        staged_trailing_enabled=True,
+        staged_trailing_levels=[
+            {"activation_pct": 0.05, "trailing_stop_pct": 0.035},
+            {"activation_pct": 0.08, "trailing_stop_pct": 0.03},
+            {"activation_pct": 0.12, "trailing_stop_pct": 0.025},
+        ],
+    )
+    current_positions = {
+        "AAPL": {
+            "qty": 100,
+            "avg_entry_price": 100.0,
+            "current_price": 102.20,
+            "peak_price": 106.0,
+            "created_at": (datetime.now(timezone.utc) - timedelta(days=4)).isoformat(),
+        }
+    }
+
+    features = [
+        FeatureResult(
+            feature_name="price_momentum",
+            symbol="AAPL",
+            computed_at=datetime.now(timezone.utc),
+            values={"latest_close": 102.20},
+        )
+    ]
+    signals = strat.generate(features, current_positions)
+
+    assert len(signals) == 1
+    assert "Staged trailing stop triggered" in signals[0].reasoning
+    assert signals[0].metadata["staged_trailing_enabled"] is True
+    assert signals[0].metadata["active_trailing_activation_pct"] == pytest.approx(0.05)
+    assert signals[0].metadata["active_trailing_stop_pct"] == pytest.approx(0.035)
+
+
 def test_peak_price_update(strategy, price_features):
     """Test that peak price is updated when current price exceeds it."""
     # Current price is higher than recorded peak

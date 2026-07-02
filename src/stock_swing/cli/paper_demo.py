@@ -1086,6 +1086,8 @@ def main() -> int:  # noqa: C901
             trailing_activation_pct=exit_config.get('trailing_activation_pct', 0.08),
             trailing_stop_pct=exit_config.get('trailing_stop_pct', 0.04),
             max_hold_days=exit_config.get('max_hold_days', 20),
+            staged_trailing_enabled=exit_config.get('staged_trailing_enabled', False),
+            staged_trailing_levels=exit_config.get('staged_trailing_levels', []),
         )
     else:
         # Fallback to default values
@@ -1478,6 +1480,7 @@ def main() -> int:  # noqa: C901
                 {},
             ),
             asset_class_breakdown=pnl_tracker.get_asset_class_breakdown(),
+            exit_attribution_breakdown=pnl_tracker.get_exit_attribution_breakdown(),
             broker_tracker_diff=_build_broker_tracker_diff(
                 list(current_positions_full.values()) if current_positions_full else [],
                 pnl_tracker.get_open_positions(),
@@ -1784,6 +1787,7 @@ def main() -> int:  # noqa: C901
             ps_sources,
         ),
         asset_class_breakdown=pnl_tracker.get_asset_class_breakdown(),
+        exit_attribution_breakdown=pnl_tracker.get_exit_attribution_breakdown(),
         broker_tracker_diff=_build_broker_tracker_diff(
             list(current_positions_full.values()) if current_positions_full else [],
             pnl_tracker.get_open_positions(),
