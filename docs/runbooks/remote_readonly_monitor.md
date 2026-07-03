@@ -11,7 +11,18 @@ mutation endpoints, so it must not be exposed remotely as the R6-F surface.
 | Phase | Choice | Status |
 |---|---|---|
 | Same-day verification | LAN/local | Verified on 2026-07-02 |
-| Production candidate before 2026-08-01 | OpenClaw gateway | Pending gateway route design |
+| Production (R6-F-GW) | Tailscale Serve | ✅ 完了 2026-07-03 |
+
+### Tailscale Serve URL (tailnet 内のみ・HTTPS)
+
+```
+https://hirotomoonomac-mini.tail64d731.ts.net/?token=r6f-lan-dc2943cf7469a02aa07b177f
+```
+
+- tailnet: `hirotomokawasaki-sudo@`
+- Tailscale IP: `100.89.217.16`
+- アクセス条件: スマホに Tailscale アプリをインストールし、同じ tailnet に接続すること
+- WireGuard 暗号化 + トークン認証の二重保護
 
 2026-07-02 LAN verification:
 
@@ -21,6 +32,74 @@ mutation endpoints, so it must not be exposed remotely as the R6-F surface.
 - `GET /health` via LAN IP: `200`
 - authenticated `GET /api/status` via LAN IP: `200`
 - unauthenticated `GET /api/status` via LAN IP: `401`
+
+---
+
+## Tailscale Serve セットアップ（R6-F-GW）
+
+### 前提
+- Tailscale v1.98+ インストール済み（`brew install tailscale`）
+- Tailscale アカウント: `hirotomokawasaki-sudo@`
+- tailnet: `tail64d731.ts.net`
+- Tailscale 管理コンソールで MagicDNS + HTTPS Certificates が有効
+
+### LaunchAgent（自動起動）
+
+```text
+~/Library/LaunchAgents/com.hirotomookawasaki.tailscaled.plist
+```
+
+tailscaled をユーザースペースネットワークモードで起動する。
+state: `~/.tailscale/state` / socket: `/tmp/tailscale.sock`
+
+```bash
+# 手動起動（LaunchAgent が動いていない場合）
+/opt/homebrew/opt/tailscale/bin/tailscaled \
+  --tun=userspace-networking \
+  --state=/Users/hirotomookawasaki/.tailscale/state \
+  --socket=/tmp/tailscale.sock &
+```
+
+### Serve 設定確認
+
+```bash
+/opt/homebrew/bin/tailscale --socket=/tmp/tailscale.sock serve status
+# 期待: https://hirotomoonomac-mini.tail64d731.ts.net/ -> proxy http://127.0.0.1:3340
+```
+
+### Serve が外れていた場合の復元
+
+```bash
+/opt/homebrew/bin/tailscale --socket=/tmp/tailscale.sock serve --bg 3340
+```
+
+### スマホ側セットアップ
+
+1. App Store / Google Play で **Tailscale** をインストール
+2. 同じアカウント（`hirotomokawasaki-sudo@`）でログイン
+3. ブラウザで以下を開く:
+   ```
+   https://hirotomoonomac-mini.tail64d731.ts.net/?token=r6f-lan-dc2943cf7469a02aa07b177f
+   ```
+4. トークンが自動保存され、次回からはトップ URL のみで OK
+
+### 障害対応
+
+```bash
+# tailscale 状態確認
+/opt/homebrew/bin/tailscale --socket=/tmp/tailscale.sock status
+
+# serve 状態確認
+/opt/homebrew/bin/tailscale --socket=/tmp/tailscale.sock serve status
+
+# ログ確認
+tail -f /Users/hirotomookawasaki/stock_swing/logs/tailscaled.log
+tail -f /Users/hirotomookawasaki/stock_swing/logs/tailscaled.err
+
+# LaunchAgent 再起動
+launchctl bootout gui/$(id -u)/com.hirotomookawasaki.tailscaled
+launchctl load ~/Library/LaunchAgents/com.hirotomookawasaki.tailscaled.plist
+```
 
 ---
 
@@ -165,3 +244,5 @@ running under launchd/tmux.
 - Do not add buy/sell/cancel/reset/parameter apply endpoints to this server.
 - Rotate `REMOTE_READONLY_TOKEN` if it appears in logs, shell history, or chat.
 - Prefer VPN/OpenClaw gateway over raw port forwarding.
+- Tailscale Serve URL は tailnet メンバーのみがアクセス可能（Funnel ではないため公衆インターネットには露出しない）。
+- tailscale serve config は `~/.tailscale/state` に永続化されるため、tailscaled 再起動後も自動復元される。
