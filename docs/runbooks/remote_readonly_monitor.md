@@ -16,11 +16,11 @@ mutation endpoints, so it must not be exposed remotely as the R6-F surface.
 ### Tailscale Serve URL (tailnet 内のみ・HTTPS)
 
 ```
-https://hirotomoonomac-mini.tail64d731.ts.net/?token=r6f-lan-dc2943cf7469a02aa07b177f
+https://hirotomoomac-mini.tail64d731.ts.net/?token=r6f-lan-dc2943cf7469a02aa07b177f
 ```
 
 - tailnet: `hirotomokawasaki-sudo@`
-- Tailscale IP: `100.89.217.16`
+- Tailscale IP: `100.111.231.47`
 - アクセス条件: スマホに Tailscale アプリをインストールし、同じ tailnet に接続すること
 - WireGuard 暗号化 + トークン認証の二重保護
 
@@ -43,34 +43,20 @@ https://hirotomoonomac-mini.tail64d731.ts.net/?token=r6f-lan-dc2943cf7469a02aa07
 - tailnet: `tail64d731.ts.net`
 - Tailscale 管理コンソールで MagicDNS + HTTPS Certificates が有効
 
-### LaunchAgent（自動起動）
-
-```text
-~/Library/LaunchAgents/com.hirotomookawasaki.tailscaled.plist
-```
-
-tailscaled をユーザースペースネットワークモードで起動する。
-state: `~/.tailscale/state` / socket: `/tmp/tailscale.sock`
-
-```bash
-# 手動起動（LaunchAgent が動いていない場合）
-/opt/homebrew/opt/tailscale/bin/tailscaled \
-  --tun=userspace-networking \
-  --state=/Users/hirotomookawasaki/.tailscale/state \
-  --socket=/tmp/tailscale.sock &
-```
+/Applications/Tailscale.app（System Extension 版）が Mac 起動時に自動起動し、
+メニューバーに常駐する。追加の LaunchAgent 設定は不要。
 
 ### Serve 設定確認
 
 ```bash
-/opt/homebrew/bin/tailscale --socket=/tmp/tailscale.sock serve status
-# 期待: https://hirotomoonomac-mini.tail64d731.ts.net/ -> proxy http://127.0.0.1:3340
+tailscale serve status
+# 期待: https://hirotomoomac-mini.tail64d731.ts.net/ -> proxy http://127.0.0.1:3340
 ```
 
 ### Serve が外れていた場合の復元
 
 ```bash
-/opt/homebrew/bin/tailscale --socket=/tmp/tailscale.sock serve --bg 3340
+tailscale serve reset && tailscale serve --bg 3340
 ```
 
 ### スマホ側セットアップ
@@ -79,7 +65,7 @@ state: `~/.tailscale/state` / socket: `/tmp/tailscale.sock`
 2. 同じアカウント（`hirotomokawasaki-sudo@`）でログイン
 3. ブラウザで以下を開く:
    ```
-   https://hirotomoonomac-mini.tail64d731.ts.net/?token=r6f-lan-dc2943cf7469a02aa07b177f
+   https://hirotomoomac-mini.tail64d731.ts.net/?token=r6f-lan-dc2943cf7469a02aa07b177f
    ```
 4. トークンが自動保存され、次回からはトップ URL のみで OK
 
@@ -87,18 +73,16 @@ state: `~/.tailscale/state` / socket: `/tmp/tailscale.sock`
 
 ```bash
 # tailscale 状態確認
-/opt/homebrew/bin/tailscale --socket=/tmp/tailscale.sock status
+tailscale status
 
 # serve 状態確認
-/opt/homebrew/bin/tailscale --socket=/tmp/tailscale.sock serve status
+tailscale serve status
 
-# ログ確認
-tail -f /Users/hirotomookawasaki/stock_swing/logs/tailscaled.log
-tail -f /Users/hirotomookawasaki/stock_swing/logs/tailscaled.err
+# Tailscale.app が起動していない場合
+open -a Tailscale
 
-# LaunchAgent 再起動
-launchctl bootout gui/$(id -u)/com.hirotomookawasaki.tailscaled
-launchctl load ~/Library/LaunchAgents/com.hirotomookawasaki.tailscaled.plist
+# serve 再設定
+tailscale serve reset && tailscale serve --bg 3340
 ```
 
 ---
