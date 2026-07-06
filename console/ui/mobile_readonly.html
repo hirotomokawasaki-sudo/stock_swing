@@ -191,7 +191,7 @@
 
     <div class="grid">
       <section>
-        <h2>Portfolio</h2>
+        <h2>Portfolio <span id="portfolioAge" style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none"></span></h2>
         <div id="portfolio"></div>
       </section>
 
@@ -282,6 +282,40 @@
       return d.toLocaleDateString(undefined, {month: "2-digit", day: "2-digit"});
     }
 
+    function fmtDateTime(v) {
+      if (!v) return "--";
+      const d = new Date(v);
+      if (Number.isNaN(d.getTime())) return "--";
+      return d.toLocaleString(undefined, {
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+
+    function metaTime(payload) {
+      const raw = payload && payload._remote_meta && payload._remote_meta.mtime;
+      if (!raw) return null;
+      const d = new Date(raw);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+
+    function renderUpdateStamp(summary, positions, trades, atRisk) {
+      const summaryTime = metaTime(summary);
+      const dataTimes = [summaryTime, metaTime(positions), metaTime(trades), metaTime(atRisk)].filter(Boolean);
+      const latestTime = dataTimes.length ? new Date(Math.max(...dataTimes.map(d => d.getTime()))) : null;
+      if (!latestTime) {
+        $("lastUpdate").textContent = "--";
+        return;
+      }
+      const parts = [`data ${fmtDateTime(latestTime.toISOString())}`];
+      if (summaryTime && summaryTime.getTime() !== latestTime.getTime()) {
+        parts.push(`summary ${fmtDateTime(summaryTime.toISOString())}`);
+      }
+      $("lastUpdate").textContent = parts.join(" / ");
+    }
+
     function clsNum(v) {
       return Number(v || 0) >= 0 ? "pos" : "neg";
     }
@@ -327,23 +361,38 @@
       $("goNoGo").textContent = msg;
     }
 
-    function renderSummary(d) {
+    function renderSummary(d, live) {
       const run = d.run || {};
       const health = d.health || {};
-      const p = d.portfolio || {};
       const status = String(run.status || "UNKNOWN").toUpperCase();
       const runStatus = $("runStatus");
       runStatus.textContent = status;
       runStatus.className = `status ${status === "OK" ? "ok" : status === "HALTED" ? "bad" : "warn"}`;
 
       const meta = d._remote_meta || {};
-      $("lastUpdate").textContent = meta.mtime ? `updated ${meta.mtime} / age ${Math.round(meta.age_seconds || 0)}s` : "--";
+      $("lastUpdate").textContent = meta.mtime ? `summary ${fmtDateTime(meta.mtime)}` : "--";
 
+      // Portfolio: prefer live data, fall back to stale console_summary
+      const liveP = (live && live.available && live.portfolio) ? live.portfolio : null;
+      const staleP = d.portfolio || {};
+      const p = liveP || staleP;
+
+      const liveTime = live && live.time ? fmtDateTime(live.time) : null;
+      const portfolioAgeEl = $("portfolioAge");
+      if (portfolioAgeEl) {
+        portfolioAgeEl.textContent = liveTime ? `🟢 live ${liveTime}` : `⚠ stale ${meta.mtime ? fmtDateTime(meta.mtime) : "--"}`;
+      }
+
+      const pf = p.profit_factor;
+      const wr = p.win_rate;
       $("portfolio").innerHTML = [
-        metric("Equity", fmtMoney(p.equity)),
-        metric("Realized", fmtMoney(p.realized_pnl), clsNum(p.realized_pnl)),
-        metric("Unrealized", fmtMoney(p.unrealized_pnl), clsNum(p.unrealized_pnl)),
-        metric("Open positions", p.open_positions ?? "--"),
+        metric("Equity", `$${Number(p.equity || 0).toLocaleString(undefined, {maximumFractionDigits: 0})}`, Number(p.equity || 0) >= 1000000 ? "pos" : ""),
+        metric("Realized PnL", fmtMoney(p.realized_pnl), clsNum(p.realized_pnl)),
+        metric("Unrealized PnL", fmtMoney(p.unrealized_pnl), clsNum(p.unrealized_pnl)),
+        metric("Total PnL", fmtMoney(p.total_pnl), clsNum(p.total_pnl)),
+        metric("Profit Factor", pf !== null && pf !== undefined ? pf.toFixed(3) : "--", pf >= 1 ? "pos" : pf < 1 ? "neg" : ""),
+        metric("Win Rate", wr !== null && wr !== undefined ? fmtPct(wr * 100) : "--"),
+        metric("Open / Closed", `${p.open_positions ?? "--"} / ${p.closed_trades ?? "--"}`),
       ].join("");
 
       $("health").innerHTML = [
@@ -451,8 +500,9 @@
 
     async function refresh() {
       try {
-        const [summary, go, positions, trades, atRisk, opHealth, diff] = await Promise.all([
+        const [summary, live, go, positions, trades, atRisk, opHealth, diff] = await Promise.all([
           api("/api/console_summary"),
+          api("/api/live_summary"),
           api("/api/go_no_go"),
           api("/api/positions"),
           api("/api/recent_trades?limit=25"),
@@ -460,12 +510,13 @@
           api("/api/operational_health"),
           api("/api/broker_tracker_detail"),
         ]);
-        renderSummary(summary);
+        renderSummary(summary, live);
         renderPositions(positions);
         renderRecentTrades(trades);
         renderAtRisk(atRisk);
         renderOperationalHealth(opHealth);
         renderBrokerTrackerDetail(diff);
+        renderUpdateStamp(summary, positions, trades, atRisk);
         $("goNoGo").textContent = go.content ? go.content.split("\n").slice(0, 32).join("\n") : "--";
       } catch (err) {
         $("runStatus").textContent = "AUTH";

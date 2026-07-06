@@ -88,6 +88,29 @@ def _open_position_audit(project_root: Path) -> tuple[dict[str, Any], list[str]]
     return {"total": 0, "missing_entry_signal_strength": 0, "missing_strength_ratio": 0.0}, warnings
 
 
+def _load_dotenv(project_root: Path) -> dict[str, str]:
+    """Parse project .env file into a dict (does not mutate os.environ)."""
+    env_file = project_root / ".env"
+    result: dict[str, str] = {}
+    if not env_file.exists():
+        return result
+    try:
+        for line in env_file.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, _, v = line.partition("=")
+            result[k.strip()] = v.strip()
+    except Exception:
+        pass
+    return result
+
+
+def _get_env(key: str, default: str, dotenv: dict[str, str]) -> str:
+    """Read from os.environ first, then .env file, then default."""
+    return os.environ.get(key) or dotenv.get(key) or default
+
+
 def get_guardrail_status(project_root: Path) -> dict[str, Any]:
     """Return current P0 guardrail settings and open-position audit.
 
@@ -95,9 +118,10 @@ def get_guardrail_status(project_root: Path) -> dict[str, Any]:
         project_root: Absolute path to repo root.
     """
     warnings: list[str] = []
+    dotenv = _load_dotenv(project_root)
 
-    # ETF buy guardrail
-    etf_buys_enabled = os.environ.get("PAPER_DEMO_ALLOW_ETF_BUYS", "").lower() == "true"
+    # ETF buy guardrail — check os.environ first, then .env file
+    etf_buys_enabled = _get_env("PAPER_DEMO_ALLOW_ETF_BUYS", "", dotenv).lower() == "true"
 
     # ETF position multiplier
     multiplier, mult_warn = _etf_position_multiplier()

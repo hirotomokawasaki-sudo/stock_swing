@@ -95,6 +95,8 @@ def test_load_recent_trades_sorts_closed_by_exit_time(tmp_path: Path, monkeypatc
     assert payload["count"] == 2
     assert [row["symbol"] for row in payload["trades"]] == ["NEW", "OLD"]
     assert payload["trades"][0]["hold_days"] == 1.0
+    assert payload["_remote_meta"]["available"] is True
+    assert payload["_remote_meta"]["path"] == str(state_path)
 
 
 def test_query_limit_clamps_bad_values() -> None:
@@ -104,12 +106,14 @@ def test_query_limit_clamps_bad_values() -> None:
 
 
 def test_load_at_risk_positions_flags_loss(monkeypatch) -> None:
+    meta = {"available": True, "path": "test-pnl-state", "mtime": "2026-01-01T00:00:00+00:00"}
     monkeypatch.setattr(
         remote,
         "load_positions",
         lambda limit=200: {
             "source": "test",
             "warnings": [],
+            "_remote_meta": meta,
             "positions": [
                 {"symbol": "BAD", "return_pct": -0.06, "entry_price": 100, "peak_price": 101},
                 {"symbol": "OK", "return_pct": 0.02, "entry_price": 100, "peak_price": 101},
@@ -122,6 +126,7 @@ def test_load_at_risk_positions_flags_loss(monkeypatch) -> None:
     assert payload["count"] == 1
     assert payload["positions"][0]["symbol"] == "BAD"
     assert payload["positions"][0]["risk_reason"] == "loss <= -5%"
+    assert payload["_remote_meta"] == meta
 
 
 def test_load_broker_tracker_detail_uses_console_summary(tmp_path: Path, monkeypatch) -> None:
@@ -136,3 +141,4 @@ def test_load_broker_tracker_detail_uses_console_summary(tmp_path: Path, monkeyp
 
     assert payload["available"] is True
     assert payload["mismatch_count"] == 2
+    assert payload["_remote_meta"]["path"] == str(summary_path)

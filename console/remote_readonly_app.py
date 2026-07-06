@@ -47,9 +47,25 @@ def _load_env() -> None:
 def _mtime_iso(path: Path) -> str | None:
     if not path.exists():
         return None
-    from datetime import datetime, timezone
-
     return datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).isoformat()
+
+
+def _file_meta(path: Path, *, read_only: bool = True) -> dict:
+    if not path.exists():
+        return {
+            "available": False,
+            "path": str(path),
+            "mtime": None,
+            "age_seconds": None,
+            "read_only": read_only,
+        }
+    return {
+        "available": True,
+        "path": str(path),
+        "mtime": _mtime_iso(path),
+        "age_seconds": max(0.0, time.time() - path.stat().st_mtime),
+        "read_only": read_only,
+    }
 
 
 def load_console_summary() -> dict:
@@ -67,13 +83,7 @@ def load_console_summary() -> dict:
             "path": str(SUMMARY_PATH),
             "error": str(exc),
         }
-    payload["_remote_meta"] = {
-        "available": True,
-        "path": str(SUMMARY_PATH),
-        "mtime": _mtime_iso(SUMMARY_PATH),
-        "age_seconds": max(0.0, time.time() - SUMMARY_PATH.stat().st_mtime),
-        "read_only": True,
-    }
+    payload["_remote_meta"] = _file_meta(SUMMARY_PATH)
     return payload
 
 
@@ -173,6 +183,7 @@ def _slim_position(row: dict) -> dict:
 def load_positions(limit: int = 100) -> dict:
     """Return current open positions from dashboard service, falling back to pnl_state."""
     warnings: list[str] = []
+    meta = _file_meta(PNL_STATE_PATH)
     try:
         from console.services.dashboard_service import DashboardService
 
@@ -187,6 +198,7 @@ def load_positions(limit: int = 100) -> dict:
                 "count": len(positions),
                 "positions": positions,
                 "warnings": warnings,
+                "_remote_meta": meta,
             }
     except Exception as exc:
         warnings.append(f"DashboardService fallback: {exc}")
@@ -200,6 +212,7 @@ def load_positions(limit: int = 100) -> dict:
         "count": len(positions),
         "positions": positions,
         "warnings": warnings,
+        "_remote_meta": meta,
     }
 
 
@@ -227,7 +240,13 @@ def load_recent_trades(limit: int = 25) -> dict:
                 "strategy_id": row.get("strategy_id") or row.get("strategy_version_id"),
             }
         )
-    return {"available": True, "source": str(PNL_STATE_PATH), "count": len(trades), "trades": trades}
+    return {
+        "available": True,
+        "source": str(PNL_STATE_PATH),
+        "count": len(trades),
+        "trades": trades,
+        "_remote_meta": _file_meta(PNL_STATE_PATH),
+    }
 
 
 def load_at_risk_positions(limit: int = 20) -> dict:
@@ -269,13 +288,80 @@ def load_at_risk_positions(limit: int = 20) -> dict:
         "count": len(at_risk[:limit]),
         "positions": at_risk[:limit],
         "warnings": positions_payload.get("warnings", []),
+        "_remote_meta": positions_payload.get("_remote_meta") or _file_meta(PNL_STATE_PATH),
     }
+
+
+def load_live_summary() -> dict:
+    """Return live portfolio metrics computed on-the-fly via DashboardService.
+
+    This replaces the stale latest_console_summary.json for the key portfolio
+    numbers (equity, realized PnL, unrealized PnL, PF, win rate).
+    """
+    warnings: list[str] = []
+    try:
+        from console.services.dashboard_service import DashboardService
+
+        dashboard = DashboardService(PROJECT_ROOT)
+        trading = dashboard.get_trading()
+        if not trading.get("available"):
+            return {"available": False, "error": "trading data unavailable", "warnings": warnings}
+
+        positions = dashboard.get_positions(trading=trading)
+        account = dashboard._get_account_info()
+        t_summary = trading.get("summary") or {}
+        p_summary = positions.get("summary") or {}
+
+        # Compute profit factor from closed trades
+        closed_trades = trading.get("closed_trades") or []
+        wins = [t for t in closed_trades if (t.get("pnl") or 0) > 0]
+        losses = [t for t in closed_trades if (t.get("pnl") or 0) < 0]
+        gross_profit = sum(float(t.get("pnl") or 0) for t in wins)
+        gross_loss = abs(sum(float(t.get("pnl") or 0) for t in losses))
+        profit_factor = round(gross_profit / gross_loss, 3) if gross_loss > 0 else None
+
+        # Per-asset-class breakdown if available
+        asset_class_breakdown: dict = {}
+        try:
+            if dashboard._tracker:
+                asset_class_breakdown = dashboard._tracker.get_asset_class_breakdown()
+        except Exception as exc:
+            warnings.append(f"asset_class_breakdown: {exc}")
+
+        equity = float(account.get("equity") or 0.0)
+        realized_pnl = float(t_summary.get("cumulative_realized_pnl") or 0.0)
+        unrealized_pnl = float(p_summary.get("unrealized_pnl") or 0.0)
+
+        return {
+            "available": True,
+            "time": datetime.now(timezone.utc).isoformat(),
+            "account": account,
+            "portfolio": {
+                "equity": equity,
+                "realized_pnl": realized_pnl,
+                "unrealized_pnl": unrealized_pnl,
+                "total_pnl": round(realized_pnl + unrealized_pnl, 2),
+                "open_positions": t_summary.get("open_trades"),
+                "closed_trades": t_summary.get("closed_trades"),
+                "win_rate": t_summary.get("win_rate"),
+                "profit_factor": profit_factor,
+                "asset_class_breakdown": asset_class_breakdown,
+            },
+            "warnings": warnings,
+        }
+    except Exception as exc:
+        return {"available": False, "error": str(exc), "warnings": warnings}
 
 
 def load_broker_tracker_detail() -> dict:
     summary = load_console_summary()
     diff = summary.get("broker_tracker_diff") or {}
-    return {"available": bool(diff), "source": str(SUMMARY_PATH), **diff}
+    return {
+        "available": bool(diff),
+        "source": str(SUMMARY_PATH),
+        "_remote_meta": summary.get("_remote_meta") or _file_meta(SUMMARY_PATH),
+        **diff,
+    }
 
 
 def load_operational_health() -> dict:
@@ -331,6 +417,11 @@ def load_operational_health() -> dict:
         },
         "circuit_breaker": circuit_breaker,
         "warnings": warnings,
+        "_remote_meta": {
+            "summary": _file_meta(SUMMARY_PATH),
+            "pnl_state": _file_meta(PNL_STATE_PATH),
+            "circuit_breaker": _file_meta(CIRCUIT_BREAKER_PATH),
+        },
     }
 
 
@@ -436,6 +527,11 @@ class RemoteReadonlyHandler(BaseHTTPRequestHandler):
             if not self._require_auth(query):
                 return
             return self._json(load_at_risk_positions(limit=_query_limit(query, default=20, minimum=1, maximum=100)))
+
+        if path == "/api/live_summary":
+            if not self._require_auth(query):
+                return
+            return self._json(load_live_summary())
 
         if path == "/api/broker_tracker_detail":
             if not self._require_auth(query):

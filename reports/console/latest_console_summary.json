@@ -2,9 +2,9 @@
   "run": {
     "mode": "paper",
     "status": "OK",
-    "run_id": "paper_demo-20260701T160003Z-3488d9ac",
-    "experiment_id": "exp-20260701-swing-v1-prompt-v1-5cc4fbbb-63890d53",
-    "timestamp": "2026-07-01T16:01:27.522577+00:00",
+    "run_id": "paper_demo-20260702T195503Z-914c990a",
+    "experiment_id": "exp-20260702-swing-v1-prompt-v1-f85239a0-63890d53",
+    "timestamp": "2026-07-02T19:55:25.867326+00:00",
     "duration_seconds": null,
     "guardrail_status": "ok"
   },
@@ -18,112 +18,151 @@
     "guardrail_status": "ok"
   },
   "portfolio": {
-    "equity": 1073371.64,
-    "realized_pnl": 78310.51,
-    "unrealized_pnl": -7384.01,
-    "total_pnl": 70926.5,
-    "open_positions": 18,
+    "equity": 989511.82,
+    "realized_pnl": 57158.32,
+    "unrealized_pnl": -81626.45,
+    "total_pnl": -24468.13,
+    "open_positions": 27,
     "asset_class_breakdown": {
       "etf": {
-        "count": 72,
+        "count": 75,
         "wins": 45,
-        "losses": 26,
-        "win_rate": 0.625,
-        "profit_factor": 2.27,
-        "net_pnl": 48733.28,
+        "losses": 29,
+        "win_rate": 0.6,
+        "profit_factor": 1.579,
+        "net_pnl": 31948.61,
         "gross_profit": 87100.64,
-        "gross_loss": 38367.36
+        "gross_loss": 55152.03
       },
       "stock": {
-        "count": 156,
+        "count": 159,
         "wins": 81,
-        "losses": 75,
-        "win_rate": 0.5192,
-        "profit_factor": 1.285,
-        "net_pnl": 31716.21,
+        "losses": 78,
+        "win_rate": 0.5094,
+        "profit_factor": 1.236,
+        "net_pnl": 27348.69,
         "gross_profit": 143130.61,
-        "gross_loss": 111414.4
+        "gross_loss": 115781.92
       },
       "all": {
-        "count": 228,
+        "count": 234,
         "wins": 126,
-        "losses": 101,
-        "win_rate": 0.5526,
-        "profit_factor": 1.537,
-        "net_pnl": 80449.49,
+        "losses": 107,
+        "win_rate": 0.5385,
+        "profit_factor": 1.347,
+        "net_pnl": 59297.3,
         "gross_profit": 230231.25,
-        "gross_loss": 149781.76
+        "gross_loss": 170933.95
       }
+    },
+    "exit_attribution_breakdown": {
+      "by_reason": {
+        "broker_fill": {
+          "count": 204,
+          "wins": 106,
+          "losses": 97,
+          "win_rate": 0.5196,
+          "profit_factor": 1.273,
+          "net_pnl": 39054.65,
+          "gross_profit": 182300.84,
+          "gross_loss": 143246.19
+        },
+        "trailing_stop": {
+          "count": 17,
+          "wins": 13,
+          "losses": 4,
+          "win_rate": 0.7647,
+          "profit_factor": 7.686,
+          "net_pnl": 33919.1,
+          "gross_profit": 38992.29,
+          "gross_loss": 5073.19
+        },
+        "breakeven_stop": {
+          "count": 6,
+          "wins": 5,
+          "losses": 1,
+          "win_rate": 0.8333,
+          "profit_factor": 19.624,
+          "net_pnl": 4872.23,
+          "gross_profit": 5133.84,
+          "gross_loss": 261.61
+        },
+        "time_based": {
+          "count": 1,
+          "wins": 1,
+          "losses": 0,
+          "win_rate": 1.0,
+          "profit_factor": null,
+          "net_pnl": 3619.0,
+          "gross_profit": 3619.0,
+          "gross_loss": 0
+        },
+        "stop_loss": {
+          "count": 6,
+          "wins": 1,
+          "losses": 5,
+          "win_rate": 0.1667,
+          "profit_factor": 0.008,
+          "net_pnl": -22167.68,
+          "gross_profit": 185.28,
+          "gross_loss": 22352.96
+        }
+      },
+      "unknown_count": 204
     }
   },
   "decision_funnel": {
-    "candidates": 20,
-    "buy": 19,
-    "sell": 1,
+    "candidates": 17,
+    "buy": 6,
+    "sell": 11,
     "deny": 0,
-    "submitted": 15,
+    "submitted": 3,
     "rejected": 0,
     "blocked": 0,
     "deny_reasons": {}
   },
   "broker_tracker_diff": {
-    "broker_count": 18,
-    "tracker_count": 30,
-    "mismatch_count": 15,
+    "broker_count": 27,
+    "tracker_count": 25,
+    "mismatch_count": 2,
     "broker_only": [
-      "TSM"
+      "CHPS",
+      "FTXL"
     ],
-    "tracker_only": [
-      "AMAT",
-      "AMD",
-      "DDOG",
-      "DELL",
-      "IBM",
-      "INTC",
-      "KLAC",
-      "LRCX",
-      "META",
-      "PATH",
-      "RBRK",
-      "SNOW",
-      "TSLA"
-    ],
-    "qty_mismatches": [
-      {
-        "symbol": "NBIS",
-        "broker_qty": 91.0,
-        "tracker_qty": 155.0
-      }
-    ]
+    "tracker_only": [],
+    "qty_mismatches": []
   },
   "risk": {
     "cluster_blocks": [],
-    "risk_budget_pct": 0.053,
-    "market_regime": "neutral"
+    "risk_budget_pct": 0.082,
+    "market_regime": "cautious"
   },
   "price_integrity": {
-    "fresh_price_count": 15,
+    "fresh_price_count": 3,
     "stale_price_count": 0,
-    "fallback_price_count": 15,
+    "fallback_price_count": 3,
     "top_stale_symbols": [],
     "price_source_breakdown": {
-      "none": 1,
-      "decision_latest_close": 14
+      "none": 3
     }
   },
   "api": {
-    "call_count": 2,
+    "call_count": 8,
     "error_count": 0,
-    "p50_latency_ms": 858.8,
-    "p95_latency_ms": 858.8,
+    "p50_latency_ms": 922.6,
+    "p95_latency_ms": 2124.3,
     "slowest_endpoints": [
       {
-        "endpoint": "broker.fetch_account",
-        "duration_ms": 858.8
+        "endpoint": "broker.fetch_bars",
+        "duration_ms": 2124.3
       },
       {
         "endpoint": "broker.fetch_positions",
-        "duration_ms": 484.8
+        "duration_ms": 613.6
+      },
+      {
+        "endpoint": "broker.fetch_account",
+        "duration_ms": 550.4
       }
     ]
   },
