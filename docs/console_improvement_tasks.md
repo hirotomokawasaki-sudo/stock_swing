@@ -70,7 +70,8 @@
 2026-07-15〜07-21  🔲 R3 完了（反実仮想検証 + exit 改善案評価）
                    🔲 R6 C6 着手（Remote Web 読み取り専用ダッシュボード）
 
-2026-07-21〜07-28  🔲 R6 C6 完了（スマートフォン読み取り専用アクセス）
+2026-07-21〜07-28  ✅ R6 C6 完了（スマートフォン読み取り専用アクセス）
+                   ✅ R6-F-LS 完了（live_summary エンドポイント）（**07-06 前倒し**）
 
 2026-07-22〜08-04  🔲 R4 完了（signal_strength サブコンポーネント実装 + 分布改善）
                    🔲 R6 C4 完了（Attribution パネル） → R6 全体完了
@@ -79,7 +80,8 @@
                    ✅ Guardrail hard-halt 有効化（07-01 完了済み）
                    🔲 R6 C5 着手（Risk Dashboard ← R2/R4 完了が前提）
 
-2026-09            🔲 R7（Corporate Action / WebSocket 検討 / ニュース感情評価）
+2026-09            ✅ R7-A 完了（Corporate Action 台帳 + 自動検知）（**07-06 前倒し**）
+                   🔲 R7-B/C（WebSocket / ニュース感情評価）
 
 2026-10+           🔲 R8（ML：クリーンラベル 1,000 件到達後）
 ```
@@ -300,6 +302,7 @@ experiment_id が全 run に付与
 | R6-E | C4 | Attribution パネル（ETF/Stock 別 PF・exit reason 別 PF）← R1 完了後 | ✅ 2026-07-02 | — |
 | R6-F | C6 | Remote Web 読み取り専用（スマートフォン対応・トークン認証） | ✅ 2026-07-02 | LAN/local 確認済み |
 | R6-F-GW | C6 | R6-F 実運用公開方式: Tailscale Serve 設計・検証 | ✅ | 2026-07-03 |
+| **R6-F-LS** | **C6** | **モバイルコンソール /api/live_summary（Equity/PF/WR リアルタイム）** | **✅ 2026-07-06** | 前倒し完了 |
 | — | C5 | Risk Dashboard（ETF/株 別昇格状態）← R5 と並行 | 🔲 | 08-05〜 |
 
 **R6-F 詳細パネル拡張（2026-07-02）**
@@ -344,7 +347,7 @@ API / AI COST
 
 | サブタスク | 内容 | 状態 | 目標日 |
 |---|---|---|---|
-| R7-A | Corporate Action 台帳 + split 自動適用（KLAC 経験済み） | 🔲 | 09-01〜09-15 |
+| R7-A | Corporate Action 台帳 + split 自動検知（data/corporate_actions.json + check_corporate_actions.py） | **✅ 2026-07-06** | 前倒し完了 |
 | R7-B | WebSocket リアルタイム価格（PriceResolver 安定後に検討） | 🔲 | 09-15〜 |
 | R7-C | ニュース感情フィーチャー（相関 \|r\|>0.3, n>=30 確認後に実装） | 🔲 | Step1: 07-01, Step2-3: 確認後 |
 
@@ -398,6 +401,9 @@ Week 3（07-14〜07-21）🟠 STRONGLY RECOMMENDED:
   ✅ R6-F   リモート Web 監視（スマホ対応）（**07-02 前倒し完了**）
   ✅ R6-F   スマホ詳細パネル拡張（Open Positions / Recent Trades / At-risk / Cron・Guardrail / Broker diff）
   ✅ R6-F-GW Tailscale Serve 実運用ルート設計・検証（**07-03 完了**）
+  ✅ R6-F-LS /api/live_summary エンドポイント追加（**07-06 前倒し完了**）
+  ✅ R7-A   Corporate Action 台帳 + 自動検知（**07-06 前倒し完了**）
+  ✅ ETF buy guardrail 誤警告解消（guardrail_service .env 参照 + .env 統一）（**07-06**）
 
 Week 4（07-21〜07-31）🔴 BLOCKING:
   ✅ 07-21  Go/No-Go チェックリスト定義・確認（定義は07-02前倒し完了、07-31に最終記入）
@@ -410,7 +416,8 @@ Week 4（07-21〜07-31）🔴 BLOCKING:
 Post-Launch:
   🔲 R4-C   signal strength デサイル検証
   🔲 R5     昇格・降格ゲート本格版
-  🔲 R7     09月
+  ✅ R7-A   Corporate Action 台帳（07-06 前倒し完了）
+  🔲 R7-B/C 09月以降
   🔲 R8     10月以降
 ```
 
@@ -439,6 +446,6 @@ Post-Launch:
 | ✅ 完了 | R3 | ✅ R3-A + R3-B 全完了 | 2026-07-02 |
 | 🟠 高 | R4 | 🔲 R4-A/B ✅ / R4-C 残り | 07-28〜08-04 |
 | 🟡 中〜高 | R5 | 🔲 未着手 | R2/R4 完了後（08-05〜） |
-| ✅ 完了 | R6 | ✅ C1/C2/D/E/F/GW 全完了 | Tailscale Serve で実運用公開済み |
-| 🟢 中 | R7 | 🔲 未着手 | 09 月 |
+| ✅ 完了 | R6 | ✅ C1/C2/D/E/F/GW/LS 全完了 | live_summary 含む（07-06）|
+| 🟢 中 | R7 | ✅ R7-A 完了 / R7-B/C 未着手 | R7-A: 07-06 前倒し完了 |
 | 🔵 長期 | R8 | 🔲 未着手 | 10 月以降 |
