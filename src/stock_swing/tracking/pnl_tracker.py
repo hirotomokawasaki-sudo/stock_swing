@@ -66,6 +66,10 @@ class DailySnapshot:
     loss_count: int
     signals_generated: int
     orders_submitted: int
+    # Cumulative metrics up to and including this date
+    cumulative_profit_factor: float | None = None
+    cumulative_win_rate: float | None = None
+    cumulative_closed_trades: int | None = None
 
 
 @dataclass
@@ -110,6 +114,36 @@ class PnLState:
     archived_from_account_id: str | None = None
     archive_path: str | None = None
     migration_note_path: str | None = None
+
+
+def _compute_cumulative_pf_wr(
+    trades: list[dict],
+    as_of_date: str,
+) -> tuple[float | None, float | None, int]:
+    """Compute cumulative PF and WR for all closed trades up to as_of_date (YYYY-MM-DD).
+
+    Returns:
+        (profit_factor, win_rate, closed_count)
+        profit_factor is None when there are no losing trades (infinite PF).
+        win_rate is None when there are no closed trades.
+    """
+    closed = [
+        t for t in trades
+        if t.get("status") == "closed"
+        and (t.get("exit_time") or "")[:10] <= as_of_date
+        and t.get("pnl") is not None
+    ]
+    if not closed:
+        return None, None, 0
+
+    wins = [t for t in closed if (t.get("pnl") or 0) > 0]
+    losses = [t for t in closed if (t.get("pnl") or 0) < 0]
+    gross_profit = sum(float(t["pnl"]) for t in wins)
+    gross_loss = abs(sum(float(t["pnl"]) for t in losses))
+
+    pf = round(gross_profit / gross_loss, 4) if gross_loss > 0 else None
+    wr = round(len(wins) / len(closed), 4)
+    return pf, wr, len(closed)
 
 
 class PnLTracker:
@@ -366,6 +400,11 @@ class PnLTracker:
             if dd > self.state.max_drawdown_pct:
                 self.state.max_drawdown_pct = round(dd, 4)
 
+        # Cumulative PF / WR — all closed trades up to and including today
+        cum_pf, cum_wr, cum_closed = _compute_cumulative_pf_wr(
+            self.state.trades, as_of_date=today
+        )
+
         snap = DailySnapshot(
             date=today,
             equity=equity,
@@ -377,6 +416,9 @@ class PnLTracker:
             loss_count=loss_count,
             signals_generated=signals_generated,
             orders_submitted=orders_submitted,
+            cumulative_profit_factor=cum_pf,
+            cumulative_win_rate=cum_wr,
+            cumulative_closed_trades=cum_closed,
         )
         self.state.daily_snapshots.append(asdict(snap))
         self._record_strategy_daily_snapshots(today=today, current_prices=current_prices)
