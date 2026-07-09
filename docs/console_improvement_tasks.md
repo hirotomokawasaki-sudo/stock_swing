@@ -1,6 +1,6 @@
 # stock_swing 改善計画（R0-R8 改訂版）
 
-**改訂日**: 2026-06-25（外部 AI レビュー後にゼロベースで再構成）  
+**改訂日**: 2026-07-09（スケジュール概要を実態に合わせて更新）  
 **旧 P0-P17 体系は廃止。本ファイルのみが正式な改善計画。**
 
 ---
@@ -45,7 +45,7 @@
 ## スケジュール概要
 
 ```
-2026-06-25（本日）  ✅ R0   paper_demo に P6/P9 接続（guardrail + experiment tracking）
+2026-06-25         ✅ R0   paper_demo に P6/P9 接続（guardrail + experiment tracking）
                    ✅ R1-A exit シグナル発火ログ追加
                    ✅ R2-C 個別株 size_multiplier = 0.5x 適用
                    ✅ R6 C1 Console Run Health + text renderer + alert 体系
@@ -57,31 +57,44 @@
 2026-06-28〜07-04  ✅ R1 完了（R1-C/D: commit 0d0ba73 + attribution fix commit b658f7d）
                    ✅ R2-A 完了（asset_class フィールド付与: commit b658f7d）
 
-2026-07-07〜07-09  ✅ Guardrail hard-halt 有効化（**07-01 前倒し完了** · 6日間誤発動ゼロ確認済み）
-                   ✅ R6-D 完了（Decision Funnel deny_reasons + Broker/Tracker パネル）（**07-01 前倒し**）
+2026-07-01（前倒し完了）
+                   ✅ Guardrail hard-halt 有効化（6日間誤発動ゼロ確認済み）
+                   ✅ R6-D 完了（Decision Funnel deny_reasons + Broker/Tracker パネル）
+                   ✅ R2 全完了（R2-B/D：ETF/株 別メトリクス必須化 + エントリーフィルター）
+                   ✅ R3-A 完了（反実仮想スクリプト作成・実行）
+                   ✅ R3-B 完了（exit replay 評価 + 結論）
+                   ✅ R4-A 完了（signal_strength 飽和原因調査）
+                   ✅ R4-B 完了（saturation / min_signal_strength 調整）
+                   ✅ R6 C4 完了（R6-E: Attribution パネル・ETF/Stock 別 PF・exit_reason 別 PF）
+                   ✅ R6 C6 完了（R6-F: リモート Web 読み取り専用・スマホ対応）
+                   ✅ R6-F-GW 完了（Tailscale Serve 実運用ルート設計・検証）
+                   ✅ Go/No-Go チェックリスト定義
 
-2026-07-07〜07-14  ✅ R2 全完了（R2-B/D：ETF/株 別メトリクス必須化 + エントリーフィルター）（**07-01 前倒し**）
-                   ✅ R3-A 完了（反実仮想スクリプト作成・実行）（**07-01 前倒し**）
-                   🔲 R3-B 着手（exit replay 評価 + 結論）
+2026-07-06（前倒し完了）
+                   ✅ R6-F-LS 完了（/api/live_summary エンドポイント）
+                   ✅ R7-A 完了（Corporate Action 台帳 + 自動検知）
+                   ✅ ETF buy guardrail 誤警告解消
 
-2026-07-14〜07-18  🔲 R6 C4 着手（Attribution パネル ← R1 完了後）
-                   ✅ R4-A 完了（signal_strength 飽和原因調査）（**07-01 前倒し**）
+2026-07-07〜07-09  ✅ Broker audit / CRWD split 修正 / R2-B/D 前倒し確認
+（本日 07-09）      ✅ Tracker rebuild（integrity 8 → 0）
+                   ✅ Console 再起動
 
-2026-07-15〜07-21  🔲 R3 完了（反実仮想検証 + exit 改善案評価）
-                   🔲 R6 C6 着手（Remote Web 読み取り専用ダッシュボード）
+── 次のアクション ──────────────────────────────────────
 
-2026-07-21〜07-28  ✅ R6 C6 完了（スマートフォン読み取り専用アクセス）
-                   ✅ R6-F-LS 完了（live_summary エンドポイント）（**07-06 前倒し**）
+2026-07-28〜07-30  🔲 hard-halt 環境でのペーパー最終確認（BLOCKING）
 
-2026-07-22〜08-04  🔲 R4 完了（signal_strength サブコンポーネント実装 + 分布改善）
-                   🔲 R6 C4 完了（Attribution パネル） → R6 全体完了
+2026-07-31         🔲 Go/No-Go 最終判定（BLOCKING）
 
-2026-08-05〜08-18  🔲 R5 着手（昇格・降格ゲート定義 ← R2/R4 完了が前提）
-                   ✅ Guardrail hard-halt 有効化（07-01 完了済み）
-                   🔲 R6 C5 着手（Risk Dashboard ← R2/R4 完了が前提）
+2026-08-01 🚀 リアルトレード開始（初期2週間は50%サイズ）
 
-2026-09            ✅ R7-A 完了（Corporate Action 台帳 + 自動検知）（**07-06 前倒し**）
-                   🔲 R7-B/C（WebSocket / ニュース感情評価）
+── Post-Launch ──────────────────────────────────────────
+
+2026-08-01〜08-18  🔲 R5 着手（昇格・降格ゲート定義 ← R2/R4 完了が前提）
+                   🔲 R6 C5 着手（Risk Dashboard ← R5 と並行）
+
+2026-08-01〜08-04  🔲 R4-C 完了（signal strength デサイル別 PF 計測スクリプト + コンソール表示）
+
+2026-09            🔲 R7-B/C（WebSocket / ニュース感情評価）
 
 2026-10+           🔲 R8（ML：クリーンラベル 1,000 件到達後）
 ```
