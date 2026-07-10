@@ -2,9 +2,9 @@
   "run": {
     "mode": "paper",
     "status": "OK",
-    "run_id": "paper_demo-20260702T195503Z-914c990a",
-    "experiment_id": "exp-20260702-swing-v1-prompt-v1-f85239a0-63890d53",
-    "timestamp": "2026-07-02T19:55:25.867326+00:00",
+    "run_id": "paper_demo-20260709T195502Z-e540d410",
+    "experiment_id": "exp-20260709-swing-v1-prompt-v1-8895c694-63890d53",
+    "timestamp": "2026-07-09T19:55:47.262685+00:00",
     "duration_seconds": null,
     "guardrail_status": "ok"
   },
@@ -18,151 +18,123 @@
     "guardrail_status": "ok"
   },
   "portfolio": {
-    "equity": 989511.82,
-    "realized_pnl": 57158.32,
-    "unrealized_pnl": -81626.45,
-    "total_pnl": -24468.13,
-    "open_positions": 27,
+    "equity": 1018649.83,
+    "realized_pnl": -116859.71,
+    "unrealized_pnl": 2359.39,
+    "total_pnl": -114500.32,
+    "open_positions": 16,
     "asset_class_breakdown": {
       "etf": {
-        "count": 75,
-        "wins": 45,
-        "losses": 29,
+        "count": 80,
+        "wins": 48,
+        "losses": 32,
         "win_rate": 0.6,
-        "profit_factor": 1.579,
-        "net_pnl": 31948.61,
-        "gross_profit": 87100.64,
-        "gross_loss": 55152.03
+        "profit_factor": 1.256,
+        "net_pnl": 17642.24,
+        "gross_profit": 86667.72,
+        "gross_loss": 69025.48
       },
       "stock": {
-        "count": 159,
-        "wins": 81,
-        "losses": 78,
-        "win_rate": 0.5094,
-        "profit_factor": 1.236,
-        "net_pnl": 27348.69,
-        "gross_profit": 143130.61,
-        "gross_loss": 115781.92
+        "count": 173,
+        "wins": 68,
+        "losses": 105,
+        "win_rate": 0.3931,
+        "profit_factor": 0.435,
+        "net_pnl": -134501.95,
+        "gross_profit": 103634.3,
+        "gross_loss": 238136.25
       },
       "all": {
-        "count": 234,
-        "wins": 126,
-        "losses": 107,
-        "win_rate": 0.5385,
-        "profit_factor": 1.347,
-        "net_pnl": 59297.3,
-        "gross_profit": 230231.25,
-        "gross_loss": 170933.95
+        "count": 253,
+        "wins": 116,
+        "losses": 137,
+        "win_rate": 0.4585,
+        "profit_factor": 0.62,
+        "net_pnl": -116859.71,
+        "gross_profit": 190302.02,
+        "gross_loss": 307161.73
       }
     },
     "exit_attribution_breakdown": {
       "by_reason": {
-        "broker_fill": {
-          "count": 204,
-          "wins": 106,
-          "losses": 97,
-          "win_rate": 0.5196,
-          "profit_factor": 1.273,
-          "net_pnl": 39054.65,
-          "gross_profit": 182300.84,
-          "gross_loss": 143246.19
-        },
-        "trailing_stop": {
-          "count": 17,
-          "wins": 13,
-          "losses": 4,
-          "win_rate": 0.7647,
-          "profit_factor": 7.686,
-          "net_pnl": 33919.1,
-          "gross_profit": 38992.29,
-          "gross_loss": 5073.19
-        },
-        "breakeven_stop": {
-          "count": 6,
-          "wins": 5,
-          "losses": 1,
-          "win_rate": 0.8333,
-          "profit_factor": 19.624,
-          "net_pnl": 4872.23,
-          "gross_profit": 5133.84,
-          "gross_loss": 261.61
-        },
-        "time_based": {
-          "count": 1,
-          "wins": 1,
-          "losses": 0,
-          "win_rate": 1.0,
-          "profit_factor": null,
-          "net_pnl": 3619.0,
-          "gross_profit": 3619.0,
-          "gross_loss": 0
-        },
         "stop_loss": {
-          "count": 6,
-          "wins": 1,
-          "losses": 5,
-          "win_rate": 0.1667,
-          "profit_factor": 0.008,
-          "net_pnl": -22167.68,
-          "gross_profit": 185.28,
-          "gross_loss": 22352.96
+          "count": 3,
+          "wins": 0,
+          "losses": 3,
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "net_pnl": -3937.92,
+          "gross_profit": 0,
+          "gross_loss": 3937.92
+        },
+        "broker_fill": {
+          "count": 250,
+          "wins": 116,
+          "losses": 134,
+          "win_rate": 0.464,
+          "profit_factor": 0.628,
+          "net_pnl": -112921.79,
+          "gross_profit": 190302.02,
+          "gross_loss": 303223.81
         }
       },
-      "unknown_count": 204
+      "unknown_count": 250
     }
   },
   "decision_funnel": {
-    "candidates": 17,
-    "buy": 6,
-    "sell": 11,
-    "deny": 0,
-    "submitted": 3,
+    "candidates": 15,
+    "buy": 13,
+    "sell": 0,
+    "deny": 2,
+    "submitted": 1,
     "rejected": 0,
     "blocked": 0,
-    "deny_reasons": {}
+    "deny_reasons": {
+      "confidence 0.40 below minimum 0.40": 1,
+      "confidence 0.35 below minimum 0.40": 1
+    }
   },
   "broker_tracker_diff": {
-    "broker_count": 27,
-    "tracker_count": 25,
-    "mismatch_count": 2,
-    "broker_only": [
-      "CHPS",
-      "FTXL"
+    "broker_count": 16,
+    "tracker_count": 17,
+    "mismatch_count": 1,
+    "broker_only": [],
+    "tracker_only": [
+      "META"
     ],
-    "tracker_only": [],
     "qty_mismatches": []
   },
   "risk": {
     "cluster_blocks": [],
-    "risk_budget_pct": 0.082,
+    "risk_budget_pct": 0.025,
     "market_regime": "cautious"
   },
   "price_integrity": {
-    "fresh_price_count": 3,
+    "fresh_price_count": 1,
     "stale_price_count": 0,
-    "fallback_price_count": 3,
+    "fallback_price_count": 1,
     "top_stale_symbols": [],
     "price_source_breakdown": {
-      "none": 3
+      "decision_latest_close": 1
     }
   },
   "api": {
-    "call_count": 8,
+    "call_count": 17,
     "error_count": 0,
-    "p50_latency_ms": 922.6,
-    "p95_latency_ms": 2124.3,
+    "p50_latency_ms": 794.1,
+    "p95_latency_ms": 2271.9,
     "slowest_endpoints": [
       {
         "endpoint": "broker.fetch_bars",
-        "duration_ms": 2124.3
-      },
-      {
-        "endpoint": "broker.fetch_positions",
-        "duration_ms": 613.6
+        "duration_ms": 2271.9
       },
       {
         "endpoint": "broker.fetch_account",
-        "duration_ms": 550.4
+        "duration_ms": 646.9
+      },
+      {
+        "endpoint": "broker.fetch_positions",
+        "duration_ms": 486.8
       }
     ]
   },

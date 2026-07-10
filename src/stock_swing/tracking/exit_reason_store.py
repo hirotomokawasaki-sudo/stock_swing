@@ -24,6 +24,8 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -39,6 +41,27 @@ def _store_path(project_root: Path) -> Path:
     return p
 
 
+def _atomic_write(path: Path, store: dict[str, Any]) -> None:
+    """Write store dict to path atomically using temp-file + os.replace."""
+    content = json.dumps(store, indent=2, ensure_ascii=False)
+    dir_path = path.parent
+    dir_path.mkdir(parents=True, exist_ok=True)
+    fd, tmp_path_str = tempfile.mkstemp(dir=str(dir_path), prefix=".exit_reasons.", suffix=".tmp")
+    tmp_path = Path(tmp_path_str)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(content)
+            fh.flush()
+            os.fsync(fh.fileno())
+        tmp_path.replace(path)
+    except Exception:
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except Exception:
+            pass
+        raise
+
+
 def write_exit_reason(
     project_root: Path,
     broker_order_id: str,
@@ -47,7 +70,7 @@ def write_exit_reason(
     exit_reason: str,
     metadata: dict[str, Any] | None = None,
 ) -> None:
-    """Persist exit reason for a submitted sell order."""
+    """Persist exit reason for a submitted sell order (atomic write)."""
     if not broker_order_id:
         return
     path = _store_path(project_root)
@@ -63,7 +86,7 @@ def write_exit_reason(
         "written_at": datetime.now(timezone.utc).isoformat(),
         **(metadata or {}),
     }
-    path.write_text(json.dumps(store, indent=2, ensure_ascii=False), encoding="utf-8")
+    _atomic_write(path, store)
     logger.debug("exit_reason_store: wrote %s → %s", broker_order_id, exit_reason)
 
 
@@ -82,7 +105,7 @@ def read_exit_reason(project_root: Path, broker_order_id: str) -> dict[str, Any]
 
 
 def delete_exit_reason(project_root: Path, broker_order_id: str) -> None:
-    """Remove a fulfilled entry from the store (cleanup after fill recorded)."""
+    """Remove a fulfilled entry from the store atomically (cleanup after fill recorded)."""
     if not broker_order_id:
         return
     path = _store_path(project_root)
@@ -92,7 +115,7 @@ def delete_exit_reason(project_root: Path, broker_order_id: str) -> None:
         store: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
         if broker_order_id in store:
             del store[broker_order_id]
-            path.write_text(json.dumps(store, indent=2, ensure_ascii=False), encoding="utf-8")
+            _atomic_write(path, store)
     except Exception:
         pass
 
@@ -118,7 +141,7 @@ def purge_old_entries(project_root: Path, max_age_days: int = 7) -> int:
         for oid in to_remove:
             del store[oid]
         if to_remove:
-            path.write_text(json.dumps(store, indent=2, ensure_ascii=False), encoding="utf-8")
+            _atomic_write(path, store)
         return len(to_remove)
     except Exception:
         return 0

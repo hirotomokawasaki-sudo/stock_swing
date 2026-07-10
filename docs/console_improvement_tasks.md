@@ -1,23 +1,32 @@
 # stock_swing 改善計画（R0-R8 改訂版）
 
-**改訂日**: 2026-07-09（スケジュール概要を実態に合わせて更新）  
+**改訂日**: 2026-07-10（Codex Review 対応フェーズ RF を追加・スケジュール更新）  
 **旧 P0-P17 体系は廃止。本ファイルのみが正式な改善計画。**
 
 ---
 
-## 運用ステータス（2026-06-25 現在）
+## 運用ステータス（2026-07-10 現在）
 
 | 項目 | 値 |
 |---|---|
 | 元本 | $1,000,000 |
-| 確定実現 PnL | +$25,578 |
-| 現在 equity（確定分） | $1,028,250 |
-| 含み益（推定） | +$60,150 |
-| ETF PF | **2.270**（72 trades, WR 62%） |
-| 個別株 PF | **0.777**（123 trades, WR 44%） |
-| 全体 PF | 1.180 |
+| Equity | $1,019,812.79（Codex review export 時点）|
+| 確定実現 PnL | -$93,583.16 |
+| ETF PF（clean records） | **1.258**（65 trades, WR 61.5%） |
+| 個別株 PF（clean records） | **0.799**（134 trades, WR 43.3%） |
+| 全体 PF（clean records） | **0.969**（199 trades）|
+| clean closed | **199件**（54件を quarantine 分離済み）|
+| attribution coverage | **65.3%**（回復前 1.5%）|
 | 稼働 cron | 12本 全 consecutiveErrors=0 |
-| テスト | 496 passed / 1 known fail |
+| テスト | 719 passed / 2 skipped |
+
+**clean records 分析（F8, 2026-07-10 初回）**
+```
+ trailing_stop  : n=66  WR=84.9%  PF=25.80  net=+$124,303  ← 機能している
+ stop_loss      : n=40  WR=30.0%  PF=0.09   net= -$85,604  ← 問題（exit 最適化要）
+ breakeven_stop : n=23  WR=26.1%  PF=1.92   net=  +$3,187
+ unknown        : n=69  WR=33.3%  PF=0.39   net= -$51,196  ← 残attribution 69件
+```
 
 ---
 
@@ -76,23 +85,43 @@
                    ✅ ETF buy guardrail 誤警告解消
 
 2026-07-07〜07-09  ✅ Broker audit / CRWD split 修正 / R2-B/D 前倒し確認
-（本日 07-09）      ✅ Tracker rebuild（integrity 8 → 0）
+（07-09）           ✅ Tracker rebuild（integrity 8 → 0）
                    ✅ Console 再起動
+
+2026-07-10         ✅ RF フェーズ完了（Codex Review F1〜F7 実装・修復スクリプト実行）
+                   ✅ RF-1（F1） quarantine 台帳: pnl_tracker.py gate 実装 + 54件移行
+                   ✅ RF-2（F2） GuardrailEngine mismatch 実測値接続（hardcoded 0 廃止）
+                   ✅ RF-3（F3） exit_reason_store 全書き込み atomic 化
+                   ✅ RF-4（F4） TradeEntry に durable metadata フィールド追加
+                   ✅ RF-5（F5） DecisionRecord に AI telemetry フィールド定義
+                   ✅ RF-6（F6） stock-reduced mode gate 実装（ENTRY_FILTER_STOCK_REDUCED）
+                   ✅ RF-7（F7） sector_shock_hold shadow モジュール + paper_demo shadow log 連携
+                   ✅ RF-8（F8） clean-records 初回分析実施（PF/exit別/ETF-Stock別）
+                   ✅ exit_reason 回復 127件（attribution: 1.5% → 65.3%）
+                   ✅ テスト 719 passed（新規 5 ファイル 32 tests 追加）
 
 ── 次のアクション ──────────────────────────────────────
 
-2026-07-28〜07-30  🔲 hard-halt 環境でのペーパー最終確認（BLOCKING）
+2026-07-10         ✅ RF-6b  ENTRY_FILTER_STOCK_REDUCED=true を cron に追加（14シンボルブロック/10シンボル通過）
+                   ✅ RF-8c  stop_loss 原因分析完了（06-25 セクターショックが主因、staged_trailing が最善）
+                   🔲 paper_demo 実行ログで sector_shock_hold SHADOW の出力を確認
 
-2026-07-31         🔲 Go/No-Go 最終判定（BLOCKING）
+2026-07-14〜07-28  🔲 RF-8b  attribution coverage 95% 達成（残 69 件の早期台帳 broker 照合）
+                   🔲 RF-5b  AI telemetry 充填（DecisionEngine 側 token 記録実装）
+
+2026-07-28〜07-30  🔴 hard-halt 環境でのペーパー最終確認（BLOCKING）
+
+2026-07-31         🔴 Go/No-Go 最終判定（BLOCKING）
 
 2026-08-01 🚀 リアルトレード開始（初期2週間は50%サイズ）
 
 ── Post-Launch ──────────────────────────────────────────
 
+2026-08-01〜08-04  🔲 R4-C 完了（signal strength デサイル別 PF 計測スクリプト + コンソール表示）
+                   🔲 RF-7b  sector_shock_hold paper A/B 正式実施（shadow log >= 10件確認後）
+
 2026-08-01〜08-18  🔲 R5 着手（昇格・降格ゲート定義 ← R2/R4 完了が前提）
                    🔲 R6 C5 着手（Risk Dashboard ← R5 と並行）
-
-2026-08-01〜08-04  🔲 R4-C 完了（signal strength デサイル別 PF 計測スクリプト + コンソール表示）
 
 2026-09            🔲 R7-B/C（WebSocket / ニュース感情評価）
 
@@ -212,6 +241,59 @@
 - [x] `broker_fill` が消え、意味のある分類に置き換わる
 - [x] post-R1-B attribution completeness = 85.7%（95% 目標には KLAC audit が必要）
 - [x] exit_reason 別の PF 計算が可能になる
+
+---
+
+### ✅ RF: 観測基盤・台帳修復フェーズ（Codex Review 対応, 2026-07-10 完了）
+
+**目的**: paper 卒業判定の前提となる観測精度・台帳整合性・attribution 信頼性を修復する  
+**背景**: Codex レビュー（2026-07-10）で判明した「証拠能力ゼロ」状態を解消
+
+#### 完了タスク一覧
+
+| ID | 内容 | 状態 | 実装ファイル |
+|---|---|---|---|
+| RF-1 / F1 | closed trade 台帳整合性修復（quarantine gate + holding_days 計算） | ✅ | pnl_tracker.py, scripts/migrate_quarantine_invalid_trades.py |
+| RF-2 / F2 | broker/tracker mismatch を GuardrailEngine に実測値で渡す | ✅ | cli/paper_demo.py（hardcoded 0 廃止） |
+| RF-3 / F3 | exit_reason_store 全書き込みを atomic 化（tempfile + fsync + os.replace） | ✅ | tracking/exit_reason_store.py |
+| RF-4 / F4 | TradeEntry に durable metadata 追加（decision_id, run_id, experiment_id 等） | ✅ | tracking/pnl_tracker.py |
+| RF-5 / F5 | DecisionRecord に AI telemetry フィールド定義（model, input/output_tokens 等） | ✅ | decision_engine/decision_engine.py, core/types.py |
+| RF-6 / F6 | stock-reduced mode gate（ENTRY_FILTER_STOCK_REDUCED=true で有効化） | ✅ | risk/entry_filter.py |
+| RF-7 / F7 | sector_shock_hold shadow モジュール新規作成 + paper_demo shadow log 連携 | ✅ | strategy_engine/sector_shock_hold.py |
+| RF-8 / F8 | clean-records 初回分析スクリプト作成・実行 | ✅ | scripts/f8_clean_records_analysis.py |
+| RF-R1 | exit_reason 127件回復（trade_events.jsonl + sell decision JSON） | ✅ | scripts/recover_exit_reasons.py |
+| RF-R1 | 既存 54件 quarantine 移行（migration script 実行） | ✅ | scripts/migrate_quarantine_invalid_trades.py |
+
+#### RF フェーズの残タスク（未完了）
+
+| ID | 内容 | 優先度 | 目標日 | 条件 |
+|---|---|---|---|---|
+| RF-5b | DecisionEngine 側で model/input_tokens を実際に充填する | 🟡 中 | 07-28〜 | AIエンジン呼び出し箇所の特定・実装 |
+| RF-6b | ENTRY_FILTER_STOCK_REDUCED=true を paper cron に適用（環境変数追加） | ✅ **2026-07-10** | — | 14シンボルブロック / 10シンボル通過 |
+| RF-7b | sector_shock_hold を paper A/B として正式実施 | 🟡 中 | 08-01 以降 | shadow log で 10+ 件のサンプル確認後 |
+| RF-8b | attribution coverage を 95% 以上に引き上げ（残 69 件の早期台帳を再構築） | 🟡 中 | 07-28〜 | broker 注文履歴との照合 |
+| RF-8c | stop_loss 原因分析（clean 199件で exit_replay 実施） | ✅ **2026-07-10** | — | 06-25 セクターショックが主因。staged_trailing D が最善(+$6,530/PF+0.034) |
+
+#### RF フェーズの重要な発見（clean records 分析結果）
+
+```
+■ trailing_stop  n=66  WR=84.9%  PF=25.80  net=+$124,303  ← 極めて有効
+■ stop_loss      n=40  WR=30.0%  PF=0.09   net= -$85,604  ← 最大の損失源
+■ breakeven_stop n=23  WR=26.1%  PF=1.92   net=  +$3,187
+■ unknown        n=69  WR=33.3%  PF=0.39   net= -$51,196  ← attribution 残課題
+
+→ stop_loss の発動条件（閾値・タイミング）の見直しが最優先の exit 改善課題
+→ trailing_stop で取れた銘柄を stop_loss で早期に切っている可能性が高い
+→ R3（反実仮想分析）の exit_replay にこのデータを適用して再検証すること
+```
+
+**RF フェーズの禁止事項**
+```
+❌ holding_days < 0 が残ったまま exit 閾値を最適化しない（F1 で解消済み）
+❌ broker/tracker 差異が未解決のまま paper 卒業判定しない（F2 で実測値接続済み）
+❌ attribution が broker_fill のまま exit 戦略を評価しない（F3/F8 で 65.3% まで回復）
+❌ sector_shock_hold を shadow 検証なしにデフォルト有効化しない（F7 shadow 中）
+```
 
 ---
 
@@ -410,19 +492,22 @@ Week 1-2（07-02〜07-14）🟠 推奨:
   ✅ R6-E   Attribution パネル（exit_reason 別 PF）
   ✅ 07-21  Go/No-Go チェックリスト定義（**07-02 前倒し完了**）
 
-Week 3（07-14〜07-21）🟠 STRONGLY RECOMMENDED:
+Week 3（07-10〜07-21）🟠 STRONGLY RECOMMENDED:
   ✅ R6-F   リモート Web 監視（スマホ対応）（**07-02 前倒し完了**）
-  ✅ R6-F   スマホ詳細パネル拡張（Open Positions / Recent Trades / At-risk / Cron・Guardrail / Broker diff）
   ✅ R6-F-GW Tailscale Serve 実運用ルート設計・検証（**07-03 完了**）
   ✅ R6-F-LS /api/live_summary エンドポイント追加（**07-06 前倒し完了**）
   ✅ R7-A   Corporate Action 台帳 + 自動検知（**07-06 前倒し完了**）
   ✅ ETF buy guardrail 誤警告解消（guardrail_service .env 参照 + .env 統一）（**07-06**）
+  ✅ RF     観測基盤・台帳修復フェーズ完了（**07-10**）
+  ✅ RF-6b  ENTRY_FILTER_STOCK_REDUCED=true を cron に追加（**07-10 完了**）
+  ✅ RF-8c  stop_loss 原因分析実施（**07-10 完了**：06-25 ショック主因 / staged_trailing 最善）
+  🔲 RF-8b  attribution coverage 95% 達成（残 69 件の broker 照合）
 
 Week 4（07-21〜07-31）🔴 BLOCKING:
   ✅ 07-21  Go/No-Go チェックリスト定義・確認（定義は07-02前倒し完了、07-31に最終記入）
   ✅ R6-F-GW Tailscale Serve 最終接続確認（**07-03 完了**）
   🔲 07-28〜07-30  hard-halt 環境でのペーパー最終確認
-  🔲 07-31  Go/No-Go 最終判定
+  🔲 07-31  Go/No-Go 最終判定（RF clean-records PF >= 1.0 も確認対象に追加）
 
 08-01 🚀 リアルトレード開始（初期2週間は50%サイズ）
 
@@ -430,6 +515,7 @@ Post-Launch:
   🔲 R4-C   signal strength デサイル検証
   🔲 R5     昇格・降格ゲート本格版
   ✅ R7-A   Corporate Action 台帳（07-06 前倒し完了）
+  🔲 RF-7b  sector_shock_hold paper A/B 正式実施
   🔲 R7-B/C 09月以降
   🔲 R8     10月以降
 ```
@@ -439,12 +525,16 @@ Post-Launch:
 ## やらないこと（制約）
 
 ```
-❌ exit attribution が修復されるまで exit 閾値を変更しない（R1 完了まで凍結）
+❌ exit attribution が修復されるまで exit 閾値を変更しない（R1 完了 / RF で 65.3% 回復済み）
 ❌ クリーンラベルが 1,000 件に達するまで ML を実行に影響させない
 ❌ ETF と個別株を 1 つの混合戦略として扱わない
 ❌ スマートフォンから遠隔 buy/sell/cancel/reset を実装しない（読み取り専用のみ）
 ❌ YAML 閾値が 2 週間 paper 検証されるまで guardrail を hard-halt として有効化しない
 ❌ 反実仮想分析で生存バイアスを制御するまで「短期保有 = 有害」と結論づけない
+❌ quarantined_trades（54件）を clean records と混在させて PF 分析しない
+❌ broker/tracker mismatch が実測値ゼロを確認するまで新規買いの guardrail を無視しない
+❌ sector_shock_hold を shadow 検証（最低 10件）なしに paper A/B 以外で有効化しない
+❌ stop_loss PF=0.09 の原因分析（R3 再実行）なしに exit 閾値を単純に広げない
 ```
 
 ---
@@ -462,3 +552,6 @@ Post-Launch:
 | ✅ 完了 | R6 | ✅ C1/C2/D/E/F/GW/LS 全完了 | live_summary 含む（07-06）|
 | 🟢 中 | R7 | ✅ R7-A 完了 / R7-B/C 未着手 | R7-A: 07-06 前倒し完了 |
 | 🔵 長期 | R8 | 🔲 未着手 | 10 月以降 |
+| ✅ 完了（本体） | **RF** | ✅ F1〜F7 実装完了・migrate/recover 実行済み | **2026-07-10** |
+| ✅ 完了 | **RF-6b / RF-8c** | RF-6b 有効化 + RF-8c 原因分析 | **2026-07-10** |
+| 🟡 中 | **RF 残** | RF-5b（token 充填）/ RF-7b（sector_shock paper A/B）/ RF-8b（attribution 95%）| **07-14〜08-01** |

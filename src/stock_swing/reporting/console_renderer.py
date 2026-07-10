@@ -38,6 +38,7 @@ class ConsoleRenderer:
             self._price_integrity(d),
             self._decision_funnel(d),
             self._broker_tracker_diff(d),
+            self._ledger_quality(d),
             self._api_ai(d),
             self._missing_metrics(d),
         ]
@@ -201,6 +202,8 @@ class ConsoleRenderer:
             for reason, count in sorted(deny_reasons.items(), key=lambda x: -x[1])[:8]:
                 bar = "▪" * min(count, 10)
                 lines.append(f"    {reason:<40s} {count:>3}  {bar}")
+        # RF-6b: stock-reduced mode ブロック
+        lines.extend(self._decision_funnel_stock_reduced(f))
         return "\n".join(lines)
 
     def _broker_tracker_diff(self, d: dict) -> str:
@@ -229,6 +232,48 @@ class ConsoleRenderer:
                     f"  qty_mismatch   = {m['symbol']} broker={m['broker_qty']} tracker={m['tracker_qty']}"
                 )
         return "\n".join(lines)
+
+    def _ledger_quality(self, d: dict) -> str:
+        """RF: 台帳品質パネル（clean/quarantined/attribution カバレッジ）."""
+        lq = d.get("ledger_quality", {})
+        if not lq:
+            return ""
+        clean      = lq.get("clean_closed", "?")
+        quarantine = lq.get("quarantined", 0)
+        coverage   = lq.get("attribution_coverage_pct")
+        no_attr    = lq.get("no_exit_attribution", 0)
+        total      = lq.get("total_closed", "?")
+
+        cov_str = f"{coverage:.1f}%" if coverage is not None else "N/A"
+        cov_icon = "✅" if (coverage or 0) >= 95 else ("🟡" if (coverage or 0) >= 65 else "🚨")
+        q_icon = "✅" if quarantine == 0 else "⚠️"
+
+        lines = [
+            "LEDGER QUALITY",
+            _SEP,
+            f"  clean_closed   = {clean:>4}  (of {total} total)",
+            f"  quarantined    = {quarantine:>4}  {q_icon}  ← 台帳外・分析除外",
+            f"  attribution    = {cov_str:>6}  {cov_icon}  ({clean - no_attr if isinstance(clean,int) and isinstance(no_attr,int) else '?'}/{clean} 属性付き)",
+        ]
+
+        # RF-7: sector_shock_hold shadow カウント
+        ssh = d.get("sector_shock_shadow", {})
+        shadow_n = ssh.get("shadow_count", 0)
+        if shadow_n > 0:
+            lines.append(f"  sector_shock   = {shadow_n} シグナル [shadow]ログ済み")
+
+        return "\n".join(lines)
+
+    def _decision_funnel_stock_reduced(self, funnel: dict) -> list[str]:
+        """stock-reduced ブロック情報を返す（_decision_funnel内で呼び出す）."""
+        n = funnel.get("stock_reduced_blocked", 0)
+        syms = funnel.get("stock_reduced_blocked_symbols", [])
+        if not n:
+            return []
+        sym_str = ", ".join(syms[:8]) + (" ..." if len(syms) > 8 else "")
+        return [
+            f"  stock_reduced  = {n} ブロック: {sym_str}"
+        ]
 
     def _api_ai(self, d: dict) -> str:
         api = d.get("api", {})

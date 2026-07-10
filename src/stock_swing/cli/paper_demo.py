@@ -67,6 +67,7 @@ from stock_swing.strategy_engine.breakout_momentum_strategy import BreakoutMomen
 from stock_swing.strategy_engine.event_swing_strategy import EventSwingStrategy
 from stock_swing.strategy_engine.simple_exit_strategy import SimpleExitStrategy
 from stock_swing.strategy_engine.simple_exit_v2_strategy import SimpleExitV2Strategy
+from stock_swing.strategy_engine.sector_shock_hold import SectorShockAnalyzer, SectorShockHoldConfig
 from stock_swing.tracking.exit_reason_store import delete_exit_reason, write_exit_reason
 from stock_swing.tracking.trade_event_store import TradeEvent
 from stock_swing.tracking.pnl_tracker import PnLTracker
@@ -1100,6 +1101,38 @@ def main() -> int:  # noqa: C901
         )
     exit_signals = exit_strat.generate(all_features, current_positions_full)
 
+    # F7: sector_shock_hold shadow analysis — annotate exit signals with regime context
+    _ssh_config = SectorShockHoldConfig.from_env()
+    _ssh_analyzer = SectorShockAnalyzer(_ssh_config)
+    _ssh_shadow_count = 0
+    if _ssh_analyzer.is_enabled() and exit_signals:
+        _sector_1d: dict[str, float] = {}
+        for _bm in _ssh_config.benchmark_symbols:
+            for _feat in all_features:
+                if getattr(_feat, "symbol", None) == _bm:
+                    _1d = getattr(_feat, "return_1d", None) or (getattr(_feat, "payload", {}) or {}).get("return_1d")
+                    if _1d is not None:
+                        try:
+                            _sector_1d[_bm] = float(_1d)
+                        except (TypeError, ValueError):
+                            pass
+                        break
+        for _sig in exit_signals:
+            _sym = getattr(_sig, "symbol", None) or ""
+            if not _sym:
+                continue
+            _pos = current_positions_full.get(_sym) or {}
+            _unrealized_pct = float(_pos.get("unrealized_plpc", 0) or 0)
+            _1d_sym = float((getattr(_sig, "signal_strength", 0) or 0)) * -1  # proxy
+            _ssh_result = _ssh_analyzer.classify(
+                symbol=_sym,
+                current_return_pct=_unrealized_pct,
+                symbol_1d_return_pct=_1d_sym,
+                sector_1d_return_pcts=_sector_1d,
+            )
+            _ssh_analyzer.log_shadow(_ssh_result)
+            _ssh_shadow_count += 1
+
     cooldown_config_path = project_root / "config" / "strategy" / "open_shock_cooldown.yaml"
     cooldown_result = None
     if cooldown_config_path.exists():
@@ -1409,9 +1442,14 @@ def main() -> int:  # noqa: C901
         )
 
     if _guard_engine is not None and apply_to_buy_candidate is not None and not _warning_only:
+        # F2: compute real broker/tracker mismatch count instead of hardcoded 0
+        _bt_diff_prebuy = _build_broker_tracker_diff(
+            list(current_positions_full.values()) if current_positions_full else [],
+            pnl_tracker.get_open_positions(),
+        )
         _guard_metrics_now = {
             "stale_price_event_count": len(stale_symbols) if "stale_symbols" in dir() else 0,
-            "broker_tracker_mismatch_count": 0,
+            "broker_tracker_mismatch_count": _bt_diff_prebuy["mismatch_count"],
         }
         _guard_decision_now = _guard_engine.evaluate(_guard_metrics_now)
         _guardrail_blocked = []
@@ -1485,6 +1523,10 @@ def main() -> int:  # noqa: C901
                 list(current_positions_full.values()) if current_positions_full else [],
                 pnl_tracker.get_open_positions(),
             ),
+            # RF: 台帳品質・フィルター・シャドウ
+            ledger_quality=pnl_tracker.get_ledger_quality_report(),
+            entry_filter_stats=_ef_result.stats if "_ef_result" in dir() else {},
+            sector_shock_shadow_count=0,
         )
         console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
         return finish(0, decisions=decisions, equity_value=equity, extra={"reason": "dry_run"})
@@ -1736,9 +1778,14 @@ def main() -> int:  # noqa: C901
 
     if _guard_engine is not None and _breaker_store is not None and post_run_update is not None:
         try:
+            # F2: compute real broker/tracker mismatch for post-run guardrail evaluation
+            _bt_diff_postrun = _build_broker_tracker_diff(
+                list(current_positions_full.values()) if current_positions_full else [],
+                pnl_tracker.get_open_positions(),
+            )
             _post_metrics = {
                 "stale_price_event_count": len(stale_symbols) if "stale_symbols" in dir() else 0,
-                "broker_tracker_mismatch_count": 0,
+                "broker_tracker_mismatch_count": _bt_diff_postrun["mismatch_count"],
                 "api_error_rate_pct": 0.0,
                 "order_rejection_rate_pct": (
                     len([s for s in submissions if s.status not in {"submitted", "accepted", "filled", "partially_filled"}])
@@ -1927,6 +1974,17 @@ def _save_decisions(decisions: list[DecisionRecord], store: StageStore, ts_tag: 
                 "requires_operator_approval": d.requires_operator_approval,
                 "time_horizon": d.time_horizon,
                 "evidence": d.evidence,
+                # F5: AI telemetry fields
+                "model": getattr(d, "model", None),
+                "input_tokens": getattr(d, "input_tokens", None),
+                "output_tokens": getattr(d, "output_tokens", None),
+                "context_pack": getattr(d, "context_pack", None),
+                "prompt_version": getattr(d, "prompt_version", None),
+                "run_id": getattr(d, "run_id", None),
+                "experiment_id": getattr(d, "experiment_id", None),
+                "skip_reason": getattr(d, "skip_reason", None),
+                "deny_reason": getattr(d, "deny_reason", None),
+                "block_reason": getattr(d, "block_reason", None),
                 "proposed_order": {
                     "symbol": d.proposed_order.symbol,
                     "side": d.proposed_order.side,

@@ -1,6 +1,31 @@
 {
   "schema_version": "v1",
-  "generated_at": "2026-07-05T13:00:07.806048+00:00",
+  "generated_at": "2026-07-09T13:00:06.814574+00:00",
   "note": "Fresh prices from Massive API to override stale broker positions API prices",
-  "overrides": {}
+  "overrides": {
+    "CRM": {
+      "fresh_price": 166.58,
+      "broker_price": 158.56,
+      "deviation_pct": 5.05802219979819,
+      "date": "2026-07-08",
+      "source": "massive_direct",
+      "updated_at": "2026-07-09T13:00:04.561848+00:00"
+    },
+    "IBM": {
+      "fresh_price": 302.05,
+      "broker_price": 287.3603,
+      "deviation_pct": 5.111944830235776,
+      "date": "2026-07-08",
+      "source": "massive_direct",
+      "updated_at": "2026-07-09T13:00:05.574724+00:00"
+    },
+    "NOW": {
+      "fresh_price": 107.78,
+      "broker_price": 102.53,
+      "deviation_pct": 5.120452550473032,
+      "date": "2026-07-08",
+      "source": "massive_direct",
+      "updated_at": "2026-07-09T13:00:05.927977+00:00"
+    }
+  }
 }

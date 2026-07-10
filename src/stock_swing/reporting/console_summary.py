@@ -87,6 +87,11 @@ class ConsoleSummary:
     deny_reason_counts: dict[str, int] = field(default_factory=dict)
     broker_tracker_diff: dict[str, Any] = field(default_factory=dict)
 
+    # --- RF: 台帳品質・フィルター情報 ---
+    ledger_quality: dict[str, Any] = field(default_factory=dict)          # RF-1: clean/quarantined/attribution
+    entry_filter_stats: dict[str, Any] = field(default_factory=dict)     # RF-6b: stock_reduced_blocked等
+    sector_shock_shadow_count: int = 0                                   # RF-7: shadow発動回数
+
     def to_dict(self) -> dict[str, Any]:
         base = {
             "run": {
@@ -103,9 +108,14 @@ class ConsoleSummary:
                 "critical_count": sum(1 for a in self.alerts if a.severity == "critical"),
                 "warning_count": sum(1 for a in self.alerts if a.severity == "warning"),
                 "stale_price_count": len(self.stale_symbols),
-                "broker_tracker_mismatch_count": 0,
+                "broker_tracker_mismatch_count": (
+                    self.broker_tracker_diff.get("mismatch_count", 0)
+                ),
                 "api_error_count": self.api_metrics.get("error_count", 0),
                 "guardrail_status": self.guardrail_status,
+                # RF-1: 台帳品質ヘッドライン
+                "attribution_coverage_pct": self.ledger_quality.get("attribution_coverage_pct"),
+                "quarantined_trades": self.ledger_quality.get("quarantined", 0),
             },
             "portfolio": {
                 "equity": round(self.equity, 2),
@@ -125,6 +135,13 @@ class ConsoleSummary:
                 "rejected": self.orders_rejected,
                 "blocked": len(self.cluster_blocks),
                 "deny_reasons": self.deny_reason_counts,
+                # RF-6b: stock-reduced modeブロック数
+                "stock_reduced_blocked": len(
+                    self.entry_filter_stats.get("stock_reduced_blocked", [])
+                ),
+                "stock_reduced_blocked_symbols": (
+                    self.entry_filter_stats.get("stock_reduced_blocked", [])[:10]
+                ),
             },
             "broker_tracker_diff": self.broker_tracker_diff,
             "risk": {
@@ -143,6 +160,11 @@ class ConsoleSummary:
             "ai": self.ai_metrics,
             "alerts": [asdict(a) for a in self.alerts],
             "missing_metrics": self.missing_metrics,
+            # RF: 台帳品質・フィルター・シャドウ
+            "ledger_quality": self.ledger_quality,
+            "sector_shock_shadow": {
+                "shadow_count": self.sector_shock_shadow_count,
+            },
         }
         return base
 
@@ -211,6 +233,10 @@ class ConsoleSummary:
         exit_attribution_breakdown: dict[str, Any] | None = None,
         # R6-D: Broker/Tracker diff (optional)
         broker_tracker_diff: dict[str, Any] | None = None,
+        # RF 追加パラメータ（全てoptional）
+        ledger_quality: dict[str, Any] | None = None,
+        entry_filter_stats: dict[str, Any] | None = None,
+        sector_shock_shadow_count: int = 0,
     ) -> "ConsoleSummary":
         decisions = decisions or []
         submissions = submissions or []
@@ -325,4 +351,7 @@ class ConsoleSummary:
             exit_attribution_breakdown=exit_attribution_breakdown or {},
             deny_reason_counts=deny_reason_counts,
             broker_tracker_diff=broker_tracker_diff or {},
+            ledger_quality=ledger_quality or {},
+            entry_filter_stats=entry_filter_stats or {},
+            sector_shock_shadow_count=sector_shock_shadow_count,
         )

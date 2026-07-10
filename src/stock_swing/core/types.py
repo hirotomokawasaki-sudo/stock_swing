@@ -49,3 +49,14 @@ class DecisionRecord:
     time_horizon: str
     evidence: dict[str, Any]
     proposed_order: dict[str, Any] | None
+    # F5: AI telemetry
+    model: str | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    context_pack: str | None = None
+    prompt_version: str | None = None
+    run_id: str | None = None
+    experiment_id: str | None = None
+    skip_reason: str | None = None
+    deny_reason: str | None = None
+    block_reason: str | None = None

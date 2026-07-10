@@ -24,6 +24,13 @@ fi
 # Allow ETF buys (guardrail disabled: actual ETF PF=2.776 vs Stock PF=0.740 per broker data)
 export PAPER_DEMO_ALLOW_ETF_BUYS=true
 
+# RF-6b (2026-07-10): stock-reduced mode
+# Blocks individual stocks with per-symbol rolling PF < 1.0 (>= 3 closed trades required).
+# 14 symbols blocked as of 2026-07-10: AMD/AVGO/CRWD/FICO/FTNT/INTC/MDB/ORCL/PATH/QCOM/RBRK/SMCI/SNOW/TSLA
+# 10 symbols passing: ARM/ASML/CRDO/DDOG/KLAC/LRCX/MRVL/MU/NBIS/PANW
+# Disable: ENTRY_FILTER_STOCK_REDUCED=false
+export ENTRY_FILTER_STOCK_REDUCED=true
+
 # Run paper demo with outside-hours allowed (will queue orders).
 # Keep cron stdout tiny; detailed logs go to the log file.
 set +e

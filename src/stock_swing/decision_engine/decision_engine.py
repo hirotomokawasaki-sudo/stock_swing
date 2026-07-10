@@ -115,6 +115,17 @@ class DecisionRecord:
     evidence: dict[str, Any]
     proposed_order: ProposedOrder | None
     sizing: PositionSizingSnapshot = field(default_factory=PositionSizingSnapshot)
+    # F5: AI judgment / token telemetry
+    model: str | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    context_pack: str | None = None
+    prompt_version: str | None = None
+    run_id: str | None = None
+    experiment_id: str | None = None
+    skip_reason: str | None = None
+    deny_reason: str | None = None
+    block_reason: str | None = None
 
 
 class DecisionEngine:

@@ -41,6 +41,10 @@ class EntryFilterConfig:
     rolling_pf_gate: float = 0.70      # per-symbol rolling PF threshold
     min_trades_for_gate: int = 5       # min closed trades to apply PF gate
     disabled: bool = False             # bypass all filters
+    # F6: stock-reduced mode — individual stocks require stricter PF gate
+    stock_reduced_mode: bool = False   # set ENTRY_FILTER_STOCK_REDUCED=true
+    stock_reduced_pf_gate: float = 1.0 # PF threshold for stocks in reduced mode
+    stock_reduced_min_trades: int = 3  # min trades to apply stricter gate
 
     @classmethod
     def from_env(cls) -> "EntryFilterConfig":
@@ -50,6 +54,9 @@ class EntryFilterConfig:
             rolling_pf_gate=float(os.environ.get("ENTRY_FILTER_ROLLING_PF_GATE", 0.70)),
             min_trades_for_gate=int(os.environ.get("ENTRY_FILTER_MIN_TRADES_FOR_GATE", 5)),
             disabled=os.environ.get("ENTRY_FILTER_DISABLED", "").lower() in ("1", "true", "yes"),
+            stock_reduced_mode=os.environ.get("ENTRY_FILTER_STOCK_REDUCED", "").lower() in ("1", "true", "yes"),
+            stock_reduced_pf_gate=float(os.environ.get("ENTRY_FILTER_STOCK_REDUCED_PF_GATE", 1.0)),
+            stock_reduced_min_trades=int(os.environ.get("ENTRY_FILTER_STOCK_REDUCED_MIN_TRADES", 3)),
         )
 
 
@@ -278,6 +285,22 @@ class EntryFilterEngine:
                         "entry_filter_pf_block symbol=%s pf=%.3f n=%d threshold=%.2f",
                         symbol, pf.profit_factor, pf.closed_count, cfg.rolling_pf_gate,
                     )
+
+            # --- Gate 4: F6 stock-reduced mode (stricter PF threshold for individual stocks) ---
+            if deny_reason is None and cfg.stock_reduced_mode and not is_etf:
+                pf = pf_stats.get(symbol)
+                if pf is not None and pf.closed_count >= cfg.stock_reduced_min_trades:
+                    effective_pf = pf.profit_factor if pf.profit_factor is not None else 0.0
+                    if effective_pf < cfg.stock_reduced_pf_gate:
+                        deny_reason = (
+                            f"stock_reduced_mode: symbol_pf={effective_pf:.3f} "
+                            f"(n={pf.closed_count}) < stock_threshold={cfg.stock_reduced_pf_gate:.2f}"
+                        )
+                        diag.setdefault("stock_reduced_blocked", []).append(symbol)
+                        logger.info(
+                            "entry_filter_stock_reduced_block symbol=%s pf=%.3f n=%d threshold=%.2f",
+                            symbol, effective_pf, pf.closed_count, cfg.stock_reduced_pf_gate,
+                        )
 
             if deny_reason:
                 blocked.append((symbol, deny_reason))

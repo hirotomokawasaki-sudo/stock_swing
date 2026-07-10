@@ -40,7 +40,7 @@ class TradeEntry:
     exit_time: str | None
     pnl: float | None  # realized P&L in USD
     return_pct: float | None  # return %
-    status: str  # "open" | "closed"
+    status: str  # "open" | "closed" | "quarantined"
     peak_price: float | None = None
     entry_signal_strength: float | None = None  # 0.0–1.0; used for dynamic exit thresholds
     account_id: str | None = None  # Broker account ID
@@ -51,6 +51,15 @@ class TradeEntry:
     exit_strategy_id: str | None = None
     exit_reason: str | None = None
     asset_class: str | None = None  # "etf" | "stock" | None
+    # F4: Durable decision metadata
+    decision_id: str | None = None
+    run_id: str | None = None
+    experiment_id: str | None = None
+    prompt_version: str | None = None
+    config_hash: str | None = None
+    # F1: Holding-period integrity
+    holding_days: float | None = None  # computed from entry_time/exit_time; None if open
+    quarantine_reason: str | None = None  # set when status="quarantined"
 
 
 @dataclass
@@ -98,6 +107,7 @@ class PnLState:
     created_at: str
     last_updated: str
     trades: list[dict[str, Any]] = field(default_factory=list)
+    quarantined_trades: list[dict[str, Any]] = field(default_factory=list)  # F1: invalid holding-period trades
     daily_snapshots: list[dict[str, Any]] = field(default_factory=list)
     strategy_daily_snapshots: list[dict[str, Any]] = field(default_factory=list)
     cumulative_realized_pnl: float = 0.0
@@ -114,6 +124,18 @@ class PnLState:
     archived_from_account_id: str | None = None
     archive_path: str | None = None
     migration_note_path: str | None = None
+
+
+def _compute_holding_days(entry_time: str | None, exit_time: str | None) -> float | None:
+    """Return calendar days between entry and exit; None if either is missing."""
+    if not entry_time or not exit_time:
+        return None
+    try:
+        et = datetime.fromisoformat(str(entry_time).replace("Z", "+00:00"))
+        xt = datetime.fromisoformat(str(exit_time).replace("Z", "+00:00"))
+        return round((xt - et).total_seconds() / 86400.0, 4)
+    except (TypeError, ValueError):
+        return None
 
 
 def _compute_cumulative_pf_wr(
@@ -178,6 +200,11 @@ class PnLTracker:
         account_id: str | None = None,
         signal_strength: float | None = None,
         asset_class: str | None = None,
+        # F4: durable decision metadata
+        run_id: str | None = None,
+        experiment_id: str | None = None,
+        prompt_version: str | None = None,
+        config_hash: str | None = None,
     ) -> str:
         """Record a new buy submission as an open trade.
 
@@ -222,6 +249,12 @@ class PnLTracker:
             broker_order_id=broker_order_id,
             original_strategy_id=original_strategy_id or strategy_id,
             asset_class=resolved_asset_class,
+            # F4: durable decision metadata
+            decision_id=decision_id,
+            run_id=run_id,
+            experiment_id=experiment_id,
+            prompt_version=prompt_version,
+            config_hash=config_hash,
         )
         self.state.trades.append(asdict(trade))
         self.state.total_trades += 1
@@ -294,7 +327,6 @@ class PnLTracker:
                 # Create a new closed trade for the exited portion
                 closed_portion = dict(trade_dict)
                 closed_portion["qty"] = qty_to_close
-                closed_portion["status"] = "closed"
                 closed_portion["exit_price"] = exit_price
                 closed_portion["exit_time"] = now
                 
@@ -308,6 +340,26 @@ class PnLTracker:
                     closed_portion["exit_strategy_id"] = exit_strategy_id
                 if exit_reason:
                     closed_portion["exit_reason"] = exit_reason
+
+                # F1: Validate holding period; quarantine if entry_time > exit_time
+                hd = _compute_holding_days(closed_portion.get("entry_time"), now)
+                closed_portion["holding_days"] = hd
+                if hd is not None and hd < 0:
+                    closed_portion["status"] = "quarantined"
+                    closed_portion["quarantine_reason"] = (
+                        f"negative_holding_days: entry_time={closed_portion.get('entry_time')} "
+                        f"exit_time={now} holding_days={hd:.4f}"
+                    )
+                    self.state.quarantined_trades.append(closed_portion)
+                    logger.warning(
+                        "F1: quarantined partial trade %s %s holding_days=%.4f",
+                        closed_portion.get("symbol"), closed_portion.get("trade_id"), hd,
+                    )
+                    closed_trade = TradeEntry(**closed_portion)
+                    remaining_to_exit = 0
+                    continue
+                else:
+                    closed_portion["status"] = "closed"
                 
                 # Add closed portion as new trade
                 self.state.trades.append(closed_portion)
@@ -325,12 +377,45 @@ class PnLTracker:
             pnl = (exit_price - entry_price) * qty_to_close
             return_pct = (exit_price - entry_price) / entry_price if entry_price else 0.0
 
+            # F1: Validate holding period; quarantine if entry_time > exit_time
+            hd = _compute_holding_days(trade_dict.get("entry_time"), now)
+            if hd is not None and hd < 0:
+                # Quarantine this trade instead of closing it normally
+                quarantine_dict = dict(trade_dict)
+                quarantine_dict.update({
+                    "exit_price": exit_price,
+                    "exit_time": now,
+                    "pnl": round(pnl, 2),
+                    "return_pct": round(return_pct, 4),
+                    "status": "quarantined",
+                    "holding_days": hd,
+                    "quarantine_reason": (
+                        f"negative_holding_days: entry_time={trade_dict.get('entry_time')} "
+                        f"exit_time={now} holding_days={hd:.4f}"
+                    ),
+                })
+                if broker_order_id:
+                    quarantine_dict["exit_broker_order_id"] = broker_order_id
+                if exit_strategy_id:
+                    quarantine_dict["exit_strategy_id"] = exit_strategy_id
+                if exit_reason:
+                    quarantine_dict["exit_reason"] = exit_reason
+                trade_dict["status"] = "quarantined"  # mark in trades list too
+                self.state.quarantined_trades.append(quarantine_dict)
+                logger.warning(
+                    "F1: quarantined trade %s %s holding_days=%.4f",
+                    trade_dict.get("symbol"), trade_dict.get("trade_id"), hd,
+                )
+                closed_trade = TradeEntry(**quarantine_dict)
+                continue
+
             trade_dict.update({
                 "exit_price": exit_price,
                 "exit_time": now,
                 "pnl": round(pnl, 2),
                 "return_pct": round(return_pct, 4),
                 "status": "closed",
+                "holding_days": hd,
             })
             if broker_order_id:
                 trade_dict["exit_broker_order_id"] = broker_order_id
@@ -658,6 +743,57 @@ class PnLTracker:
     def get_open_positions(self) -> list[dict[str, Any]]:
         return [t for t in self.state.trades if t["status"] == "open"]
 
+    def get_clean_closed_trades(self) -> list[dict[str, Any]]:
+        """F1: Return closed trades with valid holding period (holding_days >= 0 or None)."""
+        return [
+            t for t in self.state.trades
+            if t.get("status") == "closed"
+            and (t.get("holding_days") is None or float(t.get("holding_days") or 0) >= 0)
+        ]
+
+    def get_quarantined_trades(self) -> list[dict[str, Any]]:
+        """F1: Return quarantined trades (negative holding_days / invalid reconstruction).
+
+        Primary source: state.quarantined_trades (atomically written).
+        Legacy migration: also picks up status=quarantined in state.trades that
+        are NOT already in state.quarantined_trades (identified by trade_id).
+        """
+        primary_ids = {t.get("trade_id") for t in self.state.quarantined_trades}
+        legacy = [
+            t for t in self.state.trades
+            if t.get("status") == "quarantined" and t.get("trade_id") not in primary_ids
+        ]
+        return list(self.state.quarantined_trades) + legacy
+
+    def get_ledger_quality_report(self) -> dict[str, Any]:
+        """F1: Return data-quality summary for the closed-trade ledger."""
+        closed = [t for t in self.state.trades if t.get("status") == "closed"]
+        quarantined = self.get_quarantined_trades()
+        neg_hd = [
+            t for t in closed
+            if t.get("holding_days") is not None and float(t.get("holding_days") or 0) < 0
+        ]
+        no_exit_reason = [
+            t for t in closed
+            if t.get("exit_reason") in (None, "", "broker_fill", "broker_fill_unknown")
+        ]
+        no_metadata = [
+            t for t in closed
+            if not t.get("decision_id") and not t.get("run_id")
+        ]
+        return {
+            "clean_closed": len(closed) - len(neg_hd),
+            "quarantined": len(quarantined),
+            "negative_holding_days_in_clean": len(neg_hd),
+            "no_exit_attribution": len(no_exit_reason),
+            "no_metadata": len(no_metadata),
+            "total_closed": len(closed),
+            "attribution_coverage_pct": (
+                round((len(closed) - len(no_exit_reason)) / len(closed) * 100, 1)
+                if closed else None
+            ),
+        }
+
     def update_open_trade_peaks(self, current_prices: dict[str, float]) -> int:
         """Update persisted peak_price for open trades using latest market prices.
 
@@ -878,6 +1014,10 @@ class PnLTracker:
                 
                 # Remove closed_trades key (not part of PnLState dataclass)
                 data.pop("closed_trades", None)
+
+                # F1: Ensure quarantined_trades exists in older state files
+                if "quarantined_trades" not in data:
+                    data["quarantined_trades"] = []
                 
                 # Ensure required fields exist
                 if "created_at" not in data:
