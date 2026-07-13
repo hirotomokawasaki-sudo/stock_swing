@@ -108,7 +108,7 @@
 
 2026-07-13（前倒）    ✅ RF-8b  attribution coverage 100% 達成（69/69件回収、rf8b_recover_attribution.py 作成）
 
-2026-07-14〜07-28  🔲 RF-5b  AI telemetry 充填（DecisionEngine 側 token 記録実装）
+2026-07-13（前倒）    ✅ RF-5b  AI telemetry 充填（attach_ai_telemetry + TokenUsageTracker 接続、667 passed）
 
 2026-07-28〜07-30  🔴 hard-halt 環境でのペーパー最終確認（BLOCKING）
 
