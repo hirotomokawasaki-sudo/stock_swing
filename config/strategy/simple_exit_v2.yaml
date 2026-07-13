@@ -31,3 +31,14 @@ staged_trailing_levels:
 
 # Maximum holding period in calendar days
 max_hold_days: 20
+
+# ── G9: min_hold guard ───────────────────────────────────────────────────────
+# stop_loss が発火するまでの最低保有日数。
+# 削画: 59%の早期カットがノイズであり、trailing_stopに移行する前に切られていた。
+# true にすると、保有 min_hold_days 日未満は stop_loss を抑制し、
+# emergency_stop_bypass_pct を超える場合のみ即時退場する。
+min_hold_days_enabled: true
+min_hold_days: 1              # 1日未満は stop_loss を抑制
+min_hold_days_enabled: true
+emergency_stop_bypass_pct: -0.12  # -12%以下の大幅損失は min_hold を迂回して即時退場
+# ロールバック: min_hold_days_enabled: false に変更するだけで即座に旧動作に戻る

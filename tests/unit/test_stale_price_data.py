@@ -174,12 +174,13 @@ def test_simple_exit_v2_uses_position_price_priority():
     fresh_feature_result = FeatureResult(**fresh_feature)
     
     # Current position with different fresh price
+    # NOTE: created_at set to >1 day ago so G9 min_hold guard does not suppress stop_loss
     current_positions = {
         "AMZN": {
             "qty": 300,
             "avg_entry_price": 268.00,
             "current_price": 263.00,  # Position price (should be used)
-            "created_at": (now - timedelta(hours=1)).isoformat()
+            "created_at": (now - timedelta(hours=26)).isoformat()  # >1 day
         }
     }
     

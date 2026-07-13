@@ -545,3 +545,118 @@ def test_missing_price_data(strategy):
     
     signals = strategy.generate([], current_positions)
     assert len(signals) == 0
+
+
+# ────────────────────────────────────────────────────────────────
+# G9: min_hold guard tests
+# ────────────────────────────────────────────────────────────────
+
+def _make_position(symbol: str, entry_price: float, current_price: float,
+                   entry_hours_ago: float = 2.0, peak_price: float | None = None) -> dict:
+    """Helper: build a minimal position dict for SimpleExitV2 testing."""
+    now = datetime.now(timezone.utc)
+    return {
+        "symbol": symbol,
+        "qty": 100,
+        "avg_entry_price": str(entry_price),
+        "current_price": current_price,
+        "peak_price": peak_price or entry_price,
+        "created_at": (now - timedelta(hours=entry_hours_ago)).isoformat(),
+        "entry_signal_strength": 0.75,
+    }
+
+
+def _make_feature(symbol: str, current_price: float) -> FeatureResult:
+    return FeatureResult(
+        feature_name="price_momentum",
+        symbol=symbol,
+        computed_at=datetime.now(timezone.utc),
+        values={"latest_close": current_price},
+    )
+
+
+def test_min_hold_suppresses_stop_loss_within_1_day():
+    """G9: stop_loss must NOT fire when hold < 1 day and loss < emergency cap."""
+    strat = SimpleExitV2Strategy(
+        stop_loss_pct=-0.07,
+        min_hold_days=1,
+        min_hold_days_enabled=True,
+        emergency_stop_bypass_pct=-0.12,
+    )
+    current_price = 92.0  # -8% from 100
+    pos = _make_position("TEST", 100.0, current_price, entry_hours_ago=2.0)
+    features = [_make_feature("TEST", current_price)]
+    signals = strat.generate(features, {"TEST": pos})
+    assert len(signals) == 0, f"Expected no signal (min_hold guard), got: {signals}"
+
+
+def test_min_hold_allows_stop_loss_after_1_day():
+    """G9: stop_loss MUST fire normally once hold >= 1 day."""
+    strat = SimpleExitV2Strategy(
+        stop_loss_pct=-0.07,
+        min_hold_days=1,
+        min_hold_days_enabled=True,
+        emergency_stop_bypass_pct=-0.12,
+    )
+    current_price = 92.0  # -8% from 100
+    pos = _make_position("TEST", 100.0, current_price, entry_hours_ago=26.0)  # >1 day
+    features = [_make_feature("TEST", current_price)]
+    signals = strat.generate(features, {"TEST": pos})
+    assert len(signals) == 1
+    assert signals[0].action == "sell"
+    assert "Stop loss" in signals[0].reasoning
+
+
+def test_emergency_bypass_fires_even_within_min_hold():
+    """G9: if loss > emergency_stop_bypass_pct, exit immediately regardless of hold."""
+    strat = SimpleExitV2Strategy(
+        stop_loss_pct=-0.07,
+        min_hold_days=1,
+        min_hold_days_enabled=True,
+        emergency_stop_bypass_pct=-0.12,
+    )
+    current_price = 85.0  # -15% from 100, exceeds -12% emergency cap
+    pos = _make_position("TEST", 100.0, current_price, entry_hours_ago=1.0)  # <1 day
+    features = [_make_feature("TEST", current_price)]
+    signals = strat.generate(features, {"TEST": pos})
+    assert len(signals) == 1
+    assert signals[0].action == "sell"
+    assert "Emergency stop" in signals[0].reasoning
+
+
+def test_min_hold_disabled_fires_immediately():
+    """G9: when min_hold_days_enabled=False, stop_loss fires on day 0 (old behavior)."""
+    strat = SimpleExitV2Strategy(
+        stop_loss_pct=-0.07,
+        min_hold_days=1,
+        min_hold_days_enabled=False,  # disabled
+        emergency_stop_bypass_pct=-0.12,
+    )
+    current_price = 92.0  # -8%
+    pos = _make_position("TEST", 100.0, current_price, entry_hours_ago=2.0)
+    features = [_make_feature("TEST", current_price)]
+    signals = strat.generate(features, {"TEST": pos})
+    assert len(signals) == 1, "With min_hold disabled, stop_loss should fire immediately"
+    assert signals[0].action == "sell"
+
+
+def test_min_hold_does_not_affect_trailing_stop():
+    """G9: trailing_stop must fire normally even within min_hold window."""
+    strat = SimpleExitV2Strategy(
+        stop_loss_pct=-0.07,
+        trailing_activation_pct=0.05,
+        trailing_stop_pct=0.03,
+        min_hold_days=1,
+        min_hold_days_enabled=True,
+        emergency_stop_bypass_pct=-0.12,
+    )
+    # Peaked at +10%, now pulled back -4% from peak → trailing triggered
+    entry = 100.0
+    peak = 110.0
+    current_price = 110.0 * (1 - 0.04)  # 4% pullback from peak
+    pos = _make_position("TEST", entry, current_price, entry_hours_ago=2.0, peak_price=peak)
+    features = [_make_feature("TEST", current_price)]
+    signals = strat.generate(features, {"TEST": pos})
+    assert len(signals) == 1
+    assert signals[0].action == "sell"
+    assert "Trailing stop" in signals[0].reasoning or "trailing" in signals[0].reasoning.lower()

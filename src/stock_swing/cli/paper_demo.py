@@ -1099,6 +1099,10 @@ def main() -> int:  # noqa: C901
             max_hold_days=exit_config.get('max_hold_days', 20),
             staged_trailing_enabled=exit_config.get('staged_trailing_enabled', False),
             staged_trailing_levels=exit_config.get('staged_trailing_levels', []),
+            # G9: min_hold guard
+            min_hold_days=exit_config.get('min_hold_days', 1),
+            min_hold_days_enabled=exit_config.get('min_hold_days_enabled', True),
+            emergency_stop_bypass_pct=exit_config.get('emergency_stop_bypass_pct', -0.12),
         )
     else:
         # Fallback to default values

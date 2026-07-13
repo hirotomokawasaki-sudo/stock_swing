@@ -47,6 +47,10 @@ class SimpleExitV2Strategy(BaseStrategy):
         max_hold_days: int = 20,
         staged_trailing_enabled: bool = False,
         staged_trailing_levels: list[dict[str, float]] | None = None,
+        # G9: min_hold guard — prevent stop_loss from firing on early noise
+        min_hold_days: int = 1,
+        min_hold_days_enabled: bool = True,
+        emergency_stop_bypass_pct: float = -0.12,  # bypass min_hold if loss >= -12%
     ):
         """Initialize simple exit V2 strategy.
 
@@ -81,6 +85,10 @@ class SimpleExitV2Strategy(BaseStrategy):
             staged_trailing_levels or [],
             key=lambda row: float(row.get("activation_pct", 0.0)),
         )
+        # G9: min_hold guard
+        self.min_hold_days = min_hold_days
+        self.min_hold_days_enabled = min_hold_days_enabled
+        self.emergency_stop_bypass_pct = emergency_stop_bypass_pct
 
     def _resolve_thresholds(
         self, entry_signal_strength: float | None
@@ -374,12 +382,45 @@ class SimpleExitV2Strategy(BaseStrategy):
 
             # 3. Initial stop loss (position never reached breakeven zone)
             elif return_pct <= eff_stop_loss_pct:
-                exit_reason = (
-                    f"Stop loss triggered: {return_pct:.2%} <= {eff_stop_loss_pct:.2%}"
-                    + (f" (strength-adjusted from {self.stop_loss_pct:.0%})"
-                       if eff_stop_loss_pct != self.stop_loss_pct else "")
-                )
-                signal_strength = 1.0
+                # G9: min_hold guard — suppress early noise cuts
+                _suppress = False
+                if (
+                    self.min_hold_days_enabled
+                    and hold_days is not None
+                    and hold_days < self.min_hold_days
+                    and return_pct > self.emergency_stop_bypass_pct
+                ):
+                    # Within min-hold window AND not an emergency loss → suppress
+                    logger.info(
+                        "stop_loss suppressed by min_hold: %s return=%.2f%% hold=%.1fd "
+                        "< min=%dd (emergency cap=%.0f%% not breached)",
+                        symbol, return_pct * 100, hold_days,
+                        self.min_hold_days, self.emergency_stop_bypass_pct * 100,
+                    )
+                    _suppress = True
+                elif (
+                    self.min_hold_days_enabled
+                    and hold_days is not None
+                    and hold_days < self.min_hold_days
+                    and return_pct <= self.emergency_stop_bypass_pct
+                ):
+                    # Emergency bypass: loss breaches hard cap → exit immediately
+                    exit_reason = (
+                        f"Emergency stop triggered (min_hold bypass): "
+                        f"{return_pct:.2%} <= {self.emergency_stop_bypass_pct:.2%} "
+                        f"(hold {hold_days:.1f}d < min {self.min_hold_days}d)"
+                    )
+                    signal_strength = 1.0
+
+                if not _suppress and exit_reason is None:
+                    exit_reason = (
+                        f"Stop loss triggered: {return_pct:.2%} <= {eff_stop_loss_pct:.2%}"
+                        + (f" (strength-adjusted from {self.stop_loss_pct:.0%})"
+                           if eff_stop_loss_pct != self.stop_loss_pct else "")
+                        + (f" (hold {hold_days:.1f}d >= min {self.min_hold_days}d)"
+                           if self.min_hold_days_enabled and hold_days is not None else "")
+                    )
+                    signal_strength = 1.0
 
             # 4. Time-based exit
             if exit_reason is None and hold_days is not None and hold_days >= self.max_hold_days:
