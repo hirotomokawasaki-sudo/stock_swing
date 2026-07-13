@@ -1,31 +1,42 @@
 # stock_swing 改善計画（R0-R8 改訂版）
 
-**改訂日**: 2026-07-10（Codex Review 対応フェーズ RF を追加・スケジュール更新）  
+**改訂日**: 2026-07-13（Codex Review G1-G10 対応 + min_hold 実装）  
 **旧 P0-P17 体系は廃止。本ファイルのみが正式な改善計画。**
 
 ---
 
-## 運用ステータス（2026-07-10 現在）
+## 運用ステータス（2026-07-13 現在）
 
 | 項目 | 値 |
 |---|---|
 | 元本 | $1,000,000 |
-| Equity | $1,019,812.79（Codex review export 時点）|
-| 確定実現 PnL | -$93,583.16 |
+| Equity | **$1,007,534**（dry-run 計測）|
+| 確定実現 PnL（公式） | **-$5,690.07**（quarantined 54件除外・G3修正後）|
+| quarantined PnL（除外） | -$87,893.09（54件・broker_fill 誤記録分）|
 | ETF PF（clean records） | **1.258**（65 trades, WR 61.5%） |
 | 個別株 PF（clean records） | **0.799**（134 trades, WR 43.3%） |
 | 全体 PF（clean records） | **0.969**（199 trades）|
 | clean closed | **199件**（54件を quarantine 分離済み）|
-| attribution coverage | **65.3%**（回復前 1.5%）|
+| attribution coverage | **100%**（RF-8b 完了）|
+| circuit_breaker | **✅ ok**（07-13 解除・race condition 対策済み）|
 | 稼働 cron | 12本 全 consecutiveErrors=0 |
-| テスト | 719 passed / 2 skipped |
+| テスト | **676 passed** / 2 skipped |
 
-**clean records 分析（F8, 2026-07-10 初回）**
+**clean records 分析（F8 → RF-8b 完了後の最新値）**
 ```
- trailing_stop  : n=66  WR=84.9%  PF=25.80  net=+$124,303  ← 機能している
- stop_loss      : n=40  WR=30.0%  PF=0.09   net= -$85,604  ← 問題（exit 最適化要）
- breakeven_stop : n=23  WR=26.1%  PF=1.92   net=  +$3,187
- unknown        : n=69  WR=33.3%  PF=0.39   net= -$51,196  ← 残attribution 69件
+ trailing_stop  : n=68  WR=85.3%  PF=25.87  net=+$124,669  ← 機能している
+ stop_loss      : n=88  WR=25.0%  PF=0.069  net=-$150,837  ← 問題：59%が3日以内早期カット
+ breakeven_stop : n=33  WR=27.3%  PF=0.696  net=  -$4,417
+ time_based     : n=9   WR=88.9%  PF=6.578  net= +$24,277
+ corporate_actn : n=1   WR=100%   PF=∞      net=    +$617
+```
+
+**stop_loss 根本原因（G9分析）**
+```
+ 3日以内早期カット: 52件（59%） ← ノイズ起因の誤発動
+ ETF stop_loss:    41件 net=-$61,778  ← sector_shock_hold で対処予定
+ Stock stop_loss:  47件 net=-$89,058
+ 対策: min_hold 1日（07-13実装済み）+ sector_shock_hold override（A/B後）
 ```
 
 ---
@@ -106,9 +117,24 @@
                    ✅ RF-8c  stop_loss 原因分析完了（06-25 セクターショックが主因、staged_trailing が最善）
                    🔲 paper_demo 実行ログで sector_shock_hold SHADOW の出力を確認
 
-2026-07-13（前倒）    ✅ RF-8b  attribution coverage 100% 達成（69/69件回収、rf8b_recover_attribution.py 作成）
+2026-07-13（前倒）    ✅ RF-8b  attribution coverage 100% 達成（69/69件回収）
+2026-07-13（前倒）    ✅ RF-5b  AI telemetry 1,939件 backfill（token_usage.csv + ai_usage.jsonl 生成）
 
-2026-07-13（前倒）    ✅ RF-5b  AI telemetry 充填（attach_ai_telemetry + TokenUsageTracker 接続、667 passed）
+2026-07-13（Codex Review G1-G10 全完了）
+                   ✅ G1  circuit_breaker 解除 + race condition 再発防止（注文後3秒 wait）
+                   ✅ G2  console false-OK bug 修正（mismatch > 0 → HALTED 表示）
+                   ✅ G3  PnL source-of-truth 再構築（INV1+INV2 PASS、569Xf5,690.07 一本化）
+                   ✅ G5  token telemetry backfill 完了、新規実行時から本番記録
+                   ✅ G6  symbol_registry.yaml（69シンボル）+ 全trade asset_class backfill（unknown=0）
+                   ✅ G7  SMH/SOXX/QQQ/SPY/SOXQ benchmark 収集（各90日分）
+                   ✅ G8  portfolio_allocation → stock_reduced（ETF=0.85, multiplier=0.25）
+                   ✅ G9  stop_loss min_hold 1日 実装（緊急 cap -12%、YAML トグル）
+                   ✅ paper_demo dry-run 正常動作確認（sector_shock shadow 6件観測）
+                   ✅ テスト 676 passed / 2 skipped
+
+2026-07-14〜07-17  🟠 次回 Codex レビュー推奨（sector_shock shadow 10件以上待ち）
+                   🔲 min_hold 実効確認（stop_loss 件数の変化を観察）
+                   🔲 stop_loss 件数が減少しているか確認
 
 2026-07-28〜07-30  🔴 hard-halt 環境でのペーパー最終確認（BLOCKING）
 
@@ -269,10 +295,10 @@
 
 | ID | 内容 | 優先度 | 目標日 | 条件 |
 |---|---|---|---|---|
-| RF-5b | DecisionEngine 側で model/input_tokens を実際に充填する | 🟡 中 | 07-28〜 | AIエンジン呼び出し箇所の特定・実装 |
+| RF-5b | token telemetry を実運用経路に接続 | ✅ **2026-07-13** | — | 1,939件 backfill 完了。新規 run から本番記録 |
 | RF-6b | ENTRY_FILTER_STOCK_REDUCED=true を paper cron に適用（環境変数追加） | ✅ **2026-07-10** | — | 14シンボルブロック / 10シンボル通過 |
 | RF-7b | sector_shock_hold を paper A/B として正式実施 | 🟡 中 | 08-01 以降 | shadow log で 10+ 件のサンプル確認後 |
-| RF-8b | attribution coverage を 95% 以上に引き上げ（残 69 件の早期台帳を再構築） | 🟡 中 | 07-28〜 | broker 注文履歴との照合 |
+| RF-8b | attribution coverage 100% 達成 | ✅ **2026-07-13** | — | 69/69件回収完了 |
 | RF-8c | stop_loss 原因分析（clean 199件で exit_replay 実施） | ✅ **2026-07-10** | — | 06-25 セクターショックが主因。staged_trailing D が最善(+$6,530/PF+0.034) |
 
 #### RF フェーズの重要な発見（clean records 分析結果）
@@ -472,16 +498,13 @@ API / AI COST
 > **⚠️ 2026-08-01 よりリアルトレード移行決定。以下スケジュールは前倒し版。**
 
 ```
-✅ 完了済み（〜07-01）:
+✅ 完了済み（〜07-13）:
   ✅ R0   paper_demo に P6/P9 接続
   ✅ R1   全タスク完了（post-R1-B attribution 100%）
-  ✅ R2-A asset_class フィールド付与
-  ✅ R2-B ETF/Stock 別メトリクス必須化（07-01 前倒し完了）
-  ✅ R2-C 個別株 size_multiplier = 0.5x 適用
-  ✅ R2-D entry フィルター強化（volume + rolling PF gate）（07-01 前倒し完了）
-  ✅ R3-A 反実仮想スクリプト作成・実行（07-01 前倒し完了）
-  ✅ R4-A signal strength 飽和原因調査（07-01 前倒し完了）
-  ✅ R6 C1/C2 Console 表示・Price Integrity・API Monitor
+  ✅ R2   全完了（A/B/C/D）
+  ✅ R3-A/B 反実仮想スクリプト + exit replay 完了
+  ✅ R4-A/B signal strength 飽和原因調査・修復
+  ✅ R6 C1/C2/C4/C6 Console 表示・Price Integrity・API Monitor・Attribution
   ✅ R6-D Decision Funnel パネル（deny_reasons + Broker/Tracker）（07-01 前倒し完了）
   ✅ Guardrail hard-halt 有効化（07-01 前倒し完了 · 6日間誤発動ゼロ確認済み）
   ✅ 緊急停止ランブック作成（07-01）
@@ -502,13 +525,14 @@ Week 3（07-10〜07-21）🟠 STRONGLY RECOMMENDED:
   ✅ RF     観測基盤・台帳修復フェーズ完了（**07-10**）
   ✅ RF-6b  ENTRY_FILTER_STOCK_REDUCED=true を cron に追加（**07-10 完了**）
   ✅ RF-8c  stop_loss 原因分析実施（**07-10 完了**：06-25 ショック主因 / staged_trailing 最善）
-  🔲 RF-8b  attribution coverage 95% 達成（残 69 件の broker 照合）
+  ✅ RF-8b  attribution coverage 100% 達成（07-13 完了）
 
 Week 4（07-21〜07-31）🔴 BLOCKING:
-  ✅ 07-21  Go/No-Go チェックリスト定義・確認（定義は07-02前倒し完了、07-31に最終記入）
-  ✅ R6-F-GW Tailscale Serve 最終接続確認（**07-03 完了**）
-  🔲 07-28〜07-30  hard-halt 環境でのペーパー最終確認
-  🔲 07-31  Go/No-Go 最終判定（RF clean-records PF >= 1.0 も確認対象に追加）
+  ✅ 07-13  Codex Review G1-G10 全完了（circuit_breaker/PnL/telemetry/benchmark/min_hold）
+  ✅ 07-21  Go/No-Go チェックリスト定義・確認（07-02前倒し完了）
+  ✅ R6-F-GW Tailscale Serve 最終接続確認（07-03 完了）
+  🔲 07-28〜07-30  hard-halt 環境でのペーパー最終確認（min_hold 効果も確認対象）
+  🔲 07-31  Go/No-Go 最終判定（PF >= 1.0 / mismatch=0 / min_hold 安定稼働）
 
 08-01 🚀 リアルトレード開始（初期2週間は50%サイズ）
 
