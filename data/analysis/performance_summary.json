@@ -9,7 +9,7 @@
   },
   "baseline_equity": 1000000.0,
   "account_equity": 1010443.23,
-  "realized_pnl": 26055.49,
+  "realized_pnl": -5690.070000000001,
   "unrealized_pnl": 39547.47,
   "total_pnl": 65602.96,
   "pnl_vs_baseline": 10443.23,
@@ -24,5 +24,9 @@
   "consistency_check": {
     "realized_matches_tracker": true,
     "note": "account_equity != baseline + total_pnl is normal due to cash flows and timing"
-  }
+  },
+  "realized_pnl_source": "clean_closed_trades",
+  "realized_pnl_updated_at": "2026-07-13T02:19:11.191144+00:00",
+  "clean_closed_count": 199,
+  "quarantined_count": 54
 }

@@ -1,4 +1,38 @@
+# config/strategy/portfolio_allocation.yaml
+# G8: ETF-first / stock-reduced policy alignment
+# Updated: 2026-07-13
+# Previous: ETFs=0.15, stocks=0.85 (ETF-weak bias, now obsolete)
+# Current: stock_reduced mode based on clean records analysis
+
+operating_mode: stock_reduced
+# Modes: stock_shadow | stock_reduced | balanced | etf_first
+# stock_shadow: stocks do not get live fills (shadow only)
+# stock_reduced: stocks get 0.25x size, ETF full size
+# balanced: ETF and stocks at equal allocation
+# etf_first: ETF preferred, stocks limited
+
 portfolio:
   allocation:
-    ETFs: 0.15
-    stocks: 0.85
+    ETFs: 0.85
+    stocks: 0.15
+
+stock_new_buy_multiplier: 0.25
+# 0.0 = no new stock buys (stock_shadow equivalent)
+# 0.25 = 25% of normal size (stock_reduced)
+# 1.0 = full size (balanced or etf_first)
+# Rationale: clean records ETF PF=1.353 vs Stock PF=0.772
+# Stock full-size will resume after promotion gate: stock PF >= 1.0 over >= 30 clean trades
+
+etf_new_buy_multiplier: 1.0
+# ETF full size unless ETF-specific guardrail blocks
+
+promotion_gate:
+  stock_full_size_requires:
+    - min_clean_closed_trades: 30
+    - min_profit_factor: 1.0
+    - min_attribution_coverage_pct: 95.0
+    - max_consecutive_stop_loss: 5
+    - circuit_breaker_status: ok
+
+# Threshold: block buy if ETF or stock allocation exceeds target + threshold
+allocation_hard_limit_threshold: 0.10

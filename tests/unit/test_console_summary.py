@@ -116,3 +116,70 @@ def test_api_metrics_propagated() -> None:
     assert d["api"]["error_count"] == 2
     # Warning should be generated for api errors
     assert any(a.code == "api_errors" for a in s.alerts)
+
+
+# G2 regression tests: console must reflect circuit breaker and mismatch state
+def test_console_halted_when_mismatch_count_gt_0() -> None:
+    """G2: broker_tracker_mismatch_count > 0 must cause HALTED status."""
+    s = ConsoleSummary.build(
+        run_id="g2-test-mismatch",
+        equity=1_000_000.0,
+        open_position_count=18,
+        broker_tracker_diff={
+            "broker_count": 17,
+            "tracker_count": 18,
+            "mismatch_count": 2,
+            "tracker_only": ["SKYY"],
+            "qty_mismatches": [{"symbol": "META", "broker_qty": 33, "tracker_qty": 78}],
+        },
+    )
+    d = s.to_dict()
+    assert d["run"]["status"] == "HALTED", f"Expected HALTED, got {d['run']['status']}"
+    assert d["health"]["status"] == "HALTED"
+    assert d["health"]["broker_tracker_mismatch_count"] == 2
+    assert any(a.code == "broker_tracker_mismatch" for a in s.alerts)
+
+
+def test_console_halted_when_guardrail_halted() -> None:
+    """G2: guardrail_status=halted must cause HALTED status."""
+    s = ConsoleSummary.build(
+        run_id="g2-test-guardrail",
+        equity=1_000_000.0,
+        open_position_count=18,
+        guardrail_status="halted",
+        broker_tracker_diff={"mismatch_count": 0},
+    )
+    d = s.to_dict()
+    assert d["run"]["status"] == "HALTED"
+    assert any(a.code == "guardrail_halted" for a in s.alerts)
+
+
+def test_console_ok_when_no_issues() -> None:
+    """G2: clean state returns OK."""
+    s = ConsoleSummary.build(
+        run_id="g2-test-ok",
+        equity=1_000_000.0,
+        open_position_count=5,
+        guardrail_status="ok",
+        broker_tracker_diff={"mismatch_count": 0, "tracker_only": [], "broker_only": []},
+    )
+    d = s.to_dict()
+    assert d["run"]["status"] == "OK"
+
+
+def test_console_mismatch_alert_has_detail() -> None:
+    """G2: broker_tracker_mismatch alert must carry details."""
+    s = ConsoleSummary.build(
+        run_id="g2-test-detail",
+        equity=1_000_000.0,
+        open_position_count=18,
+        broker_tracker_diff={
+            "mismatch_count": 1,
+            "tracker_only": ["SKYY"],
+            "qty_mismatches": [],
+        },
+    )
+    mismatch_alert = next((a for a in s.alerts if a.code == "broker_tracker_mismatch"), None)
+    assert mismatch_alert is not None
+    assert mismatch_alert.severity == "critical"
+    assert "SKYY" in str(mismatch_alert.details)

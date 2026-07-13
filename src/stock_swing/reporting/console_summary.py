@@ -311,10 +311,29 @@ class ConsoleSummary:
         if market_regime == "unknown":
             missing.append("market_regime")
 
+        # G2 fix: use actual mismatch count from broker_tracker_diff, not hardcoded 0
+        _mismatch_count = (broker_tracker_diff or {}).get("mismatch_count", 0)
+        if _mismatch_count > 0 and not any(a.code == "broker_tracker_mismatch" for a in alerts):
+            alerts.append(
+                ConsoleAlert(
+                    severity="critical",
+                    code="broker_tracker_mismatch",
+                    message=f"Broker/tracker mismatch: {_mismatch_count} position(s) differ",
+                    details={
+                        "mismatch_count": _mismatch_count,
+                        "tracker_only": (broker_tracker_diff or {}).get("tracker_only", []),
+                        "broker_only": (broker_tracker_diff or {}).get("broker_only", []),
+                        "qty_mismatches": (broker_tracker_diff or {}).get("qty_mismatches", []),
+                    },
+                )
+            )
+            # Re-sort after adding new alert
+            alerts = sorted(alerts, key=lambda alert: order.get(alert.severity, 9))
+
         status = _compute_run_status(
             alerts=alerts,
             guardrail_status=guardrail_status,
-            broker_tracker_mismatch_count=0,
+            broker_tracker_mismatch_count=_mismatch_count,
             stale_price_count=len(stale_symbols),
             api_error_count=api_err,
         )

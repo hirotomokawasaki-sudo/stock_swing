@@ -1834,6 +1834,13 @@ def main() -> int:  # noqa: C901
         src = (s.sizing_details or {}).get("price_source", "unknown")
         ps_sources[src] = ps_sources.get(src, 0) + 1
 
+    # G2 fix: prefer _post_state (updated by post_run_update) over stale _breaker_state
+    _final_breaker_status = (
+        _post_state.status
+        if "_post_state" in dir() and _post_state is not None
+        else (_breaker_state.status if "_breaker_state" in dir() and _breaker_state is not None else "unknown")
+    )
+
     console_summary = ConsoleSummary.build(
         run_id=run_context.run_id if "run_context" in dir() else "unknown",
         equity=equity,
@@ -1849,7 +1856,7 @@ def main() -> int:  # noqa: C901
         market_regime=regime_for_sizing if "regime_for_sizing" in dir() else "unknown",
         warnings=[],
         experiment_id=experiment_context.experiment_id if experiment_context is not None else "unknown",
-        guardrail_status=_breaker_state.status if "_breaker_state" in dir() and _breaker_state is not None else "unknown",
+        guardrail_status=_final_breaker_status,
         api_metrics=_build_api_metrics(latency_tracker),
         price_integrity=_build_price_integrity(
             stale_symbols if "stale_symbols" in dir() else [],
@@ -1863,6 +1870,8 @@ def main() -> int:  # noqa: C901
         ),
         # RF-5b: AI telemetry
         ai_metrics=build_ai_metrics_from_decisions(decisions),
+        # RF/G2: sector shock shadow count
+        sector_shock_shadow_count=_ssh_shadow_count if "_ssh_shadow_count" in dir() else 0,
     )
     console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
 
