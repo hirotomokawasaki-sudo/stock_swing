@@ -165,6 +165,72 @@ def test_price_momentum_feature_bullish() -> None:
     assert result.values["trend"] == "bullish"
 
 
+def test_price_momentum_feature_return_1d() -> None:
+    """Test that return_1d (prev-bar to latest-bar return) is correctly computed."""
+    now = datetime.now(timezone.utc)
+    prev_close = 190.0
+    latest_close = 187.0
+    expected_return_1d = (latest_close - prev_close) / prev_close  # -0.015789...
+
+    records = [
+        CanonicalRecord(
+            record_id="r1",
+            schema_version="v1",
+            source="broker",
+            source_type="price",
+            symbol="SMH",
+            event_type="bar_1day",
+            event_time=now - timedelta(days=5),
+            as_of=(now - timedelta(days=5)).date().isoformat(),
+            ingested_at=now,
+            timezone="UTC",
+            payload_version=None,
+            quality_flags=[],
+            payload={"open": 200.0, "high": 201.0, "low": 199.0, "close": 200.0},
+        ),
+        CanonicalRecord(
+            record_id="r2",
+            schema_version="v1",
+            source="broker",
+            source_type="price",
+            symbol="SMH",
+            event_type="bar_1day",
+            event_time=now - timedelta(days=1),
+            as_of=(now - timedelta(days=1)).date().isoformat(),
+            ingested_at=now,
+            timezone="UTC",
+            payload_version=None,
+            quality_flags=[],
+            payload={"open": 191.0, "high": 192.0, "low": 189.0, "close": prev_close},
+        ),
+        CanonicalRecord(
+            record_id="r3",
+            schema_version="v1",
+            source="broker",
+            source_type="price",
+            symbol="SMH",
+            event_type="bar_1day",
+            event_time=now,
+            as_of=now.date().isoformat(),
+            ingested_at=now,
+            timezone="UTC",
+            payload_version=None,
+            quality_flags=[],
+            payload={"open": 189.0, "high": 189.5, "low": 186.0, "close": latest_close},
+        ),
+    ]
+
+    feature = PriceMomentumFeature(period_days=5)
+    results = feature.compute(records)
+
+    assert len(results) == 1
+    result = results[0]
+    assert result.symbol == "SMH"
+    assert "return_1d" in result.values
+    assert result.values["return_1d"] is not None
+    assert abs(result.values["return_1d"] - expected_return_1d) < 1e-9
+
+
 def test_price_momentum_feature_insufficient_data() -> None:
     """Test price momentum feature with insufficient data."""
     now = datetime.now(timezone.utc)

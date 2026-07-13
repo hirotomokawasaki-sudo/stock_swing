@@ -105,6 +105,7 @@ class PriceMomentumFeature(BaseFeature):
             risk_per_share = None
             stop_price = None
 
+            return_1d = None
             if earliest_close and latest_close and earliest_close > 0:
                 momentum = (latest_close - earliest_close) / earliest_close
 
@@ -115,6 +116,12 @@ class PriceMomentumFeature(BaseFeature):
                     trend = "bearish"
                 else:
                     trend = "neutral"
+
+                # 1-day return: compare last two bars (prev_close → latest_close)
+                if len(sorted_records) >= 2:
+                    prev_bar_close = sorted_records[-2].payload.get("close")
+                    if prev_bar_close and prev_bar_close > 0:
+                        return_1d = (latest_close - prev_bar_close) / prev_bar_close
 
                 # Simple ATR approximation from available OHLC bars
                 true_ranges = []
@@ -157,6 +164,7 @@ class PriceMomentumFeature(BaseFeature):
                     "stop_price": stop_price,
                     "latest_close": latest_close,
                     "data_age_days": data_age_days,
+                    "return_1d": return_1d,
                 },
                 metadata={
                     "earliest_time": sorted_records[0].event_time.isoformat(),

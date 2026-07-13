@@ -1,0 +1,14 @@
+{
+  "config_hash": "63890d531d52efb4",
+  "created_at": "2026-07-10T19:55:03.315816+00:00",
+  "experiment_id": "exp-20260710-swing-v1-prompt-v1-a4b40d53-63890d53",
+  "feature_schema_version": "features-v1",
+  "mode": "paper",
+  "notes": "",
+  "owner": "hirotomookawasaki",
+  "prompt_version": "prompt-v1",
+  "run_id": "paper_demo-20260710T195503Z-b213fa32",
+  "source_commit": "a4b40d5345994d4334cb9af289192b9979f31216",
+  "strategy_version": "swing-v1",
+  "tags": []
+}

@@ -88,3 +88,13 @@ data/tracking/pnl_state_backup_before_peak_init_*.json
 # Generated analysis / cache artifacts
 artifacts/
 data/backtest_price_cache/
+
+# Codex review export packages (contain trade data / account info)
+stock_swing_codex_review_export_*/
+*.zip
+
+# Account config (contains account numbers)
+config/accounts.json
+
+# Backup snapshots (quarantine/recovery)
+data/tracking/pnl_state.backup_*.json

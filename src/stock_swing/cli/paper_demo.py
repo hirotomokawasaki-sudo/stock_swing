@@ -1110,7 +1110,13 @@ def main() -> int:  # noqa: C901
         for _bm in _ssh_config.benchmark_symbols:
             for _feat in all_features:
                 if getattr(_feat, "symbol", None) == _bm:
-                    _1d = getattr(_feat, "return_1d", None) or (getattr(_feat, "payload", {}) or {}).get("return_1d")
+                    # return_1d is stored in FeatureResult.values (not as a direct attr)
+                    _vals = getattr(_feat, "values", {})
+                    _1d = (
+                        _vals.get("return_1d")
+                        if isinstance(_vals, dict)
+                        else None
+                    )
                     if _1d is not None:
                         try:
                             _sector_1d[_bm] = float(_1d)
