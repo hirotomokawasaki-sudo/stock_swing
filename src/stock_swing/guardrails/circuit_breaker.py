@@ -39,7 +39,11 @@ class CircuitBreakerStore:
     def load(self) -> CircuitBreakerState:
         if not self.path.exists():
             return CircuitBreakerState()
-        return CircuitBreakerState(**json.loads(self.path.read_text(encoding="utf-8")))
+        data = json.loads(self.path.read_text(encoding="utf-8"))
+        # Strip unknown keys (e.g. operator notes added by clear_circuit_breaker.py)
+        import dataclasses
+        known = {f.name for f in dataclasses.fields(CircuitBreakerState)}
+        return CircuitBreakerState(**{k: v for k, v in data.items() if k in known})
 
     def save(self, state: CircuitBreakerState) -> None:
         payload = asdict(state)

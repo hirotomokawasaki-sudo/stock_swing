@@ -1546,7 +1546,7 @@ def main() -> int:  # noqa: C901
             # RF: 台帳品質・フィルター・シャドウ
             ledger_quality=pnl_tracker.get_ledger_quality_report(),
             entry_filter_stats=_ef_result.stats if "_ef_result" in dir() else {},
-            sector_shock_shadow_count=0,
+            sector_shock_shadow_count=_ssh_shadow_count if "_ssh_shadow_count" in dir() else 0,
             # RF-5b: AI telemetry
             ai_metrics=build_ai_metrics_from_decisions(decisions),
         )
