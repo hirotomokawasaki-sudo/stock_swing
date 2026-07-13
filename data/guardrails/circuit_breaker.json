@@ -1,10 +1,10 @@
 {
-  "action": "halt",
-  "clear_note": null,
-  "cleared_at": null,
-  "cleared_by": null,
+  "action": "none",
+  "clear_note": "Fresh broker fetch on 2026-07-13 shows mismatch_count=0. All 18 positions (incl. SKYY qty=210 and META qty=78) confirmed filled in broker. Original halt was a race condition: orders filled after circuit breaker evaluated API response. G1 investigation complete: no phantom positions.",
+  "cleared_at": "2026-07-13T02:39:57.601242+00:00",
+  "cleared_by": "operator_verified",
   "reason": "guardrail_halt",
-  "status": "halted",
+  "status": "ok",
   "triggered_at": "2026-07-10T13:35:56.633398+00:00",
   "triggered_rules": [
     {
@@ -16,5 +16,6 @@
       "severity": "critical",
       "threshold": 1.0
     }
-  ]
+  ],
+  "clear_confirmed_mismatch_count": 0
 }
