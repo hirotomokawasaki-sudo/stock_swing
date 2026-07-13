@@ -2,9 +2,9 @@
   "run": {
     "mode": "paper",
     "status": "OK",
-    "run_id": "paper_demo-20260710T133505Z-4a2a0304",
-    "experiment_id": "exp-20260710-swing-v1-prompt-v1-a4b40d53-63890d53",
-    "timestamp": "2026-07-10T13:35:56.666012+00:00",
+    "run_id": "paper_demo-20260713T024228Z-9e592701",
+    "experiment_id": "exp-20260713-swing-v1-prompt-v1-158c2b08-63890d53",
+    "timestamp": "2026-07-13T02:42:35.660752+00:00",
     "duration_seconds": null,
     "guardrail_status": "ok"
   },
@@ -13,18 +13,18 @@
     "critical_count": 0,
     "warning_count": 0,
     "stale_price_count": 0,
-    "broker_tracker_mismatch_count": 2,
+    "broker_tracker_mismatch_count": 0,
     "api_error_count": 0,
     "guardrail_status": "ok",
-    "attribution_coverage_pct": null,
-    "quarantined_trades": 0
+    "attribution_coverage_pct": 100.0,
+    "quarantined_trades": 54
   },
   "portfolio": {
-    "equity": 1022784.29,
-    "realized_pnl": -93583.16,
-    "unrealized_pnl": 6497.62,
-    "total_pnl": -87085.54,
-    "open_positions": 17,
+    "equity": 1007534.93,
+    "realized_pnl": -5690.07,
+    "unrealized_pnl": -8681.92,
+    "total_pnl": -14371.99,
+    "open_positions": 18,
     "asset_class_breakdown": {
       "etf": {
         "count": 65,
@@ -60,123 +60,142 @@
     "exit_attribution_breakdown": {
       "by_reason": {
         "trailing_stop": {
-          "count": 66,
-          "wins": 56,
+          "count": 68,
+          "wins": 58,
           "losses": 10,
-          "win_rate": 0.8485,
-          "profit_factor": 25.8,
-          "net_pnl": 124303.43,
-          "gross_profit": 129315.61,
+          "win_rate": 0.8529,
+          "profit_factor": 25.873,
+          "net_pnl": 124669.15,
+          "gross_profit": 129681.33,
           "gross_loss": 5012.18
         },
         "time_based": {
+          "count": 9,
+          "wins": 8,
+          "losses": 1,
+          "win_rate": 0.8889,
+          "profit_factor": 6.578,
+          "net_pnl": 24276.74,
+          "gross_profit": 28629.2,
+          "gross_loss": 4352.46
+        },
+        "corporate_action": {
           "count": 1,
           "wins": 1,
           "losses": 0,
           "win_rate": 1.0,
           "profit_factor": null,
-          "net_pnl": 3619.69,
-          "gross_profit": 3619.69,
+          "net_pnl": 617.16,
+          "gross_profit": 617.16,
           "gross_loss": 0
         },
         "breakeven_stop": {
-          "count": 23,
-          "wins": 6,
-          "losses": 17,
-          "win_rate": 0.2609,
-          "profit_factor": 1.916,
-          "net_pnl": 3186.83,
-          "gross_profit": 6664.46,
-          "gross_loss": 3477.63
-        },
-        "broker_fill": {
-          "count": 69,
-          "wins": 23,
-          "losses": 46,
-          "win_rate": 0.3333,
-          "profit_factor": 0.389,
-          "net_pnl": -51195.98,
-          "gross_profit": 32546.72,
-          "gross_loss": 83742.7
+          "count": 33,
+          "wins": 9,
+          "losses": 24,
+          "win_rate": 0.2727,
+          "profit_factor": 0.696,
+          "net_pnl": -4416.58,
+          "gross_profit": 10096.54,
+          "gross_loss": 14513.12
         },
         "stop_loss": {
-          "count": 40,
-          "wins": 12,
-          "losses": 28,
-          "win_rate": 0.3,
-          "profit_factor": 0.086,
-          "net_pnl": -85604.04,
-          "gross_profit": 8061.3,
-          "gross_loss": 93665.34
+          "count": 88,
+          "wins": 22,
+          "losses": 66,
+          "win_rate": 0.25,
+          "profit_factor": 0.069,
+          "net_pnl": -150836.54,
+          "gross_profit": 11183.55,
+          "gross_loss": 162020.09
         }
       },
-      "unknown_count": 69
+      "unknown_count": 0
     }
   },
   "decision_funnel": {
-    "candidates": 16,
-    "buy": 15,
-    "sell": 0,
-    "deny": 1,
-    "submitted": 2,
+    "candidates": 20,
+    "buy": 11,
+    "sell": 6,
+    "deny": 3,
+    "submitted": 0,
     "rejected": 0,
     "blocked": 0,
     "deny_reasons": {
-      "confidence 0.39 below minimum 0.40": 1
+      "confidence 0.36 below minimum 0.40": 1,
+      "confidence 0.34 below minimum 0.40": 1,
+      "confidence 0.37 below minimum 0.40": 1
     },
     "stock_reduced_blocked": 0,
     "stock_reduced_blocked_symbols": []
   },
   "broker_tracker_diff": {
-    "broker_count": 17,
+    "broker_count": 18,
     "tracker_count": 18,
-    "mismatch_count": 2,
+    "mismatch_count": 0,
     "broker_only": [],
-    "tracker_only": [
-      "SKYY"
-    ],
-    "qty_mismatches": [
-      {
-        "symbol": "META",
-        "broker_qty": 33.0,
-        "tracker_qty": 78.0
-      }
-    ]
+    "tracker_only": [],
+    "qty_mismatches": []
   },
   "risk": {
     "cluster_blocks": [],
-    "risk_budget_pct": 0.026,
-    "market_regime": "cautious"
+    "risk_budget_pct": 0.03,
+    "market_regime": "neutral"
   },
   "price_integrity": {
-    "fresh_price_count": 2,
+    "fresh_price_count": 0,
     "stale_price_count": 0,
-    "fallback_price_count": 2,
+    "fallback_price_count": 0,
     "top_stale_symbols": [],
-    "price_source_breakdown": {
-      "decision_latest_close": 2
-    }
+    "price_source_breakdown": {}
   },
   "api": {
-    "call_count": 2,
+    "call_count": 16,
     "error_count": 0,
-    "p50_latency_ms": 653.5,
-    "p95_latency_ms": 653.5,
+    "p50_latency_ms": 527.0,
+    "p95_latency_ms": 588.1,
     "slowest_endpoints": [
       {
+        "endpoint": "broker.fetch_bars",
+        "duration_ms": 588.1
+      },
+      {
         "endpoint": "broker.fetch_account",
-        "duration_ms": 653.5
+        "duration_ms": 498.7
       },
       {
         "endpoint": "broker.fetch_positions",
-        "duration_ms": 559.8
+        "duration_ms": 474.5
       }
     ]
   },
-  "ai": {},
+  "ai": {
+    "calls": 20,
+    "skipped": 0,
+    "input_tokens": 2752,
+    "output_tokens": 527,
+    "daily_token_budget": 300000,
+    "context_pack_counts": {
+      "evidence_v1": 20
+    },
+    "model_counts": {
+      "breakout_momentum_v1": 7,
+      "breakout_momentum_v1_intraday_enhanced": 6,
+      "breakout_momentum_v1_etf_intraday_enhanced": 1,
+      "simple_exit_v2": 6
+    }
+  },
   "alerts": [],
   "missing_metrics": [],
-  "ledger_quality": {},
+  "ledger_quality": {
+    "clean_closed": 199,
+    "quarantined": 54,
+    "negative_holding_days_in_clean": 0,
+    "no_exit_attribution": 0,
+    "no_metadata": 199,
+    "total_closed": 199,
+    "attribution_coverage_pct": 100.0
+  },
   "sector_shock_shadow": {
     "shadow_count": 0
   }
