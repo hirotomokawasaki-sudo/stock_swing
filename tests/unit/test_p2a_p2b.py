@@ -94,3 +94,71 @@ def test_token_usage_tracker_records_skip(tmp_path: Path) -> None:
     assert len(rows) == 1
     assert rows[0]["skip_reason"] == "low_priority_candidate"
     assert rows[0]["total_tokens"] == "0"
+
+
+# ── RF-5b: attach_ai_telemetry / build_ai_metrics_from_decisions ─────────────
+
+from stock_swing.utils.context_budget import attach_ai_telemetry, build_ai_metrics_from_decisions
+
+
+class _FakeDecision:
+    """Minimal DecisionRecord-like stub for testing."""
+    def __init__(self, strategy_id="breakout_v1", strategy_version_id="bv1-abc123"):
+        self.strategy_id = strategy_id
+        self.strategy_version_id = strategy_version_id
+        self.action = "buy"
+        self.confidence = 0.75
+        self.signal_strength = 0.82
+        self.deny_reasons = []
+        self.evidence = {
+            "feature_refs": ["price_momentum"],
+            "notes": ["Breakout momentum > 3%"],
+            "market_regime": "expansion",
+        }
+        # fields to be filled by attach_ai_telemetry
+        self.model = None
+        self.input_tokens = None
+        self.output_tokens = None
+        self.context_pack = None
+        self.prompt_version = None
+
+
+def test_attach_ai_telemetry_sets_all_fields() -> None:
+    d = _FakeDecision()
+    attach_ai_telemetry(d)
+
+    assert d.model == "breakout_v1"           # defaults to strategy_id
+    assert isinstance(d.input_tokens, int) and d.input_tokens > 0
+    assert isinstance(d.output_tokens, int) and d.output_tokens > 0
+    assert d.context_pack == "evidence_v1"
+    assert d.prompt_version == "bv1-abc123"   # from strategy_version_id
+
+
+def test_attach_ai_telemetry_respects_explicit_model() -> None:
+    d = _FakeDecision()
+    attach_ai_telemetry(d, model="gpt-5.4")
+    assert d.model == "gpt-5.4"
+
+
+def test_build_ai_metrics_aggregates_correctly() -> None:
+    d1 = _FakeDecision("strategy_a")
+    d2 = _FakeDecision("strategy_b")
+    attach_ai_telemetry(d1)
+    attach_ai_telemetry(d2)
+
+    metrics = build_ai_metrics_from_decisions([d1, d2], skipped_count=1)
+
+    assert metrics["calls"] == 2
+    assert metrics["skipped"] == 1
+    assert metrics["input_tokens"] == (d1.input_tokens or 0) + (d2.input_tokens or 0)
+    assert metrics["output_tokens"] == (d1.output_tokens or 0) + (d2.output_tokens or 0)
+    assert "context_pack_counts" in metrics
+    assert metrics["context_pack_counts"]["evidence_v1"] == 2
+    assert "model_counts" in metrics
+
+
+def test_build_ai_metrics_empty_decisions() -> None:
+    metrics = build_ai_metrics_from_decisions([])
+    assert metrics["calls"] == 0
+    assert metrics["input_tokens"] == 0
+    assert metrics["output_tokens"] == 0

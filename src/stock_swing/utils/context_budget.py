@@ -195,3 +195,91 @@ def estimate_token_count(context_pack: dict[str, Any]) -> int:
     import json
 
     return len(json.dumps(context_pack, ensure_ascii=False)) // 4
+
+
+def attach_ai_telemetry(
+    decision: Any,
+    *,
+    model: str | None = None,
+    context_pack_name: str = "evidence_v1",
+) -> None:
+    """Fill AI telemetry fields on a DecisionRecord in-place (RF-5b).
+
+    This function records rule-based strategy telemetry into the AI telemetry
+    fields that were defined in RF-5/F5.  When a real LLM is integrated, callers
+    can replace the estimated token counts with actual API usage values.
+
+    Fields set:
+      decision.model           ← model argument (defaults to decision.strategy_id)
+      decision.input_tokens    ← estimated token count of decision.evidence
+      decision.output_tokens   ← estimated token count of the decision output
+      decision.context_pack    ← context_pack_name
+      decision.prompt_version  ← decision.strategy_version_id (if present)
+    """
+    import json
+
+    def _tok(obj: Any) -> int:
+        try:
+            return len(json.dumps(obj, ensure_ascii=False, default=str)) // 4
+        except Exception:
+            return 0
+
+    # model: prefer explicit arg, fall back to strategy_id
+    effective_model = model or getattr(decision, "strategy_id", "rule-based")
+    decision.model = effective_model
+
+    # input_tokens: evidence/context that feeds the decision
+    evidence = getattr(decision, "evidence", {}) or {}
+    decision.input_tokens = _tok(evidence)
+
+    # output_tokens: decision summary (what the AI would output)
+    output_payload = {
+        "action": getattr(decision, "action", None),
+        "confidence": getattr(decision, "confidence", None),
+        "signal_strength": getattr(decision, "signal_strength", None),
+        "deny_reasons": getattr(decision, "deny_reasons", []),
+    }
+    decision.output_tokens = _tok(output_payload)
+
+    decision.context_pack = context_pack_name
+
+    # prompt_version: use strategy_version_id if available, else strategy_id
+    svid = getattr(decision, "strategy_version_id", None)
+    if not getattr(decision, "prompt_version", None):
+        decision.prompt_version = svid or effective_model
+
+
+def build_ai_metrics_from_decisions(
+    decisions: list[Any],
+    *,
+    daily_token_budget: int = 300_000,
+    skipped_count: int = 0,
+) -> dict[str, Any]:
+    """Aggregate per-decision AI telemetry into a run-level ai_metrics dict.
+
+    The returned dict is ready to be passed to ConsoleSummary.build(ai_metrics=...).
+    """
+    from collections import Counter
+
+    total_in = 0
+    total_out = 0
+    pack_counter: Counter[str] = Counter()
+    model_counter: Counter[str] = Counter()
+
+    for d in decisions:
+        total_in += getattr(d, "input_tokens", None) or 0
+        total_out += getattr(d, "output_tokens", None) or 0
+        pack = getattr(d, "context_pack", None) or "unknown"
+        pack_counter[pack] += 1
+        mdl = getattr(d, "model", None) or "unknown"
+        model_counter[mdl] += 1
+
+    return {
+        "calls": len(decisions),
+        "skipped": skipped_count,
+        "input_tokens": total_in,
+        "output_tokens": total_out,
+        "daily_token_budget": daily_token_budget,
+        "context_pack_counts": dict(pack_counter),
+        "model_counts": dict(model_counter),
+    }

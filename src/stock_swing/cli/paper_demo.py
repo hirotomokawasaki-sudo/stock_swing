@@ -71,6 +71,12 @@ from stock_swing.strategy_engine.sector_shock_hold import SectorShockAnalyzer, S
 from stock_swing.tracking.exit_reason_store import delete_exit_reason, write_exit_reason
 from stock_swing.tracking.trade_event_store import TradeEvent
 from stock_swing.tracking.pnl_tracker import PnLTracker
+from stock_swing.utils.context_budget import (
+    TokenUsageRecord,
+    TokenUsageTracker,
+    attach_ai_telemetry,
+    build_ai_metrics_from_decisions,
+)
 from stock_swing.utils.latency_tracker import LatencyTracker
 from stock_swing.utils.market_calendar import MarketCalendar
 from stock_swing.utils.signal_prioritization import prioritize_buy_signals, prioritize_buy_signals_v2
@@ -635,6 +641,10 @@ def main() -> int:  # noqa: C901
     )
     latency_tracker = LatencyTracker(
         project_root / "data" / "analysis" / "api_latency.csv"
+    )
+    # RF-5b: token usage tracker for AI telemetry
+    token_tracker = TokenUsageTracker(
+        project_root / "data" / "analysis" / "token_usage.csv"
     )
     print(f"  URL: {broker.base_url}")
 
@@ -1358,6 +1368,10 @@ def main() -> int:  # noqa: C901
                 _d.evidence.setdefault("experiment_id", experiment_context.experiment_id)
                 _d.evidence.setdefault("config_hash", experiment_context.config_hash)
 
+    # RF-5b: fill AI telemetry fields on every DecisionRecord
+    for _d in decisions:
+        attach_ai_telemetry(_d)
+
     for decision in decisions:
         status = "PASS" if decision.action in {"buy", "sell"} and decision.risk_state == "pass" else "SKIP"
         print(f"  [{status}] {decision.symbol}: action={decision.action} risk={decision.risk_state} conf={decision.confidence:.2f}")
@@ -1533,6 +1547,8 @@ def main() -> int:  # noqa: C901
             ledger_quality=pnl_tracker.get_ledger_quality_report(),
             entry_filter_stats=_ef_result.stats if "_ef_result" in dir() else {},
             sector_shock_shadow_count=0,
+            # RF-5b: AI telemetry
+            ai_metrics=build_ai_metrics_from_decisions(decisions),
         )
         console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
         return finish(0, decisions=decisions, equity_value=equity, extra={"reason": "dry_run"})
@@ -1845,9 +1861,25 @@ def main() -> int:  # noqa: C901
             list(current_positions_full.values()) if current_positions_full else [],
             pnl_tracker.get_open_positions(),
         ),
+        # RF-5b: AI telemetry
+        ai_metrics=build_ai_metrics_from_decisions(decisions),
     )
     console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
-    
+
+    # RF-5b: flush token usage to CSV
+    _ai = console_summary.ai_metrics
+    token_tracker.record(TokenUsageRecord(
+        timestamp=datetime.now(timezone.utc).isoformat(),
+        workflow_name="paper_demo",
+        model=list((_ai.get("model_counts") or {"rule-based": 1}).keys())[0],
+        input_tokens=_ai.get("input_tokens", 0),
+        output_tokens=_ai.get("output_tokens", 0),
+        total_tokens=_ai.get("input_tokens", 0) + _ai.get("output_tokens", 0),
+        estimated_cost=0.0,
+        success=True,
+    ))
+    token_tracker.flush()
+
     # Send Telegram notification if requested
     if args.telegram:
         _send_telegram_summary(
