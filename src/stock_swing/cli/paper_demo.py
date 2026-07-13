@@ -1804,9 +1804,31 @@ def main() -> int:  # noqa: C901
 
     if _guard_engine is not None and _breaker_store is not None and post_run_update is not None:
         try:
+            # G1 fix: if new orders were submitted, wait briefly so broker API reflects fills
+            # before computing broker/tracker diff (prevents race-condition false HALT).
+            _new_submissions = [
+                s for s in submissions
+                if getattr(s, "status", "") in {"submitted", "accepted", "filled", "partially_filled"}
+            ] if "submissions" in dir() else []
+            if _new_submissions:
+                import time as _time
+                _wait_secs = 3
+                print(f"  Waiting {_wait_secs}s for broker API to reflect {len(_new_submissions)} order(s)...")
+                _time.sleep(_wait_secs)
+                # Re-fetch fresh positions after wait
+                try:
+                    _fresh_positions_env = broker.fetch_positions()
+                    _fresh_positions_list = _fresh_positions_env.payload if isinstance(_fresh_positions_env.payload, list) else []
+                    _positions_for_diff = _fresh_positions_list
+                except Exception as _fe:
+                    logger.warning("Re-fetch positions after submission failed (using stale): %s", _fe)
+                    _positions_for_diff = list(current_positions_full.values()) if current_positions_full else []
+            else:
+                _positions_for_diff = list(current_positions_full.values()) if current_positions_full else []
+
             # F2: compute real broker/tracker mismatch for post-run guardrail evaluation
             _bt_diff_postrun = _build_broker_tracker_diff(
-                list(current_positions_full.values()) if current_positions_full else [],
+                _positions_for_diff,
                 pnl_tracker.get_open_positions(),
             )
             _post_metrics = {
