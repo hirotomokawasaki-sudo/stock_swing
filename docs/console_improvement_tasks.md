@@ -106,8 +106,9 @@
                    ✅ RF-8c  stop_loss 原因分析完了（06-25 セクターショックが主因、staged_trailing が最善）
                    🔲 paper_demo 実行ログで sector_shock_hold SHADOW の出力を確認
 
-2026-07-14〜07-28  🔲 RF-8b  attribution coverage 95% 達成（残 69 件の早期台帳 broker 照合）
-                   🔲 RF-5b  AI telemetry 充填（DecisionEngine 側 token 記録実装）
+2026-07-13（前倒）    ✅ RF-8b  attribution coverage 100% 達成（69/69件回収、rf8b_recover_attribution.py 作成）
+
+2026-07-14〜07-28  🔲 RF-5b  AI telemetry 充填（DecisionEngine 側 token 記録実装）
 
 2026-07-28〜07-30  🔴 hard-halt 環境でのペーパー最終確認（BLOCKING）
 
