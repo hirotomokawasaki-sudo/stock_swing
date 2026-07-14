@@ -216,12 +216,65 @@ def fetch_broker_open_positions(broker: BrokerClient) -> dict[str, dict]:
         return {}
 
 
-def match_buy_sell_orders(filled_orders: list) -> tuple[list, list]:
+def load_corporate_actions(project_root: Path) -> list[dict]:
+    """Load corporate actions registry from data/corporate_actions.json."""
+    ca_path = project_root / "data" / "corporate_actions.json"
+    try:
+        with open(ca_path) as f:
+            data = json.load(f)
+        return data.get("actions", [])
+    except Exception:
+        return []
+
+
+def apply_split_adjustment(
+    symbol: str,
+    entry_price: float,
+    entry_time: str,
+    exit_time: str,
+    corporate_actions: list[dict],
+) -> tuple[float, float | None]:
+    """Adjust entry price for splits that occurred between buy and sell.
+
+    If a forward split ex_date falls between the buy fill date and the sell
+    fill date, the recorded buy price is pre-split while the sell price is
+    post-split.  Dividing the entry price by the split ratio makes both
+    prices comparable on a post-split basis.
+
+    Returns (adjusted_entry_price, split_ratio_applied | None).
+    """
+    for action in corporate_actions:
+        if action.get("symbol") != symbol:
+            continue
+        if action.get("type") != "split" or action.get("direction") != "forward":
+            continue
+        ex_date = action.get("ex_date", "")[:10]  # YYYY-MM-DD
+        if not ex_date:
+            continue
+        ratio = float(action.get("ratio", 1))
+        if ratio <= 1:
+            continue
+        buy_date = entry_time[:10]
+        sell_date = exit_time[:10]
+        # Buy is pre-split, sell is post-split
+        if buy_date < ex_date <= sell_date:
+            adjusted = round(entry_price / ratio, 4)
+            return adjusted, ratio
+    return entry_price, None
+
+
+def match_buy_sell_orders(
+    filled_orders: list,
+    corporate_actions: list[dict] | None = None,
+) -> tuple[list, list]:
     """Match buy and sell orders to create closed trades.
     
     Uses FIFO (First In, First Out) matching.
+    Corporate actions (splits) are applied when buy/sell straddle an ex_date.
     Returns tuple of (closed_trades, open_positions_from_fills).
     """
+    if corporate_actions is None:
+        corporate_actions = []
     by_symbol = defaultdict(lambda: {'buy': [], 'sell': []})
     market_cache: dict[str, dict[str, tuple[float, float, float]]] = {}
     
@@ -276,6 +329,18 @@ def match_buy_sell_orders(filled_orders: list) -> tuple[list, list]:
             
             entry_price = buy['price']
             exit_price = sell['price']
+
+            # Apply split adjustment when buy/sell straddle a split ex_date
+            adjusted_entry, split_ratio = apply_split_adjustment(
+                symbol, entry_price, buy['time'], sell['time'], corporate_actions
+            )
+            if split_ratio is not None:
+                print(
+                    f"  ✂ {symbol:6} split {split_ratio:.0f}:1 adjusted entry "
+                    f"${entry_price:.2f} -> ${adjusted_entry:.2f} (ex_date straddle)"
+                )
+                entry_price = adjusted_entry
+
             pnl = (exit_price - entry_price) * qty
             return_pct = (exit_price - entry_price) / entry_price if entry_price else 0.0
             
@@ -480,7 +545,8 @@ def rebuild_pnl_state(
 ) -> dict:
     """Rebuild pnl_state.json from broker order history and current positions."""
     filled_orders = fetch_all_filled_orders(broker)
-    closed_trades, open_from_fills = match_buy_sell_orders(filled_orders)
+    corporate_actions = load_corporate_actions(PROJECT_ROOT)
+    closed_trades, open_from_fills = match_buy_sell_orders(filled_orders, corporate_actions)
     
     # Fetch current broker positions and reconcile
     broker_positions = fetch_broker_open_positions(broker)

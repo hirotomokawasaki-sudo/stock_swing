@@ -1594,6 +1594,24 @@ def main() -> int:  # noqa: C901
         try:
             preview_qty, preview_sizing = preview_cache.get(decision.decision_id, (None, None))
 
+            # Guard: skip SELL orders for positions the broker no longer holds.
+            # Without this, a stale tracker position generates a 0-qty SELL which
+            # is rejected by the broker, inflating order_rejection_rate_pct and
+            # risking a spurious circuit-breaker HALT.
+            if o.side == "sell":
+                broker_qty = current_positions.get(o.symbol, 0)
+                if broker_qty <= 0:
+                    print(
+                        f"\n  SKIP SELL {o.symbol}: no broker position "
+                        f"(broker_qty=0, tracker may be stale — rebuild recommended)"
+                    )
+                    logger.warning(
+                        "sell_skipped_no_broker_position symbol=%s "
+                        "tracker_open=True broker_qty=0",
+                        o.symbol,
+                    )
+                    continue
+
             # Check symbol-level position size limit for BUY orders
             if o.side == "buy" and o.symbol in current_positions_full:
                 existing_pos = current_positions_full[o.symbol]
