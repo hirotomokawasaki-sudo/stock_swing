@@ -279,6 +279,75 @@ class BenchmarkService:
         else:
             return "Poor - losing money or excessive risk"
     
+    def get_normalized_series(
+        self,
+        portfolio_snapshots: List[Dict[str, Any]],
+        symbols: List[str] = None,
+    ) -> Dict[str, Any]:
+        """Return SPY and QQQ normalized to portfolio start equity for overlay charts.
+
+        Each series has the same date range as the portfolio snapshots, with values
+        scaled so that the benchmark's value on the first matching date equals
+        the portfolio equity on that date.
+        """
+        if symbols is None:
+            symbols = ["SPY", "QQQ"]
+
+        portfolio_snapshots = self._normalize_daily_snapshots(portfolio_snapshots)
+        if len(portfolio_snapshots) < 2:
+            return {"available": False, "error": "Not enough portfolio snapshots"}
+
+        # First portfolio date and equity — this is our normalization anchor.
+        first_snap = portfolio_snapshots[0]
+        anchor_date = str(first_snap.get("date", ""))
+        anchor_equity = float(first_snap.get("equity", 1_000_000))
+
+        # Portfolio series (plain list of {date, value})
+        portfolio_series = [
+            {"date": str(s["date"]), "value": float(s["equity"])}
+            for s in portfolio_snapshots
+            if s.get("equity") is not None
+        ]
+
+        # Build benchmark series normalized to anchor_equity
+        benchmark_series: Dict[str, List[Dict]] = {}
+        for sym in symbols:
+            bars = self.load_benchmark_data(sym)
+            if not bars:
+                continue
+
+            # Find anchor price (first bar on or after anchor_date)
+            bars_sorted = sorted(bars, key=lambda b: b["date"])
+            anchor_price: float | None = None
+            for b in bars_sorted:
+                if b["date"] >= anchor_date:
+                    anchor_price = float(b["close"])
+                    break
+
+            if anchor_price is None or anchor_price == 0:
+                continue
+
+            # Keep only dates that appear in portfolio snapshots
+            portfolio_dates = {s["date"] for s in portfolio_series}
+            series = []
+            for b in bars_sorted:
+                if b["date"] in portfolio_dates:
+                    normalized_value = (float(b["close"]) / anchor_price) * anchor_equity
+                    series.append({"date": b["date"], "value": round(normalized_value, 2)})
+
+            # Drop NaN values that yfinance may leave for the most recent bar
+            series = [s for s in series if s["value"] == s["value"]]
+            if series:
+                benchmark_series[sym] = series
+
+        return {
+            "available": True,
+            "anchor_date": anchor_date,
+            "anchor_equity": anchor_equity,
+            "portfolio": portfolio_series,
+            "benchmarks": benchmark_series,
+        }
+
     def _generate_summary(
         self,
         alpha_data: Dict[str, Any],

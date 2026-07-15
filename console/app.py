@@ -374,6 +374,18 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
         
+        # Benchmark normalized series for equity chart overlay (SPY / QQQ)
+        if p == "/api/benchmark/normalized":
+            try:
+                trading_data = dashboard.get_trading()
+                snapshots = trading_data.get('daily_snapshots', [])
+                symbols_param = q.get('symbols', ['SPY,QQQ'])[0]
+                symbols = [s.strip().upper() for s in symbols_param.split(',') if s.strip()]
+                data = benchmark_service.get_normalized_series(snapshots, symbols)
+                return self._json(data)
+            except Exception as e:
+                return self._json({"error": str(e)}, status=500)
+
         # Performance attribution (Alpha, Beta, Sharpe)
         if p == "/api/performance/attribution":
             try:

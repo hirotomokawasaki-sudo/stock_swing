@@ -1856,42 +1856,70 @@ class Console {
     }
 
     initWeeklyCharts() {
-        setTimeout(() => {
+        setTimeout(async () => {
             const charts = this.data?.charts?.overview || {};
             const equityData = charts.equity || [];
-            
             const ctx = document.getElementById('weeklyEquityChart');
             if (!ctx) return;
-            
+
+            // Fetch normalized benchmark data
+            let bmData = {};
+            try {
+                const res = await fetch('/api/benchmark/normalized?symbols=SPY,QQQ');
+                const json = await res.json();
+                if (json.available) bmData = json.benchmarks || {};
+            } catch (e) { /* ignore */ }
+
+            const labels = equityData.map(d => new Date(d.date).toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'}));
+            const dateKeys = equityData.map(d => d.date);
+
+            const datasets = [
+                {
+                    label: 'Equity',
+                    data: equityData.map(d => d.value),
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 2,
+                    order: 0
+                }
+            ];
+
+            const bmColors = { SPY: { line: '#6366f1', bg: 'rgba(99,102,241,0)' }, QQQ: { line: '#f59e0b', bg: 'rgba(245,158,11,0)' } };
+            for (const [sym, series] of Object.entries(bmData)) {
+                const seriesMap = Object.fromEntries(series.map(s => [s.date, s.value]));
+                const color = bmColors[sym] || { line: '#9ca3af', bg: 'rgba(156,163,175,0)' };
+                datasets.push({
+                    label: sym,
+                    data: dateKeys.map(d => seriesMap[d] ?? null),
+                    borderColor: color.line,
+                    backgroundColor: color.bg,
+                    fill: false,
+                    tension: 0.4,
+                    borderWidth: 1.5,
+                    borderDash: [4, 3],
+                    pointRadius: 0,
+                    spanGaps: true,
+                    order: 1
+                });
+            }
+
             new Chart(ctx, {
                 type: 'line',
-                data: {
-                    labels: equityData.map(d => new Date(d.date).toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'})),
-                    datasets: [{
-                        label: 'Equity',
-                        data: equityData.map(d => d.value),
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
+                data: { labels, datasets },
                 options: {
                     responsive: true,
                     plugins: {
-                        legend: { display: false },
+                        legend: { display: Object.keys(bmData).length > 0 },
                         tooltip: {
                             callbacks: {
-                                label: (context) => fmt.usd(context.parsed.y)
+                                label: (context) => `${context.dataset.label}: ${fmt.usd(context.parsed.y)}`
                             }
                         }
                     },
                     scales: {
-                        y: {
-                            ticks: {
-                                callback: (value) => fmt.usd(value)
-                            }
-                        }
+                        y: { ticks: { callback: (value) => fmt.usd(value) } }
                     }
                 }
             });
@@ -1953,11 +1981,76 @@ class Console {
     }
 
     initAllCharts() {
-        setTimeout(() => {
+        setTimeout(async () => {
             const charts = this.data?.charts?.overview || {};
-            
-            // Equity Chart
-            this.createLineChart('equityChart', charts.equity || [], 'Equity', '#10b981', (v) => fmt.usd(v));
+
+            // Equity Chart with SPY / QQQ benchmark overlay
+            const equityData = charts.equity || [];
+            const equityCtx = document.getElementById('equityChart');
+            if (equityCtx && equityData.length > 0) {
+                let bmData = {};
+                try {
+                    const res = await fetch('/api/benchmark/normalized?symbols=SPY,QQQ');
+                    const json = await res.json();
+                    if (json.available) bmData = json.benchmarks || {};
+                } catch (e) { /* ignore */ }
+
+                const dateKeys = equityData.map(d => d.date);
+                const labels = dateKeys.map(d => new Date(d).toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'}));
+
+                const datasets = [
+                    {
+                        label: 'Equity',
+                        data: equityData.map(d => d.value),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16,185,129,0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 2,
+                        order: 0
+                    }
+                ];
+                const bmColors = { SPY: '#6366f1', QQQ: '#f59e0b' };
+                for (const [sym, series] of Object.entries(bmData)) {
+                    const seriesMap = Object.fromEntries(series.map(s => [s.date, s.value]));
+                    datasets.push({
+                        label: sym,
+                        data: dateKeys.map(d => seriesMap[d] ?? null),
+                        borderColor: bmColors[sym] || '#9ca3af',
+                        backgroundColor: 'rgba(0,0,0,0)',
+                        fill: false,
+                        tension: 0.4,
+                        borderWidth: 1.5,
+                        borderDash: [5, 4],
+                        pointRadius: 0,
+                        spanGaps: true,
+                        order: 1
+                    });
+                }
+
+                new Chart(equityCtx, {
+                    type: 'line',
+                    data: { labels, datasets },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: true },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => `${ctx.dataset.label}: ${fmt.usd(ctx.parsed.y)}`
+                                }
+                            },
+                            zoom: {
+                                pan: { enabled: true, mode: 'x' },
+                                zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
+                            }
+                        },
+                        scales: {
+                            y: { ticks: { callback: (v) => fmt.usd(v) } }
+                        }
+                    }
+                });
+            }
             
             // Drawdown Chart
             this.createLineChart('drawdownChart', charts.drawdown_pct || [], 'Drawdown', '#ef4444', (v) => fmt.pct(v));
