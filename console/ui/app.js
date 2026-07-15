@@ -333,12 +333,26 @@ class Console {
         const winRate = ts.win_rate || 0;
         const maxDD = ts.max_drawdown_pct || 0;
 
+        // 元本比較
+        const tracking = this.data?.trading?.summary?.tracking_context || {};
+        const baseline = tracking.baseline_equity || 1000000;
+        const vsBaseline = latestEquity - baseline;
+        const vsBaselinePct = baseline > 0 ? vsBaseline / baseline : 0;
+        const vsBaselineClass = vsBaseline >= 0 ? 'success' : 'danger';
+        const vsBaselineSign = vsBaseline >= 0 ? '+' : '';
+
         return `
         <div class="grid">
-            <div class="card performance-card ${latestEquity > 100000 ? 'success-border' : 'warn-border'}">
+            <div class="card performance-card ${vsBaseline >= 0 ? 'success-border' : 'danger-border'}">
                 <h3>💰 資産総額</h3>
                 <div class="metric big-metric">
-                    <span class="value huge success">${fmt.usd(latestEquity)}</span>
+                    <span class="value huge ${vsBaselineClass}">${fmt.usd(latestEquity)}</span>
+                </div>
+                <div class="metric" style="margin-top:4px">
+                    <span class="label">元本（${fmt.usd(baseline)}）比</span>
+                    <span class="value ${vsBaselineClass}" style="font-size:1.15em;font-weight:700">
+                        ${vsBaselineSign}${fmt.usd(vsBaseline)}&nbsp;(${vsBaselineSign}${(vsBaselinePct*100).toFixed(2)}%)
+                    </span>
                 </div>
                 <div class="metric"><span class="label">現金</span><span class="value">${fmt.usd(cash)}</span></div>
                 <div class="metric"><span class="label">ポジション</span><span class="value">${fmt.usd(ps.gross_exposure)}</span></div>
@@ -731,6 +745,41 @@ class Console {
                 }).join('')
             : '<div class="muted small">ブロックなし</div>';
 
+        // データパイプライン詳細
+        const ds = this.data?.data_status || {};
+        const counts = ds.counts || {};
+        const freshness = ds.freshness || {};
+        const raw = counts.raw || 0;
+        const norm = counts.normalized || 0;
+        const normRate = raw > 0 ? (norm / raw * 100) : 0;
+        const normStatus = freshness.normalized?.status || 'unknown';
+        const normAge = freshness.normalized?.age_hours;
+        const decAge = freshness.decisions?.age_hours;
+        const normRateClass = normRate < 1 ? 'danger' : normRate < 20 ? 'warn' : 'success';
+        const normStaleClass = normStatus === 'stale' ? 'danger' : normStatus === 'aging' ? 'warn' : 'success';
+        const decAgeClass = decAge != null && decAge > 24 ? 'danger' : decAge != null && decAge > 12 ? 'warn' : 'success';
+
+        const pipelineStageHtml = `
+        <div class="card" style="margin-top:8px">
+            <h4 style="margin:0 0 8px">🔄 データパイプライン詳細</h4>
+            <div class="funnel-reason-row">
+                <span class="funnel-reason-label">📥 raw → normalized 変換率</span>
+                <span class="funnel-reason-count ${normRateClass}">${norm.toLocaleString()} / ${raw.toLocaleString()} (${normRate.toFixed(1)}%)</span>
+            </div>
+            <div class="funnel-reason-row">
+                <span class="funnel-reason-label">🕒 normalized遠新度</span>
+                <span class="funnel-reason-count ${normStaleClass}">${normAge != null ? normAge.toFixed(0) + 'h 前' : '—'} (${normStatus})</span>
+            </div>
+            <div class="funnel-reason-row">
+                <span class="funnel-reason-label">🧠 Decision遠新度</span>
+                <span class="funnel-reason-count ${decAgeClass}">${decAge != null ? decAge.toFixed(1) + 'h 前' : '—'}</span>
+            </div>
+            <div class="funnel-reason-row">
+                <span class="funnel-reason-label">📁 features / signals / decisions</span>
+                <span class="funnel-reason-count">${counts.features || 0} / ${counts.signals || 0} / ${counts.decisions || 0}</span>
+            </div>
+        </div>`;
+
         return `
         <div class="grid funnel-grid">
             <div class="funnel-item"><div>
@@ -754,7 +803,8 @@ class Console {
         <div class="card" style="margin-top:8px">
             <h4 style="margin:0 0 8px">🚫 ブロック理由の内訳</h4>
             ${reasonsHtml}
-        </div>` : ''}`;
+        </div>` : ''}
+        ${pipelineStageHtml}`;
     }
 
     renderRecentTrades(data) {
