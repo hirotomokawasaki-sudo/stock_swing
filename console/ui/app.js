@@ -507,13 +507,40 @@ class Console {
     }
 
     renderReconciliationSummary(rec = {}) {
+        const mismatch = rec.pending_or_mismatched || 0;
+        const mismatchClass = mismatch > 0 ? 'danger' : 'success';
+
+        // シンボル別 mismatch 詳細
+        const bySymbol = (rec.by_symbol || []).filter(r => (r.mismatches || 0) > 0);
+        const mismatchSymbolHtml = bySymbol.length > 0
+            ? `<div style="margin-top:8px">
+                <div class="muted small" style="margin-bottom:4px">— mismatch 詳細 —</div>
+                ${bySymbol.map(r => `<div class="metric small">
+                    <span class="label">${this.escapeHtml(r.symbol)}</span>
+                    <span class="danger">❌ ${r.mismatches}件</span>
+                </div>`).join('')}
+              </div>`
+            : '';
+
+        // last_run と last_success の乖離
+        const lastRun = rec.last_run ? new Date(rec.last_run) : null;
+        const lastSuccess = rec.last_success ? new Date(rec.last_success) : null;
+        const staleSince = lastRun && lastSuccess && lastRun > lastSuccess
+            ? `<span class="warn small">― 最終成功から${Math.round((lastRun - lastSuccess)/3600000)}h経過</span>`
+            : '';
+
         return `
-            <div class="metric"><span class="label">Recent Reconciliations</span><span class="value">${rec.recent_reconciliations ?? 0}</span></div>
-            <div class="metric"><span class="label">Recent Submissions</span><span class="value">${rec.recent_submissions ?? 0}</span></div>
-            <div class="metric"><span class="label">Pending/Mismatched</span><span class="value ${(rec.pending_or_mismatched || 0) > 0 ? 'danger' : 'success'}">${rec.pending_or_mismatched ?? 0}</span></div>
-            <div class="metric"><span class="label">Last Run</span><span class="small muted">${rec.last_run ? fmt.dt(rec.last_run) : '—'}</span></div>
-            <div class="metric"><span class="label">Last Success</span><span class="small muted">${rec.last_success ? fmt.dt(rec.last_success) : '—'}</span></div>
-            ${(rec.discrepancy_types || []).slice(0, 3).map(r => `<div class="metric"><span class="label">${this.escapeHtml(r.reason)}</span><span class="value">${r.count}</span></div>`).join('')}
+            <div class="metric">
+                <span class="label">Pending/Mismatch</span>
+                <span class="value ${mismatchClass}">${mismatch}</span>
+            </div>
+            <div class="metric"><span class="label">Reconciliations</span><span class="value">${rec.recent_reconciliations ?? 0}</span></div>
+            <div class="metric"><span class="label">Last Run</span><span class="small muted">${lastRun ? fmt.dt(rec.last_run) : '—'} ${staleSince}</span></div>
+            <div class="metric"><span class="label">Last Success</span><span class="small ${mismatch > 0 ? 'warn' : 'muted'}">${lastSuccess ? fmt.dt(rec.last_success) : '—'}</span></div>
+            ${mismatchSymbolHtml}
+            ${(rec.discrepancy_types || []).filter(r => r.reason !== 'ok').map(r =>
+                `<div class="metric small"><span class="label muted">${this.escapeHtml(r.reason)}</span><span class="warn">${r.count}</span></div>`
+            ).join('')}
         `;
     }
 
@@ -932,11 +959,44 @@ class Console {
         const positions = this.data.positions || {};
         const posArr = positions.positions || positions.by_symbol || [];
         const summary = positions.summary || {};
-        
+
+        // ETF / Stock 別集計
+        const etfPos   = posArr.filter(p => p.asset_class === 'etf');
+        const stkPos   = posArr.filter(p => p.asset_class === 'stock');
+        const etfPnl   = etfPos.reduce((s, p) => s + (p.unrealized_pnl || 0), 0);
+        const stkPnl   = stkPos.reduce((s, p) => s + (p.unrealized_pnl || 0), 0);
+        const etfMv    = etfPos.reduce((s, p) => s + (p.market_value || 0), 0);
+        const stkMv    = stkPos.reduce((s, p) => s + (p.market_value || 0), 0);
+        const etfRetPct = etfMv > 0 ? (etfPnl / (etfMv - etfPnl)) * 100 : 0;
+        const stkRetPct = stkMv > 0 ? (stkPnl / (stkMv - stkPnl)) * 100 : 0;
+
         // ポジションを評価額でソート
         const sortedPositions = [...posArr].sort((a, b) => (b.market_value || 0) - (a.market_value || 0));
-        
+
+        const breakdownHtml = (etfPos.length > 0 || stkPos.length > 0) ? `
+        <div class="card" style="margin-bottom:16px">
+            <h3>🏷️ ETF / Stock 別含み損益内訳</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div>
+                    <div class="metric"><span class="label">ETF（${etfPos.length}件）</span>
+                        <span class="value ${etfPnl >= 0 ? 'success' : 'danger'}" style="font-weight:700">${fmt.usdSigned(etfPnl)}</span></div>
+                    <div class="metric small muted"><span class="label">MV</span><span>${fmt.usd(etfMv)}</span></div>
+                    <div class="metric small"><span class="label">比率</span><span class="${etfRetPct >= 0 ? 'success' : 'danger'}">${etfRetPct >= 0 ? '+' : ''}${etfRetPct.toFixed(2)}%</span></div>
+                    ${etfPos.map(p => `<div class="metric small"><span class="label muted">${this.escapeHtml(p.symbol)}</span><span class="${(p.unrealized_pnl||0)>=0?'success':'danger'}">${fmt.usdSigned(p.unrealized_pnl||0)}</span></div>`).join('')}
+                </div>
+                <div>
+                    <div class="metric"><span class="label">Stock（${stkPos.length}件）</span>
+                        <span class="value ${stkPnl >= 0 ? 'success' : 'danger'}" style="font-weight:700">${fmt.usdSigned(stkPnl)}</span></div>
+                    <div class="metric small muted"><span class="label">MV</span><span>${fmt.usd(stkMv)}</span></div>
+                    <div class="metric small"><span class="label">比率</span><span class="${stkRetPct >= 0 ? 'success' : 'danger'}">${stkRetPct >= 0 ? '+' : ''}${stkRetPct.toFixed(2)}%</span></div>
+                    ${stkPos.slice(0,5).map(p => `<div class="metric small"><span class="label muted">${this.escapeHtml(p.symbol)}</span><span class="${(p.unrealized_pnl||0)>=0?'success':'danger'}">${fmt.usdSigned(p.unrealized_pnl||0)}</span></div>`).join('')}
+                    ${stkPos.length > 5 ? `<div class="metric small muted"><span class="label">... 他${stkPos.length - 5}件</span></div>` : ''}
+                </div>
+            </div>
+        </div>` : '';
+
         return `
+        ${breakdownHtml}
         <div class="grid">
             <div class="card performance-card ${summary.unrealized_pnl >= 0 ? 'success-border' : 'danger-border'}">
                 <h3>📊 ポートフォリオサマリー</h3>
