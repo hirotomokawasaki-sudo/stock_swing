@@ -1870,8 +1870,9 @@ class Console {
                 if (json.available) bmData = json.benchmarks || {};
             } catch (e) { /* ignore */ }
 
-            const labels = equityData.map(d => new Date(d.date).toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'}));
-            const dateKeys = equityData.map(d => d.date);
+            // Normalize date keys to YYYY-MM-DD (equity ts may be ISO datetime like '2026-06-30T00:00:00')
+            const dateKeys = equityData.map(d => (d.date || '').slice(0, 10));
+            const labels = dateKeys.map(d => new Date(d + 'T00:00:00').toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'}));
 
             const datasets = [
                 {
@@ -1888,7 +1889,7 @@ class Console {
 
             const bmColors = { SPY: { line: '#6366f1', bg: 'rgba(99,102,241,0)' }, QQQ: { line: '#f59e0b', bg: 'rgba(245,158,11,0)' } };
             for (const [sym, series] of Object.entries(bmData)) {
-                const seriesMap = Object.fromEntries(series.map(s => [s.date, s.value]));
+                const seriesMap = Object.fromEntries(series.map(s => [s.date.slice(0, 10), s.value]));
                 const color = bmColors[sym] || { line: '#9ca3af', bg: 'rgba(156,163,175,0)' };
                 datasets.push({
                     label: sym,
@@ -1995,8 +1996,9 @@ class Console {
                     if (json.available) bmData = json.benchmarks || {};
                 } catch (e) { /* ignore */ }
 
-                const dateKeys = equityData.map(d => d.date);
-                const labels = dateKeys.map(d => new Date(d).toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'}));
+                // Normalize date keys to YYYY-MM-DD
+                const dateKeys = equityData.map(d => (d.date || '').slice(0, 10));
+                const labels = dateKeys.map(d => new Date(d + 'T00:00:00').toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'}));
 
                 const datasets = [
                     {
@@ -2012,7 +2014,7 @@ class Console {
                 ];
                 const bmColors = { SPY: '#6366f1', QQQ: '#f59e0b' };
                 for (const [sym, series] of Object.entries(bmData)) {
-                    const seriesMap = Object.fromEntries(series.map(s => [s.date, s.value]));
+                    const seriesMap = Object.fromEntries(series.map(s => [s.date.slice(0, 10), s.value]));
                     datasets.push({
                         label: sym,
                         data: dateKeys.map(d => seriesMap[d] ?? null),
