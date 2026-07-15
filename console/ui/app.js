@@ -166,7 +166,7 @@ class Console {
                 case 'trading':    content.innerHTML = this.renderTrading(); break;
                 case 'positions':  content.innerHTML = this.renderPositions(); break;
                 case 'archives':   content.innerHTML = this.renderArchives(); break;
-                case 'news':       content.innerHTML = this.renderNews(); break;
+                case 'news':       content.innerHTML = this.renderNews(); this._initNewsFilters(); break;
                 case 'cron':       content.innerHTML = this.renderCronJobs(); break;
                 case 'data':       content.innerHTML = this.renderDataStatus(); break;
                 case 'logs':       content.innerHTML = this.renderLogs(); break;
@@ -297,15 +297,48 @@ class Console {
         <div class="card alerts-card" style="margin-bottom:16px">
             <h3>要対応アラート (${alerts.length}件)</h3>
             <div class="alerts-list">
-                ${alerts.map(a => `
-                    <div class="alert alert-${a.severity}">
+                ${alerts.map(a => {
+                    // 長期保有アラートにシンボル詳細を展開
+                    let detailHtml = '';
+                    if (a.message && a.message.includes('held for 10+')) {
+                        const pos = this.data?.positions?.positions || [];
+                        const longHold = pos.filter(p => (p.holding_days || 0) >= 10)
+                            .sort((a, b) => (b.holding_days || 0) - (a.holding_days || 0));
+                        if (longHold.length > 0) {
+                            detailHtml = `<div class="alert-detail-table" style="margin-top:8px">
+                                <table style="width:100%;font-size:12px;border-collapse:collapse">
+                                    <thead><tr style="opacity:.7">
+                                        <th style="text-align:left;padding:2px 6px">シンボル</th>
+                                        <th style="text-align:right;padding:2px 6px">保有日数</th>
+                                        <th style="text-align:right;padding:2px 6px">含み損益</th>
+                                        <th style="text-align:right;padding:2px 6px">ストップまで</th>
+                                    </tr></thead>
+                                    <tbody>${longHold.map(p => {
+                                        const pct = (p.unrealized_pnl_pct || 0) * 100;
+                                        const pClass = pct >= 0 ? 'color:#10b981' : 'color:#ef4444';
+                                        const dist = p.dist_to_stop_pct;
+                                        const dClass = dist == null ? '' : dist < 2 ? 'color:#ef4444' : dist < 4 ? 'color:#f59e0b' : 'color:#10b981';
+                                        return `<tr style="border-top:1px solid rgba(255,255,255,.06)">
+                                            <td style="padding:3px 6px"><strong>${this.escapeHtml(p.symbol)}</strong></td>
+                                            <td style="text-align:right;padding:3px 6px">${(p.holding_days||0).toFixed(0)}日</td>
+                                            <td style="text-align:right;padding:3px 6px;${pClass}">${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%</td>
+                                            <td style="text-align:right;padding:3px 6px;${dClass}">${dist != null ? '▲' + dist.toFixed(1) + '%' : '—'}</td>
+                                        </tr>`;
+                                    }).join('')}</tbody>
+                                </table>
+                            </div>`;
+                        }
+                    }
+                    return `<div class="alert alert-${a.severity}">
                         <div class="alert-head">
                             ${this.renderSeverityBadge(a.severity)}
                             <strong>${this.escapeHtml(a.title || a.code)}</strong>
                         </div>
                         <div class="alert-message">${this.escapeHtml(a.message || '')}</div>
+                        ${detailHtml}
                         ${a.action_hint ? `<div class="muted small">対応: ${this.escapeHtml(a.action_hint)}</div>` : ''}
-                    </div>`).join('')}
+                    </div>`;
+                }).join('')}
             </div>
         </div>`;
     }
@@ -804,7 +837,37 @@ class Console {
             <h4 style="margin:0 0 8px">🚫 ブロック理由の内訳</h4>
             ${reasonsHtml}
         </div>` : ''}
-        ${pipelineStageHtml}`;
+        ${pipelineStageHtml}
+        ${this._renderDenyBySymbol(p)}`;  
+    }
+
+    _renderDenyBySymbol(pipeline) {
+        const bySymbol = (pipeline.by_symbol || []);
+        const denied = bySymbol
+            .filter(s => (s.deny || 0) > 0)
+            .sort((a, b) => (b.deny || 0) - (a.deny || 0))
+            .slice(0, 8);
+        if (denied.length === 0) return '';
+        return `<div class="card" style="margin-top:8px">
+            <h4 style="margin:0 0 8px">🔁 Deny 多発シンボル</h4>
+            <div class="table-wrap"><table><thead><tr>
+                <th>シンボル</th><th style="text-align:right">Deny件数</th><th style="text-align:right">Pass件数</th><th style="text-align:right">率</th>
+            </tr></thead><tbody>
+            ${denied.map(s => {
+                const deny = s.deny || 0;
+                const pass = s.pass || 0;
+                const total = deny + pass;
+                const denyRate = total > 0 ? (deny / total * 100).toFixed(0) : 0;
+                const rateClass = denyRate >= 80 ? 'danger' : denyRate >= 50 ? 'warn' : '';
+                return `<tr>
+                    <td><strong>${this.escapeHtml(s.symbol)}</strong></td>
+                    <td style="text-align:right" class="danger">${deny}</td>
+                    <td style="text-align:right" class="success">${pass}</td>
+                    <td style="text-align:right" class="${rateClass}">${denyRate}%</td>
+                </tr>`;
+            }).join('')}
+            </tbody></table></div>
+        </div>`;
     }
 
     renderRecentTrades(data) {
@@ -1835,28 +1898,61 @@ class Console {
             </div>
         </div>
         
-        <div class="grid" style="margin-top: 16px;">
-            <div class="card" style="grid-column: 1 / -1;">
-                <h3>📋 ニュース記事 (${newsArr.length}件)</h3>
-                ${this.renderNewsTable(newsArr)}
+        <div class="card" style="margin-top:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+                <h3 style="margin:0">📋 ニュース記事 (${newsArr.length}件)</h3>
+                <div style="display:flex;gap:4px;flex-wrap:wrap">
+                    <button class="chart-period-btn news-sym-btn${!this._newsSymFilter ? ' active' : ''}" data-sym="">ALL</button>
+                    ${[...new Set(newsArr.map(n => n.symbol).filter(Boolean))].slice(0,12).map(sym =>
+                        `<button class="chart-period-btn news-sym-btn${this._newsSymFilter === sym ? ' active' : ''}" data-sym="${this.escapeHtml(sym)}">${this.escapeHtml(sym)}</button>`
+                    ).join('')}
+                </div>
             </div>
+            <div id="newsTableContainer">${this.renderNewsTable(newsArr, this._newsSymFilter || '')}</div>
         </div>`;
     }
 
-    renderNewsTable(data) {
+    _initNewsFilters() {
+        if (!this._newsSymFilter) this._newsSymFilter = '';
+        const newsArr = (this.data?.news?.items || []);
+        document.querySelectorAll('.news-sym-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this._newsSymFilter = btn.dataset.sym || '';
+                document.querySelectorAll('.news-sym-btn').forEach(b =>
+                    b.classList.toggle('active', b.dataset.sym === this._newsSymFilter));
+                const container = document.getElementById('newsTableContainer');
+                if (container) container.innerHTML = this.renderNewsTable(newsArr, this._newsSymFilter);
+            });
+        });
+    }
+
+    renderNewsTable(data, filterSymbol = '') {
         if (!data || data.length === 0) return '<p class="muted">ニュースなし</p>';
+        const filtered = filterSymbol
+            ? data.filter(item => (item.symbol || '').toUpperCase() === filterSymbol.toUpperCase())
+            : data;
+        if (filtered.length === 0) return `<p class="muted">${this.escapeHtml(filterSymbol)} のニュースなし</p>`;
+
         return `<div class="table-wrap"><table><thead><tr>
-            <th>日付</th><th>シンボル</th><th>タイトル</th><th>センチメント</th><th>インパクト</th><th>概要</th>
+            <th>日付</th><th>シンボル</th><th>ヘッドライン</th><th>センチメント</th><th>インパクト</th>
         </tr></thead><tbody>
-        ${data.map(item => `
+        ${filtered.map(item => {
+            const headline = item.headline || '';
+            const headlineJa = item.headline_ja || '';
+            const sentClass = item.sentiment_label === 'positive' ? 'success' : item.sentiment_label === 'negative' ? 'danger' : 'unknown';
+            const impClass = item.impact_label === 'high' || item.impact_label === 'critical' ? 'warn' : 'unknown';
+            return `
             <tr>
-                <td>${fmt.dt(item.published_at)}</td>
+                <td class="small">${fmt.dt(item.published_at)}</td>
                 <td><strong>${this.escapeHtml(item.symbol)}</strong></td>
-                <td><a href="${this.escapeHtml(item.url)}" target="_blank">${this.escapeHtml(item.headline_ja || item.headline)}</a></td>
-                <td><span class="badge badge-${item.sentiment_label === 'positive' ? 'success' : item.sentiment_label === 'negative' ? 'danger' : 'unknown'}">${this.escapeHtml(item.sentiment_label_ja || item.sentiment_label)}</span></td>
-                <td><span class="badge badge-${item.impact_label === 'high' ? 'warn' : 'unknown'}">${this.escapeHtml(item.impact_label_ja || item.impact_label)}</span></td>
-                <td class="small muted">${this.escapeHtml(item.summary_ja || item.snippet || '').substring(0, 100)}...</td>
-            </tr>`).join('')}
+                <td>
+                    <a href="${this.escapeHtml(item.url)}" target="_blank" style="font-weight:500">${this.escapeHtml(headline)}</a>
+                    ${headlineJa && headlineJa !== headline ? `<div class="small muted" style="margin-top:2px">${this.escapeHtml(headlineJa)}</div>` : ''}
+                </td>
+                <td><span class="badge badge-${sentClass}">${this.escapeHtml(item.sentiment_label_ja || item.sentiment_label || '—')}</span></td>
+                <td><span class="badge badge-${impClass}">${this.escapeHtml(item.impact_label_ja || item.impact_label || '—')}</span></td>
+            </tr>`;
+        }).join('')}
         </tbody></table></div>`;
     }
 
