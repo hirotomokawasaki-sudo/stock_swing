@@ -121,9 +121,21 @@ def _compute_once(key: str, fn, ttl: float = 60.0):
 class ConsoleHandler(BaseHTTPRequestHandler):
     """HTTP request handler for Stock Swing Console."""
     
+    @staticmethod
+    def _sanitize_for_json(obj):
+        """Recursively replace float NaN/Inf with None so json.dumps produces valid JSON."""
+        import math
+        if isinstance(obj, float):
+            return None if (math.isnan(obj) or math.isinf(obj)) else obj
+        if isinstance(obj, dict):
+            return {k: ConsoleHandler._sanitize_for_json(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [ConsoleHandler._sanitize_for_json(v) for v in obj]
+        return obj
+
     def _json(self, data, status=200):
         """Send JSON response."""
-        payload = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
+        payload = json.dumps(self._sanitize_for_json(data), ensure_ascii=False, indent=2).encode("utf-8")
         try:
             self.send_response(status)
             self.send_header("Content-Type", "application/json; charset=utf-8")

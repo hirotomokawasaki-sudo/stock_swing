@@ -19,7 +19,10 @@ class BenchmarkService:
             return []
         
         try:
-            return json.loads(benchmark_file.read_text())
+            import math
+            bars = json.loads(benchmark_file.read_text())
+            # Drop bars where close is NaN (yfinance sometimes leaves the latest bar incomplete)
+            return [b for b in bars if isinstance(b.get('close'), (int, float)) and not math.isnan(float(b['close']))]
         except:
             return []
 
