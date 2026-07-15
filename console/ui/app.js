@@ -1888,11 +1888,12 @@ class Console {
             ];
 
             const bmColors = { SPY: { line: '#6366f1', bg: 'rgba(99,102,241,0)' }, QQQ: { line: '#f59e0b', bg: 'rgba(245,158,11,0)' } };
+            const bmLabels = { SPY: 'SPY（S&P500）', QQQ: 'QQQ（NASDAQ100）' };
             for (const [sym, series] of Object.entries(bmData)) {
                 const seriesMap = Object.fromEntries(series.map(s => [s.date.slice(0, 10), s.value]));
                 const color = bmColors[sym] || { line: '#9ca3af', bg: 'rgba(156,163,175,0)' };
                 datasets.push({
-                    label: sym,
+                    label: bmLabels[sym] || sym,
                     data: dateKeys.map(d => seriesMap[d] ?? null),
                     borderColor: color.line,
                     backgroundColor: color.bg,
@@ -2013,10 +2014,11 @@ class Console {
                     }
                 ];
                 const bmColors = { SPY: '#6366f1', QQQ: '#f59e0b' };
+                const bmLabels = { SPY: 'SPY（S&P500）', QQQ: 'QQQ（NASDAQ100）' };
                 for (const [sym, series] of Object.entries(bmData)) {
                     const seriesMap = Object.fromEntries(series.map(s => [s.date.slice(0, 10), s.value]));
                     datasets.push({
-                        label: sym,
+                        label: bmLabels[sym] || sym,
                         data: dateKeys.map(d => seriesMap[d] ?? null),
                         borderColor: bmColors[sym] || '#9ca3af',
                         backgroundColor: 'rgba(0,0,0,0)',
