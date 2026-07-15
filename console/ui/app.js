@@ -2511,11 +2511,22 @@ class Console {
                 });
             }
             
+            // Trade Count / Win Rate: build from daily_snapshots (not in charts.overview)
+            const allSnapsForCharts = this.data?.trading?.daily_snapshots || [];
+            const snapPeriod = this._filterEquityByPeriod(allSnapsForCharts, this._equityChartPeriod);
+
+            const tradeCountData = snapPeriod
+                .filter(s => s.date && s.cumulative_closed_trades != null)
+                .map(s => ({ date: (s.date || '').slice(0, 10), value: s.cumulative_closed_trades }));
+            const winRateData = snapPeriod
+                .filter(s => s.date && s.cumulative_win_rate != null)
+                .map(s => ({ date: (s.date || '').slice(0, 10), value: s.cumulative_win_rate }));
+
             // Trade Count Chart
-            this.createLineChart('tradeCountChart', charts.trade_count || [], '取引回数', '#f59e0b', (v) => v);
+            this.createLineChart('tradeCountChart', tradeCountData, '累積取引回数', '#f59e0b', (v) => v);
 
             // Win Rate Chart
-            this.createLineChart('winRateChart', charts.win_rate || [], '勝率', '#10b981', (v) => fmt.pct(v));
+            this.createLineChart('winRateChart', winRateData, '勝率', '#10b981', (v) => fmt.pct(v));
 
             // Profit Factor Chart (from daily_snapshots)
             const pfCtx = document.getElementById('pfChart');
