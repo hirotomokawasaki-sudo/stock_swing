@@ -1804,6 +1804,7 @@ class DashboardService:
             'strategy_version_id': strategy_id,
             'decision_status': self._derive_position_decision_status(latest_decision, holding_days=holding_days),
             'source': 'broker',
+            'asset_class': self._get_asset_class_for_symbol(symbol),
             # Exit levels
             'peak_price': round(peak_price, 2) if peak_price else None,
             'stop_loss_price': stop_loss_price,
@@ -1876,6 +1877,18 @@ class DashboardService:
             "unrealized_pnl": unrealized_pnl,
             "avg_holding_days": avg_holding_days,
         }
+
+    def _get_asset_class_for_symbol(self, symbol: str) -> str:
+        """Return asset_class (etf|stock) from symbol_registry.yaml, fallback 'stock'."""
+        try:
+            import yaml
+            reg_path = self.project_root / "config" / "reference" / "symbol_registry.yaml"
+            if not reg_path.exists():
+                return "stock"
+            reg = yaml.safe_load(reg_path.read_text())
+            return reg.get("symbols", {}).get(symbol, {}).get("asset_class", "stock")
+        except Exception:
+            return "stock"
 
     def _get_peak_price_for_symbol(self, symbol: str, fallback: float) -> float | None:
         """Return peak_price from pnl_state for the open trade matching symbol."""

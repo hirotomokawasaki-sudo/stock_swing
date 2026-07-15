@@ -878,22 +878,29 @@ class Console {
             const dateB = new Date(b.exit_time || b.entry_time || 0);
             return dateB - dateA; // 降順（最新が上）
         });
+        const exitReasonBadge = (reason) => {
+            if (!reason) return '<span class="muted">—</span>';
+            const cls = reason === 'trailing_stop' ? 'success'
+                      : reason === 'stop_loss'     ? 'danger'
+                      : reason === 'breakeven_stop' ? 'warn'
+                      : reason === 'time_based'    ? 'warn'
+                      : 'unknown';
+            const label = reason.replace(/_/g, '\u00a0');
+            return `<span class="badge badge-${cls}">${this.escapeHtml(label)}</span>`;
+        };
         return `<div class="table-wrap"><table><thead><tr>
-            <th>エントリー</th><th>エグジット</th><th>シンボル</th><th>数量</th><th>エントリー価格</th><th>エグジット価格</th><th>PnL</th><th>リターン</th><th>元戦略</th><th>strategy_version_id</th><th>ステータス</th>
+            <th>日付</th><th>シンボル</th><th>Exit理由</th><th>PnL</th><th>リターン</th><th>保有日数</th><th>エントリー</th><th>エグジット</th>
         </tr></thead><tbody>
         ${sortedData.map(trade => `
             <tr>
-                <td class="small">${fmt.dt(trade.entry_time)}</td>
-                <td class="small">${trade.exit_time ? fmt.dt(trade.exit_time) : '—'}</td>
+                <td class="small muted">${(trade.exit_time || trade.entry_time || '').slice(0,10)}</td>
                 <td><strong>${this.escapeHtml(trade.symbol)}</strong></td>
-                <td>${trade.qty || trade.quantity || 0}</td>
-                <td>${fmt.usd(trade.entry_price)}</td>
-                <td>${trade.exit_price ? fmt.usd(trade.exit_price) : '—'}</td>
+                <td>${exitReasonBadge(trade.exit_reason)}</td>
                 <td class="${(trade.pnl || 0) >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(trade.pnl || 0)}</td>
                 <td class="${(trade.return_pct || 0) >= 0 ? 'success' : 'danger'}">${fmt.pctSigned(trade.return_pct || 0)}</td>
-                <td class="small">${this.formatStrategyLabel(trade.original_strategy_id || trade.strategy_id || '')}</td>
-                <td class="small">${this.formatStrategyLabel(trade.strategy_version_id || trade.strategy_id || '')}</td>
-                <td><span class="badge badge-${trade.status === 'closed' ? 'success' : trade.status === 'open' ? 'warn' : 'unknown'}">${this.escapeHtml(trade.status || '-')}</span></td>
+                <td class="small">${trade.holding_days != null ? (+trade.holding_days).toFixed(1) + '日' : '—'}</td>
+                <td class="small">${fmt.usd(trade.entry_price)}</td>
+                <td class="small">${trade.exit_price ? fmt.usd(trade.exit_price) : '—'}</td>
             </tr>`).join('')}
         </tbody></table></div>`;
     }
@@ -1010,9 +1017,15 @@ class Console {
             // Trailing active row highlight
             const rowStyle = trailingActive ? 'background:rgba(16,185,129,0.07);' : '';
             const trailBadge = trailingActive ? ' <span class="badge badge-success" title="Trailing Stop 起動中🔒">🔵Trail</span>' : '';
+            const assetClass = pos.asset_class || '';
+            const assetBadge = assetClass === 'etf'
+                ? ' <span class="badge badge-unknown" style="font-size:10px;padding:1px 5px">ETF</span>'
+                : assetClass === 'stock'
+                ? ' <span class="badge badge-unknown" style="font-size:10px;padding:1px 5px;opacity:.6">STK</span>'
+                : '';
             return `
             <tr style="${rowStyle}">
-                <td><strong>${this.escapeHtml(pos.symbol)}</strong>${trailBadge}</td>
+                <td><strong>${this.escapeHtml(pos.symbol)}</strong>${assetBadge}${trailBadge}</td>
                 <td>${pos.qty || pos.quantity || 0}</td>
                 <td>${pos.holding_days != null ? pos.holding_days + '日' : '—'}</td>
                 <td>${fmt.usd(pos.entry_price ?? pos.avg_entry_price ?? pos.avg_price ?? 0)}</td>
@@ -1058,27 +1071,37 @@ class Console {
 
     renderCronJobsTable(data) {
         if (!data || data.length === 0) return '<p class="muted">ジョブなし</p>';
+        const nowMs = Date.now();
+        const fmtNextRun = (nextRunAtMs) => {
+            if (!nextRunAtMs) return '—';
+            const diffMs = nextRunAtMs - nowMs;
+            const diffMin = Math.round(diffMs / 60000);
+            const dt = new Date(nextRunAtMs);
+            const hhmm = dt.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
+            if (diffMs < 0) return `<span class="warn">過ぎ (${hhmm})</span>`;
+            if (diffMin < 60) return `<span class="success">あと${diffMin}分 <span class="muted small">(${hhmm})</span></span>`;
+            const diffH = Math.floor(diffMin / 60);
+            const remMin = diffMin % 60;
+            return `あと${diffH}h${remMin}m <span class="muted small">(${hhmm})</span>`;
+        };
         return `<div class="table-wrap"><table><thead><tr>
-            <th>名前</th><th>スケジュール</th><th>状態</th><th>最終実行</th><th>次回実行</th><th>遅延</th><th>成功率 (7d)</th><th>平均実行時間</th>
+            <th>名前</th><th>スケジュール</th><th>状態</th><th>最終実行</th><th>次回実行</th><th>遅延</th>
         </tr></thead><tbody>
         ${data.map(job => {
             const lagSeconds = job.lag_seconds || 0;
             const lagClass = lagSeconds > 86400 ? 'danger' : lagSeconds > 3600 ? 'warn' : 'success';
             const lagDisplay = this.formatDuration(lagSeconds);
-            const avgDuration = this.formatDuration((job.avg_duration_ms || 0) / 1000);
-            const successRate = job.success_rate_7d || 0;
-            const successClass = successRate >= 0.9 ? 'success' : successRate >= 0.7 ? 'warn' : 'danger';
-            
+            const nextRunAtMs = job.nextRunAtMs || job.next_run_at_ms;
+            const lastStatus = job.lastRunStatus || job.last_run_status || 'unknown';
+            const statusClass = lastStatus === 'ok' ? 'success' : lastStatus === 'error' ? 'danger' : 'unknown';
             return `
             <tr>
                 <td><strong>${this.escapeHtml((job.name || '').replace('stock_swing_', ''))}</strong></td>
-                <td class="small">${this.escapeHtml(job.schedule?.expr || '-')}</td>
-                <td><span class="badge badge-${job.enabled ? 'success' : 'unknown'}">${job.enabled ? '有効' : '無効'}</span></td>
-                <td class="small">${fmt.dt(job.last_run)}</td>
-                <td class="small">${fmt.dt(job.next_run)}</td>
-                <td class="${lagClass}"><strong>${lagDisplay}</strong></td>
-                <td class="${successClass}">${fmt.pct(successRate)}</td>
-                <td class="small">${avgDuration}</td>
+                <td class="small muted">${this.escapeHtml(job.schedule?.expr || '-')}</td>
+                <td><span class="badge badge-${statusClass}">${this.escapeHtml(lastStatus)}</span></td>
+                <td class="small muted">${fmt.dt(job.last_run || job.lastRunAt)}</td>
+                <td class="small">${fmtNextRun(nextRunAtMs)}</td>
+                <td class="${lagClass} small">${lagDisplay}</td>
             </tr>`;
         }).join('')}
         </tbody></table></div>`;
