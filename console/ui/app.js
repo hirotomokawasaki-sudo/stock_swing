@@ -1929,52 +1929,82 @@ class Console {
     }
 
     initAnalysisCharts() {
-        setTimeout(() => {
+        setTimeout(async () => {
             const perf = this.data?.performance || {};
             const sharpe = perf.sharpe || {};
             const alpha = perf.alpha || {};
-            
+
             const ctx = document.getElementById('riskReturnChart');
             if (!ctx) return;
-            
+
+            // Portfolio point: use actual data_points for annualization
+            // annual_return_pct from Sharpe calc may be distorted if data is short.
+            // Show raw period return + annualized vol instead.
+            const periodDays = alpha.period?.days || sharpe.data_points || 1;
+            const portfolioReturnPct = alpha.portfolio?.return_pct ?? (sharpe.annual_return_pct / 252 * periodDays);
+            // Annualized vol is reliable; use it
+            const portfolioVolPct = sharpe.annual_volatility_pct || 0;
+
+            // Benchmark: calculate annualized vol from SPY daily data via API
+            let spyAnnualVolPct = 15; // fallback
+            let spyAnnualReturnPct = 0;
+            try {
+                const res = await fetch('/api/benchmark/normalized?symbols=SPY');
+                const bm = await res.json();
+                const spySeries = bm.benchmarks?.SPY || [];
+                if (spySeries.length >= 3) {
+                    const vals = spySeries.map(s => s.value);
+                    const dailyReturns = vals.slice(1).map((v, i) => (v - vals[i]) / vals[i]);
+                    const mean = dailyReturns.reduce((a, b) => a + b, 0) / dailyReturns.length;
+                    const variance = dailyReturns.reduce((a, r) => a + (r - mean) ** 2, 0) / dailyReturns.length;
+                    spyAnnualVolPct = Math.sqrt(variance * 252) * 100;
+                    // Period return (not annualized — same window as portfolio)
+                    const spyPeriodReturn = (vals[vals.length - 1] - vals[0]) / vals[0] * 100;
+                    spyAnnualReturnPct = spyPeriodReturn; // same window for fair comparison
+                }
+            } catch (e) { /* use fallback */ }
+
+            const bmReturnPct = alpha.benchmark?.return_pct ?? spyAnnualReturnPct;
+
             new Chart(ctx, {
                 type: 'scatter',
                 data: {
                     datasets: [{
                         label: 'ポートフォリオ',
-                        data: [{
-                            x: (sharpe.annual_volatility_pct || 0),
-                            y: (sharpe.annual_return_pct || 0)
-                        }],
+                        data: [{ x: portfolioVolPct, y: portfolioReturnPct }],
                         backgroundColor: '#10b981',
-                        pointRadius: 10
+                        pointRadius: 12,
+                        pointHoverRadius: 14
                     }, {
-                        label: 'ベンチマーク',
-                        data: [{
-                            x: 15, // 仮の値
-                            y: (alpha.benchmark?.return_pct || 0)
-                        }],
-                        backgroundColor: '#6b7280',
-                        pointRadius: 10
+                        label: 'SPY（S&P500）',
+                        data: [{ x: spyAnnualVolPct, y: bmReturnPct }],
+                        backgroundColor: '#6366f1',
+                        pointRadius: 10,
+                        pointHoverRadius: 12
                     }]
                 },
                 options: {
                     responsive: true,
                     plugins: {
+                        legend: { display: true },
                         tooltip: {
                             callbacks: {
-                                label: (context) => `${context.dataset.label}: リターン ${fmt.pct(context.parsed.y/100)}, リスク ${fmt.pct(context.parsed.x/100)}`
+                                label: (context) => {
+                                    const r = context.parsed.y;
+                                    const v = context.parsed.x;
+                                    return `${context.dataset.label}:  リターン ${r >= 0 ? '+' : ''}${r.toFixed(1)}%  ボラ ${v.toFixed(1)}%`;
+                                }
                             }
                         }
                     },
                     scales: {
                         x: {
-                            title: { display: true, text: 'リスク (ボラティリティ)' },
-                            ticks: { callback: (value) => fmt.pct(value/100) }
+                            title: { display: true, text: `リスク（年率ボラティリティ）` },
+                            ticks: { callback: (v) => v.toFixed(0) + '%' }
                         },
                         y: {
-                            title: { display: true, text: 'リターン' },
-                            ticks: { callback: (value) => fmt.pct(value/100) }
+                            title: { display: true, text: `リターン（期間: ${periodDays}日）` },
+                            ticks: { callback: (v) => v.toFixed(0) + '%' }
                         }
                     }
                 }
