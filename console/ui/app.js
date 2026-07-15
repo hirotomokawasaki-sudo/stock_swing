@@ -1945,26 +1945,35 @@ class Console {
             // Annualized vol is reliable; use it
             const portfolioVolPct = sharpe.annual_volatility_pct || 0;
 
-            // Benchmark: calculate annualized vol from SPY daily data via API
-            let spyAnnualVolPct = 15; // fallback
-            let spyAnnualReturnPct = 0;
+            // Benchmark: calculate annualized vol + period return for SPY and QQQ
+            const bmPoints = {};
             try {
-                const res = await fetch('/api/benchmark/normalized?symbols=SPY');
+                const res = await fetch('/api/benchmark/normalized?symbols=SPY,QQQ');
                 const bm = await res.json();
-                const spySeries = bm.benchmarks?.SPY || [];
-                if (spySeries.length >= 3) {
-                    const vals = spySeries.map(s => s.value);
+                for (const [sym, series] of Object.entries(bm.benchmarks || {})) {
+                    if (series.length < 3) continue;
+                    const vals = series.map(s => s.value);
                     const dailyReturns = vals.slice(1).map((v, i) => (v - vals[i]) / vals[i]);
                     const mean = dailyReturns.reduce((a, b) => a + b, 0) / dailyReturns.length;
                     const variance = dailyReturns.reduce((a, r) => a + (r - mean) ** 2, 0) / dailyReturns.length;
-                    spyAnnualVolPct = Math.sqrt(variance * 252) * 100;
-                    // Period return (not annualized — same window as portfolio)
-                    const spyPeriodReturn = (vals[vals.length - 1] - vals[0]) / vals[0] * 100;
-                    spyAnnualReturnPct = spyPeriodReturn; // same window for fair comparison
+                    const annualVol = Math.sqrt(variance * 252) * 100;
+                    const periodReturn = (vals[vals.length - 1] - vals[0]) / vals[0] * 100;
+                    bmPoints[sym] = { vol: annualVol, ret: periodReturn };
                 }
             } catch (e) { /* use fallback */ }
 
-            const bmReturnPct = alpha.benchmark?.return_pct ?? spyAnnualReturnPct;
+            const bmConfig = {
+                SPY: { label: 'SPY（S&P500）',  color: '#6366f1' },
+                QQQ: { label: 'QQQ（NASDAQ100）', color: '#f59e0b' },
+            };
+
+            const bmDatasets = Object.entries(bmPoints).map(([sym, pt]) => ({
+                label: bmConfig[sym]?.label || sym,
+                data: [{ x: pt.vol, y: pt.ret }],
+                backgroundColor: bmConfig[sym]?.color || '#9ca3af',
+                pointRadius: 10,
+                pointHoverRadius: 12
+            }));
 
             new Chart(ctx, {
                 type: 'scatter',
@@ -1975,13 +1984,7 @@ class Console {
                         backgroundColor: '#10b981',
                         pointRadius: 12,
                         pointHoverRadius: 14
-                    }, {
-                        label: 'SPY（S&P500）',
-                        data: [{ x: spyAnnualVolPct, y: bmReturnPct }],
-                        backgroundColor: '#6366f1',
-                        pointRadius: 10,
-                        pointHoverRadius: 12
-                    }]
+                    }, ...bmDatasets]
                 },
                 options: {
                     responsive: true,
