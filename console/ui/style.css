@@ -699,6 +699,50 @@ canvas {
     font-weight: 600;
 }
 
+/* Chart-level period selector (compact, inline) */
+.chart-period-selector {
+    display: flex;
+    gap: 4px;
+}
+
+.chart-period-btn {
+    padding: 4px 10px;
+    background: #1a2332;
+    border: 1px solid #2d3f56;
+    color: #9ca3af;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+    transition: all 0.15s;
+}
+
+.chart-period-btn:hover {
+    background: #243447;
+    border-color: #3b82f6;
+    color: #e5e7eb;
+}
+
+.chart-period-btn.active {
+    background: #1d4ed8;
+    border-color: #3b82f6;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* Block reason rows in funnel */
+.funnel-reason-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 13px;
+}
+
+.funnel-reason-label { color: #d1d5db; }
+.funnel-reason-count { font-weight: 600; min-width: 40px; text-align: right; }
+
 /* Comparison Chart */
 .comparison-chart-card {
     background: linear-gradient(135deg, #1a2332 0%, #243447 100%);

@@ -32,6 +32,8 @@ class Console {
     constructor() {
         this.currentTab = 'overview';
         this.currentPeriod = localStorage.getItem('dashboardPeriod') || 'month';
+        this._equityChartPeriod = localStorage.getItem('equityChartPeriod') || 'month';
+        this._weeklyChartPeriod = localStorage.getItem('weeklyChartPeriod') || 'month';
         this.data = null;
         this.selectedNewsId = null;
         this.newsFilterUsed = localStorage.getItem('newsFilterUsed') === 'true';
@@ -695,28 +697,60 @@ class Console {
 
     renderPipelineFunnel() {
         const p = this.data.pipeline || {};
-        return `<div class="grid funnel-grid">
+        const funnel = p.funnel || {};
+        const normalizedReasons = p.rejection_breakdown || {};
+
+        // ブロック理由の日本語マッピング
+        const reasonLabels = {
+            'position_size_limit':       '📊 ポジションサイズ上限',
+            'portfolio_cap':             '📊 ポートフォリオ上限',
+            'guardrail_halt':            '🚨 Guardrail HALT',
+            'guardrail_block_buys':      '🚨 Guardrail Block',
+            'entry_filter':              '🔍 エントリーフィルター',
+            'rolling_pf_gate':           '🔍 PF ゲート',
+            'stock_reduced_mode':        '🔍 Stock reduced',
+            'volume_filter':             '🔍 出来高フィルター',
+            'risk_budget':               '💰 リスクバジェット',
+            'exposure_preflight':        '💰 Exposure制限',
+            'deny_without_reason':       '⚠️ 理由不明',
+        };
+
+        const reasonsHtml = Object.keys(normalizedReasons).length > 0
+            ? Object.entries(normalizedReasons)
+                .sort((a, b) => b[1] - a[1])
+                .map(([k, v]) => {
+                    const label = reasonLabels[k] || k;
+                    return `<div class="funnel-reason-row">
+                        <span class="funnel-reason-label">${this.escapeHtml(label)}</span>
+                        <span class="funnel-reason-count danger">${v}件</span>
+                    </div>`;
+                }).join('')
+            : '<div class="muted small">ブロックなし</div>';
+
+        return `
+        <div class="grid funnel-grid">
             <div class="funnel-item"><div>
-                <div class="perf-label">Signals</div>
-                <div class="perf-value">${p.total_signals || '0'}</div>
+                <div class="perf-label">Decisions</div>
+                <div class="perf-value">${funnel.decisions || p.total_signals || '0'}</div>
             </div></div>
             <div class="funnel-item"><div>
-                <div class="perf-label">Orders</div>
-                <div class="perf-value">${p.total_orders || '0'}</div>
+                <div class="perf-label">Denied</div>
+                <div class="perf-value danger">${funnel.risk_rejected || '0'}</div>
             </div></div>
             <div class="funnel-item"><div>
-                <div class="perf-label">Targets</div>
-                <div class="perf-value">${p.total_targets || '0'}</div>
-            </div></div>
-            <div class="funnel-item"><div>
-                <div class="perf-label">Confirmed</div>
-                <div class="perf-value">${p.total_confirmed || '0'}</div>
+                <div class="perf-label">Submitted</div>
+                <div class="perf-value">${funnel.orders_submitted || p.total_orders || '0'}</div>
             </div></div>
             <div class="funnel-item"><div>
                 <div class="perf-label">Filled</div>
-                <div class="perf-value">${p.total_filled || '0'}</div>
+                <div class="perf-value success">${funnel.orders_filled || p.total_filled || '0'}</div>
             </div></div>
-        </div>`;
+        </div>
+        ${funnel.risk_rejected > 0 ? `
+        <div class="card" style="margin-top:8px">
+            <h4 style="margin:0 0 8px">🚫 ブロック理由の内訳</h4>
+            ${reasonsHtml}
+        </div>` : ''}`;
     }
 
     renderRecentTrades(data) {
@@ -842,27 +876,33 @@ class Console {
     renderPositionsTable(data) {
         if (!data || data.length === 0) return '<p class="muted">ポジションなし</p>';
         return `<div class="table-wrap"><table><thead><tr>
-            <th>シンボル</th><th>数量</th><th>取得日</th><th>保有日数</th><th>取得価格</th><th>現在価格</th><th>評価額</th><th>評価損益</th><th>損益率</th><th>比率</th><th>ステータス</th><th>strategy_version_id</th>
+            <th>シンボル</th><th>数量</th><th>保有日数</th><th>取得価格</th><th>現在価格</th><th>評価損益</th><th>損益率</th><th>Peak</th><th>ストップ水準</th><th>ストップまで</th><th>比率</th>
         </tr></thead><tbody>
         ${data.map(pos => {
             const pnlPct = pos.unrealized_pnl_pct ?? pos.unrealized_return_pct ?? pos.return_pct ?? 0;
             const pnlClass = (pos.unrealized_pnl || 0) >= 0 ? 'success' : 'danger';
             const pnlPctClass = pnlPct >= 0 ? 'success' : 'danger';
-            const statusBadge = pos.decision_status === 'stop_loss' ? 'danger' : pos.decision_status === 'review' ? 'warn' : 'success';
+            // Stop level display
+            const stopPrice = pos.effective_stop_price;
+            const distPct = pos.dist_to_stop_pct;  // % from current to stop (positive = safe)
+            const trailingActive = pos.trailing_active;
+            const stopLabel = stopPrice ? fmt.usd(stopPrice) : '—';
+            const stopMode = trailingActive ? '🔵 Trail' : '🟡 Hard';
+            const distLabel = distPct != null ? `${distPct >= 0 ? '' : ''}${distPct.toFixed(1)}%` : '—';
+            const distClass = distPct == null ? '' : distPct < 1.5 ? 'danger' : distPct < 3 ? 'warn' : 'success';
             return `
             <tr>
                 <td><strong>${this.escapeHtml(pos.symbol)}</strong></td>
                 <td>${pos.qty || pos.quantity || 0}</td>
-                <td class="small">${pos.entry_time ? fmt.dt(pos.entry_time) : '—'}</td>
                 <td>${pos.holding_days != null ? pos.holding_days + '日' : '—'}</td>
                 <td>${fmt.usd(pos.entry_price ?? pos.avg_entry_price ?? pos.avg_price ?? 0)}</td>
                 <td>${fmt.usd(pos.current_price || 0)}</td>
-                <td>${fmt.usd(pos.market_value || pos.exposure || 0)}</td>
                 <td class="${pnlClass}">${fmt.usdSigned(pos.unrealized_pnl || 0)}</td>
                 <td class="${pnlPctClass}">${fmt.pctSigned(pnlPct)}</td>
+                <td class="small">${pos.peak_price ? fmt.usd(pos.peak_price) : '—'}</td>
+                <td class="small">${stopPrice ? `<span title="${stopMode}">${stopLabel}</span>` : '—'}</td>
+                <td class="${distClass} small">${distLabel}</td>
                 <td>${fmt.pct(pos.portfolio_weight || 0)}</td>
-                <td><span class="badge badge-${statusBadge}">${this.escapeHtml(pos.decision_status || '-')}</span></td>
-                <td class="small">${this.formatStrategyLabel(pos.strategy_version_id || pos.strategy_id || '')}</td>
             </tr>`;
         }).join('')}
         </tbody></table></div>`;
@@ -1391,7 +1431,14 @@ class Console {
         </div>
         <div class="grid" style="margin-top: 16px;">
             <div class="card" style="grid-column: 1 / -1;">
-                <h3>📈 Equity推移（週次）</h3>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                    <h3 style="margin:0">📈 Equity推移</h3>
+                    <div class="chart-period-selector">
+                        ${['week','month','all'].map(p =>
+                            `<button class="chart-period-btn weekly-period-btn${this._weeklyChartPeriod === p ? ' active' : ''}" data-period="${p}">${{week:'1W', month:'1M', all:'ALL'}[p]}</button>`
+                        ).join('')}
+                    </div>
+                </div>
                 <canvas id="weeklyEquityChart" height="80"></canvas>
             </div>
         </div>
@@ -1545,12 +1592,17 @@ class Console {
 
     renderCharts() {
         const charts = this.data?.charts?.overview || {};
-        
+        const periodBtns = ['week','month','all'].map(p =>
+            `<button class="chart-period-btn${this._equityChartPeriod === p ? ' active' : ''}" data-period="${p}">${{week:'1W', month:'1M', all:'ALL'}[p]}</button>`
+        ).join('');
         return `
         ${this.renderPeriodSelector()}
         <div class="grid" style="margin-bottom: 16px;">
             <div class="card" style="grid-column: 1 / -1;">
-                <h3>💰 Equity推移</h3>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                    <h3 style="margin:0">💰 Equity推移</h3>
+                    <div class="chart-period-selector">${periodBtns}</div>
+                </div>
                 <canvas id="equityChart" height="80"></canvas>
             </div>
         </div>
@@ -1612,6 +1664,27 @@ class Console {
                 localStorage.setItem('dashboardPeriod', nextPeriod);
                 await this.loadData();
                 this.render();
+            });
+        });
+    }
+
+    _filterEquityByPeriod(equityData, period) {
+        if (!equityData || equityData.length === 0) return equityData;
+        const periodDays = { week: 7, month: 30, all: Infinity }[period] || 30;
+        if (periodDays === Infinity) return equityData;
+        return equityData.slice(-periodDays);
+    }
+
+    _setupChartPeriodBtns(selector, storageKey, stateKey, redrawFn) {
+        document.querySelectorAll(selector).forEach(btn => {
+            btn.addEventListener('click', () => {
+                const p = btn.dataset.period;
+                if (!p || this[stateKey] === p) return;
+                this[stateKey] = p;
+                localStorage.setItem(storageKey, p);
+                document.querySelectorAll(selector).forEach(b =>
+                    b.classList.toggle('active', b.dataset.period === p));
+                redrawFn(p);
             });
         });
     }
@@ -1856,11 +1929,13 @@ class Console {
     }
 
     initWeeklyCharts() {
-        setTimeout(async () => {
+        const drawWeeklyEquity = async (period) => {
             const charts = this.data?.charts?.overview || {};
-            const equityData = charts.equity || [];
+            const allEquity = charts.equity || [];
+            const equityData = this._filterEquityByPeriod(allEquity, period);
             const ctx = document.getElementById('weeklyEquityChart');
             if (!ctx) return;
+            if (ctx._chartInstance) { ctx._chartInstance.destroy(); ctx._chartInstance = null; }
 
             // Fetch normalized benchmark data
             let bmData = {};
@@ -1925,6 +2000,13 @@ class Console {
                     }
                 }
             });
+        };
+        setTimeout(async () => {
+            await drawWeeklyEquity(this._weeklyChartPeriod);
+            this._setupChartPeriodBtns(
+                '.weekly-period-btn', 'weeklyChartPeriod', '_weeklyChartPeriod',
+                (p) => drawWeeklyEquity(p)
+            );
         }, 100);
     }
 
@@ -2016,19 +2098,20 @@ class Console {
     }
 
     initAllCharts() {
-        setTimeout(async () => {
+        const drawEquityChart = async (period) => {
             const charts = this.data?.charts?.overview || {};
-
-            // Equity Chart with SPY / QQQ benchmark overlay
-            const equityData = charts.equity || [];
+            const allEquity = charts.equity || [];
+            const equityData = this._filterEquityByPeriod(allEquity, period);
             const equityCtx = document.getElementById('equityChart');
-            if (equityCtx && equityData.length > 0) {
-                let bmData = {};
-                try {
-                    const res = await fetch('/api/benchmark/normalized?symbols=SPY,QQQ');
-                    const json = await res.json();
-                    if (json.available) bmData = json.benchmarks || {};
-                } catch (e) { /* ignore */ }
+            if (!equityCtx || equityData.length === 0) return;
+            if (equityCtx._chartInstance) { equityCtx._chartInstance.destroy(); equityCtx._chartInstance = null; }
+
+            let bmData = {};
+            try {
+                const res = await fetch('/api/benchmark/normalized?symbols=SPY,QQQ');
+                const json = await res.json();
+                if (json.available) bmData = json.benchmarks || {};
+            } catch (e) { /* ignore */ }
 
                 // Normalize date keys to YYYY-MM-DD
                 const dateKeys = equityData.map(d => (d.date || '').slice(0, 10));
@@ -2087,8 +2170,17 @@ class Console {
                         }
                     }
                 });
-            }
-            
+        };
+
+        setTimeout(async () => {
+            const charts = this.data?.charts?.overview || {};
+            await drawEquityChart(this._equityChartPeriod);
+            this._setupChartPeriodBtns(
+                '.chart-period-btn:not(.weekly-period-btn)',
+                'equityChartPeriod', '_equityChartPeriod',
+                (p) => drawEquityChart(p)
+            );
+
             // Drawdown Chart
             this.createLineChart('drawdownChart', charts.drawdown_pct || [], 'Drawdown', '#ef4444', (v) => fmt.pct(v));
             

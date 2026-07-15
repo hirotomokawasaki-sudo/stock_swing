@@ -1104,7 +1104,9 @@ class DashboardService:
             "rejections": {
                 "decision_reasons": [{"reason": k, "count": v} for k, v in sorted(decision_reasons.items(), key=lambda item: item[1], reverse=True)],
                 "normalized_reasons": [{"reason": k, "count": v} for k, v in sorted(normalized_reasons.items(), key=lambda item: item[1], reverse=True)],
-            }
+            },
+            # dict form for easy JS lookup
+            "rejection_breakdown": {k: v for k, v in sorted(normalized_reasons.items(), key=lambda item: item[1], reverse=True)},
         }
 
     def get_news(self, trading: Dict[str, Any] | None = None, tracked_symbols: List[str] | None = None) -> Dict[str, Any]:
@@ -1738,6 +1740,29 @@ class DashboardService:
             pass
         
         latest_decision = self._get_latest_decision_for_symbol(symbol)
+
+        # --- Exit level calculation ---
+        # Load peak_price from pnl_state tracker for trailing stop computation.
+        peak_price = self._get_peak_price_for_symbol(symbol, avg_entry)
+        # Exit config constants (mirrors simple_exit_v2.yaml defaults)
+        STOP_LOSS_PCT      = -0.07   # hard stop: entry × 0.93
+        TRAILING_STOP_PCT  =  0.04   # trailing drawdown from peak
+        BREAKEVEN_ACT_PCT  =  0.03   # trailing activates when peak ≥ entry × 1.03
+
+        stop_loss_price = round(avg_entry * (1 + STOP_LOSS_PCT), 2) if avg_entry > 0 else None
+        trailing_stop_price = None
+        trailing_active = False
+        if peak_price and avg_entry > 0 and peak_price >= avg_entry * (1 + BREAKEVEN_ACT_PCT):
+            trailing_stop_price = round(peak_price * (1 - TRAILING_STOP_PCT), 2)
+            trailing_active = True
+        # Effective stop: higher of trailing_stop and hard stop_loss
+        effective_stop = None
+        if trailing_stop_price is not None and stop_loss_price is not None:
+            effective_stop = max(trailing_stop_price, stop_loss_price)
+        elif stop_loss_price is not None:
+            effective_stop = stop_loss_price
+        dist_to_stop = round((current_price - effective_stop) / current_price * 100, 2) if effective_stop and current_price else None
+
         return {
             'symbol': symbol,
             'qty': qty,
@@ -1753,6 +1778,13 @@ class DashboardService:
             'strategy_version_id': strategy_id,
             'decision_status': self._derive_position_decision_status(latest_decision, holding_days=holding_days),
             'source': 'broker',
+            # Exit levels
+            'peak_price': round(peak_price, 2) if peak_price else None,
+            'stop_loss_price': stop_loss_price,
+            'trailing_stop_price': trailing_stop_price,
+            'trailing_active': trailing_active,
+            'effective_stop_price': effective_stop,
+            'dist_to_stop_pct': dist_to_stop,
         }
 
     def _enrich_position(self, position: Dict[str, Any], current_prices: Dict[str, float] | None = None) -> Dict[str, Any]:
@@ -1818,6 +1850,23 @@ class DashboardService:
             "unrealized_pnl": unrealized_pnl,
             "avg_holding_days": avg_holding_days,
         }
+
+    def _get_peak_price_for_symbol(self, symbol: str, fallback: float) -> float | None:
+        """Return peak_price from pnl_state for the open trade matching symbol."""
+        try:
+            import json
+            state_path = self.project_root / "data" / "tracking" / "pnl_state.json"
+            if not state_path.exists():
+                return None
+            state = json.loads(state_path.read_text())
+            for t in state.get("trades", []):
+                if t.get("symbol") == symbol and t.get("status") == "open":
+                    peak = t.get("peak_price")
+                    if peak is not None:
+                        return float(peak)
+        except Exception:
+            pass
+        return fallback
 
     def _get_position_entry_context(self, symbol: str, qty: float) -> tuple[str | None, float | None]:
         entry_dt = self._get_tracker_entry_datetime(symbol)
