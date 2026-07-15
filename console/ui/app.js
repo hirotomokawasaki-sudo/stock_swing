@@ -888,7 +888,7 @@ class Console {
             const trailingActive = pos.trailing_active;
             const stopLabel = stopPrice ? fmt.usd(stopPrice) : '—';
             const stopMode = trailingActive ? '🔵 Trail' : '🟡 Hard';
-            const distLabel = distPct != null ? `${distPct >= 0 ? '' : ''}${distPct.toFixed(1)}%` : '—';
+            const distLabel = distPct != null ? `▲${distPct.toFixed(1)}%` : '—';
             const distClass = distPct == null ? '' : distPct < 1.5 ? 'danger' : distPct < 3 ? 'warn' : 'success';
             return `
             <tr>
