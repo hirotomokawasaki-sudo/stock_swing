@@ -865,7 +865,37 @@ class Console {
             ${reasonsHtml}
         </div>` : ''}
         ${pipelineStageHtml}
-        ${this._renderDenyBySymbol(p)}`;  
+        ${this._renderDenyBySymbol(p)}
+        ${this._renderPaperRuns(p)}`;
+    }
+
+    _renderPaperRuns(pipeline) {
+        const runs = (pipeline.runs || []).slice(0, 10);
+        if (runs.length === 0) return '';
+        return `<div class="card" style="margin-top:8px">
+            <h4 style="margin:0 0 8px">📝 paper_demo 実行ログ（直近10件）</h4>
+            <div class="table-wrap"><table><thead><tr>
+                <th>開始時刻</th>
+                <th>完了</th>
+                <th style="text-align:right">Decisions</th>
+                <th style="text-align:right">提出</th>
+                <th style="text-align:right">変換率</th>
+            </tr></thead><tbody>
+            ${runs.map(r => {
+                const started = (r.started_at || '').slice(0, 16).replace('T', ' ');
+                const completed = r.completed_at ? '\u2705' : '<span class="warn">未完了</span>';
+                const rate = r.conversion_rate || 0;
+                const rateClass = rate > 0.1 ? 'success' : rate > 0 ? 'warn' : 'muted';
+                return `<tr>
+                    <td class="small">${this.escapeHtml(started)} UTC</td>
+                    <td class="small">${completed}</td>
+                    <td style="text-align:right">${r.decisions || 0}</td>
+                    <td style="text-align:right ${r.submitted > 0 ? '" class="success' : ''}">${r.submitted || 0}</td>
+                    <td style="text-align:right" class="${rateClass}">${(rate * 100).toFixed(0)}%</td>
+                </tr>`;
+            }).join('')}
+            </tbody></table></div>
+        </div>`;
     }
 
     _renderDenyBySymbol(pipeline) {
@@ -1848,7 +1878,7 @@ class Console {
             </div>
         </div>
         
-        <div class="grid">
+        <div class="grid" style="margin-bottom: 16px;">
             <div class="card" style="grid-column: 1 / 3;">
                 <h3>🎯 取引回数推移</h3>
                 <canvas id="tradeCountChart" height="80"></canvas>
@@ -1856,6 +1886,15 @@ class Console {
             <div class="card" style="grid-column: 3 / -1;">
                 <h3>🏆 勝率推移</h3>
                 <canvas id="winRateChart" height="80"></canvas>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card" style="grid-column: 1 / -1;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                    <h3 style="margin:0">📊 Profit Factor 推移 <span class="muted small">Go/No-Go 基準: PF ≥ 1.0</span></h3>
+                </div>
+                <canvas id="pfChart" height="70"></canvas>
             </div>
         </div>`;
     }
@@ -2474,9 +2513,69 @@ class Console {
             
             // Trade Count Chart
             this.createLineChart('tradeCountChart', charts.trade_count || [], '取引回数', '#f59e0b', (v) => v);
-            
+
             // Win Rate Chart
             this.createLineChart('winRateChart', charts.win_rate || [], '勝率', '#10b981', (v) => fmt.pct(v));
+
+            // Profit Factor Chart (from daily_snapshots)
+            const pfCtx = document.getElementById('pfChart');
+            if (pfCtx) {
+                const allSnaps = this.data?.trading?.daily_snapshots || [];
+                const pfSnaps = this._filterEquityByPeriod(
+                    allSnaps.filter(s => s.cumulative_profit_factor != null && s.date),
+                    this._equityChartPeriod
+                );
+                if (pfSnaps.length > 0) {
+                    const pfLabels = pfSnaps.map(s => new Date(s.date + 'T00:00:00').toLocaleDateString('ja-JP', {month:'short', day:'numeric'}));
+                    const pfValues = pfSnaps.map(s => +s.cumulative_profit_factor);
+                    const goalLine = pfSnaps.map(() => 1.0);
+                    new Chart(pfCtx, {
+                        type: 'line',
+                        data: {
+                            labels: pfLabels,
+                            datasets: [
+                                {
+                                    label: 'Profit Factor',
+                                    data: pfValues,
+                                    borderColor: '#6366f1',
+                                    backgroundColor: 'rgba(99,102,241,0.1)',
+                                    fill: true,
+                                    tension: 0.3,
+                                    borderWidth: 2,
+                                    pointRadius: 2,
+                                },
+                                {
+                                    label: 'Go/No-Go 基準 (1.0)',
+                                    data: goalLine,
+                                    borderColor: '#ef4444',
+                                    backgroundColor: 'transparent',
+                                    fill: false,
+                                    borderDash: [6, 4],
+                                    borderWidth: 1.5,
+                                    pointRadius: 0,
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { display: true },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(3)}`
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    min: 0,
+                                    ticks: { callback: (v) => v.toFixed(2) }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
         }, 100);
     }
 
