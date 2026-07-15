@@ -702,17 +702,21 @@ class Console {
 
         // ブロック理由の日本語マッピング
         const reasonLabels = {
-            'position_size_limit':       '📊 ポジションサイズ上限',
-            'portfolio_cap':             '📊 ポートフォリオ上限',
-            'guardrail_halt':            '🚨 Guardrail HALT',
-            'guardrail_block_buys':      '🚨 Guardrail Block',
-            'entry_filter':              '🔍 エントリーフィルター',
-            'rolling_pf_gate':           '🔍 PF ゲート',
-            'stock_reduced_mode':        '🔍 Stock reduced',
-            'volume_filter':             '🔍 出来高フィルター',
-            'risk_budget':               '💰 リスクバジェット',
-            'exposure_preflight':        '💰 Exposure制限',
-            'deny_without_reason':       '⚠️ 理由不明',
+            'position_size_limit_exceeded': '📊 ポジションサイズ上限',
+            'position_size_limit':          '📊 ポジションサイズ上限',
+            'confidence_below_minimum':     '🎯 Confidence 不足',
+            'portfolio_cap':                '📊 ポートフォリオ上限',
+            'guardrail_halt':               '🚨 Guardrail HALT',
+            'guardrail_block_buys':         '🚨 Guardrail Block',
+            'entry_filter':                 '🔍 エントリーフィルター',
+            'rolling_pf_gate':              '🔍 PF ゲート',
+            'stock_reduced_mode':           '🔍 Stock reduced',
+            'volume_filter':                '🔍 出来高フィルター',
+            'adr_filter':                   '🔍 ADR フィルター',
+            'risk_budget':                  '💰 リスクバジェット',
+            'risk_limit_exceeded':          '💰 リスク上限',
+            'exposure_preflight':           '💰 Exposure制限',
+            'deny_without_reason':          '⚠️ 理由不明',
         };
 
         const reasonsHtml = Object.keys(normalizedReasons).length > 0
@@ -884,15 +888,18 @@ class Console {
             const pnlPctClass = pnlPct >= 0 ? 'success' : 'danger';
             // Stop level display
             const stopPrice = pos.effective_stop_price;
-            const distPct = pos.dist_to_stop_pct;  // % from current to stop (positive = safe)
+            const distPct = pos.dist_to_stop_pct;
             const trailingActive = pos.trailing_active;
             const stopLabel = stopPrice ? fmt.usd(stopPrice) : '—';
             const stopMode = trailingActive ? '🔵 Trail' : '🟡 Hard';
             const distLabel = distPct != null ? `▲${distPct.toFixed(1)}%` : '—';
             const distClass = distPct == null ? '' : distPct < 1.5 ? 'danger' : distPct < 3 ? 'warn' : 'success';
+            // Trailing active row highlight
+            const rowStyle = trailingActive ? 'background:rgba(16,185,129,0.07);' : '';
+            const trailBadge = trailingActive ? ' <span class="badge badge-success" title="Trailing Stop 起動中🔒">🔵Trail</span>' : '';
             return `
-            <tr>
-                <td><strong>${this.escapeHtml(pos.symbol)}</strong></td>
+            <tr style="${rowStyle}">
+                <td><strong>${this.escapeHtml(pos.symbol)}</strong>${trailBadge}</td>
                 <td>${pos.qty || pos.quantity || 0}</td>
                 <td>${pos.holding_days != null ? pos.holding_days + '日' : '—'}</td>
                 <td>${fmt.usd(pos.entry_price ?? pos.avg_entry_price ?? pos.avg_price ?? 0)}</td>
@@ -1479,8 +1486,28 @@ class Console {
             : `${this.getPeriodLabel(perf.period_filter || this.currentPeriod)} / snapshots=${perf.snapshot_count || 0}`;
         const strategyAttribution = perf.by_strategy || [];
 
+        // 全期間サマリー
+        const fp = perf.full_period;
+        const fpHtml = fp ? (() => {
+            const fpAlpha = fp.alpha ?? null;
+            const fpPf = fp.portfolio_return_pct ?? null;
+            const fpBm = fp.benchmark_return_pct ?? null;
+            const fpSharpe = fp.sharpe ?? null;
+            const fpClass = fpAlpha == null ? 'unknown' : fpAlpha > 0 ? 'success' : 'danger';
+            return `<div class="card" style="margin-bottom:16px;border-left:4px solid #6366f1">
+                <h4 style="margin:0 0 8px">📅 全期間サマリー（${fp.start || '?'} → ${fp.end || '?'} / ${fp.days || '?'}日）</h4>
+                <div style="display:flex;gap:24px;flex-wrap:wrap">
+                    <div class="metric" style="margin:0"><span class="label">Portfolio</span><span class="value ${fpPf >= 0 ? 'success' : 'danger'}">${fpPf != null ? (fpPf >= 0 ? '+' : '') + fpPf.toFixed(2) + '%' : '—'}</span></div>
+                    <div class="metric" style="margin:0"><span class="label">SPY</span><span class="value">${fpBm != null ? (fpBm >= 0 ? '+' : '') + fpBm.toFixed(2) + '%' : '—'}</span></div>
+                    <div class="metric" style="margin:0"><span class="label">Alpha</span><span class="value ${fpClass}">${fpAlpha != null ? (fpAlpha >= 0 ? '+' : '') + fpAlpha.toFixed(2) + '%' : '—'}</span></div>
+                    <div class="metric" style="margin:0"><span class="label">Sharpe</span><span class="value">${fpSharpe != null ? fpSharpe.toFixed(2) : '—'}</span></div>
+                </div>
+            </div>`;
+        })() : '';
+
         return `
         ${this.renderPeriodSelector()}
+        ${fpHtml}
         <div class="card" style="margin-bottom: 16px;">
             <div class="metric"><span class="label">分析対象期間</span><span class="value">${this.escapeHtml(periodInfo)}</span></div>
         </div>

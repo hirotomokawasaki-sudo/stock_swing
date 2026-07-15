@@ -192,6 +192,32 @@ class DashboardService:
             attribution["period_filter"] = period
             attribution["snapshot_count"] = len(filtered_snapshots)
             attribution["by_strategy"] = self._get_strategy_performance_attribution(trading, period=period)
+
+            # Full-period alpha: load ALL snapshots from pnl_state directly
+            try:
+                import json as _json
+                state_path = self.project_root / "data" / "tracking" / "pnl_state.json"
+                all_snapshots = []
+                if state_path.exists():
+                    _state = _json.loads(state_path.read_text())
+                    all_snapshots = _state.get("daily_snapshots", [])
+            except Exception:
+                all_snapshots = snapshots
+
+            if len(all_snapshots) > len(filtered_snapshots):
+                full_attr = benchmark_service.get_performance_attribution(all_snapshots, "SPY")
+                attribution["full_period"] = {
+                    "alpha": full_attr.get("alpha", {}).get("alpha"),
+                    "portfolio_return_pct": full_attr.get("alpha", {}).get("portfolio", {}).get("return_pct"),
+                    "benchmark_return_pct": full_attr.get("alpha", {}).get("benchmark", {}).get("return_pct"),
+                    "start": full_attr.get("alpha", {}).get("period", {}).get("start"),
+                    "end": full_attr.get("alpha", {}).get("period", {}).get("end"),
+                    "days": full_attr.get("alpha", {}).get("period", {}).get("days"),
+                    "sharpe": full_attr.get("sharpe", {}).get("sharpe_ratio"),
+                }
+            else:
+                attribution["full_period"] = None
+
             return attribution
         except Exception as e:
             return {"available": False, "error": str(e), "period_filter": period}
@@ -2594,16 +2620,36 @@ class DashboardService:
 
     def _normalize_rejection_reason(self, reason: str) -> str:
         text = (reason or "").strip().lower()
-        if "position_size would exceed limit" in text:
+        if "position_size would exceed limit" in text or "position_size_limit" in text:
             return "position_size_limit_exceeded"
+        if "confidence" in text and ("below" in text or "minimum" in text):
+            return "confidence_below_minimum"
+        if "rolling_pf" in text or "rolling pf" in text:
+            return "rolling_pf_gate"
+        if "stock_reduced" in text or "stock reduced" in text:
+            return "stock_reduced_mode"
+        if "volume" in text and "filter" in text:
+            return "volume_filter"
+        if "adr" in text:
+            return "adr_filter"
+        if "risk" in text and "budget" in text:
+            return "risk_budget"
         if "risk" in text and "exceed" in text:
             return "risk_limit_exceeded"
+        if "exposure" in text:
+            return "exposure_preflight"
+        if "guardrail" in text and "halt" in text:
+            return "guardrail_halt"
+        if "guardrail" in text:
+            return "guardrail_block_buys"
         if "approval" in text:
             return "operator_approval_required"
         if "duplicate" in text:
             return "duplicate_signal"
         if "cooldown" in text:
             return "cooldown_active"
+        if "entry_filter" in text:
+            return "entry_filter"
         return text or "unknown"
 
     def _summarize_paper_runs(self, audits: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
