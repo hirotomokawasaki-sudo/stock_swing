@@ -1854,8 +1854,12 @@ def main() -> int:  # noqa: C901
                 "broker_tracker_mismatch_count": _bt_diff_postrun["mismatch_count"],
                 "api_error_rate_pct": 0.0,
                 "order_rejection_rate_pct": (
+                    # Only evaluate rate when >= 4 submissions to avoid spurious triggers
+                    # (e.g. 1 rejection / 8 submissions = 12.5% previously caused false block_buys).
+                    # Threshold raised to 25% in autonomous_stop.yaml (2026-07-15).
                     len([s for s in submissions if s.status not in {"submitted", "accepted", "filled", "partially_filled"}])
-                    / max(len(submissions), 1) * 100
+                    / len(submissions) * 100
+                    if len(submissions) >= 4 else 0.0
                 ) if "submissions" in dir() else 0.0,
             }
             _post_state = post_run_update(_post_metrics, _guard_engine, _breaker_store)

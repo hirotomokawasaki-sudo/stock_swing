@@ -53,7 +53,7 @@ rules:
   order_rejection_rate_pct:
     metric: order_rejection_rate_pct
     operator: ">="
-    threshold: 10.0
+    threshold: 25.0  # raised from 10.0 (2026-07-15): 10% was too sensitive (1 rejection / 8 submissions = 12.5% caused spurious block_buys)
     action: block_buys
     severity: high
 
