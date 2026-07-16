@@ -1398,6 +1398,20 @@ def main() -> int:  # noqa: C901
         etf_symbols=ETF_SYMBOLS
     )
 
+    # Exit-only mode: block ALL new buy orders (premarket / high-volatility guard)
+    # Enable: export PAPER_DEMO_EXIT_ONLY=true
+    # Use case: premarket run (09:25 ET) where price signals are noisy and
+    # entry quality is low; exits (stop_loss / trailing_stop) still execute normally.
+    # Added 2026-07-16
+    if os.environ.get("PAPER_DEMO_EXIT_ONLY", "").lower() == "true":
+        _exit_only_blocked = [d for d in actionable if d.action == "buy"]
+        actionable = [d for d in actionable if d.action != "buy"]
+        if _exit_only_blocked:
+            _syms = ", ".join(d.symbol for d in _exit_only_blocked[:8])
+            print(f"  Exit-only mode (PAPER_DEMO_EXIT_ONLY): blocked {len(_exit_only_blocked)} buy(s) [{_syms}{'...' if len(_exit_only_blocked) > 8 else ''}]")
+        else:
+            print("  Exit-only mode (PAPER_DEMO_EXIT_ONLY): no buys to block")
+
     # Off-hours buy guardrail: block new BUY orders outside regular market hours
     # (9:30-16:00 ET). Market orders with extended_hours=False cannot fill during
     # pre-market or after-hours, creating phantom accepted orders (2026-06-03 incident).
