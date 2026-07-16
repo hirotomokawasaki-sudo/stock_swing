@@ -1103,6 +1103,8 @@ def main() -> int:  # noqa: C901
             min_hold_days=exit_config.get('min_hold_days', 1),
             min_hold_days_enabled=exit_config.get('min_hold_days_enabled', True),
             emergency_stop_bypass_pct=exit_config.get('emergency_stop_bypass_pct', -0.12),
+            # broker_recon graduation (改善点1 2026-07-16)
+            broker_recon_graduation_days=exit_config.get('broker_recon_graduation_days', 5),
         )
     else:
         # Fallback to default values

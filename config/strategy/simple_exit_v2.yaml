@@ -32,6 +32,13 @@ staged_trailing_levels:
 # Maximum holding period in calendar days
 max_hold_days: 20
 
+# ── Broker-reconstructed threshold graduation (改善点1 2026-07-16) ───────────
+# broker_reconstructed positions (entry_signal_strength=None) use a conservative
+# -5% stop by default. After holding >= broker_recon_graduation_days calendar days,
+# the position is considered established and graduates to the standard stop_loss_pct.
+# Set to null to disable graduation (always use -5% for unknown-strength positions).
+broker_recon_graduation_days: 5
+
 # ── G9: min_hold guard ───────────────────────────────────────────────────────
 # stop_loss が発火するまでの最低保有日数。
 # 削画: 59%の早期カットがノイズであり、trailing_stopに移行する前に切られていた。

@@ -10,12 +10,15 @@ Current implementation: simple_exit_v2
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 from typing import Any
 
 from stock_swing.feature_engine.base_feature import FeatureResult
 from stock_swing.pricing import PriceResolver
 from stock_swing.strategy_engine.base_strategy import BaseStrategy, CandidateSignal
+
+logger = logging.getLogger(__name__)
 
 
 class SimpleExitV2Strategy(BaseStrategy):
@@ -51,6 +54,10 @@ class SimpleExitV2Strategy(BaseStrategy):
         min_hold_days: int = 1,
         min_hold_days_enabled: bool = True,
         emergency_stop_bypass_pct: float = -0.12,  # bypass min_hold if loss >= -12%
+        # Broker-reconstructed threshold graduation (改善点1 2026-07-16)
+        # After holding >= broker_recon_graduation_days, unknown-strength positions
+        # graduate from conservative -5% stop to the standard stop_loss_pct (-7%).
+        broker_recon_graduation_days: int | None = 5,
     ):
         """Initialize simple exit V2 strategy.
 
@@ -89,17 +96,37 @@ class SimpleExitV2Strategy(BaseStrategy):
         self.min_hold_days = min_hold_days
         self.min_hold_days_enabled = min_hold_days_enabled
         self.emergency_stop_bypass_pct = emergency_stop_bypass_pct
+        # broker_recon threshold graduation
+        self.broker_recon_graduation_days = broker_recon_graduation_days
 
     def _resolve_thresholds(
-        self, entry_signal_strength: float | None
+        self,
+        entry_signal_strength: float | None,
+        hold_days: float | None = None,
     ) -> tuple[float, float]:
         """Return (stop_loss_pct, trailing_activation_pct) adjusted for signal strength.
 
         Missing or invalid strength is treated as LOW conviction (-5% stop, +10% trailing)
         because broker-reconstructed positions have no signal provenance.
+
+        Graduation rule (2026-07-16): if entry_signal_strength is None (broker_reconstructed)
+        but hold_days >= broker_recon_graduation_days, the position has demonstrated
+        stability and graduates to standard thresholds (-7% stop, +8% trailing).
         """
         if entry_signal_strength is None:
-            # Unknown conviction: use conservative/low thresholds to protect capital
+            # Check graduation: long-held broker_reconstructed positions → standard thresholds
+            if (
+                self.broker_recon_graduation_days is not None
+                and hold_days is not None
+                and hold_days >= self.broker_recon_graduation_days
+            ):
+                logger.debug(
+                    "broker_recon graduation: hold_days=%.1f >= %dd → standard thresholds",
+                    hold_days,
+                    self.broker_recon_graduation_days,
+                )
+                return self.stop_loss_pct, self.trailing_activation_pct
+            # Unknown conviction within graduation window: conservative/low thresholds
             return -0.05, 0.10
         try:
             s = float(entry_signal_strength)
@@ -315,7 +342,7 @@ class SimpleExitV2Strategy(BaseStrategy):
             # Resolve dynamic thresholds from entry signal strength
             entry_signal_strength = position_data.get("entry_signal_strength")
             eff_stop_loss_pct, eff_trailing_activation_pct = self._resolve_thresholds(
-                entry_signal_strength
+                entry_signal_strength, hold_days=hold_days
             )
 
             logger.debug(

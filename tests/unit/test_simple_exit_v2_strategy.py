@@ -259,6 +259,53 @@ def test_resolve_thresholds_missing_strength_is_conservative():
     assert trail == 0.10, f"Expected 0.10, got {trail}"
 
 
+def test_broker_recon_graduates_to_standard_after_hold_days():
+    """改善点1 2026-07-16: broker_recon position held >= graduation_days → standard thresholds."""
+    strat = SimpleExitV2Strategy(
+        stop_loss_pct=-0.07,
+        trailing_activation_pct=0.08,
+        broker_recon_graduation_days=5,
+    )
+    # Before graduation window: still conservative
+    stop, trail = strat._resolve_thresholds(None, hold_days=4)
+    assert stop == -0.05, f"Before graduation: expected -0.05, got {stop}"
+    assert trail == 0.10, f"Before graduation: expected 0.10, got {trail}"
+
+    # At exactly graduation boundary: graduates to standard
+    stop, trail = strat._resolve_thresholds(None, hold_days=5)
+    assert stop == -0.07, f"At graduation: expected -0.07, got {stop}"
+    assert trail == 0.08, f"At graduation: expected 0.08, got {trail}"
+
+    # Well past graduation: still standard
+    stop, trail = strat._resolve_thresholds(None, hold_days=14)
+    assert stop == -0.07, f"Post graduation: expected -0.07, got {stop}"
+    assert trail == 0.08, f"Post graduation: expected 0.08, got {trail}"
+
+
+def test_broker_recon_graduation_disabled_when_none():
+    """graduation_days=None disables graduation entirely."""
+    strat = SimpleExitV2Strategy(
+        stop_loss_pct=-0.07,
+        trailing_activation_pct=0.08,
+        broker_recon_graduation_days=None,
+    )
+    stop, trail = strat._resolve_thresholds(None, hold_days=30)
+    assert stop == -0.05, f"Graduation disabled: expected -0.05, got {stop}"
+    assert trail == 0.10, f"Graduation disabled: expected 0.10, got {trail}"
+
+
+def test_broker_recon_graduation_without_hold_days_stays_conservative():
+    """No hold_days info → cannot graduate, stays conservative."""
+    strat = SimpleExitV2Strategy(
+        stop_loss_pct=-0.07,
+        trailing_activation_pct=0.08,
+        broker_recon_graduation_days=5,
+    )
+    stop, trail = strat._resolve_thresholds(None, hold_days=None)
+    assert stop == -0.05, f"No hold_days: expected -0.05, got {stop}"
+    assert trail == 0.10, f"No hold_days: expected 0.10, got {trail}"
+
+
 def test_high_strength_trailing_activates_earlier():
     """High conviction entry activates trailing at +6% (vs standard +8%)."""
     strat = SimpleExitV2Strategy(
