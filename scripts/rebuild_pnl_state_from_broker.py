@@ -129,6 +129,103 @@ def load_existing_tracking_metadata(state_file: Path) -> dict[str, Any]:
     }
 
 
+def load_existing_attribution(state_file: Path) -> dict[str, Any]:
+    """Extract exit_reason attribution and quarantined_trades from current pnl_state.
+
+    Returns a dict with:
+      'by_exit_order_id'  : exit_broker_order_id -> exit_reason   (highest priority)
+      'by_key'            : (symbol, exit_time[:19], pnl_int) -> exit_reason  (fallback)
+      'quarantined_trades': list of quarantined trade dicts
+
+    Only non-broker_fill reasons are indexed (broker_fill is the rebuild default).
+    Added 2026-07-17 to prevent attribution loss on rebuild.
+    """
+    if not state_file.exists():
+        return {'by_exit_order_id': {}, 'by_key': {}, 'quarantined_trades': []}
+    try:
+        data = json.loads(state_file.read_text(encoding="utf-8"))
+    except Exception:
+        return {'by_exit_order_id': {}, 'by_key': {}, 'quarantined_trades': []}
+
+    by_exit_order_id: dict[str, str] = {}
+    by_key: dict[tuple, str] = {}
+    collisions: set = set()
+
+    for trade in data.get('trades', []):
+        if trade.get('status') == 'open':
+            continue
+        reason = trade.get('exit_reason', '')
+        if not reason or reason == 'broker_fill':
+            continue
+
+        # Primary: exit_broker_order_id (sell order id)
+        eid = trade.get('exit_broker_order_id', '')
+        if eid:
+            by_exit_order_id[eid] = reason
+
+        # Secondary: (symbol, exit_time[:19], pnl rounded to int)
+        sym = trade.get('symbol', '')
+        et = str(trade.get('exit_time', ''))[:19]
+        pnl_i = int(round(float(trade.get('pnl', 0) or 0)))
+        key = (sym, et, pnl_i)
+        if key in by_key and by_key[key] != reason:
+            collisions.add(key)   # ambiguous; skip
+        else:
+            by_key[key] = reason
+
+    # Remove ambiguous keys
+    for k in collisions:
+        by_key.pop(k, None)
+
+    return {
+        'by_exit_order_id': by_exit_order_id,
+        'by_key': by_key,
+        'quarantined_trades': data.get('quarantined_trades', []),
+    }
+
+
+def apply_attribution(pnl_state: dict, attribution: dict[str, Any]) -> dict[str, int]:
+    """Merge saved attribution back onto freshly rebuilt trades.
+
+    Mutates pnl_state['trades'] in-place and sets pnl_state['quarantined_trades'].
+    Returns stats dict: {'by_exit_order': N, 'by_key': N, 'kept_broker_fill': N}.
+    Added 2026-07-17.
+    """
+    by_exit_order_id = attribution.get('by_exit_order_id', {})
+    by_key = attribution.get('by_key', {})
+    quarantined = attribution.get('quarantined_trades', [])
+
+    stats = {'by_exit_order': 0, 'by_key': 0, 'kept_broker_fill': 0}
+
+    for trade in pnl_state.get('trades', []):
+        if trade.get('status') == 'open':
+            continue
+        if trade.get('exit_reason') != 'broker_fill':
+            continue
+
+        # Try primary key: exit_broker_order_id
+        eid = trade.get('exit_broker_order_id', '')
+        if eid and eid in by_exit_order_id:
+            trade['exit_reason'] = by_exit_order_id[eid]
+            stats['by_exit_order'] += 1
+            continue
+
+        # Try secondary key: (symbol, exit_time[:19], pnl_int)
+        sym = trade.get('symbol', '')
+        et = str(trade.get('exit_time', ''))[:19]
+        pnl_i = int(round(float(trade.get('pnl', 0) or 0)))
+        key = (sym, et, pnl_i)
+        if key in by_key:
+            trade['exit_reason'] = by_key[key]
+            stats['by_key'] += 1
+            continue
+
+        stats['kept_broker_fill'] += 1
+
+    pnl_state['quarantined_trades'] = quarantined
+    return stats
+
+
 def resolve_tracking_metadata(args: argparse.Namespace, existing: dict[str, Any], now_iso: str) -> dict[str, Any]:
     """Resolve tracking metadata for rebuilt pnl_state.
 
@@ -597,6 +694,15 @@ def main():
     parser = argparse.ArgumentParser(description="Rebuild pnl_state.json from broker order history")
     parser.add_argument("--dry-run", action="store_true", help="Show what would be changed without writing")
     parser.add_argument("--backup", action="store_true", help="Create backup of existing pnl_state.json")
+    parser.add_argument(
+        "--preserve-attribution",
+        action="store_true",
+        help=(
+            "Restore exit_reason / quarantined_trades from the current pnl_state after rebuild. "
+            "Prevents attribution loss caused by rebuild resetting all exit_reason to broker_fill. "
+            "Recommended for routine HALT-recovery rebuilds."
+        ),
+    )
     parser.add_argument("--baseline-equity", type=float, default=None, help="Override baseline equity")
     parser.add_argument("--baseline-date", type=str, default=None, help="Override baseline date (YYYY-MM-DD)")
     parser.add_argument("--created-at", type=str, default=None, help="Override tracking created_at (ISO-8601)")
@@ -621,6 +727,33 @@ def main():
     existing_meta = load_existing_tracking_metadata(state_file)
     resolved_meta = resolve_tracking_metadata(args, existing_meta, datetime.now(timezone.utc).isoformat())
 
+    # Load attribution BEFORE rebuild (if --preserve-attribution)
+    attribution: dict[str, Any] = {'by_exit_order_id': {}, 'by_key': {}, 'quarantined_trades': []}
+    if args.preserve_attribution:
+        attribution = load_existing_attribution(state_file)
+        n_attr = len(attribution['by_exit_order_id']) + len(attribution['by_key'])
+        n_q = len(attribution['quarantined_trades'])
+        print(f"ℹ️  --preserve-attribution: loaded {n_attr} attribution entries, "
+              f"{n_q} quarantined trades from existing pnl_state.")
+    else:
+        # Warn operator that attribution will be lost
+        if state_file.exists():
+            try:
+                _existing = json.loads(state_file.read_text(encoding="utf-8"))
+                _closed = [t for t in _existing.get('trades', []) if t.get('status') != 'open']
+                _non_bf = sum(1 for t in _closed if t.get('exit_reason', 'broker_fill') != 'broker_fill')
+                _q_count = len(_existing.get('quarantined_trades', []))
+                if _non_bf > 0 or _q_count > 0:
+                    print()
+                    print("⚠️  WARNING: --preserve-attribution was NOT specified.")
+                    print(f"   Current pnl_state has {_non_bf} attributed exits "
+                          f"and {_q_count} quarantined trades.")
+                    print("   These will be LOST after rebuild.")
+                    print("   To preserve them, re-run with:  --preserve-attribution")
+                    print()
+            except Exception:
+                pass
+
     # Rebuild state
     print("=" * 70)
     print("Rebuilding pnl_state.json from Broker Order History")
@@ -631,7 +764,17 @@ def main():
     print()
 
     pnl_state = rebuild_pnl_state(broker, tracking_metadata=resolved_meta)
-    
+
+    # Merge attribution back (if --preserve-attribution)
+    if args.preserve_attribution:
+        attr_stats = apply_attribution(pnl_state, attribution)
+        print()
+        print("✅ Attribution restored:")
+        print(f"   by exit_broker_order_id : {attr_stats['by_exit_order']}")
+        print(f"   by (symbol,exit_time,pnl): {attr_stats['by_key']}")
+        print(f"   kept as broker_fill      : {attr_stats['kept_broker_fill']}")
+        print(f"   quarantined_trades       : {len(pnl_state.get('quarantined_trades', []))}")
+
     # Print summary
     print()
     print("=" * 70)
