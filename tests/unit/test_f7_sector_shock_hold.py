@@ -156,3 +156,68 @@ def test_shadow_mode_enabled():
 def test_disabled_mode():
     config = SectorShockHoldConfig(mode="disabled")
     assert not SectorShockAnalyzer(config).is_enabled()
+
+
+# ── 2026-07-17 fix: sector_1d fallback · symbol_1d 修正の検証 ─────────────────────────────────
+
+def test_no_sector_data_returns_hard_stop():
+    """Empty sector_1d_return_pcts still returns hard_stop (no-data fallback)."""
+    config = _default_config()
+    analyzer = SectorShockAnalyzer(config)
+    result = analyzer.classify(
+        symbol="MDB",
+        current_return_pct=-0.04,
+        symbol_1d_return_pct=0.0,
+        sector_1d_return_pcts={},  # データなし
+    )
+    assert result.classification == "hard_stop"
+    assert any("no_sector_data" in r for r in result.reasoning)
+
+
+def test_soft_stop_07_10_us_scenario():
+    """07-11 JST (= 07-10 US): SMH +0.54%, SOXX -0.06% -- no sector shock.
+
+    Before fix these were hard_stop due to no_sector_data.
+    After fix (benchmark_returns.csv fallback) they become soft_stop.
+    """
+    config = _default_config()
+    analyzer = SectorShockAnalyzer(config)
+    # SMH/SOXX on 07-10 US: basically flat
+    sector_1d = {"SMH": 0.0054, "SOXX": -0.0006}
+    for sym, ret in [("CRWD", 0.035), ("MDB", -0.040), ("SNOW", -0.003)]:
+        result = analyzer.classify(
+            symbol=sym,
+            current_return_pct=ret,
+            symbol_1d_return_pct=0.0,
+            sector_1d_return_pcts=sector_1d,
+        )
+        assert result.classification == "soft_stop", (
+            f"{sym}: expected soft_stop, got {result.classification}"
+        )
+        assert result.recommended_action == "monitor"
+
+
+def test_sector_shock_hold_07_16_us_scenario():
+    """07-16 US: SMH -3.70%, SOXX -4.46% -- broad sector shock.
+
+    NOW / DELL stop_loss classified as sector_shock_hold when benchmark data available.
+    Previously hard_stop due to no_sector_data.
+    """
+    config = _default_config()
+    analyzer = SectorShockAnalyzer(config)
+    sector_1d = {"SMH": -0.0370, "SOXX": -0.0446}  # 07-16 actual values
+    test_cases = [
+        ("NOW",  -0.022, -0.018),
+        ("DELL", -0.015, -0.040),
+    ]
+    for sym, ret, s1d in test_cases:
+        result = analyzer.classify(
+            symbol=sym,
+            current_return_pct=ret,
+            symbol_1d_return_pct=s1d,
+            sector_1d_return_pcts=sector_1d,
+        )
+        assert result.classification == "sector_shock_hold", (
+            f"{sym}: expected sector_shock_hold, got {result.classification}"
+        )
+        assert result.recommended_action == "hold"

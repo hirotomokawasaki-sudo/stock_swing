@@ -15,6 +15,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import csv
 import logging
 import os
 import re
@@ -1122,30 +1123,60 @@ def main() -> int:  # noqa: C901
     _ssh_analyzer = SectorShockAnalyzer(_ssh_config)
     _ssh_shadow_count = 0
     if _ssh_analyzer.is_enabled() and exit_signals:
-        _sector_1d: dict[str, float] = {}
-        for _bm in _ssh_config.benchmark_symbols:
-            for _feat in all_features:
-                if getattr(_feat, "symbol", None) == _bm:
-                    # return_1d is stored in FeatureResult.values (not as a direct attr)
-                    _vals = getattr(_feat, "values", {})
-                    _1d = (
-                        _vals.get("return_1d")
-                        if isinstance(_vals, dict)
-                        else None
+        # Fix 1: build symbol → return_1d map from all price_momentum features
+        _feat_return_1d: dict[str, float] = {}
+        for _feat in all_features:
+            _sym_f = getattr(_feat, "symbol", None)
+            _vals_f = getattr(_feat, "values", {})
+            if _sym_f and isinstance(_vals_f, dict):
+                _r1d = _vals_f.get("return_1d")
+                if _r1d is not None:
+                    try:
+                        _feat_return_1d[_sym_f] = float(_r1d)
+                    except (TypeError, ValueError):
+                        pass
+
+        # Sector 1d return: prefer all_features (real-time), fall back to
+        # benchmark_returns.csv (most recent row) for any benchmark still missing.
+        _sector_1d: dict[str, float] = {
+            _bm: _feat_return_1d[_bm]
+            for _bm in _ssh_config.benchmark_symbols
+            if _bm in _feat_return_1d
+        }
+        _missing_bms = [b for b in _ssh_config.benchmark_symbols if b not in _sector_1d]
+        if _missing_bms:
+            _bm_csv = project_root / "data" / "benchmarks" / "benchmark_returns.csv"
+            if _bm_csv.exists():
+                _bm_latest: dict[str, tuple[str, float]] = {}
+                with open(_bm_csv, newline="") as _f:
+                    for _row in csv.DictReader(_f):
+                        _sym_bm = _row.get("symbol", "")
+                        _ret_str = _row.get("daily_return", "")
+                        _dt_str = _row.get("date", "")
+                        if _sym_bm in _missing_bms and _ret_str:
+                            try:
+                                _bm_latest[_sym_bm] = (_dt_str, float(_ret_str))
+                            except (TypeError, ValueError):
+                                pass
+                for _bm_sym, (_bm_dt, _bm_r) in _bm_latest.items():
+                    _sector_1d[_bm_sym] = _bm_r
+                    logger.debug(
+                        "sector_shock: %s return_1d=%.4f loaded from benchmark_returns.csv "
+                        "(date=%s; features had no data)",
+                        _bm_sym, _bm_r, _bm_dt,
                     )
-                    if _1d is not None:
-                        try:
-                            _sector_1d[_bm] = float(_1d)
-                        except (TypeError, ValueError):
-                            pass
-                        break
+
         for _sig in exit_signals:
             _sym = getattr(_sig, "symbol", None) or ""
             if not _sym:
                 continue
             _pos = current_positions_full.get(_sym) or {}
             _unrealized_pct = float(_pos.get("unrealized_plpc", 0) or 0)
-            _1d_sym = float((getattr(_sig, "signal_strength", 0) or 0)) * -1  # proxy
+            # Fix 2: use actual return_1d from features; fall back to signal_strength proxy
+            _1d_sym = _feat_return_1d.get(
+                _sym,
+                float((getattr(_sig, "signal_strength", 0) or 0)) * -1,
+            )
             _ssh_result = _ssh_analyzer.classify(
                 symbol=_sym,
                 current_return_pct=_unrealized_pct,
