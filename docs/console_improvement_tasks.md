@@ -133,8 +133,15 @@
                    ✅ テスト 676 passed / 2 skipped
 
 2026-07-14〜07-17  🟠 次回 Codex レビュー推奨（sector_shock shadow 10件以上待ち）
-                   🔲 min_hold 実効確認（stop_loss 件数の変化を観察）
-                   🔲 stop_loss 件数が減少しているか確認
+                   ✅ min_hold 実効確認（2026-07-17）
+                      - 07-13以降 stop_loss 5件: AMD(14d) / ANET(2d) / QTEC(20d) / NOW(9d) / DELL(1d)
+                      - 全て1日以上保有後の発動 → min_hold 正常機能
+                      - 1日未満のノイズ誤発動ゼロ ✅
+                   ✅ sector_shock shadow 累計確認（2026-07-17）
+                      - 累計 6件（07-11: 5件 / 07-14: 1件 / 07-15〜07-17: 0件）
+                      - ⚠️ 5件が no_sector_data → hard_stop にフォールバック（ベンチマーク未取得）
+                      - 1件は relative_weakness_exit（FRWD: symbol -100% vs sector -4.1%）
+                      - A/B 開始条件（10件）まで残り4件。引き続き passive 観察
 
 2026-07-28〜07-30  🔴 hard-halt 環境でのペーパー最終確認（BLOCKING）
 
