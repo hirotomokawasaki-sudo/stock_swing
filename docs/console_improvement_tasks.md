@@ -139,9 +139,14 @@
                       - 1日未満のノイズ誤発動ゼロ ✅
                    ✅ sector_shock shadow 累計確認（2026-07-17）
                       - 累計 6件（07-11: 5件 / 07-14: 1件 / 07-15〜07-17: 0件）
-                      - ⚠️ 5件が no_sector_data → hard_stop にフォールバック（ベンチマーク未取得）
+                      - ⚠️ 5件が no_sector_data → バグ检出: sector データ取得失敗のわかり
                       - 1件は relative_weakness_exit（FRWD: symbol -100% vs sector -4.1%）
                       - A/B 開始条件（10件）まで残り4件。引き続き passive 観察
+                   ✅ sector_shock shadow データ取得修正（2026-07-17 commit f6f1f6f）
+                      - Fix1: sector_1d に benchmark_returns.csv フォールバック追加
+                      - Fix2: symbol_1d を proxy でなく all_features.return_1d から取得
+                      - 07-16 US (SMH -3.7%)の NOW/DELL は修正後 sector_shock_hold 分類確認
+                      - 739 passed / 2 skipped (+3 regression tests)
 
 2026-07-28〜07-30  🔴 hard-halt 環境でのペーパー最終確認（BLOCKING）
 
