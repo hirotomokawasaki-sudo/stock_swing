@@ -1896,9 +1896,37 @@ def main() -> int:  # noqa: C901
                 _positions_for_diff,
                 pnl_tracker.get_open_positions(),
             )
+
+            # G1-v2: exclude submission-lag symbols from mismatch count.
+            # When a BUY is just submitted, the tracker records it immediately but the broker
+            # positions API may lag (especially at market open) → symbol appears in tracker_only.
+            # When a SELL is just submitted, the tracker closes it immediately but the broker
+            # may still show it → symbol appears in broker_only.
+            # Both are transient API-lag false positives, not real integrity issues.
+            _new_buy_symbols: set[str] = {
+                s.symbol for s in _new_submissions if getattr(s, "side", "") == "buy"
+            }
+            _new_sell_symbols: set[str] = {
+                s.symbol for s in _new_submissions if getattr(s, "side", "") == "sell"
+            }
+            _lag_excused: set[str] = (
+                (set(_bt_diff_postrun["tracker_only"]) & _new_buy_symbols)
+                | (set(_bt_diff_postrun["broker_only"]) & _new_sell_symbols)
+            )
+            _adjusted_mismatch = _bt_diff_postrun["mismatch_count"] - len(_lag_excused)
+            if _lag_excused:
+                logger.info(
+                    "post_run_mismatch: excused %d lag symbol(s) %s "
+                    "(broker API lag after submission); raw=%d adjusted=%d",
+                    len(_lag_excused),
+                    sorted(_lag_excused),
+                    _bt_diff_postrun["mismatch_count"],
+                    _adjusted_mismatch,
+                )
+
             _post_metrics = {
                 "stale_price_event_count": len(stale_symbols) if "stale_symbols" in dir() else 0,
-                "broker_tracker_mismatch_count": _bt_diff_postrun["mismatch_count"],
+                "broker_tracker_mismatch_count": _adjusted_mismatch,
                 "api_error_rate_pct": 0.0,
                 "order_rejection_rate_pct": (
                     # Only evaluate rate when >= 4 submissions to avoid spurious triggers
