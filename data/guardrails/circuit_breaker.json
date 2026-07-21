@@ -1,21 +1,10 @@
 {
-  "action": "none",
-  "clear_note": "Fresh broker fetch on 2026-07-13 shows mismatch_count=0. All 18 positions (incl. SKYY qty=210 and META qty=78) confirmed filled in broker. Original halt was a race condition: orders filled after circuit breaker evaluated API response. G1 investigation complete: no phantom positions.",
-  "cleared_at": "2026-07-13T02:39:57.601242+00:00",
-  "cleared_by": "operator_verified",
-  "reason": "guardrail_halt",
+  "action": "allow",
+  "clear_note": "07-21 market_open cron (09:35 ET) submitted BUY META+HPQ. Post-run mismatch=2 is API lag, not real mismatch. Same G1 race condition: 3s wait insufficient at market open. Broker confirmed fills OK. Current state: broker=tracker=12 positions, mismatch=0.",
+  "cleared_at": "2026-07-21T00:39:54.479425+00:00",
+  "cleared_by": "hirotomookawasaki",
+  "reason": "manual_clear",
   "status": "ok",
-  "triggered_at": "2026-07-10T13:35:56.633398+00:00",
-  "triggered_rules": [
-    {
-      "action": 5,
-      "metric": "broker_tracker_mismatch_count",
-      "name": "broker_tracker_mismatch",
-      "observed": 2.0,
-      "operator": ">=",
-      "severity": "critical",
-      "threshold": 1.0
-    }
-  ],
-  "clear_confirmed_mismatch_count": 0
+  "triggered_at": null,
+  "triggered_rules": []
 }

@@ -1938,3 +1938,15 @@ timestamp,workflow_name,model,input_tokens,output_tokens,total_tokens,estimated_
 2026-06-04T14:00:56.929938+00:00,paper_demo_backfill,rule_based:simple_exit_v2,221,20,241,0.0,f5aab714-ca15-b0f0-2baf-4a1e86c44552,TTEQ,evidence_v1,estimated_rule_based
 2026-06-04T14:05:52.056767+00:00,paper_demo_backfill,rule_based:simple_exit_v2,233,20,253,0.0,be221dc2-89e9-8ad6-cc66-c488e1cf999f,TTEQ,evidence_v1,estimated_rule_based
 2026-06-30T13:35:16.026317+00:00,paper_demo_backfill,rule_based:breakout_momentum_v1_etf,134,27,161,0.0,c47acdb3-13eb-4ee0-cdee-6afc70ca5588,TTEQ,evidence_v1,estimated_rule_based
+2026-07-13T13:36:45.291920+00:00,paper_demo,breakout_momentum_v1,2604,527,3131,0.0,True,0,,
+2026-07-13T19:55:19.244955+00:00,paper_demo,breakout_momentum_v1_intraday_enhanced,2466,464,2930,0.0,True,0,,
+2026-07-14T13:35:48.747749+00:00,paper_demo,breakout_momentum_v1,1764,371,2135,0.0,True,0,,
+2026-07-15T13:36:00.567200+00:00,paper_demo,breakout_momentum_v1,2564,468,3032,0.0,True,0,,
+2026-07-15T16:01:09.999075+00:00,paper_demo,breakout_momentum_v1,2888,537,3425,0.0,True,0,,
+2026-07-15T19:55:41.442424+00:00,paper_demo,breakout_momentum_v1,2443,444,2887,0.0,True,0,,
+2026-07-16T13:35:40.313120+00:00,paper_demo,breakout_momentum_v1,2016,431,2447,0.0,True,0,,
+2026-07-16T16:00:45.385103+00:00,paper_demo,breakout_momentum_v1,1597,311,1908,0.0,True,0,,
+2026-07-16T19:55:25.323051+00:00,paper_demo,breakout_momentum_v1_intraday_enhanced,1468,278,1746,0.0,True,0,,
+2026-07-17T13:35:36.280282+00:00,paper_demo,breakout_momentum_v1,1033,202,1235,0.0,True,0,,
+2026-07-20T13:36:02.789401+00:00,paper_demo,breakout_momentum_v1,812,172,984,0.0,True,0,,
+2026-07-20T19:55:27.272629+00:00,paper_demo,breakout_momentum_v1_intraday_enhanced,1153,218,1371,0.0,True,0,,

@@ -1,0 +1,12 @@
+{
+  "generated_at": "2026-07-21T01:00:35.479701+00:00",
+  "stats": {
+    "total_closed": 259,
+    "strategy_id_backfilled": 0,
+    "entry_signal_strength_backfilled": 0,
+    "exit_reason_backfilled": 0,
+    "no_decision_match": 36
+  },
+  "missing_count": 36,
+  "missing_pct": 13.9
+}
