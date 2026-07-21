@@ -1,38 +1,58 @@
 # config/strategy/portfolio_allocation.yaml
-# G8: ETF-first / stock-reduced policy alignment
-# Updated: 2026-07-13
-# Previous: ETFs=0.15, stocks=0.85 (ETF-weak bias, now obsolete)
-# Current: stock_reduced mode based on clean records analysis
+# SOURCE OF TRUTH: Stock 85% / ETF 15%前後
+# Updated: 2026-07-21 (Merge Spec 訂正: ETF-first → Stock 85 / ETF 15)
+# Backup: portfolio_allocation.yaml.bak_20260721 (旧: ETF=0.85 / Stock=0.15)
+#
+# 経緯:
+#   旧設定 (〜2026-07-21): ETF-first / stock_reduced モード (ETF 85% / Stock 15%)
+#   根拠だった ETF PF=1.353 vs Stock PF=0.772 は 07-14 rebuild 前の汚染データ
+#   現行方針 (ユーザー承認済み): Stock 85% / ETF 15% 前後
+#   実ポートフォリオ 07-21: Stock 90.9% / ETF 9.1% → 方針内で許容
+#
+# IMPORTANT: この値の変更にはユーザー承認が必要。ETF-first / stock-shadow への反転禁止。
 
-operating_mode: stock_reduced
-# Modes: stock_shadow | stock_reduced | balanced | etf_first
-# stock_shadow: stocks do not get live fills (shadow only)
-# stock_reduced: stocks get 0.25x size, ETF full size
-# balanced: ETF and stocks at equal allocation
-# etf_first: ETF preferred, stocks limited
+operating_mode: stock_primary
+# Modes: stock_primary | balanced | etf_primary
+# stock_primary: Stock 85% / ETF 15% 前後。現在の唯一の正式モード。
+# balanced: 50/50（将来の A/B 用）
+# etf_primary: 廃止。ユーザー承認なしに使用不可。
 
 portfolio:
   allocation:
-    ETFs: 0.85
-    stocks: 0.15
+    # Stock 85% / ETF 15% 前後が正式方針
+    stocks: 0.85
+    ETFs: 0.15
+  allocation_band:
+    # 推奨許容バンド（market value / equity ベース）
+    stocks_min: 0.80
+    stocks_max: 0.92
+    etf_min: 0.08
+    etf_max: 0.20
+  # order 後の projected allocation で判定
+  use_projected_allocation: true
 
+# position sizing multipliers
+# これらは戦略配分ではなく一時的 risk adjustment
+# R0-v2 完了後に見直し予定
 stock_new_buy_multiplier: 0.25
-# 0.0 = no new stock buys (stock_shadow equivalent)
-# 0.25 = 25% of normal size (stock_reduced)
-# 1.0 = full size (balanced or etf_first)
-# Rationale: clean records ETF PF=1.353 vs Stock PF=0.772
-# Stock full-size will resume after promotion gate: stock PF >= 1.0 over >= 30 clean trades
+# 0.25 = 25% of normal size (temporary risk reduction during ledger repair)
+# 1.0 = full size (target after R0-v2 ledger/guardrail acceptance)
+# Note: multiplier は final qty に実際に適用し、console に before/after qty を表示すること
 
 etf_new_buy_multiplier: 1.0
-# ETF full size unless ETF-specific guardrail blocks
+
+# Cluster / sector concentration caps
+sector_cap_pct: 0.80
+correlated_cluster_cap_pct: 0.40
+
+allocation_hard_limit_threshold: 0.10
 
 promotion_gate:
-  stock_full_size_requires:
+  stock_full_size_multiplier_requires:
     - min_clean_closed_trades: 30
     - min_profit_factor: 1.0
-    - min_attribution_coverage_pct: 95.0
+    - min_attribution_coverage_pct: 98.0
     - max_consecutive_stop_loss: 5
     - circuit_breaker_status: ok
-
-# Threshold: block buy if ETF or stock allocation exceeds target + threshold
-allocation_hard_limit_threshold: 0.10
+    - ledger_quality: VALID
+  # NOTE: promotion gate は汚染台帳コホートを入力に使わないこと (R0-v2 完了まで凍結)

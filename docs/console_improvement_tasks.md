@@ -177,426 +177,409 @@
 
 ---
 
-## 改訂ロードマップ（R0-R8）
+## 改訂ロードマップ v2（R0-v2〜R8-v2）— Codex Review マージ版
+
+**改訂日**: 2026-07-21（Codex Review H0-H9 統合）
+**前バージョン**: R0-R8（2026-07-13）→ git 履歴で参照可能
+**Status 定義**: VERIFIED_COMPLETE / IMPLEMENTED_UNVERIFIED / REOPENED / IN_PROGRESS / BLOCKED_BY_DATA / PLANNED
+
+> **重要方針訂正 (2026-07-21)**  
+> 運用上の正しい asset allocation 方針: **Stock 85% / ETF 15% 前後**  
+> 旧 ETF-first / stock-reduced (ETF 85% / Stock 15%) 記述は廃止。  
+> `config/strategy/portfolio_allocation.yaml` を更新済み。
 
 ---
 
-### ✅ R0: 安全モジュール統合ゲート（2026-06-25 完了）
-
-**目的**: 実装済みの P6/P9 モジュールを paper_demo ループに接続  
-**commit**: `89f8ed7`
-
-| サブタスク | 内容 | 状態 |
-|---|---|---|
-| R0-A | ExperimentContext を paper_demo に接続。全 run に experiment_id / config_hash を付与 | ✅ |
-| R0-B | GuardrailEngine + CircuitBreaker を paper_demo に接続。startup / buy-gate / post-run フック | ✅ |
-| R0-C | warning_only モード（`paper_warning_only: true`）。2週間のキャリブレーション期間中 | ✅ |
-
-**干-run 確認済み出力**
-```
--- ExperimentContext ---
-  experiment_id : exp-20260625-swing-v1-prompt-v1-9ac0851c-63890d53
-  config_hash   : 63890d531d52efb4
--- Guardrail ---
-  OK: Guardrail ACTIVE (warning_only=True — no hard blocks yet)
-```
-
-**残タスク**
-- [x] 2週間後（2026-07-09 目安）に warning ログの頻度を確認し閾値を調整（**07-01 前倒し完了** · 6日間誤発動ゼロ）
-- [x] `docs/runbooks/guardrail_calibration.md` に閾値の根拠を記録（**2026-07-02 完了**）
-- [x] キャリブレーション完了後に `paper_warning_only: false` に変更 → hard-halt 有効化（**2026-07-01 完了**）
-
----
-
-### ✅ R1: Exit Attribution 修復（**2026-06-30 完了**）
-
-**目的**: 全クローズが `exit_reason=broker_fill` になる根本原因を特定・修復  
-**重要**: このフェーズ完了まで exit 戦略の閾値変更は凍結
-
-**根本原因の4仮説**
-
-| Case | 仮説 | 確認手段 |
-|---|---|---|
-| A | SimpleExitV2 のシグナルが一度も発火していない | `exit_signals_none` ログを確認 |
-| B | シグナルは発火しているが reason が注文前に消える | `exit_signal_fired` + `pending_exit_reasons.json` を照合 |
-| C | sell が SimpleExit 以外の経路（手動 or reconcile）から送信されている | 注文の origin を確認 |
-| D | reconcile_orders が close 時に original reason を上書きしている | reconcile のコードを確認 |
-
----
-
-#### ✅ R1-A: exit シグナル発火ログ（2026-06-25 完了）
-
-**追加したログ**
-- `simple_exit_v2_strategy.py`: `exit_check` DEBUG（全ポジションの評価結果）
-- `simple_exit_v2_strategy.py`: `exit_signal_fired` INFO（シグナル発火時）
-- `paper_demo.py`: `exit_signal_generated` INFO（生成された exit signal ごと）
-- `paper_demo.py`: `exit_signals_none` INFO（exit signal ゼロの場合）
-
-**次のアクション**
-- [ ] 次の本番 paper_demo run 後にログを確認 → Case A-D のどれかを特定
-  - `exit_signal_fired` が出る → Case B / C / D のいずれか
-  - `exit_signals_none` のみ → **Case A**（シグナル自体が発火していない）
-
----
-
-#### ✅ R1-B: Exit Reason ライフサイクル修復（2026-06-26 完了）
-
-**目標**: R1-A で特定した Case に応じて修復する
-**commit**: `063f66d`
-
-**共通作業（Case によらず実施）**
-- [x] 売り注文送信前に `trade_event_store` に exit_event を記録
-  ```
-  {kind: exit_signal, symbol: X, order_id: Y, exit_reason: Z, source: SimpleExitV2}
-  ```
-- [x] `pending_exit_reasons.json` の key を `broker_order_id` に統一（変更なし・元から適切）
-- [x] `reconcile_orders` で fill 確認時に `pending_exit_reasons` から reason を引き継ぐ
-- [x] `record_exit()` のデフォルト reason を `broker_fill_unknown` に変更（`broker_fill` は廃止）
-
-**Case 判定**: Case B/C/D → 2026-06-26 paper_demo で SimpleExitV2 シグナルが正常発火を確認
-（AMAT=breakeven_stop, LRCX=breakeven_stop, MU=stop_loss）
-
-**完了条件**
-- [x] SimpleExit が生成した sell のクローズ: `exit_reason = breakeven_stop / stop_loss / trailing_stop`
-- [x] その他のクローズ: `exit_reason = broker_fill_unknown`
-- [x] `broker_fill` は新規トレードでは発生しない（legacy 204件は遡及不可）
-
-**Post-6/25 attribution**: 4/5 = 80%（broker_fill_unknown 1件残り）
-
----
-
-#### ✅ R1-C: Exit Reason 分類レポート（2026-06-29 完了）
-
-- [x] `scripts/report_exit_attribution.py` 作成（commit 0d0ba73）
-- [x] ETF/Stock 別集計セクション追加（commit b658f7d, R2-A 同時）
-- [x] post-6/25 attribution 85.7%（6/7）→ 残り 1件（KLAC-87a46701）は broker audit 必要
-
----
-
-#### ✅ R1-D: E2E テスト（2026-06-29 完了）
-
-- [x] `test_exit_reason_survives_to_closed_trade.py` 17 tests（commit 0d0ba73）
-- [x] reconcile 引き継ぎテスト
-- [x] broker_fill_unknown デフォルトテスト
-
-**R1 追加修正（2026-06-30, commit b658f7d）**
-- [x] reconcile: partial-fill completion 時に同一 exit_broker_order_id の既存 closed trade から reason を継承
-- [x] reconcile: fallback マッチ時に古い sell order が新規 open ポジションを間違って閉じるバグを temporal guard で修正
-- [x] 遡及修正: KLAC-6218057b → trailing_stop / CRDO-e23dd752 → stop_loss
-
-**R1 全体の受け入れ基準**
-- [x] `broker_fill` が消え、意味のある分類に置き換わる
-- [x] post-R1-B attribution completeness = 85.7%（95% 目標には KLAC audit が必要）
-- [x] exit_reason 別の PF 計算が可能になる
-
----
-
-### ✅ RF: 観測基盤・台帳修復フェーズ（Codex Review 対応, 2026-07-10 完了）
-
-**目的**: paper 卒業判定の前提となる観測精度・台帳整合性・attribution 信頼性を修復する  
-**背景**: Codex レビュー（2026-07-10）で判明した「証拠能力ゼロ」状態を解消
-
-#### 完了タスク一覧
-
-| ID | 内容 | 状態 | 実装ファイル |
-|---|---|---|---|
-| RF-1 / F1 | closed trade 台帳整合性修復（quarantine gate + holding_days 計算） | ✅ | pnl_tracker.py, scripts/migrate_quarantine_invalid_trades.py |
-| RF-2 / F2 | broker/tracker mismatch を GuardrailEngine に実測値で渡す | ✅ | cli/paper_demo.py（hardcoded 0 廃止） |
-| RF-3 / F3 | exit_reason_store 全書き込みを atomic 化（tempfile + fsync + os.replace） | ✅ | tracking/exit_reason_store.py |
-| RF-4 / F4 | TradeEntry に durable metadata 追加（decision_id, run_id, experiment_id 等） | ✅ | tracking/pnl_tracker.py |
-| RF-5 / F5 | DecisionRecord に AI telemetry フィールド定義（model, input/output_tokens 等） | ✅ | decision_engine/decision_engine.py, core/types.py |
-| RF-6 / F6 | stock-reduced mode gate（ENTRY_FILTER_STOCK_REDUCED=true で有効化） | ✅ | risk/entry_filter.py |
-| RF-7 / F7 | sector_shock_hold shadow モジュール新規作成 + paper_demo shadow log 連携 | ✅ | strategy_engine/sector_shock_hold.py |
-| RF-8 / F8 | clean-records 初回分析スクリプト作成・実行 | ✅ | scripts/f8_clean_records_analysis.py |
-| RF-R1 | exit_reason 127件回復（trade_events.jsonl + sell decision JSON） | ✅ | scripts/recover_exit_reasons.py |
-| RF-R1 | 既存 54件 quarantine 移行（migration script 実行） | ✅ | scripts/migrate_quarantine_invalid_trades.py |
-
-#### RF フェーズの残タスク（未完了）
-
-| ID | 内容 | 優先度 | 目標日 | 条件 |
-|---|---|---|---|---|
-| RF-5b | token telemetry を実運用経路に接続 | ✅ **2026-07-13** | — | 1,939件 backfill 完了。新規 run から本番記録 |
-| RF-6b | ENTRY_FILTER_STOCK_REDUCED=true を paper cron に適用（環境変数追加） | ✅ **2026-07-10** | — | 14シンボルブロック / 10シンボル通過 |
-| RF-7b | sector_shock_hold を paper A/B として正式実施 | 🟡 中 | 08-01 以降 | shadow log で 10+ 件のサンプル確認後 |
-| RF-8b | attribution coverage 100% 達成 | ✅ **2026-07-13** | — | 69/69件回収完了 |
-| RF-8c | stop_loss 原因分析（clean 199件で exit_replay 実施） | ✅ **2026-07-10** | — | 06-25 セクターショックが主因。staged_trailing D が最善(+$6,530/PF+0.034) |
-
-#### RF フェーズの重要な発見（clean records 分析結果）
+### 依存関係
 
 ```
-■ trailing_stop  n=66  WR=84.9%  PF=25.80  net=+$124,303  ← 極めて有効
-■ stop_loss      n=40  WR=30.0%  PF=0.09   net= -$85,604  ← 最大の損失源
-■ breakeven_stop n=23  WR=26.1%  PF=1.92   net=  +$3,187
-■ unknown        n=69  WR=33.3%  PF=0.39   net= -$51,196  ← attribution 残課題
+R0-v2 Ledger/PnL/Guardrail/Metadata Gate  ← 最優先
+ └→ R1-v2 Trade Lifecycle and Attribution
+ └→ R2-v2 Classification and Policy Unification
+ └→ R6-v2 Console Contract (status分離・完全funnel)
+     └→ R3-v2 Exit Replay / Sector Shock A/B  ← R0-v2 完了後のみ開始可
+     └→ R4-v2 Signal Calibration
+     └→ R5-v2 Portfolio Risk / Promotion Gates ← R0-v2 完了後のみ開始可
 
-→ stop_loss の発動条件（閾値・タイミング）の見直しが最優先の exit 改善課題
-→ trailing_stop で取れた銘柄を stop_loss で早期に切っている可能性が高い
-→ R3（反実仮想分析）の exit_replay にこのデータを適用して再検証すること
+R7-v2 Data Reliability  ← R0-v2 完了後、R3/R4/R6 と並行可
+R8-v2 ML               ← R0-v2 完了 + clean labels ≥300 後のみ開始可
 ```
 
-**RF フェーズの禁止事項**
-```
-❌ holding_days < 0 が残ったまま exit 閾値を最適化しない（F1 で解消済み）
-❌ broker/tracker 差異が未解決のまま paper 卒業判定しない（F2 で実測値接続済み）
-❌ attribution が broker_fill のまま exit 戦略を評価しない（F3/F8 で 65.3% まで回復）
-❌ sector_shock_hold を shadow 検証なしにデフォルト有効化しない（F7 shadow 中）
-```
+**R0-v2 未完の間、開始禁止**: R3-v2 paper A/B / stop 閾値本採用変更 / R5-v2 昇格判定 / R8-v2 ML 実行影響
 
 ---
 
-### 🟠 R2: ETF vs 個別株 戦略分離（2026-07-07 目標）
+### ✅ 旧完了フェーズ（R0-R8 v1）— 歴史的記録、削除しない
 
-**目的**: ETF PF=2.270 vs 個別株 PF=0.777 の混在を解消し、戦略・予算・レポートを分離
-
-| サブタスク | 内容 | 状態 | 目標日 |
-|---|---|---|---|
-| **R2-A** | **asset_class フィールドを全決定・注文・trade に付与** | **✅ 2026-06-30** | commit b658f7d |
-| **R2-B** | **ETF/Stock 別メトリクスを必須化（全体 PF 単独表示を廃止）** | **✅ 2026-07-01** | commit TBD |
-| **R2-C** | **個別株 size_multiplier = 0.5x 暫定適用** | **✅** | **2026-06-25** |
-| **R2-D** | **個別株エントリーフィルター強化（volume / ADR / rolling PF gate）** | **✅ 2026-07-01** | commit TBD |
-
-**R2-C 補足**
-- 現在適用中: `STOCK_POSITION_SIZE_MULTIPLIER = 0.5`（env var で上書き可）
-- ETF は `ETF_POSITION_SIZE_MULTIPLIER = 0.70` のまま変更なし
-- R1 完了 + attribution 済み stock trades >= 20件 蓄積後に再評価
-
-**R2 全体の受け入れ基準**
-- 全レポートが ETF と個別株を別々に表示する
-- 個別株の drawdown が ETF 利益を侵食しても即座に気づける
+| タスク | 旧 Status | 新 Status | 根拠 |
+|--------|-----------|-----------|------|
+| R0: guardrail + experiment 接続 | 完了 | REOPENED | P9 全 metric/action 未接続 |
+| R1: exit attribution | 完了 | REOPENED | closed/quarantine 重複 41件 |
+| R2: ETF/Stock 分離 | 完了 | REOPENED | allocation 逆転・asset_class unknown=245 |
+| R3: 反実仮想検証 | 完了（R3-A/B） | REOPENED → BLOCKED_BY_DATA | 有効 sector_shock trigger=0、価格路 replay 未実装 |
+| R4: signal 飽和修復 | R4-A/B 完了 | IMPLEMENTED_UNVERIFIED | R4-C 未実施、saturation 73% 残存 |
+| R5: 昇格・降格ゲート | PLANNED | REOPENED | 汚染台帳コホート入力、allocation 逆転 |
+| R6: Console | C1-F/GW/LS 完了 | IMPLEMENTED_UNVERIFIED | ledger_quality={} in non-dry-run |
+| R7: データ品質 | R7-A 完了 | IN_PROGRESS | R7-B/C 未着手 |
+| R8: ML | PLANNED | BLOCKED_BY_DATA | clean labels ≥300 が前提条件 |
 
 ---
 
-### 🟠 R3: 反実仮想検証（2026-07-14 目標・R1 完了後）
+### 🔴 R0-v2: Safety Containment, Ledger, Guardrail, Metadata Gate
 
-**目的**: 短期クローズが損失の原因か、生存バイアスかを定量評価  
-**重要**: 結果が出るまで exit 閾値変更は行わない
+**Status**: REOPENED  
+**Priority**: P0（全ロードマップのブロッカー）  
+**統合元**: H0 + H1 + H2 + H4 + 旧R0 + P6 + P9  
+**Target date**: 2026-07-23〜07-31
 
-**保有期間別の現状観察値**
+#### R0-v2-A: Safety Containment（H0）
+
+**Status**: PLANNED → 07-22 着手  
+**実装内容**:
+- `config/runtime/current_mode.yaml` を paper に固定（live credential への接続禁止）
+- `INVALID_LEDGER` 状態では promotion/live readiness を強制 NO-GO 表示
+- circuit breaker manual clear 後 → `recovery_pending` 遷移、次回 clean scheduled run 完了後のみ `ok`
+- `SECTOR_SHOCK_HOLD_MODE=shadow` 維持（paper A/B 開始禁止中）
+
+**Acceptance criteria**:
+- invalid ledger でも live-ready 表示にならない
+- manual clear だけでは current status が OK にならない
+
+#### R0-v2-B: Ledger Integrity（H1）
+
+**Status**: REOPENED  
+**Evidence**:
 ```
-< 1日:  n=84  avg -$363   WR 43%  ← 最悪
-3-7日:  n=40  avg -$1,799 WR 15%  ← 要注意
-7-14日: n=28  avg +$988   WR 71%  ← 良好
-> 14日: n=37  avg +$2,813 WR 92%  ← 最良
+closed/quarantine trade_id overlap: 41件  (P0-1)
+entry_time > exit_time: 62件              (P0-1)
+holding_days is None in closed: 245件     (P0-1)
+asset_class unknown in closed: 245件
 ```
 
-| サブタスク | 内容 | 状態 | 目標日 |
-|---|---|---|---|
-| R3-A | `scripts/counterfactual_hold_analysis.py`（仮想保有 +1/3/5/10日の損益推計） | ✅ 2026-07-01 | — |
-| R3-B | exit 改善案 A/B/C の `exit_replay.py` 拡張 + walk-forward 比較 | ✅ 2026-07-02 | — |
+**実装内容**:
+1. closed trade canonical validator（chronology / holding_days 再計算 / quarantine 排他）
+2. `holding_days is None` の closed trade を repair または quarantine
+3. quarantine ID を tombstone として rebuild に渡し、二重生成を防止
+4. `trade_id` を position/lot ID とし、partial fill に `execution_leg_id` を追加
+5. broker FIFO matching を `executed_at` 順で決定的に
+6. corporate action を通常 trade と分離（split-adjusted qty/price + adjustment record）
+7. `PerformanceSnapshot` を単一 source of truth にし、state/report/console/export がこれのみを参照
+8. broker equity bridge: starting_equity + cash_flow + realized + unrealized - fees = broker_equity
 
-**R3 全体の受け入れ基準**
-- 「短期クローズ = 損失の原因」か「生存バイアス」かが数値で判定されている
-- ETF / 個別株 で別の結論が出ている
-- R1 の attribution_completeness >= 95% が達成済みである
+**Tests**:
+- `test_closed_trade_requires_computed_holding_days`
+- `test_quarantine_and_closed_are_mutually_exclusive`
+- `test_rebuild_is_idempotent`
+- `test_rebuild_preserves_attribution_and_metadata`
+- `test_partial_fill_has_unique_execution_leg_id`
+- `test_broker_equity_bridge`
+
+**Acceptance criteria**:
+- invalid chronology=0、missing holding_days=0、closed/quarantine overlap=0
+- rebuild を 2 回実行して hash/count/PnL が不変
+- closed sum = state = PerformanceSnapshot = console
+- broker equity bridge 差分 ≤ $1 または 1bp
+
+#### R0-v2-C: Guardrail End-to-End Wiring（H2）
+
+**Status**: REOPENED  
+**Evidence**: 9 rules configured、post_run に渡す値は 5 metrics のみ。不足:
+- `daily_realized_loss_pct` → MISSING
+- `weekly_total_loss_pct` → MISSING
+- `consecutive_losing_trades` → MISSING
+- `token_spend_spike_pct` → MISSING
+- `api_error_rate_pct` → 0.0 固定
+
+**実装内容**:
+1. typed `RiskSnapshot` を作り startup / pre-order / post-run で共通利用
+2. 全 9 metrics を実測値で供給（api_error_rate_pct を 0.0 固定から実測へ）
+3. G1-v2 の symbol 減算を pending reconciliation state machine へ置換
+   - poll 2/5/10/20秒、最大60秒、deadline 超過 → unexplained mismatch → HALT
+4. 全 action を実行系に接続:
+   - `reduce_size` → DecisionRecord/sizing へ反映（現在は破棄）
+   - `block_buys` → 新規 BUY 停止
+   - `ai_pause` → provider call を skip し skip_reason 記録
+   - `flatten_risky` → operator approval 付きプラン生成（自動成行 flatten 禁止）
+   - `halt` → BUY 停止、SELL/risk exit のみ許可
+
+**Tests**:
+- `test_all_configured_guardrail_metrics_are_supplied`
+- `test_reduce_size_changes_final_order_qty`
+- `test_ai_pause_skips_provider_call`
+- `test_pending_sync_converges_without_halt`
+- `test_pending_sync_timeout_halts`
+- `test_true_qty_mismatch_is_not_excused`
+- `test_manual_clear_requires_verification_run`
+
+**Acceptance criteria**:
+- config 上 enabled の rule に未供給 metric が 0件
+- 5 actions すべてに E2E test
+- 10 scheduled paper runs 連続で unexplained mismatch=0、false HALT=0
+
+#### R0-v2-D: Durable Metadata & Experiment Join（H4）
+
+**Status**: REOPENED  
+**Evidence**:
+- decision_id in closed trades: 4/259
+- run_id in closed trades: 0/259
+- experiment_id: 0/259
+- decision-trade join success: 0件
+
+**実装内容**:
+1. `record_submission()` へ run_id / experiment_id / prompt_version / config_hash / decision_id を渡す（現在未渡し）
+2. order → fill → closed trade → outcome へ同じ ID を伝播
+3. `deny_reasons` list を JSON または `|` 区切りで保持（現在 CSV で空欄）
+4. join coverage report を毎 run 生成
+
+**Acceptance criteria**:
+- deployment 後の decision → order → fill → trade join ≥99%
+- run_id / experiment_id / config_hash coverage ≥99%
+- deny_reason coverage =100%
 
 ---
 
-### 🟠 R4: Signal Strength 飽和修復（2026-07-22〜08-04 目標）
+### 🔴 R1-v2: Trade Lifecycle and Attribution
 
-**目的**: BUY の 73% が strength=1.0 → 識別力ゼロを解消
+**Status**: REOPENED  
+**Priority**: P1（R0-v2-B 完了後）  
+**統合元**: H1 + H4 + 旧R1  
+**Target date**: 2026-07-28〜07-31
 
-| サブタスク | 内容 | 状態 | 目標日 |
-|---|---|---|---|
-| R4-A | 飽和原因の調査（ハードコード / 未実装 / スケーリング不足） | ✅ 2026-07-01 | — |
-| R4-B | Option A: saturation 0.10→0.20, min_signal_strength 0.65→0.40 | ✅ 2026-07-02 | — |
-| R4-C | デサイル別 PF 計測スクリプト + コンソール表示 | 🔲 | 07-28〜08-04 |
+**実装内容**:
+- immutable fill ledger を broker order/fill から再構築
+- exit_time、holding_days、quarantine 排他、execution_leg_id を必須化
+- rebuild idempotency 確認
+- attribution coverage ≥98.8% 維持（RF-8b-v2 で達成済みだが ledger 修復後に再確認）
+- `--preserve-attribution` を rebuild の必須オプションとして強制
 
-**R4 全体の受け入れ基準**
-- strength=1.0 比率: 73% → 30% 以下
-- 閾値 0.85 が BUY の 50% 以下を包含（識別力が生まれる）
-
----
-
-### 🟡 R5: ポートフォリオ配分 + 昇格・降格ゲート（2026-08-05〜08-18 目標）
-
-**前提**: R2（ETF/Stock 分離）と R4（strength 修復）が完了した後に本格化
-
-| サブタスク | 内容 | 状態 | 目標日 |
-|---|---|---|---|
-| R5-A | ETF/Stock 別の資本予算を YAML で設定 | 🔲 | 08-05〜08-11 |
-| R5-B | `scripts/check_promotion_gate.py`（昇格条件を自動チェック） | 🔲 | 08-11〜08-15 |
-| R5-C | 降格・ロールバックゲート（rolling PF < 0.85 → サイズ縮小） | 🔲 | 08-15〜08-18 |
-
-**昇格ゲート基準（案）**
-```
-closed trades >= 50件
-PF >= 1.20（全期間）
-PF >= 1.10（直近 rolling window）
-attribution completeness >= 95%
-mismatch = 0
-guardrails アクティブ
-experiment_id が全 run に付与
-```
+**Status 根拠**: closed/quarantine 重複 41件、holding_days 欠損 245件 が解消されるまで VERIFIED_COMPLETE 不可
 
 ---
 
-### 🟡 R6: コンソール・リモート監視（C-batch 対応）
+### 🔴 R2-v2: Stock 85% / ETF 15% Classification and Policy Unification
 
-**設計原則**: 読み取り専用のみ。遠隔 buy/sell/cancel は実装しない  
-**C-batch 対応表**: C1=R6-A/D、C2=R6-B/C、C3=R6-D完成、C4=R6-E、C5=R5連携、C6=R6-F
+**Status**: REOPENED  
+**Priority**: P1（R0-v2-B 完了後）  
+**統合元**: H5 + 旧R2  
+**Target date**: 2026-07-28〜08-03
 
-| サブタスク | C-batch | 内容 | 状態 | 目標日 |
-|---|---|---|---|---|
-| **R6-A** | **C1** | **Run Health テキスト表示（✅/⚠️/🚨 + experiment_id + guardrail）** | **✅ 2026-06-25** | — |
-| **R6-B** | **C2** | **Price Integrity パネル（fresh/stale/fallback カウント + sources breakdown）** | **✅ 2026-06-25** | — |
-| **R6-C** | **C2** | **API/Token モニター（p50/p95 latency + error_count + context_pack 分布）** | **✅ 2026-06-25** | — |
-| R6-D | C3 | Decision Funnel（deny_reasons 集計 + Broker/Tracker 差分パネル） | ✅ 2026-07-01 | — |
-| R6-E | C4 | Attribution パネル（ETF/Stock 別 PF・exit reason 別 PF）← R1 完了後 | ✅ 2026-07-02 | — |
-| R6-F | C6 | Remote Web 読み取り専用（スマートフォン対応・トークン認証） | ✅ 2026-07-02 | LAN/local 確認済み |
-| R6-F-GW | C6 | R6-F 実運用公開方式: Tailscale Serve 設計・検証 | ✅ | 2026-07-03 |
-| **R6-F-LS** | **C6** | **モバイルコンソール /api/live_summary（Equity/PF/WR リアルタイム）** | **✅ 2026-07-06** | 前倒し完了 |
-| — | C5 | Risk Dashboard（ETF/株 別昇格状態）← R5 と並行 | 🔲 | 08-05〜 |
+**方針**: Stock 85% / ETF 15% 前後が唯一の正式 allocation 方針
+- 旧 ETF-first / stock-reduced 記述は historical note のみ
+- ETF-first・Stock shadowへの恒久変更はユーザー承認なしに禁止
 
-**R6-F 詳細パネル拡張（2026-07-02）**
-- Open Positions: open trade の symbol / qty / entry / current / hold / unrealized または return
-- Recent Trades: 直近 closed trade の exit_reason / strategy / PnL
-- At-risk Positions: -5% 以下、利益剥落、current 不明の高ピーク銘柄
-- Cron / Guardrail Health: stock_swing cron、guardrail、circuit breaker
-- Broker/Tracker diff detail: broker_only / tracker_only / qty_mismatches
+**実装内容**:
+1. `config/strategy/portfolio_allocation.yaml` を Stock=0.85 / ETF=0.15 に訂正 ✅（2026-07-21 完了）
+2. allocator / position sizing / console / promotion gate が同じ YAML を参照するよう統一
+3. allocation band で order 後の projected allocation を判定
+4. `stock_new_buy_multiplier` をリスク調整 (一時的) として意味明確化、final qty に反映
+5. asset_class unknown=245 を idempotent backfill で解消
 
-**C1 + C2 完了確認（2026-06-25）**
-- `ConsoleSummary`: ConsoleAlert / OK・DEGRADED・HALTED ステータス / save_json() 追加
-- `ConsoleRenderer`: 6セクション（RUN HEALTH / ALERTS / PORTFOLIO / PRICE INTEGRITY / DECISION FUNNEL / API・AI COST）
-- paper_demo: experiment_id / guardrail_status / api_metrics / price_integrity を自動収集・渡す
-- 出力先: `reports/console/latest_console_summary.json`（毎 run アトミック更新）
-- commit: `b27716e` / 19 new tests
+**Tests**:
+- `test_stock_85_etf_15_is_single_policy_source`
+- `test_target_band_blocks_projected_overweight`
+- `test_stock_multiplier_changes_final_qty`
 
-**dry-run 確認済み出力サンプル**
-```
-⚠️  RUN HEALTH  DEGRADED
-────────────────────────────────────────────────────────
-  run_id    = paper_demo-20260625T021104Z-38e9f0b0
-  exp_id    = exp-20260625-swing-v1-prompt-v1-...
-  guardrail = ok
-
-PORTFOLIO
-  equity        = $1,022,168.90
-  open_positions= 17
-
-PRICE INTEGRITY
-  fresh=0  stale=0  fallback=0
-
-DECISION FUNNEL
-  candidates=17  buy=16  sell=1  deny=0  blocked=0
-
-API / AI COST
-  api_calls=18  errors=5  p50=1992ms  p95=2016ms
-```
+**Acceptance criteria**:
+- asset_class unknown=0
+- config / allocator / sizing / console / improvement plan の target が Stock 85% / ETF 15% で一致
 
 ---
 
-### 🟢 R7: 運用エッジケース・データ品質（2026-09 目標）
+### 🔴 R3-v2: Exit Counterfactual and Sector Shock A/B
 
-| サブタスク | 内容 | 状態 | 目標日 |
-|---|---|---|---|
-| R7-A | Corporate Action 台帳 + split 自動検知（data/corporate_actions.json + check_corporate_actions.py） | **✅ 2026-07-06** | 前倒し完了 |
-| R7-B | WebSocket リアルタイム価格（PriceResolver 安定後に検討） | 🔲 | 09-15〜 |
-| R7-C | ニュース感情フィーチャー（相関 \|r\|>0.3, n>=30 確認後に実装） | 🔲 | Step1: 07-01, Step2-3: 確認後 |
+**Status**: BLOCKED_BY_DATA  
+**Priority**: P2（R0-v2 完了後のみ開始可）  
+**統合元**: H6 + 旧R3 + F7/RF-7  
+**Target date**: 2026-08-03〜08-14（R0-v2 完了後）
+
+**ブロック理由**:
+- valid sector_shock_hold trigger: **0件**（以前の「3件」は soft_stop / no_sector_data）
+- days_held / state が persistent でない
+- signal_strength をリターン代用として使用中（廃止必要）
+- 実価格 path による counterfactual 未実装（現在は $0 仮定）
+- 台帳汚染により exit 成績が信頼できない
+
+**実装内容**（R0-v2 完了後）:
+1. symbol registry の benchmark_symbols を symbol ごとに使用（全銘柄を SMH/SOXX と比較禁止）
+2. signal_strength return proxy を廃止、feature 欠損時は `insufficient_data` 分類
+3. days_held / thesis_break / portfolio_risk を実値で渡す
+4. recovery state を trade_id 単位で atomic persist
+5. paper_ab は entry 時または最初の stop trigger 時に deterministic bucket を固定
+6. counterfactual を実価格 path で再生（exit now / hold 1/3/5/10d / hard cap / MFE / MAE）
+7. historical event replay (≥100 events) と forward shadow (≥10 triggers) を別管理
+
+**Activation criteria for A/B**:
+- invalid shadow=0
+- historical shock replay ≥100 events
+- forward valid stop-trigger shadow ≥10
+- treatment が baseline より costs 込み expectancy、CVaR、max drawdown で 2 指標改善
 
 ---
 
-### 🔵 R8: ML 予測（2026-10 以降）
+### 🟡 R4-v2: Signal and Confidence Calibration
 
-**前提条件（すべて必須）**
-- R0 完了（experiment_id が全 run に付与）
-- R1 完了（exit attribution >= 95%）
-- R4 完了（signal_strength が修復済み）
-- クリーンラベル >= 1,000 件
+**Status**: IMPLEMENTED_UNVERIFIED  
+**Priority**: P2（R0-v2 完了後推奨）  
+**統合元**: H7 + 旧R4  
+**Target date**: 2026-08-17〜08-28
 
-| サブタスク | 内容 | 状態 |
-|---|---|---|
-| R8-A | 期待リターンデータセットの構築 | 🔲 |
-| R8-B | Confidence calibration | 🔲 |
-| R8-C | Buy 候補の meta-labeling | 🔲 |
-| R8-D | Exit タイミングアドバイザリーモデル | 🔲 |
-| R8-E | Regime-adaptive 戦略選択 | 🔲 |
+**実装済み（未検証）**:
+- R4-A: signal_strength 飽和原因調査 ✅
+- R4-B: min_signal_strength 調整（confidence ≥0.40 filter） ✅
+
+**未実装 / 未検証**:
+- saturation: 73% が strength=1.0 → R4-B 後も改善なし
+- R4-C: デサイル別 PF スクリプト（post-launch 予定、データ不足で今は実施不可）
+- raw score / normalized score / cross-sectional percentile 保存
+- confidence を calibration 可能な probability として定義（固定 0.85 多発の解消）
+- feature snapshot を decision 時点の as-of データで immutable 保存
+- decile 別 PF / expectancy / calibration curve 生成
+
+**Learning 制約**: recommendation-only。自動本番反映禁止。
 
 ---
 
-## 次のアクション（直近）— リアルトレード移行計画 08-01 確定版
+### 🔴 R5-v2: Portfolio Risk and Promotion Gates
 
-> **⚠️ 2026-08-01 よりリアルトレード移行決定。以下スケジュールは前倒し版。**
+**Status**: REOPENED  
+**Priority**: P2（R0-v2 完了後）  
+**統合元**: H5 + H7 + 旧R5  
+**Target date**: 2026-08-17〜08-28
+
+**再 open 理由**:
+- promotion gate が汚染台帳コホートを入力に使っている
+- allocation policy が逆転していた（→ R2-v2 で訂正済み）
+- market beta / sector/factor exposure / pairwise correlation / top-5 concentration 未実装
+
+**実装内容**:
+1. Stock 85% / ETF 15% 前後を allocation band (target + threshold) で実装
+2. order 後の projected allocation で判定
+3. market beta / sector factor / cluster cap を一元管理
+4. `data_quality=RED` では PF/WR を `not_valid` 表示し、promotion gate に渡さない
+5. clean audited cohort のみで promotion 判定
+
+---
+
+### 🟡 R6-v2: Console and Operational Observability
+
+**Status**: IMPLEMENTED_UNVERIFIED  
+**Priority**: P1（R0-v2 と並行）  
+**統合元**: H3 + H9 + 旧R6  
+**Target date**: 2026-07-28〜07-31
+
+**実装済み（未検証 / 未接続）**:
+- C1-F / GW / LS パネル群 ✅
+- Run Health / Price Integrity / API Monitor ✅
+
+**未実装 / 未修正**:
+- `current_status` と `last_run_status` の分離（現在混在）
+- non-dry-run の ConsoleSummary に `ledger_quality` / `entry_filter_stats` 未渡し
+- `data_quality=RED` 時に PF/WR を非表示にする
+- 完全 funnel: generated → risk_denied → entry_blocked → allocation_blocked → guardrail_blocked → qty_zero → submitted → accepted → filled → reconciled
+- manual clear 後 → `RECOVERY_PENDING` 表示
+- mtime/config hash cache（毎 rerun での CSV 全読み込み防止）
+
+**Performance SLO**: initial render p95 ≤2秒、cached rerun p95 ≤500ms
+
+---
+
+### 🟡 R7-v2: Data Reliability and Operational Edge Cases
+
+**Status**: IN_PROGRESS  
+**Priority**: P2（R0-v2 完了後 R3/R4/R6 と並行可）  
+**統合元**: H8 + 旧R7  
+**Target date**: 2026-08-03〜08-14
+
+**完了 (VERIFIED_COMPLETE)**:
+- R7-A: Corporate Action 台帳 + 自動検知 ✅
+
+**未実装**:
+- source ごとの SLA + quality report
+  - broker position/order: ≤30秒
+  - intraday quote: market open 中 ≤2分
+  - daily bar: 前営業日 close 確定後
+  - sector benchmark: exit 判断時点と同じ as-of
+- `event_time` / `available_at` / `ingested_at` / `source` / `revision_id` / `quality_status` を canonical schema へ追加
+- Massive client の connection pool 共有（`Connection pool is full` 解消）
+- market closed 時は maintenance job 以外早期終了
+- macro (FRED) の regime lineup（現在 unknown のまま）
+- R7-B/C: WebSocket / ニュース感情評価
+
+---
+
+### 🔵 R8-v2: Learning and ML
+
+**Status**: BLOCKED_BY_DATA  
+**Priority**: P3（R0-v2 完了 + clean labels ≥300 後）  
+**統合元**: H7 + 旧R8  
+**Target date**: 2026-10 以降
+
+**開始条件**:
+- R0-v2〜R4-v2 の acceptance criteria をすべて満たすこと
+- clean joinable outcomes ≥300（単純 calibration 開始）
+- ML training は clean labels ≥1,000 が原則
+- champion/challenger / model registry / drift detection / rollback を用意してから開始
+
+**学習制約**: recommendation-only。自動本番反映禁止。
+
+---
+
+## 次のアクション（直近）— v2 改訂版
 
 ```
-✅ 完了済み（〜07-13）:
-  ✅ R0   paper_demo に P6/P9 接続
-  ✅ R1   全タスク完了（post-R1-B attribution 100%）
-  ✅ R2   全完了（A/B/C/D）
-  ✅ R3-A/B 反実仮想スクリプト + exit replay 完了
-  ✅ R4-A/B signal strength 飽和原因調査・修復
-  ✅ R6 C1/C2/C4/C6 Console 表示・Price Integrity・API Monitor・Attribution
-  ✅ R6-D Decision Funnel パネル（deny_reasons + Broker/Tracker）（07-01 前倒し完了）
-  ✅ Guardrail hard-halt 有効化（07-01 前倒し完了 · 6日間誤発動ゼロ確認済み）
-  ✅ 緊急停止ランブック作成（07-01）
-  ✅ ライブ切替手順書作成（07-01）
+2026-07-21〜07-22  R0-v2-A  safety containment（PAPER 固定、invalid performance 非表示）
+                   R2-v2    portfolio_allocation.yaml 訂正 ✅ 完了
 
-Week 1-2（07-02〜07-14）🟠 推奨:
-  ✅ R3-B   exit replay 評価 + 結論（**07-02 前倒し完了**）
-  ✅ Variant D staged trailing 実装（feature flag: `staged_trailing_enabled`）
-  ✅ R6-E   Attribution パネル（exit_reason 別 PF）
-  ✅ 07-21  Go/No-Go チェックリスト定義（**07-02 前倒し完了**）
+2026-07-23〜07-27  R0-v2-B  ledger integrity (chronology/quarantine/equity bridge)
+                   R0-v2-C  guardrail E2E（全 metric 実測供給、全 action 接続）
 
-Week 3（07-10〜07-21）🟠 STRONGLY RECOMMENDED:
-  ✅ R6-F   リモート Web 監視（スマホ対応）（**07-02 前倒し完了**）
-  ✅ R6-F-GW Tailscale Serve 実運用ルート設計・検証（**07-03 完了**）
-  ✅ R6-F-LS /api/live_summary エンドポイント追加（**07-06 前倒し完了**）
-  ✅ R7-A   Corporate Action 台帳 + 自動検知（**07-06 前倒し完了**）
-  ✅ ETF buy guardrail 誤警告解消（guardrail_service .env 参照 + .env 統一）（**07-06**）
-  ✅ RF     観測基盤・台帳修復フェーズ完了（**07-10**）
-  ✅ RF-6b  ENTRY_FILTER_STOCK_REDUCED=true を cron に追加（**07-10 完了**）
-  ✅ RF-8c  stop_loss 原因分析実施（**07-10 完了**：06-25 ショック主因 / staged_trailing 最善）
-  ✅ RF-8b  attribution coverage 100% 達成（07-13 完了）
+2026-07-28〜07-31  R0-v2-D  metadata join（record_submission に run/exp/config hash）
+                   R1-v2    immutable fill ledger rebuild
+                   R6-v2    console status 分離 + funnel + data_quality gate
 
-Week 4（07-21〜07-31）🔴 BLOCKING:
-  ✅ 07-13  Codex Review G1-G10 全完了（circuit_breaker/PnL/telemetry/benchmark/min_hold）
-  ✅ 07-21  Go/No-Go チェックリスト定義・確認（07-02前倒し完了）
-  ✅ R6-F-GW Tailscale Serve 最終接続確認（07-03 完了）
-  🔲 07-28〜07-30  hard-halt 環境でのペーパー最終確認（min_hold 効果も確認対象）
-  🔲 07-31  Go/No-Go 最終判定（PF >= 1.0 / mismatch=0 / min_hold 安定稼働）
+2026-08-01         Go/No-Go 判定（R0-v2 completion が前提条件）
+                   08-01 open：R0-v2 未完の場合は延期
 
-08-01 🚀 リアルトレード開始（初期2週間は50%サイズ）
+2026-08-03〜08-14  R3-v2    exit replay / sector shock shadow（R0-v2 完了後のみ）
+                   R7-v2    data SLA / source lineage
 
-Post-Launch:
-  🔲 R4-C   signal strength デサイル検証
-  🔲 R5     昇格・降格ゲート本格版
-  ✅ R7-A   Corporate Action 台帳（07-06 前倒し完了）
-  🔲 RF-7b  sector_shock_hold paper A/B 正式実施
-  🔲 R7-B/C 09月以降
-  🔲 R8     10月以降
+2026-08-17〜08-28  R4-v2    signal calibration + decile
+                   R5-v2    portfolio risk + promotion gates A/B
+
+2026-08-31以降     Gate review → micro-live 可否判定
 ```
 
 ---
 
-## やらないこと（制約）
+## やらないこと（制約）— v2 更新版
 
 ```
-❌ exit attribution が修復されるまで exit 閾値を変更しない（R1 完了 / RF で 65.3% 回復済み）
-❌ クリーンラベルが 1,000 件に達するまで ML を実行に影響させない
+❌ R0-v2 未完のまま sector_shock paper A/B を開始しない
+❌ R0-v2 未完のまま stop 閾値を本採用変更しない
+❌ R0-v2 未完のまま R5-v2 promotion 判定を行わない
+❌ R0-v2 未完のまま R8-v2 ML の execution 影響を発生させない
+❌ ETF-first / stock-shadow を恒久方針とする変更はユーザー承認なしに行わない
+❌ 汚染台帳コホート（closed/quarantine 重複 41件等）を PF 分析や promotion gate に使わない
+❌ manual clear だけで current_status を OK にしない（verification run 必須）
+❌ signal_strength を日次リターン代用として sector_shock 分類に使わない（feature 欠損 → insufficient_data）
+❌ counterfactual を "$0 仮定" で計算した結果を昇格判断に使わない（実価格 path 必須）
+❌ clean labels ≥1,000 件に達するまで ML を実行に影響させない
 ❌ ETF と個別株を 1 つの混合戦略として扱わない
 ❌ スマートフォンから遠隔 buy/sell/cancel/reset を実装しない（読み取り専用のみ）
-❌ YAML 閾値が 2 週間 paper 検証されるまで guardrail を hard-halt として有効化しない
-❌ 反実仮想分析で生存バイアスを制御するまで「短期保有 = 有害」と結論づけない
-❌ quarantined_trades（54件）を clean records と混在させて PF 分析しない
-❌ broker/tracker mismatch が実測値ゼロを確認するまで新規買いの guardrail を無視しない
-❌ sector_shock_hold を shadow 検証（最低 10件）なしに paper A/B 以外で有効化しない
-❌ stop_loss PF=0.09 の原因分析（R3 再実行）なしに exit 閾値を単純に広げない
 ```
 
 ---
 
-## 優先順位まとめ
+## 優先順位まとめ — v2
 
-| 優先度 | フェーズ | 状態 | 備考 |
-|---|---|---|---|
-| ✅ 完了 | R0 | ✅ 完了 | hard-halt 有効化済み（07-01〜30日検証中） |
-| ✅ 完了 | R1 | ✅ 2026-06-30 全タスク完了 | 残り: KLAC audit（不要緊急） |
-| ✅ 完了 | R2 | ✅ R2-A/B/C/D 全完了 | 2026-07-01 |
-| ✅ 完了 | R3 | ✅ R3-A + R3-B 全完了 | 2026-07-02 |
-| 🟠 高 | R4 | 🔲 R4-A/B ✅ / R4-C 残り | 07-28〜08-04 |
-| 🟡 中〜高 | R5 | 🔲 未着手 | R2/R4 完了後（08-05〜） |
-| ✅ 完了 | R6 | ✅ C1/C2/D/E/F/GW/LS 全完了 | live_summary 含む（07-06）|
-| 🟢 中 | R7 | ✅ R7-A 完了 / R7-B/C 未着手 | R7-A: 07-06 前倒し完了 |
-| 🔵 長期 | R8 | 🔲 未着手 | 10 月以降 |
-| ✅ 完了（本体） | **RF** | ✅ F1〜F7 実装完了・migrate/recover 実行済み | **2026-07-10** |
-| ✅ 完了 | **RF-6b / RF-8c** | RF-6b 有効化 + RF-8c 原因分析 | **2026-07-10** |
-| 🟡 中 | **RF 残** | RF-5b（token 充填）/ RF-7b（sector_shock paper A/B）/ RF-8b（attribution 95%）| **07-14〜08-01** |
+| 優先度 | Phase | Status | 備考 |
+|--------|-------|--------|------|
+| 🔴 P0 BLOCKER | **R0-v2** | **REOPENED** | 全ロードマップのブロッカー。ledger/guardrail/metadata |
+| 🔴 P1 | R1-v2 | REOPENED | R0-v2-B 後 |
+| 🔴 P1 | R2-v2 | REOPENED | allocation 訂正 ✅ 他未完 |
+| 🟡 P1 | R6-v2 | IMPLEMENTED_UNVERIFIED | R0-v2 と並行 |
+| 🟡 P2 | R3-v2 | BLOCKED_BY_DATA | R0-v2 完了後のみ |
+| 🟡 P2 | R4-v2 | IMPLEMENTED_UNVERIFIED | R0-v2 完了推奨後 |
+| 🔴 P2 | R5-v2 | REOPENED | R0-v2 完了後 |
+| 🟢 P2 | R7-v2 | IN_PROGRESS | R0-v2 完了後 parallel |
+| 🔵 P3 | R8-v2 | BLOCKED_BY_DATA | 10月以降 |
