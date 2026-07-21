@@ -1,1 +1,79 @@
+# config/runtime/current_mode.yaml
+# R0-v2-A: Safety Containment — source of truth for runtime mode
+# Updated: 2026-07-21
+# DO NOT change mode to 'live' without explicit user approval and all R0-v2 acceptance criteria met.
+
+# ── Runtime mode ────────────────────────────────────────────────────
 mode: paper
+# Allowed values: paper | live
+# 'paper' enforces:
+#   - ALPACA_MODE must equal 'paper' at startup (exit 1 otherwise)
+#   - All order submissions go to Alpaca paper account only
+#   - No live broker credentials are loaded
+
+# ── Ledger quality gate ─────────────────────────────────────────────
+ledger_quality_gate:
+  # If ledger is INVALID, the system must:
+  #   - Block promotion/live readiness display (show NO-GO regardless of PF)
+  #   - Suppress PF / WR metrics in console (show 'NOT_VALID' instead)
+  #   - Reject Go/No-Go confirmation
+  enforce_invalid_ledger_blocks_live_ready: true
+
+  # Acceptance criteria that must ALL pass for ledger to be VALID:
+  acceptance_criteria:
+    max_closed_quarantine_overlap: 0          # currently 41 → INVALID
+    max_reversed_chronology_count: 0           # currently 62 → INVALID
+    max_missing_holding_days_count: 0          # currently 245 → INVALID
+    max_asset_class_unknown_count: 0           # currently 245 → INVALID
+    broker_equity_bridge_tolerance_usd: 1.0   # abs(sum - broker) ≤ $1
+
+  # Current status (as of 2026-07-21 audit):
+  # INVALID — overlap=41, reversed=62, hd_missing=245, ac_unknown=245
+  # Update this field after each ledger repair run:
+  current_status: INVALID
+  last_checked: "2026-07-21"
+
+# ── Circuit breaker recovery ─────────────────────────────────────────
+circuit_breaker:
+  # After manual clear, the system enters recovery_pending.
+  # Status returns to 'ok' only after a clean scheduled run completes
+  # (i.e., mismatch=0 AND no unexplained positions in next scheduled run).
+  require_clean_run_after_manual_clear: true
+
+  # G1-v2 lag_excused logic is active.
+  # Symbol is excused if: (tracker_only ∩ new_buy) ∪ (broker_only ∩ new_sell)
+  # Real mismatches (not in submissions) still trigger halt.
+  lag_excused_logic_enabled: true
+
+  # Pending sync state machine settings (replaces simple 3s wait in future):
+  # poll_intervals_seconds: [2, 5, 10, 20]
+  # max_wait_seconds: 60
+  # timeout_action: halt_with_unexplained_mismatch
+  pending_sync_state_machine: false  # PLANNED — implement in R0-v2-C
+
+# ── Sector shock hold ───────────────────────────────────────────────
+sector_shock_hold:
+  # Current mode: shadow only (logging what would happen, not acting)
+  # Do NOT change to 'active' until paper A/B criteria are met:
+  #   - historical shock replay >= 100 events
+  #   - forward valid trigger shadow >= 10
+  #   - 2 metrics improvement vs baseline (PF, CVaR, or max_drawdown)
+  mode: shadow   # shadow | paper_ab | active
+  ab_start_condition_shadow_count: 10
+  current_valid_shadow_count: 3   # post-07-17 fix; update after each run
+
+# ── Go/No-Go gate ───────────────────────────────────────────────────
+go_no_go:
+  # These checks are enforced at 07-31 decision point.
+  # All must pass (or be explicitly overridden with user approval) for GO.
+  required_for_go:
+    ledger_quality: VALID             # currently INVALID
+    circuit_breaker_status: ok        # currently ok ✅
+    broker_tracker_mismatch: 0        # currently 0 ✅
+    attribution_coverage_pct_min: 98  # currently 98.8% ✅
+    all_crons_healthy: true           # currently true ✅
+    guardrail_hard_halt_enabled: true # currently true ✅
+  preferred_for_go:
+    overall_profit_factor_min: 1.20   # currently 0.62 ❌
+    trailing_stop_pf_min: 1.50        # currently 3.48 ✅
+    stop_loss_wr_min_pct: 30          # currently 24.1% ❌
