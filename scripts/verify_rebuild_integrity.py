@@ -178,6 +178,96 @@ def fix_peak_prices(state: dict, backup: dict) -> int:
 # Main
 # ---------------------------------------------------------------------------
 
+
+# ---------------------------------------------------------------------------
+# R0-v2-B: Ledger Invariant Checks (added 2026-07-21)
+# ---------------------------------------------------------------------------
+
+def check_closed_quarantine_overlap(state: dict) -> list[str]:
+    """INVARIANT: closed ∩ quarantined_trades = ∅
+
+    Root cause of past violation: migrate_quarantine_invalid_trades added trades
+    to quarantined_trades but forgot to remove them from state.trades (closed).
+    """
+    trades = state.get("trades", [])
+    quar_ids = {t.get("trade_id") for t in state.get("quarantined_trades", [])}
+    closed_overlap = [
+        t for t in trades
+        if t.get("status") == "closed" and t.get("trade_id") in quar_ids
+    ]
+    if closed_overlap:
+        syms = ", ".join(sorted({t.get("symbol", "?") for t in closed_overlap}))
+        return [
+            f"INVARIANT FAIL: closed/quarantine overlap = {len(closed_overlap)} trades "
+            f"({syms}). Remove these from state.trades (closed) — they are already quarantined."
+        ]
+    return []
+
+
+def check_reversed_chronology(state: dict) -> list[str]:
+    """INVARIANT: For all closed trades, entry_time ≤ exit_time (holding_days ≥ 0).
+
+    Root cause of past violation: rebuild FIFO matching assigned wrong lot pairing,
+    resulting in entry_time > exit_time (negative holding_days).
+    """
+    from datetime import datetime
+    trades = state.get("trades", [])
+    reversed_trades = []
+    for t in trades:
+        if t.get("status") != "closed":
+            continue
+        et, xt = t.get("entry_time", ""), t.get("exit_time", "")
+        if not et or not xt:
+            continue
+        try:
+            e = datetime.fromisoformat(str(et).replace("Z", "+00:00"))
+            x = datetime.fromisoformat(str(xt).replace("Z", "+00:00"))
+            if e > x:
+                reversed_trades.append(t.get("trade_id", "?"))
+        except Exception:
+            pass
+    if reversed_trades:
+        return [
+            f"INVARIANT FAIL: reversed chronology (entry > exit) = {len(reversed_trades)} trades. "
+            f"These must be quarantined or have their FIFO lot assignment corrected."
+        ]
+    return []
+
+
+def check_holding_days_missing(state: dict) -> list[str]:
+    """WARNING (not hard fail): closed trades with holding_days = None.
+
+    A small number may be acceptable if they are in the process of being fixed.
+    Threshold: 0 after R0-v2-B, warn if > 0.
+    """
+    trades = state.get("trades", [])
+    missing = [t for t in trades if t.get("status") == "closed" and t.get("holding_days") is None]
+    if missing:
+        return [
+            f"WARNING: {len(missing)} closed trades have holding_days = None. "
+            f"Run R0-v2-B fix to compute from entry_time/exit_time."
+        ]
+    return []
+
+
+def check_pnl_consistency(state: dict) -> list[str]:
+    """INVARIANT: sum(closed.pnl) ≈ state.cumulative_realized_pnl (tolerance $1).
+
+    This catches double-counting or missed trades in the running total.
+    """
+    trades = state.get("trades", [])
+    closed_sum = sum(t.get("pnl", 0) or 0 for t in trades if t.get("status") == "closed")
+    cum = state.get("cumulative_realized_pnl", 0) or 0
+    diff = abs(closed_sum - cum)
+    if diff > 1.0:
+        return [
+            f"INVARIANT FAIL: sum(closed.pnl) = ${closed_sum:+,.2f} "
+            f"but cumulative_realized_pnl = ${cum:+,.2f} (diff=${diff:,.2f}). "
+            f"Rebuild may have corrupted the running total."
+        ]
+    return []
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--fix", action="store_true", help="Auto-restore missing fields from latest backup")
@@ -202,16 +292,26 @@ def main() -> int:
     issues: list[str] = []
     issues += check_daily_snapshots(state, backup)
     issues += check_peak_prices(state)
+    # R0-v2-B: ledger invariant checks
+    issues += check_closed_quarantine_overlap(state)
+    issues += check_reversed_chronology(state)
+    issues += check_holding_days_missing(state)
+    issues += check_pnl_consistency(state)
 
-    open_count = len([t for t in state.get("trades", []) if t.get("status") == "open"])
+    trades_all = state.get("trades", [])
+    open_count = len([t for t in trades_all if t.get("status") == "open"])
+    closed_count = len([t for t in trades_all if t.get("status") == "closed"])
+    quar_count = len(state.get("quarantined_trades", []))
     snap_count = len(state.get("daily_snapshots", []))
 
     print()
     print("=" * 60)
     print("POST-REBUILD INTEGRITY CHECK")
     print("=" * 60)
-    print(f"  Open trades   : {open_count}")
-    print(f"  daily_snapshots: {snap_count}")
+    print(f"  Open trades      : {open_count}")
+    print(f"  Closed trades    : {closed_count}")
+    print(f"  Quarantined      : {quar_count}")
+    print(f"  daily_snapshots  : {snap_count}")
 
     if not issues:
         print()

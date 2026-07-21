@@ -694,14 +694,23 @@ def main():
     parser = argparse.ArgumentParser(description="Rebuild pnl_state.json from broker order history")
     parser.add_argument("--dry-run", action="store_true", help="Show what would be changed without writing")
     parser.add_argument("--backup", action="store_true", help="Create backup of existing pnl_state.json")
+    # R0-v2: --preserve-attribution is now DEFAULT True.
+    # To skip (destructive, will lose all attribution): use --no-preserve-attribution --force
     parser.add_argument(
         "--preserve-attribution",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
+        default=True,
         help=(
             "Restore exit_reason / quarantined_trades from the current pnl_state after rebuild. "
-            "Prevents attribution loss caused by rebuild resetting all exit_reason to broker_fill. "
-            "Recommended for routine HALT-recovery rebuilds."
+            "DEFAULT: True. Use --no-preserve-attribution --force to opt out (DESTRUCTIVE). "
+            "History: 07-14 two rebuilds without this flag caused attribution loss (76 trades). "
+            "See: MEMORY.md / docs/daily_logs/2026-07-21.md for context."
         ),
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Required when using --no-preserve-attribution to acknowledge data loss.",
     )
     parser.add_argument("--baseline-equity", type=float, default=None, help="Override baseline equity")
     parser.add_argument("--baseline-date", type=str, default=None, help="Override baseline date (YYYY-MM-DD)")
@@ -727,34 +736,40 @@ def main():
     existing_meta = load_existing_tracking_metadata(state_file)
     resolved_meta = resolve_tracking_metadata(args, existing_meta, datetime.now(timezone.utc).isoformat())
 
-    # Load attribution BEFORE rebuild (if --preserve-attribution)
+    # R0-v2: Guard against --no-preserve-attribution without --force
+    if not args.preserve_attribution:
+        if not getattr(args, 'force', False):
+            print()
+            print("ERROR: --no-preserve-attribution requires --force to acknowledge data loss.")
+            print("  All exit_reason and quarantined_trades will be permanently wiped.")
+            print("  Re-run: python scripts/rebuild_pnl_state_from_broker.py"
+                  " --no-preserve-attribution --force")
+            print()
+            return 1
+        if state_file.exists():
+            try:
+                _existing = json.loads(state_file.read_text(encoding="utf-8"))
+                _closed_e = [t for t in _existing.get('trades', []) if t.get('status') != 'open']
+                _non_bf = sum(1 for t in _closed_e
+                              if t.get('exit_reason', 'broker_fill') not in ('broker_fill', '', None))
+                _q_count = len(_existing.get('quarantined_trades', []))
+                print()
+                print(f"\u26a0\ufe0f  DESTRUCTIVE REBUILD (--force): losing {_non_bf} attributed exits "
+                      f"and {_q_count} quarantined trades.")
+                print()
+            except Exception:
+                pass
+
+    # Load attribution BEFORE rebuild (--preserve-attribution default True since R0-v2 2026-07-21)
     attribution: dict[str, Any] = {'by_exit_order_id': {}, 'by_key': {}, 'quarantined_trades': []}
     if args.preserve_attribution:
         attribution = load_existing_attribution(state_file)
         n_attr = len(attribution['by_exit_order_id']) + len(attribution['by_key'])
         n_q = len(attribution['quarantined_trades'])
-        print(f"ℹ️  --preserve-attribution: loaded {n_attr} attribution entries, "
+        print(f"\u2139\ufe0f  --preserve-attribution (default): loaded {n_attr} attribution entries, "
               f"{n_q} quarantined trades from existing pnl_state.")
-    else:
-        # Warn operator that attribution will be lost
-        if state_file.exists():
-            try:
-                _existing = json.loads(state_file.read_text(encoding="utf-8"))
-                _closed = [t for t in _existing.get('trades', []) if t.get('status') != 'open']
-                _non_bf = sum(1 for t in _closed if t.get('exit_reason', 'broker_fill') != 'broker_fill')
-                _q_count = len(_existing.get('quarantined_trades', []))
-                if _non_bf > 0 or _q_count > 0:
-                    print()
-                    print("⚠️  WARNING: --preserve-attribution was NOT specified.")
-                    print(f"   Current pnl_state has {_non_bf} attributed exits "
-                          f"and {_q_count} quarantined trades.")
-                    print("   These will be LOST after rebuild.")
-                    print("   To preserve them, re-run with:  --preserve-attribution")
-                    print()
-            except Exception:
-                pass
 
-    # Rebuild state
+        # Rebuild state
     print("=" * 70)
     print("Rebuilding pnl_state.json from Broker Order History")
     print("=" * 70)
