@@ -1903,39 +1903,10 @@ def main() -> int:  # noqa: C901
             # When a SELL is just submitted, the tracker closes it immediately but the broker
             # may still show it → symbol appears in broker_only.
             # Both are transient API-lag false positives, not real integrity issues.
-            _new_buy_symbols: set[str] = {
-                s.symbol for s in _new_submissions if getattr(s, "side", "") == "buy"
-            }
-            _new_sell_symbols: set[str] = {
-                s.symbol for s in _new_submissions if getattr(s, "side", "") == "sell"
-            }
-            # G1-v2: symbol-presence lag (BUY not yet in broker / SELL still in broker)
-            _lag_excused: set[str] = (
-                (set(_bt_diff_postrun["tracker_only"]) & _new_buy_symbols)
-                | (set(_bt_diff_postrun["broker_only"]) & _new_sell_symbols)
-            )
-            # G1-v2-b: qty-mismatch lag for newly submitted SELLs.
-            # Partial fills create a transient qty discrepancy: tracker closes the
-            # full position immediately, but broker may still show residual shares
-            # until the next reconciliation tick.  Excuse these to prevent false HALT.
-            _new_sell_qty_mismatches = [
-                q["symbol"] for q in _bt_diff_postrun.get("qty_mismatches", [])
-                if q["symbol"] in _new_sell_symbols
-            ]
-            _adjusted_mismatch = (
-                _bt_diff_postrun["mismatch_count"]
-                - len(_lag_excused)
-                - len(_new_sell_qty_mismatches)
-            )
-            if _lag_excused or _new_sell_qty_mismatches:
-                logger.info(
-                    "post_run_mismatch: excused presence=%s qty=%s "
-                    "(broker API lag after submission); raw=%d adjusted=%d",
-                    sorted(_lag_excused),
-                    _new_sell_qty_mismatches,
-                    _bt_diff_postrun["mismatch_count"],
-                    _adjusted_mismatch,
-                )
+            # G1-v2 / G1-v2-b: delegate to canonical module so tests call same code
+            from stock_swing.guardrails.postrun_mismatch import apply_lag_exclusion
+            _lag_result = apply_lag_exclusion(_bt_diff_postrun, _new_submissions)
+            _adjusted_mismatch = _lag_result.adjusted_mismatch_count
 
             # R0-v2-C: compute api_error_rate_pct from latency_tracker (was hardcoded 0.0)
             _lt_metrics = _build_api_metrics(latency_tracker)
