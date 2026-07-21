@@ -311,19 +311,33 @@ class ConsoleSummary:
         if market_regime == "unknown":
             missing.append("market_regime")
 
-        # G2 fix: use actual mismatch count from broker_tracker_diff, not hardcoded 0
-        _mismatch_count = (broker_tracker_diff or {}).get("mismatch_count", 0)
+        # G2 fix + G1-v2 peak clarity:
+        # Use real_mismatch_count (lag-excluded) for health status and alerts.
+        # raw mismatch_count is still in broker_tracker_diff for full observability.
+        _bt = broker_tracker_diff or {}
+        _raw_mismatch_count = _bt.get("mismatch_count", 0)
+        _mismatch_count = _bt.get("real_mismatch_count", _raw_mismatch_count)  # adjusted
+        _lag_presence = _bt.get("lag_excused_presence", [])
+        _lag_qty = _bt.get("lag_excused_qty", [])
         if _mismatch_count > 0 and not any(a.code == "broker_tracker_mismatch" for a in alerts):
+            # Compute real (non-lag) tracker_only/broker_only for the alert
+            _lag_syms = set(_lag_presence) | set(_lag_qty)
+            _real_tracker_only = [s for s in _bt.get("tracker_only", []) if s not in _lag_syms]
+            _real_broker_only  = [s for s in _bt.get("broker_only",  []) if s not in _lag_syms]
+            _real_qty_mm = [q for q in _bt.get("qty_mismatches", []) if q["symbol"] not in _lag_syms]
             alerts.append(
                 ConsoleAlert(
                     severity="critical",
                     code="broker_tracker_mismatch",
-                    message=f"Broker/tracker mismatch: {_mismatch_count} position(s) differ",
+                    message=f"Broker/tracker mismatch: {_mismatch_count} real position(s) differ"
+                            + (f" ({_raw_mismatch_count - _mismatch_count} lag-excused)" if _lag_presence or _lag_qty else ""),
                     details={
                         "mismatch_count": _mismatch_count,
-                        "tracker_only": (broker_tracker_diff or {}).get("tracker_only", []),
-                        "broker_only": (broker_tracker_diff or {}).get("broker_only", []),
-                        "qty_mismatches": (broker_tracker_diff or {}).get("qty_mismatches", []),
+                        "tracker_only": _real_tracker_only,
+                        "broker_only": _real_broker_only,
+                        "qty_mismatches": _real_qty_mm,
+                        "lag_excused_presence": _lag_presence,
+                        "lag_excused_qty": _lag_qty,
                     },
                 )
             )

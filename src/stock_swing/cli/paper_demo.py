@@ -1992,9 +1992,10 @@ def main() -> int:  # noqa: C901
         ),
         asset_class_breakdown=pnl_tracker.get_asset_class_breakdown(),
         exit_attribution_breakdown=pnl_tracker.get_exit_attribution_breakdown(),
-        broker_tracker_diff=_build_broker_tracker_diff(
+        broker_tracker_diff=_build_broker_tracker_diff_with_lag(
             list(current_positions_full.values()) if current_positions_full else [],
             pnl_tracker.get_open_positions(),
+            lag_result=_lag_result if "_lag_result" in dir() else None,
         ),
         # RF-5b: AI telemetry
         ai_metrics=build_ai_metrics_from_decisions(decisions),
@@ -2062,6 +2063,31 @@ def _build_api_metrics(latency_tracker) -> dict:
         "p50_latency_ms": round(p50, 1) if p50 is not None else None,
         "p95_latency_ms": round(p95, 1) if p95 is not None else None,
         "slowest_endpoints": slowest,
+    }
+
+
+def _build_broker_tracker_diff_with_lag(
+    broker_positions: list[dict],
+    tracker_open: list[dict],
+    lag_result=None,  # LagExclusionResult | None
+) -> dict:
+    """Build broker/tracker diff with lag exclusion metadata attached.
+
+    Extends _build_broker_tracker_diff() with:
+      - lag_excused_presence: symbols excluded as BUY/SELL presence lag
+      - lag_excused_qty: symbols excluded as partial-fill qty lag
+      - real_mismatch_count: count of non-lag mismatches (what guardrail saw)
+
+    This allows Console to display lag vs real mismatches distinctly.
+    """
+    raw = _build_broker_tracker_diff(broker_positions, tracker_open)
+    if lag_result is None:
+        return {**raw, "lag_excused_presence": [], "lag_excused_qty": [], "real_mismatch_count": raw["mismatch_count"]}
+    return {
+        **raw,
+        "lag_excused_presence": sorted(lag_result.excused_presence),
+        "lag_excused_qty": list(lag_result.excused_qty),
+        "real_mismatch_count": lag_result.adjusted_mismatch_count,
     }
 
 
