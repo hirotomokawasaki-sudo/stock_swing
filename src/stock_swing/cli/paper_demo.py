@@ -1909,17 +1909,30 @@ def main() -> int:  # noqa: C901
             _new_sell_symbols: set[str] = {
                 s.symbol for s in _new_submissions if getattr(s, "side", "") == "sell"
             }
+            # G1-v2: symbol-presence lag (BUY not yet in broker / SELL still in broker)
             _lag_excused: set[str] = (
                 (set(_bt_diff_postrun["tracker_only"]) & _new_buy_symbols)
                 | (set(_bt_diff_postrun["broker_only"]) & _new_sell_symbols)
             )
-            _adjusted_mismatch = _bt_diff_postrun["mismatch_count"] - len(_lag_excused)
-            if _lag_excused:
+            # G1-v2-b: qty-mismatch lag for newly submitted SELLs.
+            # Partial fills create a transient qty discrepancy: tracker closes the
+            # full position immediately, but broker may still show residual shares
+            # until the next reconciliation tick.  Excuse these to prevent false HALT.
+            _new_sell_qty_mismatches = [
+                q["symbol"] for q in _bt_diff_postrun.get("qty_mismatches", [])
+                if q["symbol"] in _new_sell_symbols
+            ]
+            _adjusted_mismatch = (
+                _bt_diff_postrun["mismatch_count"]
+                - len(_lag_excused)
+                - len(_new_sell_qty_mismatches)
+            )
+            if _lag_excused or _new_sell_qty_mismatches:
                 logger.info(
-                    "post_run_mismatch: excused %d lag symbol(s) %s "
+                    "post_run_mismatch: excused presence=%s qty=%s "
                     "(broker API lag after submission); raw=%d adjusted=%d",
-                    len(_lag_excused),
                     sorted(_lag_excused),
+                    _new_sell_qty_mismatches,
                     _bt_diff_postrun["mismatch_count"],
                     _adjusted_mismatch,
                 )

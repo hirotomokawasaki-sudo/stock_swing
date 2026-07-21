@@ -231,3 +231,92 @@ class TestEdgeCases:
         # qty_mismatches are not touched by lag exclusion (different failure mode).
         assert adjusted == 1
         assert excused == set()
+
+
+class TestQtyMismatchLag:
+    """G1-v2-b: qty mismatch on newly submitted SELL should be excused.
+
+    Scenario: SELL 112 GOOGL submitted → partial fill →
+    broker still shows residual qty, tracker already closed full position.
+    This creates a qty_mismatch (same symbol, different qty) not a symbol-presence mismatch.
+    G1-v2 original only excused presence mismatches; G1-v2-b also excuses qty mismatches.
+    """
+
+    def _build_diff_with_qty_mismatch(self, symbol: str, broker_qty: float, tracker_qty: float) -> dict:
+        return {
+            "broker_count": 1,
+            "tracker_count": 1,
+            "mismatch_count": 1,
+            "broker_only": [],
+            "tracker_only": [],
+            "qty_mismatches": [{"symbol": symbol, "broker_qty": broker_qty, "tracker_qty": tracker_qty}],
+        }
+
+    def _apply_g1v2b(self, bt_diff: dict, new_submissions: list[_FakeSub]) -> tuple[int, list]:
+        """Replicate the G1-v2-b qty mismatch lag-exclusion logic."""
+        new_buy_symbols = {s.symbol for s in new_submissions if getattr(s, "side", "") == "buy"}
+        new_sell_symbols = {s.symbol for s in new_submissions if getattr(s, "side", "") == "sell"}
+
+        # G1-v2: symbol-presence lag
+        lag_excused = (
+            (set(bt_diff["tracker_only"]) & new_buy_symbols)
+            | (set(bt_diff["broker_only"]) & new_sell_symbols)
+        )
+
+        # G1-v2-b: qty-mismatch lag for new sells
+        sell_qty_mismatches = [
+            q["symbol"] for q in bt_diff.get("qty_mismatches", [])
+            if q["symbol"] in new_sell_symbols
+        ]
+
+        adjusted = bt_diff["mismatch_count"] - len(lag_excused) - len(sell_qty_mismatches)
+        return adjusted, sell_qty_mismatches
+
+    def test_partial_fill_qty_mismatch_excused(self):
+        """Canonical G1-v2-b case: GOOGL partial fill (broker=112, tracker=22) excused."""
+        diff = self._build_diff_with_qty_mismatch("GOOGL", broker_qty=112, tracker_qty=22)
+        assert diff["mismatch_count"] == 1
+
+        subs = [_FakeSub("GOOGL", "sell")]
+        adjusted, excused_qty = self._apply_g1v2b(diff, subs)
+
+        assert adjusted == 0
+        assert "GOOGL" in excused_qty
+
+    def test_unsolicited_qty_mismatch_not_excused(self):
+        """Qty mismatch on a symbol NOT in this run's submissions is a real issue."""
+        diff = self._build_diff_with_qty_mismatch("GOOGL", broker_qty=112, tracker_qty=22)
+
+        subs: list[_FakeSub] = []  # no submissions this run
+        adjusted, excused_qty = self._apply_g1v2b(diff, subs)
+
+        assert adjusted == 1   # still a real mismatch
+        assert excused_qty == []
+
+    def test_buy_symbol_qty_mismatch_not_excused_by_g1v2b(self):
+        """G1-v2-b only excuses qty mismatches for SELL submissions, not BUY."""
+        diff = self._build_diff_with_qty_mismatch("META", broker_qty=10, tracker_qty=32)
+
+        subs = [_FakeSub("META", "buy")]
+        adjusted, excused_qty = self._apply_g1v2b(diff, subs)
+
+        # BUY qty mismatch is not a known lag pattern → not excused
+        assert adjusted == 1
+        assert excused_qty == []
+
+    def test_presence_and_qty_mismatches_combined(self):
+        """Presence lag (BUY HPQ) + qty lag (SELL GOOGL) — both excused simultaneously."""
+        diff = {
+            "broker_count": 2,
+            "tracker_count": 2,
+            "mismatch_count": 2,
+            "broker_only": [],
+            "tracker_only": ["HPQ"],   # BUY HPQ not yet in broker
+            "qty_mismatches": [{"symbol": "GOOGL", "broker_qty": 112, "tracker_qty": 22}],
+        }
+
+        subs = [_FakeSub("HPQ", "buy"), _FakeSub("GOOGL", "sell")]
+        adjusted, excused_qty = self._apply_g1v2b(diff, subs)
+
+        assert adjusted == 0
+        assert "GOOGL" in excused_qty
