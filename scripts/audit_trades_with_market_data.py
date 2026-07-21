@@ -210,6 +210,63 @@ def load_broker_positions(project_root: Path) -> list[dict]:
     return resp.payload if hasattr(resp, "payload") else resp
 
 
+
+def check_ledger_invariants(state: dict) -> dict:
+    """R0-v2-B: Check closed-trade ledger invariants.
+
+    Returns a dict with counts and a boolean 'passed' flag.
+    Called by audit_trades_with_market_data.py every day so that
+    ledger degradation is detected the morning after it occurs.
+    """
+    from datetime import datetime as _dt
+
+    trades = state.get("trades", [])
+    quar_ids = {t.get("trade_id") for t in state.get("quarantined_trades", [])}
+    closed = [t for t in trades if t.get("status") == "closed"]
+
+    # Invariant 1: closed ∩ quarantine = ∅
+    overlap = [t for t in closed if t.get("trade_id") in quar_ids]
+
+    # Invariant 2: entry_time ≤ exit_time for all closed
+    reversed_trades = []
+    for t in closed:
+        et, xt = t.get("entry_time", ""), t.get("exit_time", "")
+        if not et or not xt:
+            continue
+        try:
+            e = _dt.fromisoformat(str(et).replace("Z", "+00:00"))
+            x = _dt.fromisoformat(str(xt).replace("Z", "+00:00"))
+            if e > x:
+                reversed_trades.append(t)
+        except Exception:
+            pass
+
+    # Invariant 3: holding_days not None
+    hd_missing = [t for t in closed if t.get("holding_days") is None]
+
+    # Invariant 4: PnL consistency
+    closed_sum = sum(t.get("pnl", 0) or 0 for t in closed)
+    cum = state.get("cumulative_realized_pnl", 0) or 0
+    pnl_diff = abs(closed_sum - cum)
+
+    passed = (
+        len(overlap) == 0
+        and len(reversed_trades) == 0
+        and pnl_diff <= 1.0
+        # hd_missing is a warning, not a hard fail (may be pre-fix data)
+    )
+
+    return {
+        "overlap_count": len(overlap),
+        "reversed_count": len(reversed_trades),
+        "hd_missing_count": len(hd_missing),
+        "pnl_diff": round(pnl_diff, 2),
+        "closed_count": len(closed),
+        "quarantined_count": len(state.get("quarantined_trades", [])),
+        "passed": passed,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description="Audit trades against market prices")
     parser.add_argument("--anomaly-threshold", type=float, default=0.30,
@@ -405,8 +462,54 @@ def main():
         broker_check_failed = True
         print(f"WARN: Could not run broker/tracker integrity check: {e}", file=sys.stderr)
 
-    if total_anomalies > 0 or integrity_issue_count > 0 or broker_check_failed:
-        print("\n⚠️  ACTION REQUIRED:")
+    has_prior_issues = (total_anomalies > 0 or integrity_issue_count > 0 or broker_check_failed)
+
+    # ── R0-v2-B: Ledger invariant check (always runs, even when prior issues exist) ───
+    print()
+    print("=" * 100)
+    print("LEDGER INVARIANT CHECK")
+    print("=" * 100)
+    inv = check_ledger_invariants(state)
+    print(f"Closed trades:    {inv['closed_count']}")
+    print(f"Quarantined:      {inv['quarantined_count']}")
+    print()
+
+    inv_issues = []
+    if inv["overlap_count"] > 0:
+        inv_issues.append(
+            f"INVARIANT FAIL: closed/quarantine overlap = {inv['overlap_count']} trades"
+            " — run R0-v2-B ledger repair"
+        )
+    if inv["reversed_count"] > 0:
+        inv_issues.append(
+            f"INVARIANT FAIL: entry_time > exit_time = {inv['reversed_count']} trades"
+            " — FIFO lot assignment error, run R0-v2-B"
+        )
+    if inv["pnl_diff"] > 1.0:
+        inv_issues.append(
+            f"INVARIANT FAIL: PnL inconsistency = ${inv['pnl_diff']:,.2f}"
+            " — sum(closed.pnl) ≠ cumulative_realized_pnl"
+        )
+    if inv["hd_missing_count"] > 0:
+        inv_issues.append(
+            f"WARNING: holding_days = None in {inv['hd_missing_count']} closed trades"
+            " — run R0-v2-B fix3"
+        )
+
+    if not inv_issues:
+        print("✅ Ledger invariants: ALL PASSED")
+    else:
+        for msg in inv_issues:
+            print(f"⚠️  {msg}")
+        print()
+        print("  See docs/runbooks/r0v2b_ledger_repair_runbook.md")
+
+    inv_failed = not inv["passed"]
+
+    # ── Final summary ─────────────────────────────────────────────────
+    any_failure = has_prior_issues or inv_failed
+    if has_prior_issues:
+        print("\n⚠️  ACTION REQUIRED (price/tracker issues):")
         if total_anomalies > 0:
             print(f"   Review {total_anomalies} anomalous trade(s) above")
         if integrity_issue_count > 0:
@@ -424,10 +527,10 @@ def main():
         else:
             print("  2. Fix the broker check environment (virtualenv/dependencies/credentials)")
             print("  3. Rerun: python scripts/audit_trades_with_market_data.py")
-        return 1
 
-    print("\n✅ No price anomalies or tracker integrity issues detected.")
-    return 0
+    if not any_failure:
+        print("\n✅ No price anomalies, tracker issues, or ledger invariant violations detected.")
+    return 1 if any_failure else 0
 
 
 if __name__ == "__main__":
