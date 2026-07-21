@@ -1924,10 +1924,31 @@ def main() -> int:  # noqa: C901
                     _adjusted_mismatch,
                 )
 
+            # R0-v2-C: compute api_error_rate_pct from latency_tracker (was hardcoded 0.0)
+            _lt_metrics = _build_api_metrics(latency_tracker)
+            _api_error_rate_pct = (
+                _lt_metrics.get("error_count", 0) /
+                max(_lt_metrics.get("call_count", 1), 1) * 100
+            )
+
+            # R0-v2-C: compute token_spend_spike_pct from this run's AI usage
+            _run_ai_metrics = build_ai_metrics_from_decisions(
+                decisions if "decisions" in dir() else []
+            )
+            _run_tokens = (
+                _run_ai_metrics.get("input_tokens", 0) +
+                _run_ai_metrics.get("output_tokens", 0)
+            )
+            _daily_budget = _run_ai_metrics.get("daily_token_budget", 300_000)
+            _token_spend_spike_pct = (
+                max(0.0, (_run_tokens / max(_daily_budget, 1) - 1.0) * 100)
+            )
+
             _post_metrics = {
                 "stale_price_event_count": len(stale_symbols) if "stale_symbols" in dir() else 0,
                 "broker_tracker_mismatch_count": _adjusted_mismatch,
-                "api_error_rate_pct": 0.0,
+                "api_error_rate_pct": _api_error_rate_pct,
+                "token_spend_spike_pct": _token_spend_spike_pct,
                 "order_rejection_rate_pct": (
                     # Only evaluate rate when >= 4 submissions to avoid spurious triggers
                     # (e.g. 1 rejection / 8 submissions = 12.5% previously caused false block_buys).
