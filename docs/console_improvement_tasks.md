@@ -148,6 +148,14 @@
                       - 07-16 US (SMH -3.7%)の NOW/DELL は修正後 sector_shock_hold 分類確認
                       - 739 passed / 2 skipped (+3 regression tests)
 
+2026-07-21         ✅ G1-v2  post-run mismatch lag exclusion（commit 84e4532）
+                      tracker_only ∩ 今回BUY + broker_only ∩ 今回SELL を mismatch から除外
+                      3秒 wait 不足問題を根本解決。+11 tests、763 passed
+                   ✅ RF-8b-v2  attribution 70.7% → 98.8%（commit 0aadf00）
+                      trade_events 15件 + decisions 58件 = 73/76件回復
+                   ✅ Circuit Breaker  HALT クリア（09:39 JST）
+                      根本原因: 07-21 market_open cron (META+HPQ) API lag
+
 2026-07-28〜07-30  🔴 hard-halt 環境でのペーパー最終確認（BLOCKING）
 
 2026-07-31         🔴 Go/No-Go 最終判定（BLOCKING）
