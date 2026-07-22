@@ -183,3 +183,47 @@ def test_console_mismatch_alert_has_detail() -> None:
     assert mismatch_alert is not None
     assert mismatch_alert.severity == "critical"
     assert "SKYY" in str(mismatch_alert.details)
+
+
+# ── R0-v2-A: ledger_gate_status propagation ────────────────────────── #
+
+def test_ledger_gate_status_default_is_unknown() -> None:
+    """When ledger_gate_status is not supplied, default should be UNKNOWN."""
+    s = ConsoleSummary.build(run_id="lg1", equity=100_000.0, open_position_count=0)
+    assert s.ledger_gate_status == "UNKNOWN"
+    assert s.to_dict()["health"]["ledger_gate_status"] == "UNKNOWN"
+
+
+def test_ledger_gate_status_invalid_propagates_to_dict() -> None:
+    """INVALID status must reach to_dict() health section."""
+    s = ConsoleSummary.build(
+        run_id="lg2",
+        equity=100_000.0,
+        open_position_count=0,
+        ledger_gate_status="INVALID",
+    )
+    d = s.to_dict()
+    assert d["health"]["ledger_gate_status"] == "INVALID"
+
+
+def test_ledger_gate_status_valid_propagates_to_dict() -> None:
+    """VALID status must reach to_dict() health section."""
+    s = ConsoleSummary.build(
+        run_id="lg3",
+        equity=100_000.0,
+        open_position_count=0,
+        ledger_gate_status="VALID",
+    )
+    d = s.to_dict()
+    assert d["health"]["ledger_gate_status"] == "VALID"
+
+
+def test_ledger_gate_status_persists_on_field(tmp_path: Path) -> None:
+    """ledger_gate_status is accessible as a field attribute."""
+    s = ConsoleSummary.build(
+        run_id="lg4",
+        equity=100_000.0,
+        open_position_count=0,
+        ledger_gate_status="INVALID",
+    )
+    assert s.ledger_gate_status == "INVALID"

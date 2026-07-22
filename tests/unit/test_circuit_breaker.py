@@ -144,6 +144,41 @@ def test_mark_clean_run_complete_noop_when_halted(tmp_path: Path) -> None:
     assert state.is_halted
 
 
+def test_halt_during_recovery_pending_sets_halted(tmp_path: Path) -> None:
+    """A halt decision during recovery_pending must trigger HALT (safety takes priority)."""
+    store = CircuitBreakerStore(tmp_path / "cb.json")
+    store.apply_decision(_halt_decision())          # initial halt
+    store.clear(cleared_by="op", note="safe", require_verification=True)  # -> recovery_pending
+    assert store.load().status == "recovery_pending"
+
+    # New halt comes in (e.g. new mismatch detected)
+    state = store.apply_decision(_halt_decision())
+    assert state.is_halted, "halt during recovery_pending must re-halt the breaker"
+
+
+def test_degraded_during_recovery_pending_sets_degraded(tmp_path: Path) -> None:
+    """A non-halt, non-allow guardrail decision during recovery_pending sets degraded."""
+    from stock_swing.guardrails.rule_engine import GuardAction, GuardDecision, TriggeredRule
+    store = CircuitBreakerStore(tmp_path / "cb.json")
+    store.apply_decision(_halt_decision())
+    store.clear(cleared_by="op", note="safe", require_verification=True)
+    assert store.load().status == "recovery_pending"
+
+    degraded_decision = GuardDecision(
+        action=GuardAction.block_buys,
+        triggered=[
+            TriggeredRule(
+                name="loss", metric="daily_loss_pct", observed=-3.0,
+                operator="<=", threshold=-2.0, action=GuardAction.block_buys, severity="high",
+            )
+        ],
+    )
+    state = store.apply_decision(degraded_decision)
+    assert state.status == "degraded", (
+        "guardrail degraded action during recovery_pending should override to degraded"
+    )
+
+
 def test_circuit_breaker_default_state_is_ok(tmp_path: Path) -> None:
     store = CircuitBreakerStore(tmp_path / "cb.json")
     state = store.load()
