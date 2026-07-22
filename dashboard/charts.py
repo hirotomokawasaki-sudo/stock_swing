@@ -101,3 +101,53 @@ def allocation_figure(labels: list[str], values: list[float], colors: list[str])
         legend=dict(traceorder="normal"),
     )
     return fig
+
+
+SPY_COLOR = "#9b59b6"   # purple — distinct from account series
+
+
+def benchmark_figure(
+    series_dict: dict[str, "pd.Series"],
+    spy: "pd.Series",
+    colors: dict[str, str],
+    height: int = 360,
+) -> "go.Figure":
+    """Normalized % return chart: accounts + SPY on the same axis.
+
+    Each series is rebased to 0% at its first value so accounts and SPY
+    are directly comparable regardless of dollar scale.
+    """
+    fig = go.Figure(layout=_layout(height))
+
+    def _normalize(s: "pd.Series") -> "pd.Series":
+        s = s.dropna()
+        if s.empty or s.iloc[0] == 0:
+            return s
+        return (s / s.iloc[0] - 1.0) * 100
+
+    for name, s in series_dict.items():
+        ns = _normalize(s)
+        if ns.empty:
+            continue
+        color = colors.get(name, "#2a78d6")
+        fig.add_trace(go.Scatter(
+            x=ns.index, y=ns,
+            name=name,
+            mode="lines",
+            line=dict(color=color, width=2),
+            hovertemplate="%{y:+.2f}%<extra>" + name + "</extra>",
+        ))
+
+    if not spy.empty:
+        nspy = _normalize(spy)
+        fig.add_trace(go.Scatter(
+            x=nspy.index, y=nspy,
+            name="S&P 500 (SPY)",
+            mode="lines",
+            line=dict(color=SPY_COLOR, width=2, dash="dot"),
+            hovertemplate="%{y:+.2f}%<extra>S&amp;P 500 (SPY)</extra>",
+        ))
+
+    fig.add_hline(y=0, line=dict(color="#c3c2b7", width=1, dash="solid"))
+    fig.update_layout(yaxis=dict(ticksuffix="%", tickformat="+.1f"))
+    return fig

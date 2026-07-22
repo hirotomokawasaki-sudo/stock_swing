@@ -39,6 +39,50 @@ class RuntimeModeError(RuntimeError):
     pass
 
 
+def read_ledger_quality_gate(project_root: Path | None = None) -> dict:
+    """Read the ledger_quality_gate block from config/runtime/current_mode.yaml.
+
+    Returns the ``ledger_quality_gate`` dict as written in the YAML.  Never raises;
+    on any error returns a safe fallback with ``current_status="UNKNOWN"`` and
+    ``enforce_invalid_ledger_blocks_live_ready=True`` (fail-closed).
+    """
+    if project_root is None:
+        project_root = Path(__file__).parents[3]
+
+    fallback: dict = {
+        "current_status": "UNKNOWN",
+        "enforce_invalid_ledger_blocks_live_ready": True,
+    }
+    try:
+        config = ConfigLoader(project_root).load_yaml("config/runtime/current_mode.yaml")
+        gate = config.get("ledger_quality_gate")
+        if not isinstance(gate, dict):
+            return fallback
+        return gate
+    except Exception:
+        return fallback
+
+
+def read_circuit_breaker_config(project_root: Path | None = None) -> dict:
+    """Read the circuit_breaker block from config/runtime/current_mode.yaml.
+
+    Returns the ``circuit_breaker`` config dict.  Never raises; returns safe
+    defaults (``require_clean_run_after_manual_clear=True``) on any error.
+    """
+    if project_root is None:
+        project_root = Path(__file__).parents[3]
+
+    fallback: dict = {"require_clean_run_after_manual_clear": True}
+    try:
+        config = ConfigLoader(project_root).load_yaml("config/runtime/current_mode.yaml")
+        cb_cfg = config.get("circuit_breaker")
+        if not isinstance(cb_cfg, dict):
+            return fallback
+        return cb_cfg
+    except Exception:
+        return fallback
+
+
 def read_runtime_mode(project_root: Path | None = None) -> str:
     """Read and validate runtime mode from config/runtime/current_mode.yaml.
     

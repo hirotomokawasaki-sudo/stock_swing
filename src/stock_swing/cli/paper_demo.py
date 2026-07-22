@@ -46,7 +46,7 @@ _load_env(project_root / ".env")
 
 from stock_swing.core.path_manager import PathManager
 from stock_swing.core.run_context import RunContext, attach_run_context
-from stock_swing.core.runtime import RuntimeMode, RuntimeModeError, read_runtime_mode
+from stock_swing.core.runtime import RuntimeMode, RuntimeModeError, read_runtime_mode, read_ledger_quality_gate, read_circuit_breaker_config
 from stock_swing.core.types import CanonicalRecord
 from stock_swing.cli.cron_summary import emit_cron_summary
 from stock_swing.decision_engine.decision_engine import DecisionEngine, DecisionRecord
@@ -572,6 +572,15 @@ def main() -> int:  # noqa: C901
 
     runtime_mode = RuntimeMode.PAPER
     print(f"  OK: runtime_mode={runtime_mode_str}")
+
+    # R0-v2-A: Ledger quality gate status
+    _ledger_gate = read_ledger_quality_gate(project_root)
+    _ledger_gate_status = _ledger_gate.get("current_status", "UNKNOWN")
+    _enforce_invalid = _ledger_gate.get("enforce_invalid_ledger_blocks_live_ready", True)
+    if _ledger_gate_status == "INVALID" and _enforce_invalid:
+        print(f"  WARN: ledger_gate=INVALID — PF/WR suppressed in console, live-ready=NO-GO")
+    else:
+        print(f"  OK: ledger_gate={_ledger_gate_status}")
 
     # 2. Kill switch
     _section("2. Kill Switch")
@@ -1600,6 +1609,8 @@ def main() -> int:  # noqa: C901
             sector_shock_shadow_count=_ssh_shadow_count if "_ssh_shadow_count" in dir() else 0,
             # RF-5b: AI telemetry
             ai_metrics=build_ai_metrics_from_decisions(decisions),
+            # R0-v2-A: safety gate
+            ledger_gate_status=_ledger_gate_status if "_ledger_gate_status" in dir() else "UNKNOWN",
         )
         console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
         return finish(0, decisions=decisions, equity_value=equity, extra={"reason": "dry_run"})
@@ -1943,6 +1954,14 @@ def main() -> int:  # noqa: C901
                 ) if "submissions" in dir() else 0.0,
             }
             _post_state = post_run_update(_post_metrics, _guard_engine, _breaker_store)
+
+            # R0-v2-A: recovery_pending → ok 遷移（clean scheduled run 検証）
+            if _post_state.status == "recovery_pending" and _adjusted_mismatch == 0:
+                _post_state = _breaker_store.mark_clean_run_complete()
+                if _post_state.status == "ok":
+                    logger.info("circuit_breaker: recovery_pending → ok (clean scheduled run verified)")
+                    print("  INFO: circuit_breaker recovery_pending → ok (clean run 検証済み)")
+
             if _post_state.status != "ok":
                 logger.warning("guardrail_post_run status=%s action=%s", _post_state.status, _post_state.action)
         except Exception as _exc:
@@ -2001,6 +2020,8 @@ def main() -> int:  # noqa: C901
         ai_metrics=build_ai_metrics_from_decisions(decisions),
         # RF/G2: sector shock shadow count
         sector_shock_shadow_count=_ssh_shadow_count if "_ssh_shadow_count" in dir() else 0,
+        # R0-v2-A: safety gate
+        ledger_gate_status=_ledger_gate_status if "_ledger_gate_status" in dir() else "UNKNOWN",
     )
     console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
 

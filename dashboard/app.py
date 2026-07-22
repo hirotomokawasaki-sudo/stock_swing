@@ -11,6 +11,7 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 import requests
 import streamlit as st
+import yfinance as yf
 
 import alpaca
 import charts
@@ -81,6 +82,35 @@ def period_return(equity: pd.Series) -> float:
     if len(equity) < 2 or equity.iloc[0] == 0:
         return 0.0
     return float(equity.iloc[-1] / equity.iloc[0] - 1.0)
+
+
+# ---- S&P 500 (SPY) benchmark ----------------------------------------
+
+PERIOD_TO_YFINANCE = {
+    "1D": ("1d", "5m"),
+    "1W": ("5d", "30m"),
+    "1M": ("1mo", "1d"),
+    "3M": ("3mo", "1d"),
+    "1Y": ("1y", "1d"),
+    "All": ("2y", "1d"),
+}
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def cached_spy(period: str) -> pd.Series:
+    """Fetch SPY close prices for the given period via yfinance."""
+    yf_period, yf_interval = PERIOD_TO_YFINANCE.get(period, ("1mo", "1d"))
+    try:
+        ticker = yf.Ticker("SPY")
+        hist = ticker.history(period=yf_period, interval=yf_interval, auto_adjust=True)
+        if hist.empty:
+            return pd.Series(dtype=float, name="S&P 500 (SPY)")
+        s = hist["Close"].copy()
+        s.index = s.index.tz_convert(NY)
+        s.name = "S&P 500 (SPY)"
+        return s
+    except Exception:
+        return pd.Series(dtype=float, name="S&P 500 (SPY)")
 
 
 # ---------------------------------------------------------------- formatting
@@ -193,6 +223,29 @@ def render_overview(period: str):
             table["Total"] = table.sum(axis=1)
         table.index = table.index.strftime("%Y-%m-%d %H:%M")
         st.dataframe(table.style.format("${:,.2f}"), width="stretch")
+
+    # ---- S&P 500 comparison ----------------------------------------
+    st.subheader(f"vs S&P 500 — {period} (normalized % return)")
+    spy = cached_spy(period)
+    if not spy.empty and series:
+        # Align SPY to account series time range
+        combined_start = min(s.index.min() for s in series.values())
+        spy_aligned = spy[spy.index >= combined_start]
+        fig_spy = charts.benchmark_figure(series, spy_aligned, COLOR_BY_NAME)
+        st.plotly_chart(fig_spy, width="stretch", config={"displayModeBar": False})
+        # SPY return summary
+        if len(spy_aligned) >= 2:
+            spy_ret = float(spy_aligned.iloc[-1] / spy_aligned.iloc[0] - 1.0)
+            acct_total_ret = period_return(
+                pd.concat(series.values(), axis=1).sort_index().ffill().sum(axis=1)
+            )
+            c1, c2, c3 = st.columns(3)
+            c1.metric("S&P 500 return", pct(spy_ret))
+            c2.metric("Portfolio return", pct(acct_total_ret))
+            c3.metric("Alpha vs S&P 500", pct(acct_total_ret - spy_ret),
+                      delta_color="normal")
+    else:
+        st.caption("S&P 500 data unavailable.")
 
     st.subheader(f"Trend stats — {period}")
     rows = []

@@ -103,3 +103,88 @@ def test_missing_metrics_shown() -> None:
     s = ConsoleSummary.build(run_id="r8", equity=0.0, open_position_count=0)
     out = _renderer().render(s)
     assert "MISSING METRICS" in out or "equity" in out
+
+
+# ── R0-v2-A: Safety Gate ───────────────────────────────────────────────── #
+
+def test_safety_gate_section_always_present() -> None:
+    s = ConsoleSummary.build(run_id="sg1", equity=100_000.0, open_position_count=0)
+    out = _renderer().render(s)
+    assert "SAFETY GATE" in out
+
+
+def test_invalid_ledger_shows_no_go() -> None:
+    s = ConsoleSummary.build(
+        run_id="sg2",
+        equity=100_000.0,
+        open_position_count=0,
+        ledger_gate_status="INVALID",
+    )
+    out = _renderer().render(s)
+    assert "NO-GO" in out
+    assert "INVALID" in out
+    assert "live_ready" in out
+
+
+def test_valid_ledger_shows_no_go_gate_cleared() -> None:
+    s = ConsoleSummary.build(
+        run_id="sg3",
+        equity=100_000.0,
+        open_position_count=0,
+        ledger_gate_status="VALID",
+    )
+    out = _renderer().render(s)
+    assert "NO-GO" not in out
+    assert "VALID" in out
+
+
+def test_recovery_pending_shows_in_safety_gate() -> None:
+    s = ConsoleSummary.build(
+        run_id="sg4",
+        equity=100_000.0,
+        open_position_count=0,
+        guardrail_status="recovery_pending",
+        ledger_gate_status="INVALID",
+    )
+    out = _renderer().render(s)
+    assert "RECOVERY_PENDING" in out
+
+
+def test_invalid_ledger_pf_shown_as_not_valid_in_portfolio() -> None:
+    """PF/WR in ETF vs STOCK breakdown should be suppressed when ledger=INVALID."""
+    s = ConsoleSummary.build(
+        run_id="sg5",
+        equity=100_000.0,
+        open_position_count=0,
+        ledger_gate_status="INVALID",
+        asset_class_breakdown={
+            "etf": {"count": 10, "profit_factor": 2.5, "win_rate": 0.7, "net_pnl": 5000},
+            "stock": {"count": 20, "profit_factor": 0.8, "win_rate": 0.4, "net_pnl": -3000},
+        },
+    )
+    out = _renderer().render(s)
+    assert "NOT_VALID" in out
+    # Raw PF numbers should not appear in portfolio section
+    assert "PF=2.500" not in out
+    assert "PF=0.800" not in out
+
+
+def test_invalid_ledger_exit_attribution_suppresses_pf() -> None:
+    """PF/WR in EXIT ATTRIBUTION should be suppressed when ledger=INVALID."""
+    s = ConsoleSummary.build(
+        run_id="sg6",
+        equity=100_000.0,
+        open_position_count=0,
+        ledger_gate_status="INVALID",
+        exit_attribution_breakdown={
+            "by_reason": {
+                "trailing_stop": {"count": 68, "profit_factor": 25.87, "win_rate": 0.85, "net_pnl": 124669},
+                "stop_loss": {"count": 88, "profit_factor": 0.069, "win_rate": 0.25, "net_pnl": -150837},
+            },
+            "unknown_count": 0,
+        },
+    )
+    out = _renderer().render(s)
+    assert "NOT_VALID" in out
+    assert "PF=25.870" not in out
+    assert "PF=0.069" not in out

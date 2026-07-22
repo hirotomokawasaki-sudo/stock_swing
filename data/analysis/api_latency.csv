@@ -518,3 +518,12 @@ broker.fetch_bars,2026-07-20T19:55:14.144883+00:00,824.4,ok,,0,META
 broker.fetch_bars,2026-07-20T19:55:14.145987+00:00,1566.7,ok,,0,HPQ
 broker.fetch_bars,2026-07-20T19:55:14.146526+00:00,1950.0,ok,,0,SNOW
 broker.fetch_bars,2026-07-20T19:55:14.145742+00:00,6089.9,ok,,0,CRM
+broker.fetch_account,2026-07-21T13:25:03.810167+00:00,558.3,ok,,0,
+broker.fetch_positions,2026-07-21T13:25:07.942309+00:00,560.6,ok,,0,
+broker.fetch_account,2026-07-21T13:35:04.146380+00:00,543.5,ok,,0,
+broker.fetch_positions,2026-07-21T13:35:09.436519+00:00,533.9,ok,,0,
+broker.fetch_account,2026-07-21T16:00:03.460637+00:00,610.5,ok,,0,
+broker.fetch_positions,2026-07-21T16:00:08.582165+00:00,550.1,ok,,0,
+broker.fetch_account,2026-07-21T19:55:03.261490+00:00,540.9,ok,,0,
+broker.fetch_positions,2026-07-21T19:55:06.614729+00:00,529.3,ok,,0,
+broker.fetch_bars,2026-07-21T19:55:11.800798+00:00,1201.1,ok,,0,HPQ

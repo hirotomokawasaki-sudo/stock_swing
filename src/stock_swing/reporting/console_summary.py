@@ -91,6 +91,7 @@ class ConsoleSummary:
     ledger_quality: dict[str, Any] = field(default_factory=dict)          # RF-1: clean/quarantined/attribution
     entry_filter_stats: dict[str, Any] = field(default_factory=dict)     # RF-6b: stock_reduced_blocked等
     sector_shock_shadow_count: int = 0                                   # RF-7: shadow発動回数
+    ledger_gate_status: str = "UNKNOWN"                                  # R0-v2-A: VALID / INVALID / UNKNOWN
 
     def to_dict(self) -> dict[str, Any]:
         base = {
@@ -116,6 +117,8 @@ class ConsoleSummary:
                 # RF-1: 台帳品質ヘッドライン
                 "attribution_coverage_pct": self.ledger_quality.get("attribution_coverage_pct"),
                 "quarantined_trades": self.ledger_quality.get("quarantined", 0),
+                # R0-v2-A: safety gate
+                "ledger_gate_status": self.ledger_gate_status,
             },
             "portfolio": {
                 "equity": round(self.equity, 2),
@@ -237,6 +240,8 @@ class ConsoleSummary:
         ledger_quality: dict[str, Any] | None = None,
         entry_filter_stats: dict[str, Any] | None = None,
         sector_shock_shadow_count: int = 0,
+        # R0-v2-A: safety containment
+        ledger_gate_status: str = "UNKNOWN",
     ) -> "ConsoleSummary":
         decisions = decisions or []
         submissions = submissions or []
@@ -387,4 +392,5 @@ class ConsoleSummary:
             ledger_quality=ledger_quality or {},
             entry_filter_stats=entry_filter_stats or {},
             sector_shock_shadow_count=sector_shock_shadow_count,
+            ledger_gate_status=ledger_gate_status,
         )

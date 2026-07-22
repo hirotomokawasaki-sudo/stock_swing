@@ -32,6 +32,7 @@ class ConsoleRenderer:
         d = summary.to_dict()
         sections = [
             self._run_health(d),
+            self._safety_gate(d),
             self._alerts(d),
             self._portfolio(d),
             self._exit_attribution(d),
@@ -86,8 +87,49 @@ class ConsoleRenderer:
             lines.append(f"  [{sev}] {code}{sym_str}: {msg}")
         return "\n".join(lines)
 
+    def _safety_gate(self, d: dict) -> str:
+        """R0-v2-A: Safety Gate banner — ledger gate status + circuit breaker.
+
+        When ledger_gate_status is INVALID:
+        - Shows NO-GO for live-ready.
+        - Signals downstream renderers (_portfolio, _exit_attribution) to suppress PF/WR.
+        """
+        health = d.get("health", {})
+        ledger_status = health.get("ledger_gate_status", "UNKNOWN")
+        cb_status = health.get("guardrail_status", "unknown")
+
+        # Ledger gate icon + detail
+        if ledger_status == "VALID":
+            ledger_icon = "✅"
+            live_ready_str = "🟡 PENDING (07-31 Go/No-Go 未実施)"
+        elif ledger_status == "INVALID":
+            ledger_icon = "🔴"
+            live_ready_str = "🔴 NO-GO ← ledger=INVALID"
+        else:
+            ledger_icon = "❔"
+            live_ready_str = "❔ UNKNOWN"
+
+        # Circuit breaker icon
+        cb_icons = {
+            "ok": "✅ ok",
+            "recovery_pending": "🟡 RECOVERY_PENDING ← clean scheduled run 必要",
+            "degraded": "⚠️  degraded",
+            "halted": "🚨 HALTED",
+        }
+        cb_str = cb_icons.get(cb_status, f"❔ {cb_status}")
+
+        lines = [
+            "SAFETY GATE",
+            _SEP,
+            f"  ledger_gate     = {ledger_icon} {ledger_status}",
+            f"  circuit_breaker = {cb_str}",
+            f"  live_ready      = {live_ready_str}",
+        ]
+        return "\n".join(lines)
+
     def _portfolio(self, d: dict) -> str:
         p = d.get("portfolio", {})
+        ledger_invalid = d.get("health", {}).get("ledger_gate_status") == "INVALID"
         lines = [
             "PORTFOLIO",
             _SEP,
@@ -102,18 +144,21 @@ class ConsoleRenderer:
         if breakdown:
             lines.append("")
             lines.append("  ETF vs STOCK  (closed trades)")
-            for ac in ("etf", "stock"):
-                m = breakdown.get(ac, {})
-                if not m or m.get("count", 0) == 0:
-                    continue
-                pf = m.get("profit_factor")
-                pf_str = f"{pf:.3f}" if pf is not None else "∞"
-                wr = m.get("win_rate", 0)
-                net = m.get("net_pnl", 0)
-                cnt = m.get("count", 0)
-                lines.append(
-                    f"  {ac.upper():<6} n={cnt:<4} PF={pf_str:<7} WR={wr*100:.1f}%  net=${net:+,.0f}"
-                )
+            if ledger_invalid:
+                lines.append("  PF / WR       = NOT_VALID (台帳 INVALID の間は非表示)")
+            else:
+                for ac in ("etf", "stock"):
+                    m = breakdown.get(ac, {})
+                    if not m or m.get("count", 0) == 0:
+                        continue
+                    pf = m.get("profit_factor")
+                    pf_str = f"{pf:.3f}" if pf is not None else "∞"
+                    wr = m.get("win_rate", 0)
+                    net = m.get("net_pnl", 0)
+                    cnt = m.get("count", 0)
+                    lines.append(
+                        f"  {ac.upper():<6} n={cnt:<4} PF={pf_str:<7} WR={wr*100:.1f}%  net=${net:+,.0f}"
+                    )
         risk = d.get("risk", {})
         regime = risk.get("market_regime", "unknown")
         budget = risk.get("risk_budget_pct")
@@ -131,26 +176,38 @@ class ConsoleRenderer:
         if not by_reason:
             return ""
 
+        ledger_invalid = d.get("health", {}).get("ledger_gate_status") == "INVALID"
         lines = ["EXIT ATTRIBUTION", _SEP]
         unknown_count = attribution.get("unknown_count", 0)
         if unknown_count:
             lines.append(f"  unknown/unattributed = {unknown_count}")
 
-        for reason, m in sorted(
-            by_reason.items(),
-            key=lambda item: abs(float(item[1].get("net_pnl", 0) or 0)),
-            reverse=True,
-        )[:8]:
-            cnt = m.get("count", 0)
-            if cnt == 0:
-                continue
-            pf = m.get("profit_factor")
-            pf_str = "∞" if pf is None else f"{float(pf):.3f}"
-            wr = float(m.get("win_rate", 0) or 0) * 100
-            net = float(m.get("net_pnl", 0) or 0)
-            lines.append(
-                f"  {reason:<24s} n={cnt:<4} PF={pf_str:<7} WR={wr:.1f}%  net=${net:+,.0f}"
-            )
+        if ledger_invalid:
+            total = sum(m.get("count", 0) for m in by_reason.values())
+            lines.append(f"  PF / WR = NOT_VALID (台帳 INVALID の間は非表示)")
+            lines.append(f"  n={total} (countのみ表示)")
+            for reason, m in sorted(by_reason.items())[:8]:
+                cnt = m.get("count", 0)
+                if cnt == 0:
+                    continue
+                net = float(m.get("net_pnl", 0) or 0)
+                lines.append(f"  {reason:<24s} n={cnt:<4}  net=${net:+,.0f}")
+        else:
+            for reason, m in sorted(
+                by_reason.items(),
+                key=lambda item: abs(float(item[1].get("net_pnl", 0) or 0)),
+                reverse=True,
+            )[:8]:
+                cnt = m.get("count", 0)
+                if cnt == 0:
+                    continue
+                pf = m.get("profit_factor")
+                pf_str = "∞" if pf is None else f"{float(pf):.3f}"
+                wr = float(m.get("win_rate", 0) or 0) * 100
+                net = float(m.get("net_pnl", 0) or 0)
+                lines.append(
+                    f"  {reason:<24s} n={cnt:<4} PF={pf_str:<7} WR={wr:.1f}%  net=${net:+,.0f}"
+                )
         return "\n".join(lines)
 
     def _price_integrity(self, d: dict) -> str:
