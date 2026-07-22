@@ -1829,6 +1829,16 @@ def main() -> int:  # noqa: C901
                             account_id=os.environ.get("BROKER_ACCOUNT_ID"),
                             signal_strength=getattr(decision, "signal_strength", None),
                             asset_class=getattr(decision.sizing, "asset_class_used", None) if decision.sizing else None,
+                            # R0-v2-D: durable metadata 伝播
+                            run_id=run_context.run_id if "run_context" in dir() else None,
+                            experiment_id=(
+                                experiment_context.experiment_id
+                                if experiment_context is not None else None
+                            ),
+                            config_hash=(
+                                experiment_context.config_hash
+                                if experiment_context is not None else None
+                            ),
                         )
                     else:
                         print(f"WARN: Skipped P&L tracking for {o.symbol} (entry_price unavailable)")
@@ -2004,6 +2014,19 @@ def main() -> int:  # noqa: C901
             logger.warning("Guardrail post-run update failed (non-fatal): %s", _exc)
 
     audit_log.log_system_event("paper_demo_complete", details=f"decisions={len(decisions)} submitted={len(submissions)}")
+
+    # R0-v2-D: join coverage report (decision -> order -> trade)
+    try:
+        _closed = [t for t in pnl_tracker.state.trades if t.get("status") == "closed"]
+        _with_run_id = [t for t in _closed if t.get("run_id")]
+        _with_exp_id = [t for t in _closed if t.get("experiment_id")]
+        _join_pct = round(len(_with_run_id) / len(_closed) * 100, 1) if _closed else 0.0
+        logger.info(
+            "R0-v2-D join_coverage: closed=%d run_id=%d(%.1f%%) exp_id=%d",
+            len(_closed), len(_with_run_id), _join_pct, len(_with_exp_id),
+        )
+    except Exception:
+        pass
 
     _print_summary(decisions, submissions, equity, args.dry_run)
     from stock_swing.reporting.console_summary import ConsoleSummary
