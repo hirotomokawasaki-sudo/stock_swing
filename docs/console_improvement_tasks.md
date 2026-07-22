@@ -560,21 +560,41 @@ asset_class unknown in closed: 245件
 
 ```
 2026-07-22         ✅ R0-v2-A  safety containment（recovery_pending・SAFETY GATE）
-                   ✅ R0-v2-B  ledger integrity 全完了
-                              data repair: overlap=0 reversed=0 hd=0 ac=0
-                              code: canonical validator + equity bridge
-                              ledger_gate_status: INVALID → VALID
-                   ✅ R2-v2    portfolio_allocation.yaml 訂正完了
+                   ✅ R0-v2-B  ledger integrity 全完了（data repair + canonical validator + equity bridge）
+                   ✅ R0-v2-C  guardrail E2E（RiskSnapshot 全 9 metrics + reduce_size + flatten_risky）
+                   ✅ R0-v2-D  metadata join（run_id/exp_id/config_hash せ 0% → 100%）
+                   ✅ R2-v2溈  portfolio_allocation.yaml 訂正
+                   ✅ R6-v2溈  non-dry-run ledger_quality + 7-stage funnel + status 分離
+                   ✅ R1-v2溈  execution_leg_id（partial fill 一意化）
+                   ✅ AGENTS.md  Codex review H0–H9 自動参照 設定
+                   ✅ testing_standards.md 作成
 
-2026-07-22〜07-23  🔲 R0-v2-C  guardrail E2E（daily/weekly loss・consecutive・4 actions）
-2026-07-23〜07-27  🔲 R0-v2-D  metadata join（run_id/exp_id/config_hash）
+                   🔴 Go/No-Go required 全件 ✅（ledger=VALID / CB=ok / attr=100% / crons OK）
+                   ⚠️  preferred 未達: overall PF=0.686（目標 1.20）/ stop_loss WR=24%（目標 30%）
 
-2026-07-28〜07-31  R0-v2-D  metadata join（record_submission に run/exp/config hash）
-                   R1-v2    immutable fill ledger rebuild
-                   R6-v2    console status 分離 + funnel + data_quality gate
+2026-07-23（木）    🔲 R2-v2  allocator 統一（H5: allocator/sizing/console が同じ YAML 参照）
+                         allocation band で projected overweight 専判定
 
-2026-08-01         Go/No-Go 判定（R0-v2 completion が前提条件）
-                   08-01 open：R0-v2 未完の場合は延期
+2026-07-24（金）    🔲 R1-v2  rebuild idempotency + quarantine tombstone（H1 残り）
+
+2026-07-25（土）    🔲 バッファ / paper demo 観察（木金実装 の cron 正常動作確認）
+
+2026-07-26（日）    🔲 Go/No-Go 事前レポート作成
+                         ・ PF/WR 現状整理 + preferred 条件との差分
+                         ・ 50%サイズ開始可否の判断材料まとめ
+
+2026-07-27（月）    🔲 R6-v2 H9（任意）/ paper 最終確認
+
+2026-07-28〜30   paper demo 観察期間（実装なし）
+                   ・ sector_shock_hold shadow カウント
+                   ・ 直迕5日の trailing_stop / stop_loss 動向
+
+2026-07-31（木）    🚨 Go/No-Go 最終判定
+                   ・ required 全件 ✅ → 判断点は「overall PF 0.686 を許容するか」
+                   ・ YES: 50%サイズで 08-01 開始
+                   ・ NO: sector_shock_hold 完成（推定 08-20）まで延期
+
+2026-08-01 🚀（予定）  リアルトレード開始（50%サイズ）
 
 2026-08-03〜08-14  R3-v2    exit replay / sector shock shadow（R0-v2 完了後のみ）
                    R7-v2    data SLA / source lineage
