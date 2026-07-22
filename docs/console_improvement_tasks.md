@@ -363,10 +363,16 @@ asset_class unknown in closed: 245件
 
 ### 🔴 R1-v2: Trade Lifecycle and Attribution
 
-**Status**: REOPENED  
+**Status**: IN_PROGRESS（2026-07-22 部分実装）  
 **Priority**: P1（R0-v2-B 完了後）  
 **統合元**: H1 + H4 + 旧R1  
 **Target date**: 2026-07-28〜07-31
+
+**2026-07-22 実装済み**:
+- execution_leg_id ✅（partial fill の各 lot を `{trade_id}-leg-{n}` で一意識別）
+- holding_days 必須化 ✅（canonical validatorで強制）
+- quarantine 排他 ✅（canonical validatorで強制）
+- attribution coverage 100% ✅
 
 **実装内容**:
 - immutable fill ledger を broker order/fill から再構築
@@ -490,14 +496,17 @@ asset_class unknown in closed: 245件
 **統合元**: H3 + H9 + 旧R6  
 **Target date**: 2026-07-28〜07-31
 
-**実装済み（未検証 / 未接続）**:
+**実装済み**:
 - C1-F / GW / LS パネル群 ✅
 - Run Health / Price Integrity / API Monitor ✅
+- non-dry-run に ledger_quality / entry_filter_stats 伝達 ✅（2026-07-22）
+- 完全 7-stage funnel（generated→reconciled） ✅（2026-07-22）
+- status 分離（run.last_run / run.data_quality） ✅（2026-07-22）
+- data_quality=INVALID 時に PF/WR = NOT_VALID 表示 ✅（R0-v2-A SAFETY GATE）
 
-**未実装 / 未修正**:
-- `current_status` と `last_run_status` の分離（現在混在）
-- non-dry-run の ConsoleSummary に `ledger_quality` / `entry_filter_stats` 未渡し
-- `data_quality=RED` 時に PF/WR を非表示にする
+**残未実装**:
+- mtime/config hash キャッシュ（毎回 CSV 全読込み防止）← H9
+- WebSocket ← H9（state correctness 確認後）
 - 完全 funnel: generated → risk_denied → entry_blocked → allocation_blocked → guardrail_blocked → qty_zero → submitted → accepted → filled → reconciled
 - manual clear 後 → `RECOVERY_PENDING` 表示
 - mtime/config hash cache（毎 rerun での CSV 全読み込み防止）
