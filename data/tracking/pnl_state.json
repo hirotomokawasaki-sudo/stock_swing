@@ -3,182 +3,6 @@
   "last_updated": "2026-07-22T00:00:03.806676+00:00",
   "trades": [
     {
-      "trade_id": "broker_match_0001_ADBE",
-      "symbol": "ADBE",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 95,
-      "entry_price": 221.62,
-      "exit_price": 256.25,
-      "entry_time": "2026-07-07T19:55:50.333281Z",
-      "exit_time": "2026-06-03T17:01:33.583514Z",
-      "pnl": 3289.53,
-      "return_pct": 0.1562,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "c5467904-d9a4-4f6f-a3f4-33a936b77768",
-      "exit_broker_order_id": "44ce4d3d-8205-425f-bd90-8df12453eefd",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.5551
-    },
-    {
-      "trade_id": "broker_match_0002_AMAT",
-      "symbol": "AMAT",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 127,
-      "entry_price": 486.32,
-      "exit_price": 459.3,
-      "entry_time": "2026-06-04T14:02:37.019727Z",
-      "exit_time": "2026-06-01T17:04:12.348044Z",
-      "pnl": -3431.98,
-      "return_pct": -0.0556,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "eae5cb31-01eb-495b-b6e6-6d9c2e2e1ab3",
-      "exit_broker_order_id": "1f5d72dc-f45f-4417-96b7-9b816fb3094b",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "time_based",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0003_AMAT",
-      "symbol": "AMAT",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 31,
-      "entry_price": 495.44,
-      "exit_price": 459.3,
-      "entry_time": "2026-06-09T19:55:56.807044Z",
-      "exit_time": "2026-06-01T17:04:12.348044Z",
-      "pnl": -1120.34,
-      "return_pct": -0.0729,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "d7c5c0ea-7e2a-45de-92db-a71957f0fd76",
-      "exit_broker_order_id": "1f5d72dc-f45f-4417-96b7-9b816fb3094b",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "time_based",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0004_AMAT",
-      "symbol": "AMAT",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 63,
-      "entry_price": 495.44,
-      "exit_price": 478.52,
-      "entry_time": "2026-06-09T19:55:56.807044Z",
-      "exit_time": "2026-06-08T13:38:42.229052Z",
-      "pnl": -1066.0,
-      "return_pct": -0.0342,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "d7c5c0ea-7e2a-45de-92db-a71957f0fd76",
-      "exit_broker_order_id": "cb02ec4b-85c8-40ec-ac27-c4df1fd8a63d",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0005_AMAT",
-      "symbol": "AMAT",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 47,
-      "entry_price": 633.28,
-      "exit_price": 478.52,
-      "entry_time": "2026-06-25T16:00:53.399178Z",
-      "exit_time": "2026-06-08T13:38:42.229052Z",
-      "pnl": -7273.75,
-      "return_pct": -0.2444,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "c46b5424-29b7-4b48-8467-3c79494545f1",
-      "exit_broker_order_id": "cb02ec4b-85c8-40ec-ac27-c4df1fd8a63d",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0006_AMAT",
-      "symbol": "AMAT",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 17,
-      "entry_price": 647.45,
-      "exit_price": 478.52,
-      "entry_time": "2026-06-29T13:37:42.522784Z",
-      "exit_time": "2026-06-08T13:38:42.229052Z",
-      "pnl": -2871.74,
-      "return_pct": -0.2609,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "ac736c10-d1c1-46ed-b412-2fa44dc9ad5a",
-      "exit_broker_order_id": "cb02ec4b-85c8-40ec-ac27-c4df1fd8a63d",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0007_AMAT",
-      "symbol": "AMAT",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 31,
-      "entry_price": 647.45,
-      "exit_price": 628.04,
-      "entry_time": "2026-06-29T13:37:42.522784Z",
-      "exit_time": "2026-06-25T13:36:36.16662Z",
-      "pnl": -601.56,
-      "return_pct": -0.03,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "ac736c10-d1c1-46ed-b412-2fa44dc9ad5a",
-      "exit_broker_order_id": "7c18db67-99c9-47b7-a850-7803c5a36eeb",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0008_AMAT",
-      "symbol": "AMAT",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 48,
-      "entry_price": 660.88,
-      "exit_price": 628.04,
-      "entry_time": "2026-07-01T16:01:10.477411Z",
-      "exit_time": "2026-06-25T13:36:36.16662Z",
-      "pnl": -1576.32,
-      "return_pct": -0.0497,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "380514e6-ebb9-46c9-a698-ed72ad300043",
-      "exit_broker_order_id": "7c18db67-99c9-47b7-a850-7803c5a36eeb",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
-    },
-    {
       "trade_id": "broker_match_0009_AMD",
       "symbol": "AMD",
       "strategy_id": "breakout_momentum_v1",
@@ -198,7 +22,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.0194
     },
     {
       "trade_id": "broker_match_0010_AMD",
@@ -220,7 +45,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.0668
     },
     {
       "trade_id": "broker_match_0011_AMD",
@@ -241,7 +67,8 @@
       "exit_broker_order_id": "9a11cbff-ab3f-46d6-85be-6b725b0ee707",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop"
+      "exit_reason": "trailing_stop",
+      "holding_days": 13.9931
     },
     {
       "trade_id": "broker_match_0012_AMD",
@@ -262,7 +89,8 @@
       "exit_broker_order_id": "9a11cbff-ab3f-46d6-85be-6b725b0ee707",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop"
+      "exit_reason": "trailing_stop",
+      "holding_days": 13.8759
     },
     {
       "trade_id": "broker_match_0013_AMD",
@@ -284,7 +112,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 12.0214
     },
     {
       "trade_id": "broker_match_0014_AMD",
@@ -305,7 +134,8 @@
       "exit_broker_order_id": "9a11cbff-ab3f-46d6-85be-6b725b0ee707",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop"
+      "exit_reason": "trailing_stop",
+      "holding_days": 6.0019
     },
     {
       "trade_id": "broker_match_0015_AMD",
@@ -327,7 +157,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 3.9784
     },
     {
       "trade_id": "broker_match_0016_AMD",
@@ -349,205 +180,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0018_AMZN",
-      "symbol": "AMZN",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 323,
-      "entry_price": 265.27,
-      "exit_price": 266.84,
-      "entry_time": "2026-05-13T15:02:40.223727Z",
-      "exit_time": "2026-05-13T15:30:47.574946Z",
-      "pnl": 507.11,
-      "return_pct": 0.0059,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "a3ec7a04-fcb2-4abd-b84f-c79c75d4ae4d",
-      "exit_broker_order_id": "80bee53c-18dd-4a7c-9370-7ed15539ce44",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "broker_fill",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0019_AMZN",
-      "symbol": "AMZN",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 323,
-      "entry_price": 267.73,
-      "exit_price": 268.16,
-      "entry_time": "2026-05-14T15:30:59.845589Z",
-      "exit_time": "2026-05-14T17:07:15.447547Z",
-      "pnl": 138.83,
-      "return_pct": 0.0016,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "d5642a77-b416-488c-886a-db1fe8ac1bcf",
-      "exit_broker_order_id": "d931608b-a5ca-4257-9d8f-284b6ca6f610",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "broker_fill",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0020_AMZN",
-      "symbol": "AMZN",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 1,
-      "entry_price": 267.73,
-      "exit_price": 262.39,
-      "entry_time": "2026-05-14T15:30:59.845589Z",
-      "exit_time": "2026-05-15T13:31:55.918555Z",
-      "pnl": -5.34,
-      "return_pct": -0.0199,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "d5642a77-b416-488c-886a-db1fe8ac1bcf",
-      "exit_broker_order_id": "d94d698e-de22-4364-be78-3304ab3d58b8",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "broker_fill",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0021_ANET",
-      "symbol": "ANET",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 363,
-      "entry_price": 159.31,
-      "exit_price": 170.21,
-      "entry_time": "2026-06-04T14:02:50.490488Z",
-      "exit_time": "2026-06-01T17:04:17.915384Z",
-      "pnl": 3956.08,
-      "return_pct": 0.0684,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "40416e1d-9d68-46aa-aa3c-a894b783253a",
-      "exit_broker_order_id": "de9d374f-96d0-4da7-84ef-6c5b38db0300",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "time_based",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0022_ANET",
-      "symbol": "ANET",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 44,
-      "entry_price": 151.99,
-      "exit_price": 170.21,
-      "entry_time": "2026-06-09T19:56:09.823441Z",
-      "exit_time": "2026-06-01T17:04:17.915384Z",
-      "pnl": 801.68,
-      "return_pct": 0.1199,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "ad337f17-fb64-4a97-a700-e445bc2384bc",
-      "exit_broker_order_id": "de9d374f-96d0-4da7-84ef-6c5b38db0300",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "time_based",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0023_ANET",
-      "symbol": "ANET",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 243,
-      "entry_price": 151.99,
-      "exit_price": 155.96,
-      "entry_time": "2026-06-09T19:56:09.823441Z",
-      "exit_time": "2026-06-08T13:33:12.265284Z",
-      "pnl": 964.71,
-      "return_pct": 0.0261,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "ad337f17-fb64-4a97-a700-e445bc2384bc",
-      "exit_broker_order_id": "1fa348ee-25d2-4002-a80b-afaa5c0b2a68",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0024_ANET",
-      "symbol": "ANET",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 120,
-      "entry_price": 167.88,
-      "exit_price": 155.96,
-      "entry_time": "2026-06-25T16:00:50.989374Z",
-      "exit_time": "2026-06-08T13:33:12.265284Z",
-      "pnl": -1430.13,
-      "return_pct": -0.071,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "ac41c03e-5eaf-4ede-8112-17fc19f1050a",
-      "exit_broker_order_id": "1fa348ee-25d2-4002-a80b-afaa5c0b2a68",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 0.8683
-    },
-    {
-      "trade_id": "broker_match_0025_ANET",
-      "symbol": "ANET",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 60,
-      "entry_price": 167.88,
-      "exit_price": 166.47,
-      "entry_time": "2026-06-25T16:00:50.989374Z",
-      "exit_time": "2026-06-25T13:37:11.420643Z",
-      "pnl": -84.56,
-      "return_pct": -0.0084,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "ac41c03e-5eaf-4ede-8112-17fc19f1050a",
-      "exit_broker_order_id": "e5e700c8-7d75-46eb-b4fe-460b9405b1cf",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop",
-      "entry_signal_strength": 0.8683
-    },
-    {
-      "trade_id": "broker_match_0026_ANET",
-      "symbol": "ANET",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 159,
-      "entry_price": 189.05,
-      "exit_price": 166.47,
-      "entry_time": "2026-07-13T13:37:09.294221Z",
-      "exit_time": "2026-06-25T13:37:11.420643Z",
-      "pnl": -3589.92,
-      "return_pct": -0.1194,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "bdfd9a27-17bf-40ea-beea-15a9ddcaf5bb",
-      "exit_broker_order_id": "e5e700c8-7d75-46eb-b4fe-460b9405b1cf",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop",
-      "entry_signal_strength": 0.832
+      "entry_signal_strength": 1.0,
+      "holding_days": 5.9003
     },
     {
       "trade_id": "broker_match_0027_ARM",
@@ -569,7 +203,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.0195
     },
     {
       "trade_id": "broker_match_0028_ARM",
@@ -591,7 +226,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.0667
     },
     {
       "trade_id": "broker_match_0029_ARM",
@@ -613,7 +249,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 0.61
+      "entry_signal_strength": 0.61,
+      "holding_days": 7.1463
     },
     {
       "trade_id": "broker_match_0030_ARM",
@@ -634,7 +271,8 @@
       "exit_broker_order_id": "9586ad6b-c881-4f60-8796-4b4fb4d83da4",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "breakeven_stop"
+      "exit_reason": "breakeven_stop",
+      "holding_days": 1.1247
     },
     {
       "trade_id": "broker_match_0031_ARM",
@@ -656,7 +294,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 3.9809
     },
     {
       "trade_id": "broker_match_0032_ARM",
@@ -678,7 +317,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 12.8364
     },
     {
       "trade_id": "broker_match_0033_ASML",
@@ -700,7 +340,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 3.9817
     },
     {
       "trade_id": "broker_match_0034_ASML",
@@ -722,7 +363,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 15.7371
     },
     {
       "trade_id": "broker_match_0035_ASML",
@@ -744,7 +386,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 5.8993
     },
     {
       "trade_id": "broker_match_0036_AVGO",
@@ -766,7 +409,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.0197
     },
     {
       "trade_id": "broker_match_0037_AVGO",
@@ -788,7 +432,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.0782
     },
     {
       "trade_id": "broker_match_0038_AVGO",
@@ -810,51 +455,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0039_CDNS",
-      "symbol": "CDNS",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 183,
-      "entry_price": 405.56,
-      "exit_price": 383.39,
-      "entry_time": "2026-06-04T14:02:46.651549Z",
-      "exit_time": "2026-06-08T13:33:42.801779Z",
-      "pnl": -4057.11,
-      "return_pct": -0.0547,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "18270c1b-472a-42f2-bd2a-96c3993d585c",
-      "exit_broker_order_id": "46bda8f5-f53a-4311-aeb9-562ae2beeb5f",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0040_CDNS",
-      "symbol": "CDNS",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 49,
-      "entry_price": 390.71,
-      "exit_price": 383.39,
-      "entry_time": "2026-06-09T19:56:08.89601Z",
-      "exit_time": "2026-06-08T13:33:42.801779Z",
-      "pnl": -358.74,
-      "return_pct": -0.0187,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "5cd5fb47-9ddc-475a-bf31-d2ee09a3bca6",
-      "exit_broker_order_id": "46bda8f5-f53a-4311-aeb9-562ae2beeb5f",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.917
     },
     {
       "trade_id": "broker_match_0041_CDNS",
@@ -876,7 +478,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 15.8365
     },
     {
       "trade_id": "broker_match_0042_CHPS",
@@ -897,7 +500,8 @@
       "exit_broker_order_id": "c62e6b19-b9e9-47cd-bc69-42361ba9dc1f",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop"
+      "exit_reason": "trailing_stop",
+      "holding_days": 19.9917
     },
     {
       "trade_id": "broker_match_0043_CHPS",
@@ -918,7 +522,8 @@
       "exit_broker_order_id": "87ec24fe-d0d9-4527-962a-3710440b6dd3",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss"
+      "exit_reason": "stop_loss",
+      "holding_days": 19.9943
     },
     {
       "trade_id": "broker_match_0044_CHPS",
@@ -940,7 +545,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 7.2624
     },
     {
       "trade_id": "broker_match_0045_CHPX",
@@ -961,7 +567,8 @@
       "exit_broker_order_id": "90268003-ba99-419e-8599-bbb2e7aabc81",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop"
+      "exit_reason": "trailing_stop",
+      "holding_days": 19.9995
     },
     {
       "trade_id": "broker_match_0046_CHPX",
@@ -982,7 +589,8 @@
       "exit_broker_order_id": "d896bed9-7dc4-462b-a948-94f5e2395aa4",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss"
+      "exit_reason": "stop_loss",
+      "holding_days": 20.0022
     },
     {
       "trade_id": "broker_match_0047_CHPX",
@@ -1004,7 +612,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 12.0
     },
     {
       "trade_id": "broker_match_0048_CRDO",
@@ -1026,7 +635,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 3.9787
     },
     {
       "trade_id": "broker_match_0049_CRDO",
@@ -1048,7 +658,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 12.7376
     },
     {
       "trade_id": "broker_match_0050_CRDO",
@@ -1070,7 +681,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 1.1
     },
     {
       "trade_id": "broker_match_0051_CRDO",
@@ -1092,7 +704,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.9999
     },
     {
       "trade_id": "broker_match_0052_CRDO",
@@ -1114,7 +727,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.8367
     },
     {
       "trade_id": "broker_match_0053_CRDO",
@@ -1136,7 +750,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.737
     },
     {
       "trade_id": "broker_match_0054_CRDO",
@@ -1158,7 +773,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 3.9009
     },
     {
       "trade_id": "broker_match_0055_CRM",
@@ -1180,7 +796,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 4.9815
     },
     {
       "trade_id": "broker_match_0057_CRWD",
@@ -1202,7 +819,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 14.1462
     },
     {
       "trade_id": "broker_match_0058_CRWD",
@@ -1224,7 +842,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "corporate_action",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 4.9811
     },
     {
       "trade_id": "broker_match_0059_CRWD",
@@ -1254,7 +873,8 @@
           "applied_at": "2026-07-14T01:36:46.008419+00:00"
         }
       },
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 6.9961
     },
     {
       "trade_id": "broker_match_0060_CSCO",
@@ -1276,7 +896,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 18.9989
     },
     {
       "trade_id": "broker_match_0061_CSCO",
@@ -1298,7 +919,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 17.978
     },
     {
       "trade_id": "broker_match_0062_DDOG",
@@ -1320,7 +942,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 13.0225
     },
     {
       "trade_id": "broker_match_0063_DDOG",
@@ -1342,7 +965,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "time_based",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 3.9794
     },
     {
       "trade_id": "broker_match_0064_DDOG",
@@ -1364,7 +988,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "time_based",
-      "entry_signal_strength": 0.8839
+      "entry_signal_strength": 0.8839,
+      "holding_days": 20.7359
     },
     {
       "trade_id": "broker_match_0065_DDOG",
@@ -1386,7 +1011,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 11.8999
     },
     {
       "trade_id": "broker_match_0066_DELL",
@@ -1408,29 +1034,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0067_DELL",
-      "symbol": "DELL",
-      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
-      "side": "buy",
-      "qty": 299,
-      "entry_price": 245.56,
-      "exit_price": 244.78,
-      "entry_time": "2026-05-14T15:31:06.390072Z",
-      "exit_time": "2026-05-14T17:23:28.763823Z",
-      "pnl": -233.22,
-      "return_pct": -0.0032,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "9fdc8814-2cd7-4bd5-a2f2-bcc8f1a12632",
-      "exit_broker_order_id": "508c4850-1aac-451b-a3da-73fc00f5fb97",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.0195
     },
     {
       "trade_id": "broker_match_0068_DELL",
@@ -1452,95 +1057,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0069_DELL",
-      "symbol": "DELL",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 10,
-      "entry_price": 248.4,
-      "exit_price": 456.95,
-      "entry_time": "2026-05-21T14:10:01.91921Z",
-      "exit_time": "2026-06-02T14:03:53.638952Z",
-      "pnl": 2085.47,
-      "return_pct": 0.8395,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "4745d7b4-3047-4ae0-a970-2d0a9a0a6f03",
-      "exit_broker_order_id": "a4330bca-5628-4e0b-9797-53f8e114c914",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0070_DELL",
-      "symbol": "DELL",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 93,
-      "entry_price": 406.0,
-      "exit_price": 394.03,
-      "entry_time": "2026-06-04T14:02:52.011414Z",
-      "exit_time": "2026-06-08T13:38:06.345314Z",
-      "pnl": -1113.59,
-      "return_pct": -0.0295,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "90a70057-e4f2-4962-9167-449fb5d30e3f",
-      "exit_broker_order_id": "53415355-ca05-4407-af5a-4684cc64c641",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0071_DELL",
-      "symbol": "DELL",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 73,
-      "entry_price": 379.29,
-      "exit_price": 392.11,
-      "entry_time": "2026-06-09T19:56:00.671817Z",
-      "exit_time": "2026-06-25T13:36:09.480448Z",
-      "pnl": 935.71,
-      "return_pct": 0.0338,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "93352f76-9e4f-4b85-9813-10e7b0940001",
-      "exit_broker_order_id": "b93d2f63-2c10-49f3-9446-724a5787323e",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0072_DELL",
-      "symbol": "DELL",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 74,
-      "entry_price": 434.08,
-      "exit_price": 426.01,
-      "entry_time": "2026-07-01T16:01:17.659768Z",
-      "exit_time": "2026-07-13T13:36:56.93903Z",
-      "pnl": -597.18,
-      "return_pct": -0.0186,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "ea61cbc1-cf69-4a0d-8445-d7efe01fa65d",
-      "exit_broker_order_id": "aa5450d8-54b0-49c2-86ff-a424e0827394",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 13.0224
     },
     {
       "trade_id": "broker_match_0073_FICO",
@@ -1562,7 +1080,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 14.1444
     },
     {
       "trade_id": "broker_match_0074_FICO",
@@ -1584,7 +1103,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 13.1454
     },
     {
       "trade_id": "broker_match_0075_FICO",
@@ -1605,7 +1125,8 @@
       "exit_broker_order_id": "143534ec-f360-433e-abb3-90463099f023",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "breakeven_stop"
+      "exit_reason": "breakeven_stop",
+      "holding_days": 7.9978
     },
     {
       "trade_id": "broker_match_0076_FICO",
@@ -1627,7 +1148,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 3.9819
     },
     {
       "trade_id": "broker_match_0077_FRWD",
@@ -1648,7 +1170,8 @@
       "exit_broker_order_id": "c1f29ee4-7a17-463b-8285-a6c262e01023",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "time_based"
+      "exit_reason": "time_based",
+      "holding_days": 20.1154
     },
     {
       "trade_id": "broker_match_0078_FRWD",
@@ -1670,7 +1193,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "time_based",
-      "entry_signal_strength": 0.8347
+      "entry_signal_strength": 0.8347,
+      "holding_days": 18.2625
     },
     {
       "trade_id": "broker_match_0079_FTNT",
@@ -1692,7 +1216,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 8.022
     },
     {
       "trade_id": "broker_match_0080_FTNT",
@@ -1714,7 +1239,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 4.9812
     },
     {
       "trade_id": "broker_match_0081_FTNT",
@@ -1736,7 +1262,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 9.0999
     },
     {
       "trade_id": "broker_match_0083_FTXL",
@@ -1757,7 +1284,8 @@
       "exit_broker_order_id": "2bf62e76-6447-4bbf-871f-71b9a1111f0d",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop"
+      "exit_reason": "trailing_stop",
+      "holding_days": 17.001
     },
     {
       "trade_id": "broker_match_0084_FTXL",
@@ -1779,7 +1307,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 7.2627
     },
     {
       "trade_id": "broker_match_0085_GOOGL",
@@ -1800,181 +1329,8 @@
       "exit_broker_order_id": "e53df136-c0c2-4e24-9d68-f98041ef5f31",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss"
-    },
-    {
-      "trade_id": "broker_match_0086_GTOP",
-      "symbol": "GTOP",
-      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
-      "side": "buy",
-      "qty": 1061,
-      "entry_price": 46.52,
-      "exit_price": 46.04,
-      "entry_time": "2026-05-13T17:49:58.925428Z",
-      "exit_time": "2026-05-13T14:45:57.450674Z",
-      "pnl": -509.28,
-      "return_pct": -0.0103,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "94fd4549-d0fe-483c-9f7d-e355dc1f964a",
-      "exit_broker_order_id": "3bb3e7ae-3644-4c35-bb6b-e9a66e9ac878",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.6491
-    },
-    {
-      "trade_id": "broker_match_0087_GTOP",
-      "symbol": "GTOP",
-      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
-      "side": "buy",
-      "qty": 320,
-      "entry_price": 47.11,
-      "exit_price": 46.04,
-      "entry_time": "2026-05-14T14:31:38.540941Z",
-      "exit_time": "2026-05-13T14:45:57.450674Z",
-      "pnl": -342.4,
-      "return_pct": -0.0227,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "585479b3-790f-49e8-a1c7-c0171dfddbf8",
-      "exit_broker_order_id": "3bb3e7ae-3644-4c35-bb6b-e9a66e9ac878",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.6491
-    },
-    {
-      "trade_id": "broker_match_0088_GTOP",
-      "symbol": "GTOP",
-      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
-      "side": "buy",
-      "qty": 805,
-      "entry_price": 47.11,
-      "exit_price": 46.68,
-      "entry_time": "2026-05-14T14:31:38.540941Z",
-      "exit_time": "2026-05-14T13:32:53.838732Z",
-      "pnl": -343.41,
-      "return_pct": -0.0091,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "585479b3-790f-49e8-a1c7-c0171dfddbf8",
-      "exit_broker_order_id": "fa326b40-6a92-4085-82f8-ef8abf8786b0",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.6491
-    },
-    {
-      "trade_id": "broker_match_0089_GTOP",
-      "symbol": "GTOP",
-      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
-      "side": "buy",
-      "qty": 256,
-      "entry_price": 47.12,
-      "exit_price": 46.68,
-      "entry_time": "2026-05-14T17:24:06.248196Z",
-      "exit_time": "2026-05-14T13:32:53.838732Z",
-      "pnl": -111.47,
-      "return_pct": -0.0092,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "536cef64-c905-4c46-bbe5-90091cbe0203",
-      "exit_broker_order_id": "fa326b40-6a92-4085-82f8-ef8abf8786b0",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.6491
-    },
-    {
-      "trade_id": "broker_match_0090_GTOP",
-      "symbol": "GTOP",
-      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
-      "side": "buy",
-      "qty": 1123,
-      "entry_price": 47.12,
-      "exit_price": 47.21,
-      "entry_time": "2026-05-14T17:24:06.248196Z",
-      "exit_time": "2026-05-14T15:14:07.870845Z",
-      "pnl": 102.37,
-      "return_pct": 0.0019,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "536cef64-c905-4c46-bbe5-90091cbe0203",
-      "exit_broker_order_id": "43d0c6c9-cb4d-49ba-b631-fbcd512f33cb",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "time_based",
-      "entry_signal_strength": 0.6491
-    },
-    {
-      "trade_id": "broker_match_0091_GTOP",
-      "symbol": "GTOP",
-      "strategy_id": "broker_reconstructed",
-      "side": "buy",
-      "qty": 2,
-      "entry_price": 46.75,
-      "exit_price": 47.21,
-      "entry_time": "2026-05-15T14:14:46.592606Z",
-      "exit_time": "2026-05-14T15:14:07.870845Z",
-      "pnl": 0.92,
-      "return_pct": 0.0098,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "8dae1dcd-fc69-458c-b829-e14246173b2b",
-      "exit_broker_order_id": "43d0c6c9-cb4d-49ba-b631-fbcd512f33cb",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss"
-    },
-    {
-      "trade_id": "broker_match_0092_GTOP",
-      "symbol": "GTOP",
-      "strategy_id": "broker_reconstructed",
-      "side": "buy",
-      "qty": 583,
-      "entry_price": 46.75,
-      "exit_price": 46.17,
-      "entry_time": "2026-05-15T14:14:46.592606Z",
-      "exit_time": "2026-05-15T13:33:36.160967Z",
-      "pnl": -337.52,
-      "return_pct": -0.0124,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "8dae1dcd-fc69-458c-b829-e14246173b2b",
-      "exit_broker_order_id": "f229c314-2bb8-4687-bd24-0106b6ce45ea",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss"
-    },
-    {
-      "trade_id": "broker_match_0093_HPE",
-      "symbol": "HPE",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 2358,
-      "entry_price": 30.93,
-      "exit_price": 30.82,
-      "entry_time": "2026-05-13T15:02:58.744947Z",
-      "exit_time": "2026-05-13T15:31:07.309142Z",
-      "pnl": -254.84,
-      "return_pct": -0.0035,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "7c64a6f0-d6b5-443d-aee4-a4fcb148bad9",
-      "exit_broker_order_id": "b35aaac0-0894-495c-8918-b92e445625dd",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "holding_days": 16.9926
     },
     {
       "trade_id": "broker_match_0094_HPE",
@@ -1996,95 +1352,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0095_HPE",
-      "symbol": "HPE",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 120,
-      "entry_price": 32.98,
-      "exit_price": 58.97,
-      "entry_time": "2026-05-20T13:30:23.721111Z",
-      "exit_time": "2026-06-02T14:04:00.624244Z",
-      "pnl": 3119.31,
-      "return_pct": 0.7882,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "f495cbf4-f379-45d7-b098-4af14b168ad4",
-      "exit_broker_order_id": "b5bebee5-22a4-460b-a90b-ef7b1a228833",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0096_HPE",
-      "symbol": "HPE",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 10,
-      "entry_price": 37.06,
-      "exit_price": 58.97,
-      "entry_time": "2026-05-27T17:02:47.934942Z",
-      "exit_time": "2026-06-02T14:04:00.624244Z",
-      "pnl": 219.14,
-      "return_pct": 0.5913,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "dec8b09b-bfd2-4727-83c6-ceaf5f832660",
-      "exit_broker_order_id": "b5bebee5-22a4-460b-a90b-ef7b1a228833",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0097_HPE",
-      "symbol": "HPE",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 776,
-      "entry_price": 52.87,
-      "exit_price": 52.65,
-      "entry_time": "2026-06-04T14:02:51.523715Z",
-      "exit_time": "2026-06-04T14:06:05.642515Z",
-      "pnl": -172.37,
-      "return_pct": -0.0042,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "438454dd-07cf-446d-bbff-12a1b749e5e7",
-      "exit_broker_order_id": "ccb89420-8cb9-457c-828e-54fff5947366",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0098_HPE",
-      "symbol": "HPE",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 618,
-      "entry_price": 47.93,
-      "exit_price": 47.24,
-      "entry_time": "2026-06-09T19:55:56.863797Z",
-      "exit_time": "2026-06-25T13:37:39.102062Z",
-      "pnl": -425.23,
-      "return_pct": -0.0144,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "6997e716-19ab-4b77-b80a-3d60bc949c82",
-      "exit_broker_order_id": "773d68b4-6fc5-4cd6-83fc-cafc7cc5a8ca",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.078
     },
     {
       "trade_id": "broker_match_0099_HPQ",
@@ -2106,7 +1375,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 5.0816
     },
     {
       "trade_id": "broker_match_0100_HPQ",
@@ -2128,7 +1398,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 12.9996
     },
     {
       "trade_id": "broker_match_0101_IBM",
@@ -2150,7 +1421,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 3.9833
     },
     {
       "trade_id": "broker_match_0102_IBM",
@@ -2172,7 +1444,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 12.7395
     },
     {
       "trade_id": "broker_match_0103_IBM",
@@ -2194,7 +1467,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 0.6856
+      "entry_signal_strength": 0.6856,
+      "holding_days": 11.9
     },
     {
       "trade_id": "broker_match_0104_INTC",
@@ -2216,7 +1490,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.0781
     },
     {
       "trade_id": "broker_match_0105_INTC",
@@ -2238,7 +1513,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 8.02
     },
     {
       "trade_id": "broker_match_0106_INTC",
@@ -2260,7 +1536,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 1.999
     },
     {
       "trade_id": "broker_match_0107_INTC",
@@ -2282,7 +1559,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 1.9003
     },
     {
       "trade_id": "broker_match_0108_INTC",
@@ -2304,7 +1582,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 5.8997
     },
     {
       "trade_id": "broker_match_0109_INTC",
@@ -2326,7 +1605,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 5.8999
     },
     {
       "trade_id": "broker_match_0110_KLAC",
@@ -2348,7 +1628,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 3.9827
     },
     {
       "trade_id": "broker_match_0111_KLAC",
@@ -2370,7 +1651,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 2.9997
     },
     {
       "trade_id": "broker_match_0112_KLAC",
@@ -2392,7 +1674,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.0991
     },
     {
       "trade_id": "broker_match_0113_KLAC",
@@ -2414,7 +1697,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.1632
     },
     {
       "trade_id": "broker_match_0114_KLAC",
@@ -2436,7 +1720,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 1.0007
     },
     {
       "trade_id": "broker_match_0115_KLAC",
@@ -2458,73 +1743,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0116_KLAC",
-      "symbol": "KLAC",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 123,
-      "entry_price": 256.69,
-      "exit_price": 247.15,
-      "entry_time": "2026-06-29T13:37:00.855447Z",
-      "exit_time": "2026-06-26T13:35:23.41956Z",
-      "pnl": -1173.42,
-      "return_pct": -0.0372,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "dc31997f-2bb9-40c9-b8fe-cf5aabfa3196",
-      "exit_broker_order_id": "42cffcab-642f-490e-aca3-0c10951a0076",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0117_KLAC",
-      "symbol": "KLAC",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 66,
-      "entry_price": 271.14,
-      "exit_price": 247.15,
-      "entry_time": "2026-07-01T16:01:15.905352Z",
-      "exit_time": "2026-06-26T13:35:23.41956Z",
-      "pnl": -1583.49,
-      "return_pct": -0.0885,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "9e318241-bc58-43d7-9082-880e44fa5be7",
-      "exit_broker_order_id": "42cffcab-642f-490e-aca3-0c10951a0076",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0118_KLAC",
-      "symbol": "KLAC",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 52,
-      "entry_price": 271.14,
-      "exit_price": 277.46,
-      "entry_time": "2026-07-01T16:01:15.905352Z",
-      "exit_time": "2026-07-01T13:37:20.70413Z",
-      "pnl": 328.28,
-      "return_pct": 0.0233,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "9e318241-bc58-43d7-9082-880e44fa5be7",
-      "exit_broker_order_id": "6857c18b-5829-4714-bef1-6860fd1d1126",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.8989
     },
     {
       "trade_id": "broker_match_0119_LRCX",
@@ -2546,7 +1766,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.0195
     },
     {
       "trade_id": "broker_match_0120_LRCX",
@@ -2568,7 +1789,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 0.6019
+      "entry_signal_strength": 0.6019,
+      "holding_days": 15.0193
     },
     {
       "trade_id": "broker_match_0121_LRCX",
@@ -2590,7 +1812,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 3.9812
     },
     {
       "trade_id": "broker_match_0122_LRCX",
@@ -2612,7 +1835,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 15.7366
     },
     {
       "trade_id": "broker_match_0123_LRCX",
@@ -2634,7 +1858,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 0.9053
+      "entry_signal_strength": 0.9053,
+      "holding_days": 1.9985
     },
     {
       "trade_id": "broker_match_0124_LRCX",
@@ -2656,7 +1881,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.1628
     },
     {
       "trade_id": "broker_match_0125_LRCX",
@@ -2678,7 +1904,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 1.9988
     },
     {
       "trade_id": "broker_match_0126_LRCX",
@@ -2700,7 +1927,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.886
+      "entry_signal_strength": 0.886,
+      "holding_days": 4.9027
     },
     {
       "trade_id": "broker_match_0127_MDB",
@@ -2722,7 +1950,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 7.0245
     },
     {
       "trade_id": "broker_match_0128_MDB",
@@ -2744,7 +1973,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 6.0048
     },
     {
       "trade_id": "broker_match_0129_MDB",
@@ -2766,7 +1996,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 6.0008
     },
     {
       "trade_id": "broker_match_0130_MDB",
@@ -2788,7 +2019,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 3.9829
     },
     {
       "trade_id": "broker_match_0131_MDB",
@@ -2810,7 +2042,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 0.4988
+      "entry_signal_strength": 0.4988,
+      "holding_days": 4.001
     },
     {
       "trade_id": "broker_match_0132_MDB",
@@ -2832,7 +2065,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 0.4988
+      "entry_signal_strength": 0.4988,
+      "holding_days": 3.9002
     },
     {
       "trade_id": "broker_match_0133_META",
@@ -2854,7 +2088,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.8648
+      "entry_signal_strength": 0.8648,
+      "holding_days": 7.8991
     },
     {
       "trade_id": "broker_match_0136_MRVL",
@@ -2876,7 +2111,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 0.6733
+      "entry_signal_strength": 0.6733,
+      "holding_days": 7.0234
     },
     {
       "trade_id": "broker_match_0137_MRVL",
@@ -2898,7 +2134,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 6.0033
     },
     {
       "trade_id": "broker_match_0138_MRVL",
@@ -2920,7 +2157,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 3.9837
     },
     {
       "trade_id": "broker_match_0139_MRVL",
@@ -2942,7 +2180,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 12.8363
     },
     {
       "trade_id": "broker_match_0140_MU",
@@ -2964,7 +2203,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 15.0191
     },
     {
       "trade_id": "broker_match_0141_MU",
@@ -2985,7 +2225,8 @@
       "exit_broker_order_id": "67cdc909-47ca-40e1-9369-74825065aa5a",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop"
+      "exit_reason": "trailing_stop",
+      "holding_days": 8.9997
     },
     {
       "trade_id": "broker_match_0142_MU",
@@ -3007,7 +2248,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 7.8746
     },
     {
       "trade_id": "broker_match_0143_MU",
@@ -3029,7 +2271,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 3.9826
     },
     {
       "trade_id": "broker_match_0144_MU",
@@ -3051,7 +2294,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 15.7367
     },
     {
       "trade_id": "broker_match_0145_MU",
@@ -3073,7 +2317,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 0.7616
+      "entry_signal_strength": 0.7616,
+      "holding_days": 1.0007
     },
     {
       "trade_id": "broker_match_0146_MU",
@@ -3095,7 +2340,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.1629
     },
     {
       "trade_id": "broker_match_0147_MU",
@@ -3117,51 +2363,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0148_NBIS",
-      "symbol": "NBIS",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 260,
-      "entry_price": 208.1,
-      "exit_price": 213.6,
-      "entry_time": "2026-05-13T15:03:08.715064Z",
-      "exit_time": "2026-05-13T17:32:19.136655Z",
-      "pnl": 1430.0,
-      "return_pct": 0.0264,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "b03871e1-e1e1-40a2-88b0-99508a316bea",
-      "exit_broker_order_id": "ef93df7a-3813-4b4b-8193-582f3b96c8bd",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0149_NBIS",
-      "symbol": "NBIS",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 21,
-      "entry_price": 199.73,
-      "exit_price": 215.88,
-      "entry_time": "2026-05-20T13:33:52.959858Z",
-      "exit_time": "2026-05-22T17:00:38.534241Z",
-      "pnl": 339.18,
-      "return_pct": 0.0809,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "16925b0c-dcf7-4f52-ab2b-2e8c5bf92baa",
-      "exit_broker_order_id": "a569e5e0-5300-4fdc-8221-b64331a06e40",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 2.9991
     },
     {
       "trade_id": "broker_match_0150_NBIS",
@@ -3183,29 +2386,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 0.8375
-    },
-    {
-      "trade_id": "broker_match_0151_NBIS",
-      "symbol": "NBIS",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 100,
-      "entry_price": 218.86,
-      "exit_price": 271.74,
-      "entry_time": "2026-06-09T19:56:02.140414Z",
-      "exit_time": "2026-06-25T13:37:27.542121Z",
-      "pnl": 5287.79,
-      "return_pct": 0.2416,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "4e6d4bf0-72e2-403e-97d7-d19071d3d0bb",
-      "exit_broker_order_id": "2773bf77-fc6f-47df-be62-ef2409de1803",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 0.8375,
+      "holding_days": 3.9825
     },
     {
       "trade_id": "broker_match_0152_NBIS",
@@ -3227,7 +2409,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 1.9006
     },
     {
       "trade_id": "broker_match_0153_NBIS",
@@ -3249,29 +2432,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0154_NBIS",
-      "symbol": "NBIS",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 64,
-      "entry_price": 237.54,
-      "exit_price": 230.23,
-      "entry_time": "2026-07-01T16:01:22.085466Z",
-      "exit_time": "2026-07-02T13:36:09.62874Z",
-      "pnl": -468.02,
-      "return_pct": -0.0308,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "6eddbd75-7ec3-4438-bd80-973b0da730d2",
-      "exit_broker_order_id": "96937a93-0a55-422e-8f25-d8d1c8204749",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop",
-      "entry_signal_strength": 0.6866
+      "entry_signal_strength": 1.0,
+      "holding_days": 6.8996
     },
     {
       "trade_id": "broker_match_0155_NOW",
@@ -3293,7 +2455,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 12.0216
     },
     {
       "trade_id": "broker_match_0156_NOW",
@@ -3315,7 +2478,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 3.9791
     },
     {
       "trade_id": "broker_match_0158_NVDA",
@@ -3337,7 +2501,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 14.1457
     },
     {
       "trade_id": "broker_match_0159_ORCL",
@@ -3359,7 +2524,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 14.1439
     },
     {
       "trade_id": "broker_match_0160_ORCL",
@@ -3381,7 +2547,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 3.9807
     },
     {
       "trade_id": "broker_match_0161_ORCL",
@@ -3403,7 +2570,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 1.7366
     },
     {
       "trade_id": "broker_match_0162_PANW",
@@ -3425,7 +2593,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 14.1464
     },
     {
       "trade_id": "broker_match_0163_PANW",
@@ -3447,7 +2616,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 14.125
     },
     {
       "trade_id": "broker_match_0164_PANW",
@@ -3469,7 +2639,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 4.9812
     },
     {
       "trade_id": "broker_match_0165_PANW",
@@ -3491,7 +2662,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 0.7399
+      "entry_signal_strength": 0.7399,
+      "holding_days": 12.163
     },
     {
       "trade_id": "broker_match_0167_PATH",
@@ -3513,7 +2685,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 3.9786
     },
     {
       "trade_id": "broker_match_0168_PATH",
@@ -3535,7 +2708,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 7.899
     },
     {
       "trade_id": "broker_match_0170_PLTR",
@@ -3557,51 +2731,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.8437
-    },
-    {
-      "trade_id": "broker_match_0171_PSCT",
-      "symbol": "PSCT",
-      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
-      "side": "buy",
-      "qty": 861,
-      "entry_price": 79.24,
-      "exit_price": 78.43,
-      "entry_time": "2026-05-13T17:49:42.62329Z",
-      "exit_time": "2026-05-13T14:45:59.764054Z",
-      "pnl": -697.41,
-      "return_pct": -0.0102,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "c99ef35a-2008-43f4-b730-433cabec0351",
-      "exit_broker_order_id": "74805a5c-25b3-4c43-a482-16a8b7776468",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0172_PSCT",
-      "symbol": "PSCT",
-      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
-      "side": "buy",
-      "qty": 348,
-      "entry_price": 79.24,
-      "exit_price": 78.89,
-      "entry_time": "2026-05-13T17:49:42.62329Z",
-      "exit_time": "2026-05-13T17:32:25.793019Z",
-      "pnl": -121.8,
-      "return_pct": -0.0044,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "c99ef35a-2008-43f4-b730-433cabec0351",
-      "exit_broker_order_id": "4a222e13-a03c-4e90-be58-a367a6246b9d",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 0.8437,
+      "holding_days": 3.9817
     },
     {
       "trade_id": "broker_match_0173_PSCT",
@@ -3623,137 +2754,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0174_PSCT",
-      "symbol": "PSCT",
-      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
-      "side": "buy",
-      "qty": 1199,
-      "entry_price": 79.35,
-      "exit_price": 78.42,
-      "entry_time": "2026-05-14T14:31:21.322225Z",
-      "exit_time": "2026-05-14T13:33:23.450464Z",
-      "pnl": -1118.48,
-      "return_pct": -0.0118,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "62ebaff0-f912-4596-8f48-989029b8cdf0",
-      "exit_broker_order_id": "aacbf785-b502-4a91-9a14-5aeb09e52741",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0175_PSCT",
-      "symbol": "PSCT",
-      "strategy_id": "broker_reconstructed",
-      "side": "buy",
-      "qty": 10,
-      "entry_price": 78.26,
-      "exit_price": 78.42,
-      "entry_time": "2026-05-15T14:14:32.887201Z",
-      "exit_time": "2026-05-14T13:33:23.450464Z",
-      "pnl": 1.57,
-      "return_pct": 0.002,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "6e3c375f-392d-4365-9c7b-ae08590267ab",
-      "exit_broker_order_id": "aacbf785-b502-4a91-9a14-5aeb09e52741",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss"
-    },
-    {
-      "trade_id": "broker_match_0176_PSCT",
-      "symbol": "PSCT",
-      "strategy_id": "broker_reconstructed",
-      "side": "buy",
-      "qty": 593,
-      "entry_price": 78.26,
-      "exit_price": 79.6,
-      "entry_time": "2026-05-15T14:14:32.887201Z",
-      "exit_time": "2026-05-14T15:14:11.410447Z",
-      "pnl": 794.62,
-      "return_pct": 0.0171,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "6e3c375f-392d-4365-9c7b-ae08590267ab",
-      "exit_broker_order_id": "af927cb4-0c65-4f05-9425-87f99508446f",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss"
-    },
-    {
-      "trade_id": "broker_match_0177_PSCT",
-      "symbol": "PSCT",
-      "strategy_id": "breakout_momentum_v1_etf",
-      "side": "buy",
-      "qty": 130,
-      "entry_price": 87.14,
-      "exit_price": 79.6,
-      "entry_time": "2026-06-25T13:36:46.258371Z",
-      "exit_time": "2026-05-14T15:14:11.410447Z",
-      "pnl": -980.2,
-      "return_pct": -0.0865,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "940c8ff1-80da-4325-b446-678c405ec47b",
-      "exit_broker_order_id": "af927cb4-0c65-4f05-9425-87f99508446f",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "time_based",
-      "entry_signal_strength": 0.6846
-    },
-    {
-      "trade_id": "broker_match_0178_PSCT",
-      "symbol": "PSCT",
-      "strategy_id": "breakout_momentum_v1_etf",
-      "side": "buy",
-      "qty": 217,
-      "entry_price": 87.14,
-      "exit_price": 78.99,
-      "entry_time": "2026-06-25T13:36:46.258371Z",
-      "exit_time": "2026-05-14T17:23:40.161607Z",
-      "pnl": -1768.55,
-      "return_pct": -0.0935,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "940c8ff1-80da-4325-b446-678c405ec47b",
-      "exit_broker_order_id": "7bb99e5f-4881-4c78-8ce2-81b6db08f406",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop",
-      "entry_signal_strength": 0.6846
-    },
-    {
-      "trade_id": "broker_match_0179_PTF",
-      "symbol": "PTF",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 792,
-      "entry_price": 122.96,
-      "exit_price": 121.07,
-      "entry_time": "2026-05-13T17:32:31.298287Z",
-      "exit_time": "2026-05-13T14:46:04.988607Z",
-      "pnl": -1496.88,
-      "return_pct": -0.0154,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "ea30a737-725b-40c7-8f19-69d9a3ec0ed1",
-      "exit_broker_order_id": "5f5ea525-da77-40fe-85a3-a35feccd80fb",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.822
     },
     {
       "trade_id": "broker_match_0180_PTF",
@@ -3775,137 +2777,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0181_PTF",
-      "symbol": "PTF",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 788,
-      "entry_price": 122.53,
-      "exit_price": 121.05,
-      "entry_time": "2026-05-14T14:31:16.861172Z",
-      "exit_time": "2026-05-14T13:31:33.13156Z",
-      "pnl": -1166.24,
-      "return_pct": -0.0121,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "599aa2fb-286e-4c1b-80c5-28aaed9245fa",
-      "exit_broker_order_id": "20491174-618a-4dff-8a79-9d93846a1b1e",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0182_PTF",
-      "symbol": "PTF",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 4,
-      "entry_price": 122.8,
-      "exit_price": 121.05,
-      "entry_time": "2026-05-14T17:23:51.707667Z",
-      "exit_time": "2026-05-14T13:31:33.13156Z",
-      "pnl": -7.0,
-      "return_pct": -0.0142,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "682f5e47-e5a1-492d-9796-2906315a1e39",
-      "exit_broker_order_id": "20491174-618a-4dff-8a79-9d93846a1b1e",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0183_PTF",
-      "symbol": "PTF",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 782,
-      "entry_price": 122.8,
-      "exit_price": 123.15,
-      "entry_time": "2026-05-14T17:23:51.707667Z",
-      "exit_time": "2026-05-14T15:14:22.245687Z",
-      "pnl": 273.78,
-      "return_pct": 0.0029,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "682f5e47-e5a1-492d-9796-2906315a1e39",
-      "exit_broker_order_id": "5c4e2674-7207-4130-8b4e-71cd82669009",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0184_PTF",
-      "symbol": "PTF",
-      "strategy_id": "broker_reconstructed",
-      "side": "buy",
-      "qty": 6,
-      "entry_price": 119.84,
-      "exit_price": 123.15,
-      "entry_time": "2026-05-15T14:14:43.076713Z",
-      "exit_time": "2026-05-14T15:14:22.245687Z",
-      "pnl": 19.86,
-      "return_pct": 0.0276,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "52a983ac-ddcc-4c8c-86da-9e9cc6ad4d63",
-      "exit_broker_order_id": "5c4e2674-7207-4130-8b4e-71cd82669009",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss"
-    },
-    {
-      "trade_id": "broker_match_0185_PTF",
-      "symbol": "PTF",
-      "strategy_id": "broker_reconstructed",
-      "side": "buy",
-      "qty": 270,
-      "entry_price": 119.84,
-      "exit_price": 118.52,
-      "entry_time": "2026-05-15T14:14:43.076713Z",
-      "exit_time": "2026-05-15T13:33:46.697448Z",
-      "pnl": -356.41,
-      "return_pct": -0.011,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "52a983ac-ddcc-4c8c-86da-9e9cc6ad4d63",
-      "exit_broker_order_id": "68a8a435-0c5e-4ec9-a93c-95bed344caa4",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss"
-    },
-    {
-      "trade_id": "broker_match_0186_PTF",
-      "symbol": "PTF",
-      "strategy_id": "breakout_momentum_v1_etf",
-      "side": "buy",
-      "qty": 321,
-      "entry_price": 133.91,
-      "exit_price": 118.52,
-      "entry_time": "2026-06-25T13:37:03.413559Z",
-      "exit_time": "2026-05-15T13:33:46.697448Z",
-      "pnl": -4939.98,
-      "return_pct": -0.1149,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "ffccff46-35bf-4281-9d0d-77a8fe13d625",
-      "exit_broker_order_id": "68a8a435-0c5e-4ec9-a93c-95bed344caa4",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.9747
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.8327
     },
     {
       "trade_id": "broker_match_0187_QCOM",
@@ -3927,7 +2800,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 0.8926
+      "entry_signal_strength": 0.8926,
+      "holding_days": 7.0259
     },
     {
       "trade_id": "broker_match_0188_QCOM",
@@ -3949,7 +2823,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 5.8759
     },
     {
       "trade_id": "broker_match_0189_QCOM",
@@ -3971,7 +2846,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 0.7454
+      "entry_signal_strength": 0.7454,
+      "holding_days": 5.0234
     },
     {
       "trade_id": "broker_match_0190_QCOM",
@@ -3993,7 +2869,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 3.9835
     },
     {
       "trade_id": "broker_match_0191_QTEC",
@@ -4014,29 +2891,8 @@
       "exit_broker_order_id": "e3d535d9-307d-4725-9835-051be7e3dbbe",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "time_based"
-    },
-    {
-      "trade_id": "broker_match_0193_QTUM",
-      "symbol": "QTUM",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 657,
-      "entry_price": 147.0,
-      "exit_price": 145.09,
-      "entry_time": "2026-05-13T17:32:28.279752Z",
-      "exit_time": "2026-05-13T14:46:08.457702Z",
-      "pnl": -1254.87,
-      "return_pct": -0.013,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "b3c9469e-f3ee-4279-8236-02b5430bdad1",
-      "exit_broker_order_id": "57699c7a-f23c-4d66-9718-1132ae07cd02",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.748
+      "exit_reason": "time_based",
+      "holding_days": 20.1156
     },
     {
       "trade_id": "broker_match_0194_QTUM",
@@ -4058,115 +2914,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.748
-    },
-    {
-      "trade_id": "broker_match_0195_QTUM",
-      "symbol": "QTUM",
-      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
-      "side": "buy",
-      "qty": 651,
-      "entry_price": 147.42,
-      "exit_price": 146.14,
-      "entry_time": "2026-05-14T14:31:12.859132Z",
-      "exit_time": "2026-05-14T13:34:52.339367Z",
-      "pnl": -833.43,
-      "return_pct": -0.0087,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "400cc5ad-fec3-4ee7-af7b-3f28eb56dbc3",
-      "exit_broker_order_id": "db7fa948-d4c2-4c12-baa0-b8c87051b3f6",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.8977
-    },
-    {
-      "trade_id": "broker_match_0196_QTUM",
-      "symbol": "QTUM",
-      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
-      "side": "buy",
-      "qty": 6,
-      "entry_price": 147.42,
-      "exit_price": 146.14,
-      "entry_time": "2026-05-14T17:23:44.694319Z",
-      "exit_time": "2026-05-14T13:34:52.339367Z",
-      "pnl": -7.68,
-      "return_pct": -0.0087,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "38813410-62de-432e-afda-58de143961c3",
-      "exit_broker_order_id": "db7fa948-d4c2-4c12-baa0-b8c87051b3f6",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.8977
-    },
-    {
-      "trade_id": "broker_match_0197_QTUM",
-      "symbol": "QTUM",
-      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
-      "side": "buy",
-      "qty": 643,
-      "entry_price": 147.42,
-      "exit_price": 147.89,
-      "entry_time": "2026-05-14T17:23:44.694319Z",
-      "exit_time": "2026-05-14T15:14:19.206625Z",
-      "pnl": 302.21,
-      "return_pct": 0.0032,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "38813410-62de-432e-afda-58de143961c3",
-      "exit_broker_order_id": "773f6e1d-4353-48a5-9f2e-2df0a1a7b9bb",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.8977
-    },
-    {
-      "trade_id": "broker_match_0198_QTUM",
-      "symbol": "QTUM",
-      "strategy_id": "broker_reconstructed",
-      "side": "buy",
-      "qty": 8,
-      "entry_price": 142.78,
-      "exit_price": 147.89,
-      "entry_time": "2026-05-15T14:02:33.428804Z",
-      "exit_time": "2026-05-14T15:14:19.206625Z",
-      "pnl": 40.88,
-      "return_pct": 0.0358,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "57ff2b0a-35a7-4f0b-951e-0830d88be984",
-      "exit_broker_order_id": "773f6e1d-4353-48a5-9f2e-2df0a1a7b9bb",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss"
-    },
-    {
-      "trade_id": "broker_match_0199_QTUM",
-      "symbol": "QTUM",
-      "strategy_id": "broker_reconstructed",
-      "side": "buy",
-      "qty": 320,
-      "entry_price": 142.78,
-      "exit_price": 142.46,
-      "entry_time": "2026-05-15T14:02:33.428804Z",
-      "exit_time": "2026-05-15T13:32:47.255568Z",
-      "pnl": -102.18,
-      "return_pct": -0.0022,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "57ff2b0a-35a7-4f0b-951e-0830d88be984",
-      "exit_broker_order_id": "75b19cf7-865c-4339-a733-ad40e3260979",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss"
+      "entry_signal_strength": 0.748,
+      "holding_days": 0.835
     },
     {
       "trade_id": "broker_match_0200_RBRK",
@@ -4188,7 +2937,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "time_based",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 20.0014
     },
     {
       "trade_id": "broker_match_0201_RBRK",
@@ -4210,7 +2960,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "time_based",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 4.9812
     },
     {
       "trade_id": "broker_match_0202_RBRK",
@@ -4232,7 +2983,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 0.6638
+      "entry_signal_strength": 0.6638,
+      "holding_days": 12.7377
     },
     {
       "trade_id": "broker_match_0203_RBRK",
@@ -4254,7 +3006,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 6.9995
     },
     {
       "trade_id": "broker_match_0204_RBRK",
@@ -4276,29 +3029,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0205_SHOC",
-      "symbol": "SHOC",
-      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
-      "side": "buy",
-      "qty": 945,
-      "entry_price": 108.08,
-      "exit_price": 106.8,
-      "entry_time": "2026-05-13T17:49:45.973944Z",
-      "exit_time": "2026-05-13T14:46:12.584012Z",
-      "pnl": -1209.6,
-      "return_pct": -0.0118,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "c3dd491e-197a-41a4-9858-a5bb1e848623",
-      "exit_broker_order_id": "e1a24204-51d8-4918-abbe-824e9fae3149",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 4.7374
     },
     {
       "trade_id": "broker_match_0206_SHOC",
@@ -4320,51 +3052,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0207_SHOC",
-      "symbol": "SHOC",
-      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
-      "side": "buy",
-      "qty": 945,
-      "entry_price": 108.61,
-      "exit_price": 107.13,
-      "entry_time": "2026-05-14T14:31:24.90849Z",
-      "exit_time": "2026-05-14T13:30:28.126569Z",
-      "pnl": -1398.6,
-      "return_pct": -0.0136,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "5c1dfce2-7c32-438a-883a-e5924753a4ac",
-      "exit_broker_order_id": "27bb5618-dff0-4602-8a34-a2b246b7183f",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0208_SHOC",
-      "symbol": "SHOC",
-      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
-      "side": "buy",
-      "qty": 942,
-      "entry_price": 108.47,
-      "exit_price": 109.2,
-      "entry_time": "2026-05-14T17:23:53.293413Z",
-      "exit_time": "2026-05-14T15:30:37.758962Z",
-      "pnl": 687.66,
-      "return_pct": 0.0067,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "26d0061f-7e59-4903-8bd0-c6b9d394a577",
-      "exit_broker_order_id": "283678da-2d07-449b-a92b-d3bc78be2d12",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.8199
     },
     {
       "trade_id": "broker_match_0209_SKYY",
@@ -4385,7 +3074,8 @@
       "exit_broker_order_id": "d2c62d96-077a-49c3-bc57-f6eb7c05e8fa",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop"
+      "exit_reason": "trailing_stop",
+      "holding_days": 19.1162
     },
     {
       "trade_id": "broker_match_0210_SKYY",
@@ -4406,7 +3096,8 @@
       "exit_broker_order_id": "c18d76fd-71bd-4083-8f27-c375c0f7c666",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "time_based"
+      "exit_reason": "time_based",
+      "holding_days": 23.9701
     },
     {
       "trade_id": "broker_match_0212_SMCI",
@@ -4428,7 +3119,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 9.1443
     },
     {
       "trade_id": "broker_match_0213_SMCI",
@@ -4450,7 +3142,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 8.1448
     },
     {
       "trade_id": "broker_match_0214_SMCI",
@@ -4472,7 +3165,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 1.9995
     },
     {
       "trade_id": "broker_match_0215_SMCI",
@@ -4494,7 +3188,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 3.9789
     },
     {
       "trade_id": "broker_match_0216_SMCI",
@@ -4516,7 +3211,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.7358
     },
     {
       "trade_id": "broker_match_0217_SMH",
@@ -4538,7 +3234,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.0411
     },
     {
       "trade_id": "broker_match_0218_SMH",
@@ -4559,7 +3256,8 @@
       "exit_broker_order_id": "ce686681-af6a-4dd4-bdbd-de6a45ddfe51",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop"
+      "exit_reason": "trailing_stop",
+      "holding_days": 19.9917
     },
     {
       "trade_id": "broker_match_0219_SMH",
@@ -4580,7 +3278,8 @@
       "exit_broker_order_id": "c5e26277-65eb-4755-b26c-157c6382588b",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop"
+      "exit_reason": "trailing_stop",
+      "holding_days": 19.9944
     },
     {
       "trade_id": "broker_match_0220_SMH",
@@ -4602,7 +3301,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 11.9992
     },
     {
       "trade_id": "broker_match_0221_SMHX",
@@ -4624,7 +3324,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.8211
     },
     {
       "trade_id": "broker_match_0222_SMHX",
@@ -4645,7 +3346,8 @@
       "exit_broker_order_id": "5b830769-1b4a-42e1-a483-1611d2cec272",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop"
+      "exit_reason": "trailing_stop",
+      "holding_days": 19.9916
     },
     {
       "trade_id": "broker_match_0223_SMHX",
@@ -4666,7 +3368,8 @@
       "exit_broker_order_id": "8f25545d-1f23-4961-b24f-acb3eece2397",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop"
+      "exit_reason": "trailing_stop",
+      "holding_days": 19.9944
     },
     {
       "trade_id": "broker_match_0224_SMHX",
@@ -4688,7 +3391,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.7317
+      "entry_signal_strength": 0.7317,
+      "holding_days": 11.9994
     },
     {
       "trade_id": "broker_match_0225_SNOW",
@@ -4710,7 +3414,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 13.0203
     },
     {
       "trade_id": "broker_match_0226_SNOW",
@@ -4732,7 +3437,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 5.0819
     },
     {
       "trade_id": "broker_match_0227_SNOW",
@@ -4754,29 +3460,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0229_SOXQ",
-      "symbol": "SOXQ",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 1106,
-      "entry_price": 94.9,
-      "exit_price": 94.51,
-      "entry_time": "2026-05-13T17:49:53.416359Z",
-      "exit_time": "2026-05-13T15:02:23.147599Z",
-      "pnl": -431.34,
-      "return_pct": -0.0041,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "5b927e3a-24f2-47c2-8053-04919430394f",
-      "exit_broker_order_id": "ad82347c-b2d7-4a80-a41d-63d714123a30",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.736
     },
     {
       "trade_id": "broker_match_0230_SOXQ",
@@ -4798,159 +3483,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0231_SOXQ",
-      "symbol": "SOXQ",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 171,
-      "entry_price": 94.85,
-      "exit_price": 93.95,
-      "entry_time": "2026-05-14T14:31:44.515677Z",
-      "exit_time": "2026-05-14T13:33:53.155991Z",
-      "pnl": -153.81,
-      "return_pct": -0.0095,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "ed5b1b31-97cb-4fc7-9ddf-3b8820a44a39",
-      "exit_broker_order_id": "f485aa2c-9b51-4d3b-95d9-5b27874b0fa8",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0232_SOXQ",
-      "symbol": "SOXQ",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 935,
-      "entry_price": 94.47,
-      "exit_price": 93.95,
-      "entry_time": "2026-05-14T17:24:10.250875Z",
-      "exit_time": "2026-05-14T13:33:53.155991Z",
-      "pnl": -488.2,
-      "return_pct": -0.0055,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "ec8cae37-f6a5-4555-bab5-5c36ebbda3ec",
-      "exit_broker_order_id": "f485aa2c-9b51-4d3b-95d9-5b27874b0fa8",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0233_SOXQ",
-      "symbol": "SOXQ",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 166,
-      "entry_price": 94.47,
-      "exit_price": 95.39,
-      "entry_time": "2026-05-14T17:24:10.250875Z",
-      "exit_time": "2026-05-14T15:30:45.529987Z",
-      "pnl": 152.01,
-      "return_pct": 0.0097,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "ec8cae37-f6a5-4555-bab5-5c36ebbda3ec",
-      "exit_broker_order_id": "69aa9c72-c5fe-433a-bec8-ce8b923ce03e",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0234_SOXQ",
-      "symbol": "SOXQ",
-      "strategy_id": "broker_reconstructed",
-      "side": "buy",
-      "qty": 5,
-      "entry_price": 91.07,
-      "exit_price": 95.39,
-      "entry_time": "2026-05-15T14:02:36.842602Z",
-      "exit_time": "2026-05-14T15:30:45.529987Z",
-      "pnl": 21.6,
-      "return_pct": 0.0474,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "ab490f6d-5bbb-4b63-8ec1-7f99d48ae621",
-      "exit_broker_order_id": "69aa9c72-c5fe-433a-bec8-ce8b923ce03e",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss"
-    },
-    {
-      "trade_id": "broker_match_0235_SOXQ",
-      "symbol": "SOXQ",
-      "strategy_id": "broker_reconstructed",
-      "side": "buy",
-      "qty": 553,
-      "entry_price": 91.07,
-      "exit_price": 91.6,
-      "entry_time": "2026-05-15T14:02:36.842602Z",
-      "exit_time": "2026-05-15T13:32:21.012759Z",
-      "pnl": 293.09,
-      "return_pct": 0.0058,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "ab490f6d-5bbb-4b63-8ec1-7f99d48ae621",
-      "exit_broker_order_id": "3c88f030-aab4-4211-99ce-aa6ebef2b2a9",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss"
-    },
-    {
-      "trade_id": "broker_match_0236_SOXQ",
-      "symbol": "SOXQ",
-      "strategy_id": "breakout_momentum_v1_etf",
-      "side": "buy",
-      "qty": 385,
-      "entry_price": 111.3,
-      "exit_price": 91.6,
-      "entry_time": "2026-06-25T13:37:04.754776Z",
-      "exit_time": "2026-05-15T13:32:21.012759Z",
-      "pnl": -7584.04,
-      "return_pct": -0.177,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "a5796770-282e-4a16-a55a-f8ce1c545781",
-      "exit_broker_order_id": "3c88f030-aab4-4211-99ce-aa6ebef2b2a9",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0237_SOXX",
-      "symbol": "SOXX",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 33,
-      "entry_price": 527.3,
-      "exit_price": 527.91,
-      "entry_time": "2026-05-14T17:24:04.733549Z",
-      "exit_time": "2026-05-13T15:02:28.562103Z",
-      "pnl": 20.32,
-      "return_pct": 0.0012,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "61f73d80-a4e2-4f5e-bcbc-4ba8e745fd80",
-      "exit_broker_order_id": "6ba762dd-a5ee-4347-b8d8-57e465d3cf85",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.8222
     },
     {
       "trade_id": "broker_match_0238_SOXX",
@@ -4972,28 +3506,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
-    },
-    {
-      "trade_id": "broker_match_0239_SOXX",
-      "symbol": "SOXX",
-      "strategy_id": "broker_reconstructed",
-      "side": "buy",
-      "qty": 33,
-      "entry_price": 508.56,
-      "exit_price": 509.59,
-      "entry_time": "2026-05-15T14:02:45.747894Z",
-      "exit_time": "2026-05-15T13:31:12.105744Z",
-      "pnl": 33.97,
-      "return_pct": 0.002,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "6c71bbaa-da46-4d5a-812b-54b0c00b6e53",
-      "exit_broker_order_id": "9836c8d2-9ccd-455d-acfe-e00d55cbc9ef",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss"
+      "entry_signal_strength": 1.0,
+      "holding_days": 0.8383
     },
     {
       "trade_id": "broker_match_0240_SOXX",
@@ -5014,7 +3528,8 @@
       "exit_broker_order_id": "505ae81c-4dd8-4016-90d3-df8917aa85ae",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop"
+      "exit_reason": "trailing_stop",
+      "holding_days": 19.9998
     },
     {
       "trade_id": "broker_match_0241_SOXX",
@@ -5035,29 +3550,8 @@
       "exit_broker_order_id": "32d15118-efac-43b2-b38e-40c642b48a4f",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "trailing_stop"
-    },
-    {
-      "trade_id": "broker_match_0242_SOXX",
-      "symbol": "SOXX",
-      "strategy_id": "breakout_momentum_v1_etf",
-      "side": "buy",
-      "qty": 33,
-      "entry_price": 634.49,
-      "exit_price": 577.68,
-      "entry_time": "2026-06-25T13:36:50.658499Z",
-      "exit_time": "2026-06-04T14:06:13.713461Z",
-      "pnl": -1874.6,
-      "return_pct": -0.0895,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "a2cfebd0-d3d7-4b04-9ffa-cac7bb3db619",
-      "exit_broker_order_id": "32d15118-efac-43b2-b38e-40c642b48a4f",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
-      "entry_signal_strength": 1.0
+      "holding_days": 20.0024
     },
     {
       "trade_id": "broker_match_0243_SOXX",
@@ -5079,7 +3573,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 1.0
+      "entry_signal_strength": 1.0,
+      "holding_days": 11.9959
     },
     {
       "trade_id": "broker_match_0244_TSLA",
@@ -5101,7 +3596,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 0.5891
+      "entry_signal_strength": 0.5891,
+      "holding_days": 12.0214
     },
     {
       "trade_id": "broker_match_0245_TSLA",
@@ -5122,7 +3618,8 @@
       "exit_broker_order_id": "3f6ceeea-c2dd-46f2-92e3-a33cc333ea8b",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "breakeven_stop"
+      "exit_reason": "breakeven_stop",
+      "holding_days": 6.0024
     },
     {
       "trade_id": "broker_match_0246_TSLA",
@@ -5143,7 +3640,8 @@
       "exit_broker_order_id": "3f6ceeea-c2dd-46f2-92e3-a33cc333ea8b",
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "breakeven_stop"
+      "exit_reason": "breakeven_stop",
+      "holding_days": 5.998
     },
     {
       "trade_id": "broker_match_0247_TSLA",
@@ -5165,7 +3663,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.7363
+      "entry_signal_strength": 0.7363,
+      "holding_days": 4.9024
     },
     {
       "trade_id": "broker_match_0248_TSM",
@@ -5187,7 +3686,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 0.6597
+      "entry_signal_strength": 0.6597,
+      "holding_days": 3.9775
     },
     {
       "trade_id": "broker_match_0249_TSM",
@@ -5209,29 +3709,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
-      "entry_signal_strength": 0.8496
-    },
-    {
-      "trade_id": "broker_match_0250_TTEQ",
-      "symbol": "TTEQ",
-      "strategy_id": "breakout_momentum_v1",
-      "side": "buy",
-      "qty": 1520,
-      "entry_price": 41.49,
-      "exit_price": 41.11,
-      "entry_time": "2026-05-13T17:49:50.130232Z",
-      "exit_time": "2026-05-13T15:02:31.170794Z",
-      "pnl": -577.6,
-      "return_pct": -0.0092,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "a63cd689-6091-4f9e-bd80-75aa70a00fea",
-      "exit_broker_order_id": "60f984a5-a9d8-46ff-bffc-0b8302df8855",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.5901
+      "entry_signal_strength": 0.8496,
+      "holding_days": 6.0998
     },
     {
       "trade_id": "broker_match_0251_TTEQ",
@@ -5253,29 +3732,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.5901
-    },
-    {
-      "trade_id": "broker_match_0252_TTEQ",
-      "symbol": "TTEQ",
-      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
-      "side": "buy",
-      "qty": 1520,
-      "entry_price": 41.62,
-      "exit_price": 41.16,
-      "entry_time": "2026-05-14T14:31:32.087159Z",
-      "exit_time": "2026-05-14T13:33:06.359314Z",
-      "pnl": -694.42,
-      "return_pct": -0.011,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "8e2228f8-64c8-43cf-b3ed-3e154ba6ae46",
-      "exit_broker_order_id": "f7bcf492-1ad2-4b3f-bfab-1434b6ef219f",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.7081
+      "entry_signal_strength": 0.5901,
+      "holding_days": 0.8217
     },
     {
       "trade_id": "broker_match_0253_TTEQ",
@@ -5297,29 +3755,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.7081
-    },
-    {
-      "trade_id": "broker_match_0254_TTEQ",
-      "symbol": "TTEQ",
-      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
-      "side": "buy",
-      "qty": 1520,
-      "entry_price": 41.7,
-      "exit_price": 41.79,
-      "entry_time": "2026-05-14T17:23:57.451143Z",
-      "exit_time": "2026-05-14T15:30:49.407586Z",
-      "pnl": 136.8,
-      "return_pct": 0.0022,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "b63c2727-c6e9-41bb-be3a-7ed8b0daaeb4",
-      "exit_broker_order_id": "dd743bd3-c400-4f2a-95b6-732e528692ab",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.7081
+      "entry_signal_strength": 0.7081,
+      "holding_days": 0.0412
     },
     {
       "trade_id": "broker_match_0255_TTEQ",
@@ -5341,28 +3778,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
-      "entry_signal_strength": 0.7081
-    },
-    {
-      "trade_id": "broker_match_0256_TTEQ",
-      "symbol": "TTEQ",
-      "strategy_id": "broker_reconstructed",
-      "side": "buy",
-      "qty": 1168,
-      "entry_price": 40.91,
-      "exit_price": 40.6,
-      "entry_time": "2026-05-15T14:14:26.986591Z",
-      "exit_time": "2026-05-15T13:33:00.939662Z",
-      "pnl": -362.08,
-      "return_pct": -0.0076,
-      "status": "closed",
-      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
-      "strategy_version_id": "broker_reconstructed",
-      "broker_order_id": "69cff7e5-5788-4b19-b856-174c4fa122ed",
-      "exit_broker_order_id": "95fb261f-7f84-4daf-945d-54a8fa90d373",
-      "original_strategy_id": "broker_reconstructed",
-      "exit_strategy_id": "broker_reconstructed",
-      "exit_reason": "stop_loss"
+      "entry_signal_strength": 0.7081,
+      "holding_days": 0.8396
     },
     {
       "trade_id": "broker_open_0257_ADBE",
@@ -7526,6 +5943,893 @@
       "quarantine_reason": "migrate_quarantine_invalid_trades: entry_time=2026-06-25T13:36:50 exit_time=2026-06-04T14:06:13 holding_days=-20.9796",
       "asset_class": "etf",
       "sector": "semis"
+    },
+    {
+      "trade_id": "broker_match_0026_ANET",
+      "symbol": "ANET",
+      "strategy_id": "breakout_momentum_v1",
+      "side": "buy",
+      "qty": 159,
+      "entry_price": 189.05,
+      "exit_price": 166.47,
+      "entry_time": "2026-07-13T13:37:09.294221Z",
+      "exit_time": "2026-06-25T13:37:11.420643Z",
+      "pnl": -3589.92,
+      "return_pct": -0.1194,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "bdfd9a27-17bf-40ea-beea-15a9ddcaf5bb",
+      "exit_broker_order_id": "e5e700c8-7d75-46eb-b4fe-460b9405b1cf",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "trailing_stop",
+      "entry_signal_strength": 0.832,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0040_CDNS",
+      "symbol": "CDNS",
+      "strategy_id": "breakout_momentum_v1",
+      "side": "buy",
+      "qty": 49,
+      "entry_price": 390.71,
+      "exit_price": 383.39,
+      "entry_time": "2026-06-09T19:56:08.89601Z",
+      "exit_time": "2026-06-08T13:33:42.801779Z",
+      "pnl": -358.74,
+      "return_pct": -0.0187,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "5cd5fb47-9ddc-475a-bf31-d2ee09a3bca6",
+      "exit_broker_order_id": "46bda8f5-f53a-4311-aeb9-562ae2beeb5f",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 1.0,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0086_GTOP",
+      "symbol": "GTOP",
+      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
+      "side": "buy",
+      "qty": 1061,
+      "entry_price": 46.52,
+      "exit_price": 46.04,
+      "entry_time": "2026-05-13T17:49:58.925428Z",
+      "exit_time": "2026-05-13T14:45:57.450674Z",
+      "pnl": -509.28,
+      "return_pct": -0.0103,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "94fd4549-d0fe-483c-9f7d-e355dc1f964a",
+      "exit_broker_order_id": "3bb3e7ae-3644-4c35-bb6b-e9a66e9ac878",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 0.6491,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0087_GTOP",
+      "symbol": "GTOP",
+      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
+      "side": "buy",
+      "qty": 320,
+      "entry_price": 47.11,
+      "exit_price": 46.04,
+      "entry_time": "2026-05-14T14:31:38.540941Z",
+      "exit_time": "2026-05-13T14:45:57.450674Z",
+      "pnl": -342.4,
+      "return_pct": -0.0227,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "585479b3-790f-49e8-a1c7-c0171dfddbf8",
+      "exit_broker_order_id": "3bb3e7ae-3644-4c35-bb6b-e9a66e9ac878",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 0.6491,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0088_GTOP",
+      "symbol": "GTOP",
+      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
+      "side": "buy",
+      "qty": 805,
+      "entry_price": 47.11,
+      "exit_price": 46.68,
+      "entry_time": "2026-05-14T14:31:38.540941Z",
+      "exit_time": "2026-05-14T13:32:53.838732Z",
+      "pnl": -343.41,
+      "return_pct": -0.0091,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "585479b3-790f-49e8-a1c7-c0171dfddbf8",
+      "exit_broker_order_id": "fa326b40-6a92-4085-82f8-ef8abf8786b0",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 0.6491,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0089_GTOP",
+      "symbol": "GTOP",
+      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
+      "side": "buy",
+      "qty": 256,
+      "entry_price": 47.12,
+      "exit_price": 46.68,
+      "entry_time": "2026-05-14T17:24:06.248196Z",
+      "exit_time": "2026-05-14T13:32:53.838732Z",
+      "pnl": -111.47,
+      "return_pct": -0.0092,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "536cef64-c905-4c46-bbe5-90091cbe0203",
+      "exit_broker_order_id": "fa326b40-6a92-4085-82f8-ef8abf8786b0",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 0.6491,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0090_GTOP",
+      "symbol": "GTOP",
+      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
+      "side": "buy",
+      "qty": 1123,
+      "entry_price": 47.12,
+      "exit_price": 47.21,
+      "entry_time": "2026-05-14T17:24:06.248196Z",
+      "exit_time": "2026-05-14T15:14:07.870845Z",
+      "pnl": 102.37,
+      "return_pct": 0.0019,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "536cef64-c905-4c46-bbe5-90091cbe0203",
+      "exit_broker_order_id": "43d0c6c9-cb4d-49ba-b631-fbcd512f33cb",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "time_based",
+      "entry_signal_strength": 0.6491,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0091_GTOP",
+      "symbol": "GTOP",
+      "strategy_id": "broker_reconstructed",
+      "side": "buy",
+      "qty": 2,
+      "entry_price": 46.75,
+      "exit_price": 47.21,
+      "entry_time": "2026-05-15T14:14:46.592606Z",
+      "exit_time": "2026-05-14T15:14:07.870845Z",
+      "pnl": 0.92,
+      "return_pct": 0.0098,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "8dae1dcd-fc69-458c-b829-e14246173b2b",
+      "exit_broker_order_id": "43d0c6c9-cb4d-49ba-b631-fbcd512f33cb",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0092_GTOP",
+      "symbol": "GTOP",
+      "strategy_id": "broker_reconstructed",
+      "side": "buy",
+      "qty": 583,
+      "entry_price": 46.75,
+      "exit_price": 46.17,
+      "entry_time": "2026-05-15T14:14:46.592606Z",
+      "exit_time": "2026-05-15T13:33:36.160967Z",
+      "pnl": -337.52,
+      "return_pct": -0.0124,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "8dae1dcd-fc69-458c-b829-e14246173b2b",
+      "exit_broker_order_id": "f229c314-2bb8-4687-bd24-0106b6ce45ea",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0171_PSCT",
+      "symbol": "PSCT",
+      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
+      "side": "buy",
+      "qty": 861,
+      "entry_price": 79.24,
+      "exit_price": 78.43,
+      "entry_time": "2026-05-13T17:49:42.62329Z",
+      "exit_time": "2026-05-13T14:45:59.764054Z",
+      "pnl": -697.41,
+      "return_pct": -0.0102,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "c99ef35a-2008-43f4-b730-433cabec0351",
+      "exit_broker_order_id": "74805a5c-25b3-4c43-a482-16a8b7776468",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 1.0,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0172_PSCT",
+      "symbol": "PSCT",
+      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
+      "side": "buy",
+      "qty": 348,
+      "entry_price": 79.24,
+      "exit_price": 78.89,
+      "entry_time": "2026-05-13T17:49:42.62329Z",
+      "exit_time": "2026-05-13T17:32:25.793019Z",
+      "pnl": -121.8,
+      "return_pct": -0.0044,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "c99ef35a-2008-43f4-b730-433cabec0351",
+      "exit_broker_order_id": "4a222e13-a03c-4e90-be58-a367a6246b9d",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 1.0,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0174_PSCT",
+      "symbol": "PSCT",
+      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
+      "side": "buy",
+      "qty": 1199,
+      "entry_price": 79.35,
+      "exit_price": 78.42,
+      "entry_time": "2026-05-14T14:31:21.322225Z",
+      "exit_time": "2026-05-14T13:33:23.450464Z",
+      "pnl": -1118.48,
+      "return_pct": -0.0118,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "62ebaff0-f912-4596-8f48-989029b8cdf0",
+      "exit_broker_order_id": "aacbf785-b502-4a91-9a14-5aeb09e52741",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 1.0,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0175_PSCT",
+      "symbol": "PSCT",
+      "strategy_id": "broker_reconstructed",
+      "side": "buy",
+      "qty": 10,
+      "entry_price": 78.26,
+      "exit_price": 78.42,
+      "entry_time": "2026-05-15T14:14:32.887201Z",
+      "exit_time": "2026-05-14T13:33:23.450464Z",
+      "pnl": 1.57,
+      "return_pct": 0.002,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "6e3c375f-392d-4365-9c7b-ae08590267ab",
+      "exit_broker_order_id": "aacbf785-b502-4a91-9a14-5aeb09e52741",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0176_PSCT",
+      "symbol": "PSCT",
+      "strategy_id": "broker_reconstructed",
+      "side": "buy",
+      "qty": 593,
+      "entry_price": 78.26,
+      "exit_price": 79.6,
+      "entry_time": "2026-05-15T14:14:32.887201Z",
+      "exit_time": "2026-05-14T15:14:11.410447Z",
+      "pnl": 794.62,
+      "return_pct": 0.0171,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "6e3c375f-392d-4365-9c7b-ae08590267ab",
+      "exit_broker_order_id": "af927cb4-0c65-4f05-9425-87f99508446f",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0177_PSCT",
+      "symbol": "PSCT",
+      "strategy_id": "breakout_momentum_v1_etf",
+      "side": "buy",
+      "qty": 130,
+      "entry_price": 87.14,
+      "exit_price": 79.6,
+      "entry_time": "2026-06-25T13:36:46.258371Z",
+      "exit_time": "2026-05-14T15:14:11.410447Z",
+      "pnl": -980.2,
+      "return_pct": -0.0865,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "940c8ff1-80da-4325-b446-678c405ec47b",
+      "exit_broker_order_id": "af927cb4-0c65-4f05-9425-87f99508446f",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "time_based",
+      "entry_signal_strength": 0.6846,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0178_PSCT",
+      "symbol": "PSCT",
+      "strategy_id": "breakout_momentum_v1_etf",
+      "side": "buy",
+      "qty": 217,
+      "entry_price": 87.14,
+      "exit_price": 78.99,
+      "entry_time": "2026-06-25T13:36:46.258371Z",
+      "exit_time": "2026-05-14T17:23:40.161607Z",
+      "pnl": -1768.55,
+      "return_pct": -0.0935,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "940c8ff1-80da-4325-b446-678c405ec47b",
+      "exit_broker_order_id": "7bb99e5f-4881-4c78-8ce2-81b6db08f406",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "trailing_stop",
+      "entry_signal_strength": 0.6846,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0182_PTF",
+      "symbol": "PTF",
+      "strategy_id": "breakout_momentum_v1",
+      "side": "buy",
+      "qty": 4,
+      "entry_price": 122.8,
+      "exit_price": 121.05,
+      "entry_time": "2026-05-14T17:23:51.707667Z",
+      "exit_time": "2026-05-14T13:31:33.13156Z",
+      "pnl": -7.0,
+      "return_pct": -0.0142,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "682f5e47-e5a1-492d-9796-2906315a1e39",
+      "exit_broker_order_id": "20491174-618a-4dff-8a79-9d93846a1b1e",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 1.0,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0184_PTF",
+      "symbol": "PTF",
+      "strategy_id": "broker_reconstructed",
+      "side": "buy",
+      "qty": 6,
+      "entry_price": 119.84,
+      "exit_price": 123.15,
+      "entry_time": "2026-05-15T14:14:43.076713Z",
+      "exit_time": "2026-05-14T15:14:22.245687Z",
+      "pnl": 19.86,
+      "return_pct": 0.0276,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "52a983ac-ddcc-4c8c-86da-9e9cc6ad4d63",
+      "exit_broker_order_id": "5c4e2674-7207-4130-8b4e-71cd82669009",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0186_PTF",
+      "symbol": "PTF",
+      "strategy_id": "breakout_momentum_v1_etf",
+      "side": "buy",
+      "qty": 321,
+      "entry_price": 133.91,
+      "exit_price": 118.52,
+      "entry_time": "2026-06-25T13:37:03.413559Z",
+      "exit_time": "2026-05-15T13:33:46.697448Z",
+      "pnl": -4939.98,
+      "return_pct": -0.1149,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "ffccff46-35bf-4281-9d0d-77a8fe13d625",
+      "exit_broker_order_id": "68a8a435-0c5e-4ec9-a93c-95bed344caa4",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 0.9747,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0193_QTUM",
+      "symbol": "QTUM",
+      "strategy_id": "breakout_momentum_v1",
+      "side": "buy",
+      "qty": 657,
+      "entry_price": 147.0,
+      "exit_price": 145.09,
+      "entry_time": "2026-05-13T17:32:28.279752Z",
+      "exit_time": "2026-05-13T14:46:08.457702Z",
+      "pnl": -1254.87,
+      "return_pct": -0.013,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "b3c9469e-f3ee-4279-8236-02b5430bdad1",
+      "exit_broker_order_id": "57699c7a-f23c-4d66-9718-1132ae07cd02",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 0.748,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0195_QTUM",
+      "symbol": "QTUM",
+      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
+      "side": "buy",
+      "qty": 651,
+      "entry_price": 147.42,
+      "exit_price": 146.14,
+      "entry_time": "2026-05-14T14:31:12.859132Z",
+      "exit_time": "2026-05-14T13:34:52.339367Z",
+      "pnl": -833.43,
+      "return_pct": -0.0087,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "400cc5ad-fec3-4ee7-af7b-3f28eb56dbc3",
+      "exit_broker_order_id": "db7fa948-d4c2-4c12-baa0-b8c87051b3f6",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 0.8977,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0196_QTUM",
+      "symbol": "QTUM",
+      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
+      "side": "buy",
+      "qty": 6,
+      "entry_price": 147.42,
+      "exit_price": 146.14,
+      "entry_time": "2026-05-14T17:23:44.694319Z",
+      "exit_time": "2026-05-14T13:34:52.339367Z",
+      "pnl": -7.68,
+      "return_pct": -0.0087,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "38813410-62de-432e-afda-58de143961c3",
+      "exit_broker_order_id": "db7fa948-d4c2-4c12-baa0-b8c87051b3f6",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 0.8977,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0198_QTUM",
+      "symbol": "QTUM",
+      "strategy_id": "broker_reconstructed",
+      "side": "buy",
+      "qty": 8,
+      "entry_price": 142.78,
+      "exit_price": 147.89,
+      "entry_time": "2026-05-15T14:02:33.428804Z",
+      "exit_time": "2026-05-14T15:14:19.206625Z",
+      "pnl": 40.88,
+      "return_pct": 0.0358,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "57ff2b0a-35a7-4f0b-951e-0830d88be984",
+      "exit_broker_order_id": "773f6e1d-4353-48a5-9f2e-2df0a1a7b9bb",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0205_SHOC",
+      "symbol": "SHOC",
+      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
+      "side": "buy",
+      "qty": 945,
+      "entry_price": 108.08,
+      "exit_price": 106.8,
+      "entry_time": "2026-05-13T17:49:45.973944Z",
+      "exit_time": "2026-05-13T14:46:12.584012Z",
+      "pnl": -1209.6,
+      "return_pct": -0.0118,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "c3dd491e-197a-41a4-9858-a5bb1e848623",
+      "exit_broker_order_id": "e1a24204-51d8-4918-abbe-824e9fae3149",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 1.0,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0207_SHOC",
+      "symbol": "SHOC",
+      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
+      "side": "buy",
+      "qty": 945,
+      "entry_price": 108.61,
+      "exit_price": 107.13,
+      "entry_time": "2026-05-14T14:31:24.90849Z",
+      "exit_time": "2026-05-14T13:30:28.126569Z",
+      "pnl": -1398.6,
+      "return_pct": -0.0136,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "5c1dfce2-7c32-438a-883a-e5924753a4ac",
+      "exit_broker_order_id": "27bb5618-dff0-4602-8a34-a2b246b7183f",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 1.0,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0208_SHOC",
+      "symbol": "SHOC",
+      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
+      "side": "buy",
+      "qty": 942,
+      "entry_price": 108.47,
+      "exit_price": 109.2,
+      "entry_time": "2026-05-14T17:23:53.293413Z",
+      "exit_time": "2026-05-14T15:30:37.758962Z",
+      "pnl": 687.66,
+      "return_pct": 0.0067,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "26d0061f-7e59-4903-8bd0-c6b9d394a577",
+      "exit_broker_order_id": "283678da-2d07-449b-a92b-d3bc78be2d12",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 1.0,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0229_SOXQ",
+      "symbol": "SOXQ",
+      "strategy_id": "breakout_momentum_v1",
+      "side": "buy",
+      "qty": 1106,
+      "entry_price": 94.9,
+      "exit_price": 94.51,
+      "entry_time": "2026-05-13T17:49:53.416359Z",
+      "exit_time": "2026-05-13T15:02:23.147599Z",
+      "pnl": -431.34,
+      "return_pct": -0.0041,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "5b927e3a-24f2-47c2-8053-04919430394f",
+      "exit_broker_order_id": "ad82347c-b2d7-4a80-a41d-63d714123a30",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 1.0,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0231_SOXQ",
+      "symbol": "SOXQ",
+      "strategy_id": "breakout_momentum_v1",
+      "side": "buy",
+      "qty": 171,
+      "entry_price": 94.85,
+      "exit_price": 93.95,
+      "entry_time": "2026-05-14T14:31:44.515677Z",
+      "exit_time": "2026-05-14T13:33:53.155991Z",
+      "pnl": -153.81,
+      "return_pct": -0.0095,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "ed5b1b31-97cb-4fc7-9ddf-3b8820a44a39",
+      "exit_broker_order_id": "f485aa2c-9b51-4d3b-95d9-5b27874b0fa8",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 1.0,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0232_SOXQ",
+      "symbol": "SOXQ",
+      "strategy_id": "breakout_momentum_v1",
+      "side": "buy",
+      "qty": 935,
+      "entry_price": 94.47,
+      "exit_price": 93.95,
+      "entry_time": "2026-05-14T17:24:10.250875Z",
+      "exit_time": "2026-05-14T13:33:53.155991Z",
+      "pnl": -488.2,
+      "return_pct": -0.0055,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "ec8cae37-f6a5-4555-bab5-5c36ebbda3ec",
+      "exit_broker_order_id": "f485aa2c-9b51-4d3b-95d9-5b27874b0fa8",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 1.0,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0233_SOXQ",
+      "symbol": "SOXQ",
+      "strategy_id": "breakout_momentum_v1",
+      "side": "buy",
+      "qty": 166,
+      "entry_price": 94.47,
+      "exit_price": 95.39,
+      "entry_time": "2026-05-14T17:24:10.250875Z",
+      "exit_time": "2026-05-14T15:30:45.529987Z",
+      "pnl": 152.01,
+      "return_pct": 0.0097,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "ec8cae37-f6a5-4555-bab5-5c36ebbda3ec",
+      "exit_broker_order_id": "69aa9c72-c5fe-433a-bec8-ce8b923ce03e",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 1.0,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0234_SOXQ",
+      "symbol": "SOXQ",
+      "strategy_id": "broker_reconstructed",
+      "side": "buy",
+      "qty": 5,
+      "entry_price": 91.07,
+      "exit_price": 95.39,
+      "entry_time": "2026-05-15T14:02:36.842602Z",
+      "exit_time": "2026-05-14T15:30:45.529987Z",
+      "pnl": 21.6,
+      "return_pct": 0.0474,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "ab490f6d-5bbb-4b63-8ec1-7f99d48ae621",
+      "exit_broker_order_id": "69aa9c72-c5fe-433a-bec8-ce8b923ce03e",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0235_SOXQ",
+      "symbol": "SOXQ",
+      "strategy_id": "broker_reconstructed",
+      "side": "buy",
+      "qty": 553,
+      "entry_price": 91.07,
+      "exit_price": 91.6,
+      "entry_time": "2026-05-15T14:02:36.842602Z",
+      "exit_time": "2026-05-15T13:32:21.012759Z",
+      "pnl": 293.09,
+      "return_pct": 0.0058,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "ab490f6d-5bbb-4b63-8ec1-7f99d48ae621",
+      "exit_broker_order_id": "3c88f030-aab4-4211-99ce-aa6ebef2b2a9",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0236_SOXQ",
+      "symbol": "SOXQ",
+      "strategy_id": "breakout_momentum_v1_etf",
+      "side": "buy",
+      "qty": 385,
+      "entry_price": 111.3,
+      "exit_price": 91.6,
+      "entry_time": "2026-06-25T13:37:04.754776Z",
+      "exit_time": "2026-05-15T13:32:21.012759Z",
+      "pnl": -7584.04,
+      "return_pct": -0.177,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "a5796770-282e-4a16-a55a-f8ce1c545781",
+      "exit_broker_order_id": "3c88f030-aab4-4211-99ce-aa6ebef2b2a9",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 1.0,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0237_SOXX",
+      "symbol": "SOXX",
+      "strategy_id": "breakout_momentum_v1",
+      "side": "buy",
+      "qty": 33,
+      "entry_price": 527.3,
+      "exit_price": 527.91,
+      "entry_time": "2026-05-14T17:24:04.733549Z",
+      "exit_time": "2026-05-13T15:02:28.562103Z",
+      "pnl": 20.32,
+      "return_pct": 0.0012,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "61f73d80-a4e2-4f5e-bcbc-4ba8e745fd80",
+      "exit_broker_order_id": "6ba762dd-a5ee-4347-b8d8-57e465d3cf85",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 1.0,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0239_SOXX",
+      "symbol": "SOXX",
+      "strategy_id": "broker_reconstructed",
+      "side": "buy",
+      "qty": 33,
+      "entry_price": 508.56,
+      "exit_price": 509.59,
+      "entry_time": "2026-05-15T14:02:45.747894Z",
+      "exit_time": "2026-05-15T13:31:12.105744Z",
+      "pnl": 33.97,
+      "return_pct": 0.002,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "6c71bbaa-da46-4d5a-812b-54b0c00b6e53",
+      "exit_broker_order_id": "9836c8d2-9ccd-455d-acfe-e00d55cbc9ef",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0250_TTEQ",
+      "symbol": "TTEQ",
+      "strategy_id": "breakout_momentum_v1",
+      "side": "buy",
+      "qty": 1520,
+      "entry_price": 41.49,
+      "exit_price": 41.11,
+      "entry_time": "2026-05-13T17:49:50.130232Z",
+      "exit_time": "2026-05-13T15:02:31.170794Z",
+      "pnl": -577.6,
+      "return_pct": -0.0092,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "a63cd689-6091-4f9e-bd80-75aa70a00fea",
+      "exit_broker_order_id": "60f984a5-a9d8-46ff-bffc-0b8302df8855",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 0.5901,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0252_TTEQ",
+      "symbol": "TTEQ",
+      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
+      "side": "buy",
+      "qty": 1520,
+      "entry_price": 41.62,
+      "exit_price": 41.16,
+      "entry_time": "2026-05-14T14:31:32.087159Z",
+      "exit_time": "2026-05-14T13:33:06.359314Z",
+      "pnl": -694.42,
+      "return_pct": -0.011,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "8e2228f8-64c8-43cf-b3ed-3e154ba6ae46",
+      "exit_broker_order_id": "f7bcf492-1ad2-4b3f-bfab-1434b6ef219f",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 0.7081,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0254_TTEQ",
+      "symbol": "TTEQ",
+      "strategy_id": "breakout_momentum_v1_intraday_enhanced",
+      "side": "buy",
+      "qty": 1520,
+      "entry_price": 41.7,
+      "exit_price": 41.79,
+      "entry_time": "2026-05-14T17:23:57.451143Z",
+      "exit_time": "2026-05-14T15:30:49.407586Z",
+      "pnl": 136.8,
+      "return_pct": 0.0022,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "b63c2727-c6e9-41bb-be3a-7ed8b0daaeb4",
+      "exit_broker_order_id": "dd743bd3-c400-4f2a-95b6-732e528692ab",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "entry_signal_strength": 0.7081,
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
+    },
+    {
+      "trade_id": "broker_match_0256_TTEQ",
+      "symbol": "TTEQ",
+      "strategy_id": "broker_reconstructed",
+      "side": "buy",
+      "qty": 1168,
+      "entry_price": 40.91,
+      "exit_price": 40.6,
+      "entry_time": "2026-05-15T14:14:26.986591Z",
+      "exit_time": "2026-05-15T13:33:00.939662Z",
+      "pnl": -362.08,
+      "return_pct": -0.0076,
+      "status": "quarantined",
+      "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "69cff7e5-5788-4b19-b856-174c4fa122ed",
+      "exit_broker_order_id": "95fb261f-7f84-4daf-945d-54a8fa90d373",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": "broker_reconstructed",
+      "exit_reason": "stop_loss",
+      "quarantine_reason": "r0v2b_reversed_chronology: entry_time > exit_time"
     }
   ],
   "daily_snapshots": [
@@ -10678,7 +9982,7 @@
       "approximation": "normalized_strategy_sleeve"
     }
   ],
-  "cumulative_realized_pnl": -105270.022399,
+  "cumulative_realized_pnl": -66796.17,
   "total_trades": 271,
   "winning_trades": 106,
   "losing_trades": 157,

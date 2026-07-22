@@ -27,11 +27,13 @@ ledger_quality_gate:
     max_asset_class_unknown_count: 0           # currently 245 → INVALID
     broker_equity_bridge_tolerance_usd: 1.0   # abs(sum - broker) ≤ $1
 
-  # Current status (as of 2026-07-21 audit):
-  # INVALID — overlap=41, reversed=62, hd_missing=245, ac_unknown=245
+  # Current status (as of 2026-07-22 R0-v2-B data repair):
+  # INVALID — ac_unknown=183 (closed trades; R0-v2-B code change pending)
+  # Resolved by data repair: overlap=0 ✅, reversed=0 ✅, hd_missing=0 ✅
+  # Remaining blocker: asset_class unknown must be 0 for VALID
   # Update this field after each ledger repair run:
   current_status: INVALID
-  last_checked: "2026-07-21"
+  last_checked: "2026-07-22"
 
 # ── Circuit breaker recovery ─────────────────────────────────────────
 circuit_breaker:
