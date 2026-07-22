@@ -289,8 +289,17 @@ asset_class unknown in closed: 245件
 
 #### R0-v2-C: Guardrail End-to-End Wiring（H2）
 
-**Status**: REOPENED  
-**Evidence**: 9 rules configured、post_run に渡す値は 5 metrics のみ。不足:
+**Status**: ✅ VERIFIED_COMPLETE（2026-07-22）  
+**Commit**: 8f6a147  
+**実装内容**:
+- `RiskSnapshot`（risk_snapshot.py）: 全 9 metrics を型付き一世に計算
+- 副作用なしの compute_daily/weekly/consecutive 関数
+- paper_demo: pre-buy/post-run共に build_risk_snapshot() で全 9 一括評価
+- reduce_size: _effective_exposure_cap * 0.5 で sizing に反映
+- flatten_risky: リスクポジションリスト生成（自動実行禁止）
+- +17 tests（850 passed）
+
+**旧 Evidence** (pre-2026-07-22):
 - `daily_realized_loss_pct` → MISSING
 - `weekly_total_loss_pct` → MISSING
 - `consecutive_losing_trades` → MISSING
@@ -325,8 +334,15 @@ asset_class unknown in closed: 245件
 
 #### R0-v2-D: Durable Metadata & Experiment Join（H4）
 
-**Status**: REOPENED  
-**Evidence**:
+**Status**: ✅ VERIFIED_COMPLETE（2026-07-22）  
+**Commit**: 6b21464  
+**実装内容**:
+- paper_demo.record_submission 呼び出しに run_id/experiment_id/config_hash 追加
+- 新規トレードの join coverage: 0% → 100%
+- post-run join_coverage ログ生成
+- +8 tests
+
+**旧 Evidence** (pre-2026-07-22):
 - decision_id in closed trades: 4/259
 - run_id in closed trades: 0/259
 - experiment_id: 0/259
