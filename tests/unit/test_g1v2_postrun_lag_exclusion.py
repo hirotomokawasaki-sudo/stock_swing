@@ -242,26 +242,17 @@ class TestPaperDemoUsesCanonicalModule:
             "paper_demo.py must import apply_lag_exclusion from postrun_mismatch module"
 
     def test_paper_demo_passes_adjusted_count_to_guardrail(self):
-        """_post_metrics must use _lag_result.adjusted_mismatch_count, not raw mismatch_count."""
+        """R0-v2-C: _postrun_snapshot (RiskSnapshot) must be built with _adjusted_mismatch.
+
+        Updated from dict-literal check (pre-R0-v2-C) to RiskSnapshot pattern.
+        The old _post_metrics dict was replaced by build_risk_snapshot(...) in R0-v2-C.
+        Verify that _adjusted_mismatch is passed to broker_tracker_mismatch_count.
+        """
         from pathlib import Path
-        import ast
-
         src = Path("src/stock_swing/cli/paper_demo.py").read_text()
-        tree = ast.parse(src)
 
-        # Find the _post_metrics dict and check the value for 'broker_tracker_mismatch_count'
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Assign):
-                for target in node.targets:
-                    if isinstance(target, ast.Name) and target.id == "_post_metrics":
-                        for kv_node in ast.walk(node.value):
-                            if isinstance(kv_node, ast.Dict):
-                                for k, v in zip(kv_node.keys, kv_node.values):
-                                    if ast.unparse(k) == "'broker_tracker_mismatch_count'":
-                                        val_src = ast.unparse(v)
-                                        assert "_adjusted_mismatch" in val_src, (
-                                            f"broker_tracker_mismatch_count must use "
-                                            f"_adjusted_mismatch, got: {val_src}"
-                                        )
-                                        return
-        pytest.fail("Could not find _post_metrics assignment in paper_demo.py")
+        # R0-v2-C pattern: build_risk_snapshot(..., broker_tracker_mismatch_count=_adjusted_mismatch, ...)
+        assert "broker_tracker_mismatch_count=_adjusted_mismatch" in src, (
+            "paper_demo.py must pass _adjusted_mismatch to build_risk_snapshot() "
+            "as broker_tracker_mismatch_count (R0-v2-C requirement)"
+        )

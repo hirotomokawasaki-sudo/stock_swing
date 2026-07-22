@@ -72,6 +72,7 @@ from stock_swing.strategy_engine.sector_shock_hold import SectorShockAnalyzer, S
 from stock_swing.tracking.exit_reason_store import delete_exit_reason, write_exit_reason
 from stock_swing.tracking.trade_event_store import TradeEvent
 from stock_swing.tracking.pnl_tracker import PnLTracker
+from stock_swing.guardrails.risk_snapshot import build_risk_snapshot
 from stock_swing.reporting.equity_bridge import compute_equity_bridge
 from stock_swing.utils.context_budget import (
     TokenUsageRecord,
@@ -1528,11 +1529,31 @@ def main() -> int:  # noqa: C901
             list(current_positions_full.values()) if current_positions_full else [],
             pnl_tracker.get_open_positions(),
         )
-        _guard_metrics_now = {
-            "stale_price_event_count": len(stale_symbols) if "stale_symbols" in dir() else 0,
-            "broker_tracker_mismatch_count": _bt_diff_prebuy["mismatch_count"],
-        }
+        # R0-v2-C: full RiskSnapshot for pre-buy evaluation
+        _prebuy_snapshot = build_risk_snapshot(
+            trades=pnl_tracker.state.trades,
+            equity=equity,
+            unrealized_pnl=sum(float(p.get("unrealized_pl", 0) or 0)
+                               for p in current_positions_full.values()) if current_positions_full else 0.0,
+            stale_price_event_count=len(stale_symbols) if "stale_symbols" in dir() else 0,
+            broker_tracker_mismatch_count=_bt_diff_prebuy["mismatch_count"],
+        )
+        _guard_metrics_now = _prebuy_snapshot.to_metrics()
         _guard_decision_now = _guard_engine.evaluate(_guard_metrics_now)
+
+        # R0-v2-C: reduce_size → exposure_cap_override に反映
+        _reduce_size_multiplier = 1.0
+        from stock_swing.guardrails.rule_engine import GuardAction as _GA
+        if _guard_decision_now.action == _GA.reduce_size:
+            _reduce_size_multiplier = 0.5
+            print(f"  🛡 Guardrail reduce_size: position sizing reduced to {_reduce_size_multiplier:.0%}")
+
+        # R0-v2-C: flatten_risky → operator approval プラン生成（自動実行禁止）
+        if _guard_decision_now.action == _GA.flatten_risky:
+            _risky_syms = [p.get("symbol","") for p in (current_positions_full.values() if current_positions_full else [])]
+            print(f"  ⚠️  Guardrail flatten_risky: manual approval required for {len(_risky_syms)} position(s): {', '.join(_risky_syms[:5])}")
+            logger.warning("guardrail_flatten_risky positions=%s (operator approval required, NOT auto-flattened)", _risky_syms)
+
         _guardrail_blocked = []
         _new_actionable = []
         for _cand in actionable:
@@ -1628,10 +1649,16 @@ def main() -> int:  # noqa: C901
 
     executor = PaperExecutor(runtime_mode=runtime_mode, broker_client=broker)
     reconciler = Reconciler(broker_client=broker)
+    # R0-v2-C: apply reduce_size multiplier to exposure cap if guardrail fired
+    _effective_exposure_cap = (
+        dynamic_exposure_cap * _reduce_size_multiplier
+        if "_reduce_size_multiplier" in dir() and _reduce_size_multiplier < 1.0
+        else dynamic_exposure_cap
+    )
     actionable, preview_cache, skipped_buy_reasons, skipped_buy_symbols = _prefilter_actionable_buys_for_submission(
         actionable,
         executor,
-        exposure_cap_override=dynamic_exposure_cap,
+        exposure_cap_override=_effective_exposure_cap,
     )
 
     _section("9. Paper Order Submission")
@@ -1930,14 +1957,12 @@ def main() -> int:  # noqa: C901
             _lag_result = apply_lag_exclusion(_bt_diff_postrun, _new_submissions)
             _adjusted_mismatch = _lag_result.adjusted_mismatch_count
 
-            # R0-v2-C: compute api_error_rate_pct from latency_tracker (was hardcoded 0.0)
+            # R0-v2-C: full RiskSnapshot for post-run evaluation
             _lt_metrics = _build_api_metrics(latency_tracker)
             _api_error_rate_pct = (
                 _lt_metrics.get("error_count", 0) /
                 max(_lt_metrics.get("call_count", 1), 1) * 100
             )
-
-            # R0-v2-C: compute token_spend_spike_pct from this run's AI usage
             _run_ai_metrics = build_ai_metrics_from_decisions(
                 decisions if "decisions" in dir() else []
             )
@@ -1946,24 +1971,24 @@ def main() -> int:  # noqa: C901
                 _run_ai_metrics.get("output_tokens", 0)
             )
             _daily_budget = _run_ai_metrics.get("daily_token_budget", 300_000)
-            _token_spend_spike_pct = (
-                max(0.0, (_run_tokens / max(_daily_budget, 1) - 1.0) * 100)
+            _token_spend_spike_pct = max(0.0, (_run_tokens / max(_daily_budget, 1) - 1.0) * 100)
+            _order_rejection_rate_pct = (
+                len([s for s in submissions if s.status not in {"submitted", "accepted", "filled", "partially_filled"}])
+                / len(submissions) * 100
+                if "submissions" in dir() and len(submissions) >= 4 else 0.0
             )
-
-            _post_metrics = {
-                "stale_price_event_count": len(stale_symbols) if "stale_symbols" in dir() else 0,
-                "broker_tracker_mismatch_count": _adjusted_mismatch,
-                "api_error_rate_pct": _api_error_rate_pct,
-                "token_spend_spike_pct": _token_spend_spike_pct,
-                "order_rejection_rate_pct": (
-                    # Only evaluate rate when >= 4 submissions to avoid spurious triggers
-                    # (e.g. 1 rejection / 8 submissions = 12.5% previously caused false block_buys).
-                    # Threshold raised to 25% in autonomous_stop.yaml (2026-07-15).
-                    len([s for s in submissions if s.status not in {"submitted", "accepted", "filled", "partially_filled"}])
-                    / len(submissions) * 100
-                    if len(submissions) >= 4 else 0.0
-                ) if "submissions" in dir() else 0.0,
-            }
+            _postrun_snapshot = build_risk_snapshot(
+                trades=pnl_tracker.state.trades,
+                equity=equity,
+                unrealized_pnl=sum(float(p.get("unrealized_pl", 0) or 0)
+                                   for p in (_positions_for_diff if "_positions_for_diff" in dir() else [])),
+                stale_price_event_count=len(stale_symbols) if "stale_symbols" in dir() else 0,
+                broker_tracker_mismatch_count=_adjusted_mismatch,
+                api_error_rate_pct=_api_error_rate_pct,
+                order_rejection_rate_pct=_order_rejection_rate_pct,
+                token_spend_spike_pct=_token_spend_spike_pct,
+            )
+            _post_metrics = _postrun_snapshot.to_metrics()
             _post_state = post_run_update(_post_metrics, _guard_engine, _breaker_store)
 
             # R0-v2-A: recovery_pending → ok 遷移（clean scheduled run 検証）
