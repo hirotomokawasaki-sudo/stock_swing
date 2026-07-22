@@ -15,6 +15,41 @@
 
 3. `docs/testing_standards.md` — **テスト品質基準（必読）**
 
+4. `docs/codex reviews/stock_swing_codex_fix_instructions_20260721.md` — **Codex 実装指示（H0～H9）**
+   - R0-v2～R8-v2 の各タスクに対応する具体的な定義・コード例・実装順序が入っている
+   - **改善計画には高レベルの要件のみマージ済み。コードレベルの実装指示はこっちのファイルが正（ディレクトリ名にスペースあり。クォートで囲むこと）**
+
+---
+
+## Codex レビュー 実装参照（自動参照ルール）
+
+**実装時に必ず読むべき対応表**。
+
+```
+docs/codex reviews/stock_swing_codex_fix_instructions_20260721.md
+```
+
+| R-v2 タスク | 対応 H セクション | 内容概要 | 実装済 |
+|-----------|-------------|---------|------|
+| R0-v2-A | H0 | Safety Containment | ✅ 2026-07-22 |
+| R0-v2-B | H1 | Ledger integrity / deterministic rebuild | ✅ 2026-07-22 |
+| R0-v2-C | H2 | Guardrail end-to-end wiring | ✅ 2026-07-22 |
+| R0-v2-D | H4 | Durable metadata & experiment join | ✅ 2026-07-22 |
+| R1-v2 | H1 + H4 | Trade lifecycle & attribution | 🔲 次のアクション |
+| R2-v2 | H5 | Classification / Stock 85％ / ETF 15％ | 🔲 |
+| R3-v2 | H6 | Exit replay / Sector shock A/B | 🔲 |
+| R4-v2 | H7 | Signal calibration / Entry foundation | 🔲 |
+| R5-v2 | H5 + H7 | Portfolio risk / Promotion gates | 🔲 |
+| R6-v2 | H3 + H9 | Console contract / Operator UX | 🔲 |
+| R7-v2 | H8 | Data reliability / SLA | 🔲 |
+| R8-v2 | H7 | ML / Learning foundation | 🔲 |
+
+**各タスク着手時のフロー**:
+1. `docs/console_improvement_tasks.md` で要件・acceptance criteria を確認
+2. `docs/codex reviews/stock_swing_codex_fix_instructions_20260721.md` の対応 H セクションを読む
+3. 実際のソースコードを確認し差分を把握
+4. `docs/testing_standards.md` のチェックリストを埋めて実装
+
 ---
 
 ## 実装時の絶対ルール
