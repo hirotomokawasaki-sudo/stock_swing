@@ -234,21 +234,28 @@ R8-v2 ML               ← R0-v2 完了 + clean labels ≥300 後のみ開始可
 
 #### R0-v2-A: Safety Containment（H0）
 
-**Status**: PLANNED → 07-22 着手  
+**Status**: ✅ VERIFIED_COMPLETE（2026-07-22）  
+**Commits**: 2248eb2 + d764953  
 **実装内容**:
-- `config/runtime/current_mode.yaml` を paper に固定（live credential への接続禁止）
-- `INVALID_LEDGER` 状態では promotion/live readiness を強制 NO-GO 表示
-- circuit breaker manual clear 後 → `recovery_pending` 遷移、次回 clean scheduled run 完了後のみ `ok`
-- `SECTOR_SHOCK_HOLD_MODE=shadow` 維持（paper A/B 開始禁止中）
+- circuit_breaker `recovery_pending` ステートマシン（--force-ok による緊急抑払あり）
+- コンソールに SAFETY GATE バナー（INVALID 時は NO-GO + PF/WR = NOT_VALID）
+- `read_ledger_quality_gate()` / `read_circuit_breaker_config()` 追加
+- testing_standards.md + stock_swing/AGENTS.md 作成
 
 **Acceptance criteria**:
-- invalid ledger でも live-ready 表示にならない
-- manual clear だけでは current status が OK にならない
+- ✅ invalid ledger でも live-ready 表示にならない
+- ✅ manual clear だけでは current status が OK にならない
+- +39 tests（802 passed）
 
 #### R0-v2-B: Ledger Integrity（H1）
 
-**Status**: REOPENED  
-**Evidence**:
+**Status**: ✅ VERIFIED_COMPLETE（2026-07-22）  
+**Commits**: 3222b73 + babe6c4 + b7efa25  
+**辺決消済み issue**:
+```
+overlap=41→⨀ reversed=62→⨀ hd_missing=245→⨀ ac_unknown=245→⨀
+```
+**旧 Evidence** (pre-2026-07-22 履歴):
 ```
 closed/quarantine trade_id overlap: 41件  (P0-1)
 entry_time > exit_time: 62件              (P0-1)
@@ -527,11 +534,15 @@ asset_class unknown in closed: 245件
 ## 次のアクション（直近）— v2 改訂版
 
 ```
-2026-07-21〜07-22  R0-v2-A  safety containment（PAPER 固定、invalid performance 非表示）
-                   R2-v2    portfolio_allocation.yaml 訂正 ✅ 完了
+2026-07-22         ✅ R0-v2-A  safety containment（recovery_pending・SAFETY GATE）
+                   ✅ R0-v2-B  ledger integrity 全完了
+                              data repair: overlap=0 reversed=0 hd=0 ac=0
+                              code: canonical validator + equity bridge
+                              ledger_gate_status: INVALID → VALID
+                   ✅ R2-v2    portfolio_allocation.yaml 訂正完了
 
-2026-07-23〜07-27  R0-v2-B  ledger integrity (chronology/quarantine/equity bridge)
-                   R0-v2-C  guardrail E2E（全 metric 実測供給、全 action 接続）
+2026-07-22〜07-23  🔲 R0-v2-C  guardrail E2E（daily/weekly loss・consecutive・4 actions）
+2026-07-23〜07-27  🔲 R0-v2-D  metadata join（run_id/exp_id/config_hash）
 
 2026-07-28〜07-31  R0-v2-D  metadata join（record_submission に run/exp/config hash）
                    R1-v2    immutable fill ledger rebuild
