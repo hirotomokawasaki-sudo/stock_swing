@@ -92,6 +92,7 @@ class ConsoleSummary:
     entry_filter_stats: dict[str, Any] = field(default_factory=dict)     # RF-6b: stock_reduced_blocked等
     sector_shock_shadow_count: int = 0                                   # RF-7: shadow発動回数
     ledger_gate_status: str = "UNKNOWN"                                  # R0-v2-A: VALID / INVALID / UNKNOWN
+    equity_bridge: dict = field(default_factory=dict)                    # R0-v2-B: broker equity bridge
 
     def to_dict(self) -> dict[str, Any]:
         base = {
@@ -119,6 +120,8 @@ class ConsoleSummary:
                 "quarantined_trades": self.ledger_quality.get("quarantined", 0),
                 # R0-v2-A: safety gate
                 "ledger_gate_status": self.ledger_gate_status,
+                # R0-v2-B: equity bridge
+                "equity_bridge": self.equity_bridge,
             },
             "portfolio": {
                 "equity": round(self.equity, 2),
@@ -242,6 +245,8 @@ class ConsoleSummary:
         sector_shock_shadow_count: int = 0,
         # R0-v2-A: safety containment
         ledger_gate_status: str = "UNKNOWN",
+        # R0-v2-B: broker equity bridge
+        equity_bridge: dict | None = None,
     ) -> "ConsoleSummary":
         decisions = decisions or []
         submissions = submissions or []
@@ -393,4 +398,5 @@ class ConsoleSummary:
             entry_filter_stats=entry_filter_stats or {},
             sector_shock_shadow_count=sector_shock_shadow_count,
             ledger_gate_status=ledger_gate_status,
+            equity_bridge=equity_bridge or {},
         )

@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from stock_swing.tracking.closed_trade_validator import validate_closed_trade
 from stock_swing.tracking.trade_event_store import TradeEvent, TradeEventStore
 from stock_swing.utils.strategy_versioning import normalize_strategy_id
 
@@ -423,6 +424,24 @@ class PnLTracker:
                 trade_dict["exit_strategy_id"] = exit_strategy_id
             if exit_reason:
                 trade_dict["exit_reason"] = exit_reason
+
+            # R0-v2-B: canonical validator gate — quarantine instead of closing if invalid
+            _quar_ids = {t.get("trade_id") for t in self.state.quarantined_trades}
+            _val = validate_closed_trade(trade_dict, quarantined_ids=_quar_ids)
+            if not _val.valid:
+                quarantine_dict = dict(trade_dict)
+                quarantine_dict["status"] = "quarantined"
+                quarantine_dict["quarantine_reason"] = (
+                    f"canonical_validator: {_val.quarantine_reason}"
+                )
+                trade_dict["status"] = "quarantined"
+                self.state.quarantined_trades.append(quarantine_dict)
+                logger.warning(
+                    "R0-v2-B: canonical_validator quarantined %s %s: %s",
+                    trade_dict.get("symbol"), trade_dict.get("trade_id"), _val.quarantine_reason,
+                )
+                closed_trade = TradeEntry(**quarantine_dict)
+                continue
 
             self.state.cumulative_realized_pnl += pnl
             if pnl >= 0:

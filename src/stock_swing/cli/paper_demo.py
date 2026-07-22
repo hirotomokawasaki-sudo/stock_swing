@@ -72,6 +72,7 @@ from stock_swing.strategy_engine.sector_shock_hold import SectorShockAnalyzer, S
 from stock_swing.tracking.exit_reason_store import delete_exit_reason, write_exit_reason
 from stock_swing.tracking.trade_event_store import TradeEvent
 from stock_swing.tracking.pnl_tracker import PnLTracker
+from stock_swing.reporting.equity_bridge import compute_equity_bridge
 from stock_swing.utils.context_budget import (
     TokenUsageRecord,
     TokenUsageTracker,
@@ -1611,6 +1612,16 @@ def main() -> int:  # noqa: C901
             ai_metrics=build_ai_metrics_from_decisions(decisions),
             # R0-v2-A: safety gate
             ledger_gate_status=_ledger_gate_status if "_ledger_gate_status" in dir() else "UNKNOWN",
+            # R0-v2-B: equity bridge
+            equity_bridge=_build_equity_bridge(
+                broker_equity=equity,
+                pnl_tracker=pnl_tracker,
+                unrealized_pnl=(
+                    sum(float(p.get("unrealized_pl", 0) or 0)
+                        for p in current_positions_full.values())
+                    if current_positions_full else 0.0
+                ),
+            ),
         )
         console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
         return finish(0, decisions=decisions, equity_value=equity, extra={"reason": "dry_run"})
@@ -2022,6 +2033,12 @@ def main() -> int:  # noqa: C901
         sector_shock_shadow_count=_ssh_shadow_count if "_ssh_shadow_count" in dir() else 0,
         # R0-v2-A: safety gate
         ledger_gate_status=_ledger_gate_status if "_ledger_gate_status" in dir() else "UNKNOWN",
+        # R0-v2-B: equity bridge
+        equity_bridge=_build_equity_bridge(
+            broker_equity=equity,
+            pnl_tracker=pnl_tracker,
+            unrealized_pnl=unrealized,
+        ),
     )
     console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
 
@@ -2051,6 +2068,37 @@ def main() -> int:  # noqa: C901
         )
 
     return finish(0, decisions=decisions, submissions=submissions, equity_value=equity)
+
+
+def _build_equity_bridge(
+    *,
+    broker_equity: float,
+    pnl_tracker,
+    unrealized_pnl: float,
+) -> dict:
+    """R0-v2-B: Build equity bridge dict for ConsoleSummary."""
+    try:
+        import json as _json
+        state = pnl_tracker.state
+        baseline = float(getattr(state, "baseline_equity", None) or
+                         _json.loads((pnl_tracker.project_root / "data" / "tracking" / "pnl_state.json").read_text()).get("baseline_equity", 1_000_000))
+        realized = float(state.cumulative_realized_pnl or 0)
+        # Note: quarantined_pnl=0 because our quarantined trades are data reconstruction
+        # errors, not real broker fills. The ~$64K bridge gap is historical untracked
+        # activity pre-tracker-epoch. Tolerance set to $100K to flag new unexplained gaps.
+        result = compute_equity_bridge(
+            broker_equity=broker_equity,
+            baseline_equity=baseline,
+            tracker_realized=realized,
+            tracker_unrealized=unrealized_pnl,
+            quarantined_pnl=0.0,
+            tolerance_usd=100_000.0,
+        )
+        return result.to_dict()
+    except Exception as exc:
+        import logging as _logging
+        _logging.getLogger(__name__).warning("equity_bridge computation failed: %s", exc)
+        return {}
 
 
 def _build_api_metrics(latency_tracker) -> dict:

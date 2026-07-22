@@ -1,6 +1,6 @@
 {
   "created_at": "2026-05-12T00:17:00+00:00",
-  "last_updated": "2026-07-22T00:00:03.806676+00:00",
+  "last_updated": "2026-07-22T02:27:48.659160+00:00",
   "trades": [
     {
       "trade_id": "broker_match_0009_AMD",
@@ -4708,7 +4708,7 @@
       "pnl": null,
       "return_pct": null,
       "status": "open",
-      "peak_price": 24.815,
+      "peak_price": 24.8299,
       "entry_signal_strength": 0.5046,
       "account_id": "9a0de1fb-af95-47b1-9529-f2f4581ff6d5",
       "strategy_version_id": "breakout_momentum_v2_threshold_tuned",

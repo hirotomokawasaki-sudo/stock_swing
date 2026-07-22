@@ -40,6 +40,7 @@ class ConsoleRenderer:
             self._decision_funnel(d),
             self._broker_tracker_diff(d),
             self._ledger_quality(d),
+            self._equity_bridge(d),
             self._api_ai(d),
             self._missing_metrics(d),
         ]
@@ -368,6 +369,39 @@ class ConsoleRenderer:
             if skip_r:
                 sr_str = "  ".join(f"{k}:{v}" for k, v in skip_r.items())
                 lines.append(f"  skip_reasons={sr_str}")
+        return "\n".join(lines)
+
+    def _equity_bridge(self, d: dict) -> str:
+        """R0-v2-B: Broker equity bridge panel."""
+        health = d.get("health", {})
+        eb = health.get("equity_bridge", {})
+        if not eb:
+            return ""
+        baseline = eb.get("baseline_equity", 0)
+        realized = eb.get("tracker_realized", 0)
+        unrealized = eb.get("tracker_unrealized", 0)
+        computed = eb.get("tracker_computed", 0)
+        broker = eb.get("broker_equity", 0)
+        diff = eb.get("diff_usd", 0)
+        diff_bp = eb.get("diff_bp", 0)
+        q_pnl = eb.get("quarantined_pnl", 0)
+        unexplained = eb.get("unexplained_diff", 0)
+        within = eb.get("within_tolerance", True)
+        tol = eb.get("tolerance_usd", 5000)
+
+        tol_icon = "✅" if within else "🔴"
+        lines = [
+            "EQUITY BRIDGE",
+            _SEP,
+            f"  baseline        = ${baseline:>12,.2f}",
+            f"  + realized      = ${realized:>+12,.2f}",
+            f"  + unrealized    = ${unrealized:>+12,.2f}",
+            f"  tracker_computed= ${computed:>12,.2f}",
+            f"  broker_equity   = ${broker:>12,.2f}",
+            f"  diff            = ${diff:>+12,.2f}  ({diff_bp:.0f}bp)",
+            f"  quarantined_pnl = ${q_pnl:>+12,.2f}  (台帳外・ brokerは記録済み)",
+            f"  unexplained     = ${unexplained:>+12,.2f}  {tol_icon} (tol=${tol:,.0f})",
+        ]
         return "\n".join(lines)
 
     def _missing_metrics(self, d: dict) -> str:
