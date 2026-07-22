@@ -61,6 +61,9 @@ class TradeEntry:
     # F1: Holding-period integrity
     holding_days: float | None = None  # computed from entry_time/exit_time; None if open
     quarantine_reason: str | None = None  # set when status="quarantined"
+    # R1-v2: partial fill leg identity
+    execution_leg_id: str | None = None  # set on partial-fill closed legs; None for full closes
+    _partial_leg_seq: int | None = None  # internal counter; not for external use
 
 
 @dataclass
@@ -330,6 +333,12 @@ class PnLTracker:
                 closed_portion["qty"] = qty_to_close
                 closed_portion["exit_price"] = exit_price
                 closed_portion["exit_time"] = now
+                # R1-v2: execution_leg_id — partial fill の各 lot を一意に識別する
+                _leg_seq = (trade_dict.get("_partial_leg_seq") or 0) + 1
+                trade_dict["_partial_leg_seq"] = _leg_seq
+                closed_portion["execution_leg_id"] = (
+                    f"{trade_dict.get('trade_id', 'unknown')}-leg-{_leg_seq}"
+                )
                 
                 pnl = (exit_price - entry_price) * qty_to_close
                 return_pct = (exit_price - entry_price) / entry_price if entry_price else 0.0

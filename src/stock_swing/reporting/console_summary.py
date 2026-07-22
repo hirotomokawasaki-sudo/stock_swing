@@ -93,6 +93,7 @@ class ConsoleSummary:
     sector_shock_shadow_count: int = 0                                   # RF-7: shadow発動回数
     ledger_gate_status: str = "UNKNOWN"                                  # R0-v2-A: VALID / INVALID / UNKNOWN
     equity_bridge: dict = field(default_factory=dict)                    # R0-v2-B: broker equity bridge
+    funnel_stages: dict[str, int] = field(default_factory=dict)          # R6-v2: 7-stage decision funnel
 
     def to_dict(self) -> dict[str, Any]:
         base = {
@@ -104,6 +105,22 @@ class ConsoleSummary:
                 "timestamp": self.timestamp,
                 "duration_seconds": self.duration_seconds,
                 "guardrail_status": self.guardrail_status,
+                # R6-v2: separated status fields
+                "last_run": {
+                    "status": self.run_status,
+                    "as_of": self.timestamp,
+                    "guardrail": self.guardrail_status,
+                },
+                "data_quality": {
+                    "status": self.ledger_gate_status,
+                    "as_of": self.timestamp,
+                    "details": {
+                        "overlap": 0,
+                        "reversed_chronology": 0,
+                        "holding_days_missing": self.ledger_quality.get("negative_holding_days_in_clean", 0),
+                        "attribution_coverage_pct": self.ledger_quality.get("attribution_coverage_pct"),
+                    },
+                },
             },
             "health": {
                 "status": self.run_status,
@@ -141,6 +158,7 @@ class ConsoleSummary:
                 "rejected": self.orders_rejected,
                 "blocked": len(self.cluster_blocks),
                 "deny_reasons": self.deny_reason_counts,
+                "stages": self.funnel_stages,
                 # RF-6b: stock-reduced modeブロック数
                 "stock_reduced_blocked": len(
                     self.entry_filter_stats.get("stock_reduced_blocked", [])
@@ -247,6 +265,8 @@ class ConsoleSummary:
         ledger_gate_status: str = "UNKNOWN",
         # R0-v2-B: broker equity bridge
         equity_bridge: dict | None = None,
+        # R6-v2: full funnel stages
+        funnel_stages: dict[str, int] | None = None,
     ) -> "ConsoleSummary":
         decisions = decisions or []
         submissions = submissions or []
@@ -399,4 +419,5 @@ class ConsoleSummary:
             sector_shock_shadow_count=sector_shock_shadow_count,
             ledger_gate_status=ledger_gate_status,
             equity_bridge=equity_bridge or {},
+            funnel_stages=funnel_stages or {},
         )

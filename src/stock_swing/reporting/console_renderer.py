@@ -242,18 +242,43 @@ class ConsoleRenderer:
 
     def _decision_funnel(self, d: dict) -> str:
         f = d.get("decision_funnel", {})
-        lines = [
-            "DECISION FUNNEL",
-            _SEP,
-            f"  candidates={f.get('candidates', 0)}"
-            f"  buy={f.get('buy', 0)}"
-            f"  sell={f.get('sell', 0)}"
-            f"  deny={f.get('deny', 0)}"
-            f"  blocked={f.get('blocked', 0)}",
-            f"  submitted={f.get('submitted', 0)}"
-            f"  rejected={f.get('rejected', 0)}",
-        ]
-        # R6-D: deny_reasons breakdown
+        stages = f.get("stages", {})
+
+        lines = ["DECISION FUNNEL", _SEP]
+
+        if stages:
+            # R6-v2: 7-stage funnel display
+            stage_defs = [
+                ("generated",         "generated        "),
+                ("risk_denied",        "└ risk_denied     "),
+                ("entry_blocked",      "└ entry_blocked   "),
+                ("cluster_blocked",    "└ cluster_blocked "),
+                ("guardrail_blocked",  "└ guardrail_block "),
+                ("qty_zero",           "└ qty_zero        "),
+                ("submitted",          "└ submitted       "),
+                ("accepted",           "  └ accepted       "),
+                ("filled",             "  └ filled         "),
+                ("reconciled",         "  └ reconciled     "),
+            ]
+            for key, label in stage_defs:
+                n = stages.get(key)
+                if n is not None:
+                    lines.append(f"  {label} = {n}")
+        else:
+            # fallback: legacy compact display
+            lines.append(
+                f"  candidates={f.get('candidates', 0)}"
+                f"  buy={f.get('buy', 0)}"
+                f"  sell={f.get('sell', 0)}"
+                f"  deny={f.get('deny', 0)}"
+                f"  blocked={f.get('blocked', 0)}"
+            )
+            lines.append(
+                f"  submitted={f.get('submitted', 0)}"
+                f"  rejected={f.get('rejected', 0)}"
+            )
+
+        # deny_reasons breakdown
         deny_reasons = f.get("deny_reasons", {})
         if deny_reasons:
             lines.append("  deny_reasons:")

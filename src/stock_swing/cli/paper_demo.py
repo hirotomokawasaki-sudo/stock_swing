@@ -1643,6 +1643,19 @@ def main() -> int:  # noqa: C901
                     if current_positions_full else 0.0
                 ),
             ),
+            # R6-v2: funnel stages (dry-run has no submissions/reconciliation)
+            funnel_stages={
+                "generated": len(decisions),
+                "risk_denied": sum(1 for d in decisions if getattr(d, "action", "") == "deny"),
+                "entry_blocked": len(_ef_result.blocked) if "_ef_result" in dir() else 0,
+                "cluster_blocked": len(blocked_cluster_cap) if "blocked_cluster_cap" in dir() else 0,
+                "guardrail_blocked": 0,
+                "qty_zero": sum(skipped_buy_reasons.values()) if "skipped_buy_reasons" in dir() else 0,
+                "submitted": 0,
+                "accepted": 0,
+                "filled": 0,
+                "reconciled": 0,
+            },
         )
         console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
         return finish(0, decisions=decisions, equity_value=equity, extra={"reason": "dry_run"})
@@ -1739,6 +1752,7 @@ def main() -> int:  # noqa: C901
                 if total_value > max_position_value:
                     asset_type = "ETF" if is_etf else "Stock"
                     print(f"\n  SKIP {o.side.upper()} {preview_qty} {o.symbol} ({asset_type}): Position limit (${existing_value:.0f} + ${estimated_order_value:.0f} = ${total_value:.0f} > ${max_position_value:.0f} [{position_limit_pct:.0%}])")
+                    _allocation_blocked_count = _allocation_blocked_count + 1 if "_allocation_blocked_count" in dir() else 1
                     continue
             
             if preview_qty is None or preview_sizing is None:
@@ -1923,6 +1937,7 @@ def main() -> int:  # noqa: C901
                             delete_exit_reason(project_root, sub.broker_order_id)
 
                 audit_log.log_reconciliation(sub.submission_id, sub.broker_order_id, result.status_matched, result.discrepancies)
+                _reconciled_count = _reconciled_count + 1 if "_reconciled_count" in dir() else 1
             except Exception as exc:
                 print(f"  WARN: {sub.symbol} reconcile failed: {exc}")
 
@@ -2079,6 +2094,9 @@ def main() -> int:  # noqa: C901
         ai_metrics=build_ai_metrics_from_decisions(decisions),
         # RF/G2: sector shock shadow count
         sector_shock_shadow_count=_ssh_shadow_count if "_ssh_shadow_count" in dir() else 0,
+        # R6-v2: non-dry-run にも ledger_quality / entry_filter_stats を渡す
+        ledger_quality=pnl_tracker.get_ledger_quality_report(),
+        entry_filter_stats=_ef_result.stats if "_ef_result" in dir() else {},
         # R0-v2-A: safety gate
         ledger_gate_status=_ledger_gate_status if "_ledger_gate_status" in dir() else "UNKNOWN",
         # R0-v2-B: equity bridge
@@ -2087,6 +2105,19 @@ def main() -> int:  # noqa: C901
             pnl_tracker=pnl_tracker,
             unrealized_pnl=unrealized,
         ),
+        # R6-v2: full 7-stage funnel
+        funnel_stages={
+            "generated": len(decisions),
+            "risk_denied": sum(1 for d in decisions if getattr(d, "action", "") == "deny"),
+            "entry_blocked": len(_ef_result.blocked) if "_ef_result" in dir() else 0,
+            "cluster_blocked": len(blocked_cluster_cap) if "blocked_cluster_cap" in dir() else 0,
+            "guardrail_blocked": len(_guardrail_blocked) if "_guardrail_blocked" in dir() else 0,
+            "qty_zero": sum(skipped_buy_reasons.values()) if "skipped_buy_reasons" in dir() else 0,
+            "submitted": len([s for s in submissions if s.status not in {"rejected"}]),
+            "accepted": len([s for s in submissions if s.status in {"accepted", "new", "pending_new", "filled", "partially_filled"}]),
+            "filled": len([s for s in submissions if s.status in {"filled", "partially_filled"}]),
+            "reconciled": _reconciled_count if "_reconciled_count" in dir() else 0,
+        },
     )
     console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
 
