@@ -249,16 +249,17 @@ class ConsoleRenderer:
         if stages:
             # R6-v2: 7-stage funnel display
             stage_defs = [
-                ("generated",         "generated        "),
-                ("risk_denied",        "└ risk_denied     "),
-                ("entry_blocked",      "└ entry_blocked   "),
-                ("cluster_blocked",    "└ cluster_blocked "),
-                ("guardrail_blocked",  "└ guardrail_block "),
-                ("qty_zero",           "└ qty_zero        "),
-                ("submitted",          "└ submitted       "),
-                ("accepted",           "  └ accepted       "),
-                ("filled",             "  └ filled         "),
-                ("reconciled",         "  └ reconciled     "),
+                ("generated",          "generated         "),
+                ("risk_denied",         "└ risk_denied      "),
+                ("entry_blocked",       "└ entry_blocked    "),
+                ("cluster_blocked",     "└ cluster_blocked  "),
+                ("allocation_blocked",  "└ alloc_blocked    "),  # R6-v2 / H5
+                ("guardrail_blocked",   "└ guardrail_block  "),
+                ("qty_zero",            "└ qty_zero         "),
+                ("submitted",           "└ submitted        "),
+                ("accepted",            "  └ accepted        "),
+                ("filled",              "  └ filled          "),
+                ("reconciled",          "  └ reconciled      "),
             ]
             for key, label in stage_defs:
                 n = stages.get(key)

@@ -1453,12 +1453,16 @@ def main() -> int:  # noqa: C901
         config_path=_ALLOC_CONFIG_PATH,
         registry_path=_REGISTRY_PATH,
     )
+    _pre_alloc_buys = sum(1 for d in actionable if getattr(d.proposed_order, 'side', '') == 'buy')
     actionable = portfolio_allocator.filter_decisions_by_allocation(
         decisions=actionable,
         current_positions=current_positions_full,
         etf_symbols=ETF_SYMBOLS,
         account_equity=equity,
     )
+    # R6-v2: count allocation blocks (unknown symbol + projected band overweight)
+    _post_alloc_buys = sum(1 for d in actionable if getattr(d.proposed_order, 'side', '') == 'buy')
+    _allocation_blocked_count: int = max(_pre_alloc_buys - _post_alloc_buys, 0)
 
     # Exit-only mode: block ALL new buy orders (premarket / high-volatility guard)
     # Enable: export PAPER_DEMO_EXIT_ONLY=true
@@ -1669,6 +1673,7 @@ def main() -> int:  # noqa: C901
                 "risk_denied": sum(1 for d in decisions if getattr(d, "action", "") == "deny"),
                 "entry_blocked": len(_ef_result.blocked) if "_ef_result" in dir() else 0,
                 "cluster_blocked": len(blocked_cluster_cap) if "blocked_cluster_cap" in dir() else 0,
+                "allocation_blocked": _allocation_blocked_count if "_allocation_blocked_count" in dir() else 0,
                 "guardrail_blocked": 0,
                 "qty_zero": sum(skipped_buy_reasons.values()) if "skipped_buy_reasons" in dir() else 0,
                 "submitted": 0,
@@ -1773,7 +1778,7 @@ def main() -> int:  # noqa: C901
                 if total_value > max_position_value:
                     asset_type = "ETF" if is_etf else "Stock"
                     print(f"\n  SKIP {o.side.upper()} {preview_qty} {o.symbol} ({asset_type}): Position limit (${existing_value:.0f} + ${estimated_order_value:.0f} = ${total_value:.0f} > ${max_position_value:.0f} [{position_limit_pct:.0%}])")
-                    _allocation_blocked_count = _allocation_blocked_count + 1 if "_allocation_blocked_count" in dir() else 1
+                    _allocation_blocked_count += 1
                     continue
             
             if preview_qty is None or preview_sizing is None:
@@ -2136,12 +2141,13 @@ def main() -> int:  # noqa: C901
             pnl_tracker=pnl_tracker,
             unrealized_pnl=unrealized,
         ),
-        # R6-v2: full 7-stage funnel
+        # R6-v2: full 7-stage funnel (now 8 stages with allocation_blocked)
         funnel_stages={
             "generated": len(decisions),
             "risk_denied": sum(1 for d in decisions if getattr(d, "action", "") == "deny"),
             "entry_blocked": len(_ef_result.blocked) if "_ef_result" in dir() else 0,
             "cluster_blocked": len(blocked_cluster_cap) if "blocked_cluster_cap" in dir() else 0,
+            "allocation_blocked": _allocation_blocked_count,
             "guardrail_blocked": len(_guardrail_blocked) if "_guardrail_blocked" in dir() else 0,
             "qty_zero": sum(skipped_buy_reasons.values()) if "skipped_buy_reasons" in dir() else 0,
             "submitted": len([s for s in submissions if s.status not in {"rejected"}]),

@@ -188,3 +188,62 @@ def test_invalid_ledger_exit_attribution_suppresses_pf() -> None:
     assert "NOT_VALID" in out
     assert "PF=25.870" not in out
     assert "PF=0.069" not in out
+
+
+def test_allocation_blocked_shown_in_funnel() -> None:
+    """R6-v2 / H5: allocation_blocked stage appears in DECISION FUNNEL when > 0."""
+    s = ConsoleSummary.build(
+        run_id="alloc1",
+        equity=100_000.0,
+        open_position_count=0,
+        funnel_stages={
+            "generated": 10,
+            "risk_denied": 2,
+            "entry_blocked": 1,
+            "cluster_blocked": 0,
+            "allocation_blocked": 3,  # ← projected band + unknown symbol blocks
+            "guardrail_blocked": 0,
+            "qty_zero": 1,
+            "submitted": 3,
+            "accepted": 3,
+            "filled": 2,
+            "reconciled": 2,
+        },
+    )
+    out = _renderer().render(s)
+    assert "DECISION FUNNEL" in out
+    assert "alloc_blocked" in out, "allocation_blocked stage must appear in funnel"
+    assert "= 3" in out, "allocation_blocked count must be shown"
+
+
+def test_allocation_blocked_zero_still_renders() -> None:
+    """allocation_blocked=0 renders without crash (stage visible for traceability)."""
+    s = ConsoleSummary.build(
+        run_id="alloc2",
+        equity=100_000.0,
+        open_position_count=0,
+        funnel_stages={
+            "generated": 5,
+            "allocation_blocked": 0,
+            "submitted": 5,
+        },
+    )
+    out = _renderer().render(s)
+    assert "DECISION FUNNEL" in out
+
+
+def test_recovery_pending_safety_gate_detail() -> None:
+    """RECOVERY_PENDING in circuit_breaker is displayed in SAFETY GATE panel.
+    Regression: R0-v2-A (2026-07-22) added recovery_pending state.
+    """
+    s = ConsoleSummary.build(
+        run_id="rp1",
+        equity=100_000.0,
+        open_position_count=0,
+        ledger_gate_status="VALID",
+        guardrail_status="recovery_pending",
+    )
+    out = _renderer().render(s)
+    assert "SAFETY GATE" in out
+    assert "RECOVERY_PENDING" in out, "recovery_pending must show in SAFETY GATE"
+    assert "clean scheduled run" in out, "user guidance text must appear"
