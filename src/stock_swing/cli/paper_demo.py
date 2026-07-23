@@ -56,6 +56,11 @@ from stock_swing.execution.reconciler import Reconciler
 from stock_swing.risk.entry_filter import EntryFilterConfig, EntryFilterEngine
 from stock_swing.risk.open_shock_cooldown import apply_open_shock_cooldown
 from stock_swing.risk.portfolio_allocator import PortfolioAllocator
+from stock_swing.risk.allocation_config import (
+    get_etf_symbols_from_registry,
+    read_allocation_config,
+    read_symbol_registry,
+)
 from stock_swing.feature_engine.macro_regime_feature import MacroRegimeFeature
 from stock_swing.feature_engine.price_momentum_feature import PriceMomentumFeature
 from stock_swing.feature_engine.intraday_momentum_feature import IntradayMomentumFeature
@@ -438,11 +443,23 @@ DEFAULT_SYMBOLS = [
 TECH_UNIVERSE_FULL = DEFAULT_SYMBOLS
 
 # ETF symbols for portfolio allocation
-# 2026-05-15: Re-enabled with Massive API providing fresh data
-ETF_SYMBOLS = {
-    'SOXQ', 'SOXX', 'SMH', 'FTXL', 'PTF', 'SMHX', 'FRWD', 
-    'TTEQ', 'GTOP', 'CHPX', 'CHPS', 'PSCT', 'QTEC', 'TDIV', 'SKYY', 'QTUM'
-}
+# R2-v2 / H5 (2026-07-23): loaded from symbol_registry.yaml via allocation_config.
+# Hardcoded fallback retained for safety when registry is unavailable.
+_REGISTRY_PATH = project_root / "config" / "reference" / "symbol_registry.yaml"
+_ALLOC_CONFIG_PATH = project_root / "config" / "strategy" / "portfolio_allocation.yaml"
+
+_SYMBOL_REGISTRY = read_symbol_registry(_REGISTRY_PATH)
+_ALLOC_CONFIG = read_allocation_config(_ALLOC_CONFIG_PATH)
+
+_ETF_SYMBOLS_FROM_REGISTRY: frozenset[str] = get_etf_symbols_from_registry(_SYMBOL_REGISTRY)
+
+# Hardcoded fallback (used only when registry is empty)
+_ETF_SYMBOLS_FALLBACK = frozenset({
+    'SOXQ', 'SOXX', 'SMH', 'FTXL', 'PTF', 'SMHX', 'FRWD',
+    'TTEQ', 'GTOP', 'CHPX', 'CHPS', 'PSCT', 'QTEC', 'TDIV', 'SKYY', 'QTUM',
+})
+
+ETF_SYMBOLS: frozenset[str] = _ETF_SYMBOLS_FROM_REGISTRY if _ETF_SYMBOLS_FROM_REGISTRY else _ETF_SYMBOLS_FALLBACK
 
 
 def main() -> int:  # noqa: C901
@@ -1431,13 +1448,16 @@ def main() -> int:  # noqa: C901
     actionable = [d for d in decisions if d.action in {"buy", "sell"} and d.risk_state == "pass" and d.proposed_order is not None]
     
     # Portfolio allocation: Prioritize ETF or Stock buys based on target allocation
+    # R2-v2 / H5: pass both config and registry so allocator uses registry classification
     portfolio_allocator = PortfolioAllocator(
-        project_root / "config" / "strategy" / "portfolio_allocation.yaml"
+        config_path=_ALLOC_CONFIG_PATH,
+        registry_path=_REGISTRY_PATH,
     )
     actionable = portfolio_allocator.filter_decisions_by_allocation(
         decisions=actionable,
         current_positions=current_positions_full,
-        etf_symbols=ETF_SYMBOLS
+        etf_symbols=ETF_SYMBOLS,
+        account_equity=equity,
     )
 
     # Exit-only mode: block ALL new buy orders (premarket / high-volatility guard)
@@ -1660,7 +1680,8 @@ def main() -> int:  # noqa: C901
         console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
         return finish(0, decisions=decisions, equity_value=equity, extra={"reason": "dry_run"})
 
-    executor = PaperExecutor(runtime_mode=runtime_mode, broker_client=broker)
+    # R2-v2 / H5: pass AllocationConfig so PositionSizingPolicy uses same YAML multipliers
+    executor = PaperExecutor(runtime_mode=runtime_mode, broker_client=broker, alloc_config=_ALLOC_CONFIG)
     reconciler = Reconciler(broker_client=broker)
     # R0-v2-C: apply reduce_size multiplier to exposure cap if guardrail fired
     _effective_exposure_cap = (
@@ -1860,12 +1881,22 @@ def main() -> int:  # noqa: C901
                 print(f"WARN {sub.status}: {sub.reject_reason}")
             audit_log.log_submission(sub.submission_id, sub.decision_id, sub.symbol, sub.side, sub.qty, sub.status, sub.broker_order_id)
             if sub.sizing_details:
+                _sd = sub.sizing_details
+                _before = _sd.get('before_multiplier_qty')
+                _after = _sd.get('after_multiplier_qty')
+                _mult = _sd.get('multiplier_applied')
+                _mult_str = (
+                    f" [×{_mult:.2f}: {_before}→{_after}]"
+                    if (_mult is not None and _mult != 1.0 and _before is not None)
+                    else ""
+                )
                 print(
-                    f"    sizing: equity=${sub.sizing_details.get('account_equity')} "
-                    f"price=${sub.sizing_details.get('current_price')} "
-                    f"max_loss=${sub.sizing_details.get('max_loss_usd')} "
-                    f"max_notional=${sub.sizing_details.get('max_position_notional_usd')} "
-                    f"remaining_exposure=${sub.sizing_details.get('remaining_exposure_capacity_usd')}"
+                    f"    sizing: equity=${_sd.get('account_equity')} "
+                    f"price=${_sd.get('current_price')} "
+                    f"final={_sd.get('final_shares')}{_mult_str} "
+                    f"max_loss=${_sd.get('max_loss_usd')} "
+                    f"max_notional=${_sd.get('max_position_notional_usd')} "
+                    f"remaining_exposure=${_sd.get('remaining_exposure_capacity_usd')}"
                 )
         except Exception as exc:
             print(f"ERROR: {exc}")

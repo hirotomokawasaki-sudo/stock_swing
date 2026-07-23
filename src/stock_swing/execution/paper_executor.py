@@ -17,6 +17,7 @@ from stock_swing.core.runtime import RuntimeMode
 from stock_swing.decision_engine.decision_engine import DecisionRecord
 from stock_swing.pricing import PriceResolver
 from stock_swing.risk.position_sizing import PositionSizingInputs, PositionSizingPolicy
+from stock_swing.risk.allocation_config import AllocationConfig
 from stock_swing.sources.broker_client import BrokerClient
 
 
@@ -98,12 +99,15 @@ class PaperExecutor:
         self,
         runtime_mode: RuntimeMode,
         broker_client: BrokerClient,
+        alloc_config: AllocationConfig | None = None,
     ):
         """Initialize paper executor.
         
         Args:
             runtime_mode: Current runtime mode.
             broker_client: Broker client for order submission.
+            alloc_config: Optional AllocationConfig; when supplied, PositionSizingPolicy
+                reads stock/ETF multipliers from YAML (same source as PortfolioAllocator).
             
         Raises:
             ValueError: If runtime_mode is not PAPER.
@@ -116,7 +120,9 @@ class PaperExecutor:
         
         self.runtime_mode = runtime_mode
         self.broker_client = broker_client
-        self.position_sizing = PositionSizingPolicy()
+        # R2-v2 / H5: use AllocationConfig from YAML when provided so that
+        # multipliers are consistent with PortfolioAllocator
+        self.position_sizing = PositionSizingPolicy(alloc_config=alloc_config)
         
         # Track submissions (in-memory for now, would be persisted in production)
         self.submissions: dict[str, OrderSubmission] = {}
@@ -422,6 +428,10 @@ class PaperExecutor:
             "confidence": decision.confidence,
             "applied_constraint": applied_constraint,
             "skip_reason": result.skip_reason,
+            # R2-v2 / H5: before/after multiplier qty for console display
+            "before_multiplier_qty": result.before_multiplier_qty,
+            "after_multiplier_qty": result.after_multiplier_qty,
+            "multiplier_applied": result.multiplier_applied,
             "price_source": price_source,
             "price_timestamp": price_timestamp,
             "price_age_seconds": (
