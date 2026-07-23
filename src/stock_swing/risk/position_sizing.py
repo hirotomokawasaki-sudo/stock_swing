@@ -5,6 +5,12 @@ Initial implementation uses:
 - max position notional as % of equity
 - max total exposure based on regime
 - fallback risk_per_share using default stop % when no explicit stop is available
+
+R2-v2 / H5 (2026-07-23):
+- PositionSizingPolicy optionally accepts AllocationConfig so that
+  stock / ETF multipliers come from the same YAML as PortfolioAllocator.
+- PositionSizingResult gains before_multiplier_qty / after_multiplier_qty
+  for console before/after display.
 """
 
 from __future__ import annotations
@@ -12,6 +18,10 @@ from __future__ import annotations
 import os as _os
 from dataclasses import dataclass
 from math import floor
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from stock_swing.risk.allocation_config import AllocationConfig
 
 
 REGIME_LIMITS = {
@@ -23,6 +33,9 @@ REGIME_LIMITS = {
 
 DEFAULT_MAX_POSITION_NOTIONAL_PCT = 0.06
 DEFAULT_MAX_SECTOR_EXPOSURE_PCT = 0.55
+# Legacy module-level multipliers kept for backward compatibility.
+# When PositionSizingPolicy is constructed with an AllocationConfig these are
+# overridden by YAML values (stock_new_buy_multiplier / etf_new_buy_multiplier).
 ETF_POSITION_SIZE_MULTIPLIER = 0.70  # Restored to 0.70: actual ETF PF=2.776 (broker data); earlier 0.35 was based on erroneous pre-rebuild data
 STOCK_POSITION_SIZE_MULTIPLIER: float = float(_os.environ.get("STOCK_POSITION_SIZE_MULTIPLIER", "0.5"))
 
@@ -72,6 +85,10 @@ class PositionSizingResult:
     asset_class_used: str
     sector_used: str | None
     skip_reason: str | None = None
+    # R2-v2 / H5: before/after multiplier quantities for console display
+    before_multiplier_qty: int | None = None   # qty before asset-class multiplier
+    after_multiplier_qty: int | None = None    # qty after multiplier (== final_shares when multiplier < 1)
+    multiplier_applied: float | None = None    # the multiplier value used
 
 
 def classify_asset_class(symbol: str | None, asset_class: str | None = None) -> str:
@@ -94,9 +111,54 @@ def effective_position_notional_pct(symbol: str | None, asset_class: str | None 
 
 
 class PositionSizingPolicy:
-    """Hybrid sizing policy using risk, notional, and exposure caps."""
+    """Hybrid sizing policy using risk, notional, and exposure caps.
 
-    def size(self, inputs: PositionSizingInputs) -> PositionSizingResult:
+    R2-v2 / H5: accepts optional AllocationConfig so that stock/ETF multipliers
+    come from the same YAML source as PortfolioAllocator.
+    """
+
+    def __init__(self, alloc_config: "AllocationConfig | None" = None) -> None:
+        """Initialize policy.
+
+        Args:
+            alloc_config: When supplied, stock_new_buy_multiplier and
+                etf_new_buy_multiplier are read from this config.  When None,
+                the legacy module-level constants (ETF_POSITION_SIZE_MULTIPLIER /
+                STOCK_POSITION_SIZE_MULTIPLIER) are used as fallback.
+        """
+        self._alloc_config = alloc_config
+
+    def _get_multipliers(self) -> tuple[float, float]:
+        """Return (stock_multiplier, etf_multiplier) to apply to final_shares.
+
+        When alloc_config is supplied the multipliers come from YAML and are
+        applied to final_shares; effective_position_notional_pct is called with
+        base_pct only (no legacy baked-in multiplier).
+
+        When alloc_config is NOT supplied (legacy path), effective_position_notional_pct
+        already bakes the multiplier into the notional cap, so we return 1.0 here to
+        avoid double-applying.
+        """
+        if self._alloc_config is not None:
+            return (
+                self._alloc_config.stock_new_buy_multiplier,
+                self._alloc_config.etf_new_buy_multiplier,
+            )
+        # Legacy: multiplier already applied inside effective_position_notional_pct
+        return (1.0, 1.0)
+
+    def _notional_pct(self, symbol: str, asset_class: str, base_pct: float) -> float:
+        """Return the notional cap pct for sizing.
+
+        When alloc_config is set, multiplier is applied to final_shares (not here),
+        so return base_pct unchanged.  Legacy path delegates to effective_position_notional_pct
+        which bakes the multiplier in.
+        """
+        if self._alloc_config is not None:
+            return float(base_pct)
+        return effective_position_notional_pct(symbol, asset_class, base_pct)
+
+    def size(self, inputs: PositionSizingInputs) -> PositionSizingResult:  # noqa: C901
         equity = max(float(inputs.account_equity or 0), 0.0)
         price = max(float(inputs.current_price or 0), 0.0)
         exposure = max(float(inputs.current_total_exposure or 0), 0.0)
@@ -118,7 +180,7 @@ class PositionSizingPolicy:
             return self._empty(inputs, regime, "invalid_risk_per_share")
 
         max_loss_usd = equity * float(inputs.max_risk_per_trade_pct)
-        notional_pct = effective_position_notional_pct(symbol, asset_class, float(inputs.max_position_notional_pct))
+        notional_pct = self._notional_pct(symbol, asset_class, float(inputs.max_position_notional_pct))
         max_position_notional_usd = equity * notional_pct
         max_total_exposure_usd = equity * regime_limit
         remaining_capacity = max_total_exposure_usd - exposure
@@ -141,6 +203,14 @@ class PositionSizingPolicy:
         boosted = floor(base_final_shares * confidence_multiplier)
         cap = min(shares_by_risk, shares_by_notional, shares_by_exposure, shares_by_sector)
         final_shares = min(boosted, cap)
+
+        # R2-v2 / H5: apply asset-class multiplier from AllocationConfig (YAML)
+        stock_mult, etf_mult = self._get_multipliers()
+        asset_multiplier = etf_mult if asset_class == "etf" else stock_mult
+        before_multiplier_qty = final_shares
+        if asset_multiplier != 1.0 and final_shares > 0:
+            final_shares = max(floor(final_shares * asset_multiplier), 0)
+        after_multiplier_qty = final_shares
 
         skip_reason = None
         if remaining_capacity <= 0:
@@ -172,6 +242,9 @@ class PositionSizingPolicy:
             asset_class_used=asset_class,
             sector_used=sector,
             skip_reason=skip_reason,
+            before_multiplier_qty=before_multiplier_qty,
+            after_multiplier_qty=after_multiplier_qty,
+            multiplier_applied=asset_multiplier,
         )
 
     def _empty(self, inputs: PositionSizingInputs, regime: str, reason: str) -> PositionSizingResult:
@@ -191,4 +264,7 @@ class PositionSizingPolicy:
             asset_class_used=classify_asset_class(inputs.symbol, inputs.asset_class),
             sector_used=SYMBOL_SECTORS.get((inputs.symbol or '').upper()),
             skip_reason=reason,
+            before_multiplier_qty=0,
+            after_multiplier_qty=0,
+            multiplier_applied=None,
         )
