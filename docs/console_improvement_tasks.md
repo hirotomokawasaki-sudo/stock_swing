@@ -572,7 +572,7 @@ asset_class unknown in closed: 245件
                    🔴 Go/No-Go required 全件 ✅（ledger=VALID / CB=ok / attr=100% / crons OK）
                    ⚠️  preferred 未達: overall PF=0.686（目標 1.20）/ stop_loss WR=24%（目標 30%）
 
-2026-07-23（木）    🔲 R2-v2  allocator 統一（H5: allocator/sizing/console が同じ YAML 参照）
+2026-07-23（木）    ✅ R2-v2  allocator 統一（H5: allocation_config.py + projected band check + 30 tests）
                          allocation band で projected overweight 専判定
 
 2026-07-24（金）    🔲 R1-v2  rebuild idempotency + quarantine tombstone（H1 残り）
