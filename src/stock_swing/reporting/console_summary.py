@@ -168,6 +168,8 @@ class ConsoleSummary:
                 "stock_reduced_blocked_symbols": (
                     self.entry_filter_stats.get("stock_reduced_blocked", [])[:10]
                 ),
+                # BUY STOP LIST: 永続的にブロックされている全銘柄（run非依存）
+                "buy_stop_list": self.entry_filter_stats.get("buy_stop_list", []),
             },
             "broker_tracker_diff": self.broker_tracker_diff,
             "risk": {

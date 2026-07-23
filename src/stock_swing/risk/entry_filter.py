@@ -319,3 +319,93 @@ class EntryFilterEngine:
             )
 
         return EntryFilterResult(passed=passed, blocked=blocked, stats=diag)
+
+
+# ---------------------------------------------------------------------------
+# Permanent block summary — independent of any run's BUY candidates
+# ---------------------------------------------------------------------------
+
+def get_permanent_block_summary(
+    closed_trades: list[dict],
+    config: EntryFilterConfig | None = None,
+    etf_symbols: set[str] | None = None,
+) -> list[dict]:
+    """Compute which symbols are currently blocked by entry filters from PF history.
+
+    Unlike EntryFilterEngine.filter(), this function does NOT need a list of
+    BUY decisions.  It scans all closed trades, computes per-symbol PF, and
+    returns every symbol that would be blocked if it appeared as a BUY candidate.
+
+    Args:
+        closed_trades: All closed trades from pnl_state.
+        config:        EntryFilterConfig to use (defaults to from_env()).
+        etf_symbols:   Set of ETF symbols (exempt from stock_reduced gate).
+
+    Returns:
+        List of dicts sorted by PF ascending::
+
+            [
+              {
+                "symbol": "MDB",
+                "n_trades": 6,
+                "profit_factor": 0.0,
+                "reason": "stock_reduced",
+                "reason_detail": "PF=0.000 < 1.0 (n=6, min_n=5)",
+              },
+              ...
+            ]
+    """
+    cfg = config or EntryFilterConfig.from_env()
+    etf_syms = etf_symbols or set()
+
+    only_closed = [t for t in closed_trades if t.get("status") == "closed"]
+
+    # Compute PF with the lower min_trades (stock_reduced) so we capture all candidates
+    effective_min = min(cfg.min_trades_for_gate, cfg.stock_reduced_min_trades)
+    pf_stats = compute_rolling_pf(only_closed, min_trades=effective_min)
+
+    result: list[dict] = []
+    for sym, stats in pf_stats.items():
+        if stats.profit_factor is None:
+            continue  # not enough trades even for effective_min
+        is_etf = sym in etf_syms
+        pf = stats.profit_factor
+        n = stats.closed_count
+        reason = None
+        reason_detail = None
+
+        # rolling_pf_gate (applies to all symbols with enough trades)
+        if n >= cfg.min_trades_for_gate and pf < cfg.rolling_pf_gate:
+            reason = "rolling_pf_gate"
+            reason_detail = (
+                f"PF={pf:.3f} < {cfg.rolling_pf_gate:.2f} "
+                f"(n={n}, min_n={cfg.min_trades_for_gate})"
+            )
+
+        # stock_reduced stricter gate (non-ETF only)
+        if (
+            cfg.stock_reduced_mode
+            and not is_etf
+            and n >= cfg.stock_reduced_min_trades
+            and pf < cfg.stock_reduced_pf_gate
+        ):
+            if reason is None or pf < cfg.rolling_pf_gate:
+                # stock_reduced is the binding constraint (or the only one)
+                reason = "stock_reduced"
+                reason_detail = (
+                    f"PF={pf:.3f} < {cfg.stock_reduced_pf_gate:.2f} "
+                    f"(n={n}, min_n={cfg.stock_reduced_min_trades})"
+                )
+
+        if reason:
+            result.append({
+                "symbol": sym,
+                "n_trades": n,
+                "profit_factor": round(pf, 3),
+                "reason": reason,
+                "reason_detail": reason_detail,
+            })
+
+    # Sort: worst PF first
+    result.sort(key=lambda r: (r["reason"], r["profit_factor"]))
+    return result

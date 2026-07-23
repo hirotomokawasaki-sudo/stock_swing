@@ -376,15 +376,45 @@ class ConsoleRenderer:
         return "\n".join(lines)
 
     def _decision_funnel_stock_reduced(self, funnel: dict) -> list[str]:
-        """stock-reduced ブロック情報を返す（_decision_funnel内で呼び出す）."""
+        """stock-reduced ブロック + BUY STOP LIST 表示（_decision_funnel内で呼び出す）."""
+        lines: list[str] = []
+
+        # 今回の run でブロックされた stock_reduced 右数（従来の表示）
         n = funnel.get("stock_reduced_blocked", 0)
         syms = funnel.get("stock_reduced_blocked_symbols", [])
-        if not n:
-            return []
-        sym_str = ", ".join(syms[:8]) + (" ..." if len(syms) > 8 else "")
-        return [
-            f"  stock_reduced  = {n} ブロック: {sym_str}"
-        ]
+        if n:
+            sym_str = ", ".join(syms[:8]) + (" ..." if len(syms) > 8 else "")
+            lines.append(f"  stock_reduced  = {n} ブロック: {sym_str}")
+
+        # BUY STOP LIST: 現在永続ブロックされている全銘柄（run非依存）
+        stop_list = funnel.get("buy_stop_list", [])
+        if stop_list:
+            lines.append("")
+            lines.append("  BUY STOP LIST  (画構わずブロック中)")
+            lines.append(f"  {'sym':<6} {'n':>3}  {'PF':>6}  reason")
+            lines.append(f"  {'-'*6} {'-'*3}  {'-'*6}  {'-'*30}")
+
+            # Group by reason for readability
+            prev_reason = None
+            for entry in stop_list:
+                sym    = entry.get("symbol", "")[:6]
+                n_t    = entry.get("n_trades", 0)
+                pf_v   = entry.get("profit_factor", 0)
+                reason = entry.get("reason", "")
+                detail = entry.get("reason_detail", "")
+
+                # print reason header when group changes
+                if reason != prev_reason:
+                    reason_label = {
+                        "stock_reduced":  "stock_reduced (PF<1.0, n≥5)",
+                        "rolling_pf_gate": "rolling_pf_gate (PF<0.70, n≥5)",
+                    }.get(reason, reason)
+                    lines.append(f"  [{reason_label}]")
+                    prev_reason = reason
+
+                lines.append(f"  {sym:<6} {n_t:>3}  {pf_v:>6.3f}  {detail}")
+
+        return lines
 
     def _api_ai(self, d: dict) -> str:
         api = d.get("api", {})

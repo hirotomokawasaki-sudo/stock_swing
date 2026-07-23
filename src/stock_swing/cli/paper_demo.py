@@ -53,7 +53,7 @@ from stock_swing.decision_engine.decision_engine import DecisionEngine, Decision
 from stock_swing.decision_engine.risk_validator import RiskValidator
 from stock_swing.execution.paper_executor import OrderSubmission, PaperExecutor
 from stock_swing.execution.reconciler import Reconciler
-from stock_swing.risk.entry_filter import EntryFilterConfig, EntryFilterEngine
+from stock_swing.risk.entry_filter import EntryFilterConfig, EntryFilterEngine, get_permanent_block_summary
 from stock_swing.risk.open_shock_cooldown import apply_open_shock_cooldown
 from stock_swing.risk.portfolio_allocator import PortfolioAllocator
 from stock_swing.risk.allocation_config import (
@@ -1540,13 +1540,21 @@ def main() -> int:  # noqa: C901
         _sym = getattr(_rec, "symbol", None) or ""
         if _sym:
             _records_by_symbol.setdefault(_sym, []).append(_rec)
-    _entry_filter = EntryFilterEngine(EntryFilterConfig.from_env())
+    _ef_config = EntryFilterConfig.from_env()
+    _entry_filter = EntryFilterEngine(_ef_config)
     _ef_result = _entry_filter.filter(
         decisions=actionable,
         records_by_symbol=_records_by_symbol,
         closed_trades=pnl_tracker.state.trades,
         etf_symbols=set(ETF_SYMBOLS),
     )
+    # BUY STOP LIST: compute once after filter (run-independent, from full PF history)
+    _buy_stop_list = get_permanent_block_summary(
+        closed_trades=pnl_tracker.get_clean_closed_trades(),
+        config=_ef_config,
+        etf_symbols=set(ETF_SYMBOLS),
+    )
+    _ef_result.stats["buy_stop_list"] = _buy_stop_list
     actionable = _ef_result.passed
     if _ef_result.blocked:
         _vol_n = len(_ef_result.stats.get("volume_blocked", []))
