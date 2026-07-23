@@ -18,6 +18,7 @@ sys.path.insert(0, str(project_root))
 from stock_swing.core.path_manager import PathManager
 from stock_swing.core.types import RawEnvelope
 from stock_swing.cli.cron_summary import emit_cron_summary
+from stock_swing.utils.market_guard import should_skip_non_market_day
 from stock_swing.storage.stage_store import StageStore
 from stock_swing.sources.finnhub_client import FinnhubClient
 from stock_swing.sources.massive_client import MassiveClient
@@ -65,6 +66,15 @@ def main():
                 "symbols_requested": len(symbols),
                 "snapshot_count": 0,
             })
+        return 0
+
+    # R7-v2 / H8: skip on non-market days (weekends / US holidays)
+    # Override: export STOCK_SWING_FORCE_MARKET_DAY=true
+    _skip, _skip_reason = should_skip_non_market_day()
+    if _skip:
+        print(f"⏭  {_skip_reason} – skipping collect_data run")
+        if args.cron_summary_json:
+            emit_cron_summary({"job": "collect_data", "status": "skipped", "reason": _skip_reason})
         return 0
 
     paths = PathManager(project_root)

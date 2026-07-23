@@ -87,6 +87,7 @@ from stock_swing.utils.context_budget import (
 )
 from stock_swing.utils.latency_tracker import LatencyTracker
 from stock_swing.utils.market_calendar import MarketCalendar
+from stock_swing.utils.market_guard import should_skip_non_market_day
 from stock_swing.utils.signal_prioritization import prioritize_buy_signals, prioritize_buy_signals_v2
 from stock_swing.utils.stale_price import apply_price_overrides, compute_stale_price_overrides
 
@@ -528,6 +529,16 @@ def main() -> int:  # noqa: C901
                 )
             )
         return exit_code
+
+    # R7-v2 / H8: skip on non-market days (weekends / US holidays)
+    # Override: export STOCK_SWING_FORCE_MARKET_DAY=true
+    if not args.dry_run:
+        _skip, _skip_reason = should_skip_non_market_day()
+        if _skip:
+            print(f"⏭  {_skip_reason} – skipping paper_demo run")
+            if args.cron_summary_json:
+                emit_cron_summary({"job": "paper_demo", "status": "skipped", "reason": _skip_reason})
+            return 0
 
     _banner("stock_swing Paper Trading Demo")
     run_context = RunContext.create("paper_demo")
