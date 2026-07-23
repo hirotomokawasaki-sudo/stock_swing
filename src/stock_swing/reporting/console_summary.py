@@ -94,6 +94,7 @@ class ConsoleSummary:
     ledger_gate_status: str = "UNKNOWN"                                  # R0-v2-A: VALID / INVALID / UNKNOWN
     equity_bridge: dict = field(default_factory=dict)                    # R0-v2-B: broker equity bridge
     funnel_stages: dict[str, int] = field(default_factory=dict)          # R6-v2: 7-stage decision funnel
+    open_position_details: list[dict[str, Any]] = field(default_factory=list)  # entry signal per position
 
     def to_dict(self) -> dict[str, Any]:
         base = {
@@ -148,6 +149,7 @@ class ConsoleSummary:
                 "open_positions": self.open_position_count,
                 "asset_class_breakdown": self.asset_class_breakdown,
                 "exit_attribution_breakdown": self.exit_attribution_breakdown,
+                "open_position_details": self.open_position_details,
             },
             "decision_funnel": {
                 "candidates": self.signals_total,
@@ -267,6 +269,8 @@ class ConsoleSummary:
         equity_bridge: dict | None = None,
         # R6-v2: full funnel stages
         funnel_stages: dict[str, int] | None = None,
+        # open position signal details
+        open_position_details: list[dict[str, Any]] | None = None,
     ) -> "ConsoleSummary":
         decisions = decisions or []
         submissions = submissions or []
@@ -420,4 +424,5 @@ class ConsoleSummary:
             ledger_gate_status=ledger_gate_status,
             equity_bridge=equity_bridge or {},
             funnel_stages=funnel_stages or {},
+            open_position_details=open_position_details or [],
         )

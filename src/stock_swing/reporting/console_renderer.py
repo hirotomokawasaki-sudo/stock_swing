@@ -169,6 +169,33 @@ class ConsoleRenderer:
         blocks = risk.get("cluster_blocks", [])
         if blocks:
             lines.append(f"  cluster_blocks= {', '.join(blocks[:5])}")
+
+        # --- open position signal table ---
+        position_details = p.get("open_position_details", [])
+        if position_details:
+            lines.append("")
+            lines.append("  OPEN POSITIONS")
+            lines.append(f"  {'sym':<6} {'qty':>4}  {'entry':>8}  {'curr':>8}  {'ret%':>6}  {'ess':>5}  ac")
+            lines.append(f"  {'-'*6} {'-'*4}  {'-'*8}  {'-'*8}  {'-'*6}  {'-'*5}  --")
+            for pos in position_details:
+                sym = pos.get("symbol", "")[:6]
+                qty = pos.get("total_qty", 0)
+                entry = pos.get("avg_entry_price")
+                curr = pos.get("current_price")
+                ret_pct = pos.get("unrealized_plpc")
+                ess = pos.get("avg_ess")
+                lots = pos.get("lots", 1)
+                ac = (pos.get("asset_class") or "?")[0].upper()  # E or S
+
+                entry_str = f"${entry:,.2f}" if entry else "   N/A  "
+                curr_str  = f"${curr:,.2f}"  if curr  else "   N/A  "
+                ret_str   = f"{ret_pct*100:+.1f}%" if ret_pct is not None else "  N/A"
+                ess_str   = f"{ess:.2f}" if ess is not None else " N/A"
+                lots_tag  = f"x{lots}" if lots > 1 else "  "
+                lines.append(
+                    f"  {sym:<6} {qty:>4}  {entry_str:>8}  {curr_str:>8}  {ret_str:>6}  {ess_str:>5}  {ac} {lots_tag}"
+                )
+
         return "\n".join(lines)
 
     def _exit_attribution(self, d: dict) -> str:

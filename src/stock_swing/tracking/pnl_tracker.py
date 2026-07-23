@@ -772,6 +772,120 @@ class PnLTracker:
     def get_open_positions(self) -> list[dict[str, Any]]:
         return [t for t in self.state.trades if t["status"] == "open"]
 
+    def get_open_position_signal_summary(
+        self,
+        broker_positions: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Return per-symbol open position summary with entry signal values.
+
+        Aggregates multiple lots (partial fills) per symbol into one row.
+        Joins with broker position data (market_value, unrealized_plpc) when
+        *broker_positions* is supplied.
+
+        Args:
+            broker_positions: {symbol: {market_value, unrealized_plpc,
+                              current_price, qty, ...}} from broker API.
+                              When None, only tracker data is returned.
+
+        Returns:
+            List of dicts sorted by abs(unrealized_pnl) descending::
+
+                [
+                  {
+                    "symbol": "NVDA",
+                    "total_qty": 10,
+                    "lots": 2,              # number of trade records
+                    "avg_entry_price": 120.5,
+                    "avg_ess": 0.72,        # avg entry_signal_strength (None if unavail)
+                    "min_ess": 0.53,
+                    "max_ess": 0.91,
+                    "asset_class": "stock",
+                    "entry_time_earliest": "2026-07-15T...",
+                    # broker-joined fields (when broker_positions supplied):
+                    "current_price": 125.3,
+                    "market_value": 1253.0,
+                    "unrealized_plpc": 0.0398,  # 3.98%
+                    "unrealized_pnl": 48.0,
+                  },
+                  ...
+                ]
+        """
+        open_trades = [t for t in self.state.trades if t.get("status") == "open"]
+
+        # Group by symbol
+        by_symbol: dict[str, list[dict[str, Any]]] = {}
+        for t in open_trades:
+            sym = (t.get("symbol") or "").upper()
+            if sym:
+                by_symbol.setdefault(sym, []).append(t)
+
+        rows: list[dict[str, Any]] = []
+        for sym, lots in by_symbol.items():
+            total_qty = sum(int(t.get("qty") or 0) for t in lots)
+            if total_qty <= 0:
+                continue
+
+            # weighted average entry price
+            weighted_entry = sum(
+                float(t.get("entry_price") or 0) * int(t.get("qty") or 0)
+                for t in lots
+            )
+            avg_entry = weighted_entry / total_qty if total_qty else 0.0
+
+            # signal strength stats
+            ess_values = [
+                float(t["entry_signal_strength"])
+                for t in lots
+                if t.get("entry_signal_strength") is not None
+            ]
+            avg_ess = round(sum(ess_values) / len(ess_values), 4) if ess_values else None
+            min_ess = round(min(ess_values), 4) if ess_values else None
+            max_ess = round(max(ess_values), 4) if ess_values else None
+
+            # earliest entry time
+            entry_times = [t.get("entry_time") or "" for t in lots]
+            earliest_entry = min((e for e in entry_times if e), default=None)
+
+            asset_class = (lots[0].get("asset_class") or "unknown").lower()
+
+            row: dict[str, Any] = {
+                "symbol": sym,
+                "total_qty": total_qty,
+                "lots": len(lots),
+                "avg_entry_price": round(avg_entry, 4),
+                "avg_ess": avg_ess,
+                "min_ess": min_ess,
+                "max_ess": max_ess,
+                "asset_class": asset_class,
+                "entry_time_earliest": earliest_entry,
+                # broker fields (filled below)
+                "current_price": None,
+                "market_value": None,
+                "unrealized_plpc": None,
+                "unrealized_pnl": None,
+            }
+
+            # join broker data when available
+            if broker_positions and sym in broker_positions:
+                bp = broker_positions[sym]
+                row["current_price"] = float(bp.get("current_price") or bp.get("lastprice") or 0) or None
+                row["market_value"] = float(bp.get("market_value") or 0) or None
+                raw_plpc = bp.get("unrealized_plpc") or bp.get("unrealized_pl_pc")
+                row["unrealized_plpc"] = float(raw_plpc) if raw_plpc is not None else None
+                raw_pl = bp.get("unrealized_pl") or bp.get("unrealized_pnl")
+                row["unrealized_pnl"] = float(raw_pl) if raw_pl is not None else None
+
+            rows.append(row)
+
+        # sort: broker-joined rows first (have unrealized_pnl), then by abs pnl desc
+        rows.sort(
+            key=lambda r: (
+                r["unrealized_pnl"] is None,
+                -abs(r["unrealized_pnl"] or 0),
+            )
+        )
+        return rows
+
     def get_clean_closed_trades(self) -> list[dict[str, Any]]:
         """F1: Return closed trades with valid holding period (holding_days >= 0 or None)."""
         return [

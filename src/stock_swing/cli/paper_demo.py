@@ -1697,6 +1697,9 @@ def main() -> int:  # noqa: C901
                 "filled": 0,
                 "reconciled": 0,
             },
+            open_position_details=pnl_tracker.get_open_position_signal_summary(
+                broker_positions=current_positions_full or {}
+            ),
         )
         console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
         return finish(0, decisions=decisions, equity_value=equity, extra={"reason": "dry_run"})
@@ -2171,6 +2174,10 @@ def main() -> int:  # noqa: C901
             "filled": len([s for s in submissions if s.status in {"filled", "partially_filled"}]),
             "reconciled": _reconciled_count if "_reconciled_count" in dir() else 0,
         },
+        # open position signal values for console display
+        open_position_details=pnl_tracker.get_open_position_signal_summary(
+            broker_positions=current_positions_full or {}
+        ),
     )
     console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
 
