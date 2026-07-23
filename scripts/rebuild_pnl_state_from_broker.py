@@ -226,6 +226,114 @@ def apply_attribution(pnl_state: dict, attribution: dict[str, Any]) -> dict[str,
     return stats
 
 
+# ---------------------------------------------------------------------------
+# R1-v2 / H1: Quarantine tombstone – prevent rebuild from re-creating quarantined trades
+# as closed trades, which would cause closed/quarantine overlap.
+# Added 2026-07-23
+# ---------------------------------------------------------------------------
+
+QuarantineTombstoneKey = tuple  # (entry_broker_order_id, exit_broker_order_id)
+
+
+def extract_quarantine_tombstones(
+    quarantined_trades: list[dict[str, Any]],
+) -> frozenset:
+    """Build a frozenset of tombstone keys from the existing quarantined trades.
+
+    A tombstone key is (entry_broker_order_id, exit_broker_order_id).  Only trades
+    with both fields present are included.  Rebuild will filter out any newly
+    generated closed trade whose key matches a tombstone.
+
+    Args:
+        quarantined_trades: List of quarantined trade dicts from pnl_state.
+
+    Returns:
+        frozenset of (entry_order_id, exit_order_id) pairs.
+    """
+    tombstones: set = set()
+    for qt in quarantined_trades:
+        entry_oid = (qt.get('broker_order_id') or '').strip()
+        exit_oid = (qt.get('exit_broker_order_id') or '').strip()
+        if entry_oid and exit_oid:
+            tombstones.add((entry_oid, exit_oid))
+    return frozenset(tombstones)
+
+
+def apply_tombstone_filter(
+    pnl_state: dict[str, Any],
+    quarantined_trades: list[dict[str, Any]],
+) -> int:
+    """Remove trades from pnl_state['trades'] whose order-ID pair matches a quarantined trade.
+
+    Ensures that rebuild is idempotent: quarantined trades are never re-added to
+    the closed trade list on subsequent rebuilds from the same broker fills.
+
+    The pnl_state's quarantined_trades list is NOT modified here; that is done
+    by apply_attribution().  This function only filters state['trades'].
+
+    Args:
+        pnl_state: Freshly rebuilt pnl_state dict (mutated in-place).
+        quarantined_trades: Saved quarantined trades from the previous state.
+
+    Returns:
+        Number of trades removed (tombstone hits).
+    """
+    tombstones = extract_quarantine_tombstones(quarantined_trades)
+    if not tombstones:
+        return 0
+
+    original = pnl_state.get('trades', [])
+    kept: list[dict[str, Any]] = []
+    removed = 0
+
+    for trade in original:
+        entry_oid = (trade.get('broker_order_id') or '').strip()
+        exit_oid = (trade.get('exit_broker_order_id') or '').strip()
+        key = (entry_oid, exit_oid)
+        if key in tombstones:
+            removed += 1
+        else:
+            kept.append(trade)
+
+    if removed:
+        pnl_state['trades'] = kept
+        # Recompute counts to keep state consistent
+        closed = [t for t in kept if t.get('status') == 'closed']
+        pnl_state['total_trades'] = len(kept)
+        pnl_state['cumulative_realized_pnl'] = round(sum(t.get('pnl') or 0 for t in closed), 2)
+
+    return removed
+
+
+def compute_rebuild_fingerprint(pnl_state: dict[str, Any]) -> dict[str, Any]:
+    """Compute a content fingerprint of a pnl_state for idempotency checks.
+
+    Returns a dict with closed_count, open_count, quarantine_count, pnl_sum, and a
+    sorted list of (trade_id, pnl) pairs so two runs can be diff'd.
+
+    Args:
+        pnl_state: A rebuilt pnl_state dict.
+
+    Returns:
+        Dict with fingerprint fields.
+    """
+    trades = pnl_state.get('trades', [])
+    closed = sorted(
+        [(t.get('trade_id', ''), round(float(t.get('pnl') or 0), 2))
+         for t in trades if t.get('status') == 'closed'],
+        key=lambda x: x[0],
+    )
+    open_t = [t for t in trades if t.get('status') == 'open']
+    quarantined = pnl_state.get('quarantined_trades', [])
+    return {
+        'closed_count': len(closed),
+        'open_count': len(open_t),
+        'quarantine_count': len(quarantined),
+        'pnl_sum': round(sum(p for _, p in closed), 2),
+        'closed_trades': closed,  # for diff
+    }
+
+
 def resolve_tracking_metadata(args: argparse.Namespace, existing: dict[str, Any], now_iso: str) -> dict[str, Any]:
     """Resolve tracking metadata for rebuilt pnl_state.
 
@@ -782,6 +890,14 @@ def main():
 
     # Merge attribution back (if --preserve-attribution)
     if args.preserve_attribution:
+        # R1-v2 / H1: Apply tombstone filter BEFORE attribution merge.
+        # This removes any newly-generated closed trades whose order-ID pair matches
+        # a quarantined trade, preventing closed/quarantine overlap on subsequent rebuilds.
+        _tombstone_hits = apply_tombstone_filter(pnl_state, attribution.get('quarantined_trades', []))
+        if _tombstone_hits:
+            print(f"🪦  Tombstone filter: removed {_tombstone_hits} re-generated closed trade(s) "
+                  f"that matched quarantined tombstones (idempotency guard).")
+
         attr_stats = apply_attribution(pnl_state, attribution)
         print()
         print("✅ Attribution restored:")
@@ -789,6 +905,8 @@ def main():
         print(f"   by (symbol,exit_time,pnl): {attr_stats['by_key']}")
         print(f"   kept as broker_fill      : {attr_stats['kept_broker_fill']}")
         print(f"   quarantined_trades       : {len(pnl_state.get('quarantined_trades', []))}")
+        if _tombstone_hits:
+            print(f"   tombstone_filtered       : {_tombstone_hits}")
 
     # Print summary
     print()
