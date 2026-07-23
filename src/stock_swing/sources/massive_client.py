@@ -64,6 +64,22 @@ class MassiveClient:
             )
 
         self.client = _MassiveRESTClient(api_key=self.api_key)
+        # R7-v2 / H8: increase urllib3 connection pool maxsize to silence
+        # "Connection pool is full, discarding connection" warnings.
+        # The Massive SDK creates a PoolManager with default maxsize=1;
+        # patching connection_pool_kw before any requests are made raises
+        # it to 10 so concurrent symbol fetches reuse persistent connections.
+        try:
+            pool_mgr = getattr(self.client, 'client', None)
+            if pool_mgr is not None and hasattr(pool_mgr, 'connection_pool_kw'):
+                pool_mgr.connection_pool_kw.setdefault('maxsize', 10)
+                pool_mgr.connection_pool_kw['maxsize'] = max(
+                    pool_mgr.connection_pool_kw.get('maxsize', 1), 10
+                )
+                logger.debug("Massive connection pool maxsize set to %d",
+                             pool_mgr.connection_pool_kw['maxsize'])
+        except Exception as _e:
+            logger.debug("Could not patch Massive pool maxsize: %s", _e)
         logger.info("Massive client initialized")
     
     def fetch_minute_bars(
