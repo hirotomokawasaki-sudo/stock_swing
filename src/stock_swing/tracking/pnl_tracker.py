@@ -22,6 +22,7 @@ from typing import Any
 
 from stock_swing.tracking.closed_trade_validator import validate_closed_trade
 from stock_swing.tracking.trade_event_store import TradeEvent, TradeEventStore
+from stock_swing.utils.mtime_cache import pnl_state_cache
 from stock_swing.utils.strategy_versioning import normalize_strategy_id
 
 logger = logging.getLogger(__name__)
@@ -1033,7 +1034,9 @@ class PnLTracker:
     def _load_state(self) -> PnLState:
         if self.state_path.exists():
             try:
-                data = json.loads(self.state_path.read_text(encoding="utf-8"))
+                # R6-v2 / H9: use mtime cache so repeated console-server calls
+                # do not re-read the full JSON when the file has not changed.
+                data = pnl_state_cache.get(self.state_path)
                 
                 # FIX: Map closed_trades to trades if trades is empty (for restored data)
                 if "closed_trades" in data and not data.get("trades"):
