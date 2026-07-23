@@ -575,7 +575,7 @@ asset_class unknown in closed: 245件
 2026-07-23（木）    ✅ R2-v2  allocator 統一（H5: allocation_config.py + projected band check + 30 tests）
                          allocation band で projected overweight 専判定
 
-2026-07-24（金）    🔲 R1-v2  rebuild idempotency + quarantine tombstone（H1 残り）
+2026-07-24（金）    ✅ R1-v2  rebuild idempotency + quarantine tombstone（前倒し：07-23 完了）
 
 2026-07-25（土）    🔲 バッファ / paper demo 観察（木金実装 の cron 正常動作確認）
 
