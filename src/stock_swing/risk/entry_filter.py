@@ -44,7 +44,7 @@ class EntryFilterConfig:
     # F6: stock-reduced mode — individual stocks require stricter PF gate
     stock_reduced_mode: bool = False   # set ENTRY_FILTER_STOCK_REDUCED=true
     stock_reduced_pf_gate: float = 1.0 # PF threshold for stocks in reduced mode
-    stock_reduced_min_trades: int = 3  # min trades to apply stricter gate
+    stock_reduced_min_trades: int = 5  # min trades to apply stricter gate (raised 3→5: 2026-07-23)
 
     @classmethod
     def from_env(cls) -> "EntryFilterConfig":
@@ -56,7 +56,7 @@ class EntryFilterConfig:
             disabled=os.environ.get("ENTRY_FILTER_DISABLED", "").lower() in ("1", "true", "yes"),
             stock_reduced_mode=os.environ.get("ENTRY_FILTER_STOCK_REDUCED", "").lower() in ("1", "true", "yes"),
             stock_reduced_pf_gate=float(os.environ.get("ENTRY_FILTER_STOCK_REDUCED_PF_GATE", 1.0)),
-            stock_reduced_min_trades=int(os.environ.get("ENTRY_FILTER_STOCK_REDUCED_MIN_TRADES", 3)),
+            stock_reduced_min_trades=int(os.environ.get("ENTRY_FILTER_STOCK_REDUCED_MIN_TRADES", 5)),
         )
 
 

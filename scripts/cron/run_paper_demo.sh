@@ -25,11 +25,13 @@ fi
 export PAPER_DEMO_ALLOW_ETF_BUYS=true
 
 # RF-6b (2026-07-10): stock-reduced mode
-# Blocks individual stocks with per-symbol rolling PF < 1.0 (>= 3 closed trades required).
-# 14 symbols blocked as of 2026-07-10: AMD/AVGO/CRWD/FICO/FTNT/INTC/MDB/ORCL/PATH/QCOM/RBRK/SMCI/SNOW/TSLA
-# 10 symbols passing: ARM/ASML/CRDO/DDOG/KLAC/LRCX/MRVL/MU/NBIS/PANW
+# Blocks individual stocks with per-symbol rolling PF < 1.0.
+# 2026-07-23: min_trades raised 3 → 5 to avoid false positives from small samples.
+#   (symbols with <5 trades are no longer blocked by stock_reduced;
+#    rolling_pf_gate=0.70 still blocks any symbol with ≥5 trades and PF<0.70)
 # Disable: ENTRY_FILTER_STOCK_REDUCED=false
 export ENTRY_FILTER_STOCK_REDUCED=true
+export ENTRY_FILTER_STOCK_REDUCED_MIN_TRADES=5
 
 # Run paper demo with outside-hours allowed (will queue orders).
 # Keep cron stdout tiny; detailed logs go to the log file.

@@ -337,3 +337,82 @@ def test_mixed_decisions():
     blocked_syms = {sym for sym, _ in result.blocked}
     assert "INTC" in blocked_syms
     assert "AMD" in blocked_syms
+
+
+# ---------------------------------------------------------------------------
+# stock_reduced_min_trades = 5 (raised from 3, 2026-07-23)
+# ---------------------------------------------------------------------------
+
+def _stock_reduced_config(**kw) -> EntryFilterConfig:
+    defaults = dict(
+        min_volume=0,
+        min_adr_pct=0,
+        rolling_pf_gate=0.70,
+        min_trades_for_gate=5,
+        disabled=False,
+        stock_reduced_mode=True,
+        stock_reduced_pf_gate=1.0,
+        stock_reduced_min_trades=5,
+    )
+    defaults.update(kw)
+    return EntryFilterConfig(**defaults)
+
+
+def test_stock_reduced_default_min_trades_is_5():
+    """Default stock_reduced_min_trades must be 5 after 2026-07-23 change."""
+    cfg = EntryFilterConfig()
+    assert cfg.stock_reduced_min_trades == 5, (
+        "default raised 3→5 to avoid false positives from small samples (2026-07-23)"
+    )
+
+
+def test_stock_reduced_not_triggered_below_min_trades():
+    """Symbol with < 5 trades must NOT be blocked by stock_reduced even if PF < 1.0.
+    Regression: before 2026-07-23, min_trades=3 blocked symbols with only 3
+    all-loss trades, causing false positives for symbols with small sample sizes.
+    """
+    cfg = _stock_reduced_config()
+    engine = EntryFilterEngine(cfg)
+    # 4 trades, all losses → PF=0.0 but n < 5 → must NOT be blocked
+    trades = _closed_trades("AVGO", [-400, -300, -200, -100])
+    result = engine.filter(
+        decisions=[_decision("AVGO")],
+        records_by_symbol={},
+        closed_trades=trades,
+    )
+    assert len(result.passed) == 1, (
+        "AVGO with 4 all-loss trades must pass when min_trades=5 (small sample)"
+    )
+
+
+def test_stock_reduced_blocked_at_5_trades():
+    """Symbol with ≥ 5 trades and PF < 1.0 IS blocked by stock_reduced."""
+    cfg = _stock_reduced_config()
+    engine = EntryFilterEngine(cfg)
+    trades = _closed_trades("MDB", [-400, -300, -200, -100, -500])  # 5 losses
+    result = engine.filter(
+        decisions=[_decision("MDB")],
+        records_by_symbol={},
+        closed_trades=trades,
+    )
+    assert len(result.passed) == 0, "MDB with 5 all-loss trades must be blocked"
+
+
+def test_stock_reduced_threshold_3_blocks_small_sample():
+    """With min_trades=3, 3-trade all-loss symbol IS blocked (old behaviour)."""
+    cfg = _stock_reduced_config(stock_reduced_min_trades=3)
+    engine = EntryFilterEngine(cfg)
+    trades = _closed_trades("AVGO", [-400, -300, -200])
+    result = engine.filter(
+        decisions=[_decision("AVGO")],
+        records_by_symbol={},
+        closed_trades=trades,
+    )
+    assert len(result.passed) == 0, "With min_trades=3, 3 all-loss trades must block"
+
+
+def test_stock_reduced_env_default_reads_5(monkeypatch):
+    """ENTRY_FILTER_STOCK_REDUCED_MIN_TRADES env default is now 5."""
+    monkeypatch.delenv("ENTRY_FILTER_STOCK_REDUCED_MIN_TRADES", raising=False)
+    cfg = EntryFilterConfig.from_env()
+    assert cfg.stock_reduced_min_trades == 5
