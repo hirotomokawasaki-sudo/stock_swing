@@ -65,10 +65,13 @@ result = analyzer.classify(
 """
 from __future__ import annotations
 
+import json
 import logging
 import os
+import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -371,8 +374,24 @@ class SectorShockAnalyzer:
                 recommended_action="exit",
             )
 
-    def log_shadow(self, result: ExitClassification) -> None:
-        """Log shadow decision for later review without overriding live exit."""
+    def log_shadow(
+        self,
+        result: ExitClassification,
+        shadow_log_path: Path | str | None = None,
+    ) -> None:
+        """Log shadow decision for later review without overriding live exit.
+
+        Writes a structured JSON line to *shadow_log_path* (if provided) so
+        that sector_shock_hold events accumulate across runs for A/B
+        activation tracking.  Also emits a human-readable INFO log line.
+
+        Args:
+            result:           Classification result from classify().
+            shadow_log_path:  Path to the .jsonl file to append to.
+                              When None, only the INFO log line is emitted
+                              (legacy behaviour).
+        """
+        # ── Human-readable log line (always) ────────────────────────────────
         logger.info(
             "sector_shock_hold SHADOW symbol=%s classification=%s action=%s "
             "return=%.1f%% | %s",
@@ -382,3 +401,32 @@ class SectorShockAnalyzer:
             result.shadow_log.get("current_return_pct", 0),
             "; ".join(result.reasoning),
         )
+
+        # ── Persistent JSONL record (when path is provided) ──────────────────
+        if shadow_log_path is None:
+            return
+
+        log_path = Path(shadow_log_path)
+        try:
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            record = {
+                "logged_at": datetime.now(timezone.utc).isoformat(),
+                "symbol": result.symbol,
+                "classification": result.classification,
+                "recommended_action": result.recommended_action,
+                "confidence": result.confidence,
+                "reasoning": result.reasoning,
+                **result.shadow_log,
+            }
+            line = json.dumps(record, ensure_ascii=False) + "\n"
+            # Atomic append: write to temp file then rename is not possible for
+            # append-only logs; use direct append with fsync for safety.
+            with open(log_path, "a", encoding="utf-8") as fh:
+                fh.write(line)
+                fh.flush()
+                os.fsync(fh.fileno())
+        except Exception as exc:
+            logger.warning(
+                "sector_shock_hold: failed to write shadow log to %s: %s",
+                log_path, exc,
+            )

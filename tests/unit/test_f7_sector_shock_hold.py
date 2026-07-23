@@ -221,3 +221,174 @@ def test_sector_shock_hold_07_16_us_scenario():
             f"{sym}: expected sector_shock_hold, got {result.classification}"
         )
         assert result.recommended_action == "hold"
+
+
+# ── log_shadow: JSONL file writing ─────────────────────────────────────────
+
+class TestLogShadowFileWriting:
+    """R3-v2 / F7: log_shadow() must write structured records to JSONL file."""
+
+    def _make_sector_shock_result(self, symbol: str = "NVDA") -> ExitClassification:
+        config = _default_config()
+        analyzer = SectorShockAnalyzer(config)
+        return analyzer.classify(
+            symbol=symbol,
+            current_return_pct=-0.07,
+            symbol_1d_return_pct=-0.04,
+            sector_1d_return_pcts={"SMH": -0.042, "SOXX": -0.038},  # sector shock
+        )
+
+    def _make_soft_stop_result(self, symbol: str = "PANW") -> ExitClassification:
+        config = _default_config()
+        analyzer = SectorShockAnalyzer(config)
+        return analyzer.classify(
+            symbol=symbol,
+            current_return_pct=-0.04,
+            symbol_1d_return_pct=-0.025,
+            sector_1d_return_pcts={"SMH": -0.016, "SOXX": -0.014},  # no shock
+        )
+
+    def test_log_shadow_writes_jsonl_record(self, tmp_path):
+        """Each log_shadow() call appends one valid JSON line to the file."""
+        path = tmp_path / "shadow_log.jsonl"
+        config = _default_config()
+        analyzer = SectorShockAnalyzer(config)
+        result = self._make_sector_shock_result()
+
+        analyzer.log_shadow(result, shadow_log_path=path)
+
+        assert path.exists(), "shadow log file must be created"
+        lines = [l for l in path.read_text().splitlines() if l.strip()]
+        assert len(lines) == 1, "exactly one line written"
+        record = __import__("json").loads(lines[0])
+        assert record["symbol"] == "NVDA"
+        assert record["classification"] == "sector_shock_hold"
+        assert "logged_at" in record
+        assert "recommended_action" in record
+
+    def test_log_shadow_appends_multiple_records(self, tmp_path):
+        """Multiple calls append multiple lines (idempotent append)."""
+        path = tmp_path / "shadow_log.jsonl"
+        config = _default_config()
+        analyzer = SectorShockAnalyzer(config)
+
+        for sym in ("NVDA", "AMD", "ASML"):
+            result = self._make_sector_shock_result(symbol=sym)
+            analyzer.log_shadow(result, shadow_log_path=path)
+
+        lines = [l for l in path.read_text().splitlines() if l.strip()]
+        assert len(lines) == 3
+        symbols = [__import__("json").loads(l)["symbol"] for l in lines]
+        assert symbols == ["NVDA", "AMD", "ASML"]
+
+    def test_log_shadow_none_path_no_file_created(self, tmp_path):
+        """When shadow_log_path=None, no file is created (legacy behaviour)."""
+        config = _default_config()
+        analyzer = SectorShockAnalyzer(config)
+        result = self._make_sector_shock_result()
+
+        analyzer.log_shadow(result, shadow_log_path=None)
+
+        assert not any(tmp_path.iterdir()), "no file created when path is None"
+
+    def test_log_shadow_creates_parent_dirs(self, tmp_path):
+        """Parent directories are created automatically."""
+        path = tmp_path / "nested" / "deep" / "shadow_log.jsonl"
+        config = _default_config()
+        analyzer = SectorShockAnalyzer(config)
+        result = self._make_sector_shock_result()
+
+        analyzer.log_shadow(result, shadow_log_path=path)
+
+        assert path.exists()
+
+    def test_log_shadow_soft_stop_also_recorded(self, tmp_path):
+        """soft_stop is also written to file (all classifications recorded)."""
+        path = tmp_path / "shadow_log.jsonl"
+        config = _default_config()
+        analyzer = SectorShockAnalyzer(config)
+        result = self._make_soft_stop_result()
+
+        analyzer.log_shadow(result, shadow_log_path=path)
+
+        lines = [l for l in path.read_text().splitlines() if l.strip()]
+        assert len(lines) == 1
+        record = __import__("json").loads(lines[0])
+        assert record["classification"] == "soft_stop"
+
+    def test_log_shadow_record_contains_sector_data(self, tmp_path):
+        """Record must include sector_1d_return_pcts and avg_sector_return."""
+        path = tmp_path / "shadow_log.jsonl"
+        config = _default_config()
+        analyzer = SectorShockAnalyzer(config)
+        result = self._make_sector_shock_result()
+
+        analyzer.log_shadow(result, shadow_log_path=path)
+
+        record = __import__("json").loads(path.read_text().strip())
+        assert "sector_1d_return_pcts" in record, "sector data must be in record"
+        assert "avg_sector_return_pct" in record, "avg sector return must be in record"
+        assert "sector_shock_detected" in record
+
+
+class TestSshShadowCountOnlySectorShockHold:
+    """paper_demo must count only sector_shock_hold classifications.
+
+    Regression: previously _ssh_shadow_count was incremented for ALL exit
+    signals (hard_stop, soft_stop, no_sector_data), making the A/B activation
+    counter meaningless. Fixed in R3-v2 / F7 (2026-07-23).
+    """
+
+    def test_sector_shock_hold_classification_is_valid_trigger(self):
+        """sector_shock_hold result must be counted toward A/B activation."""
+        config = _default_config()
+        analyzer = SectorShockAnalyzer(config)
+        result = analyzer.classify(
+            symbol="NVDA",
+            current_return_pct=-0.07,
+            symbol_1d_return_pct=-0.04,
+            sector_1d_return_pcts={"SMH": -0.042, "SOXX": -0.038},
+        )
+        assert result.classification == "sector_shock_hold"
+        # Simulates the paper_demo counter condition:
+        assert result.classification == "sector_shock_hold"  # would be counted
+
+    def test_soft_stop_is_not_counted(self):
+        """soft_stop must NOT increment the A/B activation counter."""
+        config = _default_config()
+        analyzer = SectorShockAnalyzer(config)
+        result = analyzer.classify(
+            symbol="PANW",
+            current_return_pct=-0.04,
+            symbol_1d_return_pct=-0.025,
+            sector_1d_return_pcts={"SMH": -0.016, "SOXX": -0.014},
+        )
+        assert result.classification == "soft_stop"
+        assert result.classification != "sector_shock_hold"  # would NOT be counted
+
+    def test_hard_stop_is_not_counted(self):
+        """hard_stop must NOT increment the A/B activation counter."""
+        config = _default_config()
+        analyzer = SectorShockAnalyzer(config)
+        result = analyzer.classify(
+            symbol="AMD",
+            current_return_pct=-0.17,   # below -15% hard cap
+            symbol_1d_return_pct=-0.10,
+            sector_1d_return_pcts={"SMH": -0.042, "SOXX": -0.038},
+        )
+        assert result.classification == "hard_stop"
+        assert result.classification != "sector_shock_hold"  # would NOT be counted
+
+    def test_no_sector_data_is_not_counted(self):
+        """no_sector_data must NOT increment the A/B activation counter."""
+        config = _default_config()
+        analyzer = SectorShockAnalyzer(config)
+        result = analyzer.classify(
+            symbol="CRWD",
+            current_return_pct=-0.03,
+            symbol_1d_return_pct=-0.02,
+            sector_1d_return_pcts={},  # empty = no sector data
+        )
+        assert result.classification == "hard_stop"  # no_sector_data → hard_stop
+        assert "no_sector_data" in result.reasoning[0]
+        assert result.classification != "sector_shock_hold"

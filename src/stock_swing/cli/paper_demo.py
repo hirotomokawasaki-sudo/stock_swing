@@ -1222,8 +1222,13 @@ def main() -> int:  # noqa: C901
                 symbol_1d_return_pct=_1d_sym,
                 sector_1d_return_pcts=_sector_1d,
             )
-            _ssh_analyzer.log_shadow(_ssh_result)
-            _ssh_shadow_count += 1
+            # R3-v2 / F7: write to persistent JSONL shadow log for A/B activation tracking
+            _ssh_log_path = project_root / "data" / "sector_shock_shadow_log.jsonl"
+            _ssh_analyzer.log_shadow(_ssh_result, shadow_log_path=_ssh_log_path)
+            # Count only genuine sector_shock_hold classifications (not hard_stop/soft_stop)
+            # Activation condition: ≥10 valid sector_shock_hold events
+            if _ssh_result.classification == "sector_shock_hold":
+                _ssh_shadow_count += 1
 
     cooldown_config_path = project_root / "config" / "strategy" / "open_shock_cooldown.yaml"
     cooldown_result = None
