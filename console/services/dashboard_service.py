@@ -1825,6 +1825,8 @@ class DashboardService:
             effective_stop = stop_loss_price
         dist_to_stop = round((current_price - effective_stop) / current_price * 100, 2) if effective_stop and current_price else None
 
+        entry_signal_strength = self._get_entry_signal_strength_for_symbol(symbol)
+
         return {
             'symbol': symbol,
             'qty': qty,
@@ -1841,6 +1843,7 @@ class DashboardService:
             'decision_status': self._derive_position_decision_status(latest_decision, holding_days=holding_days),
             'source': 'broker',
             'asset_class': self._get_asset_class_for_symbol(symbol),
+            'entry_signal_strength': entry_signal_strength,
             # Exit levels
             'peak_price': round(peak_price, 2) if peak_price else None,
             'stop_loss_price': stop_loss_price,
@@ -1925,6 +1928,33 @@ class DashboardService:
             return reg.get("symbols", {}).get(symbol, {}).get("asset_class", "stock")
         except Exception:
             return "stock"
+
+    def _get_entry_signal_strength_for_symbol(self, symbol: str) -> float | None:
+        """Return avg entry_signal_strength from pnl_state for open trades matching symbol.
+
+        For multi-lot positions, returns qty-weighted average ESS.
+        Returns None when no open trade found or field is absent.
+        """
+        try:
+            import json
+            state_path = self.project_root / "data" / "tracking" / "pnl_state.json"
+            if not state_path.exists():
+                return None
+            state = json.loads(state_path.read_text())
+            weighted_sum = 0.0
+            total_qty = 0.0
+            for t in state.get("trades", []):
+                if t.get("symbol") == symbol and t.get("status") == "open":
+                    ess = t.get("entry_signal_strength")
+                    qty = float(t.get("qty") or 1.0)
+                    if ess is not None:
+                        weighted_sum += float(ess) * qty
+                        total_qty += qty
+            if total_qty > 0:
+                return round(weighted_sum / total_qty, 4)
+        except Exception:
+            pass
+        return None
 
     def _get_peak_price_for_symbol(self, symbol: str, fallback: float) -> float | None:
         """Return peak_price from pnl_state for the open trade matching symbol."""

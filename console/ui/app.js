@@ -946,7 +946,7 @@ class Console {
             return `<span class="badge badge-${cls}">${this.escapeHtml(label)}</span>`;
         };
         return `<div class="table-wrap"><table><thead><tr>
-            <th>日付</th><th>シンボル</th><th>Exit理由</th><th>PnL</th><th>リターン</th><th>保有日数</th><th>エントリー</th><th>エグジット</th>
+            <th>日付</th><th>シンボル</th><th>Exit理由</th><th>PnL</th><th>リターン</th><th>ESS</th><th>保有日数</th><th>エントリー</th><th>エグジット</th>
         </tr></thead><tbody>
         ${sortedData.map(trade => `
             <tr>
@@ -955,6 +955,7 @@ class Console {
                 <td>${exitReasonBadge(trade.exit_reason)}</td>
                 <td class="${(trade.pnl || 0) >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(trade.pnl || 0)}</td>
                 <td class="${(trade.return_pct || 0) >= 0 ? 'success' : 'danger'}">${fmt.pctSigned(trade.return_pct || 0)}</td>
+                ${this.essCell(trade.entry_signal_strength ?? null)}
                 <td class="small">${trade.holding_days != null ? (+trade.holding_days).toFixed(1) + '日' : '—'}</td>
                 <td class="small">${fmt.usd(trade.entry_price)}</td>
                 <td class="small">${trade.exit_price ? fmt.usd(trade.exit_price) : '—'}</td>
@@ -1087,10 +1088,23 @@ class Console {
         </div>`;
     }
 
+    essCell(ess) {
+        if (ess == null) return '<td class="small muted">—</td>';
+        const v = parseFloat(ess);
+        const cls = v >= 0.80 ? 'success' : v >= 0.60 ? 'warn' : 'danger';
+        const bar = Math.round(v * 100);
+        return `<td class="small" title="Entry Signal Strength: ${v.toFixed(4)}">
+            <span class="${cls}" style="font-variant-numeric:tabular-nums">${v.toFixed(2)}</span>
+            <div style="height:3px;margin-top:2px;background:#e5e7eb;border-radius:2px">
+                <div style="height:3px;width:${bar}%;background:${v >= 0.80 ? '#10b981' : v >= 0.60 ? '#f59e0b' : '#ef4444'};border-radius:2px"></div>
+            </div>
+        </td>`;
+    }
+
     renderPositionsTable(data) {
         if (!data || data.length === 0) return '<p class="muted">ポジションなし</p>';
         return `<div class="table-wrap"><table><thead><tr>
-            <th>シンボル</th><th>数量</th><th>保有日数</th><th>取得価格</th><th>現在価格</th><th>評価損益</th><th>損益率</th><th>Peak</th><th>ストップ水準</th><th>ストップまで</th><th>比率</th>
+            <th>シンボル</th><th>数量</th><th>保有日数</th><th>取得価格</th><th>現在価格</th><th>評価損益</th><th>損益率</th><th>ESS</th><th>Peak</th><th>ストップ水準</th><th>ストップまで</th><th>比率</th>
         </tr></thead><tbody>
         ${data.map(pos => {
             const pnlPct = pos.unrealized_pnl_pct ?? pos.unrealized_return_pct ?? pos.return_pct ?? 0;
@@ -1113,6 +1127,7 @@ class Console {
                 : assetClass === 'stock'
                 ? ' <span class="badge badge-unknown" style="font-size:10px;padding:1px 5px;opacity:.6">STK</span>'
                 : '';
+            const ess = pos.entry_signal_strength ?? pos.avg_ess ?? null;
             return `
             <tr style="${rowStyle}">
                 <td><strong>${this.escapeHtml(pos.symbol)}</strong>${assetBadge}${trailBadge}</td>
@@ -1122,6 +1137,7 @@ class Console {
                 <td>${fmt.usd(pos.current_price || 0)}</td>
                 <td class="${pnlClass}">${fmt.usdSigned(pos.unrealized_pnl || 0)}</td>
                 <td class="${pnlPctClass}">${fmt.pctSigned(pnlPct)}</td>
+                ${this.essCell(ess)}
                 <td class="small">${pos.peak_price ? fmt.usd(pos.peak_price) : '—'}</td>
                 <td class="small">${stopPrice ? `<span title="${stopMode}">${stopLabel}</span>` : '—'}</td>
                 <td class="${distClass} small">${distLabel}</td>
