@@ -866,6 +866,7 @@ class Console {
         </div>` : ''}
         ${pipelineStageHtml}
         ${this._renderDenyBySymbol(p)}
+        ${this._renderBuyStopList(funnel)}
         ${this._renderPaperRuns(p)}`;
     }
 
@@ -895,6 +896,38 @@ class Console {
                 </tr>`;
             }).join('')}
             </tbody></table></div>
+        </div>`;
+    }
+
+    _renderBuyStopList(funnel) {
+        const list = funnel.buy_stop_list || [];
+        if (list.length === 0) return '';
+
+        const reasonLabel = (reason) => {
+            if (reason === 'stock_reduced')   return '🔍 stock_reduced';
+            if (reason === 'rolling_pf_gate') return '📉 PF gate';
+            return reason || '—';
+        };
+
+        const rows = list.map(item => {
+            const pf = item.profit_factor;
+            const pfStr = pf != null ? pf.toFixed(3) : '—';
+            const pfCls = pf == null ? '' : pf < 0.10 ? 'danger' : pf < 0.50 ? 'warn' : 'success';
+            return `<tr>
+                <td><strong>${this.escapeHtml(item.symbol || '—')}</strong></td>
+                <td class="small">${item.n_trades ?? '—'}</td>
+                <td class="small ${pfCls}">${pfStr}</td>
+                <td class="small">${this.escapeHtml(reasonLabel(item.reason))}</td>
+                <td class="small muted">${this.escapeHtml(item.reason_detail || '—')}</td>
+            </tr>`;
+        }).join('');
+
+        return `
+        <div class="card" style="margin-top:8px">
+            <h4 style="margin:0 0 8px">🚫 BUY STOP LIST <span class="muted small" style="font-weight:normal">（永続ブロック中 ${list.length}件）</span></h4>
+            <div class="table-wrap"><table><thead><tr>
+                <th>銘柄</th><th>取引数</th><th>PF</th><th>理由</th><th>詳細</th>
+            </tr></thead><tbody>${rows}</tbody></table></div>
         </div>`;
     }
 

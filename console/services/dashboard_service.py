@@ -982,6 +982,7 @@ class DashboardService:
             "paper_runs": len(paper_runs),
             "positions_opened": position_count,
             "positions_closed": trading.get("summary", {}).get("closed_trades", 0) if trading else 0,
+            "buy_stop_list": self._get_buy_stop_list(),
         }
 
         by_strategy: Dict[str, Dict[str, Any]] = {}
@@ -1955,6 +1956,41 @@ class DashboardService:
         except Exception:
             pass
         return None
+
+    def _get_buy_stop_list(self) -> list[dict]:
+        """Return symbols currently blocked by entry filters (stock_reduced / rolling_pf_gate).
+
+        Reads closed trades from pnl_state.json and ETF symbols from symbol_registry.yaml,
+        then delegates to get_permanent_block_summary().  Returns [] on any error.
+        """
+        try:
+            import json
+            import yaml
+            from stock_swing.risk.entry_filter import get_permanent_block_summary, EntryFilterConfig
+
+            state_path = self.project_root / "data" / "tracking" / "pnl_state.json"
+            if not state_path.exists():
+                return []
+            state = json.loads(state_path.read_text())
+            closed_trades = [t for t in state.get("trades", []) if t.get("status") == "closed"]
+
+            # ETF symbols from registry (exempt from stock_reduced gate)
+            etf_syms: set[str] = set()
+            reg_path = self.project_root / "config" / "reference" / "symbol_registry.yaml"
+            if reg_path.exists():
+                reg = yaml.safe_load(reg_path.read_text())
+                etf_syms = {
+                    sym for sym, info in (reg.get("symbols") or {}).items()
+                    if (info or {}).get("asset_class") == "etf"
+                }
+
+            return get_permanent_block_summary(
+                closed_trades,
+                config=EntryFilterConfig.from_env(),
+                etf_symbols=etf_syms,
+            )
+        except Exception:
+            return []
 
     def _get_peak_price_for_symbol(self, symbol: str, fallback: float) -> float | None:
         """Return peak_price from pnl_state for the open trade matching symbol."""

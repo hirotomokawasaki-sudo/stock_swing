@@ -221,3 +221,76 @@ class TestEnrichBrokerPositionEssField:
             "Key must be present even when value is None"
         )
         assert result["entry_signal_strength"] is None
+
+
+# ---------------------------------------------------------------------------
+# _get_buy_stop_list
+# ---------------------------------------------------------------------------
+
+class TestGetBuyStopList:
+    """Unit tests for DashboardService._get_buy_stop_list().
+
+    testing_standards.md: 1-A (normal / boundary / file-missing / corrupt).
+    """
+
+    def _write_pnl_with_closed(self, tmp_path: Path, trades: list[dict]) -> None:
+        state_path = tmp_path / "data" / "tracking" / "pnl_state.json"
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        state_path.write_text(json.dumps({"trades": trades}))
+
+    def _closed_trade(self, symbol: str, pnl: float) -> dict:
+        return {"symbol": symbol, "status": "closed", "qty": 100,
+                "entry_price": 100.0, "exit_price": 100.0 + pnl / 100,
+                "pnl": pnl, "return_pct": pnl / 10000}
+
+    def test_returns_list_type(self, tmp_path):
+        """Normal: always returns a list (never None)."""
+        self._write_pnl_with_closed(tmp_path, [])
+        svc = _StubService(tmp_path)
+        result = svc._get_buy_stop_list()
+        assert isinstance(result, list), "Must return a list"
+
+    def test_missing_pnl_state_returns_empty(self, tmp_path):
+        """File-missing: no pnl_state.json → empty list (no crash)."""
+        svc = _StubService(tmp_path)
+        result = svc._get_buy_stop_list()
+        assert result == [], "Missing file should return []"
+
+    def test_corrupt_pnl_state_returns_empty(self, tmp_path):
+        """Corrupt: invalid JSON → empty list (no crash)."""
+        state_path = tmp_path / "data" / "tracking" / "pnl_state.json"
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        state_path.write_text("INVALID{{{")
+        svc = _StubService(tmp_path)
+        result = svc._get_buy_stop_list()
+        assert result == [], "Corrupt JSON should return []"
+
+    def test_blocked_symbol_appears_in_result(self, tmp_path):
+        """Normal: symbol with enough losses is included in stop list."""
+        # 6 losing trades for BADCO → should be blocked (PF<1.0, n≥5)
+        trades = [self._closed_trade("BADCO", pnl=-100) for _ in range(6)]
+        self._write_pnl_with_closed(tmp_path, trades)
+        svc = _StubService(tmp_path)
+        result = svc._get_buy_stop_list()
+        symbols = [r["symbol"] for r in result]
+        assert "BADCO" in symbols, f"BADCO should be blocked; got {symbols}"
+
+    def test_result_entries_have_required_fields(self, tmp_path):
+        """Normal: each entry has symbol, n_trades, profit_factor, reason."""
+        trades = [self._closed_trade("BADCO", pnl=-100) for _ in range(6)]
+        self._write_pnl_with_closed(tmp_path, trades)
+        svc = _StubService(tmp_path)
+        result = svc._get_buy_stop_list()
+        if result:
+            entry = result[0]
+            for field in ("symbol", "n_trades", "profit_factor", "reason"):
+                assert field in entry, f"Missing field: {field}"
+
+    def test_insufficient_trades_not_blocked(self, tmp_path):
+        """Boundary: fewer than min_trades (5) → not blocked even if PF=0."""
+        trades = [self._closed_trade("NEWCO", pnl=-100) for _ in range(3)]
+        self._write_pnl_with_closed(tmp_path, trades)
+        svc = _StubService(tmp_path)
+        result = svc._get_buy_stop_list()
+        symbols = [r["symbol"] for r in result]
+        assert "NEWCO" not in symbols, "Under min_trades threshold should not be blocked"
