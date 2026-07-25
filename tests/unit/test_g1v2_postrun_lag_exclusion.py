@@ -226,6 +226,103 @@ class TestQtyMismatchLag:
 
 # ── Acceptance: paper_demo.py uses the canonical module ────────────────────
 
+class TestG1V2cFastFillSellPhantom:
+    """G1-v2-c: tracker_only ∩ new_sell_symbols (fast-fill SELL phantom lag).
+
+    Regression: 2026-07-24 circuit-breaker false HALT (SKYY phantom).
+    Root cause: SKYY SELL submitted at 19:55 ET on 07-22, broker filled
+    immediately and removed position.  record_exit() not yet called in tracker
+    (broker returned 'submitted' status, not 'filled', within 1.6 seconds).
+    SKYY became tracker_only — not lag-excused by G1-v2 — mismatch_count=1 → HALT.
+    Commit: see docs/daily_logs/2026-07-25.md
+    """
+
+    def test_regression_skyy_phantom_07_24(self):
+        """
+        Regression: 2026-07-24 22:35 JST HALT (SKYY fast-fill phantom).
+        Replicates exact conditions: SKYY in tracker (open), not in broker
+        (filled and removed), sell submitted this run.
+        """
+        # SKYY in tracker (open), not in broker (already filled/removed)
+        diff = _build_diff(
+            broker_symbols=["META", "ANET", "HPQ"],  # no SKYY
+            tracker_symbols=["META", "ANET", "HPQ", "SKYY"],  # SKYY still open
+        )
+        assert diff["mismatch_count"] == 1  # SKYY is tracker_only
+
+        # SKYY sell was submitted this run
+        result = apply_lag_exclusion(diff, [_FakeSub("SKYY", "sell")])
+
+        assert result.adjusted_mismatch_count == 0, (
+            "SKYY tracker_only + just-sold should be lag-excused (G1-v2-c)"
+        )
+        assert "SKYY" in result.excused_presence
+
+    def test_fast_fill_sell_tracker_only_excused(self):
+        """tracker_only ∩ new_sell_symbols is excused (G1-v2-c)."""
+        diff = _build_diff(
+            broker_symbols=["AAPL"],
+            tracker_symbols=["AAPL", "TSLA"],  # TSLA tracker_only
+        )
+        result = apply_lag_exclusion(diff, [_FakeSub("TSLA", "sell")])
+        assert result.adjusted_mismatch_count == 0
+        assert "TSLA" in result.excused_presence
+
+    def test_tracker_only_without_sell_not_excused(self):
+        """tracker_only symbol NOT submitted as sell this run → real phantom, not excused."""
+        diff = _build_diff(
+            broker_symbols=["AAPL"],
+            tracker_symbols=["AAPL", "TSLA"],  # TSLA tracker_only
+        )
+        result = apply_lag_exclusion(diff, [])  # no submissions this run
+        assert result.adjusted_mismatch_count == 1, (
+            "tracker_only with no sell submission must remain as real mismatch"
+        )
+        assert "TSLA" not in result.excused_presence
+
+    def test_fast_fill_and_buy_lag_simultaneously(self):
+        """Both G1-v2 (BUY lag) and G1-v2-c (fast-fill SELL) excused in same run."""
+        diff = _build_diff(
+            broker_symbols=["AAPL"],  # broker has only AAPL
+            tracker_symbols=["AAPL", "META", "SKYY"],  # META=new BUY, SKYY=fast-fill SELL
+        )
+        result = apply_lag_exclusion(
+            diff,
+            [_FakeSub("META", "buy"), _FakeSub("SKYY", "sell")],
+        )
+        assert result.adjusted_mismatch_count == 0
+        assert {"META", "SKYY"} <= result.excused_presence
+
+    def test_tracker_only_sell_submitted_different_symbol_not_excused(self):
+        """SELL submitted for TSLA; phantom is SKYY → SKYY not excused."""
+        diff = _build_diff(
+            broker_symbols=["AAPL"],
+            tracker_symbols=["AAPL", "SKYY"],  # SKYY tracker_only phantom
+        )
+        result = apply_lag_exclusion(diff, [_FakeSub("TSLA", "sell")])
+        assert result.adjusted_mismatch_count == 1, (
+            "SKYY phantom must NOT be excused by TSLA sell submission"
+        )
+        assert "SKYY" not in result.excused_presence
+
+    def test_broker_only_sell_and_tracker_only_sell_both_excused(self):
+        """Both lag directions for the same SELL symbol are handled."""
+        # broker_only SELL: broker still shows position (slow fill confirmation)
+        # tracker_only SELL: broker removed position (fast fill)
+        # Both should be excused for their respective symbols.
+        diff = _build_diff(
+            broker_symbols=["AAPL", "GOOG"],  # GOOG = broker_only (slow-fill lag)
+            tracker_symbols=["AAPL", "SKYY"],  # SKYY = tracker_only (fast-fill lag)
+        )
+        # GOOG sell submitted (slow fill) + SKYY sell submitted (fast fill)
+        result = apply_lag_exclusion(
+            diff,
+            [_FakeSub("GOOG", "sell"), _FakeSub("SKYY", "sell")],
+        )
+        assert result.adjusted_mismatch_count == 0
+        assert {"GOOG", "SKYY"} <= result.excused_presence
+
+
 class TestPaperDemoUsesCanonicalModule:
     """Verify paper_demo.py actually imports and uses postrun_mismatch.apply_lag_exclusion.
 
