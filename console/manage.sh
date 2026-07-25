@@ -522,8 +522,19 @@ case "${1:-start}" in
     force_rotate_all_logs
     echo "✅ Rotated active console/watchdog logs into $LOG_ARCHIVE_DIR/$(date '+%Y-%m-%d')"
     ;;
+  deploy)
+    # deploy: restart console and show last few lines of auto-restart log
+    restart_ws
+    restart_http
+    echo ""
+    echo "📋 Recent auto-restart log:"
+    tail -20 "$LOG_DIR/console_auto_restart.log" 2>/dev/null || echo "  (no log yet)"
+    ;;
+  auto-restart-log)
+    tail -f "$LOG_DIR/console_auto_restart.log" 2>/dev/null || echo "  (no log yet)"
+    ;;
   *)
-    echo "Usage: $0 {start|stop|restart|status|health|watchdog-run-once|watchdog-start|watchdog-stop|watchdog-status|rotate-logs}"
+    echo "Usage: $0 {start|stop|restart|status|health|deploy|auto-restart-log|watchdog-run-once|watchdog-start|watchdog-stop|watchdog-status|rotate-logs}"
     exit 1
     ;;
 esac

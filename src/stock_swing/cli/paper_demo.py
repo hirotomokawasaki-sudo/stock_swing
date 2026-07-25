@@ -1708,6 +1708,13 @@ def main() -> int:  # noqa: C901
             open_position_details=pnl_tracker.get_open_position_signal_summary(
                 broker_positions=current_positions_full or {}
             ),
+            # circuit breaker detail for HALT visibility
+            circuit_breaker_detail={
+                "status": _breaker_state.status if "_breaker_state" in dir() and _breaker_state is not None else "unknown",
+                "triggered_at": _breaker_state.triggered_at if "_breaker_state" in dir() and _breaker_state is not None else None,
+                "triggered_rules": list(_breaker_state.triggered_rules or []) if "_breaker_state" in dir() and _breaker_state is not None else [],
+                "reason": _breaker_state.reason if "_breaker_state" in dir() and _breaker_state is not None else "",
+            },
         )
         console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
         return finish(0, decisions=decisions, equity_value=equity, extra={"reason": "dry_run"})
@@ -2119,10 +2126,22 @@ def main() -> int:  # noqa: C901
         ps_sources[src] = ps_sources.get(src, 0) + 1
 
     # G2 fix: prefer _post_state (updated by post_run_update) over stale _breaker_state
-    _final_breaker_status = (
-        _post_state.status
+    _final_breaker_state_obj = (
+        _post_state
         if "_post_state" in dir() and _post_state is not None
-        else (_breaker_state.status if "_breaker_state" in dir() and _breaker_state is not None else "unknown")
+        else (_breaker_state if "_breaker_state" in dir() and _breaker_state is not None else None)
+    )
+    _final_breaker_status = _final_breaker_state_obj.status if _final_breaker_state_obj is not None else "unknown"
+    _final_cb_detail: dict = (
+        {
+            "status": _final_breaker_state_obj.status,
+            "triggered_at": _final_breaker_state_obj.triggered_at,
+            "triggered_rules": list(_final_breaker_state_obj.triggered_rules or []),
+            "reason": _final_breaker_state_obj.reason,
+            "clear_note": _final_breaker_state_obj.clear_note,
+        }
+        if _final_breaker_state_obj is not None
+        else {}
     )
 
     console_summary = ConsoleSummary.build(
@@ -2186,6 +2205,8 @@ def main() -> int:  # noqa: C901
         open_position_details=pnl_tracker.get_open_position_signal_summary(
             broker_positions=current_positions_full or {}
         ),
+        # circuit breaker detail for HALT visibility in console
+        circuit_breaker_detail=_final_cb_detail,
     )
     console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
 

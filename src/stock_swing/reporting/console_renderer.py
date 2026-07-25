@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from stock_swing.reporting.console_summary import ConsoleSummary
 
 _SEP = "─" * 56
+_HALT_SEP = "═" * 56
 
 
 def _fmt(value: Any, default: str = "unknown") -> str:
@@ -31,6 +32,7 @@ class ConsoleRenderer:
     def render(self, summary: "ConsoleSummary") -> str:
         d = summary.to_dict()
         sections = [
+            self._halt_banner(d),   # 最上位: HALTED 時のみ表示
             self._run_health(d),
             self._safety_gate(d),
             self._alerts(d),
@@ -47,6 +49,68 @@ class ConsoleRenderer:
         return "\n\n".join(s for s in sections if s)
 
     # ------------------------------------------------------------------ #
+
+    def _halt_banner(self, d: dict) -> str:
+        """HALTED / RECOVERY_PENDING 時に最上位に表示する全幅バナー。"""
+        health = d.get("health", {})
+        cb_status = health.get("guardrail_status", "ok")
+        if cb_status not in ("halted", "recovery_pending"):
+            return ""
+
+        cb_detail = health.get("circuit_breaker_detail", {})
+        triggered_at_raw = cb_detail.get("triggered_at") or health.get("triggered_at")
+        triggered_rules: list[dict] = cb_detail.get("triggered_rules") or []
+
+        # Format timestamp in local-friendly form (JST offset shown as-is)
+        triggered_str = "unknown"
+        if triggered_at_raw:
+            try:
+                from datetime import datetime, timezone, timedelta
+                dt = datetime.fromisoformat(triggered_at_raw)
+                # Convert to JST (+09:00)
+                jst = timezone(timedelta(hours=9))
+                dt_jst = dt.astimezone(jst)
+                triggered_str = dt_jst.strftime("%Y-%m-%d %H:%M JST")
+            except Exception:
+                triggered_str = triggered_at_raw[:19] + " UTC"
+
+        if cb_status == "halted":
+            title = "  🚨  CIRCUIT BREAKER  HALTED  ─  ALL BUYS BLOCKED"
+        else:
+            title = "  🟡  CIRCUIT BREAKER  RECOVERY_PENDING  ─  clean run 待ち"
+
+        lines = [
+            _HALT_SEP,
+            title,
+            _HALT_SEP,
+            f"  triggered : {triggered_str}",
+        ]
+
+        for rule in triggered_rules[:3]:
+            metric = rule.get("metric", "?")
+            observed = rule.get("observed", "?")
+            threshold = rule.get("threshold", "?")
+            op = rule.get("operator", ">=")
+            name = rule.get("name", metric)
+            lines.append(f"  rule      : {name}")
+            lines.append(f"              {metric}  observed={observed}  {op} threshold={threshold}")
+
+        if not triggered_rules:
+            # Fallback: pull from ALERTS if available
+            for alert in d.get("alerts", []):
+                if alert.get("code") in ("guardrail_halted", "broker_tracker_mismatch"):
+                    lines.append(f"  detail    : {alert.get('message', '')}")
+                    break
+
+        lines += [
+            _SEP,
+            "  resolve:",
+            "    1. python scripts/g1_investigate_mismatch.py",
+            "    2. Verify mismatch=0 from fresh broker fetch",
+            "    3. python scripts/clear_circuit_breaker.py",
+            _HALT_SEP,
+        ]
+        return "\n".join(lines)
 
     def _run_health(self, d: dict) -> str:
         run = d.get("run", {})
@@ -126,6 +190,30 @@ class ConsoleRenderer:
             f"  circuit_breaker = {cb_str}",
             f"  live_ready      = {live_ready_str}",
         ]
+
+        # Show triggered_at and first rule when halted/recovery_pending
+        if cb_status in ("halted", "recovery_pending"):
+            cb_detail = health.get("circuit_breaker_detail", {})
+            triggered_at_raw = cb_detail.get("triggered_at")
+            triggered_rules: list[dict] = cb_detail.get("triggered_rules") or []
+
+            if triggered_at_raw:
+                try:
+                    from datetime import datetime, timezone, timedelta
+                    dt = datetime.fromisoformat(triggered_at_raw)
+                    jst = timezone(timedelta(hours=9))
+                    dt_jst = dt.astimezone(jst)
+                    lines.append(f"  triggered_at    = {dt_jst.strftime('%Y-%m-%d %H:%M JST')}")
+                except Exception:
+                    lines.append(f"  triggered_at    = {triggered_at_raw[:19]} UTC")
+
+            for rule in triggered_rules[:2]:
+                metric = rule.get("metric", "?")
+                observed = rule.get("observed", "?")
+                threshold = rule.get("threshold", "?")
+                op = rule.get("operator", ">=")
+                lines.append(f"  trigger_rule    = {metric} {op} {threshold}  (observed={observed})")
+
         return "\n".join(lines)
 
     def _portfolio(self, d: dict) -> str:

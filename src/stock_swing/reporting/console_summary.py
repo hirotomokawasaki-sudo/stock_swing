@@ -95,6 +95,7 @@ class ConsoleSummary:
     equity_bridge: dict = field(default_factory=dict)                    # R0-v2-B: broker equity bridge
     funnel_stages: dict[str, int] = field(default_factory=dict)          # R6-v2: 7-stage decision funnel
     open_position_details: list[dict[str, Any]] = field(default_factory=list)  # entry signal per position
+    circuit_breaker_detail: dict = field(default_factory=dict)           # triggered_at / triggered_rules / reason
 
     def to_dict(self) -> dict[str, Any]:
         base = {
@@ -138,6 +139,8 @@ class ConsoleSummary:
                 "quarantined_trades": self.ledger_quality.get("quarantined", 0),
                 # R0-v2-A: safety gate
                 "ledger_gate_status": self.ledger_gate_status,
+                # circuit breaker detail (triggered_at / triggered_rules for renderer)
+                "circuit_breaker_detail": self.circuit_breaker_detail,
                 # R0-v2-B: equity bridge
                 "equity_bridge": self.equity_bridge,
             },
@@ -273,6 +276,8 @@ class ConsoleSummary:
         funnel_stages: dict[str, int] | None = None,
         # open position signal details
         open_position_details: list[dict[str, Any]] | None = None,
+        # circuit breaker detail (triggered_at, triggered_rules, reason)
+        circuit_breaker_detail: dict | None = None,
     ) -> "ConsoleSummary":
         decisions = decisions or []
         submissions = submissions or []
@@ -427,4 +432,5 @@ class ConsoleSummary:
             equity_bridge=equity_bridge or {},
             funnel_stages=funnel_stages or {},
             open_position_details=open_position_details or [],
+            circuit_breaker_detail=circuit_breaker_detail or {},
         )

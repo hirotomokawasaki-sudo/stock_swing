@@ -1,15 +1,6 @@
 {
   "schema_version": "v1",
-  "generated_at": "2026-07-21T13:00:06.211723+00:00",
+  "generated_at": "2026-07-24T13:00:05.498246+00:00",
   "note": "Fresh prices from Massive API to override stale broker positions API prices",
-  "overrides": {
-    "ADBE": {
-      "fresh_price": 234.74,
-      "broker_price": 222.95,
-      "deviation_pct": 5.288181206548563,
-      "date": "2026-07-20",
-      "source": "massive_direct",
-      "updated_at": "2026-07-21T13:00:04.289374+00:00"
-    }
-  }
+  "overrides": {}
 }
