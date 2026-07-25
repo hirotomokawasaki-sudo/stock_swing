@@ -157,16 +157,24 @@ class MarketCalendar:
         if dt is None:
             dt = datetime.now(ZoneInfo("Asia/Tokyo"))
 
-        # Normalise to JST so dt.time() is comparable with get_market_hours_jst() output.
-        jst = ZoneInfo("Asia/Tokyo")
-        dt_jst = dt.astimezone(jst) if dt.tzinfo is not None else dt
+        # Weekend/holiday check uses ET (America/New_York): the US market calendar
+        # is defined in ET, not JST.  US Friday afternoon (15:55-19:55 UTC) is
+        # JST Saturday morning — using JST here caused Friday crons to be skipped.
+        # Bug fixed 2026-07-25 (root cause: 2026-07-24 US Friday cron skip incident).
+        et_tz = ZoneInfo("America/New_York")
+        dt_et = dt.astimezone(et_tz) if dt.tzinfo is not None else dt
 
-        is_holiday, holiday_name = MarketCalendar.is_us_holiday(dt_jst)
+        is_holiday, holiday_name = MarketCalendar.is_us_holiday(dt_et)
         if is_holiday:
             return False, f"Regular market closed: {holiday_name}"
 
-        if dt_jst.weekday() >= 5:
+        if dt_et.weekday() >= 5:
             return False, "Regular market closed: Weekend"
+
+        # Time comparison uses JST so dt_jst.time() is comparable with
+        # get_market_hours_jst() output (which expresses ET hours in JST).
+        jst = ZoneInfo("Asia/Tokyo")
+        dt_jst = dt.astimezone(jst) if dt.tzinfo is not None else dt
 
         market_hours = MarketCalendar.get_market_hours_jst(dt_jst)
         current_time = dt_jst.time()
@@ -197,18 +205,28 @@ class MarketCalendar:
         if dt is None:
             dt = datetime.now(ZoneInfo("Asia/Tokyo"))
 
-        # Check if holiday
-        is_holiday, holiday_name = MarketCalendar.is_us_holiday(dt)
+        # Weekend/holiday check uses ET (America/New_York).
+        # US Friday afternoon (15:55-19:55 UTC) is JST Saturday morning;
+        # using the raw dt timezone for weekday() caused Friday crons to
+        # be skipped.  Bug fixed 2026-07-25.
+        et_tz = ZoneInfo("America/New_York")
+        dt_et = dt.astimezone(et_tz) if dt.tzinfo is not None else dt
+
+        # Check if holiday (use ET calendar date)
+        is_holiday, holiday_name = MarketCalendar.is_us_holiday(dt_et)
         if is_holiday:
             return False, f"Market closed: {holiday_name}"
 
-        # Check if weekend
-        if dt.weekday() >= 5:  # Saturday=5, Sunday=6
+        # Check if weekend (use ET calendar date)
+        if dt_et.weekday() >= 5:  # Saturday=5, Sunday=6
             return False, "Market closed: Weekend"
 
-        # Get market hours in JST
-        market_hours = MarketCalendar.get_market_hours_jst(dt)
-        current_time = dt.time()
+        # Time comparison: convert to JST so dt_jst.time() is comparable with
+        # get_market_hours_jst() output (which expresses ET hours in JST offsets).
+        jst = ZoneInfo("Asia/Tokyo")
+        dt_jst = dt.astimezone(jst) if dt.tzinfo is not None else dt
+        market_hours = MarketCalendar.get_market_hours_jst(dt_jst)
+        current_time = dt_jst.time()
 
         def _in_window(start: time, end: time) -> bool:
             if end < start:

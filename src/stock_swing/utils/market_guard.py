@@ -31,10 +31,15 @@ def is_us_trading_day(dt: datetime | None = None) -> tuple[bool, str]:
     """Return (is_trading_day, reason) for the given datetime.
 
     A trading day is a US weekday that is not a US market holiday.
-    Time of day is ignored; only the calendar date matters.
+    Time of day is ignored; only the **ET calendar date** matters.
+
+    Bug fixed (2026-07-25): previously used JST date for the weekend check.
+    US Friday afternoon crons (15:55-19:55 UTC) fire on JST Saturday morning,
+    causing them to be incorrectly skipped every Friday.  Now uses ET
+    (America/New_York) as the authoritative calendar, matching the US market.
 
     Args:
-        dt: Datetime to check (defaults to now in Asia/Tokyo).
+        dt: Datetime to check (defaults to now).
 
     Returns:
         Tuple of (is_trading_day, human-readable reason).
@@ -42,20 +47,24 @@ def is_us_trading_day(dt: datetime | None = None) -> tuple[bool, str]:
     if dt is None:
         dt = datetime.now(ZoneInfo("Asia/Tokyo"))
 
-    jst = ZoneInfo("Asia/Tokyo")
-    dt_jst = dt.astimezone(jst) if dt.tzinfo is not None else dt.replace(tzinfo=jst)
+    # Use ET (America/New_York) for calendar date — the US market is US-based.
+    # JST is UTC+9; ET is UTC-4/-5.  Friday afternoon ET = Saturday JST, which
+    # is still a valid US trading day.  Using JST here was the root cause of
+    # the 2026-07-24 US Friday cron skip incident.
+    et_tz = ZoneInfo("America/New_York")
+    dt_et = dt.astimezone(et_tz) if dt.tzinfo is not None else dt.replace(tzinfo=et_tz)
 
-    # Weekend check
-    if dt_jst.weekday() >= 5:  # Saturday=5, Sunday=6
-        day_name = "Saturday" if dt_jst.weekday() == 5 else "Sunday"
-        return False, f"Non-trading day: {day_name} {dt_jst.strftime('%Y-%m-%d')}"
+    # Weekend check (using ET date)
+    if dt_et.weekday() >= 5:  # Saturday=5, Sunday=6
+        day_name = "Saturday" if dt_et.weekday() == 5 else "Sunday"
+        return False, f"Non-trading day: {day_name} {dt_et.strftime('%Y-%m-%d')}"
 
-    # US holiday check
-    is_holiday, holiday_name = MarketCalendar.is_us_holiday(dt_jst)
+    # US holiday check (using ET date)
+    is_holiday, holiday_name = MarketCalendar.is_us_holiday(dt_et)
     if is_holiday:
-        return False, f"Non-trading day: {holiday_name} ({dt_jst.strftime('%Y-%m-%d')})"
+        return False, f"Non-trading day: {holiday_name} ({dt_et.strftime('%Y-%m-%d')})"
 
-    return True, f"Trading day: {dt_jst.strftime('%Y-%m-%d %a')}"
+    return True, f"Trading day: {dt_et.strftime('%Y-%m-%d %a')}"
 
 
 def should_skip_non_market_day(dt: datetime | None = None) -> tuple[bool, str]:
