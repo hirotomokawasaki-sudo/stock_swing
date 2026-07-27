@@ -21,16 +21,40 @@ try:
     from stock_swing.tracking.pnl_tracker import PnLTracker
     from stock_swing.sources.broker_client import BrokerClient
     from stock_swing.utils.strategy_versioning import extract_decision_dt, normalize_strategy_id, resolve_strategy_key
+    from stock_swing.utils.mtime_cache import MtimeFileCache, json_file_cache
     _HAS_TRACKER = True
 except Exception:
     _HAS_TRACKER = False
     BrokerClient = None
+    MtimeFileCache = None  # type: ignore[assignment,misc]
+    json_file_cache = None  # type: ignore[assignment]
+
+# H9: module-level mtime caches – shared across all DashboardService instances
+# pnl_state.json は ~400KB で毎リクエスト全読込していたのを mtime 変化時のみ再読込に変更
+_pnl_state_cache: "MtimeFileCache[dict] | None" = MtimeFileCache(
+    loader_fn=lambda p: json.loads(p.read_text(encoding="utf-8"))
+) if MtimeFileCache else None
+
+# symbol_registry.yaml など小さめの設定ファイル用
+_yaml_cache: "MtimeFileCache | None" = None  # 初回使用時に生成（yaml import は遅延）
 
 
 class DashboardService:
     """Aggregates data from multiple adapters for dashboard display."""
 
     DEFAULT_CURRENT_ACCOUNT_CUTOFF = datetime.fromisoformat("2026-05-01T19:32:00+09:00")
+
+    @staticmethod
+    def _load_json_cached(path: Path) -> dict:
+        """H9 (2026-07-27): mtime ベースキャッシュ経由で JSON を読込む。
+
+        pnl_state.json (~400KB) は paper_demo 実行時にしか変わらないため、
+        ファイル更新がない限り再パースをスキップし p95 <=500ms SLO を達成する。
+        キャッシュ利用不可の場合は通常の直接読込にフォールバックする。
+        """
+        if _pnl_state_cache is not None:
+            return _pnl_state_cache.get(path)
+        return json.loads(path.read_text(encoding="utf-8"))
     NEWS_COLLECTION_JOB_NAME = "stock_swing_news_collection"
     RECENT_TRADES_WINDOW_HOURS = 48
     RECENT_TRADES_MIN_COUNT = 50
@@ -199,7 +223,7 @@ class DashboardService:
                 state_path = self.project_root / "data" / "tracking" / "pnl_state.json"
                 all_snapshots = []
                 if state_path.exists():
-                    _state = _json.loads(state_path.read_text())
+                    _state = DashboardService._load_json_cached(state_path)
                     all_snapshots = _state.get("daily_snapshots", [])
             except Exception:
                 all_snapshots = snapshots
@@ -750,7 +774,7 @@ class DashboardService:
                 tracking_state: Dict[str, Any] = {}
                 if tracking_state_path.exists():
                     try:
-                        tracking_state = json.loads(tracking_state_path.read_text(encoding="utf-8"))
+                        tracking_state = DashboardService._load_json_cached(tracking_state_path)
                     except Exception:
                         tracking_state = {}
 
@@ -1941,7 +1965,7 @@ class DashboardService:
             state_path = self.project_root / "data" / "tracking" / "pnl_state.json"
             if not state_path.exists():
                 return None
-            state = json.loads(state_path.read_text())
+            state = DashboardService._load_json_cached(state_path)
             weighted_sum = 0.0
             total_qty = 0.0
             for t in state.get("trades", []):
@@ -1971,7 +1995,7 @@ class DashboardService:
             state_path = self.project_root / "data" / "tracking" / "pnl_state.json"
             if not state_path.exists():
                 return []
-            state = json.loads(state_path.read_text())
+            state = DashboardService._load_json_cached(state_path)
             closed_trades = [t for t in state.get("trades", []) if t.get("status") == "closed"]
 
             # ETF symbols from registry (exempt from stock_reduced gate)
@@ -1999,7 +2023,7 @@ class DashboardService:
             state_path = self.project_root / "data" / "tracking" / "pnl_state.json"
             if not state_path.exists():
                 return None
-            state = json.loads(state_path.read_text())
+            state = DashboardService._load_json_cached(state_path)
             for t in state.get("trades", []):
                 if t.get("symbol") == symbol and t.get("status") == "open":
                     peak = t.get("peak_price")
@@ -2808,7 +2832,7 @@ class DashboardService:
         if not state_path.exists():
             return {}
         try:
-            self._tracking_state_meta_cache = json.loads(state_path.read_text(encoding="utf-8"))
+            self._tracking_state_meta_cache = DashboardService._load_json_cached(state_path)
         except Exception:
             self._tracking_state_meta_cache = {}
         return self._tracking_state_meta_cache

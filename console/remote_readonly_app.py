@@ -21,11 +21,27 @@ from urllib.parse import parse_qs, urlparse
 ROOT = Path(__file__).resolve().parent
 PROJECT_ROOT = ROOT.parent
 sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
 UI_PATH = ROOT / "ui" / "mobile_readonly.html"
 SUMMARY_PATH = PROJECT_ROOT / "reports" / "console" / "latest_console_summary.json"
 GO_NO_GO_PATH = PROJECT_ROOT / "docs" / "runbooks" / "go_no_go_checklist.md"
 PNL_STATE_PATH = PROJECT_ROOT / "data" / "tracking" / "pnl_state.json"
 CIRCUIT_BREAKER_PATH = PROJECT_ROOT / "data" / "guardrails" / "circuit_breaker.json"
+
+# H9 (2026-07-27): mtime-based cache for large JSON files
+# latest_console_summary.json は paper_demo 実行時のみ更新される (~paper_demo ごと)
+# 毎リクエスト全読込から mtime 変化時のみ再読込に変更し p95 <=500ms SLO を達成する
+try:
+    from stock_swing.utils.mtime_cache import MtimeFileCache
+    _summary_cache: MtimeFileCache[dict] = MtimeFileCache(
+        loader_fn=lambda p: json.loads(p.read_text(encoding="utf-8"))
+    )
+    _pnl_cache: MtimeFileCache[dict] = MtimeFileCache(
+        loader_fn=lambda p: json.loads(p.read_text(encoding="utf-8"))
+    )
+    _HAS_MTIME_CACHE = True
+except ImportError:
+    _HAS_MTIME_CACHE = False
 
 HOST = os.environ.get("REMOTE_READONLY_HOST", "127.0.0.1")
 PORT = int(os.environ.get("REMOTE_READONLY_PORT", "3340"))
@@ -76,13 +92,18 @@ def load_console_summary() -> dict:
             "error": "latest_console_summary.json not found",
         }
     try:
-        payload = json.loads(SUMMARY_PATH.read_text(encoding="utf-8"))
+        # H9: mtime キャッシュ経由で読込 (ファイル未変更なら再パースをスキップ)
+        if _HAS_MTIME_CACHE:
+            payload = _summary_cache.get(SUMMARY_PATH)
+        else:
+            payload = json.loads(SUMMARY_PATH.read_text(encoding="utf-8"))
     except Exception as exc:
         return {
             "available": False,
             "path": str(SUMMARY_PATH),
             "error": str(exc),
         }
+    payload = dict(payload)  # shallow copy so we don't mutate cache
     payload["_remote_meta"] = _file_meta(SUMMARY_PATH)
     return payload
 
@@ -140,6 +161,9 @@ def _load_pnl_state() -> dict:
     if not PNL_STATE_PATH.exists():
         return {"trades": []}
     try:
+        # H9: mtime キャッシュ経由で読込
+        if _HAS_MTIME_CACHE:
+            return _pnl_cache.get(PNL_STATE_PATH)
         return json.loads(PNL_STATE_PATH.read_text(encoding="utf-8"))
     except Exception:
         return {"trades": []}
