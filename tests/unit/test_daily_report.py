@@ -47,8 +47,9 @@ def test_build_report_uses_japanese_mode_labels_and_new_footer(monkeypatch) -> N
         account_summaries=None,
     )
 
-    assert "🕒  集計時刻:" in lines[2]
-    assert "💰 口座情報 (ペーパー)" in lines
+    assert "🕒" in lines[2] and "集計" in lines[2]
+    # 新フォーマット: 「💰 資産状況」
+    assert any("💰 資産状況" in line for line in lines)
     assert "次回レポート予定: 2026-05-16 09:00 JST" == lines[-1]
     assert all("22:30" not in line for line in lines)
 
@@ -108,12 +109,14 @@ def test_build_report_brief_mode_omits_sizing_details() -> None:
     assert "現在=$" not in report
 
     # Brief mode should limit recent trades to 3
-    assert report.count("✅") + report.count("❌") == 3
+    # ✅ はシステム状態行にも出るため、決済取引行のみカウント
+    trade_lines = [l for l in lines if l.startswith("  ✅") or l.startswith("  ❌")]
+    assert len(trade_lines) == 3
 
     # Brief mode should show simplified performance
-    assert "決済取引数" in report
+    assert "決済件数" in report
     assert "勝率" in report
-    assert "平均リターン" not in report  # excluded in brief
+    assert "平均騰落率" not in report  # excluded in brief
     assert "最大DD" not in report  # excluded in brief
 
 
@@ -159,16 +162,17 @@ def test_build_report_full_mode_includes_all_sections() -> None:
 
     report = "\n".join(lines)
 
-    # Full mode should include sizing section
-    assert "📏 最新のポジションサイズ根拠" in report
+    # Full mode: sizing section is廃止（NULL 多数のため）
+    # assert "📏 最新のポジションサイズ根拠" in report  # 廃止
 
-    # Full mode should show position details
+    # Full mode should show position details (新フォーマット: 「取得=$XXX→現在=$YYY」)
     assert "取得=$" in report
     assert "現在=$" in report
-    assert "含損益=" in report
+    # 含み損益は % と $ の形式で表示 (例: +1.0% ($+415))
+    assert "($+" in report or "($-" in report
 
     # Full mode should show full performance
-    assert "平均リターン" in report
+    assert "平均騰落率" in report  # 旧: "平均リターン"
     assert "最大DD" in report
 
 
@@ -212,6 +216,6 @@ def test_build_report_includes_alerts() -> None:
     )
 
     report = "\n".join(lines)
-    assert "⚠️  アラート" in report
+    assert "⚠️ アラート" in report
     assert "含み損益が" in report
     assert "合計損益が" in report
