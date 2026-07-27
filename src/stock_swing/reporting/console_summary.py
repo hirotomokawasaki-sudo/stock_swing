@@ -97,6 +97,15 @@ class ConsoleSummary:
     open_position_details: list[dict[str, Any]] = field(default_factory=list)  # entry signal per position
     circuit_breaker_detail: dict = field(default_factory=dict)           # triggered_at / triggered_rules / reason
 
+    # --- Plan A: Stop Loss Health (2026-07-27) ---
+    stop_loss_health: dict[str, Any] = field(default_factory=dict)
+    # {
+    #   "recent_30d": {count, net_pnl, avg_ret_pct},  # 30日以内の止損サマリー
+    #   "suppression": {noise_7d, mid_3d, severe_1d, total},  # 今回 run の min_hold 抑制数
+    #   "post_exit_check": {checked, correct_stops, correct_rate},  # 7-14日前止損の価格追跡
+    #   "tiered_min_hold_enabled": bool,
+    # }
+
     def to_dict(self) -> dict[str, Any]:
         base = {
             "run": {
@@ -154,6 +163,7 @@ class ConsoleSummary:
                 "exit_attribution_breakdown": self.exit_attribution_breakdown,
                 "open_position_details": self.open_position_details,
             },
+            "stop_loss_health": self.stop_loss_health,
             "decision_funnel": {
                 "candidates": self.signals_total,
                 "buy": self.signals_buy,
@@ -278,6 +288,8 @@ class ConsoleSummary:
         open_position_details: list[dict[str, Any]] | None = None,
         # circuit breaker detail (triggered_at, triggered_rules, reason)
         circuit_breaker_detail: dict | None = None,
+        # Plan A: Stop Loss Health (2026-07-27)
+        stop_loss_health: dict[str, Any] | None = None,
     ) -> "ConsoleSummary":
         decisions = decisions or []
         submissions = submissions or []
@@ -433,4 +445,5 @@ class ConsoleSummary:
             funnel_stages=funnel_stages or {},
             open_position_details=open_position_details or [],
             circuit_breaker_detail=circuit_breaker_detail or {},
+            stop_loss_health=stop_loss_health or {},
         )

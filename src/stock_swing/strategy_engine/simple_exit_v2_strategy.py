@@ -113,6 +113,9 @@ class SimpleExitV2Strategy(BaseStrategy):
             key=lambda x: x[0],
             reverse=True,  # highest threshold first
         )
+        # Run-level suppression tracking (reset each paper_demo run)
+        # Key: tier label ("noise_7d" / "mid_3d" / "severe_1d" / "legacy")
+        self._suppression_counts: dict[str, int] = {}
         # broker_recon threshold graduation
         self.broker_recon_graduation_days = broker_recon_graduation_days
 
@@ -142,6 +145,30 @@ class SimpleExitV2Strategy(BaseStrategy):
                 return hold_days
         # Severe loss zone: fall back to base min_hold_days (typically 1)
         return self.min_hold_days
+
+    def _tier_label(self, return_pct: float, eff_min_hold: int) -> str:
+        """Return a human-readable label for the tier that suppressed this stop."""
+        if not self.tiered_min_hold_enabled:
+            return "legacy"
+        if eff_min_hold >= 7:
+            return "noise_7d"
+        if eff_min_hold >= 3:
+            return "mid_3d"
+        return "severe_1d"
+
+    def get_suppression_stats(self) -> dict[str, int]:
+        """Return run-level stop_loss suppression counts by tier (for console reporting).
+
+        Returns dict like:
+          {"noise_7d": 2, "mid_3d": 1, "total": 3}
+        Reset by calling reset_suppression_stats().
+        """
+        total = sum(self._suppression_counts.values())
+        return {**self._suppression_counts, "total": total}
+
+    def reset_suppression_stats(self) -> None:
+        """Clear run-level suppression counters (call at start of each paper_demo run)."""
+        self._suppression_counts.clear()
 
     def _resolve_thresholds(
         self,
@@ -473,6 +500,11 @@ class SimpleExitV2Strategy(BaseStrategy):
                         symbol, return_pct * 100, hold_days,
                         eff_min_hold, self.tiered_min_hold_enabled,
                         self.emergency_stop_bypass_pct * 100,
+                    )
+                    # Track suppression by tier for console reporting
+                    tier_key = self._tier_label(return_pct, eff_min_hold)
+                    self._suppression_counts[tier_key] = (
+                        self._suppression_counts.get(tier_key, 0) + 1
                     )
                     _suppress = True
                 elif (

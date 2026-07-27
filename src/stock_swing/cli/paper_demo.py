@@ -1718,6 +1718,13 @@ def main() -> int:  # noqa: C901
                 "triggered_rules": list(_breaker_state.triggered_rules or []) if "_breaker_state" in dir() and _breaker_state is not None else [],
                 "reason": _breaker_state.reason if "_breaker_state" in dir() and _breaker_state is not None else "",
             },
+            # Plan A: Stop Loss Health panel
+            stop_loss_health=_build_stop_loss_health(
+                pnl_tracker=pnl_tracker,
+                exit_strat=exit_strat if "exit_strat" in dir() else None,
+                current_prices={sym: float(pos.get("current_price", 0) or 0)
+                                for sym, pos in (current_positions_full or {}).items()},
+            ),
         )
         console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
         return finish(0, decisions=decisions, equity_value=equity, extra={"reason": "dry_run"})
@@ -2210,6 +2217,13 @@ def main() -> int:  # noqa: C901
         ),
         # circuit breaker detail for HALT visibility in console
         circuit_breaker_detail=_final_cb_detail,
+        # Plan A: Stop Loss Health panel
+        stop_loss_health=_build_stop_loss_health(
+            pnl_tracker=pnl_tracker,
+            exit_strat=exit_strat if "exit_strat" in dir() else None,
+            current_prices={sym: float(pos.get("current_price", 0) or 0)
+                            for sym, pos in (current_positions_full or {}).items()},
+        ),
     )
     console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
 
@@ -2368,6 +2382,86 @@ def _build_broker_tracker_diff(
         "broker_only": broker_only,
         "tracker_only": tracker_only,
         "qty_mismatches": qty_mismatches,
+    }
+
+
+def _build_stop_loss_health(
+    pnl_tracker,
+    exit_strat,
+    current_prices: dict[str, float] | None = None,
+    post_exit_window_days: int = 14,
+) -> dict:
+    """Build stop_loss_health dict for ConsoleSummary.
+
+    Args:
+        pnl_tracker: PnLTracker instance (to read closed trades).
+        exit_strat: SimpleExitV2Strategy instance (to read suppression stats).
+        current_prices: {symbol: price} dict for post-exit drift check.
+        post_exit_window_days: Look for stop_loss trades within this many days ago.
+
+    Returns structured dict consumed by ConsoleRenderer._stop_loss_health().
+    """
+    from datetime import datetime, timedelta, timezone as _tz
+
+    now = datetime.now(_tz.utc)
+    closed = [t for t in pnl_tracker.state.trades if t.get("status") == "closed"]
+
+    # ── 30日以内の stop_loss サマリー (true stops: PnL < 0)
+    cutoff_30d = (now - timedelta(days=30)).isoformat()
+    recent_sl = [
+        t for t in closed
+        if t.get("exit_reason") == "stop_loss"
+        and (t.get("exit_time") or "") >= cutoff_30d
+        and (t.get("pnl") or 0) < 0
+    ]
+    recent_30d: dict = {}
+    if recent_sl:
+        pnls = [t.get("pnl") or 0 for t in recent_sl]
+        rets = [(t.get("return_pct") or 0) * 100 for t in recent_sl]
+        recent_30d = {
+            "count": len(recent_sl),
+            "net_pnl": round(sum(pnls), 2),
+            "avg_ret_pct": round(sum(rets) / len(rets), 2) if rets else 0.0,
+        }
+
+    # ── 今回 run の min_hold 抑制カウント
+    suppression = exit_strat.get_suppression_stats() if exit_strat is not None else {}
+
+    # ── post-exit 追跡: 7〜14日前の stop_loss 止損が今も exit_price を下回るか
+    cutoff_7d  = (now - timedelta(days=7)).isoformat()
+    cutoff_14d = (now - timedelta(days=post_exit_window_days)).isoformat()
+    window_sl = [
+        t for t in closed
+        if t.get("exit_reason") == "stop_loss"
+        and (t.get("pnl") or 0) < 0
+        and cutoff_14d <= (t.get("exit_time") or "") <= cutoff_7d
+    ]
+    post_exit_check: dict = {}
+    if window_sl and current_prices:
+        checked = 0
+        correct = 0
+        for t in window_sl:
+            sym = t.get("symbol", "")
+            xp = t.get("exit_price") or 0
+            cur = current_prices.get(sym)
+            if cur is not None and xp > 0:
+                checked += 1
+                if cur < xp:
+                    correct += 1
+        if checked > 0:
+            post_exit_check = {
+                "checked": checked,
+                "correct_stops": correct,
+                "correct_rate": round(correct / checked, 3),
+            }
+
+    tiered = getattr(exit_strat, "tiered_min_hold_enabled", False) if exit_strat else False
+
+    return {
+        "tiered_min_hold_enabled": tiered,
+        "recent_30d": recent_30d,
+        "suppression": suppression,
+        "post_exit_check": post_exit_check,
     }
 
 

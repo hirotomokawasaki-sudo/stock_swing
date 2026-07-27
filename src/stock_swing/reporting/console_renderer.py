@@ -38,6 +38,7 @@ class ConsoleRenderer:
             self._alerts(d),
             self._portfolio(d),
             self._exit_attribution(d),
+            self._stop_loss_health(d),
             self._price_integrity(d),
             self._decision_funnel(d),
             self._broker_tracker_diff(d),
@@ -324,6 +325,68 @@ class ConsoleRenderer:
                 lines.append(
                     f"  {reason:<24s} n={cnt:<4} PF={pf_str:<7} WR={wr:.1f}%  net=${net:+,.0f}"
                 )
+        return "\n".join(lines)
+
+    def _stop_loss_health(self, d: dict) -> str:
+        """Plan A (2026-07-27): Stop Loss 健全性パネル。
+
+        評価軸: WR/PF ではなく「正しい止損率」と「min_hold 抑制数」で判断する。
+        根拠: post-exit drift 分析 48件 → 止損後89.6%がさらに下落（正しい止損）。
+              WR=0% は「全件が正しい止損だった」を意味する可能性がある。
+        """
+        slh = d.get("stop_loss_health", {})
+        if not slh:
+            return ""
+
+        lines = ["STOP LOSS HEALTH", _SEP]
+        tiered = slh.get("tiered_min_hold_enabled", False)
+        lines.append(f"  tiered_min_hold = {'ON  (noise>-5%→7d | mid>-8%→3d | severe→1d)' if tiered else 'OFF (legacy 1d)'}")
+
+        # ── 30日以内の止損サマリー
+        r30 = slh.get("recent_30d", {})
+        if r30:
+            cnt = r30.get("count", 0)
+            net = float(r30.get("net_pnl", 0) or 0)
+            avg_ret = float(r30.get("avg_ret_pct", 0) or 0)
+            lines.append("")
+            lines.append("  [30日以内の止損]")
+            lines.append(f"  件数     = {cnt}")
+            lines.append(f"  net PnL  = ${net:+,.0f}")
+            lines.append(f"  avg_ret  = {avg_ret:+.1f}%")
+
+        # ── 今回 run での min_hold 抑制状況
+        sup = slh.get("suppression", {})
+        sup_total = sup.get("total", 0)
+        lines.append("")
+        lines.append("  [今回 run: min_hold 抑制]")
+        if sup_total == 0:
+            lines.append("  抑制なし（stop_loss 条件未到達 or 全件即時 exit）")
+        else:
+            lines.append(f"  合計抑制 = {sup_total}件")
+            if sup.get("noise_7d", 0):
+                lines.append(f"    noise tier (ret>-5%, 7d wait) : {sup['noise_7d']}件")
+            if sup.get("mid_3d", 0):
+                lines.append(f"    mid   tier (ret>-8%, 3d wait) : {sup['mid_3d']}件")
+            if sup.get("severe_1d", 0):
+                lines.append(f"    severe tier (ret<=-8%, 1d)    : {sup['severe_1d']}件")
+
+        # ── 7-14日前止損の post-exit 追跡（価格取得済みの場合のみ）
+        pec = slh.get("post_exit_check", {})
+        checked = pec.get("checked", 0)
+        if checked > 0:
+            correct = pec.get("correct_stops", 0)
+            rate = pec.get("correct_rate", 0.0)
+            rate_icon = "✅" if rate >= 0.70 else ("⚠️" if rate >= 0.50 else "❌")
+            lines.append("")
+            lines.append("  [post-exit 追跡: 7-14日前止損]")
+            lines.append(f"  正しい止損率 = {correct}/{checked} ({rate*100:.0f}%)  {rate_icon}")
+            lines.append(f"  ※目標 ≥ 70%  (WR ではなくこちらで評価)")
+        else:
+            lines.append("")
+            lines.append("  [post-exit 追跡]  ─ 今回対象なし（7-14日前止損ゼロ）")
+
+        lines.append("")
+        lines.append("  ※ WR/PF は stop_loss の評価指標として不適切。詳細: docs/stop_loss_evaluation_guidelines.md")
         return "\n".join(lines)
 
     def _price_integrity(self, d: dict) -> str:
