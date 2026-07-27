@@ -1143,6 +1143,9 @@ def main() -> int:  # noqa: C901
             min_hold_days=exit_config.get('min_hold_days', 1),
             min_hold_days_enabled=exit_config.get('min_hold_days_enabled', True),
             emergency_stop_bypass_pct=exit_config.get('emergency_stop_bypass_pct', -0.12),
+            # Plan A: tiered min_hold (2026-07-27)
+            tiered_min_hold_enabled=exit_config.get('tiered_min_hold_enabled', False),
+            tiered_min_hold_levels=exit_config.get('tiered_min_hold_levels', []),
             # broker_recon graduation (改善点1 2026-07-16)
             broker_recon_graduation_days=exit_config.get('broker_recon_graduation_days', 5),
         )

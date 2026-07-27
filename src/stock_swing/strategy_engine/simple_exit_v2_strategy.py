@@ -54,6 +54,11 @@ class SimpleExitV2Strategy(BaseStrategy):
         min_hold_days: int = 1,
         min_hold_days_enabled: bool = True,
         emergency_stop_bypass_pct: float = -0.12,  # bypass min_hold if loss >= -12%
+        # Plan A: Tiered min_hold (2026-07-27)
+        # Post-exit drift analysis showed avg_ret=-2.9% recovers within 15d (noise),
+        # avg_ret=-8.2% never recovers (true stop). Tiered approach reduces false stops.
+        tiered_min_hold_enabled: bool = False,
+        tiered_min_hold_levels: list[dict[str, float]] | None = None,
         # Broker-reconstructed threshold graduation (改善点1 2026-07-16)
         # After holding >= broker_recon_graduation_days, unknown-strength positions
         # graduate from conservative -5% stop to the standard stop_loss_pct (-7%).
@@ -96,8 +101,47 @@ class SimpleExitV2Strategy(BaseStrategy):
         self.min_hold_days = min_hold_days
         self.min_hold_days_enabled = min_hold_days_enabled
         self.emergency_stop_bypass_pct = emergency_stop_bypass_pct
+        # Plan A: tiered min_hold
+        self.tiered_min_hold_enabled = tiered_min_hold_enabled
+        # Sort levels descending by threshold so the first match wins
+        # e.g. [(-5.0, 7), (-8.0, 3)] → ret=-3% → 7d, ret=-6% → 3d, ret=-10% → base
+        self.tiered_min_hold_levels: list[tuple[float, int]] = sorted(
+            [
+                (float(lv["threshold_pct"]), int(lv["min_hold_days"]))
+                for lv in (tiered_min_hold_levels or [])
+            ],
+            key=lambda x: x[0],
+            reverse=True,  # highest threshold first
+        )
         # broker_recon threshold graduation
         self.broker_recon_graduation_days = broker_recon_graduation_days
+
+    def _effective_min_hold_days(self, return_pct: float) -> int:
+        """Return the effective min_hold_days for the given current return.
+
+        Plan A (2026-07-27): tiered thresholds based on post-exit drift analysis.
+
+        Post-exit analysis of 48 true stop_loss trades:
+          - avg_ret=-2.9% (noise zone)  → 78% recover within 15 days → wait 7 days
+          - avg_ret=-8.2% (true stop)   → >30 days / never recover   → exit quickly
+
+        Tiers (when tiered_min_hold_enabled=True):
+          return_pct > -5%  → 7 days  (high recovery probability, 1-week noise zone)
+          return_pct > -8%  → 3 days  (medium: give a few days to breathe)
+          return_pct <= -8% → base min_hold_days (default 1, exit quickly)
+
+        The emergency_stop_bypass_pct (-12%) is checked upstream and always takes
+        priority over any min_hold value returned here.
+
+        When tiered_min_hold_enabled=False, returns base self.min_hold_days (legacy).
+        """
+        if not self.tiered_min_hold_enabled or not self.tiered_min_hold_levels:
+            return self.min_hold_days
+        for threshold_pct, hold_days in self.tiered_min_hold_levels:
+            if return_pct > threshold_pct / 100.0:
+                return hold_days
+        # Severe loss zone: fall back to base min_hold_days (typically 1)
+        return self.min_hold_days
 
     def _resolve_thresholds(
         self,
@@ -409,33 +453,39 @@ class SimpleExitV2Strategy(BaseStrategy):
 
             # 3. Initial stop loss (position never reached breakeven zone)
             elif return_pct <= eff_stop_loss_pct:
-                # G9: min_hold guard — suppress early noise cuts
+                # G9 / Plan A: min_hold guard — suppress early noise cuts
+                # Plan A uses tiered min_hold based on loss magnitude:
+                #   return > -5% → 7d wait (noise zone)
+                #   return > -8% → 3d wait (borderline zone)
+                #   return <= -8% → base min_hold (1d, exit quickly)
+                eff_min_hold = self._effective_min_hold_days(return_pct)
                 _suppress = False
                 if (
                     self.min_hold_days_enabled
                     and hold_days is not None
-                    and hold_days < self.min_hold_days
+                    and hold_days < eff_min_hold
                     and return_pct > self.emergency_stop_bypass_pct
                 ):
                     # Within min-hold window AND not an emergency loss → suppress
                     logger.info(
                         "stop_loss suppressed by min_hold: %s return=%.2f%% hold=%.1fd "
-                        "< min=%dd (emergency cap=%.0f%% not breached)",
+                        "< min=%dd (tiered=%s emergency cap=%.0f%% not breached)",
                         symbol, return_pct * 100, hold_days,
-                        self.min_hold_days, self.emergency_stop_bypass_pct * 100,
+                        eff_min_hold, self.tiered_min_hold_enabled,
+                        self.emergency_stop_bypass_pct * 100,
                     )
                     _suppress = True
                 elif (
                     self.min_hold_days_enabled
                     and hold_days is not None
-                    and hold_days < self.min_hold_days
+                    and hold_days < eff_min_hold
                     and return_pct <= self.emergency_stop_bypass_pct
                 ):
                     # Emergency bypass: loss breaches hard cap → exit immediately
                     exit_reason = (
                         f"Emergency stop triggered (min_hold bypass): "
                         f"{return_pct:.2%} <= {self.emergency_stop_bypass_pct:.2%} "
-                        f"(hold {hold_days:.1f}d < min {self.min_hold_days}d)"
+                        f"(hold {hold_days:.1f}d < min {eff_min_hold}d)"
                     )
                     signal_strength = 1.0
 
@@ -444,7 +494,9 @@ class SimpleExitV2Strategy(BaseStrategy):
                         f"Stop loss triggered: {return_pct:.2%} <= {eff_stop_loss_pct:.2%}"
                         + (f" (strength-adjusted from {self.stop_loss_pct:.0%})"
                            if eff_stop_loss_pct != self.stop_loss_pct else "")
-                        + (f" (hold {hold_days:.1f}d >= min {self.min_hold_days}d)"
+                        + (f" (hold {hold_days:.1f}d >= min {eff_min_hold}d"
+                           + (" tiered" if self.tiered_min_hold_enabled else "")
+                           + ")"
                            if self.min_hold_days_enabled and hold_days is not None else "")
                     )
                     signal_strength = 1.0
