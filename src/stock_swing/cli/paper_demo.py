@@ -2250,6 +2250,12 @@ def main() -> int:  # noqa: C901
             equity=equity,
             dry_run=args.dry_run,
             silent=args.silent,
+            # 追加コンテキスト (改善版 2026-07-27)
+            pnl_tracker=pnl_tracker,
+            current_positions=current_positions_full or {},
+            breaker_state=_breaker_state if "_breaker_state" in dir() else None,
+            ledger_gate_status=_ledger_gate_status if "_ledger_gate_status" in dir() else "UNKNOWN",
+            exit_strat=exit_strat if "exit_strat" in dir() else None,
         )
 
     return finish(0, decisions=decisions, submissions=submissions, equity_value=equity)
@@ -2577,52 +2583,215 @@ def _send_telegram_summary(
     equity: float,
     dry_run: bool,
     silent: bool,
+    # 追加コンテキスト
+    pnl_tracker=None,
+    current_positions: dict | None = None,
+    breaker_state=None,
+    ledger_gate_status: str = "UNKNOWN",
+    exit_strat=None,
 ) -> None:
-    """Send paper demo summary to Telegram."""
+    """取引時間中の Telegram サマリーを送信する（改善版 2026-07-27）。
+
+    15分毎の reconciliation / paper_demo run 後に送信。
+    HALT 発動時はバナーを最上部に表示する。
+    """
     from stock_swing.utils.telegram_notifier import send_notification
-    
-    actionable = [d for d in decisions if d.action in {"buy", "sell"} and d.risk_state == "pass"]
+    from datetime import datetime, timezone, timedelta
+    import json as _json
+
+    jst = timezone(timedelta(hours=9))
+    jst_time = datetime.now(timezone.utc).astimezone(jst).strftime("%Y-%m-%d %H:%M JST")
+    mode_tag = "🧪 テスト" if dry_run else "📊 ペーパー"
+
+    # ── サーキットブレーカー状態を解決 ───────────────────────────────
+    cb_status = "unknown"
+    cb_triggered_at = ""
+    cb_rules: list[str] = []
+    if breaker_state is not None:
+        cb_status = getattr(breaker_state, "status", "unknown") or "unknown"
+        raw_at = getattr(breaker_state, "triggered_at", "") or ""
+        try:
+            cb_triggered_at = (
+                datetime.fromisoformat(str(raw_at).replace("Z", "+00:00"))
+                .astimezone(jst)
+                .strftime("%m/%d %H:%M JST")
+            )
+        except Exception:
+            cb_triggered_at = str(raw_at)[:16]
+        for rule in (getattr(breaker_state, "triggered_rules", None) or []):
+            if isinstance(rule, dict):
+                cb_rules.append(rule.get("name", "?"))
+    else:
+        # ファイルから直接読む（フォールバック）
+        try:
+            cb_path = project_root / "data" / "guardrails" / "circuit_breaker.json"
+            cb_data = _json.loads(cb_path.read_text())
+            cb_status = cb_data.get("status", "unknown")
+            raw_at = cb_data.get("triggered_at", "") or ""
+            try:
+                cb_triggered_at = (
+                    datetime.fromisoformat(str(raw_at).replace("Z", "+00:00"))
+                    .astimezone(jst)
+                    .strftime("%m/%d %H:%M JST")
+                )
+            except Exception:
+                cb_triggered_at = raw_at[:16]
+            for rule in (cb_data.get("triggered_rules") or []):
+                cb_rules.append(rule.get("name", "?"))
+        except Exception:
+            pass
+
+    halted = cb_status in ("halted", "recovery_pending")
+
+    # ── 資産情報 ─────────────────────────────────────────────────────
+    baseline = 1_000_000.0
+    try:
+        if pnl_tracker is not None:
+            baseline = float(getattr(pnl_tracker.state, "baseline_equity", None) or baseline)
+    except Exception:
+        pass
+    baseline_ret = (equity - baseline) / baseline if baseline else 0.0
+    ret_icon = "🔥" if baseline_ret >= 0.05 else ("✅" if baseline_ret >= 0 else ("⚠️" if baseline_ret >= -0.05 else "❌"))
+
+    cum_pnl = 0.0
+    unreal_pnl = 0.0
+    if pnl_tracker is not None:
+        try:
+            cum_pnl = float(getattr(pnl_tracker.state, "cumulative_realized_pnl", 0) or 0)
+        except Exception:
+            pass
+    if current_positions:
+        try:
+            unreal_pnl = sum(float(p.get("unrealized_pl", 0) or 0) for p in current_positions.values())
+        except Exception:
+            pass
+
+    # ── 決定の分類 ────────────────────────────────────────────────────
+    buys = [d for d in decisions if d.action == "buy" and d.risk_state == "pass"]
+    sells = [d for d in decisions if d.action == "sell" and d.risk_state == "pass"]
     denied = [d for d in decisions if d.action == "deny"]
     held = [d for d in decisions if d.action in {"hold", "review"}]
     submitted_orders = [s for s in submissions if s.status == "submitted"]
-    
-    # Build summary message in Japanese
-    mode_tag = "🧪 テスト実行" if dry_run else "📊 ペーパー取引"
-    from datetime import datetime, timezone, timedelta
-    jst = timezone(timedelta(hours=9))
-    jst_time = datetime.now(timezone.utc).astimezone(jst).strftime('%Y-%m-%d %H:%M JST')
-    
-    lines = [
-        f"<b>{mode_tag} - Stock Swing</b>",
-        f"🗓 {jst_time}",
-        "",
-        f"<b>📈 分析結果</b>",
-        f"<code>銘柄数        : {len(symbols)}</code>",
-        f"<code>判断数        : {len(decisions)}</code>",
-        f"<code>  実行可能    : {len(actionable)}</code>",
-        f"<code>  拒否        : {len(denied)}</code>",
-        f"<code>  保留        : {len(held)}</code>",
-        "",
-    ]
-    
-    if submissions:
-        lines.append(f"<b>📝 注文</b>")
-        lines.append(f"<code>送信済み      : {len(submitted_orders)}/{len(submissions)}</code>")
-        for s in submitted_orders[:5]:  # Show first 5
+
+    # ── 直近の決済取引（pnl_tracker から最新5件）────────────────────
+    recent_trades: list[dict] = []
+    if pnl_tracker is not None:
+        try:
+            closed = [t for t in pnl_tracker.state.trades if t.get("status") == "closed"]
+            recent_trades = sorted(closed, key=lambda t: t.get("exit_time") or "", reverse=True)[:5]
+        except Exception:
+            pass
+
+    # ── min_hold 抑制カウント ─────────────────────────────────────────
+    sup_total = 0
+    sup_noise = 0
+    if exit_strat is not None:
+        try:
+            sup = exit_strat.get_suppression_stats()
+            sup_total = sup.get("total", 0)
+            sup_noise = sup.get("noise_7d", 0)
+        except Exception:
+            pass
+
+    # ─────────────────────────────────────────────────────────────────
+    # メッセージ構築
+    # ─────────────────────────────────────────────────────────────────
+    parts: list[str] = []
+
+    # HALT バナー（最優先）
+    if halted:
+        rule_text = "、".join(cb_rules[:2]) if cb_rules else "不明"
+        if cb_status == "halted":
+            parts.append("🚨━━━━━━━━━━━━━━━━━━━━━━━━━━🚨")
+            parts.append("<b>⛔ サーキットブレーカー 発動中</b>")
+            parts.append("  <b>全トレード 一時停止</b>")
+        else:
+            parts.append("🚨━━━━━━━━━━━━━━━━━━━━━━━━━━🚨")
+            parts.append("<b>⚠️ サーキットブレーカー 解除待ち</b>")
+            parts.append("  手動承認が必要です")
+        parts.append(f"<code>  発動: {cb_triggered_at}</code>")
+        parts.append(f"<code>  原因: {rule_text}</code>")
+        parts.append("🚨━━━━━━━━━━━━━━━━━━━━━━━━━━🚨")
+        parts.append("")
+
+    # ヘッダー
+    parts.append(f"<b>{mode_tag} - Stock Swing</b>")
+    parts.append(f"🗓 {jst_time}")
+    parts.append("")
+
+    # システム状態
+    ledger_icon = "✅" if ledger_gate_status == "VALID" else ("❌" if ledger_gate_status == "INVALID" else "❓")
+    cb_icon = "✅ 正常" if cb_status == "ok" else ("⛔ 停止中" if cb_status == "halted" else ("⚠️ 解除待ち" if cb_status == "recovery_pending" else f"❓ {cb_status}"))
+    parts.append("<b>🛡 システム状態</b>")
+    parts.append(f"<code>  CB  : {cb_icon}</code>")
+    parts.append(f"<code>  台帳: {ledger_icon} {ledger_gate_status}</code>")
+    parts.append("")
+
+    # 資産状況
+    parts.append(f"<b>💰 資産状況  {ret_icon} 元本比 {baseline_ret:+.2%}</b>")
+    parts.append(f"<code>  総額: ${equity:>12,.2f}</code>")
+    parts.append(f"<code>  確定: ${cum_pnl:>+12,.2f}</code>")
+    if unreal_pnl:
+        parts.append(f"<code>  含み: ${unreal_pnl:>+12,.2f}</code>")
+    parts.append("")
+
+    # 今回 run の分析結果
+    parts.append(f"<b>📈 今回 run ({len(symbols)} 銘柄分析)</b>")
+    parts.append(f"<code>  買いシグナル: {len(buys)}件  売りシグナル: {len(sells)}件</code>")
+    parts.append(f"<code>  拒否: {len(denied)}件  保留: {len(held)}件</code>")
+    parts.append("")
+
+    # 注文
+    if submitted_orders:
+        parts.append(f"<b>📝 注文送信 ({len(submitted_orders)}件)</b>")
+        for s in submitted_orders[:6]:
             side_ja = "買い" if s.side.upper() == "BUY" else "売り"
-            lines.append(f"<code>  {side_ja:4} {s.qty:>4}株 {s.symbol}</code>")
-        if len(submitted_orders) > 5:
-            lines.append(f"<code>  ... 他{len(submitted_orders) - 5}件</code>")
-        lines.append("")
-    
-    lines.append(f"<b>💰 口座</b>")
-    lines.append(f"<code>資産総額      : ${equity:,.2f}</code>")
-    
-    if denied:
-        lines.append("")
-        lines.append(f"⚠️ <b>{len(denied)}件のシグナルを拒否</b>")
-    
-    message = "\n".join(lines)
+            parts.append(f"<code>  {side_ja} {s.qty:>4}株  {s.symbol}</code>")
+        if len(submitted_orders) > 6:
+            parts.append(f"<code>  ...他 {len(submitted_orders) - 6}件</code>")
+        parts.append("")
+
+    # 保有ポジション（簡略）
+    if current_positions:
+        pos_list = sorted(current_positions.values(), key=lambda p: p.get("symbol", ""))
+        pos_syms = []
+        for p in pos_list[:8]:
+            sym = p.get("symbol", "?")
+            unreal_p = float(p.get("unrealized_pl", 0) or 0)
+            pct = float(p.get("unrealized_plpc", 0) or 0) * 100
+            icon = "📈" if pct > 1 else ("📉" if pct < -5 else "")
+            pos_syms.append(f"{sym}{icon}")
+        parts.append(f"<b>📂 保有 ({len(current_positions)}件)</b>")
+        parts.append(f"<code>  {' '.join(pos_syms)}</code>")
+        parts.append("")
+
+    # 直近の決済（5件）
+    if recent_trades:
+        parts.append("<b>🔄 直近の決済</b>")
+        _REASON_JA = {
+            "trailing_stop": "利確(追跡)", "breakeven_stop": "利確(BEP)",
+            "stop_loss": "損切り", "time_based": "期間満了",
+            "broker_fill": "手動", "corporate_action": "コーポレート",
+        }
+        for t in recent_trades[:4]:
+            pnl = t.get("pnl") or 0
+            sym = t.get("symbol") or "?"
+            reason = _REASON_JA.get(t.get("exit_reason") or "", t.get("exit_reason") or "不明")
+            icon = "✅" if pnl >= 0 else "❌"
+            parts.append(f"<code>  {icon} {sym:<6} {reason:<9} ${pnl:>+,.0f}</code>")
+        parts.append("")
+
+    # 止損健全性（min_hold 抑制）
+    if sup_total > 0:
+        parts.append("<b>🔒 止損抑制 (Plan A)</b>")
+        parts.append(f"<code>  今回 run: {sup_total}件抑制 (うちノイズ tier: {sup_noise}件)</code>")
+        parts.append("")
+
+    # メッセージ上限
+    message = "\n".join(parts)
+    if len(message) > 4000:
+        message = message[:4000] + "\n…(省略)"
+
     success = send_notification(message, silent=silent)
     if success:
         print("\n✅ Telegramに送信しました")
