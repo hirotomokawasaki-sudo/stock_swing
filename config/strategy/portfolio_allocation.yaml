@@ -36,8 +36,8 @@ portfolio:
 # position sizing multipliers
 # これらは戦略配分ではなく一時的 risk adjustment
 # R0-v2 完了後に見直し予定
-stock_new_buy_multiplier: 0.50
-# 2026-07-28: 0.25 → 0.50（ユーザー指示）
+stock_new_buy_multiplier: 1.00
+# 2026-07-28: 0.25 → 0.50 → 1.00（ユーザー指示: paper はフルサイズ）
 # R0-v2/R1-v2/R2-v2 VERIFIED_COMPLETE + ledger VALID 達成のため引き上げ
 # 08-01 リアルトレード開始も 50% サイズ予定 → paper も同条件で検証
 # 1.0 = full size (08-01 以降の状況次第で昇格)
