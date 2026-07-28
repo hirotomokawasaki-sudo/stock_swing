@@ -4506,7 +4506,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": null,
       "exit_reason": null,
-      "peak_price": 176.51
+      "peak_price": 176.51,
+      "asset_class": "stock"
     },
     {
       "trade_id": "broker_open_0069_DDOG",
@@ -4527,7 +4528,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": null,
       "exit_reason": null,
-      "peak_price": 266.63
+      "peak_price": 266.63,
+      "asset_class": "stock"
     },
     {
       "trade_id": "broker_open_0077_DELL",
@@ -4548,7 +4550,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": null,
       "exit_reason": null,
-      "peak_price": 447.16
+      "peak_price": 447.16,
+      "asset_class": "stock"
     },
     {
       "trade_id": "broker_open_0078_DELL",
@@ -4569,7 +4572,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": null,
       "exit_reason": null,
-      "peak_price": 447.16
+      "peak_price": 447.16,
+      "asset_class": "stock"
     },
     {
       "trade_id": "broker_open_0102_HPE",
@@ -4590,7 +4594,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": null,
       "exit_reason": null,
-      "peak_price": 48.96
+      "peak_price": 48.96,
+      "asset_class": "stock"
     },
     {
       "trade_id": "broker_open_0106_HPQ",
@@ -4611,7 +4616,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": null,
       "exit_reason": null,
-      "peak_price": 26.45
+      "peak_price": 26.45,
+      "asset_class": "stock"
     },
     {
       "trade_id": "broker_open_0141_META",
@@ -4656,7 +4662,8 @@
       "original_strategy_id": "broker_reconstructed",
       "exit_strategy_id": null,
       "exit_reason": null,
-      "peak_price": 401.99
+      "peak_price": 401.99,
+      "asset_class": "stock"
     }
   ],
   "quarantined_trades": [

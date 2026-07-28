@@ -46,10 +46,11 @@ def main() -> int:
     fixed = 0
     skipped_no_reg = []
     for t in trades:
-        if t.get("status") != "closed":
-            continue
+        # Apply to ALL trades (open + closed). Previously skipped open trades,
+        # causing open position asset_class to remain None.
+        # Bug fixed 2026-07-28.
         ac = t.get("asset_class")
-        if ac and ac != "unknown":
+        if ac and ac not in ("unknown", ""):
             continue  # already set
 
         sym = t.get("symbol", "")
@@ -65,8 +66,7 @@ def main() -> int:
     # Summary
     still_unknown = sum(
         1 for t in trades
-        if t.get("status") == "closed"
-        and (not t.get("asset_class") or t.get("asset_class") == "unknown")
+        if not t.get("asset_class") or t.get("asset_class") in ("", "unknown")
     )
     print(f"{'[DRY-RUN] ' if args.dry_run else ''}asset_class backfill:")
     print(f"  fixed          : {fixed}")
