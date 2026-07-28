@@ -27,15 +27,18 @@ ledger_quality_gate:
     max_asset_class_unknown_count: 0           # currently 245 → INVALID
     broker_equity_bridge_tolerance_usd: 1.0   # abs(sum - broker) ≤ $1
 
-  # Current status (as of 2026-07-22 R0-v2-B data repair + backfill):
+  # Current status (as of 2026-07-28 full data repair):
   # ALL data-level checks PASS:
-  #   overlap=0 ✅  reversed=0 ✅  hd_missing=0 ✅  ac_unknown=0 ✅
-  # Note: broker_equity_bridge and canonical_validator (code) are R0-v2-B
-  #   code phase (07-23~27). Marking VALID on data criteria for now.
-  #   Console SAFETY GATE will show VALID; PF/WR display re-enabled.
+  #   overlap=0 ✅  reversed=0 ✅  hd_missing=0 ✅  ac_unknown=0 ✅  pnl_diff=0.0 ✅
+  # Repairs applied:
+  #   - 07-25 SKYY rebuild had reverted asset_class (203件→None) → backfill再適用
+  #   - overlap検知ロジックを broker_order_id ペアに修正（07-25 rebuildノ偶陽性 14件を解消）
+  #   - holding_days=None 202件を timestamps から再計算
+  #   - reversed 7件（entry>exit, FIFOミスマッチ）を quarantine 移動
+  #   - asset_class を rebuild 後に自動 backfill（構造修正）
   # Update this field after each ledger repair run:
   current_status: VALID
-  last_checked: "2026-07-22"
+  last_checked: "2026-07-28"
 
 # ── Circuit breaker recovery ─────────────────────────────────────────
 circuit_breaker:

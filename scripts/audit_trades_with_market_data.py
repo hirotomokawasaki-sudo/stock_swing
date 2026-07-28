@@ -221,11 +221,29 @@ def check_ledger_invariants(state: dict) -> dict:
     from datetime import datetime as _dt
 
     trades = state.get("trades", [])
-    quar_ids = {t.get("trade_id") for t in state.get("quarantined_trades", [])}
     closed = [t for t in trades if t.get("status") == "closed"]
 
     # Invariant 1: closed ∩ quarantine = ∅
-    overlap = [t for t in closed if t.get("trade_id") in quar_ids]
+    # Use (broker_order_id, exit_broker_order_id) pairs as the canonical key.
+    # Root cause of previous false-positives (2026-07-28): trade_id like
+    # 'broker_match_NNNN_SYMBOL' is a sequential index re-assigned on every rebuild;
+    # after a rebuild with new fills the same index number can point to a completely
+    # different trade.  broker_order_id is the immutable broker-assigned UUID and is
+    # the correct identity for overlap detection.
+    quar_pairs = {
+        (
+            t.get("broker_order_id") or t.get("entry_broker_order_id") or "",
+            t.get("exit_broker_order_id") or "",
+        )
+        for t in state.get("quarantined_trades", [])
+    }
+    overlap = [
+        t for t in closed
+        if (
+            t.get("broker_order_id") or "",
+            t.get("exit_broker_order_id") or "",
+        ) in quar_pairs
+    ]
 
     # Invariant 2: entry_time ≤ exit_time for all closed
     reversed_trades = []

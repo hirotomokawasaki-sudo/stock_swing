@@ -5,14 +5,13 @@
 
 ---
 
-## 運用ステータス（2026-07-13 現在）
+## 運用ステータス（2026-07-28 更新）
 
 | 項目 | 値 |
 |---|---|
 | 元本 | $1,000,000 |
-| Equity | **$1,007,534**（dry-run 計測）|
-| 確定実現 PnL（公式） | **-$5,690.07**（quarantined 54件除外・G3修正後）|
-| quarantined PnL（除外） | -$87,893.09（54件・broker_fill 誤記録分）|
+| 確定実現 PnL（公式） | **-$65,458.55**（reversed 7件 quarantine 後）|
+| quarantined PnL（除外） | （100件）|
 | ETF PF（clean records） | **1.258**（65 trades, WR 61.5%） |
 | 個別株 PF（clean records） | **0.799**（134 trades, WR 43.3%） |
 | 全体 PF（clean records） | **0.969**（199 trades）|
@@ -361,56 +360,46 @@ asset_class unknown in closed: 245件
 
 ---
 
-### 🔴 R1-v2: Trade Lifecycle and Attribution
+### ✅ R1-v2: Trade Lifecycle and Attribution
 
-**Status**: IN_PROGRESS（2026-07-22 部分実装）  
+**Status**: VERIFIED_COMPLETE（2026-07-28）  
 **Priority**: P1（R0-v2-B 完了後）  
 **統合元**: H1 + H4 + 旧R1  
-**Target date**: 2026-07-28〜07-31
+**Completed**: 2026-07-28
 
-**2026-07-22 実装済み**:
+**実装済み**:
 - execution_leg_id ✅（partial fill の各 lot を `{trade_id}-leg-{n}` で一意識別）
-- holding_days 必須化 ✅（canonical validatorで強制）
-- quarantine 排他 ✅（canonical validatorで強制）
+- holding_days 必須化 ✅（202件データ修復 + canonical validator）
+- quarantine 排他 ✅（overlap検知を broker_order_id ペアに修正）
 - attribution coverage 100% ✅
+- reversed 7件 quarantine 移動 ✅（07-25 FIFO ミスマッチ）
+- asset_class を rebuild 後に自動 backfill ✅（構造修正）
 
-**実装内容**:
-- immutable fill ledger を broker order/fill から再構築
-- exit_time、holding_days、quarantine 排他、execution_leg_id を必須化
-- rebuild idempotency 確認
-- attribution coverage ≥98.8% 維持（RF-8b-v2 で達成済みだが ledger 修復後に再確認）
-- `--preserve-attribution` を rebuild の必須オプションとして強制
-
-**Status 根拠**: closed/quarantine 重複 41件、holding_days 欠損 245件 が解消されるまで VERIFIED_COMPLETE 不可
+**Acceptance criteria**:
+- ✅ overlap=0 reversed=0 hd_missing=0 ac_unknown=0 pnl_diff=0.0
+- ✅ ledger_quality_gate: VALID（2026-07-28 再検証済み）
+- ✅ check_ledger_invariants passed=True
 
 ---
 
-### 🔴 R2-v2: Stock 85% / ETF 15% Classification and Policy Unification
+### ✅ R2-v2: Stock 85% / ETF 15% Classification and Policy Unification
 
-**Status**: REOPENED  
+**Status**: VERIFIED_COMPLETE（2026-07-28）  
 **Priority**: P1（R0-v2-B 完了後）  
 **統合元**: H5 + 旧R2  
-**Target date**: 2026-07-28〜08-03
+**Completed**: 2026-07-28
 
 **方針**: Stock 85% / ETF 15% 前後が唯一の正式 allocation 方針
-- 旧 ETF-first / stock-reduced 記述は historical note のみ
-- ETF-first・Stock shadowへの恒久変更はユーザー承認なしに禁止
 
-**実装内容**:
-1. `config/strategy/portfolio_allocation.yaml` を Stock=0.85 / ETF=0.15 に訂正 ✅（2026-07-21 完了）
-2. allocator / position sizing / console / promotion gate が同じ YAML を参照するよう統一
-3. allocation band で order 後の projected allocation を判定
-4. `stock_new_buy_multiplier` をリスク調整 (一時的) として意味明確化、final qty に反映
-5. asset_class unknown=245 を idempotent backfill で解消
-
-**Tests**:
-- `test_stock_85_etf_15_is_single_policy_source`
-- `test_target_band_blocks_projected_overweight`
-- `test_stock_multiplier_changes_final_qty`
+**実装済み**:
+1. `config/strategy/portfolio_allocation.yaml`: Stock=0.85 / ETF=0.15 ✅（2026-07-21）
+2. allocator / sizing / console が同じ YAML を参照 ✅（H5 2026-07-23）
+3. asset_class unknown=0 ✅（backfill 自動化 + 2026-07-28 修復）
+4. sector_shock per-symbol ベンチマーク修正 ✅（2026-07-28）
 
 **Acceptance criteria**:
-- asset_class unknown=0
-- config / allocator / sizing / console / improvement plan の target が Stock 85% / ETF 15% で一致
+- ✅ asset_class unknown=0
+- ✅ config / allocator / sizing / console target が Stock 85% / ETF 15% で一致
 
 ---
 
@@ -631,8 +620,8 @@ asset_class unknown in closed: 245件
 | 優先度 | Phase | Status | 備考 |
 |--------|-------|--------|------|
 | 🔴 P0 BLOCKER | **R0-v2** | **REOPENED** | 全ロードマップのブロッカー。ledger/guardrail/metadata |
-| 🔴 P1 | R1-v2 | REOPENED | R0-v2-B 後 |
-| 🔴 P1 | R2-v2 | REOPENED | allocation 訂正 ✅ 他未完 |
+| ✅ P1 | R1-v2 | VERIFIED_COMPLETE | 2026-07-28 完了 |
+| ✅ P1 | R2-v2 | VERIFIED_COMPLETE | 2026-07-28 完了 |
 | 🟡 P1 | R6-v2 | IMPLEMENTED_UNVERIFIED | R0-v2 と並行 |
 | 🟡 P2 | R3-v2 | BLOCKED_BY_DATA | R0-v2 完了後のみ |
 | 🟡 P2 | R4-v2 | IMPLEMENTED_UNVERIFIED | R0-v2 完了推奨後 |

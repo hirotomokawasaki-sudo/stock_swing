@@ -32,7 +32,8 @@ def _make_state(closed_trades: list[dict], cumulative_pnl: float = 0.0) -> dict:
     }
 
 
-def _closed(symbol: str, asset_class: str | None, pnl: float = 100.0) -> dict:
+def _closed(symbol: str, asset_class: str | None, pnl: float = 100.0,
+            broker_order_id: str = "", exit_broker_order_id: str = "") -> dict:
     return {
         "trade_id": f"t_{symbol}",
         "symbol": symbol,
@@ -42,7 +43,64 @@ def _closed(symbol: str, asset_class: str | None, pnl: float = 100.0) -> dict:
         "exit_time": "2026-07-10T15:00:00+00:00",
         "pnl": pnl,
         "holding_days": 9,
+        "broker_order_id": broker_order_id,
+        "exit_broker_order_id": exit_broker_order_id,
     }
+
+
+class TestLedgerInvariantOverlapDetection:
+    """Invariant 1: overlap must be detected by broker_order_id pair, not trade_id.
+
+    Root cause (2026-07-28): trade_id='broker_match_NNNN_SYMBOL' is a sequential
+    index that shifts on every rebuild when new fills are added.  After the 07-25
+    SKYY phantom rebuild 14 quarantined trades appeared as overlaps solely because
+    the same index now pointed to a different broker_order_id.  True overlap was 0.
+    """
+
+    def test_true_overlap_detected_by_broker_order_id(self):
+        """Two trades with the same (broker_order_id, exit_broker_order_id) in
+        both closed and quarantine → overlap=1."""
+        state = {
+            "trades": [
+                _closed("AMD", "stock", pnl=100.0,
+                        broker_order_id="buy-aaa", exit_broker_order_id="sell-bbb"),
+            ],
+            "quarantined_trades": [
+                {"symbol": "AMD", "broker_order_id": "buy-aaa",
+                 "exit_broker_order_id": "sell-bbb", "pnl": 100.0},
+            ],
+            "cumulative_realized_pnl": 100.0,
+        }
+        result = check_ledger_invariants(state)
+        assert result["overlap_count"] == 1
+        assert result["passed"] is False
+
+    def test_false_overlap_trade_id_same_but_broker_id_different(self):
+        """Regression: trade_id collision after rebuild (07-25 pattern).
+        Same trade_id, different broker_order_id → NOT an overlap."""
+        state = {
+            "trades": [
+                _closed("AMZN", "stock", pnl=50.0,
+                        broker_order_id="buy-NEW", exit_broker_order_id="sell-NEW"),
+            ],
+            "quarantined_trades": [
+                # Same trade_id prefix 't_AMZN' but different broker IDs (old rebuild)
+                {"symbol": "AMZN", "trade_id": "t_AMZN",
+                 "broker_order_id": "buy-OLD",
+                 "exit_broker_order_id": "sell-OLD", "pnl": 50.0},
+            ],
+            "cumulative_realized_pnl": 50.0,
+        }
+        result = check_ledger_invariants(state)
+        assert result["overlap_count"] == 0  # no true overlap
+        assert result["passed"] is True
+
+    def test_no_overlap_when_quarantine_empty(self):
+        state = _make_state([
+            _closed("NVDA", "stock", broker_order_id="b1", exit_broker_order_id="e1"),
+        ], cumulative_pnl=100.0)
+        result = check_ledger_invariants(state)
+        assert result["overlap_count"] == 0
 
 
 class TestLedgerInvariantAssetClass:
