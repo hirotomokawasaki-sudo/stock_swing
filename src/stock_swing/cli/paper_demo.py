@@ -73,7 +73,11 @@ from stock_swing.strategy_engine.breakout_momentum_strategy import BreakoutMomen
 from stock_swing.strategy_engine.event_swing_strategy import EventSwingStrategy
 from stock_swing.strategy_engine.simple_exit_strategy import SimpleExitStrategy
 from stock_swing.strategy_engine.simple_exit_v2_strategy import SimpleExitV2Strategy
-from stock_swing.strategy_engine.sector_shock_hold import SectorShockAnalyzer, SectorShockHoldConfig
+from stock_swing.strategy_engine.sector_shock_hold import (
+    SectorShockAnalyzer,
+    SectorShockHoldConfig,
+    get_symbol_sector_returns,
+)
 from stock_swing.tracking.exit_reason_store import delete_exit_reason, write_exit_reason
 from stock_swing.tracking.trade_event_store import TradeEvent
 from stock_swing.tracking.pnl_tracker import PnLTracker
@@ -1178,14 +1182,24 @@ def main() -> int:  # noqa: C901
                     except (TypeError, ValueError):
                         pass
 
+        # Build returns for ALL benchmark symbols used across the entire registry
+        # (2026-07-28 fix): previously only global [SMH, SOXX] were fetched, meaning
+        # non-semiconductor stocks (ADBE/AMZN/PLTR/META) were always evaluated against
+        # semiconductor benchmarks. Per-symbol benchmarks from symbol_registry.yaml
+        # were ignored even though they were correctly defined there.
+        _all_bm_symbols: set[str] = set(_ssh_config.benchmark_symbols)  # global fallback
+        for _reg_info in _SYMBOL_REGISTRY.values():
+            for _bm in (_reg_info.get("benchmark_symbols") or []):
+                _all_bm_symbols.add(_bm)
+
         # Sector 1d return: prefer all_features (real-time), fall back to
         # benchmark_returns.csv (most recent row) for any benchmark still missing.
-        _sector_1d: dict[str, float] = {
+        _all_benchmark_1d: dict[str, float] = {
             _bm: _feat_return_1d[_bm]
-            for _bm in _ssh_config.benchmark_symbols
+            for _bm in _all_bm_symbols
             if _bm in _feat_return_1d
         }
-        _missing_bms = [b for b in _ssh_config.benchmark_symbols if b not in _sector_1d]
+        _missing_bms = [b for b in _all_bm_symbols if b not in _all_benchmark_1d]
         if _missing_bms:
             _bm_csv = project_root / "data" / "benchmarks" / "benchmark_returns.csv"
             if _bm_csv.exists():
@@ -1201,7 +1215,7 @@ def main() -> int:  # noqa: C901
                             except (TypeError, ValueError):
                                 pass
                 for _bm_sym, (_bm_dt, _bm_r) in _bm_latest.items():
-                    _sector_1d[_bm_sym] = _bm_r
+                    _all_benchmark_1d[_bm_sym] = _bm_r
                     logger.debug(
                         "sector_shock: %s return_1d=%.4f loaded from benchmark_returns.csv "
                         "(date=%s; features had no data)",
@@ -1219,11 +1233,18 @@ def main() -> int:  # noqa: C901
                 _sym,
                 float((getattr(_sig, "signal_strength", 0) or 0)) * -1,
             )
+            # Per-symbol benchmark selection from symbol_registry.yaml (2026-07-28 fix)
+            _sym_sector_1d = get_symbol_sector_returns(
+                symbol=_sym,
+                all_benchmark_returns=_all_benchmark_1d,
+                symbol_registry=_SYMBOL_REGISTRY,
+                fallback_benchmarks=_ssh_config.benchmark_symbols,
+            )
             _ssh_result = _ssh_analyzer.classify(
                 symbol=_sym,
                 current_return_pct=_unrealized_pct,
                 symbol_1d_return_pct=_1d_sym,
-                sector_1d_return_pcts=_sector_1d,
+                sector_1d_return_pcts=_sym_sector_1d,
             )
             # R3-v2 / F7: write to persistent JSONL shadow log for A/B activation tracking
             _ssh_log_path = project_root / "data" / "sector_shock_shadow_log.jsonl"

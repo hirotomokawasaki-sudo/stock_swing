@@ -283,10 +283,14 @@ class SectorShockAnalyzer:
             )
 
         # ── Rule 5: Detect sector-wide shock ─────────────────────────────────
-        relevant_benchmarks = {
-            sym: ret for sym, ret in sector_1d_return_pcts.items()
-            if sym in cfg.benchmark_symbols
-        }
+        # Use ALL benchmarks passed in sector_1d_return_pcts.
+        # (2026-07-28 fix): previously this filtered by cfg.benchmark_symbols (global [SMH, SOXX]),
+        # which silently discarded per-symbol benchmarks like QQQ/SPY/SKYY even when the
+        # caller passed them.  The filtering responsibility has moved to the caller:
+        # get_symbol_sector_returns() pre-selects the correct per-symbol subset, so classify()
+        # should trust what it receives.  cfg.benchmark_symbols is now only used as the
+        # fallback in get_symbol_sector_returns() when a symbol is not in the registry.
+        relevant_benchmarks = dict(sector_1d_return_pcts)
         sector_shock_detected = False
         avg_sector_return = 0.0
         if relevant_benchmarks:
@@ -430,3 +434,38 @@ class SectorShockAnalyzer:
                 "sector_shock_hold: failed to write shadow log to %s: %s",
                 log_path, exc,
             )
+
+
+def get_symbol_sector_returns(
+    symbol: str,
+    all_benchmark_returns: dict[str, float],
+    symbol_registry: dict[str, dict],
+    fallback_benchmarks: list[str] | None = None,
+) -> dict[str, float]:
+    """Return the per-symbol subset of benchmark returns for sector_shock classification.
+
+    Uses benchmark_symbols from symbol_registry.yaml for the given symbol.
+    Falls back to fallback_benchmarks (usually SectorShockHoldConfig.benchmark_symbols)
+    when the symbol is not in the registry or has no benchmark_symbols defined.
+
+    This function was introduced (2026-07-28) to fix a bug where paper_demo.py
+    used the global [SMH, SOXX] benchmark for ALL symbols, including non-semiconductor
+    stocks like ADBE, AMZN, PLTR, META, HPQ whose correct benchmarks are QQQ/SPY/SKYY.
+    The root cause was that symbol_registry.yaml had correct per-symbol data but
+    paper_demo.py never read it for sector_shock.
+
+    Args:
+        symbol:               Trading symbol (e.g. "ADBE").
+        all_benchmark_returns: Dict of all available benchmark returns keyed by symbol
+                              (e.g. {"SMH": -0.03, "QQQ": -0.025, "SPY": -0.02}).
+        symbol_registry:      Loaded symbol_registry.yaml as dict[SYMBOL, info_dict].
+        fallback_benchmarks:  Benchmark list to use when symbol is not in registry.
+                              Defaults to ["SMH", "SOXX"] if None.
+
+    Returns:
+        Dict of {benchmark_symbol: daily_return} for the symbol's sector.
+    """
+    fb = fallback_benchmarks if fallback_benchmarks is not None else list(SEMICONDUCTOR_BENCHMARKS)
+    reg_info = symbol_registry.get(symbol) or {}
+    bm_list: list[str] = reg_info.get("benchmark_symbols") or fb
+    return {bm: all_benchmark_returns[bm] for bm in bm_list if bm in all_benchmark_returns}

@@ -249,10 +249,21 @@ def check_ledger_invariants(state: dict) -> dict:
     cum = state.get("cumulative_realized_pnl", 0) or 0
     pnl_diff = abs(closed_sum - cum)
 
+    # Invariant 5: asset_class must be set (not None / 'unknown' / missing)
+    # Root cause: rebuild_pnl_state_from_broker.py used to wipe asset_class on every
+    # rebuild because --preserve-attribution only saved exit_reason + quarantined_trades.
+    # Detected 2026-07-28: 203 closed trades reverted to None after 07-25 SKYY rebuild.
+    VALID_ASSET_CLASSES = {"stock", "etf"}
+    ac_unknown = [
+        t for t in closed
+        if (t.get("asset_class") or "").lower() not in VALID_ASSET_CLASSES
+    ]
+
     passed = (
         len(overlap) == 0
         and len(reversed_trades) == 0
         and pnl_diff <= 1.0
+        and len(ac_unknown) == 0
         # hd_missing is a warning, not a hard fail (may be pre-fix data)
     )
 
@@ -260,6 +271,7 @@ def check_ledger_invariants(state: dict) -> dict:
         "overlap_count": len(overlap),
         "reversed_count": len(reversed_trades),
         "hd_missing_count": len(hd_missing),
+        "ac_unknown_count": len(ac_unknown),
         "pnl_diff": round(pnl_diff, 2),
         "closed_count": len(closed),
         "quarantined_count": len(state.get("quarantined_trades", [])),

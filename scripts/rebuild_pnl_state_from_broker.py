@@ -24,6 +24,9 @@ PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from stock_swing.sources.broker_client import BrokerClient
+from stock_swing.risk.allocation_config import read_symbol_registry
+
+_REGISTRY_PATH = PROJECT_ROOT / "config" / "reference" / "symbol_registry.yaml"
 
 
 def fetch_yahoo_daily_bars(symbol: str) -> dict[str, tuple[float, float, float]]:
@@ -257,6 +260,40 @@ def extract_quarantine_tombstones(
         if entry_oid and exit_oid:
             tombstones.add((entry_oid, exit_oid))
     return frozenset(tombstones)
+
+
+def apply_asset_class_from_registry(
+    pnl_state: dict[str, Any],
+    registry_path: Path | None = None,
+) -> int:
+    """Backfill asset_class on all trades (open + closed) from symbol_registry.yaml.
+
+    Called automatically after every rebuild so that asset_class is never wiped.
+    Root cause fix (2026-07-28): --preserve-attribution only saved exit_reason /
+    quarantined_trades; asset_class was silently lost on each rebuild.
+
+    Returns the number of trades updated.
+    """
+    path = registry_path or _REGISTRY_PATH
+    try:
+        registry = read_symbol_registry(path)
+    except Exception:
+        registry = {}
+
+    updated = 0
+    for trade in pnl_state.get("trades", []):
+        sym = trade.get("symbol", "")
+        current_ac = (trade.get("asset_class") or "").lower()
+        if current_ac in ("stock", "etf"):
+            continue  # already valid, preserve
+        reg_info = registry.get(sym) or {}
+        new_ac = (reg_info.get("asset_class") or "").lower()
+        if new_ac in ("stock", "etf"):
+            trade["asset_class"] = new_ac
+            updated += 1
+        else:
+            trade["asset_class"] = "unknown"
+    return updated
 
 
 def apply_tombstone_filter(
@@ -907,6 +944,13 @@ def main():
         print(f"   quarantined_trades       : {len(pnl_state.get('quarantined_trades', []))}")
         if _tombstone_hits:
             print(f"   tombstone_filtered       : {_tombstone_hits}")
+
+    # Always backfill asset_class from symbol_registry.yaml after rebuild.
+    # Root cause fix (2026-07-28): asset_class was silently wiped on every rebuild
+    # because --preserve-attribution only saved exit_reason + quarantined_trades.
+    # The daily audit and ledger_quality_gate now both check asset_class.
+    _ac_updated = apply_asset_class_from_registry(pnl_state)
+    print(f"\n🏷️  asset_class backfill from symbol_registry: {_ac_updated} trade(s) updated.")
 
     # Print summary
     print()
