@@ -24,8 +24,10 @@ portfolio:
     ETFs: 0.15
   allocation_band:
     # 推奨許容バンド（market value / equity ベース）
-    stocks_min: 0.80
-    stocks_max: 0.92
+    # stocks_max: Stock MV / equity（Stock+ETF+Cash）が85%を超えたら BUY ブロック
+    # 2026-07-28: 0.92 → 0.85（ユーザー指示: 資産全体の85%上限）
+    stocks_min: 0.70
+    stocks_max: 0.85
     etf_min: 0.08
     etf_max: 0.20
   # order 後の projected allocation で判定
