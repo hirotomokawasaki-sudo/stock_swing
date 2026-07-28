@@ -32,6 +32,11 @@ export PAPER_DEMO_ALLOW_ETF_BUYS=true
 # Disable: ENTRY_FILTER_STOCK_REDUCED=false
 export ENTRY_FILTER_STOCK_REDUCED=true
 export ENTRY_FILTER_STOCK_REDUCED_MIN_TRADES=5
+# 2026-07-28: stock_reduced PF gate 1.00 → 0.35
+#   PF < 0.35 = 損失が勝利の3倍超（構造的問題）→ ブロック継続
+#   PF 0.35〜1.00（AMD/INTC/HPE）= 少サンプルの誤差範囲 → 解放
+#   理由: 閾値1.00では売買が進まず paper 最終確認期間のデータが不足
+export ENTRY_FILTER_STOCK_REDUCED_PF_GATE=0.35
 
 # Run paper demo with outside-hours allowed (will queue orders).
 # Keep cron stdout tiny; detailed logs go to the log file.
