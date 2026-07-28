@@ -1,6 +1,6 @@
 {
   "created_at": "2026-05-12T00:17:00+00:00",
-  "last_updated": "2026-07-28T00:00:03.356465+00:00",
+  "last_updated": "2026-07-28T01:45:30.970656+00:00",
   "trades": [
     {
       "trade_id": "broker_match_0009_AMD",
@@ -161,7 +161,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
       "asset_class": "stock",
-      "holding_days": 5
+      "holding_days": 5,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0016_AMD",
@@ -184,7 +185,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "stock",
-      "holding_days": 13
+      "holding_days": 13,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0017_AMZN",
@@ -253,7 +255,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "stock",
-      "holding_days": 7
+      "holding_days": 7,
+      "entry_signal_strength": 0.5328
     },
     {
       "trade_id": "broker_match_0020_AMZN",
@@ -276,7 +279,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "stock",
-      "holding_days": 7
+      "holding_days": 7,
+      "entry_signal_strength": 0.6083
     },
     {
       "trade_id": "broker_match_0029_ARM",
@@ -460,7 +464,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
       "asset_class": "stock",
-      "holding_days": 5
+      "holding_days": 5,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0037_AVGO",
@@ -621,7 +626,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "etf",
-      "holding_days": 7
+      "holding_days": 7,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0045_CHPX",
@@ -690,7 +696,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "etf",
-      "holding_days": 12
+      "holding_days": 12,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0048_CRDO",
@@ -828,7 +835,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "stock",
-      "holding_days": 0
+      "holding_days": 0,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0054_CRDO",
@@ -851,7 +859,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "stock",
-      "holding_days": 3
+      "holding_days": 3,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0055_CRM",
@@ -897,7 +906,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
       "asset_class": "stock",
-      "holding_days": 13
+      "holding_days": 13,
+      "entry_signal_strength": 0.4765
     },
     {
       "trade_id": "broker_match_0057_CRWD",
@@ -966,7 +976,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "corporate_action",
       "asset_class": "stock",
-      "holding_days": 6
+      "holding_days": 6,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0061_CRWD",
@@ -989,7 +1000,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
       "asset_class": "stock",
-      "holding_days": 1
+      "holding_days": 1,
+      "entry_signal_strength": 0.7914
     },
     {
       "trade_id": "broker_match_0062_CSCO",
@@ -1127,7 +1139,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "stock",
-      "holding_days": 11
+      "holding_days": 11,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0068_DDOG",
@@ -1150,7 +1163,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
       "asset_class": "stock",
-      "holding_days": 1
+      "holding_days": 1,
+      "entry_signal_strength": 0.8174
     },
     {
       "trade_id": "broker_match_0070_DELL",
@@ -1288,7 +1302,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "broker_fill",
       "asset_class": "stock",
-      "holding_days": 11
+      "holding_days": 11,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0076_DELL",
@@ -1311,7 +1326,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "stock",
-      "holding_days": 1
+      "holding_days": 1,
+      "entry_signal_strength": 0.5402
     },
     {
       "trade_id": "broker_match_0079_FICO",
@@ -1449,7 +1465,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "time_based",
       "asset_class": "etf",
-      "holding_days": 18
+      "holding_days": 18,
+      "entry_signal_strength": 0.8347
     },
     {
       "trade_id": "broker_match_0085_FTNT",
@@ -1518,7 +1535,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "stock",
-      "holding_days": 9
+      "holding_days": 9,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0088_FTNT",
@@ -1541,7 +1559,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
       "asset_class": "stock",
-      "holding_days": 6
+      "holding_days": 6,
+      "entry_signal_strength": 0.6075
     },
     {
       "trade_id": "broker_match_0089_FTXL",
@@ -1587,7 +1606,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "etf",
-      "holding_days": 7
+      "holding_days": 7,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0091_GOOGL",
@@ -1633,7 +1653,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "stock",
-      "holding_days": 4
+      "holding_days": 4,
+      "entry_signal_strength": 0.4932
     },
     {
       "trade_id": "broker_match_0093_GOOGL",
@@ -1656,7 +1677,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "stock",
-      "holding_days": 4
+      "holding_days": 4,
+      "entry_signal_strength": 0.5025
     },
     {
       "trade_id": "broker_match_0094_GTOP",
@@ -1909,7 +1931,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
       "asset_class": "stock",
-      "holding_days": 3
+      "holding_days": 3,
+      "entry_signal_strength": 0.5046
     },
     {
       "trade_id": "broker_match_0107_IBM",
@@ -1978,7 +2001,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
       "asset_class": "stock",
-      "holding_days": 11
+      "holding_days": 11,
+      "entry_signal_strength": 0.6856
     },
     {
       "trade_id": "broker_match_0110_INTC",
@@ -2093,7 +2117,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
       "asset_class": "stock",
-      "holding_days": 5
+      "holding_days": 5,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0115_INTC",
@@ -2116,7 +2141,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "stock",
-      "holding_days": 5
+      "holding_days": 5,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0116_KLAC",
@@ -2231,7 +2257,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
       "asset_class": "stock",
-      "holding_days": 1
+      "holding_days": 1,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0121_KLAC",
@@ -2254,7 +2281,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
       "asset_class": "stock",
-      "holding_days": 0
+      "holding_days": 0,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0125_LRCX",
@@ -2369,7 +2397,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
       "asset_class": "stock",
-      "holding_days": 0
+      "holding_days": 0,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0130_LRCX",
@@ -2392,7 +2421,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
       "asset_class": "stock",
-      "holding_days": 1
+      "holding_days": 1,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0131_LRCX",
@@ -2415,7 +2445,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "stock",
-      "holding_days": 4
+      "holding_days": 4,
+      "entry_signal_strength": 0.886
     },
     {
       "trade_id": "broker_match_0132_MDB",
@@ -2530,7 +2561,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
       "asset_class": "stock",
-      "holding_days": 4
+      "holding_days": 4,
+      "entry_signal_strength": 0.4988
     },
     {
       "trade_id": "broker_match_0137_MDB",
@@ -2553,7 +2585,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
       "asset_class": "stock",
-      "holding_days": 3
+      "holding_days": 3,
+      "entry_signal_strength": 0.6326
     },
     {
       "trade_id": "broker_match_0138_META",
@@ -2576,7 +2609,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "stock",
-      "holding_days": 7
+      "holding_days": 7,
+      "entry_signal_strength": 0.8648
     },
     {
       "trade_id": "broker_match_0139_META",
@@ -2599,7 +2633,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
       "asset_class": "stock",
-      "holding_days": 7
+      "holding_days": 7,
+      "entry_signal_strength": 0.6947
     },
     {
       "trade_id": "broker_match_0140_META",
@@ -2622,7 +2657,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
       "asset_class": "stock",
-      "holding_days": 6
+      "holding_days": 6,
+      "entry_signal_strength": 0.9495
     },
     {
       "trade_id": "broker_match_0142_MRVL",
@@ -2852,7 +2888,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
       "asset_class": "stock",
-      "holding_days": 1
+      "holding_days": 1,
+      "entry_signal_strength": 0.7616
     },
     {
       "trade_id": "broker_match_0154_MU",
@@ -2875,7 +2912,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "stock",
-      "holding_days": 0
+      "holding_days": 0,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0155_MU",
@@ -2898,7 +2936,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
       "asset_class": "stock",
-      "holding_days": 2
+      "holding_days": 2,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0156_NBIS",
@@ -3013,7 +3052,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
       "asset_class": "stock",
-      "holding_days": 6
+      "holding_days": 6,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0161_NBIS",
@@ -3036,7 +3076,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
       "asset_class": "stock",
-      "holding_days": 0
+      "holding_days": 0,
+      "entry_signal_strength": 0.6866
     },
     {
       "trade_id": "broker_match_0162_NOW",
@@ -3105,7 +3146,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "stock",
-      "holding_days": 8
+      "holding_days": 8,
+      "entry_signal_strength": 0.9552
     },
     {
       "trade_id": "broker_match_0165_NVDA",
@@ -3289,7 +3331,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
       "asset_class": "stock",
-      "holding_days": 12
+      "holding_days": 12,
+      "entry_signal_strength": 0.7399
     },
     {
       "trade_id": "broker_match_0173_PANW",
@@ -3312,7 +3355,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
       "asset_class": "stock",
-      "holding_days": 12
+      "holding_days": 12,
+      "entry_signal_strength": 0.8052
     },
     {
       "trade_id": "broker_match_0174_PATH",
@@ -3358,7 +3402,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "stock",
-      "holding_days": 7
+      "holding_days": 7,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0176_PATH",
@@ -3381,7 +3426,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
       "asset_class": "stock",
-      "holding_days": 12
+      "holding_days": 12,
+      "entry_signal_strength": 0.8082
     },
     {
       "trade_id": "broker_match_0177_PLTR",
@@ -3427,7 +3473,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "stock",
-      "holding_days": 7
+      "holding_days": 7,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0179_PSCT",
@@ -3519,7 +3566,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "broker_fill",
       "asset_class": "etf",
-      "holding_days": 11
+      "holding_days": 11,
+      "entry_signal_strength": 0.6846
     },
     {
       "trade_id": "broker_match_0189_QCOM",
@@ -3657,7 +3705,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "etf",
-      "holding_days": 20
+      "holding_days": 20,
+      "entry_signal_strength": 0.717
     },
     {
       "trade_id": "broker_match_0200_RBRK",
@@ -3749,7 +3798,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
       "asset_class": "stock",
-      "holding_days": 6
+      "holding_days": 6,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0204_RBRK",
@@ -3772,7 +3822,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
       "asset_class": "stock",
-      "holding_days": 4
+      "holding_days": 4,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0205_SHOC",
@@ -3887,7 +3938,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "etf",
-      "holding_days": 12
+      "holding_days": 12,
+      "entry_signal_strength": 0.5192
     },
     {
       "trade_id": "broker_match_0210_SMCI",
@@ -4094,7 +4146,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "etf",
-      "holding_days": 11
+      "holding_days": 11,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0219_SMHX",
@@ -4163,7 +4216,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "etf",
-      "holding_days": 11
+      "holding_days": 11,
+      "entry_signal_strength": 0.7317
     },
     {
       "trade_id": "broker_match_0222_SNOW",
@@ -4255,7 +4309,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "trailing_stop",
       "asset_class": "stock",
-      "holding_days": 15
+      "holding_days": 15,
+      "entry_signal_strength": 0.8886
     },
     {
       "trade_id": "broker_match_0232_SOXX",
@@ -4347,7 +4402,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "etf",
-      "holding_days": 11
+      "holding_days": 11,
+      "entry_signal_strength": 1.0
     },
     {
       "trade_id": "broker_match_0236_TSLA",
@@ -4439,7 +4495,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "stop_loss",
       "asset_class": "stock",
-      "holding_days": 4
+      "holding_days": 4,
+      "entry_signal_strength": 0.7363
     },
     {
       "trade_id": "broker_match_0240_TSM",
@@ -4485,7 +4542,8 @@
       "exit_strategy_id": "broker_reconstructed",
       "exit_reason": "breakeven_stop",
       "asset_class": "stock",
-      "holding_days": 6
+      "holding_days": 6,
+      "entry_signal_strength": 0.8496
     },
     {
       "trade_id": "broker_open_0247_ANET",
@@ -4529,7 +4587,8 @@
       "exit_strategy_id": null,
       "exit_reason": null,
       "peak_price": 266.63,
-      "asset_class": "stock"
+      "asset_class": "stock",
+      "entry_signal_strength": 0.9918
     },
     {
       "trade_id": "broker_open_0077_DELL",
@@ -4551,7 +4610,8 @@
       "exit_strategy_id": null,
       "exit_reason": null,
       "peak_price": 447.16,
-      "asset_class": "stock"
+      "asset_class": "stock",
+      "entry_signal_strength": 0.5047
     },
     {
       "trade_id": "broker_open_0078_DELL",
@@ -4573,7 +4633,8 @@
       "exit_strategy_id": null,
       "exit_reason": null,
       "peak_price": 447.16,
-      "asset_class": "stock"
+      "asset_class": "stock",
+      "entry_signal_strength": 0.6192
     },
     {
       "trade_id": "broker_open_0102_HPE",
@@ -4595,7 +4656,8 @@
       "exit_strategy_id": null,
       "exit_reason": null,
       "peak_price": 48.96,
-      "asset_class": "stock"
+      "asset_class": "stock",
+      "entry_signal_strength": 0.9016
     },
     {
       "trade_id": "broker_open_0106_HPQ",
@@ -4617,7 +4679,8 @@
       "exit_strategy_id": null,
       "exit_reason": null,
       "peak_price": 26.45,
-      "asset_class": "stock"
+      "asset_class": "stock",
+      "entry_signal_strength": 0.5487
     },
     {
       "trade_id": "broker_open_0141_META",
@@ -4641,7 +4704,8 @@
       "peak_price": 649.2821,
       "holding_days": 7.2665,
       "exit_broker_order_id": "e03c16d8-e849-43f2-9590-2ef80bd670be",
-      "asset_class": "stock"
+      "asset_class": "stock",
+      "entry_signal_strength": 0.6973
     },
     {
       "trade_id": "broker_open_0248_MSFT",

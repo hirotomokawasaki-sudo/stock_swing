@@ -270,7 +270,12 @@ class PnLTracker:
             symbol=symbol,
             trade_id=trade_id,
             broker_order_id=broker_order_id,
-            payload={"entry_price": price, "qty": qty, "strategy_id": strategy_id},
+            payload={
+                "entry_price": price,
+                "qty": qty,
+                "strategy_id": strategy_id,
+                "signal_strength": round(float(signal_strength), 4) if signal_strength is not None else None,
+            },
         ))
         return trade_id
 

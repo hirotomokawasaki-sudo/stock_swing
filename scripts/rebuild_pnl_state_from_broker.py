@@ -153,8 +153,19 @@ def load_existing_attribution(state_file: Path) -> dict[str, Any]:
     by_exit_order_id: dict[str, str] = {}
     by_key: dict[tuple, str] = {}
     collisions: set = set()
+    # entry_signal_strength: keyed by broker_order_id (buy order)
+    ess_by_order_id: dict[str, float] = {}
 
     for trade in data.get('trades', []):
+        # entry_signal_strength: preserve for both open and closed trades
+        ess = trade.get('entry_signal_strength')
+        bid = trade.get('broker_order_id', '')
+        if ess is not None and bid:
+            try:
+                ess_by_order_id[bid] = float(ess)
+            except (TypeError, ValueError):
+                pass
+
         if trade.get('status') == 'open':
             continue
         reason = trade.get('exit_reason', '')
@@ -180,11 +191,57 @@ def load_existing_attribution(state_file: Path) -> dict[str, Any]:
     for k in collisions:
         by_key.pop(k, None)
 
+    # Also load ESS from trade_events.jsonl (fallback for trades where pnl_state had None)
+    events_file = state_file.parent / "trade_events.jsonl"
+    ess_by_order_id = _merge_ess_from_trade_events(events_file, ess_by_order_id)
+
     return {
         'by_exit_order_id': by_exit_order_id,
         'by_key': by_key,
         'quarantined_trades': data.get('quarantined_trades', []),
+        'ess_by_order_id': ess_by_order_id,
     }
+
+
+def _merge_ess_from_trade_events(
+    events_file: Path,
+    existing: dict[str, float],
+) -> dict[str, float]:
+    """Read trade_opened events from trade_events.jsonl and merge signal_strength.
+
+    Only fills entries that are missing from ``existing`` (pnl_state takes priority).
+    Returns a new dict (does not mutate ``existing``).
+    Added 2026-07-28: makes entry_signal_strength durable across rebuilds.
+    """
+    result = dict(existing)
+    if not events_file.exists():
+        return result
+    try:
+        with events_file.open(encoding="utf-8") as fh:
+            for raw in fh:
+                raw = raw.strip()
+                if not raw:
+                    continue
+                try:
+                    ev = json.loads(raw)
+                except json.JSONDecodeError:
+                    continue
+                if ev.get("event_type") != "trade_opened":
+                    continue
+                bid = ev.get("broker_order_id", "")
+                if not bid:
+                    continue
+                ss = ev.get("payload", {}).get("signal_strength")
+                if ss is None:
+                    continue
+                if bid not in result:  # pnl_state wins if already present
+                    try:
+                        result[bid] = float(ss)
+                    except (TypeError, ValueError):
+                        pass
+    except Exception:
+        pass
+    return result
 
 
 def apply_attribution(pnl_state: dict, attribution: dict[str, Any]) -> dict[str, int]:
@@ -198,9 +255,17 @@ def apply_attribution(pnl_state: dict, attribution: dict[str, Any]) -> dict[str,
     by_key = attribution.get('by_key', {})
     quarantined = attribution.get('quarantined_trades', [])
 
-    stats = {'by_exit_order': 0, 'by_key': 0, 'kept_broker_fill': 0}
+    ess_by_order_id = attribution.get('ess_by_order_id', {})
+    stats = {'by_exit_order': 0, 'by_key': 0, 'kept_broker_fill': 0, 'ess_restored': 0}
 
     for trade in pnl_state.get('trades', []):
+        # Restore entry_signal_strength for all trades (open + closed)
+        # keyed by broker_order_id (buy order id)
+        bid = trade.get('broker_order_id', '')
+        if bid and bid in ess_by_order_id and trade.get('entry_signal_strength') is None:
+            trade['entry_signal_strength'] = ess_by_order_id[bid]
+            stats['ess_restored'] += 1
+
         if trade.get('status') == 'open':
             continue
         if trade.get('exit_reason') != 'broker_fill':
