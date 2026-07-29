@@ -31,7 +31,9 @@ REGIME_LIMITS = {
     "unknown": 0.75,  # Same as neutral when regime is uncertain
 }
 
-DEFAULT_MAX_POSITION_NOTIONAL_PCT = 0.06
+# 2026-07-30: 0.06 → 0.08 (ユーザー指示: 有効上限 60K → 80K / ~$1M equity)
+# History: 0.08 → 0.06 (2026-05-15), 0.06 → 0.08 (2026-07-30)
+DEFAULT_MAX_POSITION_NOTIONAL_PCT = 0.08
 DEFAULT_MAX_SECTOR_EXPOSURE_PCT = 0.55
 # Legacy module-level multipliers kept for backward compatibility.
 # When PositionSizingPolicy is constructed with an AllocationConfig these are

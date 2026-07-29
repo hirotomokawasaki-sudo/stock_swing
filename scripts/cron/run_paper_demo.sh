@@ -38,6 +38,11 @@ export ENTRY_FILTER_STOCK_REDUCED_MIN_TRADES=5
 #   理由: 閾値1.00では売買が進まず paper 最終確認期間のデータが不足
 export ENTRY_FILTER_STOCK_REDUCED_PF_GATE=0.35
 
+# 2026-07-30: AMD rolling_pf_gate バイパス（ユーザー指示: 購入制限解除）
+#   AMD rolling PF=0.60 < gate=0.70 → Gate 3 にブロックされていた
+#   pf_gate_skip_symbols で Gate 3 をスキップ（他の gate は有効のまま）
+export ENTRY_FILTER_PF_GATE_SKIP_SYMBOLS=AMD
+
 # Run paper demo with outside-hours allowed (will queue orders).
 # Keep cron stdout tiny; detailed logs go to the log file.
 set +e

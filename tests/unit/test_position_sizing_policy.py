@@ -54,8 +54,11 @@ def test_position_sizing_applies_asset_class_multipliers():
         confidence=0.7,
     ))
 
-    assert stock_result.max_position_notional_usd == 30000.0
-    assert etf_result.max_position_notional_usd == 42000.0
-    assert etf_result.shares_by_notional == 420
-    assert stock_result.shares_by_notional == 300
+    # 2026-07-30: DEFAULT_MAX_POSITION_NOTIONAL_PCT 0.06 → 0.08 (有効上限 80K対応)
+    # legacy path: stock = 0.08 * STOCK_MULTIPLIER(0.5) * 1M = 40K
+    #              etf   = 0.08 * ETF_MULTIPLIER(0.70) * 1M = 56K
+    assert stock_result.max_position_notional_usd == 40000.0
+    assert etf_result.max_position_notional_usd == 56000.0
+    assert etf_result.shares_by_notional == 560
+    assert stock_result.shares_by_notional == 400
     assert stock_result.final_shares <= etf_result.final_shares

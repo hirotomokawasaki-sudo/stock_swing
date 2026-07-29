@@ -28,3 +28,12 @@ min_trades_for_gate: 5
 
 # Set to true to disable all entry filters (for debugging/research)
 disabled: false
+
+# --- Per-symbol PF gate skip list ---
+# Symbols listed here bypass the rolling_pf_gate check entirely.
+# Useful when a symbol's historical PF is below threshold but you want
+# to allow new entries (e.g. after strategy changes).
+# Set via env: ENTRY_FILTER_PF_GATE_SKIP_SYMBOLS=AMD,MDB (comma-separated)
+# 2026-07-30: AMD追加 (PF=0.60/8trades, ユーザー指示: 購入制限解除)
+pf_gate_skip_symbols:
+  - AMD

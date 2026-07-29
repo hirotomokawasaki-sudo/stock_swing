@@ -45,9 +45,16 @@ class EntryFilterConfig:
     stock_reduced_mode: bool = False   # set ENTRY_FILTER_STOCK_REDUCED=true
     stock_reduced_pf_gate: float = 1.0 # PF threshold for stocks in reduced mode
     stock_reduced_min_trades: int = 5  # min trades to apply stricter gate (raised 3→5: 2026-07-23)
+    # Per-symbol PF gate override: symbols in this list skip the rolling_pf_gate check.
+    # Set via ENTRY_FILTER_PF_GATE_SKIP_SYMBOLS (comma-separated, e.g. "AMD,MDB").
+    pf_gate_skip_symbols: list = field(default_factory=list)
 
     @classmethod
     def from_env(cls) -> "EntryFilterConfig":
+        raw_skip = os.environ.get("ENTRY_FILTER_PF_GATE_SKIP_SYMBOLS", "")
+        skip_symbols = [
+            s.strip().upper() for s in raw_skip.split(",") if s.strip()
+        ]
         return cls(
             min_volume=float(os.environ.get("ENTRY_FILTER_MIN_VOLUME", 500_000)),
             min_adr_pct=float(os.environ.get("ENTRY_FILTER_MIN_ADR_PCT", 1.0)),
@@ -57,6 +64,7 @@ class EntryFilterConfig:
             stock_reduced_mode=os.environ.get("ENTRY_FILTER_STOCK_REDUCED", "").lower() in ("1", "true", "yes"),
             stock_reduced_pf_gate=float(os.environ.get("ENTRY_FILTER_STOCK_REDUCED_PF_GATE", 1.0)),
             stock_reduced_min_trades=int(os.environ.get("ENTRY_FILTER_STOCK_REDUCED_MIN_TRADES", 5)),
+            pf_gate_skip_symbols=skip_symbols,
         )
 
 
@@ -269,7 +277,8 @@ class EntryFilterEngine:
                         )
 
             # --- Gate 3: Rolling PF gate (all asset classes) ---
-            if deny_reason is None:
+            # Symbols in pf_gate_skip_symbols bypass this check entirely.
+            if deny_reason is None and symbol not in cfg.pf_gate_skip_symbols:
                 pf = pf_stats.get(symbol)
                 if (
                     pf is not None
@@ -285,6 +294,11 @@ class EntryFilterEngine:
                         "entry_filter_pf_block symbol=%s pf=%.3f n=%d threshold=%.2f",
                         symbol, pf.profit_factor, pf.closed_count, cfg.rolling_pf_gate,
                     )
+            elif deny_reason is None and symbol in cfg.pf_gate_skip_symbols:
+                logger.info(
+                    "entry_filter_pf_gate_skipped symbol=%s (pf_gate_skip_symbols override)",
+                    symbol,
+                )
 
             # --- Gate 4: F6 stock-reduced mode (stricter PF threshold for individual stocks) ---
             if deny_reason is None and cfg.stock_reduced_mode and not is_etf:
@@ -373,6 +387,10 @@ def get_permanent_block_summary(
         n = stats.closed_count
         reason = None
         reason_detail = None
+
+        # Symbols in pf_gate_skip_symbols are never listed as blocked.
+        if sym in cfg.pf_gate_skip_symbols:
+            continue
 
         # rolling_pf_gate (applies to all symbols with enough trades)
         if n >= cfg.min_trades_for_gate and pf < cfg.rolling_pf_gate:

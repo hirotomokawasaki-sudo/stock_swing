@@ -88,7 +88,9 @@ def test_paper_executor_submit_success() -> None:
     assert submission.decision_id == "test-decision-1"
     assert submission.symbol == "AAPL"
     assert submission.side == "buy"
-    assert submission.qty == 30
+    # 2026-07-30: DEFAULT_MAX_POSITION_NOTIONAL_PCT 0.06 → 0.08 (80K上限対応)
+    # legacy path: equity=$100K, price=$100, notional=0.08*0.5*100K=$4K → 40 shares
+    assert submission.qty == 40
     assert submission.status == "submitted"
     assert submission.broker_order_id == "broker-order-123"
     
@@ -97,7 +99,7 @@ def test_paper_executor_submit_success() -> None:
         symbol="AAPL",
         side="buy",
         order_type="market",
-        qty=30,
+        qty=40,  # 2026-07-30: 0.08 * 0.5 * 100K / 100 = 40 shares
         time_in_force="day",
         limit_price=None,
     )
