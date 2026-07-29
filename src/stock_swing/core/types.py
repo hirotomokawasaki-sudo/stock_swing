@@ -12,6 +12,13 @@ class RawEnvelope:
     fetched_at: datetime
     request_params: dict[str, Any]
     payload: dict[str, Any]
+    event_time: datetime | None = None
+    available_at: datetime | None = None
+    ingested_at: datetime | None = None
+    source_id: str | None = None
+    revision_id: str | None = None
+    quality_status: str = "ok"
+    is_synthetic: bool = False
 
 
 @dataclass
@@ -57,6 +64,13 @@ class DecisionRecord:
     prompt_version: str | None = None
     run_id: str | None = None
     experiment_id: str | None = None
+    config_hash: str | None = None
+    decision_time: str | None = None
     skip_reason: str | None = None
     deny_reason: str | None = None
     block_reason: str | None = None
+    usage_source: str | None = None
+    input_tokens_actual: int | None = None
+    output_tokens_actual: int | None = None
+    input_tokens_estimated: int | None = None
+    output_tokens_estimated: int | None = None

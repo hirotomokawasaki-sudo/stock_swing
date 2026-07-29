@@ -5,6 +5,7 @@ Collects data from configured sources and persists immutable raw snapshots.
 """
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -41,6 +42,11 @@ def main():
         default=int(os.environ.get("COLLECT_DATA_MAX_RUNTIME_SECONDS", "0") or 0),
         help="Best-effort runtime ceiling for finnhub collection (0 disables)",
     )
+    parser.add_argument(
+        "--fixture-mode",
+        action="store_true",
+        help="Reserved for non-production fixtures; production path rejects this flag.",
+    )
     parser.add_argument("--cron-summary-json", action="store_true", help="Emit one compact CRON_SUMMARY_JSON line at the end")
     args = parser.parse_args()
 
@@ -67,6 +73,10 @@ def main():
                 "snapshot_count": 0,
             })
         return 0
+
+    if args.fixture_mode:
+        print("ERROR: --fixture-mode is not allowed on the production collect_data path", file=sys.stderr)
+        return 1
 
     # R7-v2 / H8: skip on non-market days (weekends / US holidays)
     # Override: export STOCK_SWING_FORCE_MARKET_DAY=true
@@ -126,20 +136,49 @@ def main():
     return 0
 
 
-def _write_raw_snapshot(store, source, identifier, endpoint, payload, request_params=None):
+def _write_raw_snapshot(
+    store,
+    source,
+    identifier,
+    endpoint,
+    payload,
+    request_params=None,
+    *,
+    quality_status="ok",
+    is_synthetic=False,
+    event_time=None,
+    available_at=None,
+    revision_id=None,
+):
     fetched_at = datetime.now(timezone.utc)
+    event_dt = event_time or fetched_at
+    available_dt = available_at or fetched_at
     env = RawEnvelope(
         source=source,
         endpoint=endpoint,
         fetched_at=fetched_at,
         request_params=request_params or {},
         payload=payload,
+        event_time=event_dt,
+        available_at=available_dt,
+        ingested_at=fetched_at,
+        source_id=hashlib.sha256(f"{source}:{identifier}:{endpoint}".encode("utf-8")).hexdigest()[:16],
+        revision_id=revision_id,
+        quality_status=quality_status,
+        is_synthetic=is_synthetic,
     )
     filename = f"{source}_{identifier.lower()}_{fetched_at.date().isoformat()}_{fetched_at.strftime('%H%M%S%f')}.json"
     return store.write_raw(source, filename, {
         "source": env.source,
         "endpoint": env.endpoint,
         "fetched_at": env.fetched_at.isoformat(),
+        "event_time": env.event_time.isoformat() if env.event_time else env.fetched_at.isoformat(),
+        "available_at": env.available_at.isoformat() if env.available_at else env.fetched_at.isoformat(),
+        "ingested_at": env.ingested_at.isoformat() if env.ingested_at else env.fetched_at.isoformat(),
+        "source_id": env.source_id,
+        "revision_id": env.revision_id,
+        "quality_status": env.quality_status,
+        "is_synthetic": env.is_synthetic,
         "request_params": env.request_params,
         "payload": env.payload,
     })
@@ -188,20 +227,31 @@ def collect_finnhub(symbols, store, max_runtime_seconds=0):
             break
         if i > 0:
             time.sleep(INTER_SYMBOL_DELAY)
-        payload = {
-            "symbol": symbol,
-            "metric": {
-                "52WeekHigh": 150 + i,
-                "52WeekLow": 90 + i,
-                "marketCapitalization": 100000 + i * 1000,
-            }
-        }
-        path = _write_raw_snapshot(store, "finnhub", symbol, "stock/metric", payload, {"symbol": symbol})
-        written.append(str(path))
+        metric_payload = None
+        metric_quality = "missing_client"
+        if client:
+            try:
+                env = client.fetch_basic_financials(symbol=symbol)
+                metric_payload = env.payload if env else None
+                metric_quality = "ok" if metric_payload else "empty"
+            except Exception:
+                metric_quality = "failed"
+                metric_payload = None
+        if metric_payload:
+            path = _write_raw_snapshot(
+                store,
+                "finnhub",
+                symbol,
+                "stock/metric",
+                metric_payload,
+                {"symbol": symbol},
+                quality_status=metric_quality,
+                is_synthetic=False,
+            )
+            written.append(str(path))
 
         news_payload = None
         reason = None
-        used_fallback = False
         if client:
             try:
                 env = client.fetch_company_news(symbol=symbol, from_date=from_date, to_date=today)
@@ -228,26 +278,26 @@ def collect_finnhub(symbols, store, max_runtime_seconds=0):
                 news_payload = None
         else:
             reason = 'missing_client'
-        if not news_payload:
-            used_fallback = True
-            if reason is None:
-                reason = 'no_company_news'
-            news_payload = [{
-                "headline": f"{symbol} momentum update",
-                "summary": f"{symbol} shows notable market activity relevant for swing trading.",
-                "url": f"https://example.local/news/{symbol.lower()}",
-                "datetime": int(datetime.now(timezone.utc).timestamp()),
-                "source": "synthetic",
-                "related": symbol,
-            }]
-        news_path = _write_raw_snapshot(store, "finnhub", f"{symbol}_news", "company-news", {"symbol": symbol, "news": news_payload}, {"symbol": symbol, "from": from_date, "to": today})
-        written.append(str(news_path))
+        if news_payload:
+            news_path = _write_raw_snapshot(
+                store,
+                "finnhub",
+                f"{symbol}_news",
+                "company-news",
+                {"symbol": symbol, "news": news_payload},
+                {"symbol": symbol, "from": from_date, "to": today},
+                quality_status="ok",
+                is_synthetic=False,
+            )
+            written.append(str(news_path))
         coverage_status.append({
             'symbol': symbol,
             'news_count': len(news_payload or []),
-            'used_fallback': used_fallback,
+            'used_fallback': False,
             'reason': reason or 'ok',
             'source': 'finnhub',
+            'metric_quality': metric_quality,
+            'quality_status': 'ok' if news_payload else (reason or 'no_data'),
             'from': from_date,
             'to': today,
         })
@@ -263,61 +313,47 @@ def collect_finnhub(symbols, store, max_runtime_seconds=0):
 
 
 def collect_fred(store):
-    payload = {
-        "series_id": "CPIAUCSL",
-        "observations": [
-            {"date": "2026-01-01", "value": "315.1"},
-            {"date": "2026-02-01", "value": "315.8"},
-            {"date": "2026-03-01", "value": "316.2"},
-        ],
-    }
-    path = _write_raw_snapshot(store, "fred", "cpiaucsl", "series/observations", payload, {"series_id": "CPIAUCSL"})
-    return [str(path)]
+    status_path = project_root / "data" / "audits" / "fred_collection_status.json"
+    status_path.parent.mkdir(parents=True, exist_ok=True)
+    status_path.write_text(json.dumps({
+        "time": datetime.now(timezone.utc).isoformat(),
+        "status": "not_implemented",
+        "note": "FIX-001: fixed FRED payload removed. Real API client required.",
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    return []
 
 
 def collect_sec(symbols, store):
-    written = []
-    for symbol in symbols[:10]:
-        payload = {
-            "cik": f"000{abs(hash(symbol)) % 1000000:06d}",
-            "symbol": symbol,
-            "filings": [{"form": "10-K", "filed": "2026-02-15"}],
-        }
-        path = _write_raw_snapshot(store, "sec", symbol, "submissions", payload, {"symbol": symbol})
-        written.append(str(path))
-    return written
+    status_path = project_root / "data" / "audits" / "sec_collection_status.json"
+    status_path.parent.mkdir(parents=True, exist_ok=True)
+    status_path.write_text(json.dumps({
+        "time": datetime.now(timezone.utc).isoformat(),
+        "status": "not_implemented",
+        "note": "FIX-001: hash-generated CIK removed. Real SEC API required.",
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    return []
 
 
 def collect_broker(symbols, store):
-    written = []
-    for i, symbol in enumerate(symbols[:10]):
-        quote = {"symbol": symbol, "quote": {"bp": round(100 + i * 2.5, 2), "ap": round(100.2 + i * 2.5, 2), "t": datetime.now(timezone.utc).isoformat()}}
-        path = _write_raw_snapshot(store, "broker", symbol, "quotes/latest", quote, {"symbol": symbol})
-        written.append(str(path))
-    return written
+    status_path = project_root / "data" / "audits" / "broker_quotes_status.json"
+    status_path.parent.mkdir(parents=True, exist_ok=True)
+    status_path.write_text(json.dumps({
+        "time": datetime.now(timezone.utc).isoformat(),
+        "status": "not_implemented",
+        "note": "FIX-001: fixed broker quote payload removed. Broker quotes via reconcile_orders instead.",
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    return []
 
 
 def collect_broker_bars(symbols, store):
-    written = []
-    base_time = datetime.now(timezone.utc)
-    for i, symbol in enumerate(symbols[:20]):
-        bars = []
-        start_price = 100 + i * 3
-        step = 0.03 if i % 2 == 0 else 0.012
-        for d in range(5):
-            close = round(start_price * (1 + step * d), 2)
-            bars.append({
-                "t": int((base_time - timedelta(days=4-d)).timestamp()),
-                "o": round(close * 0.99, 2),
-                "h": round(close * 1.015, 2),
-                "l": round(close * 0.985, 2),
-                "c": close,
-                "v": 100000 + d * 1000,
-            })
-        payload = {"symbol": symbol, "bars": bars}
-        path = _write_raw_snapshot(store, "broker", symbol, "marketdata/bars", payload, {"symbol": symbol, "timeframe": "1Day"})
-        written.append(str(path))
-    return written
+    status_path = project_root / "data" / "audits" / "broker_bars_status.json"
+    status_path.parent.mkdir(parents=True, exist_ok=True)
+    status_path.write_text(json.dumps({
+        "time": datetime.now(timezone.utc).isoformat(),
+        "status": "not_implemented",
+        "note": "FIX-001: fixed broker_bars payload removed. Use massive/finnhub for price data.",
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    return []
 
 
 def collect_massive(symbols, store, days=30, timeframe="daily"):
