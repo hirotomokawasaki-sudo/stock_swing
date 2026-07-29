@@ -7,7 +7,7 @@ stop_loss_pct: -0.07
 # Breakeven protection: once return reaches this level, effective floor = 0%
 # (never let a position that was +3% become a loser)
 # Added 2026-05-27
-breakeven_activation_pct: 0.03
+breakeven_activation_pct: 0.05  # raised from 0.03 (2026-07-29): +3% was triggering on noise; +5% requires stronger move before activation
 
 # Trailing stop activation threshold (e.g., 0.08 = +8%)
 # Increased from 5% to 8% to reduce early profit-taking (2026-05-18)

@@ -4733,7 +4733,10 @@
       "exit_strategy_id": null,
       "exit_reason": null,
       "peak_price": 401.99,
-      "asset_class": "stock"
+      "asset_class": "stock",
+      "additional_broker_order_ids": [
+        "e7fd3b05-4867-45af-865b-fc28875c0a4f"
+      ]
     },
     {
       "trade_id": "ADBE-3fd1e2a4",
