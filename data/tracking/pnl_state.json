@@ -10899,9 +10899,9 @@
     }
   ],
   "cumulative_realized_pnl": -74666.19,
-  "total_trades": 203,
+  "total_trades": 197,
   "winning_trades": 89,
-  "losing_trades": 109,
+  "losing_trades": 108,
   "peak_equity": 986832.6,
   "max_drawdown_pct": 0.0091,
   "broker_account_id": "PA3SEQKOZ91C",

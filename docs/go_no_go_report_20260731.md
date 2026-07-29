@@ -1,6 +1,6 @@
 # Go/No-Go 事前レポート — 2026-07-31 判定用
 
-**作成日**: 2026-07-28 / **最終更新**: 2026-07-29（fix batch + ledger repair後）
+**作成日**: 2026-07-28 / **最終更新**: 2026-07-29 20:26 JST（Batch A/B + KLAC quarantine後）
 **判定予定**: 2026-07-31
 **リアルトレード想定開始**: 2026-08-20以降（延期済）
 **開始サイズ**: 50%（stock_new_buy_multiplier = 0.50）
@@ -41,17 +41,21 @@
 
 ## 3. パフォーマンス詳細（2026-07-29 最終計算）
 
-### 3-A. 全期間サマリー
+### 3-A. 全期間サマリー（Batch A/B + KLAC quarantine後）
 
 ```
-closed=199  quarantined=100  
-gross_profit: +$166,910
-gross_loss:   -$238,708
-total PnL:     -$71,797
-PF=0.699  WR=44.7%  n=199
+closed=197  quarantined=101（KLAC split anomaly追加）
+status=open: 5件（ADBE/DDOG/HPE/HPQ/MSFT ─ 現在保有中）
+PF=0.843  WR=45.2%  n=197
+sum(pnl, closed only): -$30,984
 
-state.cumulative_realized_pnl: -$74,666
-  ↑ 差額 -$2,869: 台帳上の pre-epoch 処理分（許容範囲）
+state.cumulative_realized_pnl: -$74,666（rebuild前の値、未更新）
+  ↑ 差: KLAC split -$39,342除外、台帳修復等の影響
+
+Batch A/B 実装後の変化:
+  overlap=0 / duplicate=0 / exit_None(closed)=0 / hd_missing=0
+  legacy synthetic raw: 568件を raw_legacy_untrusted/ へ隔離
+  KLAC broker_match_0117 quarantine（entry pre-split/$2126.92）
 ```
 
 ### 3-B. exit_reason 別パフォーマンス
@@ -63,7 +67,8 @@ state.cumulative_realized_pnl: -$74,666
 | breakeven_stop | 43 | 0.65 | 20.9% | -$7,980 |
 | broker_fill | 3 | 0.58 | 33.3% | -$100 |
 | corporate_action | 2 | 0.17 | 50.0% | -$3,027 |
-| **stop_loss** | 69 | **0.10** | **18.8%** | **-$166,252** |
+| **stop_loss** | 67 | **0.13** | **19.4%** | **-$125,438** |
+_注: KLAC broker_match_0117（-$39,342 split anomaly）は quarantine 済み_ |
 
 ### 3-C. 注目点
 
