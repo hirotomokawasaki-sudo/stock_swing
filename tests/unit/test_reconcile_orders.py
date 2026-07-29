@@ -626,3 +626,39 @@ def test_reconcile_skips_fill_absent_from_state_but_in_trade_events(monkeypatch,
             "Stale sell fill must be blocked by trade_events.jsonl guard."
         )
         assert open_trades[0]["qty"] == 20
+
+
+def test_quarantined_trade_fill_not_replayed():
+    """Quarantined trade with exit_broker_order_id must not trigger WARN loop.
+
+    Regression: 2026-07-30 ANET broker_open_0247_ANET was quarantined with
+    exit_broker_order_id='95a52b5f-...' (qty=117).  recorded_qty_by_order_id only
+    counted closed trades, so remaining=117>0 and the partial-fill path ran every
+    reconcile cycle printing 'Skipping exit: no open trade found'.
+    Fix: quarantined trades are now included in recorded_qty_by_order_id.
+    """
+    from stock_swing.cli.reconcile_orders import _build_recorded_qty_by_order_id
+
+    trades = [
+        {
+            "trade_id": "broker_open_0247_ANET",
+            "symbol": "ANET",
+            "status": "quarantined",
+            "qty": 117,
+            "exit_broker_order_id": "95a52b5f-79d0-4b3c-b342-d3ac9acd83dc",
+        },
+        {
+            "trade_id": "other_closed",
+            "symbol": "NVDA",
+            "status": "closed",
+            "qty": 50,
+            "exit_broker_order_id": "aaaa-bbbb",
+        },
+    ]
+    result = _build_recorded_qty_by_order_id(trades)
+    # Quarantined ANET must be counted
+    assert result.get("95a52b5f-79d0-4b3c-b342-d3ac9acd83dc") == 117, (
+        "quarantined trade qty must be included so partial-fill guard skips the replay"
+    )
+    # Closed NVDA must still be counted
+    assert result.get("aaaa-bbbb") == 50

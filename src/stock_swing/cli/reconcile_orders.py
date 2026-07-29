@@ -59,6 +59,25 @@ def load_recent_submissions(audits_dir: Path, limit: int = 100):
 RECENTLY_SOLD_WINDOW_MINUTES = 30
 
 
+def _build_recorded_qty_by_order_id(trades: list[dict]) -> dict[str, int]:
+    """Return {exit_broker_order_id: total_recorded_qty} for closed and quarantined trades.
+
+    Both closed and quarantined trades are included so that a quarantined trade
+    whose sell fill has already been consumed does not trigger spurious partial-fill
+    warnings on subsequent reconcile runs.
+
+    Args:
+        trades: All trades from pnl_state (state.trades list).
+    """
+    result: dict[str, int] = {}
+    for trade in trades:
+        if trade.get("status") in ("closed", "quarantined"):
+            eid = trade.get("exit_broker_order_id")
+            if eid:
+                result[eid] = result.get(eid, 0) + int(trade.get("qty", 0) or 0)
+    return result
+
+
 def _build_recently_sold_symbols(
     filled_sells_by_symbol: dict[str, list[dict]],
     *,
@@ -798,14 +817,15 @@ def main() -> int:
     # Used by the partial-fill completion logic: when the inline paper_demo reconciler
     # records a partial fill and then the broker completes the order, the cron reconciler
     # uses this map to detect and record the remaining unrecorded shares.
-    recorded_qty_by_order_id: dict[str, int] = {}
-    for _trade in tracker.state.trades:
-        if _trade.get("status") == "closed":
-            _eid = _trade.get("exit_broker_order_id")
-            if _eid:
-                recorded_qty_by_order_id[_eid] = (
-                    recorded_qty_by_order_id.get(_eid, 0) + int(_trade.get("qty", 0) or 0)
-                )
+    #
+    # Build map: exit_broker_order_id → total qty already recorded.
+    # Includes both closed AND quarantined trades (see _build_recorded_qty_by_order_id).
+    # BUG FIX (2026-07-30): quarantined trades must be included so that a quarantined
+    # position whose sell fill is already consumed does not trigger the partial-fill
+    # path on every reconcile cycle ("Skipping exit: no open trade found" loop).
+    recorded_qty_by_order_id: dict[str, int] = _build_recorded_qty_by_order_id(
+        tracker.state.trades
+    )
 
     submissions = load_recent_submissions(project_root / "data" / "audits")
     filled_exits = 0
