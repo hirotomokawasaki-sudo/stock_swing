@@ -628,3 +628,75 @@ asset_class unknown in closed: 245件
 | 🔴 P2 | R5-v2 | REOPENED | R0-v2 完了後 |
 | 🟢 P2 | R7-v2 | IN_PROGRESS | R0-v2 完了後 parallel |
 | 🔵 P3 | R8-v2 | BLOCKED_BY_DATA | 10月以降 |
+
+---
+
+## Codex Review 2026-07-29（SSR-20260729-01）対応 — R0-v3以降
+
+**レビュー日**: 2026-07-29
+**baseline commit**: 744e3fa → 0ae1ce6（68 commits）
+**critical findings**: P0-1〜P0-5（下記）
+
+### Critical findings summary
+
+| ID | 問題 | 影響 | 対応 |
+|---|---|---|---|
+| P0-1 | collect_data.pyがsynthetic dataをproduction pathへ書き込み | 全feature/学習/backtest無効化リスク | FIX-001 |
+| P0-2 | allocation checkが最終sizing前に実行→band未強制 | overweight BUY通過 | FIX-002 |
+| P0-3 | recently_sold_symbols=全historical sells→時刻制限なし | 再購入suppression | FIX-003 |
+| P0-4 | guardrail daily_loss計算が前回unrealizedを0仮定 | 指標誤計算・fail-open | FIX-005 |
+| P0-5 | full consoleが0.0.0.0 bind + 認証なしwrite endpoint | 外部からconfig書き換え可能 | FIX-009 |
+| P1-1 | P6 join coverage: run_id/exp_id/config_hash = 0% | decision→trade追跡不能 | FIX-006 |
+| P1-2 | 7d min-hold tierが到達不能（stop条件と矛盾） | シミュレーション+$41K無効 | FIX-007（disable） |
+| P1-3 | export時のpytest証跡なし（collect_data.pyがSYSTEM python使用） | テスト証跡無効 | テスト実行改善 |
+| P1-4 | AI token: rule-basedをactualとして計上 | コスト計算誤り | FIX-010 |
+| P1-5 | current_mode.yaml手書きVALIDとexport invariant不一致 | 誤判定 | FIX-004 |
+
+### Export data integrity findings（independent_analysis_20260729.json）
+
+- closed_trades.csv: quantity/realized_pnl フィールドが0/205（qty/pnlという内部名でexport）
+- duplicate trade_id: ADBE-3fd1e2a4 が2件
+- closed/quarantine overlap: 15件（previouslyは0と報告）
+- attribution coverage: 1.96%（現行台帳とjoinできるのは4件のみ）
+- equity curve max drawdown: 12.71%（state.max_drawdown_pct=0.91%と不一致）
+
+### v3タスクリスト
+
+| Task | Roadmap | Priority | Status | 説明 |
+|---|---|---|---|---|
+| FIX-001 | R7-v3 | P0 | IN_PROGRESS | synthetic data production分離 |
+| FIX-002 | R2-v3/R5-v3 | P0 | PLANNED | allocation sizing後enforcement |
+| FIX-003 | R0-v3/R1-v3 | P0 | PLANNED | fill ledger + recently_sold修正 |
+| FIX-004 | R0-v3/R6-v3 | P0 | PLANNED | dynamic ledger validity + export mapping |
+| FIX-005 | R0-v3/P9 | P0 | PLANNED | guardrail metric + fail-closed |
+| FIX-006 | R0-v3/P6 | P1 | PLANNED | P6 top-level join |
+| FIX-007 | R3-v3 | P1 | PLANNED | 7d tier disable + exit freeze |
+| FIX-009 | R6-v3 | P1 | PLANNED | console security |
+| FIX-010 | R6-v3/R8-v3 | P2 | PLANNED | token accounting separation |
+
+### 現行status（v3 merge時点）
+
+| Phase | Status | 根拠 |
+|---|---|---|
+| R0-v2 Safety/Ledger/Integration | **REOPENED** | overlap 15、duplicate、export PnL欠落、guardrail式不正 |
+| R1-v2 Trade Lifecycle | **REOPENED** | phantom fix改善→historical sell skip新不整合 |
+| R2-v2 Allocation | **REOPENED** | YAML正しいが最終notional band未強制 |
+| R3-v2 Exit/Sector Shock | **BLOCKED_BY_DATA** | 7d tier到達不能、counterfactual不一致 |
+| R4-v2 Signal Calibration | **REOPENED** | 61件偏りsample、PIT calibration未実施 |
+| R5-v2 Portfolio/Promotion | **REOPENED** | metrics無効、cost未反映 |
+| R6-v2 Console | **IMPLEMENTED_UNVERIFIED** | security issue、API snapshot unreachable |
+| R7-v2 Data Reliability | **REOPENED** | synthetic data混入 |
+| R8-v2 Learning/ML | **BLOCKED_BY_DATA** | join 0%、labels未確立 |
+
+### Promotion requirements（live-ready条件）
+
+次を全て満たすまでlive-ready = NO-GO:
+- current test run PASS（JSON/JUnit/coverage）
+- 20 consecutive scheduled runsでunexplained mismatch=0
+- duplicate fill application=0
+- closed/quarantine overlap=0
+- sum(closed.pnl) vs state cumulative PnL差 <= $1
+- run_id/experiment_id/config_hash coverage >=99%
+- required source coverage >=99.5%、synthetic production records=0
+- console current snapshot reachable、freshness SLA内
+- post-fix clean paper cohortでcost-adjusted PF >1、expectancy >0
