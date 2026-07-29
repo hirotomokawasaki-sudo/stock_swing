@@ -260,8 +260,15 @@ class PortfolioAllocator:
                 notional = getattr(d.proposed_order, "notional", None)
                 if notional is None:
                     # Estimate from qty × current_price if available
-                    qty = getattr(d.proposed_order, "quantity", 0) or 0
+                    qty = getattr(d.proposed_order, "quantity", None) or getattr(d.proposed_order, "qty", 0) or 0
                     price = getattr(d.proposed_order, "limit_price", None) or getattr(d.proposed_order, "price", 0) or 0
+                    if float(price) <= 0:
+                        blocked_band += 1
+                        logger.info(
+                            "PortfolioAllocator: blocking BUY %s – price_unavailable",
+                            symbol,
+                        )
+                        continue
                     notional = float(qty) * float(price)
 
                 if notional > 0:

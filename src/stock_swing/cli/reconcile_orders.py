@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 project_root = Path(__file__).resolve().parents[3]
@@ -54,6 +54,34 @@ def load_recent_submissions(audits_dir: Path, limit: int = 100):
                 if len(items) >= limit:
                     return items
     return items
+
+
+RECENTLY_SOLD_WINDOW_MINUTES = 30
+
+
+def _build_recently_sold_symbols(
+    filled_sells_by_symbol: dict[str, list[dict]],
+    *,
+    now: datetime | None = None,
+) -> set[str]:
+    """Return sell symbols with a fill inside the recent-sell suppression window."""
+    cutoff_dt = (now or datetime.now(timezone.utc)) - timedelta(minutes=RECENTLY_SOLD_WINDOW_MINUTES)
+    recently_sold_symbols: set[str] = set()
+    for sym, sell_orders in filled_sells_by_symbol.items():
+        for order in sell_orders:
+            filled_at_str = order.get("filled_at") or order.get("updated_at")
+            if filled_at_str:
+                try:
+                    filled_at = datetime.fromisoformat(str(filled_at_str).replace("Z", "+00:00"))
+                    if filled_at >= cutoff_dt:
+                        recently_sold_symbols.add(sym)
+                        break
+                except (TypeError, ValueError):
+                    continue
+            else:
+                recently_sold_symbols.add(sym)
+                break
+    return recently_sold_symbols
 
 
 # ---------------------------------------------------------------------------
@@ -694,7 +722,7 @@ def main() -> int:
 
     # Symbols with a filled sell in the broker order history — pass to reconcile_filled_buys
     # so it does not re-open positions that were just exited.
-    recently_sold_symbols: set[str] = set(filled_sells_by_symbol.keys())
+    recently_sold_symbols = _build_recently_sold_symbols(filled_sells_by_symbol)
 
     # Step 1b: Reconcile filled buys (broker-only positions)
     newly_recorded_buys = reconcile_filled_buys(broker, tracker, recently_sold_symbols)

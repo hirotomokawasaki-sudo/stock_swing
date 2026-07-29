@@ -630,6 +630,7 @@ def main() -> int:  # noqa: C901
     # --- R0-B: Guardrail startup check ---
     _section("Guardrail")
     _breaker_path = project_root / "data" / "guardrails" / "circuit_breaker.json"
+    hard_mode = False
     try:
         import yaml as _gyaml
         from stock_swing.guardrails.rule_engine import GuardrailEngine, load_rules_from_dict
@@ -639,6 +640,7 @@ def main() -> int:  # noqa: C901
         _guardrail_config_path = project_root / "config" / "guardrails" / "autonomous_stop.yaml"
         _guardrail_raw = _gyaml.safe_load(_guardrail_config_path.read_text(encoding="utf-8")) if _guardrail_config_path.exists() else {}
         _warning_only = bool(_guardrail_raw.get("paper_warning_only", True))
+        hard_mode = not _warning_only
         _guardrail_rules = load_rules_from_dict(_guardrail_raw)
         _guard_engine = GuardrailEngine(_guardrail_rules, warning_only=_warning_only)
         _breaker_store = CircuitBreakerStore(_breaker_path)
@@ -651,14 +653,19 @@ def main() -> int:  # noqa: C901
         else:
             print(f"  OK: Guardrail status={_breaker_state.status}")
     except Exception as _exc:
+        _hard_mode_failed = hard_mode
         logger.warning("Guardrail setup failed (non-fatal): %s", _exc)
         _guard_engine = None
         _breaker_store = None
         _breaker_state = None
         _warning_only = True
+        hard_mode = False
         should_skip_ai = None
         apply_to_buy_candidate = None
         post_run_update = None
+        if _hard_mode_failed:
+            logger.critical("Guardrail setup failed in hard mode — fail-closed, aborting")
+            sys.exit(1)
     # --- end R0-B startup ---
 
     # 3. Market hours
@@ -976,6 +983,19 @@ def main() -> int:  # noqa: C901
                     pos["entry_signal_strength"] = tracker_ctx["entry_signal_strength"]
     except Exception as exc:
         print(f"  WARN: Could not fetch positions for exit strategy: {exc}")
+
+    _day_start_unrealized = 0.0
+    try:
+        _risk_state_path = project_root / "data" / "risk_monitor_state.json"
+        if _risk_state_path.exists():
+            _risk_state = json.loads(_risk_state_path.read_text(encoding="utf-8"))
+            _day_start_unrealized = float(_risk_state.get("prev_unrealized_pnl", 0.0) or 0.0)
+        elif current_positions_full:
+            _day_start_unrealized = sum(
+                float(pos.get("unrealized_pl", 0) or 0) for pos in current_positions_full.values()
+            )
+    except Exception:
+        _day_start_unrealized = 0.0
 
     # Entry strategies: first pass on daily features only.
     breakout_strat = BreakoutMomentumStrategy(
@@ -1476,6 +1496,13 @@ def main() -> int:  # noqa: C901
     # RF-5b: fill AI telemetry fields on every DecisionRecord
     for _d in decisions:
         attach_ai_telemetry(_d)
+        if experiment_context is not None:
+            if getattr(_d, "experiment_id", None) is None:
+                _d.experiment_id = experiment_context.experiment_id
+            if getattr(_d, "config_hash", None) is None:
+                _d.config_hash = experiment_context.config_hash
+        if getattr(_d, "decision_time", None) is None:
+            _d.decision_time = _d.generated_at.isoformat()
 
     for decision in decisions:
         status = "PASS" if decision.action in {"buy", "sell"} and decision.risk_state == "pass" else "SKIP"
@@ -1498,7 +1525,7 @@ def main() -> int:  # noqa: C901
         decisions=actionable,
         current_positions=current_positions_full,
         etf_symbols=ETF_SYMBOLS,
-        account_equity=equity,
+        account_equity=None,
     )
     # R6-v2: count allocation blocks (unknown symbol + projected band overweight)
     _post_alloc_buys = sum(1 for d in actionable if getattr(d.proposed_order, 'side', '') == 'buy')
@@ -1833,10 +1860,11 @@ def main() -> int:  # noqa: C901
 
                 # Estimate order value (qty * current_price)
                 current_price = get_mid_price(o.symbol)
-                if current_price > 0:
-                    estimated_order_value = preview_qty * current_price
-                else:
-                    estimated_order_value = preview_qty * 100  # Conservative estimate
+                if current_price <= 0:
+                    print(f"\n  SKIP BUY {o.symbol}: allocation price unavailable")
+                    _allocation_blocked_count += 1
+                    continue
+                estimated_order_value = preview_qty * current_price
                 
                 total_value = existing_value + estimated_order_value
                 
@@ -1852,6 +1880,27 @@ def main() -> int:  # noqa: C901
                     market_regime=(decision.evidence.get("market_regime") if isinstance(decision.evidence, dict) else "neutral") or "neutral",
                     exposure_cap_override=dynamic_exposure_cap,
                 )
+            if o.side == "buy":
+                current_price = get_mid_price(o.symbol)
+                if preview_qty and preview_qty >= 1 and current_price > 0:
+                    projected_notional = float(preview_qty) * float(current_price)
+                    band_result = portfolio_allocator.check_projected_band(
+                        o.symbol,
+                        projected_notional,
+                        current_positions_full,
+                        equity,
+                    )
+                    if not band_result.allowed:
+                        print(
+                            f"\n  SKIP BUY {o.symbol}: {band_result.reason} "
+                            f"(projected_notional=${projected_notional:,.0f})"
+                        )
+                        _allocation_blocked_count += 1
+                        continue
+                else:
+                    print(f"\n  SKIP BUY {o.symbol}: allocation price unavailable")
+                    _allocation_blocked_count += 1
+                    continue
             preview_basis = ""
             if preview_sizing:
                 preview_basis = (
@@ -1972,7 +2021,14 @@ def main() -> int:  # noqa: C901
             print(f"ERROR: {exc}")
             audit_log.log_system_event("submission_error", AuditLevel.ERROR, details=f"{decision.symbol}: {exc}")
 
-    _save_decisions(decisions, store, ts_tag)
+    _save_decisions(
+        decisions,
+        store,
+        ts_tag,
+        run_id=run_context.run_id if "run_context" in dir() else None,
+        experiment_id=experiment_context.experiment_id if experiment_context is not None else None,
+        config_hash=experiment_context.config_hash if experiment_context is not None else None,
+    )
 
     # 10. Record daily snapshot (before reconciliation to avoid SIGTERM issues)
     try:
@@ -2108,6 +2164,7 @@ def main() -> int:  # noqa: C901
                 equity=equity,
                 unrealized_pnl=sum(float(p.get("unrealized_pl", 0) or 0)
                                    for p in (_positions_for_diff if "_positions_for_diff" in dir() else [])),
+                prev_unrealized_pnl=_day_start_unrealized,
                 stale_price_event_count=len(stale_symbols) if "stale_symbols" in dir() else 0,
                 broker_tracker_mismatch_count=_adjusted_mismatch,
                 api_error_rate_pct=_api_error_rate_pct,
@@ -2127,6 +2184,14 @@ def main() -> int:  # noqa: C901
             if _post_state.status != "ok":
                 logger.warning("guardrail_post_run status=%s action=%s", _post_state.status, _post_state.action)
         except Exception as _exc:
+            if hard_mode:
+                if _breaker_store is not None:
+                    try:
+                        _breaker_store.halt(reason=f"guardrail_post_run_failure: {_exc}")
+                    except Exception:
+                        pass
+                logger.critical("Guardrail post-run update failed in hard mode — HALT")
+                sys.exit(1)
             logger.warning("Guardrail post-run update failed (non-fatal): %s", _exc)
 
     audit_log.log_system_event("paper_demo_complete", details=f"decisions={len(decisions)} submitted={len(submissions)}")
@@ -2517,13 +2582,26 @@ def _build_price_integrity(
     }
 
 
-def _save_decisions(decisions: list[DecisionRecord], store: StageStore, ts_tag: str) -> None:
+def _save_decisions(
+    decisions: list[DecisionRecord],
+    store: StageStore,
+    ts_tag: str,
+    *,
+    run_id: str | None = None,
+    experiment_id: str | None = None,
+    config_hash: str | None = None,
+) -> None:
     for d in decisions:
         try:
+            effective_run_id = getattr(d, "run_id", None) or run_id
+            effective_experiment_id = getattr(d, "experiment_id", None) or experiment_id
+            effective_config_hash = getattr(d, "config_hash", None) or config_hash
+            decision_time = getattr(d, "decision_time", None) or d.generated_at.isoformat()
             doc = {
                 "decision_id": d.decision_id,
                 "schema_version": d.schema_version,
                 "generated_at": d.generated_at.isoformat(),
+                "decision_time": decision_time,
                 "mode": d.mode,
                 "strategy_id": d.strategy_id,
                 "strategy_version_id": d.strategy_version_id,
@@ -2542,11 +2620,17 @@ def _save_decisions(decisions: list[DecisionRecord], store: StageStore, ts_tag: 
                 "output_tokens": getattr(d, "output_tokens", None),
                 "context_pack": getattr(d, "context_pack", None),
                 "prompt_version": getattr(d, "prompt_version", None),
-                "run_id": getattr(d, "run_id", None),
-                "experiment_id": getattr(d, "experiment_id", None),
+                "run_id": effective_run_id,
+                "experiment_id": effective_experiment_id,
+                "config_hash": effective_config_hash,
                 "skip_reason": getattr(d, "skip_reason", None),
                 "deny_reason": getattr(d, "deny_reason", None),
                 "block_reason": getattr(d, "block_reason", None),
+                "usage_source": getattr(d, "usage_source", None),
+                "input_tokens_actual": getattr(d, "input_tokens_actual", None),
+                "output_tokens_actual": getattr(d, "output_tokens_actual", None),
+                "input_tokens_estimated": getattr(d, "input_tokens_estimated", None),
+                "output_tokens_estimated": getattr(d, "output_tokens_estimated", None),
                 "proposed_order": {
                     "symbol": d.proposed_order.symbol,
                     "side": d.proposed_order.side,
@@ -2584,6 +2668,27 @@ def _save_decisions(decisions: list[DecisionRecord], store: StageStore, ts_tag: 
             store.write_decisions(f"decision_{d.symbol}_{ts_tag}.json", doc)
         except Exception:
             pass
+
+
+def _build_closed_trade_export_row(trade: dict) -> dict:
+    """Normalize tracker trade fields for CSV exports."""
+    quantity = trade.get("quantity")
+    if quantity in (None, "", 0):
+        quantity = trade.get("qty", 0)
+    realized_pnl = trade.get("realized_pnl")
+    if realized_pnl in (None, "", 0):
+        realized_pnl = trade.get("pnl", 0)
+    return {
+        "trade_id": trade.get("trade_id"),
+        "symbol": trade.get("symbol"),
+        "entry_time": trade.get("entry_time"),
+        "exit_time": trade.get("exit_time"),
+        "quantity": quantity,
+        "realized_pnl": realized_pnl,
+        "return_pct": trade.get("return_pct"),
+        "holding_days": trade.get("holding_days"),
+        "status": trade.get("status"),
+    }
 
 
 def _banner(title: str) -> None:

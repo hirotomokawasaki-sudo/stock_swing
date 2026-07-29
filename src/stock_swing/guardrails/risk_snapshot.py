@@ -176,3 +176,31 @@ def build_risk_snapshot(
         token_spend_spike_pct=token_spend_spike_pct,
         missing_metrics=missing,
     )
+
+
+def compute_risk_snapshot(
+    *,
+    trades: list[dict[str, Any]],
+    equity: float,
+    unrealized_pnl: float = 0.0,
+    prev_unrealized_pnl: float = 0.0,
+    stale_price_event_count: int = 0,
+    broker_tracker_mismatch_count: int = 0,
+    api_error_rate_pct: float = 0.0,
+    order_rejection_rate_pct: float = 0.0,
+    token_spend_spike_pct: float = 0.0,
+    reference_date: str | None = None,
+) -> RiskSnapshot:
+    """Backward-compatible alias used by regression tests and older callers."""
+    return build_risk_snapshot(
+        trades=trades,
+        equity=equity,
+        unrealized_pnl=unrealized_pnl,
+        prev_unrealized_pnl=prev_unrealized_pnl,
+        stale_price_event_count=stale_price_event_count,
+        broker_tracker_mismatch_count=broker_tracker_mismatch_count,
+        api_error_rate_pct=api_error_rate_pct,
+        order_rejection_rate_pct=order_rejection_rate_pct,
+        token_spend_spike_pct=token_spend_spike_pct,
+        reference_date=reference_date,
+    )

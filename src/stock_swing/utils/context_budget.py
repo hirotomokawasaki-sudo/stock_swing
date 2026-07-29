@@ -248,6 +248,26 @@ def attach_ai_telemetry(
     if not getattr(decision, "prompt_version", None):
         decision.prompt_version = svid or effective_model
 
+    provider_response = getattr(decision, "_provider_response", None)
+    if provider_response is not None:
+        decision.usage_source = "provider_actual"
+        decision.input_tokens_actual = decision.input_tokens
+        decision.output_tokens_actual = decision.output_tokens
+        decision.input_tokens_estimated = None
+        decision.output_tokens_estimated = None
+    elif effective_model == "rule-based" or str(effective_model).startswith("rule"):
+        decision.usage_source = "rule_based_zero"
+        decision.input_tokens_actual = 0
+        decision.output_tokens_actual = 0
+        decision.input_tokens_estimated = None
+        decision.output_tokens_estimated = None
+    else:
+        decision.usage_source = "estimated"
+        decision.input_tokens_actual = None
+        decision.output_tokens_actual = None
+        decision.input_tokens_estimated = decision.input_tokens
+        decision.output_tokens_estimated = decision.output_tokens
+
 
 def build_ai_metrics_from_decisions(
     decisions: list[Any],

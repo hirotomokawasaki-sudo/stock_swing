@@ -123,9 +123,16 @@ class DecisionRecord:
     prompt_version: str | None = None
     run_id: str | None = None
     experiment_id: str | None = None
+    config_hash: str | None = None
+    decision_time: str | None = None
     skip_reason: str | None = None
     deny_reason: str | None = None
     block_reason: str | None = None
+    usage_source: str | None = None
+    input_tokens_actual: int | None = None
+    output_tokens_actual: int | None = None
+    input_tokens_estimated: int | None = None
+    output_tokens_estimated: int | None = None
 
 
 class DecisionEngine:

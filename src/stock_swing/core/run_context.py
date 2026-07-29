@@ -31,8 +31,12 @@ class RunContext:
 
 
 def attach_run_context(decisions: list, run_context: RunContext) -> None:
-    """Attach run_id to all decision evidence dicts (in-place)."""
+    """Attach run metadata to decision top-level fields and evidence."""
     for decision in decisions:
+        if getattr(decision, "run_id", None) is None:
+            decision.run_id = run_context.run_id
+        if getattr(decision, "decision_time", None) is None:
+            decision.decision_time = run_context.started_at
         evidence = getattr(decision, "evidence", None)
         if isinstance(evidence, dict):
             evidence.setdefault("run_id", run_context.run_id)
