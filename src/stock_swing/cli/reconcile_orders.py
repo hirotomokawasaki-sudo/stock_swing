@@ -728,12 +728,39 @@ def main() -> int:
 
     # Build set of sell order IDs already persisted on closed trades.
     # This prevents the same broker sell fill from being replayed on later runs.
+    #
+    # BUG FIX (2026-07-29): Rebuilds can remove closed trades from state.trades,
+    # causing stale sell fills to be re-applied to new positions (phantom close).
+    # Fix: also collect IDs from quarantined_trades and historical trade_events.jsonl.
     processed_sell_order_ids: set[str] = set()
     for trade in tracker.state.trades:
         if trade.get("status") == "closed":
             exit_broker_order_id = trade.get("exit_broker_order_id")
             if exit_broker_order_id:
                 processed_sell_order_ids.add(str(exit_broker_order_id))
+    # Also include quarantined trades (removed from active trades but fills still consumed)
+    for trade in tracker.state.quarantined_trades:
+        exit_broker_order_id = trade.get("exit_broker_order_id")
+        if exit_broker_order_id:
+            processed_sell_order_ids.add(str(exit_broker_order_id))
+    # Also include broker_order_id from ALL historical trade_closed events in trade_events.jsonl.
+    # This is the definitive guard: even if a closed trade was removed by a rebuild,
+    # the fill ID is still present in the event log and must not be re-applied.
+    _te_path = project_root / "data" / "tracking" / "trade_events.jsonl"
+    if _te_path.exists():
+        try:
+            with open(_te_path) as _tef:
+                for _line in _tef:
+                    try:
+                        _ev = json.loads(_line)
+                        if _ev.get("event_type") == "trade_closed":
+                            _oid = _ev.get("broker_order_id")
+                            if _oid:
+                                processed_sell_order_ids.add(str(_oid))
+                    except Exception:
+                        pass
+        except OSError:
+            pass
 
     # Also track which SELL order IDs have already been used to close trades,
     # to prevent the same sell fill from closing multiple reconcile-created open trades.

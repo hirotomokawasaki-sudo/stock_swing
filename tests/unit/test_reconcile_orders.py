@@ -508,3 +508,121 @@ def test_fill_exit_uses_stored_reason_when_pending_exists():
         assert resolved == "trailing_stop"
     finally:
         ro.read_exit_reason = orig_read
+
+
+
+def test_reconcile_skips_fill_absent_from_state_but_in_trade_events(monkeypatch, capsys):
+    """
+    Regression: 2026-07-29 ADBE phantom close bug.
+
+    Scenario:
+      1. AAPL bought and sold → trade_closed written to trade_events.jsonl
+      2. Rebuild removes the closed trade from state.trades (simulated manually)
+      3. AAPL bought again as new position
+      4. Reconciler sees the old filled sell in broker orders
+      5. Must NOT replay the stale fill against the new position
+
+    Root cause: processed_sell_order_ids was built from state.trades only.
+    Fix: also include broker_order_ids from trade_events.jsonl trade_closed events.
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        project_root = Path(tmpdir)
+        tracker = PnLTracker(project_root)
+
+        # Step 1: old AAPL trade opened and closed → writes trade_closed to trade_events.jsonl
+        tracker.record_submission(
+            symbol="AAPL",
+            strategy_id="s",
+            side="buy",
+            qty=10,
+            price=200.0,
+            broker_order_id="buy-old-aapl",
+            decision_id="dec-old",
+        )
+        tracker.record_exit(
+            symbol="AAPL",
+            exit_price=195.0,
+            exit_qty=10,
+            broker_order_id="sell-stale-aapl",
+            exit_reason="trailing_stop",
+        )
+
+        # Step 2: simulate rebuild removing the closed trade from state.trades
+        # (the trade_events.jsonl still has the trade_closed event)
+        tracker.state.trades = [
+            t for t in tracker.state.trades if t.get("status") == "open"
+        ]
+
+        # Step 3: new AAPL position (the one that must NOT be phantom-closed)
+        tracker.record_submission(
+            symbol="AAPL",
+            strategy_id="s",
+            side="buy",
+            qty=20,
+            price=210.0,
+            broker_order_id="buy-new-aapl",
+            decision_id="dec-new",
+        )
+
+        class StubBroker:
+            def __init__(self, *a, **kw): pass
+            def fetch_orders(self, status="all", limit=500):
+                return SimpleNamespace(payload=[
+                    {
+                        "id": "sell-stale-aapl",
+                        "symbol": "AAPL",
+                        "side": "sell",
+                        "status": "filled",
+                        "filled_avg_price": 195.0,
+                        "filled_qty": 10,
+                        "qty": 10,
+                        "submitted_at": "2026-07-23T09:35:00Z",
+                        "created_at": "2026-07-23T09:35:00Z",
+                    }
+                ])
+            def fetch_latest_quote(self, symbol):
+                return SimpleNamespace(payload={"quote": {"bp": 209.0, "ap": 211.0}})
+
+        monkeypatch.setattr(reconcile_orders, "project_root", project_root)
+        monkeypatch.setattr(reconcile_orders, "_load_env", lambda path: None)
+        monkeypatch.setattr(reconcile_orders, "BrokerClient", StubBroker)
+        monkeypatch.setattr(reconcile_orders, "PnLTracker", lambda root: tracker)
+        monkeypatch.setattr(reconcile_orders, "cancel_stale_buy_orders", lambda broker: [])
+        monkeypatch.setattr(reconcile_orders, "reconcile_filled_buys", lambda broker, tracker, recently_sold_symbols: 0)
+        monkeypatch.setattr(
+            reconcile_orders,
+            "load_recent_submissions",
+            lambda audits_dir, limit=100: [
+                {
+                    "ts": "2026-07-23T09:35:00+00:00",
+                    "submission_id": "sub-stale",
+                    "side": "sell",
+                    "qty": 10,
+                    "symbol": "AAPL",
+                }
+            ],
+        )
+        monkeypatch.setattr(reconcile_orders, "read_exit_reason", lambda root, oid: None)
+        monkeypatch.setattr(reconcile_orders, "delete_exit_reason", lambda root, oid: None)
+        monkeypatch.setattr(reconcile_orders, "purge_old_entries", lambda root, max_age_days=7: None)
+
+        monkeypatch.setenv("BROKER_API_KEY", "key")
+        monkeypatch.setenv("BROKER_API_SECRET", "secret")
+
+        assert reconcile_orders.main() == 0
+
+        out = capsys.readouterr().out
+        summary_line = [ln for ln in out.splitlines() if ln.startswith(CRON_SUMMARY_PREFIX)][-1]
+        payload = json.loads(summary_line.split("=", 1)[1])
+        assert payload["filled_exits_recorded"] == 0, (
+            f"Stale sell fill must not close new position. "
+            f"filled_exits_recorded={payload['filled_exits_recorded']}. "
+            "Incident: 2026-07-29 ADBE phantom close."
+        )
+
+        open_trades = [t for t in tracker.state.trades if t.get("symbol") == "AAPL" and t.get("status") == "open"]
+        assert open_trades, (
+            "AAPL new position must remain open after reconcile. "
+            "Stale sell fill must be blocked by trade_events.jsonl guard."
+        )
+        assert open_trades[0]["qty"] == 20
