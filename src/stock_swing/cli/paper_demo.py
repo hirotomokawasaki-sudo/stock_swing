@@ -984,18 +984,42 @@ def main() -> int:  # noqa: C901
     except Exception as exc:
         print(f"  WARN: Could not fetch positions for exit strategy: {exc}")
 
-    _day_start_unrealized = 0.0
+    # FIX-GUARDRAIL-2: Use day-start snapshot; never fall back to 0 silently.
+    _day_start_unrealized: float = 0.0
+    _day_start_missing_metrics: list[str] = []
     try:
-        _risk_state_path = project_root / "data" / "risk_monitor_state.json"
-        if _risk_state_path.exists():
-            _risk_state = json.loads(_risk_state_path.read_text(encoding="utf-8"))
-            _day_start_unrealized = float(_risk_state.get("prev_unrealized_pnl", 0.0) or 0.0)
-        elif current_positions_full:
-            _day_start_unrealized = sum(
-                float(pos.get("unrealized_pl", 0) or 0) for pos in current_positions_full.values()
+        from stock_swing.guardrails.day_start_snapshot import get_prev_unrealized_for_guardrail
+        # Compute current unrealized for capture if no snapshot exists yet today
+        _current_unrealized_for_capture: float | None = None
+        if current_positions_full:
+            try:
+                _current_unrealized_for_capture = sum(
+                    float(pos.get("unrealized_pl", 0) or 0)
+                    for pos in current_positions_full.values()
+                )
+            except Exception:
+                pass
+        _broker_equity_for_capture: float | None = None
+        try:
+            _acct = broker.get_account()
+            _broker_equity_for_capture = float(_acct.get("equity", 0) or 0) or None
+        except Exception:
+            pass
+        _day_start_unrealized, _day_start_missing_metrics = get_prev_unrealized_for_guardrail(
+            project_root,
+            equity=_broker_equity_for_capture,
+            unrealized_pnl=_current_unrealized_for_capture,
+            source="broker_api" if _broker_equity_for_capture is not None else "tracker_estimate",
+        )
+        if _day_start_missing_metrics:
+            print(
+                f"  WARN [FIX-GUARDRAIL-2]: day-start snapshot missing fields: "
+                f"{_day_start_missing_metrics}. Guardrail daily_loss may be inaccurate.",
+                file=sys.stderr,
             )
-    except Exception:
-        _day_start_unrealized = 0.0
+    except Exception as _dss_exc:
+        print(f"  WARN [FIX-GUARDRAIL-2]: day-start snapshot error: {_dss_exc}", file=sys.stderr)
+        _day_start_missing_metrics = ["day_start_unrealized", "day_start_equity"]
 
     # Entry strategies: first pass on daily features only.
     breakout_strat = BreakoutMomentumStrategy(
@@ -2171,6 +2195,11 @@ def main() -> int:  # noqa: C901
                 order_rejection_rate_pct=_order_rejection_rate_pct,
                 token_spend_spike_pct=_token_spend_spike_pct,
             )
+            # FIX-GUARDRAIL-2: Propagate day-start missing metrics into snapshot
+            if _day_start_missing_metrics:
+                for _mm in _day_start_missing_metrics:
+                    if _mm not in _postrun_snapshot.missing_metrics:
+                        _postrun_snapshot.missing_metrics.append(_mm)
             _post_metrics = _postrun_snapshot.to_metrics()
             _post_state = post_run_update(_post_metrics, _guard_engine, _breaker_store)
 

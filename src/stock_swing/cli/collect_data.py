@@ -92,6 +92,27 @@ def main():
     written = []
     timed_out = False
 
+    # FIX-SOURCE-4: load source classification from config
+    _source_configs: dict = {}
+    try:
+        import yaml as _yaml
+        _sources_dir = project_root / "config" / "sources"
+        for _sname in ["finnhub", "fred", "sec", "broker", "massive"]:
+            _spath = _sources_dir / f"{_sname}.yaml"
+            if _spath.exists():
+                _source_configs[_sname] = _yaml.safe_load(_spath.read_text()) or {}
+    except Exception:
+        pass
+
+    def _is_required(src: str) -> bool:
+        return bool(_source_configs.get(src, {}).get("required", False))
+
+    def _is_not_implemented(src: str) -> bool:
+        return bool(_source_configs.get(src, {}).get("not_implemented", False))
+
+    required_failures: list[str] = []
+    degraded_sources: list[str] = []
+
     for source in sources:
         if source == "finnhub":
             source_written, source_timed_out = collect_finnhub(
@@ -101,13 +122,25 @@ def main():
             )
             written.extend(source_written)
             timed_out = timed_out or source_timed_out
+            # Finnhub is required; zero snapshots = failure
+            if _is_required(source) and not source_written:
+                required_failures.append(f"{source}: 0 snapshots written (possible API failure)")
         elif source == "fred":
-            written.extend(collect_fred(store))
+            if _is_not_implemented(source):
+                degraded_sources.append("fred:not_implemented")
+            else:
+                written.extend(collect_fred(store))
         elif source == "sec":
-            written.extend(collect_sec(symbols, store))
+            if _is_not_implemented(source):
+                degraded_sources.append("sec:not_implemented")
+            else:
+                written.extend(collect_sec(symbols, store))
         elif source == "broker":
-            written.extend(collect_broker(symbols, store))
-            written.extend(collect_broker_bars(symbols, store))
+            if _is_not_implemented(source):
+                degraded_sources.append("broker:not_implemented")
+            else:
+                written.extend(collect_broker(symbols, store))
+                written.extend(collect_broker_bars(symbols, store))
         elif source == "massive":
             written.extend(collect_massive(symbols, store, days=args.days, timeframe=args.timeframe))
         else:
@@ -121,10 +154,17 @@ def main():
     if len(written) > 10:
         print(f"  ... and {len(written) - 10} more")
     print(f"📅 Completed at: {datetime.now().isoformat()}")
+    if degraded_sources:
+        print(f"⚠️  Degraded sources: {degraded_sources}", file=sys.stderr)
+    if required_failures:
+        for _rf in required_failures:
+            print(f"❌ REQUIRED SOURCE FAILURE: {_rf}", file=sys.stderr)
+
+    _overall_status = "ok" if not required_failures else "failed"
     if args.cron_summary_json:
         emit_cron_summary({
             "job": "collect_data",
-            "status": "ok",
+            "status": _overall_status,
             "dry_run": False,
             "sources": sources,
             "symbols_requested": len(symbols),
@@ -132,7 +172,11 @@ def main():
             "timeframe": args.timeframe,
             "days": args.days,
             "timed_out": timed_out,
+            "required_failures": required_failures,
+            "degraded_sources": degraded_sources,
         })
+    if required_failures:
+        return 1  # FIX-SOURCE-4: non-0 exit for required source failures
     return 0
 
 

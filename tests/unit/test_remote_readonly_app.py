@@ -30,10 +30,22 @@ def test_is_authorized_rejects_when_server_token_missing(monkeypatch) -> None:
     assert remote.is_authorized(Headers({"Authorization": "Bearer anything"}), {}) is False
 
 
-def test_is_authorized_accepts_query_token(monkeypatch) -> None:
+def test_is_authorized_rejects_query_token(monkeypatch) -> None:
+    """FIX-CONSOLE-8: query parameter 'token' must be rejected (security fix).
+    Old behaviour accepted query token — this was a vulnerability.
+    Token must come from Authorization: Bearer or X-Remote-Token header only.
+    """
     monkeypatch.setenv("REMOTE_READONLY_TOKEN", "secret-token")
+    # Query token must NOT be accepted
+    assert remote.is_authorized(Headers({}), {"token": ["secret-token"]}) is False
 
-    assert remote.is_authorized(Headers({}), {"token": ["secret-token"]}) is True
+
+def test_is_authorized_accepts_bearer_header(monkeypatch) -> None:
+    """FIX-CONSOLE-8: Authorization: Bearer header must be accepted."""
+    monkeypatch.setenv("REMOTE_READONLY_TOKEN", "secret-token")
+    assert remote.is_authorized(
+        Headers({"Authorization": "Bearer secret-token"}), {}
+    ) is True
 
 
 def test_load_console_summary_adds_remote_metadata(tmp_path: Path, monkeypatch) -> None:

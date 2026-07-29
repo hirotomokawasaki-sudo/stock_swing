@@ -1107,6 +1107,27 @@ def main() -> int:
         "summary": tracker.get_summary(),
     }
     print(json.dumps(summary_payload, ensure_ascii=False, indent=2))
+
+    # FIX-OBSERVE-1: Write reconcile_status.json for console health evidence.
+    # Contains broker/tracker mismatch count so health score can degrade when stale.
+    _reconcile_status = {
+        "as_of": datetime.now(timezone.utc).isoformat(),
+        "unexplained_mismatch_count": 0,  # If we reach this point, reconcile succeeded
+        "newly_recorded_buys": newly_recorded_buys,
+        "filled_exits_recorded": filled_exits,
+        "checked_sell_submissions": checked,
+        "job": "reconcile_orders",
+    }
+    try:
+        _status_path = project_root / "data" / "audits" / "reconcile_status.json"
+        _status_path.parent.mkdir(parents=True, exist_ok=True)
+        _status_path.write_text(
+            json.dumps(_reconcile_status, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+    except Exception as _e:
+        print(f"WARN: Failed to write reconcile_status.json: {_e}", file=sys.stderr)
+
     emit_cron_summary({
         "job": "reconcile_orders",
         "status": "ok",

@@ -3,3 +3,7 @@ base_url: https://finnhub.io/api/v1
 timeout_seconds: 15
 retry_attempts: 3
 raw_partition: finnhub
+# FIX-SOURCE-4: required sources must exit non-0 on failure
+required: true
+failure_exit_code: 1
+description: "Primary price and news data source"

@@ -248,20 +248,50 @@ def attach_ai_telemetry(
     if not getattr(decision, "prompt_version", None):
         decision.prompt_version = svid or effective_model
 
+    # FIX-TOKEN-7: Exclusive, exhaustive classification of token source.
+    # rule_based_zero: ANY decision that does not involve an actual LLM API call.
+    # provider_actual:  LLM call with a real usage field from the provider response.
+    # estimated:        LLM call where provider usage is unavailable (heuristic count).
+    # unknown:          Should not occur; indicates a coding error.
+    #
+    # Rule: rule_based_zero decisions MUST have 0 actual/estimated tokens.
+    #       Do NOT copy heuristic token counts into actual fields.
+    _is_rule_based = (
+        effective_model == "rule-based"
+        or str(effective_model).startswith("rule")
+        or getattr(decision, "strategy_id", "") in {
+            "breakout_momentum_v1", "event_swing_v1", "exit_strategy"
+        }
+    )
     provider_response = getattr(decision, "_provider_response", None)
-    if provider_response is not None:
-        decision.usage_source = "provider_actual"
-        decision.input_tokens_actual = decision.input_tokens
-        decision.output_tokens_actual = decision.output_tokens
-        decision.input_tokens_estimated = None
-        decision.output_tokens_estimated = None
-    elif effective_model == "rule-based" or str(effective_model).startswith("rule"):
+
+    if _is_rule_based:
+        # Rule-based: actual = 0 (no LLM call occurred); estimated = None
         decision.usage_source = "rule_based_zero"
         decision.input_tokens_actual = 0
         decision.output_tokens_actual = 0
         decision.input_tokens_estimated = None
         decision.output_tokens_estimated = None
+    elif provider_response is not None and isinstance(provider_response, dict):
+        # Real provider response with usage field
+        usage = provider_response.get("usage") or {}
+        _actual_in  = usage.get("input_tokens") or usage.get("prompt_tokens")
+        _actual_out = usage.get("output_tokens") or usage.get("completion_tokens")
+        if _actual_in is not None:
+            decision.usage_source = "provider_actual"
+            decision.input_tokens_actual = int(_actual_in)
+            decision.output_tokens_actual = int(_actual_out) if _actual_out is not None else 0
+            decision.input_tokens_estimated = None
+            decision.output_tokens_estimated = None
+        else:
+            # Response present but no usage field — treat as estimated
+            decision.usage_source = "estimated"
+            decision.input_tokens_actual = None
+            decision.output_tokens_actual = None
+            decision.input_tokens_estimated = decision.input_tokens
+            decision.output_tokens_estimated = decision.output_tokens
     else:
+        # LLM call assumed but no provider response captured
         decision.usage_source = "estimated"
         decision.input_tokens_actual = None
         decision.output_tokens_actual = None

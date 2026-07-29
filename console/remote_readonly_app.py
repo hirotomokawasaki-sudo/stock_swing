@@ -454,14 +454,19 @@ def _configured_token() -> str:
 
 
 def _extract_token(headers, query: dict[str, list[str]]) -> str:
+    """FIX-CONSOLE-8: token MUST come from Authorization header or X-Remote-Token.
+    URL query parameter 'token' is explicitly rejected to prevent:
+      - token leakage in browser history / access logs / referrer headers
+      - localStorage persistence
+    """
     auth = headers.get("Authorization", "")
     if auth.startswith("Bearer "):
         return auth[len("Bearer ") :].strip()
     header_token = headers.get("X-Remote-Token", "")
     if header_token:
         return header_token.strip()
-    values = query.get("token") or []
-    return values[0].strip() if values else ""
+    # Query parameter 'token' intentionally NOT accepted (FIX-CONSOLE-8)
+    return ""
 
 
 def is_authorized(headers, query: dict[str, list[str]]) -> bool:
