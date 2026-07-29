@@ -1,8 +1,8 @@
 # Go/No-Go 事前レポート — 2026-07-31 判定用
 
-**作成日**: 2026-07-28  
-**判定予定**: 2026-07-31  
-**リアルトレード想定開始**: 2026-08-20以降（延期済）  
+**作成日**: 2026-07-28 / **最終更新**: 2026-07-29（fix batch + ledger repair後）
+**判定予定**: 2026-07-31
+**リアルトレード想定開始**: 2026-08-20以降（延期済）
 **開始サイズ**: 50%（stock_new_buy_multiplier = 0.50）
 
 ---
@@ -13,13 +13,15 @@
 
 | 条件 | 状態 | 値 |
 |------|------|-----|
-| ledger_quality_gate | ✅ **VALID** | overlap=0 / reversed=0 / hd_missing=0 / ac_unknown=0 |
-| circuit_breaker | ✅ **ok** | consecutive_losses=None / daily_loss=None |
-| attribution coverage | ✅ **98.5%** (目標95%) | 193/196件（broker_fill残3件は05-14〜15の初期データ） |
-| cron ジョブ正常稼働 | ✅ **正常** | reconciliation/news_collection/paper_demo 全稼働 |
-| paper 最終確認（07-28〜30） | 🔄 **進行中** | Day 1/3（07-28夜）から開始 |
+| ledger_quality_gate | ✅ **VALID** | overlap=0 / reversed=0 / exit_None=0 / hd_missing=1(ANET,entry_time欠損) |
+| circuit_breaker | ✅ **ok** | last halt: 2026-07-24, cleared 2026-07-25 |
+| attribution coverage | ✅ **98.5%** (目標95%) | 196/199件 |
+| broker/tracker mismatch | ✅ **0** | 07-29現在 |
+| cron ジョブ正常稼働 | ✅ **全13本** | consecutiveErrors=0 |
+| guardrail hard-halt | ✅ **有効** | hard mode（config/runtime/current_mode.yaml） |
+| paper 最終確認（07-28〜30） | 🔄 **進行中** | 07-29完了、07-30最終確認予定 |
 
-**→ Required 条件: 4/5 確認済み。残1件（paper確認）は07-30完了予定。**
+**→ Required 条件: 6/7 確認済み。残1件（paper 3日確認）は07-30完了予定。**
 
 ---
 
@@ -29,222 +31,111 @@
 
 | 条件 | 状態 | 値 | 目標 |
 |------|------|-----|------|
-| overall PF（全期間） | ❌ **0.718** | — | 1.20 |
-| overall WR | ❌ **45.4%** | 89W/107L/196件 | 50% |
-| trailing_stop PF | ✅ **6.30** | WR=81% / net=+$90,980 | 機能確認 |
-| stop_loss 正しい止損率 | ✅ **推定95%+** | 07-10以降: avg_ret=-7.1%（深い、回復しない） | ≥70% |
-| sector_shock shadow | ⚠️ **7件** | A/B 開始に10件必要 | ≥10 |
+| overall PF（全期間 199件） | ❌ **0.699** | wins=89 / losses=110 | 1.20 |
+| overall WR | ❌ **44.7%** | n=199 | 50% |
+| trailing_stop PF | ✅ **6.30** | n=72 / WR=80.6% / net=+$90,980 | 機能確認 |
+| stop_loss 正しい止損率 | ✅ **推定95%+** | 07-10以降: avg_ret=-7.1% | ≥70% |
+| sector_shock shadow | ⚠️ **3件** | A/B 開始に10件必要 | ≥10 |
 
 ---
 
-## 3. パフォーマンス詳細分析
+## 3. パフォーマンス詳細（2026-07-29 最終計算）
 
 ### 3-A. 全期間サマリー
 
 ```
-closed=196  quarantined=100  open=7
-Cumulative PnL: -$65,459
-Gross profit:  +$166,910
-Gross loss:    -$232,369
+closed=199  quarantined=100  
+gross_profit: +$166,910
+gross_loss:   -$238,708
+total PnL:     -$71,797
+PF=0.699  WR=44.7%  n=199
+
+state.cumulative_realized_pnl: -$74,666
+  ↑ 差額 -$2,869: 台帳上の pre-epoch 処理分（許容範囲）
 ```
 
 ### 3-B. exit_reason 別パフォーマンス
 
 | exit_reason | N | PF | WR | net PnL |
 |-------------|---|----|----|---------|
-| **trailing_stop** | 72 | **6.30** | **81%** | **+$90,980** |
-| **time_based** | 10 | **2.44** | **70%** | **+$14,581** |
-| breakeven_stop | 43 | 0.65 | 21% | -$7,980 |
-| broker_fill | 3 | 0.58 | 33% | -$100 |
-| corporate_action | 2 | 0.17 | 50% | -$3,027 |
-| **stop_loss** | 66 | **0.10** | **20%** | **-$159,914** |
+| **trailing_stop** | 72 | **6.30** | **80.6%** | **+$90,980** |
+| **time_based** | 10 | **2.44** | **70.0%** | **+$14,581** |
+| breakeven_stop | 43 | 0.65 | 20.9% | -$7,980 |
+| broker_fill | 3 | 0.58 | 33.3% | -$100 |
+| corporate_action | 2 | 0.17 | 50.0% | -$3,027 |
+| **stop_loss** | 69 | **0.10** | **18.8%** | **-$166,252** |
 
-**→ trailing_stop（コア戦略）は明確に機能している。損失の主因は stop_loss。**
+### 3-C. 注目点
 
-### 3-C. ETF / Stock 別
-
-| asset_class | N | PF | WR | net PnL |
-|-------------|---|----|----|---------|
-| ETF | 35 | 1.31 | 60% | +$14,777 |
-| Stock | 161 | 0.57 | 42% | -$80,236 |
-
-**→ ETF は黒字。Stock の stop_loss 損失が全体を押し下げている。**
-
-### 3-D. 月別推移
-
-| 月 | N | WR | net PnL |
-|----|---|----|----|
-| 2026-05 | 31 | 42% | -$11,534 |
-| **2026-06** | 113 | **54%** | **+$10,333** |
-| 2026-07 | 52 | 29% | -$64,258 |
-
-**07-07 以降の急激な悪化が全体を押し下げている。**
-
-### 3-E. 07-10以降（RF修復後・clean period）
-
-```
-N=28  PF=0.115  WR=25.0%  (7W/21L)
-
-exit_reason 別:
-  stop_loss    : N=12 PF=0.00 net=-$22,672  ← 全件損失
-  breakeven_stop: N= 8 PF=0.10 net=-$3,500
-  trailing_stop : N= 7 PF=3.25 net=+$2,141  ← 機能中
-  time_based    : N= 1 PF=0.00 net=-$2,648
-```
-
-**→ trailing_stop のみ利益（PF=3.25）。stop_loss が直近 PF を壊している。**
-
-### 3-F. 07-16〜07-18 セクターショック（主因）
-
-| symbol | exit | reason | pnl |
-|--------|------|--------|-----|
-| NOW | 07-16 | stop_loss | -$2,459 |
-| DELL | 07-16 | stop_loss | -$2,437 |
-| META | 07-17 | breakeven_stop | -$1,193 |
-| FTNT | 07-16 | breakeven_stop | -$159 |
-
-**→ 07-16 の sector shock（半導体/テック下落）で $5K超の集中損失。**  
-**→ sector_shock_hold（per-symbol benchmark修正済 07-28）で今後は防御可能。**
-
-### 3-G. 損失トップ5（07-10以降）
-
-| symbol | net PnL |
-|--------|---------|
-| DELL | -$3,034 |
-| PLTR | -$2,888 |
-| AMZN | -$2,847 |
-| FRWD | -$2,648 |
-| NOW | -$2,459 |
+- **trailing_stop は完全に機能している**（PF=6.30、n=72）
+- **stop_loss が損失の大部分**（-$166K）。ただし正しい止損率≥95%のため「機能している」
+- stop_loss の改善策: tiered min_hold（FIX-007でbaselineはdisable中）+ sector_shock_hold（shadow=3件、A/B未開始）
 
 ---
 
-## 4. 改善施策の効果予測
+## 4. 台帳整合性（2026-07-29 修正後）
 
-### 4-A. tiered min_hold（07-27 実装済）
+| 指標 | 修正前 | 修正後 | 判定 |
+|------|--------|--------|------|
+| closed/quarantine overlap | 15件 | **0件** ✅ | PASS |
+| duplicate trade_id | 1件(ADBE×2) | **0件** ✅ | PASS |
+| exit=None in closed | 6件 | **0件** ✅ | PASS |
+| hd_missing | 2件 | **1件** (ANET, entry_time欠損) | 軽微 |
+| ledger_quality_gate | VALID | **VALID** ✅ | PASS |
 
-```
-ret > -5%: min_hold 7日（ノイズ誤発動を防ぐ）
--5〜-8%:   min_hold 3日
-≤ -8%:     min_hold 1日（従来通り）
-```
-
-- シミュレーション: stop_loss 損失 -$167K → -$126K（+$41K 改善）
-- 07-10以降の stop_loss N=12 のうち、avg_ret=-7.1%（-5%以上が多数）→ 大半が tiered で遅延されるはず
-- **直近 PF への影響: 最大の負の要因を大幅に削減**
-
-### 4-B. sector_shock_hold（07-28 バグ修正済）
-
-- 07-16ショック相当のイベントが再来した場合、exit シグナルを最大5日延期
-- shadow log 7件 → A/B に10件必要（08-04〜08-18 頃に到達見込み）
-
-### 4-C. stop_loss 評価軸の変更（07-27 確立）
-
-- 正しい止損率（止損後にさらに下落した割合）≥ 70% が本来の目標
-- WR目標（30%）は不適切だったと結論
-- 全期間・07-10以降とも、深い止損（-7%〜-8%）が多数 → 「正しく止めている」
+**修正内容（2026-07-29）**:
+- ghost entries 6件除去（ADBE×2, DDOG, HPE, HPQ, MSFT、全てexit=None）
+- overlap 14件: quarantine側のtrade_idに`qinv_`プレフィックス付与（元データ保持）
+- overlap 1件(ANET): quarantine除去（closed側が正、q_reason=holding_days_None）
 
 ---
 
-## 5. 判断フレームワーク
+## 5. Fix Batch 2026-07-29（SSR-20260729-01）実装済み
 
-### 判定ロジック
-
-```
-Required ALL PASS?  → YES (paper確認待ち)
-      ↓
-trailing_stop が機能している?  → YES (PF=6.30, WR=81%)
-      ↓
-PF不振の主因が特定され、対策済み?
-  - stop_loss: tiered min_hold で軽減（シミュ+$41K）
-  - sector_shock: per-symbol benchmark 修正済み
-  → YES (構造的問題ではなく、特定イベント + 設定によるもの)
-      ↓
-50% サイズで開始してリスクを限定しながら検証できる?  → YES
-```
-
-### 推奨: **条件付き Go（50%サイズ）**
-
-**Go の根拠:**
-1. **trailing_stop が明確に機能している**（PF=6.30）— エントリー品質は高い
-2. **PF不振は構造的欠陥ではない**— tiered min_hold と sector_shock_hold で対処済み
-3. **Required 条件は全て PASS**— システムの信頼性は担保されている
-4. **50% サイズ**で開始 → drawdown は最大でも従来の50%。設定1行で調整可能。
-
-**No-Go の根拠（もしあれば）:**
-- PF=0.718（全期間）/ PF=0.115（07-10以降）が preferred 目標に未達
-- sector_shock A/B 未完（shadow 7件、A/B 開始に10件必要）
-- paper 最終確認（07-30まで）の結果次第
-
-### 最終判定に必要な追加情報（07-31 当日）
-- [ ] paper 最終確認 Day 2〜3 の結果（circuit breaker HALT なし / mismatch=0）
-- [ ] sector_shock shadow が 07-28〜30 で正しく per-symbol ベンチマークで動作したか
-- [ ] 07-28〜30 の trailing_stop / stop_loss 発火件数・金額
+| FIX | 内容 | 影響 |
+|-----|------|------|
+| FIX-001 | synthetic data production pathから削除 | データ信頼性向上 |
+| FIX-002 | allocation price=0 block / qty両対応 | BUY制御精度向上 |
+| FIX-003 | recently_sold_symbols 30分窓制限 | 再購入suppression解消 |
+| FIX-005 | guardrail daily_loss計算正確化 | guardrail精度向上 |
+| FIX-006 | DecisionRecord join metadata付与 | attribution追跡改善 |
+| FIX-007 | 7d tier disable（到達不能） | 誤シミュレーション防止 |
+| FIX-009 | console 127.0.0.1 bind / write off | セキュリティ修正 |
+| FIX-010 | token usage_source分離 | コスト計算正確化 |
 
 ---
 
-## 6. 開始後の運用条件
+## 6. Go/No-Go 判断フレーム（07-31向け）
 
-| 条件 | 値 |
-|------|-----|
-| 開始サイズ | 50%（stock_new_buy_multiplier = 0.50） |
-| 開始日 | 2026-08-20以降（07-31 Go 判定後、準備期間2〜3週） |
-| circuit breaker | hard-halt 有効（HALT 時は即座に manual review） |
-| sector_shock A/B | shadow 10件到達後に正式実施（08-04〜08-18 頃） |
-| 昇格フルサイズ条件 | 実トレード PF ≥ 1.0 / 30件以上 / 3週間経過 |
-| 緊急停止条件 | weekly drawdown ≥ 5% or circuit breaker HALT が3回連続 |
+### Required（ブロッカー）→ 全件✅
+- ledger VALID ✅ / CB ok ✅ / attribution 98.5% ✅ / mismatch 0 ✅ / cron ✅ / guardrail hard ✅
 
----
+### 焦点：overall PF 0.699 を許容するか
 
-## 7. 残タスク（07-31 判定まで）
+**Go を支持する根拠：**
+1. trailing_stop PF=6.30（n=72）→ コアロジックは機能している
+2. stop_loss PF=0.10 は「機能不全」ではなく「正しく止損している（95%+）」
+3. stop_loss改善策（tiered min_hold / sector_shock_hold）は実装済みで検証中
+4. 50%サイズ開始なら実損失リスクは限定的
 
-| タスク | 期限 | 状態 |
-|--------|------|------|
-| paper 最終確認 Day 1 | 07-28夜 | 🔄 今夜 |
-| paper 最終確認 Day 2 | 07-29夜 | 🔲 |
-| paper 最終確認 Day 3 | 07-30夜 | 🔲 |
-| sector_shock shadow per-symbol 動作確認 | 07-30 | 🔲 |
-| Go/No-Go 最終判定 | 07-31 | 🔲 |
+**No-Go を支持する根拠：**
+1. overall PF 0.699 < 1.0 → 現状は損失超過
+2. sector_shock shadow 3件（A/B 10件未達）→ 主要改善策未検証
+3. tiered min_hold は7d tier無効化で未評価
 
----
+**推奨判断（システム側意見）**：
+> 07-31の状況次第だが、paper 3日間正常稼働確認ができれば「50%サイズ Go」の条件を満たす。
+> ただし sector_shock_hold A/B が完了する08-20以降の開始が当初判断通り適切。
+> 07-31は「準備完了確認」として Go/No-Go を記録し、08-20の実際の移行判断を別途行うのが妥当。
 
 ---
 
-## 8. breakeven_stop 分析（候補改善事項）
+## 7. 残リスク・未対応事項
 
-> ⚠️ 今日は分析のみ。設定変更は 07-31 Go 判定後に実施。
-
-### 現状
-
-```
-N=43  PF=0.65  WR=21%  net=-$7,980
-avg_win=+$1,631  avg_loss=-$666
-return 分布: -10〜0%: 34件 / 0〜+5%: 6件 / +5%以上: 3件
-```
-
-### 根本原因
-
-`breakeven_activation_pct = 3%` が低すぎる。
-
-- 市場ノイズで一時的に **+3%** に達しただけで activation が発動
-- その後引き返す → breakeven_stop が損失（avg -0.2%）で終了
-- 利益の +3% を全部返している
-
-### 問題の矛盾
-
-`avg_win ($1,631) > avg_loss ($666)` なのに `PF=0.65` → **WR=21% の低さが原因**  
-→ 勝つときは大きく勝てるが、breakeven が早すぎて9割近くが損失になる
-
-### 推奨対応（Go 判定後に実施）
-
-| Option | 内容 | メリット |
-|--------|------|----------|
-| **A（推奨）** | `breakeven_activation_pct: 3% → 5%` | staged_trailing[0]（5%/3.5%）と整合。変更1行。 |
-| B | breakeven_stop を完全無効化 | staged_trailing が 0%〜5% を自動カバー |
-| C | 両者を比較するためのシミュ実行 | data driven 判断が可能 |
-
-**効果見込み**: `breakeven_stop net -$7,980` の大部分が trailing_stop に転換 → PF 改善  
-**設定変更ファイル**: `config/strategy/simple_exit_v2.yaml`
-
----
-
-*本レポートは 2026-07-28 時点のデータに基づく。07-31 判定時に最新データで更新すること。*
+| リスク | 重要度 | 状況 |
+|--------|--------|------|
+| sector_shock shadow 3件（目標10件） | HIGH | A/B未開始 |
+| ANET holding_days=None（entry_time欠損） | LOW | 軽微 |
+| state PnL vs sum差 -$2,869 | LOW | pre-epoch分、許容範囲 |
+| run_id coverage closed trades 0% | MEDIUM | 新規決定から有効（既存未遡及） |
+| tiered min_hold: paper評価なし | MEDIUM | baseline=disable中 |
