@@ -61,6 +61,7 @@ from stock_swing.risk.allocation_config import (
     read_allocation_config,
     read_symbol_registry,
 )
+from stock_swing.risk.position_sizing import DEFAULT_MAX_POSITION_NOTIONAL_PCT
 from stock_swing.feature_engine.macro_regime_feature import MacroRegimeFeature
 from stock_swing.feature_engine.price_momentum_feature import PriceMomentumFeature
 from stock_swing.feature_engine.intraday_momentum_feature import IntradayMomentumFeature
@@ -1869,9 +1870,14 @@ def main() -> int:  # noqa: C901
                 existing_value = float(existing_pos.get('market_value', 0))
                 
                 # Determine position limit using the same sizing policy as order generation.
-                from stock_swing.risk.position_sizing import effective_position_notional_pct
+                # BUG FIX (2026-07-30): Must use alloc_config multipliers (stock=1.0, etf=1.0)
+                # not the legacy effective_position_notional_pct() which bakes in
+                # STOCK_POSITION_SIZE_MULTIPLIER=0.5 → gives half the real limit (e.g. $39K vs $78K).
+                # This mismatch caused all existing-position BUYs to be blocked with
+                # allocation_blocked even though the executor would size them correctly.
                 is_etf = o.symbol in ETF_SYMBOLS
-                position_limit_pct = effective_position_notional_pct(o.symbol)
+                _base_pct = float(_ALLOC_CONFIG.stock_new_buy_multiplier if not is_etf else _ALLOC_CONFIG.etf_new_buy_multiplier)
+                position_limit_pct = DEFAULT_MAX_POSITION_NOTIONAL_PCT * _base_pct
                 max_position_value = equity * position_limit_pct
                 
                 # Get estimated order value
