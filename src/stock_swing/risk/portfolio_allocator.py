@@ -242,6 +242,12 @@ class PortfolioAllocator:
         blocked_unknown = 0
         blocked_band = 0
 
+        # FIX-ALLOC-5: running_positions accumulates accepted BUY notionals
+        # within this run so that a second BUY cannot push over the band even
+        # if the first BUY has not yet settled into current_positions.
+        # We work on a shallow copy so broker current_positions stay immutable.
+        running_positions: Dict[str, Any] = dict(current_positions)
+
         for d in buy_decisions:
             symbol: str = d.proposed_order.symbol
 
@@ -255,11 +261,11 @@ class PortfolioAllocator:
                 )
                 continue
 
-            # --- Rule 2: projected band check ---
+            # --- Rule 2: projected band check (uses running_positions, not just broker) ---
+            notional: float = 0.0
             if equity and equity > 0:
-                notional = getattr(d.proposed_order, "notional", None)
-                if notional is None:
-                    # Estimate from qty × current_price if available
+                notional_raw = getattr(d.proposed_order, "notional", None)
+                if notional_raw is None:
                     qty = getattr(d.proposed_order, "quantity", None) or getattr(d.proposed_order, "qty", 0) or 0
                     price = getattr(d.proposed_order, "limit_price", None) or getattr(d.proposed_order, "price", 0) or 0
                     if float(price) <= 0:
@@ -269,19 +275,32 @@ class PortfolioAllocator:
                             symbol,
                         )
                         continue
-                    notional = float(qty) * float(price)
+                    notional_raw = float(qty) * float(price)
+                notional = float(notional_raw)
 
                 if notional > 0:
-                    band_result = self.check_projected_band(symbol, notional, current_positions, equity)
+                    band_result = self.check_projected_band(symbol, notional, running_positions, equity)
                     if not band_result.allowed:
                         blocked_band += 1
                         logger.info(
-                            "PortfolioAllocator: blocking BUY %s – %s",
+                            "PortfolioAllocator: blocking BUY %s – %s (cumulative projection)",
                             symbol, band_result.reason,
                         )
                         continue
 
             filtered_buys.append(d)
+
+            # FIX-ALLOC-5: Add accepted BUY notional to running_positions
+            # so the next iteration sees the projected exposure.
+            if notional > 0:
+                sym_upper = symbol.upper()
+                existing = running_positions.get(sym_upper, {})
+                existing_mv = float(existing.get("market_value", 0))
+                running_positions[sym_upper] = {
+                    **existing,
+                    "market_value": existing_mv + notional,
+                    "_projected": True,  # flag: not yet broker-confirmed
+                }
 
         if blocked_unknown:
             logger.warning(

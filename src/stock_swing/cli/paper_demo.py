@@ -2225,18 +2225,64 @@ def main() -> int:  # noqa: C901
 
     audit_log.log_system_event("paper_demo_complete", details=f"decisions={len(decisions)} submitted={len(submissions)}")
 
-    # R0-v2-D: join coverage report (decision -> order -> trade)
+    # FIX-P6-6 / R0-v2-D: join coverage report (decision -> order -> trade)
+    # Write to file every run so health dashboard can track coverage over time.
     try:
         _closed = [t for t in pnl_tracker.state.trades if t.get("status") == "closed"]
-        _with_run_id = [t for t in _closed if t.get("run_id")]
-        _with_exp_id = [t for t in _closed if t.get("experiment_id")]
-        _join_pct = round(len(_with_run_id) / len(_closed) * 100, 1) if _closed else 0.0
+        # Separate legacy (pre-fix epoch) from post-fix epoch trades
+        _post_fix_epoch = "2026-07-29"  # Batch A/B fix date
+        _post_epoch = [t for t in _closed if str(t.get("entry_time", ""))[:10] >= _post_fix_epoch]
+        _legacy     = [t for t in _closed if str(t.get("entry_time", ""))[:10] < _post_fix_epoch]
+
+        def _cov(trades: list) -> dict:
+            n = len(trades)
+            if n == 0:
+                return {"n": 0, "run_id_pct": None, "exp_id_pct": None, "cfg_hash_pct": None}
+            return {
+                "n": n,
+                "run_id_pct":   round(sum(1 for t in trades if t.get("run_id")) / n * 100, 1),
+                "exp_id_pct":   round(sum(1 for t in trades if t.get("experiment_id")) / n * 100, 1),
+                "cfg_hash_pct": round(sum(1 for t in trades if t.get("config_hash")) / n * 100, 1),
+            }
+
+        _jc_all    = _cov(_closed)
+        _jc_post   = _cov(_post_epoch)
+        _jc_legacy = _cov(_legacy)
+
+        # This-run decisions coverage
+        _run_decisions = decisions
+        _rd_run_id = sum(1 for d in _run_decisions if getattr(d, "run_id", None))
+        _rd_exp_id = sum(1 for d in _run_decisions if getattr(d, "experiment_id", None))
+        _rd_cfg    = sum(1 for d in _run_decisions if getattr(d, "config_hash", None))
+        _rd_n = max(len(_run_decisions), 1)
+
+        _join_report = {
+            "run_id": run_context.run_id,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "post_fix_epoch": _post_fix_epoch,
+            "all_closed": _jc_all,
+            "post_epoch_closed": _jc_post,
+            "legacy_closed": _jc_legacy,
+            "this_run_decisions": {
+                "n": len(_run_decisions),
+                "run_id_pct":   round(_rd_run_id / _rd_n * 100, 1),
+                "exp_id_pct":   round(_rd_exp_id / _rd_n * 100, 1),
+                "cfg_hash_pct": round(_rd_cfg / _rd_n * 100, 1),
+            },
+        }
+
+        _jr_path = project_root / "data" / "audits" / "p6_join_coverage.json"
+        _jr_path.parent.mkdir(parents=True, exist_ok=True)
+        _jr_path.write_text(json.dumps(_join_report, ensure_ascii=False, indent=2), encoding="utf-8")
+
         logger.info(
-            "R0-v2-D join_coverage: closed=%d run_id=%d(%.1f%%) exp_id=%d",
-            len(_closed), len(_with_run_id), _join_pct, len(_with_exp_id),
+            "P6 join_coverage: all_closed=%d run_id=%.1f%% | post_epoch=%d run_id=%.1f%% | this_run decisions=%d run_id=%.1f%%",
+            _jc_all["n"], _jc_all["run_id_pct"] or 0,
+            _jc_post["n"], _jc_post["run_id_pct"] or 0,
+            len(_run_decisions), _join_report["this_run_decisions"]["run_id_pct"],
         )
-    except Exception:
-        pass
+    except Exception as _jc_exc:
+        logger.warning("P6 join_coverage report failed: %s", _jc_exc)
 
     _print_summary(decisions, submissions, equity, args.dry_run)
     from stock_swing.reporting.console_summary import ConsoleSummary
