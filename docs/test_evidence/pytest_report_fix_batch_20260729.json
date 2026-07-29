@@ -1,0 +1,9 @@
+{
+  "status": "ok",
+  "passed": 1118,
+  "skipped": 2,
+  "xfailed": 0,
+  "warnings": 1,
+  "duration_seconds": 7.68,
+  "note": "pytest-json-report plugin unavailable; generated summary JSON from captured pytest output"
+}
