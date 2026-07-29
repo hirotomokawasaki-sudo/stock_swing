@@ -46,8 +46,9 @@ from console.services.guardrail_service import get_guardrail_status
 from console.services.performance_breakdown_service import get_performance_breakdown
 from console.services.position_risk_service import get_open_position_risk
 
-HOST = "0.0.0.0"
+HOST = "127.0.0.1"
 PORT = int(os.environ.get("CONSOLE_PORT", "3333"))
+WRITE_ENDPOINTS_ENABLED = os.environ.get("CONSOLE_WRITE_ENABLED", "false").lower() == "true"
 
 # Initialize services
 dashboard = DashboardService(PROJECT_ROOT)
@@ -477,6 +478,12 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         """Handle POST requests."""
         u = urlparse(self.path)
         p = u.path
+
+        if not WRITE_ENDPOINTS_ENABLED:
+            return self._json({
+                "error": "Write endpoints disabled",
+                "note": "Set CONSOLE_WRITE_ENABLED=true to enable (local use only)",
+            }, status=403)
         
         # T12: Apply parameter change
         if p.startswith("/api/parameters/") and p.endswith("/apply"):
