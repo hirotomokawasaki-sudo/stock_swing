@@ -61,7 +61,8 @@ emergency_stop_bypass_pct: -0.12  # -12%以下の大幅損失は min_hold を迂
 #   min_hold_days: 当該 tier での最低保有営業日数
 # エントリは threshold_pct 降順で評価され、最初にマッチした tier が採用される。
 # どの tier にもマッチしない（loss >= -8%）場合は base min_hold_days (1日) を使用。
-tiered_min_hold_enabled: true
+tiered_min_hold_enabled: false
+tiered_min_hold_disable_reason: "FIX-007: 7d tier unreachable (return > -5% impossible when stop triggers at <= -5%)"
 tiered_min_hold_levels:
   - threshold_pct: -5.0   # return > -5%:  ノイズ域    → 7日様子見
     min_hold_days: 7
