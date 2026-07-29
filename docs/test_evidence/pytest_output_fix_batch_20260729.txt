@@ -20,4 +20,4 @@ tests/unit/test_source_base.py:14
     class TestSourceClient(SourceClient):
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-1118 passed, 2 skipped, 1 warning in 7.68s
+1118 passed, 2 skipped, 1 warning in 8.39s
