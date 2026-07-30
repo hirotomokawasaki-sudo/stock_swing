@@ -167,3 +167,131 @@ def test_paper_demo_halts_buy_when_day_start_missing(monkeypatch, tmp_path, caps
     assert exit_code == 1
     assert summary["status"] == "error"
     assert breaker["status"] == "halted"
+
+
+
+# --- Coverage補強: day_start_snapshot の主要パス ---
+from stock_swing.guardrails.day_start_snapshot import (
+    DayStartSnapshot,
+    get_prev_unrealized_for_guardrail,
+)
+
+
+def test_day_start_snapshot_is_valid_for_market_date_same_date():
+    snap = DayStartSnapshot(
+        market_date="2026-07-30",
+        captured_at="2026-07-30T13:00:00+00:00",
+        source="broker_api",
+        day_start_equity=1000000.0,
+        day_start_unrealized=-500.0,
+    )
+    assert snap.is_valid_for_market_date("2026-07-30") is True
+
+
+def test_day_start_snapshot_is_valid_for_market_date_mismatch():
+    snap = DayStartSnapshot(
+        market_date="2026-07-29",
+        captured_at="2026-07-29T13:00:00+00:00",
+        source="broker_api",
+        day_start_equity=1000000.0,
+        day_start_unrealized=-500.0,
+    )
+    assert snap.is_valid_for_market_date("2026-07-30") is False
+
+
+def test_day_start_snapshot_validation_errors_fully_populated():
+    snap = DayStartSnapshot(
+        market_date="2026-07-30",
+        captured_at="2026-07-30T13:00:00+00:00",
+        source="broker_api",
+        day_start_equity=1000000.0,
+        day_start_unrealized=-500.0,
+    )
+    assert snap.validation_errors("2026-07-30") == []
+
+
+def test_day_start_snapshot_validation_errors_equity_none():
+    snap = DayStartSnapshot(
+        market_date="2026-07-30",
+        captured_at="2026-07-30T13:00:00+00:00",
+        source="broker_api",
+        day_start_equity=None,
+        day_start_unrealized=-500.0,
+    )
+    assert "day_start_equity" in snap.validation_errors("2026-07-30")
+
+
+def test_day_start_snapshot_validation_errors_stale_date():
+    snap = DayStartSnapshot(
+        market_date="2026-07-29",
+        captured_at="2026-07-29T13:00:00+00:00",
+        source="broker_api",
+        day_start_equity=1000000.0,
+        day_start_unrealized=-500.0,
+    )
+    assert "market_date" in snap.validation_errors("2026-07-30")
+
+
+def test_get_prev_unrealized_returns_value_when_snapshot_valid(tmp_path):
+    """get_prev_unrealized_for_guardrail returns unrealized pnl from existing snapshot."""
+    import json as _json
+    (tmp_path / "data" / "guardrails").mkdir(parents=True)
+    snap_data = {
+        "market_date": "2026-07-30",
+        "captured_at": "2026-07-30T13:00:00+00:00",
+        "source": "broker_api",
+        "day_start_equity": 1000000.0,
+        "day_start_unrealized": -750.0,
+        "missing_fields": [],
+    }
+    (tmp_path / "data" / "guardrails" / "day_start_snapshot.json").write_text(_json.dumps(snap_data))
+    value, missing = get_prev_unrealized_for_guardrail(
+        tmp_path, market_date="2026-07-30"
+    )
+    assert value == -750.0
+    assert missing == []
+
+
+def test_get_prev_unrealized_returns_missing_when_no_snapshot(tmp_path):
+    """get_prev_unrealized_for_guardrail reports missing fields when snapshot absent."""
+    value, missing = get_prev_unrealized_for_guardrail(
+        tmp_path, market_date="2026-07-30"
+    )
+    assert len(missing) > 0
+
+
+# --- risk_snapshot coverage補強 ---
+from stock_swing.guardrails.risk_snapshot import build_risk_snapshot
+
+
+def test_build_risk_snapshot_equity_none_adds_missing():
+    """equity=None adds 'equity' to missing_metrics."""
+    snap = build_risk_snapshot(
+        equity=None,
+        unrealized_pnl=-500.0,
+        prev_unrealized_pnl=-400.0,
+        trades=[],
+    )
+    assert "equity" in snap.missing_metrics
+
+
+def test_build_risk_snapshot_unrealized_none_adds_missing():
+    """prev_unrealized_pnl=None adds day_start_unrealized to missing."""
+    snap = build_risk_snapshot(
+        equity=1_000_000.0,
+        unrealized_pnl=-500.0,
+        prev_unrealized_pnl=None,
+        trades=[],
+    )
+    assert "day_start_unrealized" in snap.missing_metrics
+
+
+def test_build_risk_snapshot_all_present_no_missing():
+    """All required fields present → no missing_metrics."""
+    snap = build_risk_snapshot(
+        equity=1_000_000.0,
+        unrealized_pnl=-500.0,
+        prev_unrealized_pnl=-400.0,
+        trades=[],
+    )
+    assert snap.missing_metrics == []

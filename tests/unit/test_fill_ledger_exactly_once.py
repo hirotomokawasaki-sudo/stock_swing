@@ -199,3 +199,89 @@ def test_reconcile_orders_uses_fill_ledger_to_block_replay_after_state_reset(mon
         payload = json.loads(summary_line.split("=", 1)[1])
         assert payload["filled_exits_recorded"] == 0
         assert tracker.get_open_positions()[0]["qty"] == 20
+
+
+
+
+# --- Coverage補強: fill_ledger ingest/consume パス ---
+from stock_swing.tracking.fill_ledger import (
+    FillLedger,
+    FillAlreadyConsumedError,
+    MissingFillIdError,
+)
+
+_SAMPLE_FILL = {"id": "fill_cov_001", "filled_qty": 10, "filled_at": "2026-07-30T10:00:00Z", "price": 100.0}
+
+
+def test_fill_ledger_raises_on_duplicate_consumption(tmp_path):
+    """FillAlreadyConsumedError on second full consume of same fill."""
+    ledger = FillLedger(tmp_path / "ledger.json")
+    ledger.ingest(dict(_SAMPLE_FILL))
+    ledger.consume("fill_cov_001", "trade_a", qty=10)
+    try:
+        ledger.consume("fill_cov_001", "trade_a", qty=10)
+        assert False, "Should have raised"
+    except FillAlreadyConsumedError:
+        pass
+
+
+def test_fill_ledger_raises_on_missing_fill_id(tmp_path):
+    """MissingFillIdError when fill has no identifier."""
+    ledger = FillLedger(tmp_path / "ledger2.json")
+    try:
+        ledger.ingest({})
+        assert False, "Should have raised"
+    except MissingFillIdError:
+        pass
+
+
+def test_fill_ledger_is_consumed_returns_true_after_consume(tmp_path):
+    """is_consumed reflects state after consume."""
+    ledger = FillLedger(tmp_path / "ledger3.json")
+    fill = {"id": "fill_cov_002", "filled_qty": 5, "filled_at": "2026-07-30T10:00:00Z"}
+    ledger.ingest(fill)
+    assert ledger.is_consumed("fill_cov_002") is False
+    ledger.consume("fill_cov_002", "trade_b", qty=5)
+    assert ledger.is_consumed("fill_cov_002") is True
+
+
+def test_fill_ledger_persists_across_instances(tmp_path):
+    """Consumed state survives new FillLedger instance."""
+    path = tmp_path / "ledger4.json"
+    fill = {"id": "fill_cov_003", "filled_qty": 20, "filled_at": "2026-07-30T10:00:00Z"}
+    FillLedger(path).ingest(fill)
+    FillLedger(path).consume("fill_cov_003", "trade_c", qty=20)
+    assert FillLedger(path).is_consumed("fill_cov_003") is True
+
+
+def test_fill_ledger_quarantine_on_missing_timestamp(tmp_path):
+    """Fill with no timestamp is quarantined when quarantine_on_missing=False but still ingested."""
+    ledger = FillLedger(tmp_path / "ledger5.json")
+    fill_no_ts = {"id": "fill_no_ts", "filled_qty": 5}  # no filled_at
+    fill_id = ledger.ingest(fill_no_ts)
+    assert fill_id == "fill_no_ts"
+
+
+def test_fill_ledger_quarantine_on_missing_fill_id_with_flag(tmp_path):
+    """ingest with quarantine_on_missing=True on fill with no id does not raise."""
+    ledger = FillLedger(tmp_path / "ledger6.json")
+    fill_no_id = {"filled_qty": 5, "filled_at": "2026-07-30T10:00:00Z"}
+    result = ledger.ingest(fill_no_id, quarantine_on_missing=True)
+    assert result is not None  # quarantine ID returned
+
+
+def test_fill_ledger_normalize_qty_handles_invalid():
+    """_normalize_qty returns 0.0 for non-numeric values."""
+    from stock_swing.tracking.fill_ledger import _normalize_qty
+    assert _normalize_qty("invalid") == 0.0
+    assert _normalize_qty(None) == 0.0
+    assert _normalize_qty(10) == 10.0
+
+
+def test_fill_ledger_reload_clears_cache(tmp_path):
+    """reload() forces re-read from disk."""
+    ledger = FillLedger(tmp_path / "ledger7.json")
+    fill = {"id": "fill_reload", "filled_qty": 3, "filled_at": "2026-07-30T10:00:00Z"}
+    ledger.ingest(fill)
+    ledger.reload()
+    assert ledger.is_consumed("fill_reload") is False

@@ -1,0 +1,10 @@
+{
+  "clean_epoch_id": "clean_epoch_20260730_014631",
+  "created_at_utc": "2026-07-30T01:46:31.571534+00:00",
+  "baseline_commit": "3b5cb97",
+  "remediation_commit": "809a17f",
+  "legacy_cutoff_note": "Trades prior to this epoch are legacy_untrusted and read-only",
+  "status": "active",
+  "new_buy_enabled": false,
+  "description": "Clean epoch started after remediation bundle 20260730 Phase 0-7 implementation"
+}

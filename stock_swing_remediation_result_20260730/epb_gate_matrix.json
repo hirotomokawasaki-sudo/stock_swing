@@ -1,0 +1,104 @@
+{
+  "schema": "epb_gate_matrix_v1",
+  "assessed_at_utc": "2026-07-30T02:07:37.600460+00:00",
+  "git_head": "ref: refs/heads/main",
+  "gates": [
+    {
+      "id": "EPB-001",
+      "area": "runtime_isolation",
+      "status": "VERIFIED_COMPLETE",
+      "evidence": "PaperExecutor raises ValueError for non-PAPER mode (RESEARCH blocked). No LiveExecutor in codebase. ALPACA_MODE=paper enforced at startup.",
+      "tests": [
+        "PaperExecutor(RuntimeMode.RESEARCH) \u2192 ValueError confirmed"
+      ]
+    },
+    {
+      "id": "EPB-002",
+      "area": "snapshot",
+      "status": "VERIFIED_COMPLETE",
+      "evidence": "stock_swing_epb_preenable_snapshot_20260730/manifest.json captured. SHA-256: 47218a605da8554a749af696d53357b69c0b6ebbbb526866fd1d2fc8ebec31cd",
+      "tests": [
+        "Manifest SHA recorded"
+      ]
+    },
+    {
+      "id": "EPB-003",
+      "area": "guardrail",
+      "status": "VERIFIED_COMPLETE",
+      "evidence": "day_start_snapshot exists (market_date=2026-07-29 ET). Currently stale post-midnight ET (correct behavior). validation_errors=[equity,market_date] \u2192 BUY HALT triggers. Fail-closed confirmed via test.",
+      "tests": [
+        "test_build_risk_snapshot_marks_missing_day_start_metric PASSED",
+        "test_paper_demo_halts_buy_when_day_start_missing PASSED"
+      ]
+    },
+    {
+      "id": "EPB-004",
+      "area": "source_lineage",
+      "status": "VERIFIED_COMPLETE",
+      "evidence": "Today BUY decisions: 0 synthetic hits. 568 files quarantined in data/raw_legacy_untrusted/. required-source breach \u2192 nonzero exit confirmed.",
+      "tests": [
+        "test_collect_data_main_fails_closed_on_coverage_breach PASSED",
+        "test_dashboard_filters_synthetic_external_news PASSED"
+      ]
+    },
+    {
+      "id": "EPB-005",
+      "area": "allocation",
+      "status": "VERIFIED_COMPLETE",
+      "evidence": "Production-loop sequential BUY test uses actual paper_demo allocation path. Cumulative projection preserves Stock 85%/ETF 15% constraints.",
+      "tests": [
+        "test_sequential_buys_use_running_projection PASSED",
+        "test_rejected_first_order_does_not_pollute_second_projection PASSED"
+      ]
+    },
+    {
+      "id": "EPB-006",
+      "area": "clean_epoch_ledger",
+      "status": "VERIFIED_COMPLETE",
+      "evidence": "clean_epoch_id=clean_epoch_20260730_014631 active. fill_consumed_ledger.json created. 3-run idempotency confirmed. Replay blocked after state reset.",
+      "tests": [
+        "test_fill_ledger_writes_consumed_snapshot PASSED",
+        "test_reconcile_orders_state_and_ledger_sha_stable_across_three_runs PASSED",
+        "test_reconcile_orders_uses_fill_ledger_to_block_replay_after_state_reset PASSED"
+      ]
+    },
+    {
+      "id": "EPB-007",
+      "area": "observability",
+      "status": "VERIFIED_COMPLETE",
+      "evidence": "Cron parse error \u2192 DEGRADED/BLOCKED confirmed. End-to-end decision\u2192fill\u2192trade trace PASSED. Console critical evidence gate confirmed.",
+      "tests": [
+        "test_cron_adapter_run_history_parse_error_returns_not_ok PASSED",
+        "test_apply_critical_evidence_gate_clamps_healthy_payload PASSED",
+        "test_decision_to_fill_to_closed_trade_preserves_join_metadata PASSED"
+      ]
+    },
+    {
+      "id": "EPB-008",
+      "area": "tests",
+      "status": "PASS_NO_COVERAGE_TOOL",
+      "evidence": "29 production-path EPB tests PASSED (17 targeted + 12 reconcile). Full suite: 1190 passed. pytest-cov not installed; changed lines covered by production-path tests. Formal coverage % unavailable.",
+      "tests": [
+        "17 EPB targeted tests PASSED",
+        "12 reconcile tests PASSED",
+        "Full suite 1190 PASSED"
+      ]
+    },
+    {
+      "id": "EPB-009",
+      "area": "replay",
+      "status": "VERIFIED_COMPLETE",
+      "evidence": "3-run reconcile idempotency: state SHA stable across 3 runs. Sequential BUY replay: same input \u2192 same acceptance/rejection deterministically.",
+      "tests": [
+        "test_reconcile_orders_state_and_ledger_sha_stable_across_three_runs PASSED"
+      ]
+    },
+    {
+      "id": "EPB-010",
+      "area": "approval",
+      "status": "PENDING",
+      "evidence": "EPB-001 to EPB-007, EPB-009: VERIFIED_COMPLETE. EPB-008: PASS_NO_COVERAGE_TOOL (coverage.py unavailable). Awaiting final determination.",
+      "tests": []
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "type": "epb_preenable_snapshot",
+  "as_of_utc": "2026-07-30T02:04:31.735778+00:00",
+  "git_head": "809a17f7548f135f42d2433246e37ad2e571516b",
+  "git_branch": "main",
+  "clean_epoch_id": "clean_epoch_20260730_014631",
+  "pnl_state_sha256": "d7a4b44db0ee3ba3e3a2babbd9ad88257e8fcb3f75eee9c5f6f27a1f778f6c7a",
+  "fill_ledger_sha256": "8da0ffb09576311f330b5d803917e60b521f5ed1c4cafe50158186edc77559b3",
+  "runtime_mode": "paper",
+  "new_buy_enabled": false,
+  "operation": "exit_only_pre_enable"
+}
