@@ -27,6 +27,80 @@ from stock_swing.sources.retry import RetryConfig
 
 
 DEFAULT_SYMBOLS = "NVDA,MSFT,GOOGL,AMZN,META,TSLA,AVGO,AMD,TSM,ASML,INTC,MU,ARM,AMAT,LRCX,KLAC,QCOM,MRVL,PLTR,ADBE,CRM,ORCL,NOW,SNOW,MDB,DDOG,PATH,FICO,SMCI,PANW,CRWD,FTNT,ANET,CSCO,IBM,HPE,DELL,HPQ,SNPS,CDNS,V,MA,INTU,NBIS,CRDO,RBRK,CIEN,SHOC,SOXQ,SOXX,SMH,FTXL,PTF,SMHX,FRWD,TTEQ,GTOP,CHPX,CHPS,PSCT,QTEC,TDIV,SKYY,QTUM"
+_REQUIRED_FINNHUB_COVERAGE = 0.995
+
+
+def _load_json(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _evaluate_required_source_failures(project_root: Path, source: str, written: list[str], timed_out: bool = False) -> list[str]:
+    failures: list[str] = []
+
+    if source == "finnhub":
+        status_path = project_root / "data" / "audits" / "news_collection_status.json"
+        if not written:
+            failures.append("0 snapshots written")
+        if timed_out:
+            failures.append("collector timed out")
+        if not status_path.exists():
+            failures.append("missing news_collection_status.json")
+            return failures
+        try:
+            status = _load_json(status_path)
+        except Exception as exc:
+            failures.append(f"invalid status json: {exc}")
+            return failures
+
+        rows = list(status.get("symbols") or [])
+        ok_rows = sum(
+            1
+            for row in rows
+            if row.get("news_count", 0) > 0
+            and not row.get("used_fallback")
+            and str(row.get("reason") or "ok") == "ok"
+        )
+        coverage = (ok_rows / len(rows)) if rows else 0.0
+        bad_reasons = sorted(
+            {
+                str(row.get("reason") or "unknown")
+                for row in rows
+                if str(row.get("reason") or "ok") != "ok" or int(row.get("news_count", 0) or 0) <= 0
+            }
+        )
+        if coverage < _REQUIRED_FINNHUB_COVERAGE:
+            failures.append(
+                f"coverage breach {coverage:.3%} < {_REQUIRED_FINNHUB_COVERAGE:.1%}"
+            )
+        if status.get("timed_out"):
+            failures.append("status file reports timeout")
+        failures.extend(f"row_failure:{reason}" for reason in bad_reasons)
+        return failures
+
+    status_candidates = [
+        project_root / "data" / "audits" / f"{source}_collection_status.json",
+        project_root / "data" / "audits" / f"{source}_quotes_status.json",
+        project_root / "data" / "audits" / f"{source}_bars_status.json",
+    ]
+    existing = [path for path in status_candidates if path.exists()]
+    if not existing:
+        if not written:
+            failures.append("0 snapshots written")
+        failures.append("missing source status files")
+        return failures
+
+    if not written:
+        failures.append("0 snapshots written")
+    for path in existing:
+        try:
+            data = _load_json(path)
+        except Exception as exc:
+            failures.append(f"{path.name}: invalid status json: {exc}")
+            continue
+        status = str(data.get("status") or "unknown")
+        if status != "ok":
+            failures.append(f"{path.name}: status={status}")
+    return failures
 
 
 def main():
@@ -123,24 +197,43 @@ def main():
             written.extend(source_written)
             timed_out = timed_out or source_timed_out
             # Finnhub is required; zero snapshots = failure
-            if _is_required(source) and not source_written:
-                required_failures.append(f"{source}: 0 snapshots written (possible API failure)")
+            if _is_required(source):
+                for failure in _evaluate_required_source_failures(
+                    project_root,
+                    source,
+                    source_written,
+                    timed_out=source_timed_out,
+                ):
+                    required_failures.append(f"{source}: {failure}")
         elif source == "fred":
             if _is_not_implemented(source):
                 degraded_sources.append("fred:not_implemented")
             else:
-                written.extend(collect_fred(store))
+                source_written = collect_fred(store)
+                written.extend(source_written)
+                if _is_required(source):
+                    for failure in _evaluate_required_source_failures(project_root, source, source_written):
+                        required_failures.append(f"{source}: {failure}")
         elif source == "sec":
             if _is_not_implemented(source):
                 degraded_sources.append("sec:not_implemented")
             else:
-                written.extend(collect_sec(symbols, store))
+                source_written = collect_sec(symbols, store)
+                written.extend(source_written)
+                if _is_required(source):
+                    for failure in _evaluate_required_source_failures(project_root, source, source_written):
+                        required_failures.append(f"{source}: {failure}")
         elif source == "broker":
             if _is_not_implemented(source):
                 degraded_sources.append("broker:not_implemented")
             else:
-                written.extend(collect_broker(symbols, store))
-                written.extend(collect_broker_bars(symbols, store))
+                source_written = []
+                source_written.extend(collect_broker(symbols, store))
+                source_written.extend(collect_broker_bars(symbols, store))
+                written.extend(source_written)
+                if _is_required(source):
+                    for failure in _evaluate_required_source_failures(project_root, source, source_written):
+                        required_failures.append(f"{source}: {failure}")
         elif source == "massive":
             written.extend(collect_massive(symbols, store, days=args.days, timeframe=args.timeframe))
         else:
@@ -160,7 +253,7 @@ def main():
         for _rf in required_failures:
             print(f"❌ REQUIRED SOURCE FAILURE: {_rf}", file=sys.stderr)
 
-    _overall_status = "ok" if not required_failures else "failed"
+    _overall_status = "failed" if required_failures else ("degraded" if degraded_sources else "ok")
     if args.cron_summary_json:
         emit_cron_summary({
             "job": "collect_data",
