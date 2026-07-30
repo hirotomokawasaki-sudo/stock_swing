@@ -13,6 +13,16 @@ ROOT = Path(__file__).resolve().parents[1]
 SKIP_DIRS = {
     ".git", ".venv", "venv", "__pycache__", ".pytest_cache",
     "data/raw", "data/news", "data/archive",
+    # Codex review export bundles: contain redacted keys and test fixtures
+    # that intentionally include fake secret patterns.
+    "stock_swing_codex_review_export_",
+    "stock_swing_codex_recurring_review_export_",
+    "stock_swing_post_fix_retest_export_",
+    "stock_swing_post_fix_retest_",
+    "stock_swing_review_mail_safe_",
+    "stock_swing_remediation_snapshot_",
+    "stock_swing_remediation_result_",
+    "stock_swing_epb_preenable_snapshot_",
 }
 SKIP_EXTENSIONS = {".pyc", ".pyo", ".png", ".jpg", ".jpeg", ".gif", ".zip"}
 SKIP_FILES = {
@@ -30,6 +40,7 @@ PATTERNS = [
 SAFE_MARKERS = {
     "***REDACTED***",
     "<masked>",
+    "[REDACTED]",   # env_keys.txt / export redaction format
     "your-api-key",
     "your-secret",
     "your-alpaca-api-key",
