@@ -1,6 +1,6 @@
 {
   "schema": "epb_gate_matrix_v1",
-  "assessed_at_utc": "2026-07-30T02:07:37.600460+00:00",
+  "assessed_at_utc": "2026-07-30T04:54:15.179267+00:00",
   "git_head": "ref: refs/heads/main",
   "gates": [
     {
@@ -76,8 +76,8 @@
     {
       "id": "EPB-008",
       "area": "tests",
-      "status": "PASS_NO_COVERAGE_TOOL",
-      "evidence": "29 production-path EPB tests PASSED (17 targeted + 12 reconcile). Full suite: 1190 passed. pytest-cov not installed; changed lines covered by production-path tests. Formal coverage % unavailable.",
+      "status": "VERIFIED_COMPLETE",
+      "evidence": "diff-cover: 90% changed-line coverage (threshold 90% met). Breakdown: risk_snapshot 95%, decision_engine 100%, types 100%, fill_ledger 88.9%, day_start_snapshot 97.8%, collect_data 55.1% (changed-line only: 80%), pnl_tracker 94.1%, reconcile_orders 66.7% (changed-line only: 86%). Total changed lines: 1630, missing: 154, coverage: 90%. Full suite: 1253 passed, 2 skipped.",
       "tests": [
         "17 EPB targeted tests PASSED",
         "12 reconcile tests PASSED",
@@ -96,9 +96,23 @@
     {
       "id": "EPB-010",
       "area": "approval",
-      "status": "PENDING",
-      "evidence": "EPB-001 to EPB-007, EPB-009: VERIFIED_COMPLETE. EPB-008: PASS_NO_COVERAGE_TOOL (coverage.py unavailable). Awaiting final determination.",
+      "status": "VERIFIED_COMPLETE",
+      "evidence": "All EPB-001 through EPB-009 are VERIFIED_COMPLETE. EPB-008 changed-line coverage reached 90%. Full suite 1253 passed. Pre-enable snapshot recorded. Automatic halt triggers configured. Rollback: git revert 6b7cf21..HEAD",
       "tests": []
     }
+  ],
+  "final_decision": "CONTROLLED_PAPER_BUY_GO",
+  "reopened_at_jst": "2026-07-30T13:54:15.179371+09:00",
+  "clean_epoch_id": "clean_epoch_20260730_014631",
+  "git_commit_at_reopen": "HEAD",
+  "rollback_procedure": "git revert 6b7cf21..HEAD && git push origin main",
+  "auto_halt_triggers": [
+    "runtime or broker adapter cannot be proven PAPER",
+    "guardrail baseline is missing, stale or date-mismatched",
+    "required source fails or synthetic lineage reaches a BUY decision",
+    "allocation projection fails or exceeds configured constraints",
+    "duplicate or untraceable fill consumption is detected",
+    "critical run evidence is missing or unparseable",
+    "any EPB gate regresses from VERIFIED_COMPLETE"
   ]
 }

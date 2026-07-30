@@ -295,3 +295,148 @@ def test_build_risk_snapshot_all_present_no_missing():
         trades=[],
     )
     assert snap.missing_metrics == []
+
+
+# --- day_start_snapshot カバレッジ補強 ---
+from stock_swing.guardrails.day_start_snapshot import (
+    load_snapshot,
+    capture_snapshot,
+    load_or_capture_day_start,
+    DayStartMissingError,
+    current_market_date,
+)
+
+
+def test_current_market_date_is_string():
+    """current_market_date() returns a YYYY-MM-DD string."""
+    result = current_market_date()
+    assert len(result) == 10 and result[4] == "-" and result[7] == "-"
+
+
+def test_day_start_snapshot_to_dict():
+    """to_dict() returns a serialisable mapping."""
+    snap = DayStartSnapshot(
+        market_date="2026-07-30",
+        captured_at="2026-07-30T13:00:00+00:00",
+        source="broker_api",
+        day_start_equity=1_000_000.0,
+        day_start_unrealized=-500.0,
+    )
+    d = snap.to_dict()
+    assert d["market_date"] == "2026-07-30"
+    assert d["day_start_equity"] == 1_000_000.0
+
+
+def test_day_start_snapshot_validation_errors_missing_source():
+    """validation_errors includes 'source' when source is empty."""
+    snap = DayStartSnapshot(
+        market_date="2026-07-30",
+        captured_at="2026-07-30T13:00:00+00:00",
+        source="",
+        day_start_equity=1_000_000.0,
+        day_start_unrealized=-500.0,
+    )
+    assert "source" in snap.validation_errors("2026-07-30")
+
+
+def test_day_start_snapshot_validation_errors_missing_captured_at():
+    """validation_errors includes 'captured_at' when empty."""
+    snap = DayStartSnapshot(
+        market_date="2026-07-30",
+        captured_at="",
+        source="broker_api",
+        day_start_equity=1_000_000.0,
+        day_start_unrealized=-500.0,
+    )
+    assert "captured_at" in snap.validation_errors("2026-07-30")
+
+
+def test_day_start_snapshot_validation_errors_unrealized_none():
+    """validation_errors includes day_start_unrealized when unrealized is None."""
+    snap = DayStartSnapshot(
+        market_date="2026-07-30",
+        captured_at="2026-07-30T13:00:00+00:00",
+        source="broker_api",
+        day_start_equity=1_000_000.0,
+        day_start_unrealized=None,
+    )
+    assert "day_start_unrealized" in snap.validation_errors("2026-07-30")
+
+
+def test_load_snapshot_returns_none_when_missing(tmp_path):
+    """load_snapshot returns None when file does not exist."""
+    result = load_snapshot(tmp_path)
+    assert result is None
+
+
+def test_load_snapshot_returns_none_on_corrupt_json(tmp_path):
+    """load_snapshot returns None when JSON is invalid."""
+    snap_dir = tmp_path / "data" / "guardrails"
+    snap_dir.mkdir(parents=True)
+    (snap_dir / "day_start_snapshot.json").write_text("{invalid json}")
+    result = load_snapshot(tmp_path)
+    assert result is None
+
+
+def test_load_snapshot_returns_snapshot_when_valid(tmp_path):
+    """load_snapshot correctly deserialises a valid snapshot file."""
+    snap_dir = tmp_path / "data" / "guardrails"
+    snap_dir.mkdir(parents=True)
+    data = {
+        "market_date": "2026-07-30",
+        "captured_at": "2026-07-30T13:00:00+00:00",
+        "source": "broker_api",
+        "day_start_equity": 1_000_000.0,
+        "day_start_unrealized": -500.0,
+        "missing_fields": [],
+    }
+    (snap_dir / "day_start_snapshot.json").write_text(json.dumps(data))
+    result = load_snapshot(tmp_path)
+    assert result is not None
+    assert result.day_start_equity == 1_000_000.0
+
+
+def test_load_or_capture_raises_when_missing_and_not_allowed(tmp_path):
+    """load_or_capture_day_start raises DayStartMissingError when snapshot missing."""
+    try:
+        load_or_capture_day_start(
+            tmp_path,
+            equity=None,
+            unrealized_pnl=None,
+            source="",
+            allow_missing=False,
+            market_date="2026-07-30",
+        )
+        assert False, "Should have raised DayStartMissingError"
+    except DayStartMissingError:
+        pass
+
+
+def test_load_or_capture_returns_snapshot_when_allowed_missing(tmp_path):
+    """load_or_capture_day_start with allow_missing=True returns snapshot even with missing fields."""
+    snap = load_or_capture_day_start(
+        tmp_path,
+        equity=None,
+        unrealized_pnl=None,
+        source="",
+        allow_missing=True,
+        market_date="2026-07-30",
+    )
+    assert snap is not None
+    assert len(snap.missing_fields) > 0
+
+
+def test_capture_snapshot_saves_and_reloads(tmp_path):
+    """capture_snapshot writes to disk and can be re-read by load_snapshot."""
+    snap = capture_snapshot(
+        tmp_path,
+        equity=999_000.0,
+        unrealized_pnl=-300.0,
+        source="broker_api",
+        market_date="2026-07-30",
+    )
+    assert snap.day_start_equity == 999_000.0
+
+    reloaded = load_snapshot(tmp_path)
+    assert reloaded is not None
+    assert reloaded.day_start_equity == 999_000.0

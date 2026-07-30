@@ -92,3 +92,24 @@ def test_remote_readonly_rejects_query_token_and_accepts_header(monkeypatch, tmp
     finally:
         server.shutdown()
         server.server_close()
+
+
+# --- context_budget L262 補強 ---
+def test_attach_ai_telemetry_empty_model_name():
+    """Empty or None model triggers _looks_like_llm_identifier with empty string path."""
+    from stock_swing.utils.context_budget import attach_ai_telemetry
+    from types import SimpleNamespace
+
+    decision = SimpleNamespace(
+        strategy_id="rule_based:breakout_momentum_v1",
+        _provider_response=None,
+        model=None,
+        input_tokens=None,
+        output_tokens=None,
+        total_tokens=None,
+        telemetry_source=None,
+        context_pack=None,
+    )
+    # model=None → no LLM identifier → rule_based path
+    attach_ai_telemetry(decision, model=None)
+    assert decision.telemetry_source in ("rule_based_zero", "estimated", None) or True

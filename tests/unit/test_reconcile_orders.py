@@ -904,3 +904,87 @@ def test_reconcile_orders_state_and_ledger_sha_stable_across_three_runs(monkeypa
 
         assert len(set(state_shas)) == 1
         assert len(set(ledger_shas)) == 1
+
+
+# --- reconcile_orders changed-line カバレッジ補強 ---
+from stock_swing.cli.reconcile_orders import (
+    _write_reconcile_status,
+    _build_fill_snapshot_from_order,
+    ReconcileProcessingError,
+)
+
+
+def test_write_reconcile_status_ok(tmp_path, monkeypatch):
+    """_write_reconcile_status writes a valid JSON status file."""
+    import json as _json
+    import stock_swing.cli.reconcile_orders as _ro
+    monkeypatch.setattr(_ro, "project_root", tmp_path)
+    (tmp_path / "data" / "audits").mkdir(parents=True)
+
+    _write_reconcile_status(
+        newly_recorded_buys=2,
+        filled_exits_recorded=1,
+        checked_sell_submissions=4,
+        status="ok",
+    )
+    status_file = tmp_path / "data" / "audits" / "reconcile_status.json"
+    assert status_file.exists()
+    data = _json.loads(status_file.read_text())
+    assert data["status"] == "ok"
+    assert data["newly_recorded_buys"] == 2
+    assert data["unexplained_mismatch_count"] == 0
+
+
+def test_write_reconcile_status_error(tmp_path, monkeypatch):
+    """_write_reconcile_status records error and sets mismatch count to 1."""
+    import json as _json
+    import stock_swing.cli.reconcile_orders as _ro
+    monkeypatch.setattr(_ro, "project_root", tmp_path)
+    (tmp_path / "data" / "audits").mkdir(parents=True)
+
+    _write_reconcile_status(
+        newly_recorded_buys=0,
+        filled_exits_recorded=0,
+        checked_sell_submissions=0,
+        status="error",
+        error="connection_refused",
+    )
+    data = _json.loads((tmp_path / "data" / "audits" / "reconcile_status.json").read_text())
+    assert data["status"] == "error"
+    assert data["unexplained_mismatch_count"] == 1
+    assert data["error"] == "connection_refused"
+
+
+def test_build_fill_snapshot_from_order_full():
+    """_build_fill_snapshot_from_order extracts key fill fields."""
+    order = {
+        "id": "ord_001",
+        "fill_id": "fill_001",
+        "symbol": "NVDA",
+        "side": "sell",
+        "filled_qty": 10,
+        "filled_avg_price": 500.0,
+        "filled_at": "2026-07-30T14:00:00Z",
+    }
+    snap = _build_fill_snapshot_from_order(order)
+    assert snap["fill_id"] == "fill_001"
+    assert snap["order_id"] == "ord_001"
+    assert snap["symbol"] == "NVDA"
+    assert snap["qty"] == 10
+    assert snap["side"] == "sell"
+
+
+def test_build_fill_snapshot_from_order_missing_fields():
+    """_build_fill_snapshot_from_order handles missing optional fields gracefully."""
+    order = {"id": "ord_002"}
+    snap = _build_fill_snapshot_from_order(order)
+    assert snap["order_id"] == "ord_002"
+    assert snap["qty"] is None  # not set in order
+
+
+def test_reconcile_processing_error_is_raisable():
+    """ReconcileProcessingError can be raised with a message."""
+    try:
+        raise ReconcileProcessingError("test_order_id: fill error")
+    except ReconcileProcessingError as e:
+        assert "test_order_id" in str(e)
