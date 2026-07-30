@@ -1,0 +1,17 @@
+{
+  "as_of_utc": "2026-07-29T11:34:31.856959+00:00",
+  "head_commit": "99d04de",
+  "closed_count": 197,
+  "open_count": 5,
+  "quarantined_count": 101,
+  "overlap_count": 0,
+  "duplicate_trade_id_count": 0,
+  "exit_none_in_closed": 0,
+  "hd_missing_in_closed": 0,
+  "pnl_n": 197,
+  "profit_factor": 0.843,
+  "win_rate_pct": 45.2,
+  "sum_pnl": -30983.5,
+  "state_sha256": "3f6ed797fd7920ce47bf44e6a1c9473edb6d96731e9262bf1c0545e86fdfaf3a",
+  "validity_status": "VALID"
+}

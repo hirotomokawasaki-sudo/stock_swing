@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-09T19:04:15.168302+00:00",
+  "request_params": {
+    "symbol": "AMZN",
+    "from": "2026-06-06",
+    "to": "2026-06-09"
+  },
+  "payload": {
+    "symbol": "AMZN",
+    "news": [
+      {
+        "headline": "AMZN momentum update",
+        "summary": "AMZN shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/amzn",
+        "datetime": 1781031855,
+        "source": "synthetic",
+        "related": "AMZN"
+      }
+    ]
+  }
+}

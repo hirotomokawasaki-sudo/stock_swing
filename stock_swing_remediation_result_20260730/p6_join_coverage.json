@@ -1,0 +1,4 @@
+{
+  "status": "MISSING",
+  "reason": "data/audits/p6_join_coverage.json not present in current runtime"
+}

@@ -1,0 +1,21 @@
+99d04de63337000d084a351ab9d7b011829a0f42
+ M data/audits/reconcile_status.json
+ M data/tracking/trade_events.jsonl
+?? data/raw_legacy_untrusted/
+?? data/tracking/pnl_state.json.backup_hd_fix_20260729_185838
+?? data/tracking/pnl_state.json.backup_klac_split_20260729_202010
+?? stock_swing_codex_recurring_review_export_20260729_DELTA/
+?? stock_swing_post_fix_retest_20260729_batchab/
+?? stock_swing_post_fix_retest_export_20260729/
+?? stock_swing_post_fix_retest_mail_safe_20260729/
+?? stock_swing_review_mail_safe_20260729/
+99d04de fix(stats): correct total_trades/wins/losses for status=closed only; update Go/No-Go report
+f1e96b8 fix(batch-b): fill ledger, cumulative allocation, P6 join report, KLAC split quarantine
+128b4d0 fix(batch-a): observability, day-start snapshot, source fail-closed, token accounting, console security
+f407b27 fix(ledger): repair overlap/duplicate/ghost entries + update Go/No-Go report
+deb4e84 test: add pytest evidence for fix batch 20260729 (1118 passed)
+b44956b docs: add 2026-07-29 fix batch result and pytest evidence
+992188e fix(FIX-009): bind console to 127.0.0.1, disable write endpoints by default
+687c5c5 fix(FIX-007): disable unreachable 7-day min-hold tier (FIX-007)
+c948f57 fix(FIX-002): allocation enforcement after position sizing, remove $100 fallback
+40bcc1d fix(FIX-001): remove synthetic data from production collect_data path

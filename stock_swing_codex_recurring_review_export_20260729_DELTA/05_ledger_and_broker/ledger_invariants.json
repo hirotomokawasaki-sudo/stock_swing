@@ -1,0 +1,54 @@
+{
+  "as_of_utc": "2026-07-29T02:23:31.711117+00:00",
+  "closed_count": 205,
+  "quarantined_count": 101,
+  "closed_quarantine_overlap_count": 15,
+  "overlap_trade_ids": [
+    "broker_match_0018_AMZN",
+    "broker_match_0019_AMZN",
+    "broker_match_0020_AMZN",
+    "broker_match_0039_CDNS",
+    "broker_match_0070_DELL",
+    "broker_match_0071_DELL",
+    "broker_match_0072_DELL",
+    "broker_match_0073_DELL",
+    "broker_match_0097_HPE",
+    "broker_match_0098_HPE",
+    "broker_match_0116_KLAC",
+    "broker_match_0117_KLAC",
+    "broker_match_0118_KLAC",
+    "broker_match_0205_SHOC",
+    "broker_open_0247_ANET"
+  ],
+  "duplicate_trade_id_count": 1,
+  "duplicate_trade_ids": [
+    "ADBE-3fd1e2a4"
+  ],
+  "invalid_chronology_count": 0,
+  "invalid_chronology_trade_ids": [],
+  "missing_holding_days_count": 7,
+  "missing_hd_trade_ids": [
+    "broker_open_0247_ANET",
+    "broker_open_0069_DDOG",
+    "broker_open_0102_HPE",
+    "broker_open_0106_HPQ",
+    "broker_open_0248_MSFT",
+    "ADBE-3fd1e2a4",
+    "ADBE-3fd1e2a4"
+  ],
+  "asset_class_unknown_count": 0,
+  "ac_unknown_trade_ids": [],
+  "invalid_qty_or_price_count": 0,
+  "pnl_arithmetic_sum_vs_cumulative": {
+    "sum_of_realized_pnl": 0,
+    "cumulative_realized_pnl": -74666.19,
+    "difference": 74666.19
+  },
+  "exit_reason_attribution": {
+    "total_closed": 205,
+    "attributed_non_broker_fill": 196,
+    "pct": 95.6
+  },
+  "validity_status": "NEEDS_REVIEW",
+  "daily_snapshots_count": 131
+}

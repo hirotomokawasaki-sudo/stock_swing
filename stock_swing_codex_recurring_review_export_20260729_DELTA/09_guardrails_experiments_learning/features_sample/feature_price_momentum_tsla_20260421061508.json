@@ -1,0 +1,19 @@
+{
+  "feature_name": "price_momentum",
+  "symbol": "TSLA",
+  "computed_at": "2026-04-21T06:15:08.659764+00:00",
+  "values": {
+    "momentum": 0.11999999999999998,
+    "trend": "bullish",
+    "bars_used": 5,
+    "atr": 4.804000000000002,
+    "risk_per_share": 9.608000000000004,
+    "stop_price": 115.832,
+    "latest_close": 125.44
+  },
+  "metadata": {
+    "earliest_time": "2026-04-17T06:15:08+00:00",
+    "latest_time": "2026-04-21T06:15:08+00:00"
+  },
+  "quality_flags": []
+}

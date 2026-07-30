@@ -1,0 +1,8 @@
+QQQ_daily.json
+SMH_daily.json
+SOXQ_daily.json
+SOXX_daily.json
+SPY_daily.json
+SPY_summary.json
+benchmark_prices.csv
+benchmark_returns.csv

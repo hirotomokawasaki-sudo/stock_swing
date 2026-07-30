@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-11T19:04:16.997991+00:00",
+  "request_params": {
+    "symbol": "AVGO",
+    "from": "2026-06-08",
+    "to": "2026-06-11"
+  },
+  "payload": {
+    "symbol": "AVGO",
+    "news": [
+      {
+        "headline": "AVGO momentum update",
+        "summary": "AVGO shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/avgo",
+        "datetime": 1781204656,
+        "source": "synthetic",
+        "related": "AVGO"
+      }
+    ]
+  }
+}

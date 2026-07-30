@@ -1,0 +1,9 @@
+enabled: false
+base_url: https://data.sec.gov
+timeout_seconds: 20
+retry_attempts: 3
+raw_partition: sec
+# FIX-SOURCE-4: optional source — not yet implemented
+required: false
+not_implemented: true
+description: "SEC filings — real client not yet connected"

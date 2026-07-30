@@ -1,0 +1,5 @@
+enabled: true
+base_url: https://finnhub.io/api/v1
+timeout_seconds: 15
+retry_attempts: 3
+raw_partition: finnhub

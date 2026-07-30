@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-04T19:06:48.985357+00:00",
+  "request_params": {
+    "symbol": "QCOM",
+    "from": "2026-06-01",
+    "to": "2026-06-04"
+  },
+  "payload": {
+    "symbol": "QCOM",
+    "news": [
+      {
+        "headline": "QCOM momentum update",
+        "summary": "QCOM shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/qcom",
+        "datetime": 1780600008,
+        "source": "synthetic",
+        "related": "QCOM"
+      }
+    ]
+  }
+}

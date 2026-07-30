@@ -1,0 +1,4 @@
+{
+  "error": "Write endpoints disabled",
+  "note": "Set CONSOLE_WRITE_ENABLED=true to enable (local use only)"
+}

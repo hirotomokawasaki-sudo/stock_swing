@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-04T19:06:37.080371+00:00",
+  "request_params": {
+    "symbol": "KLAC",
+    "from": "2026-06-01",
+    "to": "2026-06-04"
+  },
+  "payload": {
+    "symbol": "KLAC",
+    "news": [
+      {
+        "headline": "KLAC momentum update",
+        "summary": "KLAC shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/klac",
+        "datetime": 1780599997,
+        "source": "synthetic",
+        "related": "KLAC"
+      }
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-07-06T07:04:02.476985+00:00",
+  "request_params": {
+    "symbol": "PATH",
+    "from": "2026-07-03",
+    "to": "2026-07-06"
+  },
+  "payload": {
+    "symbol": "PATH",
+    "news": [
+      {
+        "headline": "PATH momentum update",
+        "summary": "PATH shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/path",
+        "datetime": 1783321442,
+        "source": "synthetic",
+        "related": "PATH"
+      }
+    ]
+  }
+}

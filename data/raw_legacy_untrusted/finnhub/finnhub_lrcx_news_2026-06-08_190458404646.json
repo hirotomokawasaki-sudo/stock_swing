@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-08T19:04:58.404646+00:00",
+  "request_params": {
+    "symbol": "LRCX",
+    "from": "2026-06-05",
+    "to": "2026-06-08"
+  },
+  "payload": {
+    "symbol": "LRCX",
+    "news": [
+      {
+        "headline": "LRCX momentum update",
+        "summary": "LRCX shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/lrcx",
+        "datetime": 1780945498,
+        "source": "synthetic",
+        "related": "LRCX"
+      }
+    ]
+  }
+}

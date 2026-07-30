@@ -1,0 +1,64 @@
+{
+  "total_decisions": 2159,
+  "actual_provider_usage_rows": 2159,
+  "estimated_usage_rows": 0,
+  "actual_and_estimated_separated": true,
+  "has_model_field_pct": 100.0,
+  "note_on_cost": "provider_cost_not_tracked_in_decision_files; API cost not metered in system",
+  "by_model": {
+    "rule_based:breakout_momentum_v1": {
+      "n": 1432,
+      "input_tokens": 289207,
+      "output_tokens": 33086,
+      "estimated_count": 0
+    },
+    "rule_based:simple_exit_v2": {
+      "n": 205,
+      "input_tokens": 41092,
+      "output_tokens": 4100,
+      "estimated_count": 0
+    },
+    "rule_based:breakout_momentum_v1_intraday_enhanced": {
+      "n": 86,
+      "input_tokens": 19631,
+      "output_tokens": 1975,
+      "estimated_count": 0
+    },
+    "breakout_momentum_v1": {
+      "n": 159,
+      "input_tokens": 21821,
+      "output_tokens": 4420,
+      "estimated_count": 0
+    },
+    "breakout_momentum_v1_intraday_enhanced": {
+      "n": 27,
+      "input_tokens": 4007,
+      "output_tokens": 732,
+      "estimated_count": 0
+    },
+    "simple_exit_v2": {
+      "n": 29,
+      "input_tokens": 3367,
+      "output_tokens": 580,
+      "estimated_count": 0
+    },
+    "rule_based:breakout_momentum_v1_etf": {
+      "n": 210,
+      "input_tokens": 21643,
+      "output_tokens": 4913,
+      "estimated_count": 0
+    },
+    "rule_based:breakout_momentum_v1_etf_intraday_enhanced": {
+      "n": 6,
+      "input_tokens": 780,
+      "output_tokens": 151,
+      "estimated_count": 0
+    },
+    "breakout_momentum_v1_etf": {
+      "n": 5,
+      "input_tokens": 725,
+      "output_tokens": 175,
+      "estimated_count": 0
+    }
+  }
+}

@@ -1,0 +1,8 @@
+mode: paper
+strategy_version: swing-v1
+prompt_version: prompt-v1
+feature_schema_version: features-v1
+notes: "default paper experiment"
+tags:
+  - paper
+  - baseline

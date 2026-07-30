@@ -1,0 +1,56 @@
+[
+  {
+    "id": "ENV",
+    "command": "environment_start collection via Python subprocess",
+    "exit_code": 0,
+    "evidence": "00_CONTROL/environment_start.json"
+  },
+  {
+    "id": "PYTEST_ALL",
+    "command": "venv/bin/python -m pytest --tb=short -q --junitxml=... --cov=src --cov=console --cov-branch --cov-report=json:...",
+    "exit_code": 0,
+    "evidence": "02_TESTS/pytest_output.txt; 02_TESTS/junit.xml; 02_TESTS/coverage.json"
+  },
+  {
+    "id": "PYTEST_SCENARIO",
+    "command": "venv/bin/python -m pytest selected scenario tests",
+    "exit_code": 0,
+    "evidence": "02_TESTS/scenario_pytest_output.txt"
+  },
+  {
+    "id": "PYTEST_INTEGRATION",
+    "command": "venv/bin/python -m pytest -q tests/integration",
+    "exit_code": 0,
+    "evidence": "02_TESTS/integration_pytest_output.txt"
+  },
+  {
+    "id": "PYTEST_REBUILD",
+    "command": "venv/bin/python -m pytest selected rebuild/idempotency tests",
+    "exit_code": 0,
+    "evidence": "02_TESTS/rebuild_pytest_output.txt"
+  },
+  {
+    "id": "PYTEST_FAULT",
+    "command": "venv/bin/python -m pytest selected fault injection tests",
+    "exit_code": 0,
+    "evidence": "02_TESTS/fault_injection_pytest_output.txt"
+  },
+  {
+    "id": "PYTEST_SOURCE_ERROR",
+    "command": "venv/bin/python -m pytest selected source error tests",
+    "exit_code": 0,
+    "evidence": "02_TESTS/source_error_pytest_output.txt"
+  },
+  {
+    "id": "CONSOLE_API",
+    "command": "temporary local full console + remote readonly API probes",
+    "exit_code": 0,
+    "evidence": "08_CONSOLE/console_api_snapshots/console_api_results.json"
+  },
+  {
+    "id": "CRON",
+    "command": "openclaw cron list + runs",
+    "exit_code": 0,
+    "evidence": "03_SNAPSHOT/broker_and_tracker/cron_jobs_and_runs.json"
+  }
+]

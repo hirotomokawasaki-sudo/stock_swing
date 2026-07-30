@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-05-27T15:07:23.158415+00:00",
+  "request_params": {
+    "symbol": "DDOG",
+    "from": "2026-05-24",
+    "to": "2026-05-27"
+  },
+  "payload": {
+    "symbol": "DDOG",
+    "news": [
+      {
+        "headline": "DDOG momentum update",
+        "summary": "DDOG shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/ddog",
+        "datetime": 1779894443,
+        "source": "synthetic",
+        "related": "DDOG"
+      }
+    ]
+  }
+}

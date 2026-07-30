@@ -1,0 +1,511 @@
+{
+  "collected_at_utc": "2026-07-29T10:13:59.534Z",
+  "jobs": {
+    "jobs": [
+      {
+        "id": "0a5ae126-cc03-44af-b4a8-b12b9821bd6f",
+        "name": "stock_swing_news_collection",
+        "enabled": true,
+        "nextRunAtMs": 1785323003299,
+        "scheduleKind": "cron",
+        "lastRunAtMs": 1785308603327,
+        "lastRunStatus": "ok",
+        "lastRunError": null,
+        "lastDeliveryStatus": "not-requested",
+        "lastFailureNotificationDeliveryStatus": "not-requested"
+      },
+      {
+        "id": "46c13997-20ef-43d5-bb39-f0e710c45ede",
+        "name": "stock_swing_update_price_overrides",
+        "enabled": true,
+        "nextRunAtMs": 1785330000000,
+        "scheduleKind": "cron",
+        "lastRunAtMs": 1785243600108,
+        "lastRunStatus": "ok",
+        "lastRunError": null,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "lastFailureNotificationDeliveryStatus": "not-requested"
+      },
+      {
+        "id": "d4fb64ec-6b22-4985-8945-552f986eec2b",
+        "name": "stock_swing_paper_demo_premarket",
+        "enabled": true,
+        "nextRunAtMs": 1785331500000,
+        "scheduleKind": "cron",
+        "lastRunAtMs": 1785245100026,
+        "lastRunStatus": "ok",
+        "lastRunError": null,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "lastFailureNotificationDeliveryStatus": "not-requested"
+      },
+      {
+        "id": "4a16593b-d0e6-482b-9165-5d4709660398",
+        "name": "stock_swing_order_reconciliation_market_open_window",
+        "enabled": true,
+        "nextRunAtMs": 1785331800000,
+        "scheduleKind": "cron",
+        "lastRunAtMs": 1785246300021,
+        "lastRunStatus": "ok",
+        "lastRunError": null,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "lastFailureNotificationDeliveryStatus": "not-requested"
+      },
+      {
+        "id": "6eda856d-915a-4605-9428-8d5d13553176",
+        "name": "stock_swing_paper_demo_market_open",
+        "enabled": true,
+        "nextRunAtMs": 1785332100000,
+        "scheduleKind": "cron",
+        "lastRunAtMs": 1785245700023,
+        "lastRunStatus": "ok",
+        "lastRunError": null,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "lastFailureNotificationDeliveryStatus": "not-requested"
+      },
+      {
+        "id": "2a056564-65d9-46b7-a7a6-dde970df8e71",
+        "name": "sector_shock_shadow_check_20260729",
+        "owner": {
+          "agentId": "main",
+          "sessionKey": "agent:main:dashboard:fc2fbc29-5c1f-4c11-a09c-dc5540aecf0a"
+        },
+        "enabled": true,
+        "nextRunAtMs": 1785333600000,
+        "scheduleKind": "at",
+        "lastRunAtMs": null,
+        "lastRunStatus": null,
+        "lastRunError": null
+      },
+      {
+        "id": "32c3be71-3e86-470f-92e1-f50d8c77d533",
+        "name": "stock_swing_order_reconciliation_market_hours",
+        "enabled": true,
+        "nextRunAtMs": 1785333600000,
+        "scheduleKind": "cron",
+        "lastRunAtMs": 1785267900026,
+        "lastRunStatus": "ok",
+        "lastRunError": null,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "lastFailureNotificationDeliveryStatus": "not-requested"
+      },
+      {
+        "id": "a2986600-6e6a-4712-afa1-0ac8062e90fd",
+        "name": "stock_swing_paper_demo_midday",
+        "enabled": true,
+        "nextRunAtMs": 1785340800000,
+        "scheduleKind": "cron",
+        "lastRunAtMs": 1785254400023,
+        "lastRunStatus": "ok",
+        "lastRunError": null,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "lastFailureNotificationDeliveryStatus": "not-requested"
+      },
+      {
+        "id": "fc5f2185-2117-4413-9684-da79ac428869",
+        "name": "stock_swing_paper_demo_market_close",
+        "enabled": true,
+        "nextRunAtMs": 1785354900000,
+        "scheduleKind": "cron",
+        "lastRunAtMs": 1785268500024,
+        "lastRunStatus": "ok",
+        "lastRunError": null,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "lastFailureNotificationDeliveryStatus": "not-requested"
+      },
+      {
+        "id": "c118d9f3-beea-4da0-899d-8f549ed15baa",
+        "name": "stock_swing_daily_audit",
+        "enabled": true,
+        "nextRunAtMs": 1785358800000,
+        "scheduleKind": "cron",
+        "lastRunAtMs": 1785272400028,
+        "lastRunStatus": "ok",
+        "lastRunError": null,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "lastFailureNotificationDeliveryStatus": "not-requested"
+      },
+      {
+        "id": "be4838ae-9d76-458a-aa1e-d3c968750d65",
+        "name": "stock_swing_update_benchmark_all",
+        "enabled": true,
+        "nextRunAtMs": 1785367800000,
+        "scheduleKind": "cron",
+        "lastRunAtMs": 1785281400022,
+        "lastRunStatus": "ok",
+        "lastRunError": null,
+        "lastDeliveryStatus": "not-requested",
+        "lastFailureNotificationDeliveryStatus": "not-requested"
+      },
+      {
+        "id": "494e46d9-9214-492f-b83c-18a5e59bd5f7",
+        "name": "daily_report_morning",
+        "enabled": true,
+        "nextRunAtMs": 1785369600000,
+        "scheduleKind": "cron",
+        "lastRunAtMs": 1785283200022,
+        "lastRunStatus": "ok",
+        "lastRunError": null,
+        "lastDeliveryStatus": "not-requested",
+        "lastFailureNotificationDeliveryStatus": "not-requested"
+      },
+      {
+        "id": "6a97221b-5d6d-450f-9eec-8a5f4d0249a6",
+        "name": "stock_swing_weekly_full_audit",
+        "enabled": true,
+        "nextRunAtMs": 1785708000000,
+        "scheduleKind": "cron",
+        "lastRunAtMs": 1785103200027,
+        "lastRunStatus": "ok",
+        "lastRunError": null,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "lastFailureNotificationDeliveryStatus": "not-requested"
+      },
+      {
+        "id": "1ecd8d63-a4bd-4698-b1a8-b4a8a190c851",
+        "name": "stock_swing_massive_data_collection",
+        "enabled": false,
+        "nextRunAtMs": null,
+        "scheduleKind": "cron",
+        "lastRunAtMs": 1779147008439,
+        "lastRunStatus": "error",
+        "lastRunError": "cron: job execution timed out",
+        "lastDeliveryStatus": "unknown"
+      },
+      {
+        "id": "221dbb1d-d49c-4c7f-ae3a-2fe2716ec927",
+        "name": "stock_swing_order_reconciliation_off_hours",
+        "enabled": false,
+        "nextRunAtMs": null,
+        "scheduleKind": "cron",
+        "lastRunAtMs": 1779332400010,
+        "lastRunStatus": "ok",
+        "lastRunError": null,
+        "lastDeliveryStatus": "not-requested"
+      },
+      {
+        "id": "59d4870f-7231-483f-810c-14f5d378e70e",
+        "name": "remind_check_daily_audit_tomorrow",
+        "enabled": false,
+        "nextRunAtMs": null,
+        "scheduleKind": "at",
+        "lastRunAtMs": 1779141047985,
+        "lastRunStatus": "error",
+        "lastRunError": "cron: job execution timed out",
+        "lastDeliveryStatus": "not-requested"
+      },
+      {
+        "id": "73410e77-5a22-40f5-9b90-d2c6d286434e",
+        "name": "stock_swing_order_reconciliation",
+        "enabled": false,
+        "nextRunAtMs": null,
+        "scheduleKind": "cron",
+        "lastRunAtMs": 1778217300011,
+        "lastRunStatus": "ok",
+        "lastRunError": null,
+        "lastDeliveryStatus": "not-requested"
+      },
+      {
+        "id": "da905b38-7dad-4a1a-b118-3f702fe71ac5",
+        "name": "remind_check_off_hours_reconciliation_0945",
+        "enabled": false,
+        "nextRunAtMs": null,
+        "scheduleKind": "at",
+        "lastRunAtMs": 1779065400010,
+        "lastRunStatus": "error",
+        "lastRunError": "cron: job execution timed out",
+        "lastDeliveryStatus": "not-requested"
+      }
+    ],
+    "total": 18,
+    "offset": 0,
+    "limit": 18,
+    "hasMore": false,
+    "nextOffset": null
+  },
+  "runs": {
+    "0a5ae126-cc03-44af-b4a8-b12b9821bd6f": {
+      "error": "SyntaxError: Bad control character in string literal in JSON at position 15892 (line 433 column 13)"
+    },
+    "46c13997-20ef-43d5-bb39-f0e710c45ede": {
+      "error": "SyntaxError: Expected property name or '}' in JSON at position 15889 (line 319 column 1)"
+    },
+    "d4fb64ec-6b22-4985-8945-552f986eec2b": {
+      "error": "SyntaxError: Bad control character in string literal in JSON at position 15892 (line 407 column 28)"
+    },
+    "4a16593b-d0e6-482b-9165-5d4709660398": {
+      "error": "SyntaxError: Unexpected token '.', ...\"_tokens\":\n...(OpenCl\"... is not valid JSON"
+    },
+    "6eda856d-915a-4605-9428-8d5d13553176": {
+      "error": "SyntaxError: Expected double-quoted property name in JSON at position 15890 (line 387 column 1)"
+    },
+    "2a056564-65d9-46b7-a7a6-dde970df8e71": {
+      "entries": [],
+      "total": 0,
+      "offset": 0,
+      "limit": 50,
+      "hasMore": false,
+      "nextOffset": null
+    },
+    "32c3be71-3e86-470f-92e1-f50d8c77d533": {
+      "error": "SyntaxError: Bad control character in string literal in JSON at position 15892 (line 497 column 12)"
+    },
+    "a2986600-6e6a-4712-afa1-0ac8062e90fd": {
+      "error": "SyntaxError: Bad control character in string literal in JSON at position 15892 (line 407 column 26)"
+    },
+    "fc5f2185-2117-4413-9684-da79ac428869": {
+      "error": "SyntaxError: Bad control character in string literal in JSON at position 15892 (line 452 column 214)"
+    },
+    "c118d9f3-beea-4da0-899d-8f549ed15baa": {
+      "error": "SyntaxError: Bad control character in string literal in JSON at position 15891 (line 296 column 273)"
+    },
+    "be4838ae-9d76-458a-aa1e-d3c968750d65": {
+      "error": "SyntaxError: Expected property name or '}' in JSON at position 15887 (line 412 column 1)"
+    },
+    "494e46d9-9214-492f-b83c-18a5e59bd5f7": {
+      "error": "SyntaxError: Unexpected token '.', ...\"\"action\":\n...(OpenCl\"... is not valid JSON"
+    },
+    "6a97221b-5d6d-450f-9eec-8a5f4d0249a6": {
+      "error": "SyntaxError: Bad control character in string literal in JSON at position 15892 (line 343 column 27)"
+    },
+    "1ecd8d63-a4bd-4698-b1a8-b4a8a190c851": {
+      "entries": [
+        {
+          "ts": 1779147924185,
+          "jobId": "1ecd8d63-a4bd-4698-b1a8-b4a8a190c851",
+          "action": "finished",
+          "status": "error",
+          "error": "cron: job execution timed out",
+          "errorReason": "timeout",
+          "runAtMs": 1779147008439,
+          "durationMs": 915737,
+          "nextRunAtMs": 1779233400000,
+          "deliveryStatus": "unknown",
+          "jobName": "stock_swing_massive_data_collection"
+        },
+        {
+          "ts": 1779061542414,
+          "jobId": "1ecd8d63-a4bd-4698-b1a8-b4a8a190c851",
+          "action": "finished",
+          "status": "ok",
+          "summary": "- Final status: Success (exit code 0)\n- Elapsed time: ~3.5s (2026-05-18 08:45:30 to 08:45:34 JST)\n- Symbols collected: MRVL, CIEN, DELL, RBRK, PLTR, NOW, INTU, NBIS\n- Total bars collected: 20,959",
+          "runAtMs": 1779061511333,
+          "durationMs": 26830,
+          "nextRunAtMs": 1779147000000,
+          "model": "gpt-5.4",
+          "provider": "openai",
+          "usage": {
+            "input_tokens": 8225,
+            "output_tokens": 201,
+            "total_tokens": 8213
+          },
+          "delivered": true,
+          "deliveryStatus": "delivered",
+          "delivery": {
+            "intended": {
+              "channel": "telegram",
+              "to": "8417431746",
+              "source": "explicit"
+            },
+            "resolved": {
+              "ok": true,
+              "channel": "telegram",
+              "to": "8417431746",
+              "source": "explicit"
+            },
+            "fallbackUsed": true,
+            "delivered": true
+          },
+          "sessionId": "139d4a40-8519-4a0d-b570-f809a1635c8f",
+          "sessionKey": "agent:main:cron:1ecd8d63-a4bd-4698-b1a8-b4a8a190c851:run:139d4a40-8519-4a0d-b570-f809a1635c8f",
+          "jobName": "stock_swing_massive_data_collection"
+        },
+        {
+          "ts": 1778975784651,
+          "jobId": "1ecd8d63-a4bd-4698-b1a8-b4a8a190c851",
+          "action": "finished",
+          "status": "ok",
+          "summary": "- Final status: Success (exit code 0)\n- Elapsed time: ~3.5s\n- Symbols collected: MRVL, CIEN, DELL, RBRK, PLTR, NOW, INTU, NBIS\n- Total bars collected: 26,269",
+          "runAtMs": 1778974718498,
+          "durationMs": 39784,
+          "nextRunAtMs": 1779060600000,
+          "model": "gpt-5.4",
+          "provider": "openai",
+          "usage": {
+            "input_tokens": 8226,
+            "output_tokens": 181,
+            "total_tokens": 8214
+          },
+          "delivered": true,
+          "deliveryStatus": "delivered",
+          "delivery": {
+            "intended": {
+              "channel": "telegram",
+              "to": "8417431746",
+              "source": "explicit"
+            },
+            "resolved": {
+              "ok": true,
+              "channel": "telegram",
+              "to": "8417431746",
+              "source": "explicit"
+            },
+            "fallbackUsed": true,
+            "delivered": true
+          },
+          "sessionId": "cab5623c-bdbe-4dfc-b4b2-5d394d5a8607",
+          "sessionKey": "agent:main:cron:1ecd8d63-a4bd-4698-b1a8-b4a8a190c851:run:cab5623c-bdbe-4dfc-b4b2-5d394d5a8607",
+          "jobName": "stock_swing_massive_data_collection"
+        },
+        {
+          "ts": 1778887861865,
+          "jobId": "1ecd8d63-a4bd-4698-b1a8-b4a8a190c851",
+          "action": "finished",
+          "status": "ok",
+          "summary": "- Final status: Success (exit code 0)\n- Elapsed time: ~3.9s (2026-05-16 08:30:38 to 08:30:42 JST)\n- Symbols collected: MRVL, CIEN, DELL, RBRK, PLTR, NOW, INTU, NBIS\n- Total bars collected: 25,980",
+          "runAtMs": 1778887817884,
+          "durationMs": 39553,
+          "nextRunAtMs": 1778974200000,
+          "model": "gpt-5.4",
+          "provider": "openai",
+          "usage": {
+            "input_tokens": 8236,
+            "output_tokens": 206,
+            "total_tokens": 8220
+          },
+          "delivered": true,
+          "deliveryStatus": "delivered",
+          "delivery": {
+            "intended": {
+              "channel": "telegram",
+              "to": "8417431746",
+              "source": "explicit"
+            },
+            "resolved": {
+              "ok": true,
+              "channel": "telegram",
+              "to": "8417431746",
+              "source": "explicit"
+            },
+            "fallbackUsed": true,
+            "delivered": true
+          },
+          "sessionId": "dc4a50f6-9be5-4341-9604-7afca301ba5d",
+          "sessionKey": "agent:main:cron:1ecd8d63-a4bd-4698-b1a8-b4a8a190c851:run:dc4a50f6-9be5-4341-9604-7afca301ba5d",
+          "jobName": "stock_swing_massive_data_collection"
+        },
+        {
+          "ts": 1778802139725,
+          "jobId": "1ecd8d63-a4bd-4698-b1a8-b4a8a190c851",
+          "action": "finished",
+          "status": "error",
+          "error": "cron: job execution timed out",
+          "errorReason": "timeout",
+          "runAtMs": 1778801488884,
+          "durationMs": 650819,
+          "nextRunAtMs": 1778887800000,
+          "deliveryStatus": "unknown",
+          "jobName": "stock_swing_massive_data_collection"
+        },
+        {
+          "ts": 1778715276043,
+          "jobId": "1ecd8d63-a4bd-4698-b1a8-b4a8a190c851",
+          "action": "finished",
+          "status": "ok",
+          "summary": "- Final status: Success (exit code 0)\n- Elapsed time: ~4.5s (started 2026-05-14 08:34:11 JST, completed 08:34:15 JST)\n- Symbols collected: MRVL, CIEN, DELL, RBRK, PLTR, NOW, INTU, NBIS\n- Total bars collected: 20,709",
+          "runAtMs": 1778715231113,
+          "durationMs": 44923,
+          "nextRunAtMs": 1778801400000,
+          "model": "gpt-5.4",
+          "provider": "openai",
+          "usage": {
+            "input_tokens": 8236,
+            "output_tokens": 210,
+            "total_tokens": 8220
+          },
+          "delivered": true,
+          "deliveryStatus": "delivered",
+          "delivery": {
+            "intended": {
+              "channel": "telegram",
+              "to": "8417431746",
+              "source": "explicit"
+            },
+            "resolved": {
+              "ok": true,
+              "channel": "telegram",
+              "to": "8417431746",
+              "source": "explicit"
+            },
+            "fallbackUsed": true,
+            "delivered": true
+          },
+          "sessionId": "753c96d4-1929-45bb-9de4-44c8aff6c7fd",
+          "sessionKey": "agent:main:cron:1ecd8d63-a4bd-4698-b1a8-b4a8a190c851:run:753c96d4-1929-45bb-9de4-44c8aff6c7fd",
+          "jobName": "stock_swing_massive_data_collection"
+        }
+      ],
+      "total": 6,
+      "offset": 0,
+      "limit": 50,
+      "hasMore": false,
+      "nextOffset": null
+    },
+    "221dbb1d-d49c-4c7f-ae3a-2fe2716ec927": {
+      "error": "SyntaxError: Bad control character in string literal in JSON at position 15891 (line 442 column 117)"
+    },
+    "59d4870f-7231-483f-810c-14f5d378e70e": {
+      "entries": [
+        {
+          "ts": 1779141975466,
+          "jobId": "59d4870f-7231-483f-810c-14f5d378e70e",
+          "action": "finished",
+          "status": "error",
+          "error": "cron: job execution timed out",
+          "errorReason": "timeout",
+          "runAtMs": 1779141047985,
+          "durationMs": 927465,
+          "deliveryStatus": "not-requested",
+          "jobName": "remind_check_daily_audit_tomorrow"
+        }
+      ],
+      "total": 1,
+      "offset": 0,
+      "limit": 50,
+      "hasMore": false,
+      "nextOffset": null
+    },
+    "73410e77-5a22-40f5-9b90-d2c6d286434e": {
+      "error": "SyntaxError: Expected ',' or '}' after property value in JSON at position 15893 (line 452 column 1)"
+    },
+    "da905b38-7dad-4a1a-b118-3f702fe71ac5": {
+      "entries": [
+        {
+          "ts": 1779066340667,
+          "jobId": "da905b38-7dad-4a1a-b118-3f702fe71ac5",
+          "action": "finished",
+          "status": "error",
+          "error": "cron: job execution timed out",
+          "errorReason": "timeout",
+          "runAtMs": 1779065400010,
+          "durationMs": 940649,
+          "deliveryStatus": "not-requested",
+          "jobName": "remind_check_off_hours_reconciliation_0945"
+        }
+      ],
+      "total": 1,
+      "offset": 0,
+      "limit": 50,
+      "hasMore": false,
+      "nextOffset": null
+    }
+  }
+}

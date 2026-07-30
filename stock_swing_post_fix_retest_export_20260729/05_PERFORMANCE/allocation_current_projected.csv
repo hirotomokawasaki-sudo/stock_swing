@@ -1,0 +1,12 @@
+metric,value
+snapshot_id,0288631a317e14a941d9
+as_of_utc,2026-07-29T10:18:06.302948+00:00
+equity_source,console.health.equity_bridge.broker_equity or baseline
+equity,977818.52
+stock_market_value_estimated_from_open_entry,151663.13
+etf_market_value_estimated_from_open_entry,0
+stock_pct_estimated,0.1551
+etf_pct_estimated,0.0
+target,"{""stocks"": 0.85, ""ETFs"": 0.15}"
+band,"{""stocks_min"": 0.7, ""stocks_max"": 0.85, ""etf_min"": 0.08, ""etf_max"": 0.2}"
+projected_orders,no current proposed orders in snapshot

@@ -1,0 +1,169 @@
+{
+  "time": "2026-07-30T10:24:17.768996+09:00",
+  "runtime_mode": "paper",
+  "api_keys_configured": true,
+  "venv_exists": true,
+  "score": 49,
+  "status": "blocked",
+  "evidence": {
+    "ledger_validity": {
+      "critical": true,
+      "ok": false,
+      "status": "VALID",
+      "last_checked": "2026-07-28",
+      "age_seconds": 177858,
+      "stale": true,
+      "detail": "config/runtime/current_mode.yaml:ledger_quality_gate"
+    },
+    "guardrail_metric_freshness": {
+      "critical": true,
+      "ok": false,
+      "cb_status": "ok",
+      "cb_as_of": "2026-07-25T00:41:44.275439+00:00",
+      "cb_age_seconds": 434553,
+      "market_date": "2026-07-29",
+      "expected_market_date": "2026-07-30",
+      "captured_at": "2026-07-29T13:25:09.247971+00:00",
+      "captured_age_seconds": 43149,
+      "source": "tracker_estimate",
+      "missing_fields": [
+        "day_start_equity"
+      ],
+      "problems": [
+        "stale_circuit_breaker",
+        "market_date_mismatch",
+        "missing_day_start_metrics"
+      ],
+      "detail": "data/guardrails/circuit_breaker.json + day_start_snapshot.json"
+    },
+    "broker_tracker_reconciliation": {
+      "critical": true,
+      "ok": true,
+      "as_of": "2026-07-30T01:15:05.420535+00:00",
+      "age_seconds": 552,
+      "mismatch_count": 0,
+      "stale": false,
+      "detail": "data/audits/reconcile_status.json"
+    },
+    "console_summary_freshness": {
+      "critical": true,
+      "ok": false,
+      "age_seconds": 19740,
+      "stale": true,
+      "detail": "reports/console/latest_console_summary.json"
+    },
+    "source_sla": {
+      "critical": true,
+      "ok": false,
+      "required_sources": [
+        "broker",
+        "finnhub"
+      ],
+      "failing_sources": [
+        "broker",
+        "finnhub"
+      ],
+      "sources": [
+        {
+          "source": "broker",
+          "ok": false,
+          "reason": "missing_status"
+        },
+        {
+          "source": "finnhub",
+          "ok": false,
+          "as_of": "2026-07-29T23:04:26.288621+00:00",
+          "age_seconds": 8391,
+          "timed_out": false,
+          "coverage_ratio": 0.977273,
+          "coverage_pct": 97.727,
+          "required_min_coverage": 0.995,
+          "failure_reasons": [
+            "no_company_news"
+          ],
+          "stale": false
+        }
+      ],
+      "detail": "config/sources/*.yaml + data/audits/*_status.json"
+    },
+    "cron_run_history": {
+      "critical": true,
+      "ok": false,
+      "enabled_jobs": 12,
+      "parsed_jobs": 0,
+      "parse_coverage": 0.0,
+      "parse_errors": [
+        {
+          "job": "stock_swing_news_collection",
+          "job_id": "0a5ae126-cc03-44af-b4a8-b12b9821bd6f",
+          "error": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help"
+        },
+        {
+          "job": "stock_swing_update_price_overrides",
+          "job_id": "46c13997-20ef-43d5-bb39-f0e710c45ede",
+          "error": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help"
+        },
+        {
+          "job": "stock_swing_paper_demo_premarket",
+          "job_id": "d4fb64ec-6b22-4985-8945-552f986eec2b",
+          "error": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help"
+        },
+        {
+          "job": "stock_swing_order_reconciliation_market_open_window",
+          "job_id": "4a16593b-d0e6-482b-9165-5d4709660398",
+          "error": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help"
+        },
+        {
+          "job": "stock_swing_paper_demo_market_open",
+          "job_id": "6eda856d-915a-4605-9428-8d5d13553176",
+          "error": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help"
+        },
+        {
+          "job": "stock_swing_order_reconciliation_market_hours",
+          "job_id": "32c3be71-3e86-470f-92e1-f50d8c77d533",
+          "error": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help"
+        },
+        {
+          "job": "stock_swing_paper_demo_midday",
+          "job_id": "a2986600-6e6a-4712-afa1-0ac8062e90fd",
+          "error": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help"
+        },
+        {
+          "job": "stock_swing_paper_demo_market_close",
+          "job_id": "fc5f2185-2117-4413-9684-da79ac428869",
+          "error": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help"
+        },
+        {
+          "job": "stock_swing_daily_audit",
+          "job_id": "c118d9f3-beea-4da0-899d-8f549ed15baa",
+          "error": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help"
+        },
+        {
+          "job": "stock_swing_update_benchmark_all",
+          "job_id": "be4838ae-9d76-458a-aa1e-d3c968750d65",
+          "error": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help"
+        },
+        {
+          "job": "daily_report_morning",
+          "job_id": "494e46d9-9214-492f-b83c-18a5e59bd5f7",
+          "error": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help"
+        },
+        {
+          "job": "stock_swing_weekly_full_audit",
+          "job_id": "6a97221b-5d6d-450f-9eec-8a5f4d0249a6",
+          "error": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help"
+        }
+      ],
+      "detail": "openclaw cron list/runs --json"
+    }
+  },
+  "critical_missing": [
+    "ledger_validity",
+    "guardrail_metric_freshness",
+    "console_summary_freshness",
+    "source_sla",
+    "cron_run_history"
+  ],
+  "noncritical_issues": [],
+  "evidence_status": "invalid"
+}

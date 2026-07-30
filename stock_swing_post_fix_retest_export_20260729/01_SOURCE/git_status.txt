@@ -1,0 +1,10 @@
+## main...origin/main
+ M data/tracking/trade_events.jsonl
+?? data/tracking/pnl_state.json.backup_hd_fix_20260729_185838
+?? stock_swing_codex_recurring_review_export_20260729_DELTA/
+?? stock_swing_review_mail_safe_20260729/
+
+ M data/tracking/trade_events.jsonl
+?? data/tracking/pnl_state.json.backup_hd_fix_20260729_185838
+?? stock_swing_codex_recurring_review_export_20260729_DELTA/
+?? stock_swing_review_mail_safe_20260729/

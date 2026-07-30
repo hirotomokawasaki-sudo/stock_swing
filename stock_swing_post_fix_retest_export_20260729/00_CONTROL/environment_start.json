@@ -1,0 +1,97 @@
+{
+  "started_at_utc": "2026-07-29T10:08:26.027583+00:00",
+  "commands": {
+    "git_commit_start": {
+      "cmd": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "stdout": "f407b27162e7e7d3f8aed8c8a8e3ce82b1e0b3e5\n",
+      "stderr": ""
+    },
+    "git_branch": {
+      "cmd": [
+        "git",
+        "branch",
+        "--show-current"
+      ],
+      "exit_code": 0,
+      "stdout": "main\n",
+      "stderr": ""
+    },
+    "git_status_porcelain": {
+      "cmd": [
+        "git",
+        "status",
+        "--porcelain=v1"
+      ],
+      "exit_code": 0,
+      "stdout": " M data/tracking/trade_events.jsonl\n?? data/tracking/pnl_state.json.backup_hd_fix_20260729_185838\n?? stock_swing_codex_recurring_review_export_20260729_DELTA/\n?? stock_swing_review_mail_safe_20260729/\n",
+      "stderr": ""
+    },
+    "git_status_branch": {
+      "cmd": [
+        "git",
+        "status",
+        "--branch",
+        "--short"
+      ],
+      "exit_code": 0,
+      "stdout": "## main...origin/main\n M data/tracking/trade_events.jsonl\n?? data/tracking/pnl_state.json.backup_hd_fix_20260729_185838\n?? stock_swing_codex_recurring_review_export_20260729_DELTA/\n?? stock_swing_review_mail_safe_20260729/\n",
+      "stderr": ""
+    },
+    "git_diff": {
+      "cmd": [
+        "git",
+        "diff",
+        "--binary"
+      ],
+      "exit_code": 0,
+      "stdout": "diff --git a/data/tracking/trade_events.jsonl b/data/tracking/trade_events.jsonl\nindex 15c10bc..fe25496 100644\n--- a/data/tracking/trade_events.jsonl\n+++ b/data/tracking/trade_events.jsonl\n@@ -388,3 +388,8 @@\n {\"broker_order_id\": \"3a4cde2a-7ffd-4294-b4b7-b41e01b3a424\", \"created_at\": \"2026-07-28T13:35:21.191733+00:00\", \"event_id\": \"dffaa0d6-7b07-4318-ae75-016b8d23a637\", \"event_type\": \"trade_opened\", \"payload\": {\"entry_price\": 245.53, \"qty\": 160, \"signal_strength\": 0.5565, \"strategy_id\": \"breakout_momentum_v2_threshold_tuned\"}, \"run_id\": null, \"symbol\": \"ADBE\", \"trade_id\": \"ADBE-3fd1e2a4\"}\n {\"broker_order_id\": \"95a52b5f-79d0-4b3c-b342-d3ac9acd83dc\", \"created_at\": \"2026-07-28T13:45:08.116409+00:00\", \"event_id\": \"dfcae1c4-78a1-47fc-9de0-7f31cfbe9d39\", \"event_type\": \"trade_closed\", \"payload\": {\"exit_price\": 163.45, \"exit_qty\": 117, \"exit_reason\": \"stop_loss\", \"pnl\": -1471.86}, \"run_id\": null, \"symbol\": \"ANET\", \"trade_id\": \"broker_open_0247_ANET\"}\n {\"broker_order_id\": \"ac62b2a0-97ed-4491-8ec8-caadd6522eaa\", \"created_at\": \"2026-07-28T13:45:08.614335+00:00\", \"event_id\": \"a170a48b-eac1-470f-a3c4-1db7e446a5df\", \"event_type\": \"trade_closed\", \"payload\": {\"exit_price\": 386.46, \"exit_qty\": 93, \"exit_reason\": \"stop_loss\", \"pnl\": -2616.48}, \"run_id\": null, \"symbol\": \"DELL\", \"trade_id\": \"broker_open_0078_DELL\"}\n+{\"broker_order_id\": null, \"created_at\": \"2026-07-29T10:00:04.018454+00:00\", \"event_id\": \"c133b4f5-3d67-4b89-bfe4-499b05151ea6\", \"event_type\": \"trade_opened\", \"payload\": {\"entry_price\": 246.74375, \"qty\": 160, \"signal_strength\": null, \"strategy_id\": \"breakout_momentum_v1\"}, \"run_id\": null, \"symbol\": \"ADBE\", \"trade_id\": \"ADBE-reconcil\"}\n+{\"broker_order_id\": null, \"created_at\": \"2026-07-29T10:00:04.029728+00:00\", \"event_id\": \"40e8ec8b-bf53-4ade-a14b-63d21808133a\", \"event_type\": \"trade_opened\", \"payload\": {\"entry_price\": 265.16, \"qty\": 113, \"signal_strength\": null, \"strategy_id\": \"breakout_momentum_v1\"}, \"run_id\": null, \"symbol\": \"DDOG\", \"trade_id\": \"DDOG-reconcil\"}\n+{\"broker_order_id\": null, \"created_at\": \"2026-07-29T10:00:04.037538+00:00\", \"event_id\": \"664f4600-7e8b-4ba1-9d85-731b25b607f8\", \"event_type\": \"trade_opened\", \"payload\": {\"entry_price\": 48.59, \"qty\": 611, \"signal_strength\": null, \"strategy_id\": \"breakout_momentum_v1\"}, \"run_id\": null, \"symbol\": \"HPE\", \"trade_id\": \"HPE-reconcil\"}\n+{\"broker_order_id\": null, \"created_at\": \"2026-07-29T10:00:04.044913+00:00\", \"event_id\": \"dff5be1c-49ab-4799-b04b-3d8b72e30335\", \"event_type\": \"trade_opened\", \"payload\": {\"entry_price\": 25.248398, \"qty\": 412, \"signal_strength\": null, \"strategy_id\": \"breakout_momentum_v1\"}, \"run_id\": null, \"symbol\": \"HPQ\", \"trade_id\": \"HPQ-reconcil\"}\n+{\"broker_order_id\": null, \"created_at\": \"2026-07-29T10:00:04.052548+00:00\", \"event_id\": \"d3477fcb-e823-4a38-bce8-8633d6706c0b\", \"event_type\": \"trade_opened\", \"payload\": {\"entry_price\": 393.740374, \"qty\": 107, \"signal_strength\": null, \"strategy_id\": \"breakout_momentum_v1\"}, \"run_id\": null, \"symbol\": \"MSFT\", \"trade_id\": \"MSFT-reconcil\"}\n",
+      "stderr": ""
+    },
+    "python_executable": {
+      "cmd": [
+        "/Users/hirotomookawasaki/stock_swing/venv/bin/python",
+        "-c",
+        "import sys; print(sys.executable)"
+      ],
+      "exit_code": 0,
+      "stdout": "/Users/hirotomookawasaki/stock_swing/venv/bin/python\n",
+      "stderr": ""
+    },
+    "python_version": {
+      "cmd": [
+        "/Users/hirotomookawasaki/stock_swing/venv/bin/python",
+        "-V"
+      ],
+      "exit_code": 0,
+      "stdout": "Python 3.13.10\n",
+      "stderr": ""
+    },
+    "pytest_version": {
+      "cmd": [
+        "/Users/hirotomookawasaki/stock_swing/venv/bin/python",
+        "-m",
+        "pytest",
+        "--version"
+      ],
+      "exit_code": 0,
+      "stdout": "pytest 9.0.2\n",
+      "stderr": ""
+    },
+    "pip_freeze": {
+      "cmd": [
+        "/Users/hirotomookawasaki/stock_swing/venv/bin/python",
+        "-m",
+        "pip",
+        "freeze"
+      ],
+      "exit_code": 0,
+      "stdout": "aiohappyeyeballs==2.6.1\naiohttp==3.13.3\naiosignal==1.4.0\naiosqlite==0.22.1\nalpaca-py==0.43.2\nannotated-doc==0.0.4\nannotated-types==0.7.0\nanyio==4.13.0\nattrs==26.1.0\nbeautifulsoup4==4.14.3\ncertifi==2026.2.25\ncffi==2.0.0\ncharset-normalizer==3.4.7\nclick==8.3.1\ncoverage==7.13.5\ncurl_cffi==0.15.0\nfrozendict==2.4.7\nfrozenlist==1.8.0\nh11==0.16.0\nhttpcore==1.0.9\nhttpx==0.28.1\nidna==3.11\niniconfig==2.3.0\nmarkdown-it-py==4.0.0\nmassive==2.7.0\nmdurl==0.1.2\nmsgpack==1.1.2\nmultidict==6.7.1\nmultitasking==0.0.13\nnetworkx==3.6.1\nneural-memory==4.21.0\nnumpy==2.4.4\npackaging==26.0\npandas==3.0.2\npeewee==4.0.5\nplatformdirs==4.9.6\npluggy==1.6.0\npropcache==0.4.1\nprotobuf==7.34.1\npycparser==3.0\npydantic==2.12.5\npydantic_core==2.41.5\nPygments==2.19.2\npytest==9.0.2\npytest-cov==7.1.0\npython-dateutil==2.9.0.post0\npython-dotenv==1.2.2\npytz==2026.1.post1\nPyYAML==6.0.3\nrequests==2.33.1\nrich==14.3.3\nshellingham==1.5.4\nsix==1.17.0\nsoupsieve==2.8.3\nsseclient-py==1.9.0\n-e git+https://github.com/hirotomokawasaki-sudo/stock_swing.git@f407b27162e7e7d3f8aed8c8a8e3ce82b1e0b3e5#egg=stock_swing\ntyper==0.24.1\ntyping-inspection==0.4.2\ntyping_extensions==4.15.0\nurllib3==2.6.3\nwebsockets==16.0\nyarl==1.23.0\nyfinance==1.3.0\n",
+      "stderr": ""
+    }
+  }
+}

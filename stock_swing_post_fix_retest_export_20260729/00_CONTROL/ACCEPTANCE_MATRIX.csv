@@ -1,0 +1,16 @@
+id,description,status,expected,actual,evidence_path,rollback_required,next_stage
+GATE-001,current commit required tests all PASS,PASS,all pytest suites exit 0,see 02_TESTS,see related export section,NO,OK
+GATE-002,synthetic production records=0,FAIL,0,1136,see related export section,NO,NO-GO
+GATE-003,closed/quarantine overlap=0,PASS,0,0,see related export section,NO,OK
+GATE-004,duplicate trade_id=0,PASS,0,0,see related export section,NO,OK
+GATE-005,duplicate fill consumption=0,BLOCKED,0,potential key reuse count=25; exact duplicate consumption unavailable without broker fill ledger,see related export section,NO,NO-GO
+GATE-006,sum(closed.pnl) and state PnL diff <= $1,FAIL,abs(diff)<=1,-4340.8,see related export section,NO,NO-GO
+GATE-007,unexplained broker/tracker mismatch=0,FAIL,0,1,see related export section,NO,NO-GO
+GATE-008,run_id/experiment_id/config_hash coverage >=99%,FAIL,>=99%,"{""run_id_pct"": 0.0, ""experiment_id_pct"": 0.0, ""config_hash_pct"": 0.0}",see related export section,NO,NO-GO
+GATE-009,required source coverage >=99.5%,FAIL,>=99.5% and no synthetic/stale required source,"[{""source"": ""finnhub_news"", ""rows"": 44, ""ok"": 41, ""coverage_pct"": 93.182, ""as_of"": ""2026-07-29T07:04:18.198275+00:00"", ""timed_out"": false}, {""source"": ""broker"", ""raw_file_count"": 25, ""latest_mtime_utc"": ""2026-04-21T06:15:08.596495+00:00"", ""freshness_hours"": 2380.05, ""coverage_pct"": null}, {""source"": ""fred"", ""raw_file_count"": 4, ""latest_mtime_utc"": ""2026-04-21T06:15:08.596586+00:00"", ""freshness_hours"": 2380.05, ""coverage_pct"": 0}, {""source"": ""sec"", ""raw_file_count"": 10, ""latest_mtime_utc"": ""2026-",see related export section,NO,NO-GO
+GATE-010,guardrail fail-closed,PASS,missing metric not zero + tests pass,see 06_GUARDRAILS and scenario tests,see related export section,NO,OK
+GATE-011,console current snapshot reachable,PASS,HTTP 200,health=200,see related export section,NO,OK
+GATE-012,full console unauthenticated write impossible,PASS,403 for apply/rollback,"{""full_parameter_apply_post"": 403, ""full_parameter_rollback_post"": 403}",see related export section,NO,OK
+GATE-013,invalid/stale data not VALID/green,FAIL,stale/invalid must not display VALID,"{""status"": ""VALID"", ""as_of"": ""2026-07-28T13:35:26.156176+00:00"", ""details"": {""overlap"": 0, ""reversed_chronology"": 0, ""holding_days_missing"": 0, ""attribution_coverage_pct"": 98.5}}",see related export section,NO,NO-GO
+GATE-014,performance aggregation matches independent recomputation,PASS,independent recomputation generated in export,05_PERFORMANCE/performance_by_window.json,see related export section,NO,OK
+GATE-015,remote read-only query token disabled,FAIL,query token rejected,200,see related export section,YES,NO-GO

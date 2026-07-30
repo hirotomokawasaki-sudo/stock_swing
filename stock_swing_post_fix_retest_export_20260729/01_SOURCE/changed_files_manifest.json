@@ -1,0 +1,32 @@
+{
+  "baseline": "0ae1ce6",
+  "head": "f407b27162e7e7d3f8aed8c8a8e3ce82b1e0b3e5",
+  "changed_files": [
+    "config/strategy/simple_exit_v2.yaml",
+    "console/app.py",
+    "data/tracking/pnl_state.json",
+    "docs/codex reviews/stock_swing_fix_batch_result_20260729.md",
+    "docs/console_improvement_tasks.md",
+    "docs/daily_logs/2026-07-29.md",
+    "docs/go_no_go_report_20260731.md",
+    "docs/test_evidence/junit_fix_batch_20260729.xml",
+    "docs/test_evidence/pytest_output_fix_batch_20260729.txt",
+    "docs/test_evidence/pytest_report_fix_batch_20260729.json",
+    "src/stock_swing/cli/collect_data.py",
+    "src/stock_swing/cli/paper_demo.py",
+    "src/stock_swing/cli/reconcile_orders.py",
+    "src/stock_swing/core/run_context.py",
+    "src/stock_swing/core/types.py",
+    "src/stock_swing/decision_engine/decision_engine.py",
+    "src/stock_swing/guardrails/risk_snapshot.py",
+    "src/stock_swing/risk/portfolio_allocator.py",
+    "src/stock_swing/utils/context_budget.py",
+    "tests/unit/test_allocation_fix002.py",
+    "tests/unit/test_collect_data_fix001.py",
+    "tests/unit/test_console_security_fix009.py",
+    "tests/unit/test_fix007_yaml_disable.py",
+    "tests/unit/test_guardrail_fix005.py",
+    "tests/unit/test_p6_join_fix006.py",
+    "tests/unit/test_reconcile_fix003.py"
+  ]
+}

@@ -1,0 +1,89 @@
+=== GENERATION_LOG ===
+started_at_utc: 2026-07-29T02:23:29Z
+request_id: SSR-20260729-01
+mode: DELTA_SELF_CONTAINED
+baseline: 744e3fa
+repo: [USER_HOME]/stock_swing
+[2026-07-29T02:23:29Z] START git log since baseline
+[2026-07-29T02:23:29Z] DONE git log since baseline
+[2026-07-29T02:23:29Z] START git diff stat
+[2026-07-29T02:23:29Z] DONE git diff stat
+[2026-07-29T02:23:29Z] START git diff name-status
+[2026-07-29T02:23:29Z] DONE git diff name-status
+[2026-07-29T02:23:29Z] START git diff full patch
+[2026-07-29T02:23:29Z] DONE git diff full patch
+[2026-07-29T02:23:29Z] START git diff docs patch
+[2026-07-29T02:23:29Z] DONE git diff docs patch
+[2026-07-29T02:23:29Z] START git status
+[2026-07-29T02:23:29Z] DONE git status
+[2026-07-29T02:23:29Z] START git show head/baseline
+[2026-07-29T02:23:29Z] DONE git show head/baseline
+[2026-07-29T02:23:29Z] START copy changed files
+[2026-07-29T02:23:30Z] DONE copy changed files
+[2026-07-29T02:23:30Z] START copy critical runtime
+[2026-07-29T02:23:30Z] DONE copy critical runtime
+[2026-07-29T02:23:30Z] START copy config
+[2026-07-29T02:23:30Z] DONE copy config
+[2026-07-29T02:23:30Z] START copy requirements and docs
+[2026-07-29T02:23:30Z] DONE copy requirements and docs
+[2026-07-29T02:23:30Z] START runtime versions
+[2026-07-29T02:23:31Z] DONE runtime versions
+[2026-07-29T02:23:31Z] [STEP 1 done] 2026-07-29T02:23:31Z
+[2026-07-29T02:23:31Z] START pytest json report
+[2026-07-29T02:23:31Z] DONE pytest json report
+[2026-07-29T02:23:31Z] START pytest plain
+/Library/Developer/CommandLineTools/usr/bin/python3: No module named pytest
+[2026-07-29T02:23:31Z] DONE pytest plain
+[2026-07-29T02:23:31Z] START pytest collect-only
+[2026-07-29T02:23:31Z] DONE pytest collect-only
+[2026-07-29T02:23:31Z] START pytest coverage
+[2026-07-29T02:23:31Z] DONE pytest coverage
+[2026-07-29T02:23:31Z] START tests changed since baseline
+[2026-07-29T02:23:31Z] DONE tests changed since baseline
+[2026-07-29T02:23:31Z] START copy tests source
+[2026-07-29T02:23:31Z] DONE copy tests source
+[2026-07-29T02:23:31Z] [STEP 2 done] 2026-07-29T02:23:31Z
+[2026-07-29T02:23:31Z] START cron definitions note
+[2026-07-29T02:23:31Z] DONE cron definitions note
+[2026-07-29T02:23:31Z] START runtime logs and statuses
+[2026-07-29T02:23:31Z] DONE runtime logs and statuses
+[2026-07-29T02:23:31Z] [STEP 3 done] 2026-07-29T02:23:31Z
+[2026-07-29T02:23:31Z] [STEP 4 done] 2026-07-29T02:23:31Z
+[2026-07-29T02:23:31Z] [STEP 5 done] 2026-07-29T02:23:31Z
+[2026-07-29T02:23:31Z] START benchmarks and reports
+[2026-07-29T02:23:31Z] DONE benchmarks and reports
+[2026-07-29T02:23:31Z] [STEP 6 done] 2026-07-29T02:23:31Z
+[2026-07-29T02:23:32Z] [STEP 7 done] 2026-07-29T02:23:32Z
+[2026-07-29T02:23:32Z] [STEP 8 done] 2026-07-29T02:23:32Z
+[2026-07-29T02:23:32Z] [STEP 9 done] 2026-07-29T02:23:32Z
+[2026-07-29T02:23:32Z] START console API snapshots
+[2026-07-29T02:23:32Z] DONE console API snapshots
+[2026-07-29T02:23:32Z] START console files
+[2026-07-29T02:23:36Z] DONE console files
+[2026-07-29T02:23:36Z] [STEP 10 done] 2026-07-29T02:23:36Z
+[2026-07-29T02:23:37Z] [STEP 11 done] 2026-07-29T02:23:37Z
+[2026-07-29T02:23:37Z] START copy roadmap/context docs
+[2026-07-29T02:23:37Z] DONE copy roadmap/context docs
+[2026-07-29T02:23:37Z] [STEP 12 done] 2026-07-29T02:23:37Z
+[2026-07-29T02:23:37Z] START write security/open questions
+[2026-07-29T02:23:37Z] DONE write security/open questions
+[2026-07-29T02:23:37Z] [STEP 13 done] 2026-07-29T02:23:37Z
+[2026-07-29T02:23:38Z] [STEP 14 done] 2026-07-29T02:23:38Z
+[2026-07-29T02:23:38Z] [STEP 15 done] 2026-07-29T02:23:38Z
+[2026-07-29T02:25:48Z] [CHECKSUMS done:    15450 files] 2026-07-29T02:25:48Z
+[2026-07-29T02:25:51Z] [STEP 16 done] 2026-07-29T02:25:51Z
+completed_at_utc: 2026-07-29T02:25:51Z
+=== DONE ===
+zip_path: /Users/hirotomookawasaki/stock_swing/stock_swing_codex_recurring_review_export_20260729_DELTA.zip
+[2026-07-29T02:29:06.921113+00:00] START final export cleanup and revalidation
+[2026-07-29T02:29:06.921390+00:00] removed 10_console/dashboard_source/.env
+[2026-07-29T02:29:07.445603+00:00] removed 10_console/dashboard_source/.venv
+[2026-07-29T02:29:07.461848+00:00] removed __pycache__ and .pyc artifacts from export
+[2026-07-29T02:29:07.554730+00:00] secret scan hits after cleanup: 3
+[2026-07-29T02:29:07.574283+00:00] recomputed CHECKSUMS.sha256 after cleanup
+[2026-07-29T02:29:07.679282+00:00] refreshed manifest and validation after cleanup
+[2026-07-29T02:29:07.770842+00:00] recreated ZIP from finalized export root
+[2026-07-29T02:29:07.892969+00:00] completed ZIP roundtrip after cleanup
+[2026-07-29T02:29:26.433076+00:00] refined account identifier scan; hits=0 overall=PASS
+[2026-07-29T02:29:33.239555+00:00] syncing checksums and ZIP after final validation update
+[2026-07-29T02:29:33.474397+00:00] final ZIP sync complete

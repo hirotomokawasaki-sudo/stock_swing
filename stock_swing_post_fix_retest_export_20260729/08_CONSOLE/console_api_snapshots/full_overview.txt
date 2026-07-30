@@ -1,0 +1,76 @@
+{
+  "time": "2026-07-29T19:10:46.501886+09:00",
+  "health_score": 100,
+  "health_status": "healthy",
+  "cron_jobs_active": 13,
+  "cron_jobs_total": 13,
+  "data_counts": {
+    "raw": 34556,
+    "normalized": 58,
+    "features": 16,
+    "signals": 6,
+    "decisions": 2159,
+    "audits": 2
+  },
+  "runtime_mode": "paper",
+  "account": {
+    "available": true,
+    "equity": 979316.24,
+    "cash": 829720.24,
+    "buying_power": 1809036.48,
+    "portfolio_value": 979316.24,
+    "long_market_value": 149596.0
+  },
+  "trading_summary": {
+    "total_trades": 203,
+    "all_trade_records": 204,
+    "closed_trades": 198,
+    "open_trades": 5,
+    "reconciled_removed_trades": 0,
+    "winning_trades": 89,
+    "losing_trades": 109,
+    "flat_trades": 0,
+    "win_rate": 0.4495,
+    "cumulative_realized_pnl": -74666.19,
+    "avg_return_per_trade": 0.0329,
+    "avg_pnl_per_trade": -355.18,
+    "valid_return_trade_count": 198,
+    "max_drawdown_pct": 0.0091,
+    "peak_equity": 986832.6,
+    "trading_days": 52,
+    "tracking_context": {
+      "broker_account_id": "PA3SEQKOZ91C",
+      "baseline_date": "2026-05-12",
+      "baseline_equity": 1000000.0,
+      "tracking_label": "alpaca_account_epoch_2026-05-12",
+      "performance_scope": "current_account_since_baseline",
+      "archived_from_account_id": null,
+      "archive_path": null,
+      "migration_note_path": null
+    }
+  },
+  "positions_summary": {
+    "gross_exposure": 149596.0,
+    "net_exposure": 149596.0,
+    "long_count": 5,
+    "short_count": 0,
+    "largest_position_weight": 0.2811042407551004,
+    "top5_concentration": 1.0,
+    "unrealized_pnl": -2067.1299940000054,
+    "avg_holding_days": 0.0,
+    "position_count": 5,
+    "portfolio_value": 979316.24,
+    "cash": 829720.24,
+    "total_pnl": -2067.13,
+    "total_pnl_pct": -0.0136
+  },
+  "deltas": {
+    "equity_vs_prev_snapshot": 1769.3,
+    "open_trades_vs_prev_snapshot": null,
+    "decisions_vs_prev_snapshot": 0,
+    "signals_vs_prev_snapshot": -4.0,
+    "orders_vs_prev_snapshot": -3.0,
+    "equity_vs_prev_day": 7244.78,
+    "unrealized_pnl": -2067.1299940000054
+  }
+}

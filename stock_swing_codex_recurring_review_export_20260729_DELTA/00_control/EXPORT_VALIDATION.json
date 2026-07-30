@@ -1,0 +1,24 @@
+{
+  "generated_at_utc": "2026-07-29T02:29:07.678991+00:00",
+  "request_id": "SSR-20260729-01",
+  "overall_status": "PASS",
+  "checks": {
+    "required_directories_present": "PASS",
+    "required_files_present": "PASS",
+    "no_empty_critical_files": "PASS",
+    "baseline_commit_present": "PASS",
+    "account_identifier_scan": "PASS",
+    "checksums_file_present": "PASS",
+    "json_parse_check": {
+      "00_control/EXPORT_MANIFEST.json": "PASS",
+      "05_ledger_and_broker/ledger_invariants.json": "PASS",
+      "06_performance_and_risk/performance_by_window.json": "PASS"
+    }
+  },
+  "missing_required_files": [],
+  "empty_critical_files": [],
+  "total_files": 518,
+  "total_size_bytes": 6953103,
+  "zip_roundtrip_passed": "PASS",
+  "zip_roundtrip_file_count": 518
+}

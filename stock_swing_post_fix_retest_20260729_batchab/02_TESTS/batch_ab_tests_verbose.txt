@@ -1,0 +1,53 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.10, pytest-9.0.2, pluggy-1.6.0 -- /Users/hirotomookawasaki/stock_swing/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/hirotomookawasaki/stock_swing
+configfile: pyproject.toml
+plugins: cov-7.1.0, anyio-4.13.0
+collecting ... collected 43 items
+
+tests/unit/test_batch_a_fixes.py::TestConsoleHealthEvidence::test_missing_reconcile_status_caps_score PASSED [  2%]
+tests/unit/test_batch_a_fixes.py::TestConsoleHealthEvidence::test_health_not_100_without_evidence PASSED [  4%]
+tests/unit/test_batch_a_fixes.py::TestConsoleHealthEvidence::test_evidence_status_invalid_when_missing PASSED [  6%]
+tests/unit/test_batch_a_fixes.py::TestConsoleHealthEvidence::test_reconcile_status_present_raises_score PASSED [  9%]
+tests/unit/test_batch_a_fixes.py::TestDayStartSnapshot::test_fresh_snapshot_captures_today PASSED [ 11%]
+tests/unit/test_batch_a_fixes.py::TestDayStartSnapshot::test_stale_snapshot_is_not_valid_for_today PASSED [ 13%]
+tests/unit/test_batch_a_fixes.py::TestDayStartSnapshot::test_missing_fields_raises_without_allow_missing PASSED [ 16%]
+tests/unit/test_batch_a_fixes.py::TestDayStartSnapshot::test_missing_fields_returned_with_allow_missing PASSED [ 18%]
+tests/unit/test_batch_a_fixes.py::TestDayStartSnapshot::test_get_prev_unrealized_surfaces_missing PASSED [ 20%]
+tests/unit/test_batch_a_fixes.py::TestDayStartSnapshot::test_corrupt_snapshot_handled_gracefully PASSED [ 23%]
+tests/unit/test_batch_a_fixes.py::TestDayStartSnapshot::test_missing_snapshot_file_handled PASSED [ 25%]
+tests/unit/test_batch_a_fixes.py::TestSourceFailClosed::test_collect_data_required_source_failure_returns_nonzero PASSED [ 27%]
+tests/unit/test_batch_a_fixes.py::TestSourceFailClosed::test_legacy_synthetic_quarantine_script_dry_run PASSED [ 30%]
+tests/unit/test_batch_a_fixes.py::TestSourceFailClosed::test_not_implemented_source_exits_degraded_not_ok PASSED [ 32%]
+tests/unit/test_batch_a_fixes.py::TestTokenAccounting::test_rule_based_strategy_has_zero_actual_tokens PASSED [ 34%]
+tests/unit/test_batch_a_fixes.py::TestTokenAccounting::test_provider_actual_only_when_usage_present PASSED [ 37%]
+tests/unit/test_batch_a_fixes.py::TestTokenAccounting::test_no_provider_response_gives_estimated PASSED [ 39%]
+tests/unit/test_batch_a_fixes.py::TestTokenAccounting::test_usage_source_values_are_exclusive PASSED [ 41%]
+tests/unit/test_batch_a_fixes.py::TestRemoteConsoleSecurity::test_query_token_is_not_accepted PASSED [ 44%]
+tests/unit/test_batch_a_fixes.py::TestRemoteConsoleSecurity::test_bearer_header_is_accepted PASSED [ 46%]
+tests/unit/test_batch_a_fixes.py::TestRemoteConsoleSecurity::test_x_remote_token_header_is_accepted PASSED [ 48%]
+tests/unit/test_batch_a_fixes.py::TestRemoteConsoleSecurity::test_full_console_host_is_loopback PASSED [ 51%]
+tests/unit/test_batch_a_fixes.py::TestRemoteConsoleSecurity::test_write_endpoint_disabled_by_default PASSED [ 53%]
+tests/unit/test_batch_a_fixes.py::TestRemoteConsoleSecurity::test_reconcile_status_written_on_success PASSED [ 55%]
+tests/unit/test_batch_b_fixes.py::TestFillLedger::test_ingest_new_fill PASSED [ 58%]
+tests/unit/test_batch_b_fixes.py::TestFillLedger::test_ingest_idempotent PASSED [ 60%]
+tests/unit/test_batch_b_fixes.py::TestFillLedger::test_consume_marks_fill PASSED [ 62%]
+tests/unit/test_batch_b_fixes.py::TestFillLedger::test_double_consume_raises PASSED [ 65%]
+tests/unit/test_batch_b_fixes.py::TestFillLedger::test_missing_fill_id_raises PASSED [ 67%]
+tests/unit/test_batch_b_fixes.py::TestFillLedger::test_missing_timestamp_quarantined PASSED [ 69%]
+tests/unit/test_batch_b_fixes.py::TestFillLedger::test_three_partial_fills_correct_total PASSED [ 72%]
+tests/unit/test_batch_b_fixes.py::TestFillLedger::test_same_reconcile_run_idempotent PASSED [ 74%]
+tests/unit/test_batch_b_fixes.py::TestFillLedger::test_old_sell_not_applied_to_new_position PASSED [ 76%]
+tests/unit/test_batch_b_fixes.py::TestCumulativeAllocation::test_second_buy_blocked_when_combined_over_band PASSED [ 79%]
+tests/unit/test_batch_b_fixes.py::TestCumulativeAllocation::test_rejected_first_not_in_second_projection PASSED [ 81%]
+tests/unit/test_batch_b_fixes.py::TestCumulativeAllocation::test_allocation_target_unchanged PASSED [ 83%]
+tests/unit/test_batch_b_fixes.py::TestCumulativeAllocation::test_single_buy_within_band_passes PASSED [ 86%]
+tests/unit/test_batch_b_fixes.py::TestP6JoinCoverage::test_join_coverage_file_structure PASSED [ 88%]
+tests/unit/test_batch_b_fixes.py::TestP6JoinCoverage::test_fill_ledger_key_derivation PASSED [ 90%]
+tests/unit/test_batch_b_fixes.py::TestP6JoinCoverage::test_klac_split_investigation_report_exists PASSED [ 93%]
+tests/unit/test_batch_b_fixes.py::TestP6JoinCoverage::test_klac_anomaly_quarantined PASSED [ 95%]
+tests/unit/test_batch_b_fixes.py::TestP6JoinCoverage::test_cumulative_pnl_excludes_split_anomaly PASSED [ 97%]
+tests/unit/test_batch_b_fixes.py::TestP6JoinCoverage::test_fill_ledger_idempotency_across_rebuilds PASSED [100%]
+
+============================== 43 passed in 0.24s ==============================

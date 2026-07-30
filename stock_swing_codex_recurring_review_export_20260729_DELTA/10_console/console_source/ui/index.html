@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Swing コンソール</title>
+    <link rel="stylesheet" href="/ui/style.css?v=20260427-1226">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📈 Stock Swing コンソール</h1>
+            <div id="status-bar">
+                <span id="system-status">読み込み中...</span>
+                <span id="ws-status" class="ws-disconnected">🔴 WebSocket</span>
+                <span id="last-update"></span>
+                <span id="stale-badge" title="サーバーへの接続に失敗しました。最後のデータを表示中。" style="display:none">⚠️ データ古い</span>
+            </div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab active" data-tab="overview">概要</button>
+            <button class="tab" data-tab="weekly">週次</button>
+            <button class="tab" data-tab="analysis">分析</button>
+            <button class="tab" data-tab="charts">チャート</button>
+            <button class="tab" data-tab="trading">取引</button>
+            <button class="tab" data-tab="positions">ポジション</button>
+            <button class="tab" data-tab="archives">移行履歴</button>
+            <button class="tab" data-tab="news">ニュース</button>
+            <button class="tab" data-tab="cron">定期実行</button>
+            <button class="tab" data-tab="data">データ状況</button>
+            <button class="tab" data-tab="logs">ログ</button>
+            <button class="tab" data-tab="metrics">📊 メトリクス</button>
+        </nav>
+
+        <main id="content">
+            <!-- 動的コンテンツがここに読み込まれます -->
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
+    <!-- Robustness improvements (Phase 1 & 2) -->
+    <script src="/ui/utils.js?v=20260501-1910"></script>
+    <script src="/ui/validators.js?v=20260501-1910"></script>
+    <!-- Phase 3: Monitoring & Recovery -->
+    <script src="/ui/performance-monitor.js?v=20260501-1920"></script>
+    <script src="/ui/error-tracker.js?v=20260501-1920"></script>
+    <script src="/ui/health-monitor.js?v=20260501-1920"></script>
+    <script src="/ui/recovery-manager.js?v=20260501-1920"></script>
+    <script src="/ui/report-generator.js?v=20260501-1920"></script>
+    <!-- API & State Management -->
+    <script src="/ui/api-client.js?v=20260501-1910"></script>
+    <script src="/ui/error-handler.js?v=20260501-1910"></script>
+    <script src="/ui/state-manager.js?v=20260501-1910"></script>
+    <!-- Main Application -->
+    <script src="/ui/app.js?v=20260715-2036"></script>
+</body>
+</html>

@@ -1,0 +1,3972 @@
+{
+  "generated_at": "2026-07-01T01:16:52.004587+00:00",
+  "offsets_days": [
+    1,
+    3,
+    5,
+    10
+  ],
+  "trades": [
+    {
+      "trade_id": "broker_match_0001_AMAT",
+      "symbol": "AMAT",
+      "asset_class": "stock",
+      "hold_days": 20.08,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 6041.92,
+      "qty": 158,
+      "exit_price": 459.3,
+      "exit_date": "2026-06-01",
+      "counterfactual": {
+        "1": 10900.418071289061,
+        "3": 12741.121928710936,
+        "5": 11235.38212158203,
+        "10": 26025.764628906247
+      }
+    },
+    {
+      "trade_id": "broker_match_0002_AMAT",
+      "symbol": "AMAT",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -991.13,
+      "qty": 127,
+      "exit_price": 478.52,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": 1636.498914794924,
+        "3": 8422.111860351566,
+        "5": 12630.893720703129,
+        "10": 19539.68906982422
+      }
+    },
+    {
+      "trade_id": "broker_match_0004_AMD",
+      "symbol": "AMD",
+      "asset_class": "stock",
+      "hold_days": 0.02,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 300.24,
+      "qty": 254,
+      "exit_price": 450.5,
+      "exit_date": "2026-05-12",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0005_AMD",
+      "symbol": "AMD",
+      "asset_class": "stock",
+      "hold_days": 0.94,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 2053.36,
+      "qty": 256,
+      "exit_price": 452.02,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0006_AMD",
+      "symbol": "AMD",
+      "asset_class": "stock",
+      "hold_days": 0.02,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -473.54,
+      "qty": 261,
+      "exit_price": 444.46,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0007_AMD",
+      "symbol": "AMD",
+      "asset_class": "stock",
+      "hold_days": 0.07,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -882.18,
+      "qty": 261,
+      "exit_price": 447.62,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0008_AMD",
+      "symbol": "AMD",
+      "asset_class": "stock",
+      "hold_days": 13.99,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 132.25,
+      "qty": 2,
+      "exit_price": 487.5,
+      "exit_date": "2026-06-01",
+      "counterfactual": {
+        "1": 200.3299560546875,
+        "3": 203.6500244140625,
+        "5": 137.90997314453125,
+        "10": 251.77001953125
+      }
+    },
+    {
+      "trade_id": "broker_match_0009_AMD",
+      "symbol": "AMD",
+      "asset_class": "stock",
+      "hold_days": 13.88,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 280.52,
+      "qty": 4,
+      "exit_price": 487.5,
+      "exit_date": "2026-06-01",
+      "counterfactual": {
+        "1": 416.679912109375,
+        "3": 423.320048828125,
+        "5": 291.8399462890625,
+        "10": 519.5600390625
+      }
+    },
+    {
+      "trade_id": "broker_match_0010_AMD",
+      "symbol": "AMD",
+      "asset_class": "stock",
+      "hold_days": 12.02,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 687.4,
+      "qty": 12,
+      "exit_price": 487.5,
+      "exit_date": "2026-06-01",
+      "counterfactual": {
+        "1": 1095.879736328125,
+        "3": 1115.800146484375,
+        "5": 721.3598388671875,
+        "10": 1404.5201171875
+      }
+    },
+    {
+      "trade_id": "broker_match_0011_AMD",
+      "symbol": "AMD",
+      "asset_class": "stock",
+      "hold_days": 6.0,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -69.11,
+      "qty": 10,
+      "exit_price": 487.5,
+      "exit_date": "2026-06-01",
+      "counterfactual": {
+        "1": 271.2897802734375,
+        "3": 287.8901220703125,
+        "5": -40.81013427734375,
+        "10": 528.49009765625
+      }
+    },
+    {
+      "trade_id": "broker_match_0012_AMD",
+      "symbol": "AMD",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -2119.45,
+      "qty": 95,
+      "exit_price": 482.53,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": -2786.3490722656225,
+        "3": -1557.0488403320285,
+        "5": 4029.9009277343775,
+        "10": 4445.05046386719
+      }
+    },
+    {
+      "trade_id": "broker_match_0013_AMZN",
+      "symbol": "AMZN",
+      "asset_class": "stock",
+      "hold_days": 0.94,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 246.75,
+      "qty": 329,
+      "exit_price": 264.82,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0014_AMZN",
+      "symbol": "AMZN",
+      "asset_class": "stock",
+      "hold_days": 0.02,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 507.11,
+      "qty": 323,
+      "exit_price": 266.84,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0015_AMZN",
+      "symbol": "AMZN",
+      "asset_class": "stock",
+      "hold_days": 0.07,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 138.83,
+      "qty": 323,
+      "exit_price": 268.16,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0016_AMZN",
+      "symbol": "AMZN",
+      "asset_class": "stock",
+      "hold_days": 0.92,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -5.34,
+      "qty": 1,
+      "exit_price": 262.39,
+      "exit_date": "2026-05-15",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": -6.469990234374986
+      }
+    },
+    {
+      "trade_id": "broker_match_0017_ANET",
+      "symbol": "ANET",
+      "asset_class": "stock",
+      "hold_days": 20.09,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 12144.92,
+      "qty": 407,
+      "exit_price": 170.21,
+      "exit_date": "2026-06-01",
+      "counterfactual": {
+        "1": 14228.760745239255,
+        "3": 10435.517764282224,
+        "5": 6524.247515869138,
+        "10": 11689.078509521481
+      }
+    },
+    {
+      "trade_id": "broker_match_0018_ANET",
+      "symbol": "ANET",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -1216.71,
+      "qty": 363,
+      "exit_price": 155.96,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": -2596.1086706543,
+        "3": -1056.9922155761749,
+        "5": 3549.4786706542936,
+        "10": 5535.089113769528
+      }
+    },
+    {
+      "trade_id": "broker_match_0020_ARM",
+      "symbol": "ARM",
+      "asset_class": "stock",
+      "hold_days": 0.02,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 353.78,
+      "qty": 266,
+      "exit_price": 217.82,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0021_ARM",
+      "symbol": "ARM",
+      "asset_class": "stock",
+      "hold_days": 0.07,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -61.18,
+      "qty": 266,
+      "exit_price": 222.7,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0022_ARM",
+      "symbol": "ARM",
+      "asset_class": "stock",
+      "hold_days": 7.15,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 894.4,
+      "qty": 13,
+      "exit_price": 303.34,
+      "exit_date": "2026-05-27",
+      "counterfactual": {
+        "1": null,
+        "3": 2266.0300793457036,
+        "5": 2304.7698254394536,
+        "10": 947.5699047851565
+      }
+    },
+    {
+      "trade_id": "broker_match_0023_ARM",
+      "symbol": "ARM",
+      "asset_class": "stock",
+      "hold_days": 1.12,
+      "hold_bucket": "1-3d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -28.9,
+      "qty": 10,
+      "exit_price": 303.34,
+      "exit_date": "2026-05-27",
+      "counterfactual": {
+        "1": null,
+        "3": 1026.2000610351565,
+        "5": 1055.9998657226565,
+        "10": 11.999926757812752
+      }
+    },
+    {
+      "trade_id": "broker_match_0024_ARM",
+      "symbol": "ARM",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -2538.67,
+      "qty": 83,
+      "exit_price": 342.92,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": -4037.651215820314,
+        "3": -2595.939088134767,
+        "5": 3240.6189868164047,
+        "10": 2839.730101318358
+      }
+    },
+    {
+      "trade_id": "broker_match_0025_ARM",
+      "symbol": "ARM",
+      "asset_class": "stock",
+      "hold_days": 12.84,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 5270.57,
+      "qty": 63,
+      "exit_price": 406.78,
+      "exit_date": "2026-06-22",
+      "counterfactual": {
+        "1": 2726.0009228515637,
+        "3": 1549.159461669923,
+        "5": 1288.9691540527356,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0026_ASML",
+      "symbol": "ASML",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 1835.09,
+      "qty": 42,
+      "exit_price": 1731.14,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": 3793.5508203124955,
+        "3": 8905.369179687495,
+        "5": 8618.93143554687,
+        "10": 10155.709999999995
+      }
+    },
+    {
+      "trade_id": "broker_match_0028_AVGO",
+      "symbol": "AVGO",
+      "asset_class": "stock",
+      "hold_days": 0.95,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -1408.1,
+      "qty": 202,
+      "exit_price": 412.85,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0029_AVGO",
+      "symbol": "AVGO",
+      "asset_class": "stock",
+      "hold_days": 0.02,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -411.87,
+      "qty": 205,
+      "exit_price": 412.27,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0030_AVGO",
+      "symbol": "AVGO",
+      "asset_class": "stock",
+      "hold_days": 0.08,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -1550.04,
+      "qty": 202,
+      "exit_price": 432.07,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0031_AVGO",
+      "symbol": "AVGO",
+      "asset_class": "stock",
+      "hold_days": 0.92,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -12.33,
+      "qty": 1,
+      "exit_price": 427.41,
+      "exit_date": "2026-05-15",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": 20.2300012207031
+      }
+    },
+    {
+      "trade_id": "broker_match_0032_CDNS",
+      "symbol": "CDNS",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -4057.11,
+      "qty": 183,
+      "exit_price": 383.39,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": -2682.781116943357,
+        "3": -3993.0617871093727,
+        "5": -2023.9799999999977,
+        "10": -3023.1584362792946
+      }
+    },
+    {
+      "trade_id": "broker_match_0033_CDNS",
+      "symbol": "CDNS",
+      "asset_class": "stock",
+      "hold_days": -1.27,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -358.74,
+      "qty": 49,
+      "exit_price": 383.39,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": 9.249700927735034,
+        "3": -341.59047851562434,
+        "5": 185.65000000000066,
+        "10": -81.88958129882747
+      }
+    },
+    {
+      "trade_id": "broker_match_0035_CHPS",
+      "symbol": "CHPS",
+      "asset_class": "etf",
+      "hold_days": 19.99,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 3075.41,
+      "qty": 281,
+      "exit_price": 92.87,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 1144.6591543579088,
+        "3": 1991.8739828491198,
+        "5": 3595.8220343017565,
+        "10": 6359.175931396483
+      }
+    },
+    {
+      "trade_id": "broker_match_0036_CHPS",
+      "symbol": "CHPS",
+      "asset_class": "etf",
+      "hold_days": 19.99,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 3587.5,
+      "qty": 350,
+      "exit_price": 92.18,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 1424.15019226074,
+        "3": 2479.399978637693,
+        "5": 4477.200042724607,
+        "10": 7919.0999145507785
+      }
+    },
+    {
+      "trade_id": "broker_match_0037_CHPX",
+      "symbol": "CHPX",
+      "asset_class": "etf",
+      "hold_days": 20.0,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 3612.98,
+      "qty": 262,
+      "exit_price": 102.09,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 1789.459280395507,
+        "3": 2478.520559692382,
+        "5": 3109.939520263671,
+        "10": 5494.139120483398
+      }
+    },
+    {
+      "trade_id": "broker_match_0038_CHPX",
+      "symbol": "CHPX",
+      "asset_class": "etf",
+      "hold_days": 20.0,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 4211.76,
+      "qty": 322,
+      "exit_price": 101.38,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 2199.2591156005874,
+        "3": 3046.1206878662124,
+        "5": 3822.139410400392,
+        "10": 6752.338919067384
+      }
+    },
+    {
+      "trade_id": "broker_match_0039_CRDO",
+      "symbol": "CRDO",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 1035.29,
+      "qty": 132,
+      "exit_price": 216.35,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": 3407.3309667968756,
+        "3": 7425.411289062501,
+        "5": 6719.210483398439,
+        "10": 12409.728549804688
+      }
+    },
+    {
+      "trade_id": "broker_match_0040_CRDO",
+      "symbol": "CRDO",
+      "asset_class": "stock",
+      "hold_days": 12.74,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 7617.88,
+      "qty": 103,
+      "exit_price": 304.62,
+      "exit_date": "2026-06-22",
+      "counterfactual": {
+        "1": 4258.535502929687,
+        "3": 3849.1098742675777,
+        "5": 1547.0592456054683,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0041_CRDO",
+      "symbol": "CRDO",
+      "asset_class": "stock",
+      "hold_days": 1.1,
+      "hold_bucket": "1-3d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -208.12,
+      "qty": 86,
+      "exit_price": 271.56,
+      "exit_date": "2026-06-24",
+      "counterfactual": {
+        "1": -511.70010498046895,
+        "3": -2433.8006298828127,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0042_CRDO",
+      "symbol": "CRDO",
+      "asset_class": "stock",
+      "hold_days": 1.0,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -162.96,
+      "qty": 84,
+      "exit_price": 271.56,
+      "exit_date": "2026-06-24",
+      "counterfactual": {
+        "1": -459.4801025390627,
+        "3": -2336.880615234375,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0043_CRDO",
+      "symbol": "CRDO",
+      "asset_class": "stock",
+      "hold_days": 0.84,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -106.68,
+      "qty": 84,
+      "exit_price": 271.56,
+      "exit_date": "2026-06-24",
+      "counterfactual": {
+        "1": -403.2001025390627,
+        "3": -2280.600615234375,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0045_CRM",
+      "symbol": "CRM",
+      "asset_class": "stock",
+      "hold_days": 4.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -3795.07,
+      "qty": 270,
+      "exit_price": 179.74,
+      "exit_date": "2026-06-09",
+      "counterfactual": {
+        "1": -6176.470494384768,
+        "3": -7534.5701647949245,
+        "5": -8663.168187255862,
+        "10": -10901.470494384768
+      }
+    },
+    {
+      "trade_id": "broker_match_0046_CRWD",
+      "symbol": "CRWD",
+      "asset_class": "stock",
+      "hold_days": 14.15,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 898.1,
+      "qty": 7,
+      "exit_price": 748.0,
+      "exit_date": "2026-06-03",
+      "counterfactual": {
+        "1": 695.7301879882813,
+        "3": 273.6298461914063,
+        "5": 196.27993164062502,
+        "10": 442.8201538085938
+      }
+    },
+    {
+      "trade_id": "broker_match_0047_CRWD",
+      "symbol": "CRWD",
+      "asset_class": "stock",
+      "hold_days": 4.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -3643.72,
+      "qty": 71,
+      "exit_price": 648.38,
+      "exit_date": "2026-06-09",
+      "counterfactual": {
+        "1": -3689.1606933593744,
+        "3": -1199.900866699218,
+        "5": -1434.9106933593744,
+        "10": -1333.3812133789056
+      }
+    },
+    {
+      "trade_id": "broker_match_0048_CSCO",
+      "symbol": "CSCO",
+      "asset_class": "stock",
+      "hold_days": 19.0,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 282.5,
+      "qty": 38,
+      "exit_price": 123.83,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": 150.64002319335944,
+        "3": 206.5000695800782,
+        "5": 143.41993041992194,
+        "10": 195.09995361328131
+      }
+    },
+    {
+      "trade_id": "broker_match_0049_CSCO",
+      "symbol": "CSCO",
+      "asset_class": "stock",
+      "hold_days": 17.98,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 83.22,
+      "qty": 10,
+      "exit_price": 123.83,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": 48.52000610351564,
+        "3": 63.22001831054689,
+        "5": 46.61998168945314,
+        "10": 60.219987792968766
+      }
+    },
+    {
+      "trade_id": "broker_match_0050_DDOG",
+      "symbol": "DDOG",
+      "asset_class": "stock",
+      "hold_days": 13.02,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 1124.27,
+      "qty": 25,
+      "exit_price": 261.19,
+      "exit_date": "2026-06-02",
+      "counterfactual": {
+        "1": 852.7700457763672,
+        "3": 447.27001525878904,
+        "5": 278.0199084472656,
+        "10": 372.27001525878904
+      }
+    },
+    {
+      "trade_id": "broker_match_0051_DDOG",
+      "symbol": "DDOG",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -3126.0,
+      "qty": 200,
+      "exit_price": 232.76,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": -4210.000732421873,
+        "3": -2829.9989013671857,
+        "5": -3060.000732421873,
+        "10": -5404.000976562498
+      }
+    },
+    {
+      "trade_id": "broker_match_0053_DELL",
+      "symbol": "DELL",
+      "asset_class": "stock",
+      "hold_days": 0.93,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 2369.9,
+      "qty": 293,
+      "exit_price": 241.41,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0054_DELL",
+      "symbol": "DELL",
+      "asset_class": "stock",
+      "hold_days": 0.02,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -412.37,
+      "qty": 299,
+      "exit_price": 240.6,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0055_DELL",
+      "symbol": "DELL",
+      "asset_class": "stock",
+      "hold_days": 0.08,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -233.22,
+      "qty": 299,
+      "exit_price": 244.78,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0056_DELL",
+      "symbol": "DELL",
+      "asset_class": "stock",
+      "hold_days": 13.02,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 3464.72,
+      "qty": 16,
+      "exit_price": 456.95,
+      "exit_date": "2026-06-02",
+      "counterfactual": {
+        "1": 2890.79978515625,
+        "3": 2463.760234375,
+        "5": 2261.99998046875,
+        "10": 2618.79978515625
+      }
+    },
+    {
+      "trade_id": "broker_match_0057_DELL",
+      "symbol": "DELL",
+      "asset_class": "stock",
+      "hold_days": 12.0,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 2085.47,
+      "qty": 10,
+      "exit_price": 456.95,
+      "exit_date": "2026-06-02",
+      "counterfactual": {
+        "1": 1726.769865722656,
+        "3": 1459.8701464843748,
+        "5": 1333.7699877929685,
+        "10": 1556.769865722656
+      }
+    },
+    {
+      "trade_id": "broker_match_0058_DELL",
+      "symbol": "DELL",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -1113.59,
+      "qty": 93,
+      "exit_price": 394.03,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": -2252.840113525388,
+        "3": -1353.5288647460911,
+        "5": 285.13068115234637,
+        "10": 1181.6492053222685
+      }
+    },
+    {
+      "trade_id": "broker_match_0060_FICO",
+      "symbol": "FICO",
+      "asset_class": "stock",
+      "hold_days": 14.14,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -20.58,
+      "qty": 3,
+      "exit_price": 1165.72,
+      "exit_date": "2026-06-03",
+      "counterfactual": {
+        "1": -17.64014648437508,
+        "3": 104.27989746093742,
+        "5": 142.71007324218743,
+        "10": -137.22010253906257
+      }
+    },
+    {
+      "trade_id": "broker_match_0061_FICO",
+      "symbol": "FICO",
+      "asset_class": "stock",
+      "hold_days": 13.15,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -522.8,
+      "qty": 10,
+      "exit_price": 1165.72,
+      "exit_date": "2026-06-03",
+      "counterfactual": {
+        "1": -513.0004882812502,
+        "3": -106.60034179687523,
+        "5": 21.500244140624773,
+        "10": -911.6003417968752
+      }
+    },
+    {
+      "trade_id": "broker_match_0062_FICO",
+      "symbol": "FICO",
+      "asset_class": "stock",
+      "hold_days": 8.0,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -955.2,
+      "qty": 10,
+      "exit_price": 1165.72,
+      "exit_date": "2026-06-03",
+      "counterfactual": {
+        "1": -945.4004882812503,
+        "3": -539.0003417968753,
+        "5": -410.8997558593753,
+        "10": -1344.0003417968753
+      }
+    },
+    {
+      "trade_id": "broker_match_0063_FICO",
+      "symbol": "FICO",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -3205.96,
+      "qty": 40,
+      "exit_price": 1134.04,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": 438.4409765625014,
+        "3": -1152.7601953124986,
+        "5": -1302.7601953124986,
+        "10": -4933.560976562499
+      }
+    },
+    {
+      "trade_id": "broker_match_0064_FRWD",
+      "symbol": "FRWD",
+      "asset_class": "etf",
+      "hold_days": 20.12,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 5765.34,
+      "qty": 1813,
+      "exit_price": 33.32,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 1396.0097233581537,
+        "3": 2182.8517510223387,
+        "5": 3083.912280731201,
+        "10": 7841.225276641846
+      }
+    },
+    {
+      "trade_id": "broker_match_0065_FTNT",
+      "symbol": "FTNT",
+      "asset_class": "stock",
+      "hold_days": 8.02,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -16.76,
+      "qty": 40,
+      "exit_price": 126.6,
+      "exit_date": "2026-05-28",
+      "counterfactual": {
+        "1": 804.8399755859377,
+        "3": 873.6400244140627,
+        "5": 906.0399267578127,
+        "10": 721.6399023437502
+      }
+    },
+    {
+      "trade_id": "broker_match_0066_FTNT",
+      "symbol": "FTNT",
+      "asset_class": "stock",
+      "hold_days": 4.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -3594.12,
+      "qty": 491,
+      "exit_price": 140.57,
+      "exit_date": "2026-06-09",
+      "counterfactual": {
+        "1": -4423.907602539059,
+        "3": -780.6885015869107,
+        "5": -427.1679022216763,
+        "10": 54.0100000000034
+      }
+    },
+    {
+      "trade_id": "broker_match_0067_FTXL",
+      "symbol": "FTXL",
+      "asset_class": "etf",
+      "hold_days": 0.02,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -498.18,
+      "qty": 100,
+      "exit_price": 235.86,
+      "exit_date": "2026-05-12",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0068_FTXL",
+      "symbol": "FTXL",
+      "asset_class": "etf",
+      "hold_days": 17.0,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 4110.81,
+      "qty": 223,
+      "exit_price": 252.71,
+      "exit_date": "2026-06-01",
+      "counterfactual": {
+        "1": 8713.531361083984,
+        "3": 8662.238911132812,
+        "5": 5317.238911132811,
+        "10": 11128.618366699218
+      }
+    },
+    {
+      "trade_id": "broker_match_0069_GOOGL",
+      "symbol": "GOOGL",
+      "asset_class": "stock",
+      "hold_days": 16.99,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -474.76,
+      "qty": 21,
+      "exit_price": 376.26,
+      "exit_date": "2026-06-01",
+      "counterfactual": {
+        "1": -777.3698718261717,
+        "3": -560.2299487304685,
+        "5": -746.710051269531,
+        "10": -619.8698718261717
+      }
+    },
+    {
+      "trade_id": "broker_match_0070_GTOP",
+      "symbol": "GTOP",
+      "asset_class": "etf",
+      "hold_days": 0.02,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -184.0,
+      "qty": 460,
+      "exit_price": 45.43,
+      "exit_date": "2026-05-12",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0071_GTOP",
+      "symbol": "GTOP",
+      "asset_class": "etf",
+      "hold_days": 0.96,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 0,
+      "qty": 941,
+      "exit_price": 45.83,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0072_GTOP",
+      "symbol": "GTOP",
+      "asset_class": "etf",
+      "hold_days": 0.03,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 165.72,
+      "qty": 1381,
+      "exit_price": 46.04,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0073_GTOP",
+      "symbol": "GTOP",
+      "asset_class": "etf",
+      "hold_days": 0.82,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 173.37,
+      "qty": 1061,
+      "exit_price": 46.68,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0074_GTOP",
+      "symbol": "GTOP",
+      "asset_class": "etf",
+      "hold_days": 0.03,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 112.5,
+      "qty": 1125,
+      "exit_price": 47.21,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0075_GTOP",
+      "symbol": "GTOP",
+      "asset_class": "etf",
+      "hold_days": 0.84,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -1306.98,
+      "qty": 1379,
+      "exit_price": 46.17,
+      "exit_date": "2026-05-15",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": 4160.752685394285
+      }
+    },
+    {
+      "trade_id": "broker_match_0076_GTOP",
+      "symbol": "GTOP",
+      "asset_class": "etf",
+      "hold_days": 20.12,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 1854.45,
+      "qty": 585,
+      "exit_price": 49.92,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 503.10035705566315,
+        "3": 476.77419662475495,
+        "5": 598.4543037414542,
+        "10": 1643.8508033752432
+      }
+    },
+    {
+      "trade_id": "broker_match_0077_HPE",
+      "symbol": "HPE",
+      "asset_class": "stock",
+      "hold_days": 0.94,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 1619.8,
+      "qty": 2314,
+      "exit_price": 30.5,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0078_HPE",
+      "symbol": "HPE",
+      "asset_class": "stock",
+      "hold_days": 0.02,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -254.84,
+      "qty": 2358,
+      "exit_price": 30.82,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0079_HPE",
+      "symbol": "HPE",
+      "asset_class": "stock",
+      "hold_days": 0.08,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -3066.7,
+      "qty": 2359,
+      "exit_price": 33.38,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0080_HPE",
+      "symbol": "HPE",
+      "asset_class": "stock",
+      "hold_days": 13.02,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 3119.31,
+      "qty": 120,
+      "exit_price": 58.97,
+      "exit_date": "2026-06-02",
+      "counterfactual": {
+        "1": 2660.9101831054686,
+        "3": 1946.9100915527345,
+        "5": 1835.3100549316407,
+        "10": 1848.5101281738282
+      }
+    },
+    {
+      "trade_id": "broker_match_0081_HPE",
+      "symbol": "HPE",
+      "asset_class": "stock",
+      "hold_days": 5.88,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 219.14,
+      "qty": 10,
+      "exit_price": 58.97,
+      "exit_date": "2026-06-02",
+      "counterfactual": {
+        "1": 180.94001525878906,
+        "3": 121.44000762939453,
+        "5": 112.14000457763672,
+        "10": 113.24001068115234
+      }
+    },
+    {
+      "trade_id": "broker_match_0082_HPE",
+      "symbol": "HPE",
+      "asset_class": "stock",
+      "hold_days": 0.0,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -172.37,
+      "qty": 776,
+      "exit_price": 52.65,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": -2849.569407958983,
+        "3": -3571.2496447753892,
+        "5": -4711.970592041014,
+        "10": -4238.610118408202
+      }
+    },
+    {
+      "trade_id": "broker_match_0084_HPQ",
+      "symbol": "HPQ",
+      "asset_class": "stock",
+      "hold_days": 5.08,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -2979.72,
+      "qty": 1674,
+      "exit_price": 24.42,
+      "exit_date": "2026-06-09",
+      "counterfactual": {
+        "1": -2527.7391059875517,
+        "3": -1607.040383148196,
+        "5": -3197.338467407229,
+        "10": -4235.2198722839385
+      }
+    },
+    {
+      "trade_id": "broker_match_0085_HPQ",
+      "symbol": "HPQ",
+      "asset_class": "stock",
+      "hold_days": 13.0,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -1788.39,
+      "qty": 1423,
+      "exit_price": 23.61,
+      "exit_date": "2026-06-22",
+      "counterfactual": {
+        "1": -1703.0098914337152,
+        "3": -2770.259891433715,
+        "5": -3168.7008685302726,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0086_IBM",
+      "symbol": "IBM",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -4011.19,
+      "qty": 173,
+      "exit_price": 286.39,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": -5550.891689453123,
+        "3": -6007.608944091795,
+        "5": -7069.831478271482,
+        "10": -9922.599788818357
+      }
+    },
+    {
+      "trade_id": "broker_match_0087_IBM",
+      "symbol": "IBM",
+      "asset_class": "stock",
+      "hold_days": 12.74,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -4382.52,
+      "qty": 141,
+      "exit_price": 246.62,
+      "exit_date": "2026-06-22",
+      "counterfactual": {
+        "1": -1799.3996557617197,
+        "3": -2739.8715490722666,
+        "5": 42.05999999999858,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0088_INTC",
+      "symbol": "INTC",
+      "asset_class": "stock",
+      "hold_days": 0.93,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 3187.91,
+      "qty": 807,
+      "exit_price": 122.08,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0089_INTC",
+      "symbol": "INTC",
+      "asset_class": "stock",
+      "hold_days": 0.08,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -864.15,
+      "qty": 823,
+      "exit_price": 115.26,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0090_INTC",
+      "symbol": "INTC",
+      "asset_class": "stock",
+      "hold_days": 8.02,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -79.39,
+      "qty": 51,
+      "exit_price": 117.03,
+      "exit_date": "2026-05-28",
+      "counterfactual": {
+        "1": -472.089906616211,
+        "3": -543.4899844360352,
+        "5": -347.14006225585945,
+        "10": -82.96004669189459
+      }
+    },
+    {
+      "trade_id": "broker_match_0093_KLAC",
+      "symbol": "KLAC",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -65.7,
+      "qty": 31,
+      "exit_price": 203.17,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": 268.07689025878943,
+        "3": 1112.1140454101567,
+        "5": 1585.050416259766,
+        "10": 1979.990113525391
+      }
+    },
+    {
+      "trade_id": "broker_match_0094_KLAC",
+      "symbol": "KLAC",
+      "asset_class": "stock",
+      "hold_days": 3.0,
+      "hold_bucket": "1-3d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 856.9,
+      "qty": 21,
+      "exit_price": 253.5,
+      "exit_date": "2026-06-12",
+      "counterfactual": {
+        "1": 918.2202819824219,
+        "3": 546.7299102783203,
+        "5": 1185.760076904297,
+        "10": 754.8399871826172
+      }
+    },
+    {
+      "trade_id": "broker_match_0095_KLAC",
+      "symbol": "KLAC",
+      "asset_class": "stock",
+      "hold_days": 0.1,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -121.93,
+      "qty": 29,
+      "exit_price": 242.5,
+      "exit_date": "2026-06-23",
+      "counterfactual": {
+        "1": -180.5101239013672,
+        "3": 56.12998229980468,
+        "5": 1595.1597521972656,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0096_KLAC",
+      "symbol": "KLAC",
+      "asset_class": "stock",
+      "hold_days": 0.16,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 58.63,
+      "qty": 29,
+      "exit_price": 244.72,
+      "exit_date": "2026-06-23",
+      "counterfactual": {
+        "1": -64.33012390136716,
+        "3": 172.30998229980472,
+        "5": 1711.3397521972659,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0098_LRCX",
+      "symbol": "LRCX",
+      "asset_class": "stock",
+      "hold_days": 0.02,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -88.2,
+      "qty": 210,
+      "exit_price": 291.45,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0099_LRCX",
+      "symbol": "LRCX",
+      "asset_class": "stock",
+      "hold_days": 15.02,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 360.44,
+      "qty": 8,
+      "exit_price": 327.3,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 168.2799902343749,
+        "3": 359.3200292968749,
+        "5": 642.199912109375,
+        "10": 854.360068359375
+      }
+    },
+    {
+      "trade_id": "broker_match_0100_LRCX",
+      "symbol": "LRCX",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -1647.76,
+      "qty": 179,
+      "exit_price": 318.84,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": -158.47934448241745,
+        "3": 6170.95803344727,
+        "5": 10896.562403564458,
+        "10": 14587.54152954102
+      }
+    },
+    {
+      "trade_id": "broker_match_0103_MDB",
+      "symbol": "MDB",
+      "asset_class": "stock",
+      "hold_days": 7.02,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -394.41,
+      "qty": 12,
+      "exit_price": 300.58,
+      "exit_date": "2026-05-27",
+      "counterfactual": {
+        "1": null,
+        "3": 845.1900585937501,
+        "5": 418.47008789062517,
+        "10": 177.98998535156267
+      }
+    },
+    {
+      "trade_id": "broker_match_0104_MDB",
+      "symbol": "MDB",
+      "asset_class": "stock",
+      "hold_days": 6.0,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -153.6,
+      "qty": 10,
+      "exit_price": 300.58,
+      "exit_date": "2026-05-27",
+      "counterfactual": {
+        "1": null,
+        "3": 879.4000488281253,
+        "5": 523.8000732421876,
+        "10": 323.3999877929689
+      }
+    },
+    {
+      "trade_id": "broker_match_0105_MDB",
+      "symbol": "MDB",
+      "asset_class": "stock",
+      "hold_days": 6.0,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -169.32,
+      "qty": 10,
+      "exit_price": 300.58,
+      "exit_date": "2026-05-27",
+      "counterfactual": {
+        "1": null,
+        "3": 863.6800488281253,
+        "5": 508.08007324218767,
+        "10": 307.6799877929689
+      }
+    },
+    {
+      "trade_id": "broker_match_0106_MDB",
+      "symbol": "MDB",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -3773.69,
+      "qty": 99,
+      "exit_price": 345.78,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": -4318.1901208496065,
+        "3": -2919.319637451169,
+        "5": -2942.0907250976534,
+        "10": -6409.06963745117
+      }
+    },
+    {
+      "trade_id": "broker_match_0107_MRVL",
+      "symbol": "MRVL",
+      "asset_class": "stock",
+      "hold_days": 0.02,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 260.64,
+      "qty": 424,
+      "exit_price": 165.75,
+      "exit_date": "2026-05-12",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0108_MRVL",
+      "symbol": "MRVL",
+      "asset_class": "stock",
+      "hold_days": 0.02,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 2190.74,
+      "qty": 300,
+      "exit_price": 178.0,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0109_MRVL",
+      "symbol": "MRVL",
+      "asset_class": "stock",
+      "hold_days": 7.02,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 228.06,
+      "qty": 15,
+      "exit_price": 204.42,
+      "exit_date": "2026-05-27",
+      "counterfactual": {
+        "1": null,
+        "3": 453.20989013671897,
+        "5": 1686.5099084472658,
+        "10": 950.6099450683596
+      }
+    },
+    {
+      "trade_id": "broker_match_0110_MRVL",
+      "symbol": "MRVL",
+      "asset_class": "stock",
+      "hold_days": 6.0,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 103.34,
+      "qty": 10,
+      "exit_price": 204.42,
+      "exit_date": "2026-05-27",
+      "counterfactual": {
+        "1": null,
+        "3": 253.43992675781263,
+        "5": 1075.6399389648439,
+        "10": 585.0399633789064
+      }
+    },
+    {
+      "trade_id": "broker_match_0111_MRVL",
+      "symbol": "MRVL",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 561.7,
+      "qty": 125,
+      "exit_price": 288.67,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": -2162.0493896484395,
+        "3": -433.3010681152364,
+        "5": 3087.9506103515605,
+        "10": 2960.4481689453105
+      }
+    },
+    {
+      "trade_id": "broker_match_0112_MRVL",
+      "symbol": "MRVL",
+      "asset_class": "stock",
+      "hold_days": 12.84,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 3083.2,
+      "qty": 82,
+      "exit_price": 299.56,
+      "exit_date": "2026-06-22",
+      "counterfactual": {
+        "1": 1400.5607006835935,
+        "3": 1582.6008007812497,
+        "5": 1294.7799999999997,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0113_MU",
+      "symbol": "MU",
+      "asset_class": "stock",
+      "hold_days": 15.02,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 1813.4,
+      "qty": 7,
+      "exit_price": 985.54,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 962.6900683593753,
+        "3": 1465.8501025390628,
+        "5": 1885.7099658203128,
+        "10": 2852.5499316406253
+      }
+    },
+    {
+      "trade_id": "broker_match_0114_MU",
+      "symbol": "MU",
+      "asset_class": "stock",
+      "hold_days": 9.0,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 1307.67,
+      "qty": 10,
+      "exit_price": 985.54,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 92.37009765625044,
+        "3": 811.1701464843754,
+        "5": 1410.9699511718754,
+        "10": 2792.1699023437504
+      }
+    },
+    {
+      "trade_id": "broker_match_0115_MU",
+      "symbol": "MU",
+      "asset_class": "stock",
+      "hold_days": 7.87,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 762.97,
+      "qty": 10,
+      "exit_price": 985.54,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": -452.3299023437496,
+        "3": 266.4701464843754,
+        "5": 866.2699511718754,
+        "10": 2247.4699023437506
+      }
+    },
+    {
+      "trade_id": "broker_match_0116_MU",
+      "symbol": "MU",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -1910.25,
+      "qty": 41,
+      "exit_price": 938.07,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": -1999.6293994140647,
+        "3": 459.54979980468534,
+        "5": 4236.469599609373,
+        "10": 9295.46020019531
+      }
+    },
+    {
+      "trade_id": "broker_match_0119_NBIS",
+      "symbol": "NBIS",
+      "asset_class": "stock",
+      "hold_days": 0.93,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 1123.2,
+      "qty": 36,
+      "exit_price": 208.99,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0120_NBIS",
+      "symbol": "NBIS",
+      "asset_class": "stock",
+      "hold_days": 0.1,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 1430.0,
+      "qty": 260,
+      "exit_price": 213.6,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0121_NBIS",
+      "symbol": "NBIS",
+      "asset_class": "stock",
+      "hold_days": 2.14,
+      "hold_bucket": "1-3d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 339.18,
+      "qty": 21,
+      "exit_price": 215.88,
+      "exit_date": "2026-05-22",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": 1360.410205078125,
+        "10": 589.7099487304688
+      }
+    },
+    {
+      "trade_id": "broker_match_0122_NBIS",
+      "symbol": "NBIS",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -1193.09,
+      "qty": 126,
+      "exit_price": 229.32,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": -2352.290615234374,
+        "3": -2085.169307861327,
+        "5": 2681.4109228515636,
+        "10": 5647.448154296876
+      }
+    },
+    {
+      "trade_id": "broker_match_0125_NOW",
+      "symbol": "NOW",
+      "asset_class": "stock",
+      "hold_days": 12.02,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 1174.74,
+      "qty": 33,
+      "exit_price": 135.12,
+      "exit_date": "2026-06-01",
+      "counterfactual": {
+        "1": 928.2300503540038,
+        "3": 654.6600201416014,
+        "5": 484.0500805664061,
+        "10": 152.73005035400377
+      }
+    },
+    {
+      "trade_id": "broker_match_0126_NOW",
+      "symbol": "NOW",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -3424.15,
+      "qty": 320,
+      "exit_price": 113.21,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": -5420.9496093749985,
+        "3": -6665.7494140624985,
+        "5": -6323.3495117187485,
+        "10": -9888.149316406249
+      }
+    },
+    {
+      "trade_id": "broker_match_0127_NVDA",
+      "symbol": "NVDA",
+      "asset_class": "stock",
+      "hold_days": 14.15,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -99.53,
+      "qty": 16,
+      "exit_price": 215.86,
+      "exit_date": "2026-06-03",
+      "counterfactual": {
+        "1": -54.72994140625022,
+        "3": -215.05000976562522,
+        "5": -346.5700292968752,
+        "10": -278.8900976562502
+      }
+    },
+    {
+      "trade_id": "broker_match_0128_ORCL",
+      "symbol": "ORCL",
+      "asset_class": "stock",
+      "hold_days": 14.14,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 856.34,
+      "qty": 18,
+      "exit_price": 228.92,
+      "exit_date": "2026-06-03",
+      "counterfactual": {
+        "1": 989.8999340820315,
+        "3": 548.5401318359377,
+        "5": 358.45990112304713,
+        "10": 39.319978027344064
+      }
+    },
+    {
+      "trade_id": "broker_match_0129_ORCL",
+      "symbol": "ORCL",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -4410.1,
+      "qty": 244,
+      "exit_price": 214.85,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": -6615.860595703124,
+        "3": -11913.098510742188,
+        "5": -9829.340148925781,
+        "10": -14116.418212890623
+      }
+    },
+    {
+      "trade_id": "broker_match_0130_ORCL",
+      "symbol": "ORCL",
+      "asset_class": "stock",
+      "hold_days": 1.74,
+      "hold_bucket": "1-3d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -4752.0,
+      "qty": 180,
+      "exit_price": 178.67,
+      "exit_date": "2026-06-11",
+      "counterfactual": {
+        "1": -3769.1991210937476,
+        "3": -3013.199670410154,
+        "5": -3740.4012084960914,
+        "10": -9469.798791503905
+      }
+    },
+    {
+      "trade_id": "broker_match_0131_PANW",
+      "symbol": "PANW",
+      "asset_class": "stock",
+      "hold_days": 14.15,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 770.71,
+      "qty": 19,
+      "exit_price": 280.44,
+      "exit_date": "2026-06-03",
+      "counterfactual": {
+        "1": 748.1000000000001,
+        "3": 502.61974487304695,
+        "5": 443.53002319335945,
+        "10": 802.8200927734376
+      }
+    },
+    {
+      "trade_id": "broker_match_0132_PANW",
+      "symbol": "PANW",
+      "asset_class": "stock",
+      "hold_days": 14.12,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 384.43,
+      "qty": 10,
+      "exit_price": 280.44,
+      "exit_date": "2026-06-03",
+      "counterfactual": {
+        "1": 372.53000000000003,
+        "3": 243.32986572265628,
+        "5": 212.23001220703128,
+        "10": 401.33004882812503
+      }
+    },
+    {
+      "trade_id": "broker_match_0133_PANW",
+      "symbol": "PANW",
+      "asset_class": "stock",
+      "hold_days": 4.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -2893.88,
+      "qty": 184,
+      "exit_price": 261.26,
+      "exit_date": "2026-06-09",
+      "counterfactual": {
+        "1": -2533.2397753906234,
+        "3": 484.35910156250156,
+        "5": 535.8788769531266,
+        "10": 2563.5624707031266
+      }
+    },
+    {
+      "trade_id": "broker_match_0134_PATH",
+      "symbol": "PATH",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -2646.0,
+      "qty": 3150,
+      "exit_price": 11.12,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": -3811.4999999999973,
+        "3": -4126.501201629636,
+        "5": -3685.500120162961,
+        "10": -5670.000480651854
+      }
+    },
+    {
+      "trade_id": "broker_match_0135_PLTR",
+      "symbol": "PLTR",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -3824.68,
+      "qty": 397,
+      "exit_price": 136.55,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": -5603.2370922851605,
+        "3": -5996.269273071293,
+        "5": -4555.157334594731,
+        "10": -10593.530000000004
+      }
+    },
+    {
+      "trade_id": "broker_match_0136_PSCT",
+      "symbol": "PSCT",
+      "asset_class": "etf",
+      "hold_days": 0.02,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -939.4,
+      "qty": 610,
+      "exit_price": 77.16,
+      "exit_date": "2026-05-12",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0137_PSCT",
+      "symbol": "PSCT",
+      "asset_class": "etf",
+      "hold_days": 0.96,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -77.56,
+      "qty": 595,
+      "exit_price": 78.57,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0138_PSCT",
+      "symbol": "PSCT",
+      "asset_class": "etf",
+      "hold_days": 0.03,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -163.59,
+      "qty": 861,
+      "exit_price": 78.43,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0139_PSCT",
+      "symbol": "PSCT",
+      "asset_class": "etf",
+      "hold_days": 0.14,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 93.96,
+      "qty": 348,
+      "exit_price": 78.89,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0140_PSCT",
+      "symbol": "PSCT",
+      "asset_class": "etf",
+      "hold_days": 0.82,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -998.93,
+      "qty": 1214,
+      "exit_price": 78.42,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0141_PSCT",
+      "symbol": "PSCT",
+      "asset_class": "etf",
+      "hold_days": 0.03,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 180.75,
+      "qty": 723,
+      "exit_price": 79.6,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0142_PSCT",
+      "symbol": "PSCT",
+      "asset_class": "etf",
+      "hold_days": 0.12,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -171.36,
+      "qty": 476,
+      "exit_price": 78.99,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0143_PSCT",
+      "symbol": "PSCT",
+      "asset_class": "etf",
+      "hold_days": 20.12,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 5632.02,
+      "qty": 603,
+      "exit_price": 87.6,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 1652.220000000004,
+        "3": 2285.371840209965,
+        "5": 4172.760184021,
+        "10": 5264.188711853031
+      }
+    },
+    {
+      "trade_id": "broker_match_0144_PTF",
+      "symbol": "PTF",
+      "asset_class": "etf",
+      "hold_days": 0.03,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -2090.85,
+      "qty": 789,
+      "exit_price": 119.18,
+      "exit_date": "2026-05-12",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0145_PTF",
+      "symbol": "PTF",
+      "asset_class": "etf",
+      "hold_days": 0.98,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 1.45,
+      "qty": 8,
+      "exit_price": 122.01,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0146_PTF",
+      "symbol": "PTF",
+      "asset_class": "etf",
+      "hold_days": 0.03,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 277.2,
+      "qty": 792,
+      "exit_price": 121.07,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0147_PTF",
+      "symbol": "PTF",
+      "asset_class": "etf",
+      "hold_days": 0.83,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -1518.45,
+      "qty": 795,
+      "exit_price": 121.05,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0148_PTF",
+      "symbol": "PTF",
+      "asset_class": "etf",
+      "hold_days": 0.03,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 488.2,
+      "qty": 788,
+      "exit_price": 123.15,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0149_PTF",
+      "symbol": "PTF",
+      "asset_class": "etf",
+      "hold_days": 0.84,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -3364.44,
+      "qty": 786,
+      "exit_price": 118.52,
+      "exit_date": "2026-05-15",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": 6028.260959472658
+      }
+    },
+    {
+      "trade_id": "broker_match_0150_PTF",
+      "symbol": "PTF",
+      "asset_class": "etf",
+      "hold_days": 20.12,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 4038.15,
+      "qty": 276,
+      "exit_price": 134.47,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 535.7096630859378,
+        "3": 566.069831542969,
+        "5": 2211.029578857422,
+        "10": 4783.3494946289065
+      }
+    },
+    {
+      "trade_id": "broker_match_0151_QCOM",
+      "symbol": "QCOM",
+      "asset_class": "stock",
+      "hold_days": 7.03,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 779.04,
+      "qty": 24,
+      "exit_price": 230.34,
+      "exit_date": "2026-05-27",
+      "counterfactual": {
+        "1": null,
+        "3": 746.6401318359374,
+        "5": 1251.1198681640624,
+        "10": -160.32007324218762
+      }
+    },
+    {
+      "trade_id": "broker_match_0152_QCOM",
+      "symbol": "QCOM",
+      "asset_class": "stock",
+      "hold_days": 5.88,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 36.2,
+      "qty": 10,
+      "exit_price": 232.16,
+      "exit_date": "2026-06-02",
+      "counterfactual": {
+        "1": 214.6999450683594,
+        "3": -125.99997558593746,
+        "5": -231.20001831054685,
+        "10": -144.69992675781248
+      }
+    },
+    {
+      "trade_id": "broker_match_0153_QCOM",
+      "symbol": "QCOM",
+      "asset_class": "stock",
+      "hold_days": 5.02,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -47.0,
+      "qty": 10,
+      "exit_price": 232.16,
+      "exit_date": "2026-06-02",
+      "counterfactual": {
+        "1": 131.4999450683594,
+        "3": -209.19997558593747,
+        "5": -314.40001831054684,
+        "10": -227.89992675781247
+      }
+    },
+    {
+      "trade_id": "broker_match_0154_QCOM",
+      "symbol": "QCOM",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -2943.16,
+      "qty": 149,
+      "exit_price": 217.87,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": -4798.210272827149,
+        "3": -5164.74899963379,
+        "5": -2505.1003637695317,
+        "10": -2342.6909094238285
+      }
+    },
+    {
+      "trade_id": "broker_match_0155_QTEC",
+      "symbol": "QTEC",
+      "asset_class": "etf",
+      "hold_days": 20.12,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 6587.28,
+      "qty": 168,
+      "exit_price": 329.31,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 2504.8816406249994,
+        "3": 2829.1204101562494,
+        "5": 4010.1602050781244,
+        "10": 7573.438769531249
+      }
+    },
+    {
+      "trade_id": "broker_match_0156_QTUM",
+      "symbol": "QTUM",
+      "asset_class": "etf",
+      "hold_days": 0.03,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -1339.26,
+      "qty": 663,
+      "exit_price": 142.75,
+      "exit_date": "2026-05-12",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0157_QTUM",
+      "symbol": "QTUM",
+      "asset_class": "etf",
+      "hold_days": 0.97,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 1.68,
+      "qty": 7,
+      "exit_price": 145.01,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0158_QTUM",
+      "symbol": "QTUM",
+      "asset_class": "etf",
+      "hold_days": 0.03,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 243.09,
+      "qty": 657,
+      "exit_price": 145.09,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0159_QTUM",
+      "symbol": "QTUM",
+      "asset_class": "etf",
+      "hold_days": 0.84,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -567.75,
+      "qty": 660,
+      "exit_price": 146.14,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0160_QTUM",
+      "symbol": "QTUM",
+      "asset_class": "etf",
+      "hold_days": 0.03,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 305.97,
+      "qty": 651,
+      "exit_price": 147.89,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0161_QTUM",
+      "symbol": "QTUM",
+      "asset_class": "etf",
+      "hold_days": 0.84,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -3218.6,
+      "qty": 649,
+      "exit_price": 142.46,
+      "exit_date": "2026-05-15",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": 10027.486831054683
+      }
+    },
+    {
+      "trade_id": "broker_match_0162_QTUM",
+      "symbol": "QTUM",
+      "asset_class": "etf",
+      "hold_days": 20.0,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 6307.44,
+      "qty": 328,
+      "exit_price": 162.01,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 3279.9995996093776,
+        "3": 3926.1600000000026,
+        "5": 5438.240200195315,
+        "10": 8262.320400390628
+      }
+    },
+    {
+      "trade_id": "broker_match_0163_RBRK",
+      "symbol": "RBRK",
+      "asset_class": "stock",
+      "hold_days": 20.0,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 368.88,
+      "qty": 62,
+      "exit_price": 70.36,
+      "exit_date": "2026-06-09",
+      "counterfactual": {
+        "1": 428.3999810791016,
+        "3": 234.34015136718753,
+        "5": 295.7200189208985,
+        "10": 609.439867553711
+      }
+    },
+    {
+      "trade_id": "broker_match_0164_RBRK",
+      "symbol": "RBRK",
+      "asset_class": "stock",
+      "hold_days": 4.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -4352.46,
+      "qty": 595,
+      "exit_price": 70.36,
+      "exit_date": "2026-06-09",
+      "counterfactual": {
+        "1": -3781.2601815795897,
+        "3": -5643.608547363281,
+        "5": -5054.55981842041,
+        "10": -2043.8612710571288
+      }
+    },
+    {
+      "trade_id": "broker_match_0165_RBRK",
+      "symbol": "RBRK",
+      "asset_class": "stock",
+      "hold_days": 12.74,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -50.54,
+      "qty": 361,
+      "exit_price": 71.24,
+      "exit_date": "2026-06-22",
+      "counterfactual": {
+        "1": 1032.4592288208028,
+        "3": -129.9612118530255,
+        "5": 1855.5387881469746,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0166_SHOC",
+      "symbol": "SHOC",
+      "asset_class": "etf",
+      "hold_days": 0.02,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -1725.69,
+      "qty": 943,
+      "exit_price": 104.17,
+      "exit_date": "2026-05-12",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0167_SHOC",
+      "symbol": "SHOC",
+      "asset_class": "etf",
+      "hold_days": 0.96,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 9.9,
+      "qty": 10,
+      "exit_price": 106.99,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0168_SHOC",
+      "symbol": "SHOC",
+      "asset_class": "etf",
+      "hold_days": 0.03,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 642.19,
+      "qty": 945,
+      "exit_price": 106.8,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0169_SHOC",
+      "symbol": "SHOC",
+      "asset_class": "etf",
+      "hold_days": 0.82,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -902.5,
+      "qty": 950,
+      "exit_price": 107.13,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0170_SHOC",
+      "symbol": "SHOC",
+      "asset_class": "etf",
+      "hold_days": 0.04,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 557.55,
+      "qty": 945,
+      "exit_price": 109.2,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0171_SHOC",
+      "symbol": "SHOC",
+      "asset_class": "etf",
+      "hold_days": 0.84,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -4794.78,
+      "qty": 942,
+      "exit_price": 103.38,
+      "exit_date": "2026-05-15",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": 4458.48875976563
+      }
+    },
+    {
+      "trade_id": "broker_match_0172_SKYY",
+      "symbol": "SKYY",
+      "asset_class": "etf",
+      "hold_days": 19.12,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 3558.6,
+      "qty": 180,
+      "exit_price": 147.76,
+      "exit_date": "2026-06-03",
+      "counterfactual": {
+        "1": 3600.000988769533,
+        "3": 2152.7994506835953,
+        "5": 1015.2008789062515,
+        "10": 707.3996704101578
+      }
+    },
+    {
+      "trade_id": "broker_match_0173_SKYY",
+      "symbol": "SKYY",
+      "asset_class": "etf",
+      "hold_days": 23.97,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 880.44,
+      "qty": 66,
+      "exit_price": 141.33,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": 548.4602014160148,
+        "3": 382.139919433593,
+        "5": 576.8397180175773,
+        "10": 102.2995568847648
+      }
+    },
+    {
+      "trade_id": "broker_match_0174_SMCI",
+      "symbol": "SMCI",
+      "asset_class": "stock",
+      "hold_days": 9.14,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 1651.13,
+      "qty": 116,
+      "exit_price": 45.83,
+      "exit_date": "2026-05-29",
+      "counterfactual": {
+        "1": 1772.9301239013676,
+        "3": 1835.5697875976566,
+        "5": 1165.0899291992191,
+        "10": -131.7901062011715
+      }
+    },
+    {
+      "trade_id": "broker_match_0175_SMCI",
+      "symbol": "SMCI",
+      "asset_class": "stock",
+      "hold_days": 8.14,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 127.65,
+      "qty": 10,
+      "exit_price": 45.83,
+      "exit_date": "2026-05-29",
+      "counterfactual": {
+        "1": 138.15001068115237,
+        "3": 143.54998168945315,
+        "5": 85.7499938964844,
+        "10": -26.050009155273415
+      }
+    },
+    {
+      "trade_id": "broker_match_0176_SMCI",
+      "symbol": "SMCI",
+      "asset_class": "stock",
+      "hold_days": 2.0,
+      "hold_bucket": "1-3d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 75.81,
+      "qty": 10,
+      "exit_price": 45.83,
+      "exit_date": "2026-05-29",
+      "counterfactual": {
+        "1": 86.31001068115236,
+        "3": 91.70998168945314,
+        "5": 33.909993896484394,
+        "10": -77.89000915527342
+      }
+    },
+    {
+      "trade_id": "broker_match_0177_SMCI",
+      "symbol": "SMCI",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -2320.23,
+      "qty": 869,
+      "exit_price": 42.98,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": -4353.690530395505,
+        "3": -11887.920596694943,
+        "5": -12861.199668502804,
+        "10": -8855.110795593258
+      }
+    },
+    {
+      "trade_id": "broker_match_0178_SMCI",
+      "symbol": "SMCI",
+      "asset_class": "stock",
+      "hold_days": 0.74,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -3655.45,
+      "qty": 647,
+      "exit_price": 34.72,
+      "exit_date": "2026-06-10",
+      "counterfactual": {
+        "1": -5434.700444259643,
+        "3": -6159.339753189086,
+        "5": -8145.6295557403555,
+        "10": -5124.139506378173
+      }
+    },
+    {
+      "trade_id": "broker_match_0179_SMH",
+      "symbol": "SMH",
+      "asset_class": "etf",
+      "hold_days": 0.04,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 592.95,
+      "qty": 177,
+      "exit_price": 580.28,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0180_SMH",
+      "symbol": "SMH",
+      "asset_class": "etf",
+      "hold_days": 19.99,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 1948.73,
+      "qty": 41,
+      "exit_price": 608.4,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 361.6201000976571,
+        "3": 1235.7404003906258,
+        "5": 1991.780500488282,
+        "10": 4059.4102001953133
+      }
+    },
+    {
+      "trade_id": "broker_match_0181_SMH",
+      "symbol": "SMH",
+      "asset_class": "etf",
+      "hold_days": 19.99,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 2165.68,
+      "qty": 49,
+      "exit_price": 605.07,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 432.0601196289035,
+        "3": 1476.7404785156223,
+        "5": 2380.3005981445285,
+        "10": 4851.37023925781
+      }
+    },
+    {
+      "trade_id": "broker_match_0182_SMHX",
+      "symbol": "SMHX",
+      "asset_class": "etf",
+      "hold_days": 0.82,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -101.39,
+      "qty": 280,
+      "exit_price": 56.6,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0183_SMHX",
+      "symbol": "SMHX",
+      "asset_class": "etf",
+      "hold_days": 19.99,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 3152.2,
+      "qty": 417,
+      "exit_price": 63.75,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 1396.6303817749022,
+        "3": 1742.739554595947,
+        "5": 2245.6420890808104,
+        "10": 4207.209490966797
+      }
+    },
+    {
+      "trade_id": "broker_match_0184_SMHX",
+      "symbol": "SMHX",
+      "asset_class": "etf",
+      "hold_days": 19.99,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 3502.66,
+      "qty": 492,
+      "exit_price": 63.31,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 1647.8204504394519,
+        "3": 2056.179474487303,
+        "5": 2649.5321051025376,
+        "10": 4963.899399414061
+      }
+    },
+    {
+      "trade_id": "broker_match_0185_SNOW",
+      "symbol": "SNOW",
+      "asset_class": "stock",
+      "hold_days": 13.02,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 2004.08,
+      "qty": 22,
+      "exit_price": 259.54,
+      "exit_date": "2026-06-02",
+      "counterfactual": {
+        "1": 1602.3599731445306,
+        "3": 1535.91987915039,
+        "5": 1566.7200805664056,
+        "10": 1537.2401611328119
+      }
+    },
+    {
+      "trade_id": "broker_match_0186_SNOW",
+      "symbol": "SNOW",
+      "asset_class": "stock",
+      "hold_days": 5.08,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -2724.79,
+      "qty": 157,
+      "exit_price": 232.51,
+      "exit_date": "2026-06-09",
+      "counterfactual": {
+        "1": -1564.5609582519517,
+        "3": -2682.4001916503894,
+        "5": -1812.6188500976548,
+        "10": -3054.489425048827
+      }
+    },
+    {
+      "trade_id": "broker_match_0187_SNOW",
+      "symbol": "SNOW",
+      "asset_class": "stock",
+      "hold_days": 0.74,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -116.44,
+      "qty": 142,
+      "exit_price": 237.46,
+      "exit_date": "2026-06-10",
+      "counterfactual": {
+        "1": 299.619913330077,
+        "3": 354.9998266601551,
+        "5": -533.919393310548,
+        "10": -1750.8604333496105
+      }
+    },
+    {
+      "trade_id": "broker_match_0188_SOXQ",
+      "symbol": "SOXQ",
+      "asset_class": "etf",
+      "hold_days": 0.02,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -1757.03,
+      "qty": 1112,
+      "exit_price": 90.96,
+      "exit_date": "2026-05-12",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0189_SOXQ",
+      "symbol": "SOXQ",
+      "asset_class": "etf",
+      "hold_days": 0.96,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 21.72,
+      "qty": 12,
+      "exit_price": 94.35,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0190_SOXQ",
+      "symbol": "SOXQ",
+      "asset_class": "etf",
+      "hold_days": 0.03,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 1592.16,
+      "qty": 1106,
+      "exit_price": 94.51,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0191_SOXQ",
+      "symbol": "SOXQ",
+      "asset_class": "etf",
+      "hold_days": 0.82,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -1053.09,
+      "qty": 1111,
+      "exit_price": 93.95,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0192_SOXQ",
+      "symbol": "SOXQ",
+      "asset_class": "etf",
+      "hold_days": 0.04,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 92.07,
+      "qty": 171,
+      "exit_price": 95.39,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0193_SOXQ",
+      "symbol": "SOXQ",
+      "asset_class": "etf",
+      "hold_days": 0.84,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -3164.56,
+      "qty": 1101,
+      "exit_price": 91.6,
+      "exit_date": "2026-05-15",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": 8318.868656005867
+      }
+    },
+    {
+      "trade_id": "broker_match_0194_SOXQ",
+      "symbol": "SOXQ",
+      "asset_class": "etf",
+      "hold_days": 20.0,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 3117.8,
+      "qty": 251,
+      "exit_price": 103.49,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 1310.6002297973648,
+        "3": 2146.430689392091,
+        "5": 3170.5092340087904,
+        "10": 5449.589693603517
+      }
+    },
+    {
+      "trade_id": "broker_match_0195_SOXQ",
+      "symbol": "SOXQ",
+      "asset_class": "etf",
+      "hold_days": 20.0,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 3546.45,
+      "qty": 307,
+      "exit_price": 102.62,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 1603.1402810668928,
+        "3": 2625.450843200682,
+        "5": 3878.00906311035,
+        "10": 6665.569625244139
+      }
+    },
+    {
+      "trade_id": "broker_match_0196_SOXX",
+      "symbol": "SOXX",
+      "asset_class": "etf",
+      "hold_days": 0.02,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -1632.64,
+      "qty": 201,
+      "exit_price": 509.37,
+      "exit_date": "2026-05-12",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0197_SOXX",
+      "symbol": "SOXX",
+      "asset_class": "etf",
+      "hold_days": 0.96,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 14.75,
+      "qty": 2,
+      "exit_price": 524.87,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0198_SOXX",
+      "symbol": "SOXX",
+      "asset_class": "etf",
+      "hold_days": 0.03,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 254.25,
+      "qty": 33,
+      "exit_price": 527.91,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0199_SOXX",
+      "symbol": "SOXX",
+      "asset_class": "etf",
+      "hold_days": 0.84,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -3524.06,
+      "qty": 199,
+      "exit_price": 509.59,
+      "exit_date": "2026-05-15",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": 8881.598542480475
+      }
+    },
+    {
+      "trade_id": "broker_match_0200_SOXX",
+      "symbol": "SOXX",
+      "asset_class": "etf",
+      "hold_days": 20.0,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 3254.09,
+      "qty": 44,
+      "exit_price": 582.52,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 1373.090859375001,
+        "3": 2357.370644531251,
+        "5": 3448.129677734376,
+        "10": 5759.010537109376
+      }
+    },
+    {
+      "trade_id": "broker_match_0201_SOXX",
+      "symbol": "SOXX",
+      "asset_class": "etf",
+      "hold_days": 20.0,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 3940.03,
+      "qty": 57,
+      "exit_price": 577.68,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 1779.1611132812532,
+        "3": 3054.2508349609407,
+        "5": 4467.279582519534,
+        "10": 7460.920695800784
+      }
+    },
+    {
+      "trade_id": "broker_match_0202_TSLA",
+      "symbol": "TSLA",
+      "asset_class": "stock",
+      "hold_days": 12.02,
+      "hold_bucket": "7-14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 65.48,
+      "qty": 5,
+      "exit_price": 423.25,
+      "exit_date": "2026-06-01",
+      "counterfactual": {
+        "1": 67.929951171875,
+        "3": 41.480061035156254,
+        "5": -6.019938964843746,
+        "10": 4.979969482421879
+      }
+    },
+    {
+      "trade_id": "broker_match_0203_TSLA",
+      "symbol": "TSLA",
+      "asset_class": "stock",
+      "hold_days": 6.0,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -73.43,
+      "qty": 10,
+      "exit_price": 423.25,
+      "exit_date": "2026-06-01",
+      "counterfactual": {
+        "1": -68.53009765625,
+        "3": -121.4298779296875,
+        "5": -216.4298779296875,
+        "10": -194.43006103515626
+      }
+    },
+    {
+      "trade_id": "broker_match_0204_TSLA",
+      "symbol": "TSLA",
+      "asset_class": "stock",
+      "hold_days": 6.0,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -59.67,
+      "qty": 10,
+      "exit_price": 423.25,
+      "exit_date": "2026-06-01",
+      "counterfactual": {
+        "1": -54.77009765625,
+        "3": -107.6698779296875,
+        "5": -202.66987792968752,
+        "10": -180.67006103515627
+      }
+    },
+    {
+      "trade_id": "broker_match_0205_TSM",
+      "symbol": "TSM",
+      "asset_class": "stock",
+      "hold_days": 3.98,
+      "hold_bucket": "3-7d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -637.72,
+      "qty": 107,
+      "exit_price": 424.9,
+      "exit_date": "2026-06-08",
+      "counterfactual": {
+        "1": -314.57856323241947,
+        "3": -1047.5292163085915,
+        "5": 1127.7793469238306,
+        "10": 3938.6714367675804
+      }
+    },
+    {
+      "trade_id": "broker_match_0206_TTEQ",
+      "symbol": "TTEQ",
+      "asset_class": "etf",
+      "hold_days": 0.02,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -968.23,
+      "qty": 1695,
+      "exit_price": 40.45,
+      "exit_date": "2026-05-12",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0207_TTEQ",
+      "symbol": "TTEQ",
+      "asset_class": "etf",
+      "hold_days": 0.03,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 348.61,
+      "qty": 1520,
+      "exit_price": 41.11,
+      "exit_date": "2026-05-13",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0208_TTEQ",
+      "symbol": "TTEQ",
+      "asset_class": "etf",
+      "hold_days": 0.82,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -539.64,
+      "qty": 1651,
+      "exit_price": 41.16,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0209_TTEQ",
+      "symbol": "TTEQ",
+      "asset_class": "etf",
+      "hold_days": 0.04,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 273.36,
+      "qty": 1608,
+      "exit_price": 41.79,
+      "exit_date": "2026-05-14",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_match_0210_TTEQ",
+      "symbol": "TTEQ",
+      "asset_class": "etf",
+      "hold_days": 0.84,
+      "hold_bucket": "<1d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -1764.4,
+      "qty": 1604,
+      "exit_price": 40.6,
+      "exit_date": "2026-05-15",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": 5132.802447509763
+      }
+    },
+    {
+      "trade_id": "broker_match_0211_TTEQ",
+      "symbol": "TTEQ",
+      "asset_class": "etf",
+      "hold_days": 19.99,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 1386.7,
+      "qty": 566,
+      "exit_price": 43.36,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 84.90077728271513,
+        "3": 408.0862936401371,
+        "5": 785.6081900024418,
+        "10": 2218.7210363769536
+      }
+    },
+    {
+      "trade_id": "broker_match_0212_TTEQ",
+      "symbol": "TTEQ",
+      "asset_class": "etf",
+      "hold_days": 19.99,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 1420.72,
+      "qty": 602,
+      "exit_price": 43.27,
+      "exit_date": "2026-06-04",
+      "counterfactual": {
+        "1": 90.30082672118965,
+        "3": 434.04231231689266,
+        "5": 835.5762020874005,
+        "10": 2359.84110229492
+      }
+    },
+    {
+      "trade_id": "broker_open_0003_AMAT",
+      "symbol": "AMAT",
+      "asset_class": "stock",
+      "hold_days": 15.74,
+      "hold_bucket": ">14d",
+      "exit_reason": "trailing_stop",
+      "actual_pnl": 12464.4,
+      "qty": 94,
+      "exit_price": 628.04,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": 12351.602524414066,
+        "3": 21390.640000000003,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_open_0019_ANET",
+      "symbol": "ANET",
+      "asset_class": "stock",
+      "hold_days": 15.74,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 3822.32,
+      "qty": 264,
+      "exit_price": 166.468502,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": 1481.037083328125,
+        "3": 4722.9567610625,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_open_0027_ASML",
+      "symbol": "ASML",
+      "asset_class": "stock",
+      "hold_days": 15.74,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 298.47,
+      "qty": 4,
+      "exit_price": 1841.887188,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": 109.40122846875033,
+        "3": 888.6810136250003,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_open_0044_CRDO",
+      "symbol": "CRDO",
+      "asset_class": "stock",
+      "hold_days": 0.74,
+      "hold_bucket": "<1d",
+      "exit_reason": "breakeven_stop",
+      "actual_pnl": 1445.11,
+      "qty": 85,
+      "exit_price": 286.651294,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": -2690.249990000001,
+        "3": 195.50104759765554,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_open_0052_DDOG",
+      "symbol": "DDOG",
+      "asset_class": "stock",
+      "hold_days": 20.74,
+      "hold_bucket": ">14d",
+      "exit_reason": "time_based",
+      "actual_pnl": 3619.0,
+      "qty": 172,
+      "exit_price": 248.450698,
+      "exit_date": "2026-06-30",
+      "counterfactual": {
+        "1": null,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_open_0059_DELL",
+      "symbol": "DELL",
+      "asset_class": "stock",
+      "hold_days": 15.74,
+      "hold_bucket": ">14d",
+      "exit_reason": "trailing_stop",
+      "actual_pnl": 935.86,
+      "qty": 73,
+      "exit_price": 392.11,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": 1474.599287109374,
+        "3": 3808.409376220702,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_open_0083_HPE",
+      "symbol": "HPE",
+      "asset_class": "stock",
+      "hold_days": 15.74,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -425.23,
+      "qty": 618,
+      "exit_price": 47.241925,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": -2607.9602157959,
+        "3": -1742.7592728027355,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_open_0091_INTC",
+      "symbol": "INTC",
+      "asset_class": "stock",
+      "hold_days": 2.0,
+      "hold_bucket": "1-3d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 1838.26,
+      "qty": 234,
+      "exit_price": 139.5658,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": -793.2554861328115,
+        "3": 1853.283942578126,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_open_0092_INTC",
+      "symbol": "INTC",
+      "asset_class": "stock",
+      "hold_days": 1.91,
+      "hold_bucket": "1-3d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 957.81,
+      "qty": 235,
+      "exit_price": 139.5658,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": -1684.9512788085926,
+        "3": 972.8981474609384,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_open_0097_KLAC",
+      "symbol": "KLAC",
+      "asset_class": "stock",
+      "hold_days": 1.0,
+      "hold_bucket": "1-3d",
+      "exit_reason": "breakeven_stop",
+      "actual_pnl": 1094.28,
+      "qty": 132,
+      "exit_price": 252.32,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": 608.5199194335946,
+        "3": 7613.758872070313,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_open_0101_LRCX",
+      "symbol": "LRCX",
+      "asset_class": "stock",
+      "hold_days": 15.74,
+      "hold_bucket": ">14d",
+      "exit_reason": "trailing_stop",
+      "actual_pnl": 8643.67,
+      "qty": 133,
+      "exit_price": 390.27,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": 7156.729512939455,
+        "3": 14370.64821411133,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_open_0102_LRCX",
+      "symbol": "LRCX",
+      "asset_class": "stock",
+      "hold_days": 2.0,
+      "hold_bucket": "1-3d",
+      "exit_reason": "trailing_stop",
+      "actual_pnl": 1753.84,
+      "qty": 88,
+      "exit_price": 390.27,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": 769.9996777343765,
+        "3": 5543.118818359377,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_open_0117_MU",
+      "symbol": "MU",
+      "asset_class": "stock",
+      "hold_days": 15.85,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 6404.78,
+      "qty": 32,
+      "exit_price": 1248.3,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": 2693.738593750001,
+        "3": 3396.461250000001,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_open_0118_MU",
+      "symbol": "MU",
+      "asset_class": "stock",
+      "hold_days": 1.11,
+      "hold_bucket": "1-3d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 527.69,
+      "qty": 26,
+      "exit_price": 1248.3,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": -2487.5311425781238,
+        "3": -1916.5689843749988,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_open_0123_NBIS",
+      "symbol": "NBIS",
+      "asset_class": "stock",
+      "hold_days": 15.74,
+      "hold_bucket": ">14d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": 581.66,
+      "qty": 11,
+      "exit_price": 271.737937,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": 235.84272656933604,
+        "3": 630.4128407050782,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_open_0124_NBIS",
+      "symbol": "NBIS",
+      "asset_class": "stock",
+      "hold_days": 1.91,
+      "hold_bucket": "1-3d",
+      "exit_reason": "broker_fill",
+      "actual_pnl": -528.84,
+      "qty": 89,
+      "exit_price": 271.737937,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": -3326.8161213935537,
+        "3": -134.3851979316396,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_open_0019_ANET",
+      "symbol": "ANET",
+      "asset_class": "stock",
+      "hold_days": 15.74,
+      "hold_bucket": ">14d",
+      "exit_reason": "trailing_stop",
+      "actual_pnl": 340.17,
+      "qty": 23,
+      "exit_price": 166.78,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": 129.03014038085936,
+        "3": 411.4701123046875,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_open_0027_ASML",
+      "symbol": "ASML",
+      "asset_class": "stock",
+      "hold_days": 15.74,
+      "hold_bucket": ">14d",
+      "exit_reason": "trailing_stop",
+      "actual_pnl": 2105.6,
+      "qty": 28,
+      "exit_price": 1842.47,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": 765.7998632812491,
+        "3": 6220.758359374999,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "broker_open_0123_NBIS",
+      "symbol": "NBIS",
+      "asset_class": "stock",
+      "hold_days": 15.74,
+      "hold_bucket": ">14d",
+      "exit_reason": "trailing_stop",
+      "actual_pnl": 4662.71,
+      "qty": 89,
+      "exit_price": 271.25,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": 1908.1602716064453,
+        "3": 5100.591195068359,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "CRDO-e23dd752",
+      "symbol": "CRDO",
+      "asset_class": "stock",
+      "hold_days": 3.91,
+      "hold_bucket": "3-7d",
+      "exit_reason": "stop_loss",
+      "actual_pnl": -2518.05,
+      "qty": 86,
+      "exit_price": 241.140348,
+      "exit_date": "2026-06-29",
+      "counterfactual": {
+        "1": 131.58112180468834,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "MU-0e05d424",
+      "symbol": "MU",
+      "asset_class": "stock",
+      "hold_days": 0.17,
+      "hold_bucket": "<1d",
+      "exit_reason": "stop_loss",
+      "actual_pnl": 185.28,
+      "qty": 23,
+      "exit_price": 1204.65,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": -1478.0810107421896,
+        "3": -972.9991015625021,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "AMAT-9e2c3570",
+      "symbol": "AMAT",
+      "asset_class": "stock",
+      "hold_days": 0.17,
+      "hold_bucket": "<1d",
+      "exit_reason": "breakeven_stop",
+      "actual_pnl": 226.86,
+      "qty": 8,
+      "exit_price": 661.637447,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": -51.5193611562496,
+        "3": 717.7604240000004,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "LRCX-60a42c9b",
+      "symbol": "LRCX",
+      "asset_class": "stock",
+      "hold_days": 0.17,
+      "hold_bucket": "<1d",
+      "exit_reason": "breakeven_stop",
+      "actual_pnl": 1264.43,
+      "qty": 79,
+      "exit_price": 399.335443,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": -334.96028630664046,
+        "3": 3949.9989422089848,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "KLAC-6218057b",
+      "symbol": "KLAC",
+      "asset_class": "stock",
+      "hold_days": 0.91,
+      "hold_bucket": "<1d",
+      "exit_reason": "trailing_stop",
+      "actual_pnl": -705.67,
+      "qty": 119,
+      "exit_price": 247.15,
+      "exit_date": "2026-06-26",
+      "counterfactual": {
+        "1": 3011.8917431640616,
+        "3": null,
+        "5": null,
+        "10": null
+      }
+    },
+    {
+      "trade_id": "AMAT-9e2c3570",
+      "symbol": "AMAT",
+      "asset_class": "stock",
+      "hold_days": 0.16,
+      "hold_bucket": "<1d",
+      "exit_reason": "breakeven_stop",
+      "actual_pnl": 1103.16,
+      "qty": 39,
+      "exit_price": 661.566154,
+      "exit_date": "2026-06-25",
+      "counterfactual": {
+        "1": -251.1589586367179,
+        "3": 3499.0799940000006,
+        "5": null,
+        "10": null
+      }
+    }
+  ],
+  "skipped": 1
+}

@@ -1,0 +1,71 @@
+enabled: true
+name: simple_exit_v2
+
+# Hard stop loss threshold (negative value, e.g., -0.07 = -7%)
+stop_loss_pct: -0.07
+
+# Breakeven protection: once return reaches this level, effective floor = 0%
+# (never let a position that was +3% become a loser)
+# Added 2026-05-27
+breakeven_activation_pct: 0.05  # raised from 0.03 (2026-07-29): +3% was triggering on noise; +5% requires stronger move before activation
+
+# Trailing stop activation threshold (e.g., 0.08 = +8%)
+# Increased from 5% to 8% to reduce early profit-taking (2026-05-18)
+trailing_activation_pct: 0.08
+
+# Pullback from peak to trigger trailing exit (e.g., 0.04 = 4%)
+# Increased from 3% to 4% to allow more room for volatility (2026-05-18)
+trailing_stop_pct: 0.04
+
+# R3-B staged trailing rollout (2026-07-02)
+# Backtest/replay result: staged trailing improved first-pass replay by +$5,089 vs baseline.
+# Disable quickly by setting staged_trailing_enabled: false.
+staged_trailing_enabled: true
+staged_trailing_levels:
+  - activation_pct: 0.05
+    trailing_stop_pct: 0.035
+  - activation_pct: 0.08
+    trailing_stop_pct: 0.03
+  - activation_pct: 0.12
+    trailing_stop_pct: 0.025
+
+# Maximum holding period in calendar days
+max_hold_days: 20
+
+# ── Broker-reconstructed threshold graduation (改善点1 2026-07-16) ───────────
+# broker_reconstructed positions (entry_signal_strength=None) use a conservative
+# -5% stop by default. After holding >= broker_recon_graduation_days calendar days,
+# the position is considered established and graduates to the standard stop_loss_pct.
+# Set to null to disable graduation (always use -5% for unknown-strength positions).
+broker_recon_graduation_days: 5
+
+# ── G9: min_hold guard ───────────────────────────────────────────────────────
+# stop_loss が発火するまでの最低保有日数。
+# 削画: 59%の早期カットがノイズであり、trailing_stopに移行する前に切られていた。
+# true にすると、保有 min_hold_days 日未満は stop_loss を抑制し、
+# emergency_stop_bypass_pct を超える場合のみ即時退場する。
+min_hold_days_enabled: true
+min_hold_days: 1              # tiered 無効時の基本値 / severe loss (< -8%) のフォールバック
+emergency_stop_bypass_pct: -0.12  # -12%以下の大幅損失は min_hold を迂回して即時退場
+# ロールバック: min_hold_days_enabled: false に変更するだけで即座に旧動作に戻る
+
+# ── Plan A: Tiered min_hold (2026-07-27) ─────────────────────────────────────
+# Post-exit drift 分析（48件）の結果:
+#   avg_ret=-2.9% (noise zone)  → 78% が15日以内に回復 → 1週間待つ
+#   avg_ret=-8.2% (true stop)   → 30日超/未回復       → 素早く exit
+#
+# シミュレーション結果: 全48件で現行比 +$41,054 改善 (-$167K → -$126K)
+#
+# tiered_min_hold_levels の各エントリ:
+#   threshold_pct: この値 (%) より大きい return なら min_hold_days を適用
+#   min_hold_days: 当該 tier での最低保有営業日数
+# エントリは threshold_pct 降順で評価され、最初にマッチした tier が採用される。
+# どの tier にもマッチしない（loss >= -8%）場合は base min_hold_days (1日) を使用。
+tiered_min_hold_enabled: false
+tiered_min_hold_disable_reason: "FIX-007: 7d tier unreachable (return > -5% impossible when stop triggers at <= -5%)"
+tiered_min_hold_levels:
+  - threshold_pct: -5.0   # return > -5%:  ノイズ域    → 7日様子見
+    min_hold_days: 7
+  - threshold_pct: -8.0   # return > -8%:  中間域      → 3日様子見
+    min_hold_days: 3
+  # return <= -8%: 真の止損域 → base min_hold_days (1日) で素早く exit

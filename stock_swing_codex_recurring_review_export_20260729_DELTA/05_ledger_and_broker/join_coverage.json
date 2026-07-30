@@ -1,0 +1,8 @@
+{
+  "total_decisions": 2159,
+  "has_run_id_pct": 0.0,
+  "has_experiment_id_pct": 0.0,
+  "has_config_hash_pct": 0.0,
+  "has_prompt_version_pct": 10.2,
+  "has_token_data_pct": 100.0
+}

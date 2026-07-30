@@ -1,0 +1,46 @@
+{
+  "raw": {
+    "file_count": 34380,
+    "sample_files": [
+      "data/raw/broker/broker_aapl_2026-04-21_061002229065.json",
+      "data/raw/broker/broker_aapl_2026-04-21_061159092473.json",
+      "data/raw/broker/broker_aapl_2026-04-21_061306318403.json",
+      "data/raw/broker/broker_aapl_2026-04-21_061508594225.json",
+      "data/raw/broker/broker_aapl_2026-04-21_061508595846.json"
+    ]
+  },
+  "normalized": {
+    "file_count": 58,
+    "sample_files": [
+      "data/normalized/normalized_broker_aapl_0c80aa34.json",
+      "data/normalized/normalized_broker_aapl_34679832.json",
+      "data/normalized/normalized_broker_aapl_8b47dfef.json",
+      "data/normalized/normalized_broker_aapl_9fef0a39.json",
+      "data/normalized/normalized_broker_aapl_b7d701a9.json"
+    ]
+  },
+  "benchmarks": {
+    "file_count": 8,
+    "sample_files": [
+      "data/benchmarks/QQQ_daily.json",
+      "data/benchmarks/SMH_daily.json",
+      "data/benchmarks/SOXQ_daily.json",
+      "data/benchmarks/SOXX_daily.json",
+      "data/benchmarks/SPY_daily.json"
+    ]
+  },
+  "price_cache": {
+    "file_count": 0,
+    "sample_files": []
+  },
+  "backtest_price_cache": {
+    "file_count": 45,
+    "sample_files": [
+      "data/backtest_price_cache/AMAT_2026_05.json",
+      "data/backtest_price_cache/AMD_2026_05.json",
+      "data/backtest_price_cache/AMZN_2026_05.json",
+      "data/backtest_price_cache/ANET_2026_05.json",
+      "data/backtest_price_cache/ARM_2026_05.json"
+    ]
+  }
+}

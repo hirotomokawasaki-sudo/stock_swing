@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-04T19:05:13.722944+00:00",
+  "request_params": {
+    "symbol": "TSM",
+    "from": "2026-06-01",
+    "to": "2026-06-04"
+  },
+  "payload": {
+    "symbol": "TSM",
+    "news": [
+      {
+        "headline": "TSM momentum update",
+        "summary": "TSM shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/tsm",
+        "datetime": 1780599913,
+        "source": "synthetic",
+        "related": "TSM"
+      }
+    ]
+  }
+}

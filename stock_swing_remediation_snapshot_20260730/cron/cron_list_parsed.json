@@ -1,0 +1,707 @@
+{
+  "jobs": [
+    {
+      "id": "0a5ae126-cc03-44af-b4a8-b12b9821bd6f",
+      "name": "stock_swing_news_collection",
+      "enabled": true,
+      "createdAtMs": 1776765677115,
+      "updatedAtMs": 1785366270078,
+      "agentId": "main",
+      "sessionKey": "agent:main:main",
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 */4 * * *",
+        "tz": "Asia/Tokyo",
+        "staggerMs": 300000
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run exactly this command and wait for it to finish:\ncd ~/stock_swing && source venv/bin/activate && python -u -m stock_swing.cli.collect_data --sources finnhub --symbols NVDA,MSFT,GOOGL,AMZN,META,TSLA,AVGO,AMD,TSM,ASML,INTC,MU,ARM,AMAT,LRCX,KLAC,QCOM,MRVL,PLTR,ADBE,CRM,ORCL,NOW,SNOW,MDB,DDOG,PATH,FICO,SMCI,PANW,CRWD,FTNT,ANET,CSCO,IBM,HPE,DELL,HPQ,SNPS,CDNS,NBIS,CRDO,RBRK,CIEN\n\nUse `exec` first. If the command backgrounds or keeps running, use `process` to wait for completion and read the final output before replying.\n\nThen reply in at most 4 bullets with: final status, elapsed time, sources, and snapshot count. Keep it concise and stop.",
+        "model": "anthropic/claude-sonnet-4-6",
+        "fallbacks": [],
+        "thinking": "off",
+        "timeoutSeconds": 1200,
+        "lightContext": true,
+        "toolsAllow": [
+          "exec",
+          "process"
+        ]
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {
+        "nextRunAtMs": 1785380603299,
+        "lastRunAtMs": 1785366203322,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 66756,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0,
+        "lastFailureNotificationDeliveryStatus": "not-requested"
+      },
+      "nextRunAtMs": 1785380603299,
+      "lastRunAtMs": 1785366203322,
+      "lastRunStatus": "ok",
+      "lastDeliveryStatus": "not-requested",
+      "lastFailureNotificationDeliveryStatus": "not-requested",
+      "status": "ok"
+    },
+    {
+      "id": "46c13997-20ef-43d5-bb39-f0e710c45ede",
+      "name": "stock_swing_update_price_overrides",
+      "description": "Daily price override update to fix stale Alpaca positions API prices with fresh Massive API data",
+      "enabled": true,
+      "createdAtMs": 1779150933572,
+      "updatedAtMs": 1785330011794,
+      "agentId": "main",
+      "sessionKey": "agent:main:telegram:direct:8417431746",
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 22 * * *",
+        "tz": "Asia/Tokyo"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run daily price override update for stock_swing:\n\nExecute: cd /Users/hirotomookawasaki/stock_swing && ./scripts/cron/update_price_overrides.sh\n\nThis fetches fresh prices from Massive API and generates price_overrides.json to fix stale Alpaca positions API prices.\n\nReport:\n- Number of symbols with >5% price deviation\n- Symbols updated\n- Any errors\n\nIf successful, send a brief summary to Telegram.",
+        "model": "anthropic/claude-sonnet-4-6",
+        "fallbacks": [],
+        "thinking": "off",
+        "timeoutSeconds": 600,
+        "lightContext": true,
+        "toolsAllow": [
+          "exec",
+          "process"
+        ]
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "8417431746"
+      },
+      "state": {
+        "nextRunAtMs": 1785416400000,
+        "lastRunAtMs": 1785330000022,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 11772,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0,
+        "lastFailureNotificationDeliveryStatus": "not-requested",
+        "lastDelivered": true
+      },
+      "nextRunAtMs": 1785416400000,
+      "lastRunAtMs": 1785330000022,
+      "lastRunStatus": "ok",
+      "lastDelivered": true,
+      "lastDeliveryStatus": "delivered",
+      "lastFailureNotificationDeliveryStatus": "not-requested",
+      "status": "ok"
+    },
+    {
+      "id": "d4fb64ec-6b22-4985-8945-552f986eec2b",
+      "name": "stock_swing_paper_demo_premarket",
+      "description": "US premarket paper demo at 09:25 ET (auto-adjusts DST); reduced intraday candidate limit.",
+      "enabled": true,
+      "createdAtMs": 1775572545178,
+      "updatedAtMs": 1785331512676,
+      "schedule": {
+        "kind": "cron",
+        "expr": "25 9 * * 1-5",
+        "tz": "America/New_York"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run exactly this command and wait for it to finish:\nexport PAPER_DEMO_USE_INTRADAY=false\nexport PAPER_DEMO_MAX_WORKERS=4\nexport PAPER_DEMO_ALLOW_ETF_BUYS=true\nexport PAPER_DEMO_EXIT_ONLY=true\ncd ~/stock_swing && source venv/bin/activate && python -u -m stock_swing.cli.paper_demo --allow-outside-hours --min-momentum 0.05 --intraday-candidate-limit 15 --telegram\n\nUse `exec` first. If the command backgrounds or keeps running, use `process` to wait for completion and read the final output before replying.\n\nThe command will send a formatted Telegram report automatically. Reply with ONLY a single line: ✅ premarket 完了 [elapsed time] or ❌ エラー: [brief reason]. Nothing else.",
+        "model": "anthropic/claude-sonnet-4-6",
+        "fallbacks": [],
+        "thinking": "off",
+        "timeoutSeconds": 7200,
+        "lightContext": true,
+        "toolsAllow": [
+          "exec",
+          "process"
+        ]
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "8417431746"
+      },
+      "state": {
+        "nextRunAtMs": 1785417900000,
+        "lastRunAtMs": 1785331500023,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 12653,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0,
+        "lastFailureNotificationDeliveryStatus": "not-requested",
+        "lastDelivered": true
+      },
+      "nextRunAtMs": 1785417900000,
+      "lastRunAtMs": 1785331500023,
+      "lastRunStatus": "ok",
+      "lastDelivered": true,
+      "lastDeliveryStatus": "delivered",
+      "lastFailureNotificationDeliveryStatus": "not-requested",
+      "status": "ok"
+    },
+    {
+      "id": "4a16593b-d0e6-482b-9165-5d4709660398",
+      "name": "stock_swing_order_reconciliation_market_open_window",
+      "description": "Order reconciliation during US regular-hours open window (09:30 and 09:45 ET; auto-adjusts DST).",
+      "enabled": true,
+      "createdAtMs": 1780959900712,
+      "updatedAtMs": 1785332713773,
+      "agentId": "main",
+      "schedule": {
+        "kind": "cron",
+        "expr": "30,45 9 * * 1-5",
+        "tz": "America/New_York"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run exactly this command and wait for it to finish:\ncd ~/stock_swing && source venv/bin/activate && python -m stock_swing.cli.reconcile_orders\n\nUse `exec` first. If the command backgrounds or keeps running, use `process` to wait for completion and read the final output before replying.\n\nThen reply in at most 5 bullets with: final status, elapsed time, checked sell submissions, filled exits recorded, and any anomaly if present. Keep it concise and stop.",
+        "model": "anthropic/claude-sonnet-4-6",
+        "fallbacks": [],
+        "thinking": "off",
+        "timeoutSeconds": 1800,
+        "lightContext": true,
+        "toolsAllow": [
+          "exec",
+          "process"
+        ]
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "8417431746"
+      },
+      "state": {
+        "nextRunAtMs": 1785418200000,
+        "lastRunAtMs": 1785332700020,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 13753,
+        "lastDeliveryStatus": "delivered",
+        "lastFailureNotificationDeliveryStatus": "not-requested",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0,
+        "lastDelivered": true
+      },
+      "nextRunAtMs": 1785418200000,
+      "lastRunAtMs": 1785332700020,
+      "lastRunStatus": "ok",
+      "lastDelivered": true,
+      "lastDeliveryStatus": "delivered",
+      "lastFailureNotificationDeliveryStatus": "not-requested",
+      "status": "ok"
+    },
+    {
+      "id": "6eda856d-915a-4605-9428-8d5d13553176",
+      "name": "stock_swing_paper_demo_market_open",
+      "description": "US market-open paper demo at 09:35 ET (auto-adjusts DST).",
+      "enabled": true,
+      "createdAtMs": 1775572545176,
+      "updatedAtMs": 1785332123783,
+      "schedule": {
+        "kind": "cron",
+        "expr": "35 9 * * 1-5",
+        "tz": "America/New_York"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run exactly this command and wait for it to finish:\nexport PAPER_DEMO_USE_INTRADAY=false\nexport PAPER_DEMO_MAX_WORKERS=4\nexport PAPER_DEMO_ALLOW_ETF_BUYS=true\ncd ~/stock_swing && source venv/bin/activate && python -u -m stock_swing.cli.paper_demo --allow-outside-hours --min-momentum 0.05 --telegram\n\nUse `exec` first. If the command backgrounds or keeps running, use `process` to wait for completion and read the final output before replying.\n\nThe command will send a formatted Telegram report automatically. Reply with ONLY a single line: ✅ market_open 完了 [elapsed time] or ❌ エラー: [brief reason]. Nothing else.",
+        "model": "anthropic/claude-sonnet-4-6",
+        "fallbacks": [],
+        "thinking": "off",
+        "timeoutSeconds": 7200,
+        "lightContext": true,
+        "toolsAllow": [
+          "exec",
+          "process"
+        ]
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "8417431746"
+      },
+      "state": {
+        "nextRunAtMs": 1785418500000,
+        "lastRunAtMs": 1785332100024,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 23759,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0,
+        "lastFailureNotificationDeliveryStatus": "not-requested",
+        "lastDelivered": true
+      },
+      "nextRunAtMs": 1785418500000,
+      "lastRunAtMs": 1785332100024,
+      "lastRunStatus": "ok",
+      "lastDelivered": true,
+      "lastDeliveryStatus": "delivered",
+      "lastFailureNotificationDeliveryStatus": "not-requested",
+      "status": "ok"
+    },
+    {
+      "id": "32c3be71-3e86-470f-92e1-f50d8c77d533",
+      "name": "stock_swing_order_reconciliation_market_hours",
+      "description": "Order reconciliation during US regular-hours core session (10:00-15:45 ET, every 15min; auto-adjusts DST).",
+      "enabled": true,
+      "createdAtMs": 1778217432816,
+      "updatedAtMs": 1785354312554,
+      "agentId": "main",
+      "sessionKey": "agent:main:telegram:direct:8417431746",
+      "schedule": {
+        "kind": "cron",
+        "expr": "*/15 10-15 * * 1-5",
+        "tz": "America/New_York"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run exactly this command and wait for it to finish:\ncd ~/stock_swing && source venv/bin/activate && python -m stock_swing.cli.reconcile_orders\n\nUse `exec` first. If the command backgrounds or keeps running, use `process` to wait for completion and read the final output before replying.\n\nAfter the command completes, also run this to check circuit breaker:\npython3 -c \"import json; d=json.load(open('data/guardrails/circuit_breaker.json')); print(d['status'], (d.get('triggered_at') or '')[:16])\"\n\nThen reply in Japanese with this exact format:\n\n🔄 reconcile 完了 [HH:MM JST]  [経過時間]\n🛡 CB: [ok→✅ 正常 | halted→⛔ 停止中 発動:[time] | recovery_pending→⚠️ 解除待ち]\n📊 sell確認: [N]件  exit記録: [N]件  異常: [なし or N件]\n\n異常があれば箇所と内容を追記する。\n正常時は3行のみ。",
+        "model": "anthropic/claude-sonnet-4-6",
+        "fallbacks": [],
+        "thinking": "off",
+        "timeoutSeconds": 1800,
+        "lightContext": true,
+        "toolsAllow": [
+          "exec",
+          "process"
+        ]
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "8417431746"
+      },
+      "state": {
+        "nextRunAtMs": 1785420000000,
+        "lastRunAtMs": 1785354300023,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 12531,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0,
+        "lastFailureNotificationDeliveryStatus": "not-requested",
+        "lastDelivered": true
+      },
+      "nextRunAtMs": 1785420000000,
+      "lastRunAtMs": 1785354300023,
+      "lastRunStatus": "ok",
+      "lastDelivered": true,
+      "lastDeliveryStatus": "delivered",
+      "lastFailureNotificationDeliveryStatus": "not-requested",
+      "status": "ok"
+    },
+    {
+      "id": "a2986600-6e6a-4712-afa1-0ac8062e90fd",
+      "name": "stock_swing_paper_demo_midday",
+      "description": "US midday paper demo at 12:00 ET (auto-adjusts DST).",
+      "enabled": true,
+      "createdAtMs": 1775572545160,
+      "updatedAtMs": 1785340831861,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 12 * * 1-5",
+        "tz": "America/New_York"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run exactly this command and wait for it to finish:\nexport PAPER_DEMO_USE_INTRADAY=false\nexport PAPER_DEMO_MAX_WORKERS=4\nexport PAPER_DEMO_ALLOW_ETF_BUYS=true\ncd ~/stock_swing && source venv/bin/activate && python -u -m stock_swing.cli.paper_demo --allow-outside-hours --min-momentum 0.05 --intraday-candidate-limit 15 --telegram\n\nUse `exec` first. If the command backgrounds or keeps running, use `process` to wait for completion and read the final output before replying.\n\nThe command will send a formatted Telegram report automatically. Reply with ONLY a single line: ✅ midday 完了 [elapsed time] or ❌ エラー: [brief reason]. Nothing else.",
+        "model": "anthropic/claude-sonnet-4-6",
+        "fallbacks": [],
+        "thinking": "off",
+        "timeoutSeconds": 7200,
+        "lightContext": true,
+        "toolsAllow": [
+          "exec",
+          "process"
+        ]
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "8417431746"
+      },
+      "state": {
+        "nextRunAtMs": 1785427200000,
+        "lastRunAtMs": 1785340800025,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 31836,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0,
+        "lastFailureNotificationDeliveryStatus": "not-requested",
+        "lastDelivered": true
+      },
+      "nextRunAtMs": 1785427200000,
+      "lastRunAtMs": 1785340800025,
+      "lastRunStatus": "ok",
+      "lastDelivered": true,
+      "lastDeliveryStatus": "delivered",
+      "lastFailureNotificationDeliveryStatus": "not-requested",
+      "status": "ok"
+    },
+    {
+      "id": "fc5f2185-2117-4413-9684-da79ac428869",
+      "name": "stock_swing_paper_demo_market_close",
+      "description": "US near-close paper demo at 15:55 ET (auto-adjusts DST).",
+      "enabled": true,
+      "createdAtMs": 1775572545145,
+      "updatedAtMs": 1785354924940,
+      "schedule": {
+        "kind": "cron",
+        "expr": "55 15 * * 1-5",
+        "tz": "America/New_York"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run exactly this command and wait for it to finish:\nexport PAPER_DEMO_USE_INTRADAY=false\nexport PAPER_DEMO_MAX_WORKERS=4\nexport PAPER_DEMO_ALLOW_ETF_BUYS=true\nexport ENTRY_FILTER_STOCK_REDUCED=true\nexport ENTRY_FILTER_STOCK_REDUCED_MIN_TRADES=5\ncd ~/stock_swing && source venv/bin/activate && python -u -m stock_swing.cli.paper_demo --allow-outside-hours --min-momentum 0.05 --telegram\n\nUse `exec` first. If the command backgrounds or keeps running, use `process` to wait for completion and read the final output before replying.\n\nThe command will send a formatted Telegram report automatically. Reply with ONLY a single line: ✅ market_close 完了 [elapsed time] or ❌ エラー: [brief reason]. Nothing else.",
+        "model": "anthropic/claude-sonnet-4-6",
+        "fallbacks": [],
+        "thinking": "off",
+        "timeoutSeconds": 7200,
+        "lightContext": true,
+        "toolsAllow": [
+          "exec",
+          "process"
+        ]
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "8417431746"
+      },
+      "state": {
+        "nextRunAtMs": 1785441300000,
+        "lastRunAtMs": 1785354900023,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 24917,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0,
+        "lastFailureNotificationDeliveryStatus": "not-requested",
+        "lastDelivered": true
+      },
+      "nextRunAtMs": 1785441300000,
+      "lastRunAtMs": 1785354900023,
+      "lastRunStatus": "ok",
+      "lastDelivered": true,
+      "lastDeliveryStatus": "delivered",
+      "lastFailureNotificationDeliveryStatus": "not-requested",
+      "status": "ok"
+    },
+    {
+      "id": "c118d9f3-beea-4da0-899d-8f549ed15baa",
+      "name": "stock_swing_daily_audit",
+      "enabled": true,
+      "createdAtMs": 1778466628166,
+      "updatedAtMs": 1785358821445,
+      "agentId": "main",
+      "sessionKey": "agent:main:telegram:direct:8417431746",
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 6 * * *",
+        "tz": "Asia/Tokyo"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run these three commands in order and wait for each to finish:\n\n1) cd ~/stock_swing && ~/stock_swing/venv/bin/python scripts/audit_trades_with_market_data.py --recent-days 10\n\n2) cd ~/stock_swing && ~/stock_swing/venv/bin/python scripts/check_corporate_actions.py\n\n3) cd ~/stock_swing && ~/stock_swing/venv/bin/python scripts/build_broker_tracker_reconciliation.py\n\nUse `exec` for each. If a command keeps running, use `process` to wait for completion before proceeding.\n\nThen reply in at most 10 bullets:\n- audit status, elapsed time\n- audited trade count, price anomaly count, tracker integrity anomaly count\n- corporate action anomaly count (0 = clean, >0 = list symbols)\n- broker/tracker reconciliation result (issues count, any mismatches)\n- recommended action if any issue was found\n\nKeep it concise and stop.",
+        "model": "anthropic/claude-sonnet-4-6",
+        "fallbacks": [],
+        "thinking": "off",
+        "timeoutSeconds": 1800,
+        "lightContext": true,
+        "toolsAllow": [
+          "exec",
+          "process"
+        ]
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "8417431746"
+      },
+      "state": {
+        "nextRunAtMs": 1785445200000,
+        "lastRunAtMs": 1785358800026,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 21419,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0,
+        "lastFailureNotificationDeliveryStatus": "not-requested",
+        "lastDiagnostics": {
+          "summary": "⚠️ 🛠️ Exec failed: `python scripts/audit_trades_with_market_data.py (in ~/stock_swing)`",
+          "entries": [
+            {
+              "ts": 1785358820414,
+              "source": "tool",
+              "severity": "warn",
+              "message": "⚠️ 🛠️ Exec failed: `python scripts/audit_trades_with_market_data.py (in ~/stock_swing)`"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "⚠️ 🛠️ Exec failed: `python scripts/audit_trades_with_market_data.py (in ~/stock_swing)`",
+        "lastDelivered": true
+      },
+      "nextRunAtMs": 1785445200000,
+      "lastRunAtMs": 1785358800026,
+      "lastRunStatus": "ok",
+      "lastDelivered": true,
+      "lastDeliveryStatus": "delivered",
+      "lastFailureNotificationDeliveryStatus": "not-requested",
+      "status": "ok"
+    },
+    {
+      "id": "be4838ae-9d76-458a-aa1e-d3c968750d65",
+      "name": "stock_swing_update_benchmark_all",
+      "description": "Daily benchmark update for SPY/QQQ/SMH/SOXX/SOXQ via yfinance. Keeps sector_shock_hold shadow analysis and alpha/beta fresh.",
+      "enabled": true,
+      "createdAtMs": 1780360306183,
+      "updatedAtMs": 1785367814975,
+      "agentId": "main",
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 8 * * 2-6",
+        "tz": "Asia/Tokyo"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run exactly this command and wait for it to finish:\ncd ~/stock_swing && source venv/bin/activate && python -u - << 'PYEOF'\nimport json, csv, sys\nfrom pathlib import Path\nfrom datetime import datetime, timedelta\nimport yfinance as yf\n\nSYMBOLS = [\"SMH\", \"SOXX\", \"QQQ\", \"SPY\", \"SOXQ\"]\nout_dir = Path(\"data/benchmarks\")\nout_dir.mkdir(parents=True, exist_ok=True)\nend_date = datetime.now()\nstart_date = end_date - timedelta(days=90)\n\nall_bars = {}\nfor sym in SYMBOLS:\n    ticker = yf.Ticker(sym)\n    hist = ticker.history(start=start_date.strftime(\"%Y-%m-%d\"), end=end_date.strftime(\"%Y-%m-%d\"))\n    if hist.empty:\n        print(f\"  SKIP {sym}: no data\")\n        continue\n    bars = []\n    for dt, row in hist.iterrows():\n        bars.append({\"date\": dt.strftime(\"%Y-%m-%d\"), \"open\": round(float(row[\"Open\"]),4), \"high\": round(float(row[\"High\"]),4), \"low\": round(float(row[\"Low\"]),4), \"close\": round(float(row[\"Close\"]),4), \"volume\": int(row[\"Volume\"])})\n    all_bars[sym] = bars\n    (out_dir / f\"{sym}_daily.json\").write_text(json.dumps(bars, indent=2))\n    print(f\"  OK {sym}: {len(bars)} bars -> {bars[-1]['date']}\")\n\nprices_path = out_dir / \"benchmark_prices.csv\"\nwith open(prices_path, \"w\", newline=\"\") as f:\n    w = csv.writer(f)\n    w.writerow([\"date\",\"symbol\",\"open\",\"high\",\"low\",\"close\",\"volume\"])\n    for sym, bars in all_bars.items():\n        for b in bars:\n            w.writerow([b[\"date\"],sym,b[\"open\"],b[\"high\"],b[\"low\"],b[\"close\"],b[\"volume\"]])\n\nreturns_path = out_dir / \"benchmark_returns.csv\"\nwith open(returns_path, \"w\", newline=\"\") as f:\n    w = csv.writer(f)\n    w.writerow([\"date\",\"symbol\",\"close\",\"daily_return\",\"return_3d\",\"return_5d\",\"cumulative_return\"])\n    for sym, bars in all_bars.items():\n        closes = [b[\"close\"] for b in bars]\n        start = closes[0]\n        for i, b in enumerate(bars):\n            c = closes[i]\n            daily = (c-closes[i-1])/closes[i-1] if i>0 else 0.0\n            r3d = (c-closes[i-3])/closes[i-3] if i>=3 else 0.0\n            r5d = (c-closes[i-5])/closes[i-5] if i>=5 else 0.0\n            cum = (c-start)/start\n            w.writerow([b[\"date\"],sym,c,f\"{daily:.4f}\",f\"{r3d:.4f}\",f\"{r5d:.4f}\",f\"{cum:.4f}\"])\n\nprint(f\"Done: {list(all_bars.keys())}\")\nPYEOF\n\nUse `exec` first. If the command backgrounds, use `process` to wait for completion.\n\nThen reply in at most 5 bullets: symbols updated, latest date, any failures, elapsed time. Keep it concise and stop.",
+        "model": "anthropic/claude-sonnet-4-6",
+        "fallbacks": [],
+        "thinking": "off",
+        "timeoutSeconds": 1200,
+        "lightContext": true,
+        "toolsAllow": [
+          "exec",
+          "process"
+        ]
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {
+        "nextRunAtMs": 1785454200000,
+        "lastRunAtMs": 1785367800017,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 14958,
+        "lastDeliveryStatus": "not-requested",
+        "lastFailureNotificationDeliveryStatus": "not-requested",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
+      },
+      "nextRunAtMs": 1785454200000,
+      "lastRunAtMs": 1785367800017,
+      "lastRunStatus": "ok",
+      "lastDeliveryStatus": "not-requested",
+      "lastFailureNotificationDeliveryStatus": "not-requested",
+      "status": "ok"
+    },
+    {
+      "id": "494e46d9-9214-492f-b83c-18a5e59bd5f7",
+      "name": "daily_report_morning",
+      "enabled": true,
+      "createdAtMs": 1775212819440,
+      "updatedAtMs": 1785369608784,
+      "agentId": "main",
+      "sessionKey": "agent:main:main",
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * 2-6",
+        "tz": "Asia/Tokyo"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run exactly this command and wait for it to finish:\ncd ~/stock_swing && source venv/bin/activate && python -m stock_swing.cli.daily_report --mode brief --telegram\n\nIf it succeeds, do not send any additional summary. If it fails before the CLI can notify Telegram, send one short Japanese error message only.",
+        "model": "anthropic/claude-sonnet-4-6",
+        "fallbacks": [],
+        "thinking": "off",
+        "timeoutSeconds": 1800,
+        "lightContext": true,
+        "toolsAllow": [
+          "exec"
+        ]
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "telegram",
+        "to": "8417431746"
+      },
+      "state": {
+        "nextRunAtMs": 1785456000000,
+        "lastRunAtMs": 1785369600025,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 8759,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0,
+        "lastFailureNotificationDeliveryStatus": "not-requested"
+      },
+      "nextRunAtMs": 1785456000000,
+      "lastRunAtMs": 1785369600025,
+      "lastRunStatus": "ok",
+      "lastDeliveryStatus": "not-requested",
+      "lastFailureNotificationDeliveryStatus": "not-requested",
+      "status": "ok"
+    },
+    {
+      "id": "6a97221b-5d6d-450f-9eec-8a5f4d0249a6",
+      "name": "stock_swing_weekly_full_audit",
+      "enabled": true,
+      "createdAtMs": 1778466636901,
+      "updatedAtMs": 1785103220248,
+      "agentId": "main",
+      "sessionKey": "agent:main:telegram:direct:8417431746",
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * 1",
+        "tz": "Asia/Tokyo"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run exactly this command and wait for it to finish:\ncd ~/stock_swing && source venv/bin/activate && python scripts/audit_trades_with_market_data.py\n\nUse `exec` first. If the command backgrounds or keeps running, use `process` to wait for completion and read the final output before replying.\n\nThen reply in at most 6 bullets with: final status, elapsed time, audited trade count, price anomaly count, tracker integrity anomaly count, and the recommended action if any issue was found. Keep it concise and stop.",
+        "model": "anthropic/claude-sonnet-4-6",
+        "fallbacks": [],
+        "thinking": "off",
+        "timeoutSeconds": 900,
+        "lightContext": true,
+        "toolsAllow": [
+          "exec",
+          "process"
+        ]
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "8417431746"
+      },
+      "state": {
+        "nextRunAtMs": 1785708000000,
+        "lastRunAtMs": 1785103200027,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 20221,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0,
+        "lastFailureNotificationDeliveryStatus": "not-requested",
+        "lastDiagnostics": {
+          "summary": "⚠️ 🛠️ Exec failed: `run source venv/bin/activate → run python scripts/audit_trades_with_market_data.py (in ~/stock_swing)`",
+          "entries": [
+            {
+              "ts": 1785103219015,
+              "source": "tool",
+              "severity": "warn",
+              "message": "⚠️ 🛠️ Exec failed: `run source venv/bin/activate → run python scripts/audit_trades_with_market_data.py (in ~/stock_swing)`"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "⚠️ 🛠️ Exec failed: `run source venv/bin/activate → run python scripts/audit_trades_with_market_data.py (in ~/stock_swing)`"
+      },
+      "nextRunAtMs": 1785708000000,
+      "lastRunAtMs": 1785103200027,
+      "lastRunStatus": "ok",
+      "lastDelivered": true,
+      "lastDeliveryStatus": "delivered",
+      "lastFailureNotificationDeliveryStatus": "not-requested",
+      "status": "ok"
+    }
+  ],
+  "total": 12,
+  "offset": 0,
+  "limit": 12,
+  "hasMore": false,
+  "nextOffset": null,
+  "deliveryPreviews": {
+    "0a5ae126-cc03-44af-b4a8-b12b9821bd6f": {
+      "label": "not requested",
+      "detail": "not requested"
+    },
+    "46c13997-20ef-43d5-bb39-f0e710c45ede": {
+      "label": "announce -> telegram:8417431746",
+      "detail": "explicit"
+    },
+    "d4fb64ec-6b22-4985-8945-552f986eec2b": {
+      "label": "announce -> telegram:8417431746",
+      "detail": "explicit"
+    },
+    "4a16593b-d0e6-482b-9165-5d4709660398": {
+      "label": "announce -> telegram:8417431746",
+      "detail": "explicit"
+    },
+    "6eda856d-915a-4605-9428-8d5d13553176": {
+      "label": "announce -> telegram:8417431746",
+      "detail": "explicit"
+    },
+    "32c3be71-3e86-470f-92e1-f50d8c77d533": {
+      "label": "announce -> telegram:8417431746",
+      "detail": "explicit"
+    },
+    "a2986600-6e6a-4712-afa1-0ac8062e90fd": {
+      "label": "announce -> telegram:8417431746",
+      "detail": "explicit"
+    },
+    "fc5f2185-2117-4413-9684-da79ac428869": {
+      "label": "announce -> telegram:8417431746",
+      "detail": "explicit"
+    },
+    "c118d9f3-beea-4da0-899d-8f549ed15baa": {
+      "label": "announce -> telegram:8417431746",
+      "detail": "explicit"
+    },
+    "be4838ae-9d76-458a-aa1e-d3c968750d65": {
+      "label": "not requested",
+      "detail": "not requested"
+    },
+    "494e46d9-9214-492f-b83c-18a5e59bd5f7": {
+      "label": "none -> telegram:8417431746",
+      "detail": "explicit"
+    },
+    "6a97221b-5d6d-450f-9eec-8a5f4d0249a6": {
+      "label": "announce -> telegram:8417431746",
+      "detail": "explicit"
+    }
+  }
+}

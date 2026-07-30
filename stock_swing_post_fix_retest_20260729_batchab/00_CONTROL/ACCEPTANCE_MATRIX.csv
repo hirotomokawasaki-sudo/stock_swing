@@ -1,0 +1,26 @@
+fix_id,criterion,expected,actual,status,evidence_path
+FIX-001,synthetic production records=0,0,568 quarantined,PASS,07_DATA/legacy_synthetic_quarantine.json
+FIX-001,is_synthetic=False in new raw files,False,False,PASS,02_TESTS/batch_ab_tests_verbose.txt
+FIX-002,allocation price=0 blocks BUY,block,block,PASS,02_TESTS/batch_ab_tests_verbose.txt
+FIX-003,recently_sold 30min window,<=30min,30min,PASS,02_TESTS/batch_ab_tests_verbose.txt
+FIX-005,prev_unrealized_pnl != silent 0,error raised,DayStartMissingError,PASS,02_TESTS/batch_ab_tests_verbose.txt
+FIX-006,P6 join report generated,file exists,see 04_LEDGER/,IMPLEMENTED_UNVERIFIED,04_LEDGER/p6_join_coverage_status.json
+FIX-007,7d tier disabled,false,false,PASS,02_TESTS/batch_ab_tests_verbose.txt
+FIX-009,console 127.0.0.1 bind,127.0.0.1,127.0.0.1,PASS,02_TESTS/batch_ab_tests_verbose.txt
+FIX-009,query token rejected,401/403,rejected,PASS,02_TESTS/batch_ab_tests_verbose.txt
+FIX-010,rule_based_zero actual=0,0,0,PASS,02_TESTS/batch_ab_tests_verbose.txt
+FIX-B3,fill ledger exactly-once,FillAlreadyConsumedError,raised,PASS,02_TESTS/batch_ab_tests_verbose.txt
+FIX-B3,idempotent reconcile x3,same SHA256,same SHA256,PASS,02_TESTS/batch_ab_tests_verbose.txt
+FIX-B5,cumulative BUY projection,2nd BUY blocked,blocked,PASS,02_TESTS/batch_ab_tests_verbose.txt
+FIX-B5,rejected BUY not in projection,no inflation,no inflation,PASS,02_TESTS/batch_ab_tests_verbose.txt
+KLAC,split anomaly quarantined,not in closed,quarantined,PASS,04_LEDGER/klac_split_investigation.json
+LEDGER,overlap=0,0,0,PASS,04_LEDGER/ledger_invariants.json
+LEDGER,duplicate_trade_id=0,0,0,PASS,04_LEDGER/ledger_invariants.json
+LEDGER,exit_None_in_closed=0,0,0,PASS,04_LEDGER/ledger_invariants.json
+LEDGER,hd_missing_in_closed=0,0,0,PASS,04_LEDGER/ledger_invariants.json
+ALLOC,Stock 85%/ETF 15% unchanged,0.85/0.15,0.85/0.15,PASS,02_TESTS/batch_ab_tests_verbose.txt
+RUNTIME,mode=paper,paper,paper,PASS,config/runtime/current_mode.yaml
+broker_mismatch,unexplained=0,0,0,PASS,06_GUARDRAILS/reconcile_status.json
+run_id_coverage,post-epoch>=99%,>=99%,BLOCKED,BLOCKED,04_LEDGER/p6_join_coverage_status.json
+source_coverage,required>=99.5%,>=99.5%,BLOCKED,BLOCKED,07_DATA/news_collection_status.json
+console_snapshot,reachable,reachable,console_not_reachable,BLOCKED,08_CONSOLE/api_summary.json

@@ -1,0 +1,2 @@
+test commands:
+  venv/bin/python -m pytest tests/ --junit-xml=junit.xml --tb=short -q

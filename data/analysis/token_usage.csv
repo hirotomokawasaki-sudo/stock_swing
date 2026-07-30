@@ -1964,3 +1964,6 @@ timestamp,workflow_name,model,input_tokens,output_tokens,total_tokens,estimated_
 2026-07-27T16:00:14.773111+00:00,paper_demo,breakout_momentum_v1,410,91,501,0.0,True,0,,
 2026-07-27T19:55:19.481882+00:00,paper_demo,breakout_momentum_v1,513,101,614,0.0,True,0,,
 2026-07-28T13:35:26.159664+00:00,paper_demo,breakout_momentum_v1,495,94,589,0.0,True,0,,
+2026-07-29T13:35:18.726567+00:00,paper_demo,breakout_momentum_v1,403,81,484,0.0,True,0,,
+2026-07-29T16:00:27.906603+00:00,paper_demo,breakout_momentum_v1,402,81,483,0.0,True,0,,
+2026-07-29T19:55:17.855570+00:00,paper_demo,breakout_momentum_v1,402,81,483,0.0,True,0,,

@@ -1,0 +1,1689 @@
+{
+  "schema_version": "1.0",
+  "protocol_version": "stock_swing_recurring_review_protocol_v1",
+  "request_id": "SSR-20260729-01",
+  "generated_at_utc": "2026-07-29T02:29:07.594257+00:00",
+  "generated_by": "openclaw-assistant",
+  "mode_requested": "AUTO",
+  "mode_actual": "DELTA_SELF_CONTAINED",
+  "reason_for_mode": "baseline commit 744e3fa confirmed as ancestor; self-contained delta export requested",
+  "baseline": {
+    "export_name": "stock_swing_codex_full_review_export_20260721.zip",
+    "commit": "744e3fa",
+    "commit_is_ancestor": true,
+    "comparison_start_utc": "2026-07-21T00:00:00Z"
+  },
+  "repository": {
+    "name": "stock_swing",
+    "root_name_redacted": false,
+    "branch": "main",
+    "commit": "0ae1ce6926a6b757093d484bdb9a0b8b30e0e52e",
+    "tag": null,
+    "dirty": true,
+    "commits_since_baseline": 68,
+    "files_changed_since_baseline": 129,
+    "diff_stat_path": "02_source_and_config/git_diff_stat.txt",
+    "full_patch_path": "02_source_and_config/git_diff_full.patch"
+  },
+  "runtime": {
+    "mode": "paper",
+    "current_control_status": "ok",
+    "current_control_as_of_utc": "2026-07-29T02:29:07.669921+00:00",
+    "config_hash": null,
+    "allocation_policy": {
+      "stock_target_pct": 85,
+      "etf_target_pct": 15
+    }
+  },
+  "data_ranges": {
+    "trades": {
+      "rows": 306,
+      "closed": 205,
+      "quarantined": 101,
+      "truncated": false
+    },
+    "daily_snapshots": {
+      "rows": 131,
+      "truncated": false
+    },
+    "decisions": {
+      "rows": 2159,
+      "note": "see 11_ai_usage/ai_usage_summary.json and 05_ledger_and_broker/decisions_summary.csv"
+    }
+  },
+  "ledger_quality": {
+    "validity_status": "NEEDS_REVIEW",
+    "evidence_path": "05_ledger_and_broker/ledger_invariants.json",
+    "as_of": "2026-07-29T02:23:31.711117+00:00"
+  },
+  "performance": {
+    "canonical_snapshot_path": "06_performance_and_risk/performance_by_window.json",
+    "windows": [
+      "all",
+      "30d",
+      "90d",
+      "180d",
+      "365d",
+      "since_baseline"
+    ],
+    "invalid_cohort_excluded": true
+  },
+  "tests": {
+    "command": "python3 -m pytest tests/ --tb=short -q",
+    "result_paths": [
+      "03_tests_and_quality/pytest_output.txt",
+      "03_tests_and_quality/pytest_output_plain.txt"
+    ],
+    "json_report_path": "03_tests_and_quality/pytest_report.json"
+  },
+  "redaction": {
+    "secret_scan_passed": false,
+    "redacted_field_count": 4,
+    "report_path": "00_control/REDACTION_REPORT.md"
+  },
+  "total_files": 518,
+  "total_size_bytes": 6953103,
+  "files": [
+    {
+      "path": "00_control/CHECKSUMS.sha256",
+      "size_bytes": 68124,
+      "sha256": "4bd9064438f26f32dbf8f3e032d7ef08d3a6c30712b893960ee8654beee3e092",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": true
+    },
+    {
+      "path": "00_control/DATA_DICTIONARY.md",
+      "size_bytes": 2300,
+      "sha256": "a1fc9999c91d5001a088d4648ffe66fd7ae4f930d73c5d4f8e066069214d71c6",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": true
+    },
+    {
+      "path": "00_control/EXPORT_MANIFEST.json",
+      "size_bytes": 64596,
+      "sha256": "c0a63d3bfed44758f924fabafff8ec76a6643725a5ba89707d356b43932b639c",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": true
+    },
+    {
+      "path": "00_control/EXPORT_VALIDATION.json",
+      "size_bytes": 840,
+      "sha256": "e2ba5b2353891d19bc895567c16ccc41d0331ad6d507829ece42f0eb18132657",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": true
+    },
+    {
+      "path": "00_control/GENERATION_LOG.txt",
+      "size_bytes": 4314,
+      "sha256": "8579946059e594558354a6b70788eb27d3f9a56181232b107ec5b9d77c2dcb97",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": true
+    },
+    {
+      "path": "00_control/MISSING_DATA.csv",
+      "size_bytes": 89,
+      "sha256": "050d870ae8c86c2dda9892e4021449a45d22adeea9d364ede9d9eee9f7cca583",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": true
+    },
+    {
+      "path": "00_control/REDACTION_REPORT.md",
+      "size_bytes": 774,
+      "sha256": "1cb582423332e1f195fc9fe9808302960a2f4ca6b3eeae34a60d877a52e2e2fd",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": true
+    },
+    {
+      "path": "00_control/REVIEW_INDEX.md",
+      "size_bytes": 1679,
+      "sha256": "7db12ac274ab76eeb0b62707ec7ec82b753fc366b38105821a6ecac003e1d2d7",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": true
+    },
+    {
+      "path": "00_control/SOURCE_INVENTORY.csv",
+      "size_bytes": 122840,
+      "sha256": "159cb9ece18a5f82f519d7d4e3a128d572cf45ee02c371e2873be227e4f57ad2",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": true
+    },
+    {
+      "path": "01_context_and_roadmap/2026-07-22.md",
+      "size_bytes": 8784,
+      "sha256": "069737f7123594b20d2d469d4d24dce85258f0bb90d4890078f29b84e9e0bc3b",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/2026-07-23.md",
+      "size_bytes": 4591,
+      "sha256": "0428d3db6a11f2b79102a0c2fb8df53428dcccca8ab8e36f596e4c45f2a53ef7",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/2026-07-25.md",
+      "size_bytes": 3411,
+      "sha256": "cbc9efc8373e38b1856fcf0f591b5f9e8ba91841ea2402aa7821bcbce620a774",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/2026-07-27.md",
+      "size_bytes": 3158,
+      "sha256": "777e7a0620900ec624c39b4c818b3d8ad92fb19d4bffdb3997251d30f2001bfc",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/2026-07-28.md",
+      "size_bytes": 7413,
+      "sha256": "b4318c174092977afb21d068b417129c8d7cc9d3a3592722de4ac1fbbff9c6dd",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/2026-07-29.md",
+      "size_bytes": 4060,
+      "sha256": "6156e803922b381c8f1cc63de671d1ee41bccfceb347600b00b8bb5f9d5662fe",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/AGENTS.md",
+      "size_bytes": 4023,
+      "sha256": "cbbc64617d5f35302dd8ed3c759335a8b3510e8cc4ee2dfc8e2b677613eb49be",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/GOVERNANCE.md",
+      "size_bytes": 4437,
+      "sha256": "627cc8716ba89f48f8b860d83db9b06343ff7f9aa64978976feb3988e560524e",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/STATUS.md",
+      "size_bytes": 7041,
+      "sha256": "a3b8053ff576566e06787815a4df814d1bc31e0c040fb8a1dfd702ef66596ab2",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/codex reviews/stock_swing_codex_fix_instructions_20260721.md",
+      "size_bytes": 16208,
+      "sha256": "5795e890361dd1bba59f0c6a3bdc354f4e56875711fdaac7d5232a10a65d9d78",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/codex reviews/stock_swing_codex_review_report_20260721.md",
+      "size_bytes": 19176,
+      "sha256": "558ee3daa188420685b0fa7f26b2879036736819126ec753bdf3a4c74f0d69ab",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/codex reviews/stock_swing_improvement_plan_merge_prompt_20260721.md",
+      "size_bytes": 5355,
+      "sha256": "c63df46474f65859271d0d36469da34c8284d24b29549c59a37119570092c1ca",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/codex reviews/stock_swing_improvement_plan_merge_spec_20260721.md",
+      "size_bytes": 8340,
+      "sha256": "2517bdee662970956f6569e54d086b6642f7a73c9923e514adfdd3b9c8d8ccdb",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/console_improvement_tasks.md",
+      "size_bytes": 31065,
+      "sha256": "c52e995c0c29f18b3a5299e1e76a7506e8ebc06376dd263ec7734aaeb029d5ad",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/go_no_go_checklist.md",
+      "size_bytes": 2632,
+      "sha256": "459e795e8b7600610535e2e1727aa30ea9a91718880ae40fec74bc5e2602fca8",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/go_no_go_judgment_20260731.md",
+      "size_bytes": 3847,
+      "sha256": "819cdf6d66e9fe5aeac8f99476295b22e6d69556601bcebd8c14e7f9a46bf722",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/go_no_go_prereport_20260723.md",
+      "size_bytes": 6710,
+      "sha256": "84d270377f50360abc7a53c1dfea2aac0f38b947df2eba95fde556a0c140366d",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/go_no_go_prereport_20260727.md",
+      "size_bytes": 9956,
+      "sha256": "6fff821def4416c74d6a166e51b6fa2bc0b32772058d675502f3bbb0a676990a",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/go_no_go_report_20260731.md",
+      "size_bytes": 8991,
+      "sha256": "2f3cb5f253e450aac55903bbf8f5702b42734f9b758c35eaf3bb7d69ae504bda",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/stop_loss_evaluation_guidelines.md",
+      "size_bytes": 5750,
+      "sha256": "819e9f5570b4da7abbfa414b52332acf4d123202205e13731b91e562e7a1bfc5",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "01_context_and_roadmap/testing_standards.md",
+      "size_bytes": 6947,
+      "sha256": "fc8540738f31d9f1e2be9953d76049c041c465844f1e0b614bedc4ca63c5cf6f",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/GOVERNANCE.md",
+      "size_bytes": 4437,
+      "sha256": "627cc8716ba89f48f8b860d83db9b06343ff7f9aa64978976feb3988e560524e",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/MUSTREAD_NAVIGATION.md",
+      "size_bytes": 7016,
+      "sha256": "f16a07b822ff67d0cbbf2a9f2938472fd8f42e607fdee133f41099be924ecf69",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/README.md",
+      "size_bytes": 1290,
+      "sha256": "9093c1f5eea4b1385ae6d61b81db3cb049e97fa573ace5510f2265eeaea4e24f",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/config/runtime/current_mode.yaml",
+      "size_bytes": 4727,
+      "sha256": "3f70ba4f79687e0df7c729e493a17be6796d31c22fa60f3459970338e269b8e0",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/config/strategy/portfolio_allocation.yaml",
+      "size_bytes": 2612,
+      "sha256": "d89a0828ff737e400b7b6e8edf6fe8c80c91231e114752a9aeb0daed3a696011",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/config/strategy/portfolio_allocation.yaml.bak_20260721",
+      "size_bytes": 1330,
+      "sha256": "29eb2fde3ecbb190e9d489f88fce363648560f191ba5e3bd634593c73629b88b",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/config/strategy/simple_exit_v2.yaml",
+      "size_bytes": 3741,
+      "sha256": "5857e663413efdb26253eb2237e5005a96e1b696987a70dbde07ec3496305895",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/IMPROVEMENT_PLAN_CHANGELOG_20260721.md",
+      "size_bytes": 6379,
+      "sha256": "715943268341ab1976a33fb931eb3d3b946cc75a6c71bfbaaf16ca977eb59767",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/IMPROVEMENT_PLAN_MERGE_RESULT_20260721.md",
+      "size_bytes": 8041,
+      "sha256": "bea6a2ade688bf826dd5711e64ef4b349c4041a30f94769ca1026b2e7e95bf4d",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/IMPROVEMENT_PLAN_TRACEABILITY_20260721.csv",
+      "size_bytes": 5410,
+      "sha256": "93c914a3009f090b4218e144351931e4930019a467dde35516d234f237a54abc",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/codex reviews/stock_swing_codex_fix_instructions_20260721.md",
+      "size_bytes": 16208,
+      "sha256": "5795e890361dd1bba59f0c6a3bdc354f4e56875711fdaac7d5232a10a65d9d78",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/codex reviews/stock_swing_codex_review_report_20260721.md",
+      "size_bytes": 19176,
+      "sha256": "558ee3daa188420685b0fa7f26b2879036736819126ec753bdf3a4c74f0d69ab",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/codex reviews/stock_swing_improvement_plan_merge_prompt_20260721.md",
+      "size_bytes": 5355,
+      "sha256": "c63df46474f65859271d0d36469da34c8284d24b29549c59a37119570092c1ca",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/codex reviews/stock_swing_improvement_plan_merge_spec_20260721.md",
+      "size_bytes": 8340,
+      "sha256": "2517bdee662970956f6569e54d086b6642f7a73c9923e514adfdd3b9c8d8ccdb",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/console_improvement_tasks.md",
+      "size_bytes": 31065,
+      "sha256": "c52e995c0c29f18b3a5299e1e76a7506e8ebc06376dd263ec7734aaeb029d5ad",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/daily_logs/2026-07-14.md",
+      "size_bytes": 6155,
+      "sha256": "4d3a4ec931de1967a98ff62aa193c6340621bf93b2c516e99de52945f94cc556",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/daily_logs/2026-07-21.md",
+      "size_bytes": 8788,
+      "sha256": "5d581c9ee9f2803f925bb5f1781a428818b9383498beaf5e0bad19c257f1cc27",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/daily_logs/2026-07-22.md",
+      "size_bytes": 8784,
+      "sha256": "069737f7123594b20d2d469d4d24dce85258f0bb90d4890078f29b84e9e0bc3b",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/daily_logs/2026-07-23.md",
+      "size_bytes": 4591,
+      "sha256": "0428d3db6a11f2b79102a0c2fb8df53428dcccca8ab8e36f596e4c45f2a53ef7",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/daily_logs/2026-07-25.md",
+      "size_bytes": 3411,
+      "sha256": "cbc9efc8373e38b1856fcf0f591b5f9e8ba91841ea2402aa7821bcbce620a774",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/daily_logs/2026-07-27.md",
+      "size_bytes": 3158,
+      "sha256": "777e7a0620900ec624c39b4c818b3d8ad92fb19d4bffdb3997251d30f2001bfc",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/daily_logs/2026-07-28.md",
+      "size_bytes": 7413,
+      "sha256": "b4318c174092977afb21d068b417129c8d7cc9d3a3592722de4ac1fbbff9c6dd",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/daily_logs/2026-07-29.md",
+      "size_bytes": 4060,
+      "sha256": "6156e803922b381c8f1cc63de671d1ee41bccfceb347600b00b8bb5f9d5662fe",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/go_no_go_20260731.md",
+      "size_bytes": 5130,
+      "sha256": "0f2b285792c8c86d78ff8f704046104e3f559a0d5a53d4ec775009031930fa15",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/go_no_go_judgment_20260731.md",
+      "size_bytes": 3847,
+      "sha256": "819cdf6d66e9fe5aeac8f99476295b22e6d69556601bcebd8c14e7f9a46bf722",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/go_no_go_prereport_20260723.md",
+      "size_bytes": 6710,
+      "sha256": "84d270377f50360abc7a53c1dfea2aac0f38b947df2eba95fde556a0c140366d",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/go_no_go_prereport_20260727.md",
+      "size_bytes": 9956,
+      "sha256": "6fff821def4416c74d6a166e51b6fa2bc0b32772058d675502f3bbb0a676990a",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/go_no_go_report_20260731.md",
+      "size_bytes": 8991,
+      "sha256": "2f3cb5f253e450aac55903bbf8f5702b42734f9b758c35eaf3bb7d69ae504bda",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/r0v2b_reversed_chronology_20260721.csv",
+      "size_bytes": 6351,
+      "sha256": "8fd24a162e9d95dce9b57338ece6aa02e6dcb67e85cc2209254821f194f4978d",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/r0v2c_guardrail_metrics_analysis_20260721.md",
+      "size_bytes": 5710,
+      "sha256": "756011f9d985faeb6483c577ffac75e88bf1f2a33345347b7ea3f9cb968d1858",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/runbooks/r0v2b_ledger_repair_runbook.md",
+      "size_bytes": 10467,
+      "sha256": "0bcfd4f404733e07de9c4d4b24561696dc1a2322a8197156084f9f5faf3ea32b",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/stop_loss_evaluation_guidelines.md",
+      "size_bytes": 5750,
+      "sha256": "819e9f5570b4da7abbfa414b52332acf4d123202205e13731b91e562e7a1bfc5",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/docs/testing_standards.md",
+      "size_bytes": 6947,
+      "sha256": "fc8540738f31d9f1e2be9953d76049c041c465844f1e0b614bedc4ca63c5cf6f",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/scripts/analyze_stop_loss_post_exit.py",
+      "size_bytes": 10343,
+      "sha256": "0d7b8ca0a27a199d11ab4292764d3e5b58d54089cb71cc4067ce22b6c915d9e7",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/scripts/audit_trades_with_market_data.py",
+      "size_bytes": 21823,
+      "sha256": "369cd2c404b8a2e6609766e78fc7fad3c6504ef8b210096352e0bc67ac43eb01",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/scripts/backfill_asset_class.py",
+      "size_bytes": 3069,
+      "sha256": "bd0981eab92aefa8883ef5b91872f2a9d39e3eb57615d1fd35443bfc394d7f66",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/scripts/backfill_entry_signal_strength.py",
+      "size_bytes": 7376,
+      "sha256": "961d33c2fd1973582567b29f312f75a1cc01e718238bf2152352e3770c93eb4b",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/scripts/cron/run_paper_demo.sh",
+      "size_bytes": 2906,
+      "sha256": "909815901cdd3db672ab2d3029c6186f9062f44efbf7c77e2d8d35e9bc05c3b1",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/scripts/rebuild_pnl_state_from_broker.py",
+      "size_bytes": 43409,
+      "sha256": "5e1bf2c6800d536d880bef3c36585930469ce0242c5e29841e4fa26c942f0880",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/scripts/reset_circuit_breaker.py",
+      "size_bytes": 2842,
+      "sha256": "3e77819f76007e7c0898b8edd67d5bbdabf1a62d3782e9d7ae7752d3384c2bc3",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/scripts/sim_ae.py",
+      "size_bytes": 6755,
+      "sha256": "6abc8313e141d56f158203bb46064a82425f5a46eaa290d64459b5ceaf2d52bc",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/scripts/verify_rebuild_integrity.py",
+      "size_bytes": 13162,
+      "sha256": "83b4f7a14cf963e0d2cf00961ce0a095c5daa2261efaba7ddf2481c93a2082af",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/cli/collect_data.py",
+      "size_bytes": 15687,
+      "sha256": "e43272f3c1e25aff273470c7d112c92155a9671995122dc8f8569996aa4df4a0",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/cli/daily_report.py",
+      "size_bytes": 24576,
+      "sha256": "bf91f33d2de4f5796f82181fbc017a2b2249709434a96f16c1c25b3599014e35",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/cli/paper_demo.py",
+      "size_bytes": 137487,
+      "sha256": "ac957962735ef4bc0b036484ec2f8bb241581f591c385b5a3e7f1362d3d93215",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/cli/reconcile_orders.py",
+      "size_bytes": 49765,
+      "sha256": "5bdd455167c4daa6adde074475d694f9ca11777a413806197900180ce55c5a92",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/core/runtime.py",
+      "size_bytes": 3639,
+      "sha256": "e31a66bb192819f94bb4d6f244193fe74a6ab631b08d43e75a17dc3808a0dc69",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/execution/paper_executor.py",
+      "size_bytes": 19994,
+      "sha256": "5ad1254356350d4aa64b756ba2ef0151e876c79296b560b62ef00abbfb448f33",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/guardrails/circuit_breaker.py",
+      "size_bytes": 5506,
+      "sha256": "1820c1a2d6bf19b1d6b75115486cb9564f4a30e250aaa3a330c311cf157ea28f",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/guardrails/postrun_mismatch.py",
+      "size_bytes": 4586,
+      "sha256": "82aa0ba4031e4fbee91461cc6c16f380273693f293af5387a9ae8ee0bffac16e",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/guardrails/risk_snapshot.py",
+      "size_bytes": 6931,
+      "sha256": "dda8fa4836ead0f0d7f540e73b8f69d4b719e2dc60d83801bae3109d2010d33e",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/reporting/console_renderer.py",
+      "size_bytes": 27657,
+      "sha256": "cc97c6ae5287f8875f10d926b97afcc1023a2f5dd310d896f1209d83641a8674",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/reporting/console_summary.py",
+      "size_bytes": 19743,
+      "sha256": "0c3cdd2a2e1f201048313f6747d7f41fd8f0602cc8b50ea714302f312ccaae96",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/reporting/equity_bridge.py",
+      "size_bytes": 4609,
+      "sha256": "88e7e5397cb4fc13ca8c2545bb9986e17a91c71b8eaa3c3d2c314d3442891c8a",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/risk/allocation_config.py",
+      "size_bytes": 5625,
+      "sha256": "dcb2e4f21aaf01163d66859a1cde97c039ff39dffb07aade5486ff6213c2b85f",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/risk/entry_filter.py",
+      "size_bytes": 16214,
+      "sha256": "f3f736ec83b668616664500621c0e582cef4d832ea429bc82b0e9c44818a3cd6",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/risk/portfolio_allocator.py",
+      "size_bytes": 16426,
+      "sha256": "2f438ce20370b108abf6ea961cc3b7dc5254a2d5f7e2428d1c16a4fbc2a3f274",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/risk/position_sizing.py",
+      "size_bytes": 12933,
+      "sha256": "773b3adbdd3cd2c954a6fed417f33e1ede969620333504f4ac9e40f39ec21ea8",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/sources/massive_client.py",
+      "size_bytes": 10676,
+      "sha256": "6ed163f73f52c963b4755363b17893c4e58e437debec9e72bf20f7789c0bd772",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/strategy_engine/sector_shock_hold.py",
+      "size_bytes": 21437,
+      "sha256": "6a0a08956f2c6a7ee0b6d73dccbcfae6c51c35ea066c54195e0f29f49ec6ebdd",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/strategy_engine/simple_exit_v2_strategy.py",
+      "size_bytes": 28678,
+      "sha256": "2a8a3bf8a7b207751117e8e70952fbbe14fefe3975183e3c5a86eb2499a75dfb",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/tracking/closed_trade_validator.py",
+      "size_bytes": 4412,
+      "sha256": "8ee27a6089a03905ae322635f5975f7467fb84effc4554a71f037209f77690c0",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/tracking/pnl_tracker.py",
+      "size_bytes": 53200,
+      "sha256": "9d1c2c427d831482f38f3c257c78d292c4832f3120d1cf3affe249c3bcbec8c5",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/utils/market_calendar.py",
+      "size_bytes": 10538,
+      "sha256": "abecd0f08a9492e0fb41fc8cbb81645955e00152778888c0e68c8c333a79d6b2",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/utils/market_guard.py",
+      "size_bytes": 3534,
+      "sha256": "517c820dd0b8eca1b2385712cbb71d7bd5a1bdc1995deda7443d966bc2f5104a",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/src/stock_swing/utils/mtime_cache.py",
+      "size_bytes": 4843,
+      "sha256": "0badb35b2e27f9f1de414ffb6f28d406382e97eded341aa818f24731beb1fdfc",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_asset_class_rebuild_integration.py",
+      "size_bytes": 11528,
+      "sha256": "659ae442ecf0108bb6eebc05b83fda2faf27e662121cf6fd429a42581f24489b",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_buy_stop_list.py",
+      "size_bytes": 8781,
+      "sha256": "d256fb80322e05ae6a17876ac7324b5dfb77bd1355d30e7b0b38b06d19ab766e",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_circuit_breaker.py",
+      "size_bytes": 7850,
+      "sha256": "c23a6780df167f16db1818d17676932c6df578c07560b75f1a30faf071e0a86b",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_console_halt_visibility.py",
+      "size_bytes": 10082,
+      "sha256": "30caf705a051855633016a4bc1824903c60e3744b8d12e102024de6fc10b447a",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_console_renderer.py",
+      "size_bytes": 7842,
+      "sha256": "754a03dd119f6dcc0b3fa979f94d2fdbc806a3490a1e6374fe87c9916b54b599",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_console_summary.py",
+      "size_bytes": 7440,
+      "sha256": "752444e52e685dcb900f86465b80b901433652431a8fb7b8c9be85cc2508d723",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_daily_report.py",
+      "size_bytes": 7442,
+      "sha256": "e2772eb96da483e6ccc31ab9940c13d40219e2fd700004e13b6737568d3e157f",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_dashboard_service.py",
+      "size_bytes": 12963,
+      "sha256": "e4ab62d56f8593817ae1fd690f352e39c192c92341b057721c386820c85af488",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_entry_filter.py",
+      "size_bytes": 14319,
+      "sha256": "ee47cd9d149a9ae3b661ac08c3a72ad93cc5f4890480fccee153d3ebd49c97e5",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_entry_signal_strength.py",
+      "size_bytes": 15369,
+      "sha256": "911abf2b5aa9b1bb8b9cbaac1d1a380aeca33ce05fe79f86750642e3e01d0030",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_f2_guardrail_mismatch.py",
+      "size_bytes": 4990,
+      "sha256": "a22d9ed72e3736c6e1893f2967eb32cac420bea52b766bc3955de1cd3da60472",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_f7_sector_shock_hold.py",
+      "size_bytes": 15850,
+      "sha256": "3ad0570ee0fb95dc2f76aa680671289213fdd1775f435f2fad9495556c1e3ebf",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_g1v2_postrun_lag_exclusion.py",
+      "size_bytes": 15598,
+      "sha256": "1f14e8a49b8d6928a90ba92bbde928d534b2e1783bec584b4c962befd7dc4172",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_h5_allocation_unification.py",
+      "size_bytes": 24299,
+      "sha256": "317ecac48c860ce53e7c6c570d7a1da862638392d0966c5555b647b616cf48ce",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_massive_client.py",
+      "size_bytes": 2211,
+      "sha256": "c2bd24ec3e73fd12655ee5a47d842a13a5a01c76bf3b366501ad1a8775e1a8c6",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_open_position_signal_summary.py",
+      "size_bytes": 10278,
+      "sha256": "06463a714f334a51a8521f9d9f9d64cff600c829eb5288059f38adea9736d6d0",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_r0v2b_code.py",
+      "size_bytes": 15794,
+      "sha256": "a50cc4350084065e0fe3e24d5fd8069e153e05f240b051fbba3c9733b81e793f",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_r0v2c_guardrail.py",
+      "size_bytes": 12814,
+      "sha256": "68205212a4d11dca3b8996e38443f840cee766579806a948c50a5e081182eb5c",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_r0v2d_metadata.py",
+      "size_bytes": 8007,
+      "sha256": "afd83b20bb3267fd4f562434354321b09b791973550bbd3632bb93f807d1a3af",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_r1v2_rebuild_idempotency.py",
+      "size_bytes": 15765,
+      "sha256": "d7c11e40ad93a23f00ac4bf2ff16810d31a421c089cbb079fd6c51ce9721d835",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_r6v2_console.py",
+      "size_bytes": 9571,
+      "sha256": "2f70d8a459fe5f2a342af0f01cb8127f1313157c75061ad96bff2748c5e0d7a0",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_r6v2_mtime_cache.py",
+      "size_bytes": 8229,
+      "sha256": "7d83e9382109b77068dc446a555d43e09e9b7f7d435bb717644daf5242846f84",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_r7v2_market_guard.py",
+      "size_bytes": 11394,
+      "sha256": "0a179fee5281106e1e660a184a904f64f428f6651c2d66c103b8e21a10b323e7",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_reconcile_orders.py",
+      "size_bytes": 25703,
+      "sha256": "34f136a39c4bcd174f1fc814218f8c4599a455e0e727fdba3a3507fc2947700f",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_runtime.py",
+      "size_bytes": 4559,
+      "sha256": "d193f027cb54a472ae81489fe217dfe4471a5f14c71a491f8f9ea0d133c5b712",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_sector_shock_per_symbol_benchmark.py",
+      "size_bytes": 10853,
+      "sha256": "454852a1d81c469b2d5d3e448a6694e30b24de015ef4b21aa355d2a0bd84ef21",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/changed_files/tests/unit/test_simple_exit_v2_strategy.py",
+      "size_bytes": 34009,
+      "sha256": "1cf99ec27746c2439bf9b684748fce1cfafe218285847b17dd279c420b7ef253",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/accounts.json",
+      "size_bytes": 1424,
+      "sha256": "63faf557d73ca62c5602600b3f7b71ed5753a9dbbbc2f9c051f9409012518bfe",
+      "generated_or_copied": "generated",
+      "redaction_status": "redacted",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/ai/ai_runtime.yaml",
+      "size_bytes": 343,
+      "sha256": "ec0791a164a4fd5790f387c0c0489bd4f377ce166ac0fc9e29b2ebfd1fdb0ef5",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/environments/local.yaml",
+      "size_bytes": 74,
+      "sha256": "812beb1aa5e01a68663c2892f4e402ef81602036b7e4216a1688519ef4607e77",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/experiments/ab_buckets.yaml",
+      "size_bytes": 237,
+      "sha256": "4464f572de59dcc8866f3327ed4ef310cf2e2a36d5c7693c45d5ba9ef9c3dc29",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/experiments/default_experiment.yaml",
+      "size_bytes": 164,
+      "sha256": "900758254618590c7d00065a6366df6ed273df6f3fecb76f62b7aa5c8d352bdc",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/features/intraday_momentum.yaml",
+      "size_bytes": 1348,
+      "sha256": "17f401488b8bc01925abb86590bf1edd60875e6116487cc1c1531498b0780196",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/guardrails/autonomous_stop.yaml",
+      "size_bytes": 1512,
+      "sha256": "89dde5ef01f3c0fe1f4f2248497a3ead39b3ed88f67cd98cde559120ef202603",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/reference/symbol_registry.yaml",
+      "size_bytes": 12501,
+      "sha256": "b9cc1e991e89781bb62a00aafd226ce0de011cf677c525bff2189b72036c7aa3",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/runtime/current_mode.yaml",
+      "size_bytes": 4727,
+      "sha256": "3f70ba4f79687e0df7c729e493a17be6796d31c22fa60f3459970338e269b8e0",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/sources/broker.yaml",
+      "size_bytes": 103,
+      "sha256": "4a43742f694e21097178752e935b2820fd37a7443b12fb7262eae8a87d0522ff",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/sources/finnhub.yaml",
+      "size_bytes": 111,
+      "sha256": "7bc00de412e5644913aad37a1334f5034b6d3d899abaf30a18394c3b37ab879c",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/sources/fred.yaml",
+      "size_bytes": 114,
+      "sha256": "7d151d0a722a93f953541ff7dc227f9db7fd9f8f42b7f4b08923917e1b9b5a0e",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/sources/sec.yaml",
+      "size_bytes": 102,
+      "sha256": "85b56628063603feafc022ebd9fb46c7b73ebde1aa24ac3896725629972b6c31",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/strategy/breakout_momentum_v1.yaml",
+      "size_bytes": 133,
+      "sha256": "af1c67510e391d3e0f4c306d9ef308ba305c1fed3536f75622dec61fe4567bf7",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/strategy/entry_filters.yaml",
+      "size_bytes": 1151,
+      "sha256": "3daad856b2132cdda4a642e71e3d2c0d06d6166217529db115d43382f6ed45c5",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/strategy/event_swing_v1.yaml",
+      "size_bytes": 124,
+      "sha256": "2c3f2ae24fc26ba89b1ef597429267ab4c63db97101b37cfb34756d2575df7bc",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/strategy/open_shock_cooldown.yaml",
+      "size_bytes": 543,
+      "sha256": "94c648f4127d165d4e4731fd4149abed78c8803eed2152f24c2567991f6de6dc",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/strategy/portfolio_allocation.yaml",
+      "size_bytes": 2612,
+      "sha256": "d89a0828ff737e400b7b6e8edf6fe8c80c91231e114752a9aeb0daed3a696011",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/strategy/portfolio_allocation.yaml.bak_20260721",
+      "size_bytes": 1330,
+      "sha256": "29eb2fde3ecbb190e9d489f88fce363648560f191ba5e3bd634593c73629b88b",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/config/strategy/simple_exit_v2.yaml",
+      "size_bytes": 3741,
+      "sha256": "5857e663413efdb26253eb2237e5005a96e1b696987a70dbde07ec3496305895",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/console_improvement_tasks.md",
+      "size_bytes": 31065,
+      "sha256": "c52e995c0c29f18b3a5299e1e76a7506e8ebc06376dd263ec7734aaeb029d5ad",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/critical_runtime/src/stock_swing/guardrails/__init__.py",
+      "size_bytes": 186,
+      "sha256": "3d86e337be3fb91253cd9b3518e143a455f59110eda30b40a706d6c885ddc8fa",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/critical_runtime/src/stock_swing/guardrails/circuit_breaker.py",
+      "size_bytes": 5506,
+      "sha256": "1820c1a2d6bf19b1d6b75115486cb9564f4a30e250aaa3a330c311cf157ea28f",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/critical_runtime/src/stock_swing/guardrails/flatten_plan.py",
+      "size_bytes": 1281,
+      "sha256": "cbaf2879600076c4024c928370ccb6b0e6b07faaad61144121d25478c9770880",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/critical_runtime/src/stock_swing/guardrails/postrun_mismatch.py",
+      "size_bytes": 4586,
+      "sha256": "82aa0ba4031e4fbee91461cc6c16f380273693f293af5387a9ae8ee0bffac16e",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/critical_runtime/src/stock_swing/guardrails/pre_trade_check.py",
+      "size_bytes": 3915,
+      "sha256": "7a0af208eeaa0e691f9d34607f4633971ae360e4ee01c7e038a27f95c019e80f",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/critical_runtime/src/stock_swing/guardrails/risk_snapshot.py",
+      "size_bytes": 6931,
+      "sha256": "dda8fa4836ead0f0d7f540e73b8f69d4b719e2dc60d83801bae3109d2010d33e",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/critical_runtime/src/stock_swing/guardrails/rule_engine.py",
+      "size_bytes": 4134,
+      "sha256": "ada8f6ed2a4abc57bcbf26d0e7a36c312aff7b47f1493540f79ea17bb4097e1d",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/git_diff_docs.patch",
+      "size_bytes": 234493,
+      "sha256": "f176993393f44dad2583efd33592593b97e296a940c1d81bc98e454896bb5a87",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/git_diff_full.patch",
+      "size_bytes": 564797,
+      "sha256": "7baaec9ec41372725a011771455d88bf0c8939f882ff0c4db0b079fa081ec4fb",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/git_diff_name_status.txt",
+      "size_bytes": 5588,
+      "sha256": "f32a725df63ad4c8e0a09a2cb6ef7791301fd73744066797f272d842f88c081e",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/git_diff_stat.txt",
+      "size_bytes": 8148,
+      "sha256": "3df4a4692f52ca2fbe17482d7dc9259bb54df933a70e857ea68425e9ba4fd7ba",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/git_log_since_baseline.txt",
+      "size_bytes": 7302,
+      "sha256": "80652c859de2d3db11332beea7a4189d7dad6dd48a15070bb7f3e8fcd07cf783",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/git_status.txt",
+      "size_bytes": 121,
+      "sha256": "da15388dd3f06700c088182a1774f4c99f26e22bf54f0fb6b1fb86aafe988a44",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/pip_freeze.txt",
+      "size_bytes": 1028,
+      "sha256": "b1b664fa030aef695d1bc0fe4395d23709fa410703eca912b8cd7e7441826ac0",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/pyproject.toml",
+      "size_bytes": 456,
+      "sha256": "763e0d8b00880106208857e17de5e89a1ec86b63b8530d956506dbf4a81d17c8",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/requirements.txt",
+      "size_bytes": 259,
+      "sha256": "f261aa9eae6a5449e29d7c077464d49646a2261d62544f15604799488a755392",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "02_source_and_config/runtime_versions.txt",
+      "size_bytes": 129636,
+      "sha256": "140fcd112f891584d1b63185dbca060d00847f4638a241d23d8ff7b38ba2c0f5",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/pytest_output.txt",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/pytest_output_plain.txt",
+      "size_bytes": 152,
+      "sha256": "865c5be7234c9a7ba732a52d7aedd815fa505b406ba4e4c1a1a9b03508955f15",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/pytest_stderr.txt",
+      "size_bytes": 76,
+      "sha256": "e33688c9c0c9a5aedf876266cc617f2c572e0d1ad4ec27d79c0e93a9f6ccc385",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/test_inventory.txt",
+      "size_bytes": 76,
+      "sha256": "e33688c9c0c9a5aedf876266cc617f2c572e0d1ad4ec27d79c0e93a9f6ccc385",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_changed_since_baseline.txt",
+      "size_bytes": 1090,
+      "sha256": "5cf9835d8f334fcc9359101ab8e5e30c5cd44545ce322b114631f141880d8afe",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/__init__.py",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/contract/__init__.py",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/contract/test_canonical_schema_contract.py",
+      "size_bytes": 13399,
+      "sha256": "df59c36ff1856cbf602b3b94b94a9c3f79d8041f7d0fca0d77fa76fe77b856e5",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/contract/test_decision_fixture_shape.py",
+      "size_bytes": 385,
+      "sha256": "45c4cc215c4fc573ed50dab3861af65bf829993f38e5e7ce5fa82d23aafd615c",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/contract/test_decision_schema_contract.py",
+      "size_bytes": 6932,
+      "sha256": "091db92f2463eb94dc9f86e95635a21b08ee62f0b9b6ab78b0a3e3c1b001a6d4",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/__init__.py",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/decisions/__init__.py",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/decisions/decision_sample.json",
+      "size_bytes": 564,
+      "sha256": "7632937d3c968a6473bb648c3094033dcf2682f92d980e46224143745b404901",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/incidents/klac_20260624_stale_price.json",
+      "size_bytes": 462,
+      "sha256": "bf41dd32e5ed1bb764a87622cb7931e8c403e590f4fca586d4536b164bdf9ae1",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/normalized/__init__.py",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/normalized/broker_bar_canonical.json",
+      "size_bytes": 617,
+      "sha256": "5285ac0e0e930b38efa32b96d223991ed9b5b195fc7d0913125f8d636bb71b4a",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/normalized/finnhub_basic_financials_canonical.json",
+      "size_bytes": 616,
+      "sha256": "af5130895835eac950672c516b3632d1c36eb4acdc93005c1bcd1766d8f70fe9",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/normalized/finnhub_normalized_sample.json",
+      "size_bytes": 416,
+      "sha256": "0b33f1e6aeef14157d755a1c4e6e4657990111b4abf1e70e53c8ec117c9dc533",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/normalized/fred_series_observation_canonical.json",
+      "size_bytes": 603,
+      "sha256": "9dcf5cfc2fe378cfc32de337d50025455d99b36ff78164a61f1308a041274c72",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/raw/__init__.py",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/raw/broker_account_sample.json",
+      "size_bytes": 827,
+      "sha256": "ee0bbcc0c1170248cc072ab7463d9d6c1e32df5286c798edaef1f862925a60be",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/raw/broker_bars_sample.json",
+      "size_bytes": 490,
+      "sha256": "99f7eae542e97a156a5356faa58100a50fc3eaac04e175e2c1ddaffa67a4c38c",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/raw/broker_orders_sample.json",
+      "size_bytes": 909,
+      "sha256": "84669134a917cc4cb5ae6bad8faf10a574730f8f443c7d89f77c123b4ef3e8f6",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/raw/broker_positions_sample.json",
+      "size_bytes": 545,
+      "sha256": "ae8f74880a3e120c2b76302396c15664d0e5fb1730850927f847036daccb76de",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/raw/finnhub_basic_financials_sample.json",
+      "size_bytes": 344,
+      "sha256": "1af85c14459915e24e445994acb75e327fb06dbae9e7115e2fecf7c0bf1f6e40",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/raw/finnhub_earnings_calendar_sample.json",
+      "size_bytes": 330,
+      "sha256": "0871f66ded04fa0d84451a7203f2718493e058b1ad24956947a218d07c00f61a",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/raw/finnhub_filing_sentiment_sample.json",
+      "size_bytes": 480,
+      "sha256": "930000b18b13d119b9ad821fc85a138de6ec14d6ca76f67db29b95e6e733bdb2",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/raw/finnhub_insider_transactions_sample.json",
+      "size_bytes": 562,
+      "sha256": "72c084e06afd94e35ce18527e2cc4e539a51cf5b805e83d97136aca2ccd03c2a",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/raw/fred_series_info_sample.json",
+      "size_bytes": 936,
+      "sha256": "2aa3252306a497ad475740f3bfac09710bccbda1421f0f931373c5d435b5365a",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/raw/fred_series_observations_sample.json",
+      "size_bytes": 841,
+      "sha256": "d9d1f54b4404c7684237cbe879d94baa1bda450effdd9fd3faec149fc2356a2a",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/raw/sec_company_concept_sample.json",
+      "size_bytes": 1330,
+      "sha256": "51bb936b11a58a574bb602efb225a8005a7dbe4d69a40f4ecdefb936332d6989",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/fixtures/raw/sec_company_submissions_sample.json",
+      "size_bytes": 1322,
+      "sha256": "f8b2a770c997f87ff483eb3ee3900d292bd238acefd6b53160289334d4418494",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/integration/__init__.py",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/integration/test_broker_integration.py",
+      "size_bytes": 3962,
+      "sha256": "8f15a19db4e05916353ab11af498eb8ef4e6e8988d7c02431a2177f62c9807e9",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/integration/test_finnhub_integration.py",
+      "size_bytes": 3930,
+      "sha256": "836f0508e921e4440c5b2a7da1c839151114511ef9474527c44a41a0b0f4189e",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/integration/test_fred_integration.py",
+      "size_bytes": 3868,
+      "sha256": "bf4f844a8bd389e459fc10c393933f94090889e9238c5bdeb8c2767f8b18fd5e",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/integration/test_ingestion_integration.py",
+      "size_bytes": 6524,
+      "sha256": "c2f9c0fdbb0c5371e51f421f8df01ae4b3b5277dbf82dea08032952c1caced89",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/integration/test_recommendation_workflow.py",
+      "size_bytes": 7213,
+      "sha256": "af1e695be61d2cab29ac884fe788b96ce293cf0af5b826d40ca7385668010e05",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    },
+    {
+      "path": "03_tests_and_quality/tests_source/integration/test_sec_integration.py",
+      "size_bytes": 3812,
+      "sha256": "b905d206ea7413bfb3a554e777365a9e718d3ecd5f9c222b71878266e0c523bf",
+      "generated_or_copied": "generated",
+      "redaction_status": "clean",
+      "required": false
+    }
+  ],
+  "files_note": "showing first 200 of 518 files; see CHECKSUMS.sha256 for full list"
+}

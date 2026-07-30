@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stock Swing Monitor</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111318;
+      --panel: #1b1f27;
+      --panel-2: #242a34;
+      --line: #363f4d;
+      --text: #eef2f6;
+      --muted: #a7b0bd;
+      --green: #2fd17c;
+      --amber: #f3bd4e;
+      --red: #ff6b6b;
+      --cyan: #6fd3ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .shell {
+      width: min(100%, 920px);
+      margin: 0 auto;
+      padding: 14px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 0 14px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.1;
+      font-weight: 750;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .status {
+      min-width: 92px;
+      text-align: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--panel);
+    }
+
+    .status.ok { border-color: rgba(47, 209, 124, .7); color: var(--green); }
+    .status.warn { border-color: rgba(243, 189, 78, .7); color: var(--amber); }
+    .status.bad { border-color: rgba(255, 107, 107, .8); color: var(--red); }
+
+    .auth {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    input, button {
+      height: 40px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      font: inherit;
+    }
+
+    input {
+      min-width: 0;
+      color: var(--text);
+      background: var(--panel);
+      padding: 0 10px;
+    }
+
+    button {
+      color: var(--text);
+      background: var(--panel-2);
+      padding: 0 12px;
+      font-weight: 700;
+    }
+
+    button:active { transform: translateY(1px); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: var(--cyan);
+      text-transform: uppercase;
+    }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      font-size: 14px;
+    }
+
+    .metric:last-child { border-bottom: 0; }
+    .label { color: var(--muted); }
+    .value { font-weight: 750; text-align: right; overflow-wrap: anywhere; }
+    .pos { color: var(--green); }
+    .neg { color: var(--red); }
+    .muted { color: var(--muted); }
+
+    .full { grid-column: 1 / -1; }
+    .reason-row, .alert-row, .list-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      padding: 9px 0;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      font-size: 13px;
+    }
+    .reason-row:last-child, .alert-row:last-child, .list-row:last-child { border-bottom: 0; }
+    .reason-meta { color: var(--muted); margin-top: 2px; }
+    .stack { display: grid; gap: 2px; min-width: 0; }
+    .symbol { font-weight: 800; }
+
+    pre {
+      white-space: pre-wrap;
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 720px) {
+      .shell { padding: 10px; }
+      header { align-items: flex-start; }
+      .grid { grid-template-columns: 1fr; }
+      .auth { grid-template-columns: 1fr; }
+      button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div>
+        <h1>Stock Swing Monitor</h1>
+        <div id="lastUpdate" class="sub">--</div>
+      </div>
+      <div id="runStatus" class="status warn">LOADING</div>
+    </header>
+
+    <div class="auth">
+      <input id="token" type="password" autocomplete="current-password" placeholder="Token">
+      <button id="saveToken" type="button">Save</button>
+      <button id="refresh" type="button">Refresh</button>
+    </div>
+
+    <div class="grid">
+      <section>
+        <h2>Portfolio <span id="portfolioAge" style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none"></span></h2>
+        <div id="portfolio"></div>
+      </section>
+
+      <section>
+        <h2>Run Health</h2>
+        <div id="health"></div>
+      </section>
+
+      <section class="full">
+        <h2>Operational Health</h2>
+        <div id="operationalHealth"></div>
+      </section>
+
+      <section class="full">
+        <h2>At-risk Positions</h2>
+        <div id="atRisk"></div>
+      </section>
+
+      <section class="full">
+        <h2>Open Positions</h2>
+        <div id="positions"></div>
+      </section>
+
+      <section class="full">
+        <h2>Recent Trades</h2>
+        <div id="recentTrades"></div>
+      </section>
+
+      <section class="full">
+        <h2>Exit Attribution</h2>
+        <div id="attribution"></div>
+      </section>
+
+      <section>
+        <h2>Broker / Tracker</h2>
+        <div id="brokerTracker"></div>
+      </section>
+
+      <section class="full">
+        <h2>Broker / Tracker Detail</h2>
+        <div id="brokerTrackerDetail"></div>
+      </section>
+
+      <section>
+        <h2>Decision Funnel</h2>
+        <div id="funnel"></div>
+      </section>
+
+      <section class="full">
+        <h2>Alerts</h2>
+        <div id="alerts"></div>
+      </section>
+
+      <section class="full">
+        <h2>Go / No-Go</h2>
+        <pre id="goNoGo">--</pre>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const tokenInput = $("token");
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get("token");
+    if (urlToken) {
+      localStorage.setItem("remoteReadonlyToken", urlToken);
+      history.replaceState({}, "", window.location.pathname);
+    }
+    tokenInput.value = localStorage.getItem("remoteReadonlyToken") || "";
+
+    function fmtMoney(v) {
+      if (v === null || v === undefined || Number.isNaN(Number(v))) return "--";
+      const n = Number(v);
+      const sign = n > 0 ? "+" : "";
+      return `${sign}$${n.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+    }
+
+    function fmtPct(v) {
+      if (v === null || v === undefined || Number.isNaN(Number(v))) return "--";
+      return `${Number(v).toFixed(1)}%`;
+    }
+
+    function fmtDate(v) {
+      if (!v) return "--";
+      const d = new Date(v);
+      if (Number.isNaN(d.getTime())) return "--";
+      return d.toLocaleDateString(undefined, {month: "2-digit", day: "2-digit"});
+    }
+
+    function fmtDateTime(v) {
+      if (!v) return "--";
+      const d = new Date(v);
+      if (Number.isNaN(d.getTime())) return "--";
+      return d.toLocaleString(undefined, {
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+
+    function metaTime(payload) {
+      const raw = payload && payload._remote_meta && payload._remote_meta.mtime;
+      if (!raw) return null;
+      const d = new Date(raw);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+
+    function renderUpdateStamp(summary, positions, trades, atRisk) {
+      const summaryTime = metaTime(summary);
+      const dataTimes = [summaryTime, metaTime(positions), metaTime(trades), metaTime(atRisk)].filter(Boolean);
+      const latestTime = dataTimes.length ? new Date(Math.max(...dataTimes.map(d => d.getTime()))) : null;
+      if (!latestTime) {
+        $("lastUpdate").textContent = "--";
+        return;
+      }
+      const parts = [`data ${fmtDateTime(latestTime.toISOString())}`];
+      if (summaryTime && summaryTime.getTime() !== latestTime.getTime()) {
+        parts.push(`summary ${fmtDateTime(summaryTime.toISOString())}`);
+      }
+      $("lastUpdate").textContent = parts.join(" / ");
+    }
+
+    function clsNum(v) {
+      return Number(v || 0) >= 0 ? "pos" : "neg";
+    }
+
+    function positionValue(p) {
+      if (p.unrealized_pnl !== null && p.unrealized_pnl !== undefined) return fmtMoney(p.unrealized_pnl);
+      if (p.return_pct !== null && p.return_pct !== undefined) return fmtPct(Number(p.return_pct) * 100);
+      return "--";
+    }
+
+    function positionValueClass(p) {
+      if (p.unrealized_pnl !== null && p.unrealized_pnl !== undefined) return clsNum(p.unrealized_pnl);
+      if (p.return_pct !== null && p.return_pct !== undefined) return clsNum(p.return_pct);
+      return "muted";
+    }
+
+    function metric(label, value, valueClass = "") {
+      return `<div class="metric"><span class="label">${label}</span><span class="value ${valueClass}">${value}</span></div>`;
+    }
+
+    async function api(path) {
+      const token = tokenInput.value.trim();
+      if (!token) throw new Error("token required");
+      const res = await fetch(path, {headers: {"Authorization": `Bearer ${token}`}});
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return res.json();
+    }
+
+    function renderFetchError(err) {
+      const msg = String(err.message || err);
+      const html = `<div class="muted">Data unavailable: ${msg}</div>`;
+      $("portfolio").innerHTML = html;
+      $("health").innerHTML = html;
+      $("attribution").innerHTML = html;
+      $("brokerTracker").innerHTML = html;
+      $("brokerTrackerDetail").innerHTML = html;
+      $("operationalHealth").innerHTML = html;
+      $("positions").innerHTML = html;
+      $("recentTrades").innerHTML = html;
+      $("atRisk").innerHTML = html;
+      $("funnel").innerHTML = html;
+      $("alerts").innerHTML = html;
+      $("goNoGo").textContent = msg;
+    }
+
+    function renderSummary(d, live) {
+      const run = d.run || {};
+      const health = d.health || {};
+      const status = String(run.status || "UNKNOWN").toUpperCase();
+      const runStatus = $("runStatus");
+      runStatus.textContent = status;
+      runStatus.className = `status ${status === "OK" ? "ok" : status === "HALTED" ? "bad" : "warn"}`;
+
+      const meta = d._remote_meta || {};
+      $("lastUpdate").textContent = meta.mtime ? `summary ${fmtDateTime(meta.mtime)}` : "--";
+
+      // Portfolio: prefer live data, fall back to stale console_summary
+      const liveP = (live && live.available && live.portfolio) ? live.portfolio : null;
+      const staleP = d.portfolio || {};
+      const p = liveP || staleP;
+
+      const liveTime = live && live.time ? fmtDateTime(live.time) : null;
+      const portfolioAgeEl = $("portfolioAge");
+      if (portfolioAgeEl) {
+        portfolioAgeEl.textContent = liveTime ? `🟢 live ${liveTime}` : `⚠ stale ${meta.mtime ? fmtDateTime(meta.mtime) : "--"}`;
+      }
+
+      const pf = p.profit_factor;
+      const wr = p.win_rate;
+      $("portfolio").innerHTML = [
+        metric("Equity", `$${Number(p.equity || 0).toLocaleString(undefined, {maximumFractionDigits: 0})}`, Number(p.equity || 0) >= 1000000 ? "pos" : ""),
+        metric("Realized PnL", fmtMoney(p.realized_pnl), clsNum(p.realized_pnl)),
+        metric("Unrealized PnL", fmtMoney(p.unrealized_pnl), clsNum(p.unrealized_pnl)),
+        metric("Total PnL", fmtMoney(p.total_pnl), clsNum(p.total_pnl)),
+        metric("Profit Factor", pf !== null && pf !== undefined ? pf.toFixed(3) : "--", pf >= 1 ? "pos" : pf < 1 ? "neg" : ""),
+        metric("Win Rate", wr !== null && wr !== undefined ? fmtPct(wr * 100) : "--"),
+        metric("Open / Closed", `${p.open_positions ?? "--"} / ${p.closed_trades ?? "--"}`),
+      ].join("");
+
+      $("health").innerHTML = [
+        metric("Guardrail", run.guardrail_status || "--"),
+        metric("Critical", health.critical_count ?? 0),
+        metric("Warnings", health.warning_count ?? 0),
+        metric("API errors", health.api_error_count ?? 0),
+      ].join("");
+
+      const attr = ((p.exit_attribution_breakdown || {}).by_reason) || {};
+      const rows = Object.entries(attr)
+        .sort((a, b) => Math.abs((b[1].net_pnl || 0)) - Math.abs((a[1].net_pnl || 0)))
+        .slice(0, 8)
+        .map(([reason, m]) => `
+          <div class="reason-row">
+            <div>
+              <div class="value" style="text-align:left">${reason}</div>
+              <div class="reason-meta">n=${m.count} PF=${m.profit_factor ?? "∞"} WR=${fmtPct((m.win_rate || 0) * 100)}</div>
+            </div>
+            <div class="${clsNum(m.net_pnl)}">${fmtMoney(m.net_pnl)}</div>
+          </div>`);
+      $("attribution").innerHTML = rows.length ? rows.join("") : `<div class="muted">No attribution data yet</div>`;
+
+      const diff = d.broker_tracker_diff || {};
+      $("brokerTracker").innerHTML = [
+        metric("Mismatch", diff.mismatch_count ?? 0, Number(diff.mismatch_count || 0) ? "neg" : "pos"),
+        metric("Broker positions", diff.broker_count ?? "--"),
+        metric("Tracker open", diff.tracker_count ?? "--"),
+      ].join("");
+
+      const f = d.decision_funnel || {};
+      $("funnel").innerHTML = [
+        metric("Candidates", f.candidates ?? 0),
+        metric("Buy / Sell", `${f.buy ?? 0} / ${f.sell ?? 0}`),
+        metric("Deny", f.deny ?? 0),
+        metric("Submitted", f.submitted ?? 0),
+      ].join("");
+
+      const alerts = d.alerts || [];
+      $("alerts").innerHTML = alerts.length
+        ? alerts.slice(0, 8).map(a => `<div class="alert-row"><span>${a.code}</span><span class="${a.severity === "critical" ? "neg" : "muted"}">${a.severity}</span></div>`).join("")
+        : `<div class="muted">No alerts</div>`;
+    }
+
+    function renderOperationalHealth(d) {
+      const cron = d.cron || {};
+      const guard = d.guardrail || {};
+      const cb = d.circuit_breaker || {};
+      const badJobs = cron.bad_jobs || [];
+      $("operationalHealth").innerHTML = [
+        metric("Cron jobs", `${cron.enabled_stock_swing_jobs ?? 0}/${cron.total_stock_swing_jobs ?? 0}`),
+        metric("Bad cron jobs", badJobs.length, badJobs.length ? "neg" : "pos"),
+        metric("Guardrail", guard.latest_console_status || guard.service_status || "--"),
+        metric("Circuit breaker", cb.status || "--"),
+      ].join("") + (badJobs.length ? badJobs.slice(0, 5).map(j => `<div class="alert-row"><span>${j.name}</span><span class="neg">${j.status}</span></div>`).join("") : "");
+    }
+
+    function renderPositions(payload) {
+      const rows = payload.positions || [];
+      $("positions").innerHTML = rows.length ? rows.slice(0, 30).map(p => `
+        <div class="list-row">
+          <div class="stack">
+            <span class="symbol">${p.symbol || "--"}</span>
+            <span class="reason-meta">qty=${p.qty ?? "--"} entry=${p.entry_price ?? "--"} current=${p.current_price ?? "--"} hold=${p.hold_days ?? "--"}d</span>
+          </div>
+          <div class="${positionValueClass(p)}">${positionValue(p)}</div>
+        </div>`).join("") : `<div class="muted">No open positions</div>`;
+    }
+
+    function renderRecentTrades(payload) {
+      const rows = payload.trades || [];
+      $("recentTrades").innerHTML = rows.length ? rows.slice(0, 25).map(t => `
+        <div class="list-row">
+          <div class="stack">
+            <span class="symbol">${t.symbol || "--"}</span>
+            <span class="reason-meta">buy=${fmtDate(t.entry_time)} sell=${fmtDate(t.exit_time)} / ${t.exit_reason || "--"} / ${t.strategy_id || "--"}</span>
+          </div>
+          <div class="${clsNum(t.pnl)}">${fmtMoney(t.pnl)}</div>
+        </div>`).join("") : `<div class="muted">No recent trades</div>`;
+    }
+
+    function renderAtRisk(payload) {
+      const rows = payload.positions || [];
+      $("atRisk").innerHTML = rows.length ? rows.slice(0, 20).map(p => `
+        <div class="list-row">
+          <div class="stack">
+            <span class="symbol">${p.symbol || "--"}</span>
+            <span class="reason-meta">${p.risk_reason || "--"} / return=${p.return_pct !== null && p.return_pct !== undefined ? fmtPct(Number(p.return_pct) * 100) : "--"} peak=${p.peak_gain_pct !== null && p.peak_gain_pct !== undefined ? fmtPct(Number(p.peak_gain_pct) * 100) : "--"}</span>
+          </div>
+          <div class="${positionValueClass(p)}">${positionValue(p)}</div>
+        </div>`).join("") : `<div class="muted">No at-risk positions</div>`;
+    }
+
+    function renderBrokerTrackerDetail(d) {
+      const brokerOnly = d.broker_only || [];
+      const trackerOnly = d.tracker_only || [];
+      const qty = d.qty_mismatches || [];
+      const chunks = [];
+      chunks.push(metric("Mismatch count", d.mismatch_count ?? 0, Number(d.mismatch_count || 0) ? "neg" : "pos"));
+      if (brokerOnly.length) chunks.push(`<div class="metric"><span class="label">Broker only</span><span class="value neg">${brokerOnly.slice(0, 8).join(", ")}</span></div>`);
+      if (trackerOnly.length) chunks.push(`<div class="metric"><span class="label">Tracker only</span><span class="value neg">${trackerOnly.slice(0, 8).join(", ")}</span></div>`);
+      if (qty.length) chunks.push(qty.slice(0, 8).map(m => `<div class="alert-row"><span>${m.symbol}</span><span class="neg">${m.broker_qty} / ${m.tracker_qty}</span></div>`).join(""));
+      $("brokerTrackerDetail").innerHTML = chunks.join("");
+    }
+
+    async function refresh() {
+      try {
+        const [summary, live, go, positions, trades, atRisk, opHealth, diff] = await Promise.all([
+          api("/api/console_summary"),
+          api("/api/live_summary"),
+          api("/api/go_no_go"),
+          api("/api/positions"),
+          api("/api/recent_trades?limit=25"),
+          api("/api/at_risk_positions"),
+          api("/api/operational_health"),
+          api("/api/broker_tracker_detail"),
+        ]);
+        renderSummary(summary, live);
+        renderPositions(positions);
+        renderRecentTrades(trades);
+        renderAtRisk(atRisk);
+        renderOperationalHealth(opHealth);
+        renderBrokerTrackerDetail(diff);
+        renderUpdateStamp(summary, positions, trades, atRisk);
+        $("goNoGo").textContent = go.content ? go.content.split("\n").slice(0, 32).join("\n") : "--";
+      } catch (err) {
+        $("runStatus").textContent = "AUTH";
+        $("runStatus").className = "status bad";
+        $("lastUpdate").textContent = String(err.message || err);
+        renderFetchError(err);
+      }
+    }
+
+    $("saveToken").addEventListener("click", () => {
+      localStorage.setItem("remoteReadonlyToken", tokenInput.value.trim());
+      refresh();
+    });
+    $("refresh").addEventListener("click", refresh);
+    refresh();
+    setInterval(refresh, 60000);
+  </script>
+</body>
+</html>

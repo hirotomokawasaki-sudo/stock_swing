@@ -1,0 +1,5 @@
+enabled: true
+base_url: https://data.sec.gov
+timeout_seconds: 20
+retry_attempts: 3
+raw_partition: sec

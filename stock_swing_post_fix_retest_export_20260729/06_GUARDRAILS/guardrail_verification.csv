@@ -1,0 +1,5 @@
+metric,value,source,freshness
+daily_total_loss_pct,,computed runtime RiskSnapshot; no current raw metric file,stale_or_missing
+weekly_total_loss_pct,,not present in current snapshot,stale_or_missing
+broker_tracker_mismatch_count,1,reports/console/latest_console_summary.json,snapshot
+circuit_breaker_status,ok,data/guardrails/circuit_breaker.json,snapshot

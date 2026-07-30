@@ -1,0 +1,35 @@
+{
+  "_comment": "Multi-account config. Credentials stored in .env (see BROKER_API_KEY_1/2/3). Updated 2026-07-10.",
+  "accounts": [
+    {
+      "label": "PP-10-\u53e3\u5ea71",
+      "account_number": "REDACTED_ACCOUNT",
+      "env_key": "BROKER_API_KEY_1",
+      "env_secret": "BROKER_API_SECRET_1",
+      "env_account_id": "BROKER_ACCOUNT_ID_1",
+      "base_url": "https://paper-api.alpaca.markets/v2",
+      "role": "sub",
+      "note": "\u53e3\u5ea71 \u2014 \u500b\u5225\u682a\u4e2d\u5fc3\u30dd\u30fc\u30c8\u30d5\u30a9\u30ea\u30aa"
+    },
+    {
+      "label": "PP-10-\u53e3\u5ea72\uff08main\uff09",
+      "account_number": "REDACTED_ACCOUNT",
+      "env_key": "BROKER_API_KEY",
+      "env_secret": "BROKER_API_SECRET",
+      "env_account_id": "BROKER_ACCOUNT_ID",
+      "base_url": "https://paper-api.alpaca.markets/v2",
+      "role": "main",
+      "note": "\u65e2\u5b58\u30e1\u30a4\u30f3\u53e3\u5ea7 \u2014 stock_swing paper_demo \u3067\u4f7f\u7528\u4e2d"
+    },
+    {
+      "label": "PP-10-\u53e3\u5ea73",
+      "account_number": "REDACTED_ACCOUNT",
+      "env_key": "BROKER_API_KEY_3",
+      "env_secret": "BROKER_API_SECRET_3",
+      "env_account_id": "BROKER_ACCOUNT_ID_3",
+      "base_url": "https://paper-api.alpaca.markets/v2",
+      "role": "sub",
+      "note": "\u53e3\u5ea73 \u2014 \u73fe\u5728\u30dd\u30b8\u30b7\u30e7\u30f3\u306a\u3057\uff08\u30ad\u30e3\u30c3\u30b7\u30e5\u5f85\u6a5f\u4e2d\uff09"
+    }
+  ]
+}

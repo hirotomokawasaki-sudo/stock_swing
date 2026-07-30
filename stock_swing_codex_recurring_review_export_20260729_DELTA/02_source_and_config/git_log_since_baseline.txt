@@ -1,0 +1,118 @@
+0ae1ce6 Pre-live tuning: MSFT broker_order_id + breakeven_stop +5% + min_signal_strength 0.60
+fc52184 07-29 daily tasks: MSFT entry_time fix + Go/No-Go report + DNS config
+36d6af3 Fix phantom close bug: reconciler replays stale exit fill to new position (ADBE 2026-07-29)
+0bd99ca docs: Go/No-Go 事前レポート作成 + breakeven_stop 分析
+f405082 fix(attribution): recover 18 broker_fill exit_reasons from decision files + events
+6f08787 docs: 2026-07-28 デイリーログ更新（entry_signal_strength 追記）
+31b2353 feat: persist entry_signal_strength durably across rebuilds
+5a6a593 schedule: リアルトレード開始 08-01 → 08-20以降 延期 (2026-07-28ユーザー指示)
+7867374 config: stock_new_buy_multiplier 0.50 → 1.00 (paper フルサイズ)
+7d806cc config: stock_new_buy_multiplier 0.25 → 0.50 (2026-07-28)
+049aa6c config: stock_band_max 0.92 → 0.85 (2026-07-28)
+edf17f4 config: stock_reduced_pf_gate 1.00 → 0.35 (2026-07-28)
+979850c fix(backfill): apply asset_class to open positions (not only closed)
+a58caaa fix(ledger): overlap false-positives + holding_days repair + reversed quarantine (R1-v2 COMPLETE)
+3f97b61 fix(integrity+sector_shock): asset_class rebuild loss + per-symbol benchmark wiring
+151f8d5 取引時間中 Telegram レポート全面改善 (2026-07-27)
+5cf6bc0 Telegram日次レポート全面改善 (2026-07-27)
+eb605ac H9: mtime cache + Go/No-Go judgment template (2026-07-27)
+c61ddc3 2026-07-27 日次ログ + Go/No-Go 事前レポート + 分析スクリプト
+7a0258f Stop Loss Health: evaluation guidelines + console panel (2026-07-27)
+52736ca Plan A: tiered min_hold for stop_loss (2026-07-27)
+0b69dd9 fix(market_guard): ET曜日判定修正 — US金曜午後 JST土曜スキップ解消
+40c907a fix(guardrail): G1-v2-c fast-fill SELL phantom lag exclusion（SKYY HALT 根本対策）
+c07064a feat(console): HALT 可視性強化 — 全幅バナー + triggered_at/rules 表示
+5931392 feat(console): add BUY STOP LIST panel to Trading tab (web UI)
+d7b69fa chore: remove post-commit hook test marker
+939cf63 test: verify post-commit auto-restart hook
+b0fa47e feat(console): add entry signal strength (ESS) to positions and trades tabs
+2bbaefd feat: BUY STOP LIST in DECISION FUNNEL console section
+445af25 R2-v2: stock_reduced min_trades 3→5 to reduce false-positive blocks
+53a9241 feat: open position signal values in console OPEN POSITIONS table
+8fe4589 R3-v2 / F7: sector_shock_hold shadow log file writing + count fix
+0b099e7 docs: daily log final (all tasks A-C + R7+①②③ complete)
+6da78aa R6-v2 / H9: mtime/config hash cache for console performance SLO
+399fe2f R7-v2 / H8: fix Massive connection pool maxsize (suppress pool-full warnings)
+3917757 docs: Go/No-Go pre-report (front-loaded from 07-26 to 07-23)
+517d12f R7-v2 / H8: market-closed early exit for non-maintenance cron jobs
+a87a7ba docs: A/B/C all complete – daily log final + schedule update (07-23)
+1fcaeda R6-v2: allocation_blocked funnel stage + RECOVERY_PENDING tests
+9bbd200 R1-v2 / H1: rebuild idempotency + quarantine tombstone
+8b28980 R2-v2 / H5: wire registry+alloc_config into paper_demo + before/after qty display
+15a8374 docs: R2-v2/H5 complete – daily log + schedule update
+5c44a5c R2-v2 / H5: allocator unification – single YAML source for stock 85% / ETF 15%
+8e8ca7e docs: update schedule to reflect 07-22 progress (R0-v2-A/B/C/D all done)
+4112bb4 docs: update R1-v2/R6-v2 status + MEMORY.md final
+9de4cc4 R6-v2 + R1-v2: console contract + execution_leg_id
+7a1c1b0 docs: AGENTS.md - add Codex review auto-reference rules (H0-H9 mapping)
+bfa5bf4 docs: R0-v2-C/D VERIFIED_COMPLETE + daily log final
+6b21464 R0-v2-D: Durable Metadata & Experiment Join
+8f6a147 R0-v2-C: Guardrail E2E wiring
+6155305 docs: update status R0-v2-A/B VERIFIED_COMPLETE + daily log + schedule
+b7efa25 R0-v2-B (code): canonical validator + equity bridge
+da76974 docs: finalize 2026-07-22 daily log (dry-run results)
+babe6c4 R0-v2-B: asset_class backfill + ledger_gate_status -> VALID
+60f0b01 docs: update 2026-07-22 daily log (R0-v2-B data repair)
+3222b73 R0-v2-B (data repair): fix ledger integrity issues
+f158355 docs: add testing_standards.md and AGENTS.md
+d764953 test: R0-v2-A test hardening (+15 tests)
+e6f867e docs: 2026-07-22 daily log (R0-v2-A)
+2248eb2 R0-v2-A: Safety Containment
+2c5cf4d fix: lag vs real mismatch を console/alert で完全峻別
+4090e94 refactor: extract lag exclusion to canonical module; tests now call production code
+ff72772 G1-v2-b: excuse qty-mismatch lag on newly submitted SELL symbols
+fd18b36 audit: ledger invariant check を daily_audit に統合 (R0-v2-B 継続監視)
+6b20a91 R0-v2 懸念1・2対処: rebuild safety + ledger invariant validator
+ef3b17f R0-v2-C: api_error_rate_pct and token_spend_spike_pct now computed (not hardcoded)
+8fa32a4 R0-v2 準備: safety containment + ledger/guardrail 調査完了
+12fa79a plan-merge: R0-v2〜R8-v2 Codex Review マージ (2026-07-21)
+commit 0ae1ce6926a6b757093d484bdb9a0b8b30e0e52e
+Author: hirotomoo Kawasaki <hirotomookawasaki@hirotomoonoMac-mini.local>
+Date:   Wed Jul 29 10:17:03 2026 +0900
+
+    Pre-live tuning: MSFT broker_order_id + breakeven_stop +5% + min_signal_strength 0.60
+    
+    MSFT broker_order_id fix:
+    - broker_open_0248_MSFT: set broker_order_id=21b2300c... (primary buy order)
+    - additional_broker_order_ids: [e7fd3b05...] (second lot, 53 shares)
+    - Both orders confirmed filled via broker API
+    
+    breakeven_stop threshold adjustment:
+    - activation_pct: 0.03 → 0.05 (+3% → +5%)
+    - Rationale: +3% triggered on normal intraday noise → 34/43 trades were losses
+    - Pattern: +3% reached → breakeven activated → -0.5 to -2% stop-out (noise)
+    - Raising to +5% requires stronger move before activating
+    
+    min_signal_strength recalibration:
+    - Default: 0.40 → 0.60
+    - Decile analysis (61 trades): 0.4-0.6 range PF<0.05, net=-,127
+    - 0.7-0.8 range best (PF=1.10) but n=6, statistically weak
+    - Caveat: all 61 ss-tracked trades are in recent poor-market period (bias)
+    - R4-C (proper decile analysis) deferred to post-launch (needs 300+ trades)
+    
+    All 1096 tests pass
+
+ config/strategy/simple_exit_v2.yaml | 2 +-
+ data/tracking/pnl_state.json        | 5 ++++-
+ src/stock_swing/cli/paper_demo.py   | 2 +-
+ 3 files changed, 6 insertions(+), 3 deletions(-)
+baseline commit:
+commit 744e3fa15679caf93b5a56965527e1968b73b003
+Author: hirotomoo Kawasaki <hirotomookawasaki@hirotomoonoMac-mini.local>
+Date:   Tue Jul 21 10:13:15 2026 +0900
+
+    docs: Go/No-Go status report 2026-07-21
+    
+    stop_loss 構造分析:
+    - pre-min_hold era (107件 hd=0): ノイズ誤発動 → min_hold で修正済み
+    - post-min_hold (5件): 2件はセクターショック(-,897)、3件は通常下落(-,218)
+    - セクターショック対策: sector_shock_hold shadow 3/10件待ち
+    
+    Go/No-Go 見通し:
+    - Critical gates: 全✅ (guardrail/circuit_breaker/attribution/cron)
+    - Performance: trailing_stop PF=3.48 ✅, overall PF=0.62 ❌
+    - 推奨: 条件付きGO（trailing_stop 機能確認済み、50%サイズ開始）
+      or NO-GO（recent PF=0.28）を07-28~30の最終確認で判断
+
+ docs/go_no_go_status_20260721.md | 162 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 162 insertions(+)

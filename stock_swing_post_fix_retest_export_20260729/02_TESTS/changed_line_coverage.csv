@@ -1,0 +1,11 @@
+file,changed_lines,covered_changed_lines,coverage_pct
+console/app.py,8,0,0.0
+src/stock_swing/cli/collect_data.py,109,22,20.18
+src/stock_swing/cli/paper_demo.py,114,13,11.4
+src/stock_swing/cli/reconcile_orders.py,30,18,60.0
+src/stock_swing/core/run_context.py,5,4,80.0
+src/stock_swing/core/types.py,14,14,100.0
+src/stock_swing/decision_engine/decision_engine.py,7,7,100.0
+src/stock_swing/guardrails/risk_snapshot.py,28,2,7.14
+src/stock_swing/risk/portfolio_allocator.py,8,5,62.5
+src/stock_swing/utils/context_budget.py,20,8,40.0

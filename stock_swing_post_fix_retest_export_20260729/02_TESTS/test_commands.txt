@@ -1,0 +1,10 @@
+id,command,exit_code,evidence
+ENV,environment_start collection via Python subprocess,0,00_CONTROL/environment_start.json
+PYTEST_ALL,venv/bin/python -m pytest --tb=short -q --junitxml=... --cov=src --cov=console --cov-branch --cov-report=json:...,0,02_TESTS/pytest_output.txt; 02_TESTS/junit.xml; 02_TESTS/coverage.json
+PYTEST_SCENARIO,venv/bin/python -m pytest selected scenario tests,0,02_TESTS/scenario_pytest_output.txt
+PYTEST_INTEGRATION,venv/bin/python -m pytest -q tests/integration,0,02_TESTS/integration_pytest_output.txt
+PYTEST_REBUILD,venv/bin/python -m pytest selected rebuild/idempotency tests,0,02_TESTS/rebuild_pytest_output.txt
+PYTEST_FAULT,venv/bin/python -m pytest selected fault injection tests,0,02_TESTS/fault_injection_pytest_output.txt
+PYTEST_SOURCE_ERROR,venv/bin/python -m pytest selected source error tests,0,02_TESTS/source_error_pytest_output.txt
+CONSOLE_API,temporary local full console + remote readonly API probes,0,08_CONSOLE/console_api_snapshots/console_api_results.json
+CRON,openclaw cron list + runs,0,03_SNAPSHOT/broker_and_tracker/cron_jobs_and_runs.json

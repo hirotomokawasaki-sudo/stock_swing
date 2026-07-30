@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-10T15:07:55.233525+00:00",
+  "request_params": {
+    "symbol": "CRWD",
+    "from": "2026-06-07",
+    "to": "2026-06-10"
+  },
+  "payload": {
+    "symbol": "CRWD",
+    "news": [
+      {
+        "headline": "CRWD momentum update",
+        "summary": "CRWD shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/crwd",
+        "datetime": 1781104075,
+        "source": "synthetic",
+        "related": "CRWD"
+      }
+    ]
+  }
+}

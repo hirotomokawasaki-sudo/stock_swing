@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-08T19:05:23.426418+00:00",
+  "request_params": {
+    "symbol": "MRVL",
+    "from": "2026-06-05",
+    "to": "2026-06-08"
+  },
+  "payload": {
+    "symbol": "MRVL",
+    "news": [
+      {
+        "headline": "MRVL momentum update",
+        "summary": "MRVL shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/mrvl",
+        "datetime": 1780945523,
+        "source": "synthetic",
+        "related": "MRVL"
+      }
+    ]
+  }
+}

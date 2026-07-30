@@ -1,0 +1,40 @@
+# Intraday Momentum Feature Configuration
+# Optimized parameters from grid search (2026-05-12)
+
+# Feature class
+feature_class: IntradayMomentumFeature
+
+# Parameters (optimal configuration)
+lookback_bars: 25           # Number of 5-minute bars to analyze (25 bars = 125 minutes)
+smoothing_window: 5         # Moving average window for noise reduction (5 bars = 25 minutes)
+vwap_threshold: 0.005       # VWAP deviation threshold for signal (0.5%)
+
+# Signal generation criteria
+signal_criteria:
+  momentum_threshold: 0.003  # Minimum smoothed momentum for buy signal (0.3%)
+  vwap_filter: true          # Exclude signals when price is below VWAP
+  min_confidence: 0.50       # Minimum confidence score
+
+# Performance metrics (from backtest)
+backtest_results:
+  date: 2026-05-12
+  period_days: 60
+  symbols: NVDA, AMD, AAPL, MRVL, PLTR
+  total_trades: 55
+  win_rate: 76.4%
+  avg_return: 2.88%
+  total_return: 158.5%
+  sharpe_ratio: 0.43
+
+# Usage notes
+notes: |
+  This configuration represents the optimal parameters identified through
+  grid search testing on 60 days of historical data.
+  
+  The feature requires 5-minute bar data and should be used in combination
+  with daily momentum features for best results.
+  
+  Signal criteria:
+  - smoothed_momentum > 0.003 (0.3%)
+  - vwap_signal != 'below_vwap'
+  - Win rate: 76.4% (vs 69.2% for daily-only)

@@ -1,0 +1,902 @@
+[
+  {
+    "fill_id": "20260728093539055::f5cdbbe9-bb47-4c13-9fc6-c64756618ecf",
+    "order_id": "3a4cde2a-7ffd-4294-b4b7-b41e01b3a424",
+    "symbol": "ADBE",
+    "side": "buy",
+    "qty": "70",
+    "price": "246.8",
+    "filled_at": "2026-07-28T13:35:39.055968Z"
+  },
+  {
+    "fill_id": "20260728093536207::6aa7c846-10f3-457b-9f72-6079074df3c0",
+    "order_id": "ac62b2a0-97ed-4491-8ec8-caadd6522eaa",
+    "symbol": "DELL",
+    "side": "sell",
+    "qty": "93",
+    "price": "386.46",
+    "filled_at": "2026-07-28T13:35:36.207657Z"
+  },
+  {
+    "fill_id": "20260728093535874::00bdc32e-2fcf-4fde-8063-3d0526ff58e1",
+    "order_id": "3a4cde2a-7ffd-4294-b4b7-b41e01b3a424",
+    "symbol": "ADBE",
+    "side": "buy",
+    "qty": "90",
+    "price": "246.7",
+    "filled_at": "2026-07-28T13:35:35.874372Z"
+  },
+  {
+    "fill_id": "20260728093532119::3e05ce7a-0a50-49a8-9ab3-780d735d9899",
+    "order_id": "95a52b5f-79d0-4b3c-b342-d3ac9acd83dc",
+    "symbol": "ANET",
+    "side": "sell",
+    "qty": "117",
+    "price": "163.45",
+    "filled_at": "2026-07-28T13:35:32.119203Z"
+  },
+  {
+    "fill_id": "20260727155529951::f4736a5f-6d55-4ca1-b74f-fbde5b56cdf6",
+    "order_id": "e03c16d8-e849-43f2-9590-2ef80bd670be",
+    "symbol": "META",
+    "side": "sell",
+    "qty": "1",
+    "price": "593.92",
+    "filled_at": "2026-07-27T19:55:29.951499Z"
+  },
+  {
+    "fill_id": "20260727155528634::e19fd9a1-345d-40af-824b-6b77f65e1821",
+    "order_id": "e03c16d8-e849-43f2-9590-2ef80bd670be",
+    "symbol": "META",
+    "side": "sell",
+    "qty": "1",
+    "price": "593.65",
+    "filled_at": "2026-07-27T19:55:28.634096Z"
+  },
+  {
+    "fill_id": "20260727155526222::681237c3-4000-4d91-b501-fcfa36330c87",
+    "order_id": "e03c16d8-e849-43f2-9590-2ef80bd670be",
+    "symbol": "META",
+    "side": "sell",
+    "qty": "1",
+    "price": "593.65",
+    "filled_at": "2026-07-27T19:55:26.222918Z"
+  },
+  {
+    "fill_id": "20260727155525402::46309e01-b8ec-4359-9f12-11e5efef97bc",
+    "order_id": "e03c16d8-e849-43f2-9590-2ef80bd670be",
+    "symbol": "META",
+    "side": "sell",
+    "qty": "1",
+    "price": "593.65",
+    "filled_at": "2026-07-27T19:55:25.40209Z"
+  },
+  {
+    "fill_id": "20260727155521829::1794c852-892b-4945-b5ab-4db28fd4331c",
+    "order_id": "e03c16d8-e849-43f2-9590-2ef80bd670be",
+    "symbol": "META",
+    "side": "sell",
+    "qty": "1",
+    "price": "593.61",
+    "filled_at": "2026-07-27T19:55:21.8298Z"
+  },
+  {
+    "fill_id": "20260727155518896::e9b6ec3a-fb5c-4c0a-89fc-44f7e24d29b9",
+    "order_id": "e03c16d8-e849-43f2-9590-2ef80bd670be",
+    "symbol": "META",
+    "side": "sell",
+    "qty": "27",
+    "price": "593.53",
+    "filled_at": "2026-07-27T19:55:18.896317Z"
+  },
+  {
+    "fill_id": "20260724093520782::db0b2fe2-158a-4374-b027-98b7d7881f7b",
+    "order_id": "8f528765-195f-48a5-8802-885d84f765f5",
+    "symbol": "HPQ",
+    "side": "buy",
+    "qty": "33",
+    "price": "25.23",
+    "filled_at": "2026-07-24T13:35:20.782958Z"
+  },
+  {
+    "fill_id": "20260724093518331::a9e56e5d-5fe8-446c-abba-ca7dd392e3a7",
+    "order_id": "8f528765-195f-48a5-8802-885d84f765f5",
+    "symbol": "HPQ",
+    "side": "buy",
+    "qty": "215",
+    "price": "25.25",
+    "filled_at": "2026-07-24T13:35:18.331726Z"
+  },
+  {
+    "fill_id": "20260724093516664::9289bfbb-6747-41a2-bc50-34e7d013de29",
+    "order_id": "8f528765-195f-48a5-8802-885d84f765f5",
+    "symbol": "HPQ",
+    "side": "buy",
+    "qty": "164",
+    "price": "25.25",
+    "filled_at": "2026-07-24T13:35:16.664844Z"
+  },
+  {
+    "fill_id": "20260723155521975::60d85bd2-dc54-4704-bbca-f62713159513",
+    "order_id": "64c05f0f-4c84-4cef-ab6b-f7469cff6794",
+    "symbol": "HPQ",
+    "side": "sell",
+    "qty": "49",
+    "price": "24.32",
+    "filled_at": "2026-07-23T19:55:21.975313Z"
+  },
+  {
+    "fill_id": "20260723155521084::a8bc8685-5915-403a-8ec8-3ed21b2b5b28",
+    "order_id": "64c05f0f-4c84-4cef-ab6b-f7469cff6794",
+    "symbol": "HPQ",
+    "side": "sell",
+    "qty": "135",
+    "price": "24.32",
+    "filled_at": "2026-07-23T19:55:21.084489Z"
+  },
+  {
+    "fill_id": "20260723155520009::7abda0d3-60b7-4b74-8005-161e4d7d4cf1",
+    "order_id": "64c05f0f-4c84-4cef-ab6b-f7469cff6794",
+    "symbol": "HPQ",
+    "side": "sell",
+    "qty": "14",
+    "price": "24.32",
+    "filled_at": "2026-07-23T19:55:20.009298Z"
+  },
+  {
+    "fill_id": "20260723155518787::be647db9-415c-4395-a112-b979aa521e59",
+    "order_id": "64c05f0f-4c84-4cef-ab6b-f7469cff6794",
+    "symbol": "HPQ",
+    "side": "sell",
+    "qty": "461",
+    "price": "24.31",
+    "filled_at": "2026-07-23T19:55:18.787164Z"
+  },
+  {
+    "fill_id": "20260723155516779::333a8932-2660-4640-ab99-5e0180bb96ea",
+    "order_id": "64c05f0f-4c84-4cef-ab6b-f7469cff6794",
+    "symbol": "HPQ",
+    "side": "sell",
+    "qty": "207",
+    "price": "24.3",
+    "filled_at": "2026-07-23T19:55:16.779286Z"
+  },
+  {
+    "fill_id": "20260723093528604::0d8c3aa0-6463-4839-9d75-06850d8a6522",
+    "order_id": "a8808d3f-a343-41e0-8acf-0489f19e9537",
+    "symbol": "PLTR",
+    "side": "sell",
+    "qty": "215",
+    "price": "122.9",
+    "filled_at": "2026-07-23T13:35:28.604148Z"
+  },
+  {
+    "fill_id": "20260723093527156::d36b15cc-da13-4d6d-b444-d02e56eb7f36",
+    "order_id": "a8808d3f-a343-41e0-8acf-0489f19e9537",
+    "symbol": "PLTR",
+    "side": "sell",
+    "qty": "10",
+    "price": "122.97",
+    "filled_at": "2026-07-23T13:35:27.156425Z"
+  },
+  {
+    "fill_id": "20260723093526286::e9d7520b-ec82-490c-80b7-d05b2e300a0f",
+    "order_id": "916fc395-c90d-4857-b295-6ee3bc9b9da9",
+    "symbol": "AMZN",
+    "side": "sell",
+    "qty": "116",
+    "price": "236.23",
+    "filled_at": "2026-07-23T13:35:26.286626Z"
+  },
+  {
+    "fill_id": "20260723093525392::d1613f2e-0086-4904-a594-6ee3e14b4dee",
+    "order_id": "916fc395-c90d-4857-b295-6ee3bc9b9da9",
+    "symbol": "AMZN",
+    "side": "sell",
+    "qty": "50",
+    "price": "236.35",
+    "filled_at": "2026-07-23T13:35:25.392084Z"
+  },
+  {
+    "fill_id": "20260723093522923::1e1c0e7f-1891-42b8-a085-ef4772a57975",
+    "order_id": "5874c9bf-8bba-4cfc-b297-17798aa7dcf4",
+    "symbol": "ADBE",
+    "side": "sell",
+    "qty": "86",
+    "price": "218.4",
+    "filled_at": "2026-07-23T13:35:22.923152Z"
+  },
+  {
+    "fill_id": "20260723093521956::f9eb752f-03b0-4d37-81fc-88eb57aa3c6b",
+    "order_id": "5874c9bf-8bba-4cfc-b297-17798aa7dcf4",
+    "symbol": "ADBE",
+    "side": "sell",
+    "qty": "9",
+    "price": "218.4",
+    "filled_at": "2026-07-23T13:35:21.956107Z"
+  },
+  {
+    "fill_id": "20260722155529169::799c5f06-2d46-42b6-abd2-356aec46b31a",
+    "order_id": "84c6cf24-f96f-448b-8c15-ccd8ceec6ea2",
+    "symbol": "SKYY",
+    "side": "sell",
+    "qty": "1",
+    "price": "133.21",
+    "filled_at": "2026-07-22T19:55:29.169159Z"
+  },
+  {
+    "fill_id": "20260722155527028::5e35845e-14bb-4236-89c3-9a973bb5180d",
+    "order_id": "84c6cf24-f96f-448b-8c15-ccd8ceec6ea2",
+    "symbol": "SKYY",
+    "side": "sell",
+    "qty": "16",
+    "price": "133.2",
+    "filled_at": "2026-07-22T19:55:27.028944Z"
+  },
+  {
+    "fill_id": "20260722155524123::4740516e-da0c-4033-ae5f-3731923ba7c7",
+    "order_id": "84c6cf24-f96f-448b-8c15-ccd8ceec6ea2",
+    "symbol": "SKYY",
+    "side": "sell",
+    "qty": "193",
+    "price": "133.2",
+    "filled_at": "2026-07-22T19:55:24.123173Z"
+  },
+  {
+    "fill_id": "20260722120027552::32c156de-0a43-415b-a9c5-87136e3787e9",
+    "order_id": "a6c26df4-b457-4dd0-838c-d247bac4900a",
+    "symbol": "ANET",
+    "side": "buy",
+    "qty": "64",
+    "price": "176.03",
+    "filled_at": "2026-07-22T16:00:27.552937Z"
+  },
+  {
+    "fill_id": "20260722120026804::c9818817-b3b6-480f-8dee-8ff85ec0c8af",
+    "order_id": "a6c26df4-b457-4dd0-838c-d247bac4900a",
+    "symbol": "ANET",
+    "side": "buy",
+    "qty": "53",
+    "price": "176.03",
+    "filled_at": "2026-07-22T16:00:26.804581Z"
+  },
+  {
+    "fill_id": "20260722120026242::b8558c0b-b4f2-4433-8c79-ea752fcd1f8d",
+    "order_id": "61fcee0f-a38a-4849-ac3a-63d4aad1a044",
+    "symbol": "DELL",
+    "side": "buy",
+    "qty": "46",
+    "price": "443.34",
+    "filled_at": "2026-07-22T16:00:26.242698Z"
+  },
+  {
+    "fill_id": "20260722120024758::b7789988-0ade-44ef-ba72-a7f1a14bdec3",
+    "order_id": "bf4b4431-2ab0-43aa-87ff-fa96b0381de0",
+    "symbol": "CRM",
+    "side": "sell",
+    "qty": "60",
+    "price": "164.03",
+    "filled_at": "2026-07-22T16:00:24.758805Z"
+  },
+  {
+    "fill_id": "20260722120024118::b7abee6c-8467-4975-83e9-02a2008d313f",
+    "order_id": "bf4b4431-2ab0-43aa-87ff-fa96b0381de0",
+    "symbol": "CRM",
+    "side": "sell",
+    "qty": "66",
+    "price": "164.03",
+    "filled_at": "2026-07-22T16:00:24.118313Z"
+  },
+  {
+    "fill_id": "20260722093527128::5b9e0775-a738-4d01-9a43-ccaaa42b398c",
+    "order_id": "ae6036e0-7475-402f-8fcc-186fdd92c790",
+    "symbol": "DELL",
+    "side": "buy",
+    "qty": "31",
+    "price": "434.34",
+    "filled_at": "2026-07-22T13:35:27.128085Z"
+  },
+  {
+    "fill_id": "20260722093526457::b0c1e32a-6a89-42ba-8a2d-397fa8e0ff01",
+    "order_id": "ae6036e0-7475-402f-8fcc-186fdd92c790",
+    "symbol": "DELL",
+    "side": "buy",
+    "qty": "16",
+    "price": "434.34",
+    "filled_at": "2026-07-22T13:35:26.457492Z"
+  },
+  {
+    "fill_id": "20260722093525212::bf80ef94-fca0-49b0-8ee1-136e77f2eb30",
+    "order_id": "38905e8e-41f7-4532-b9fa-71612f3eedc1",
+    "symbol": "HPE",
+    "side": "buy",
+    "qty": "111",
+    "price": "48.59",
+    "filled_at": "2026-07-22T13:35:25.212282Z"
+  },
+  {
+    "fill_id": "20260722093524581::824821d6-8918-4009-a2b9-fd03d0567239",
+    "order_id": "38905e8e-41f7-4532-b9fa-71612f3eedc1",
+    "symbol": "HPE",
+    "side": "buy",
+    "qty": "500",
+    "price": "48.59",
+    "filled_at": "2026-07-22T13:35:24.58128Z"
+  },
+  {
+    "fill_id": "20260721155528080::1324a284-9ff0-4a9c-811a-57f3c986cf48",
+    "order_id": "3b36e840-628b-4e1c-a3fe-0e11b59bf2f5",
+    "symbol": "PATH",
+    "side": "sell",
+    "qty": "136",
+    "price": "11.97",
+    "filled_at": "2026-07-21T19:55:28.080722Z"
+  },
+  {
+    "fill_id": "20260721155527325::e6539996-c824-416e-9393-896b8575576f",
+    "order_id": "3b36e840-628b-4e1c-a3fe-0e11b59bf2f5",
+    "symbol": "PATH",
+    "side": "sell",
+    "qty": "73",
+    "price": "11.97",
+    "filled_at": "2026-07-21T19:55:27.325012Z"
+  },
+  {
+    "fill_id": "20260721155525492::5f2ee541-7b0a-4c8b-91de-9dc1415df95d",
+    "order_id": "3b36e840-628b-4e1c-a3fe-0e11b59bf2f5",
+    "symbol": "PATH",
+    "side": "sell",
+    "qty": "2379",
+    "price": "11.97",
+    "filled_at": "2026-07-21T19:55:25.492292Z"
+  },
+  {
+    "fill_id": "20260721093524766::6a98df14-7e6d-44f7-bb47-b6c44fbe56ad",
+    "order_id": "bda06ba8-ed04-4759-9fb1-5aec6f9a9352",
+    "symbol": "GOOGL",
+    "side": "sell",
+    "qty": "9",
+    "price": "349.66",
+    "filled_at": "2026-07-21T13:35:24.766814Z"
+  },
+  {
+    "fill_id": "20260721093523995::d5587e2b-f5df-47f0-a16d-a0031e81c02a",
+    "order_id": "bda06ba8-ed04-4759-9fb1-5aec6f9a9352",
+    "symbol": "GOOGL",
+    "side": "sell",
+    "qty": "2",
+    "price": "349.66",
+    "filled_at": "2026-07-21T13:35:23.995524Z"
+  },
+  {
+    "fill_id": "20260721093523007::4409efc9-1365-4824-961a-7853c0b4b613",
+    "order_id": "bda06ba8-ed04-4759-9fb1-5aec6f9a9352",
+    "symbol": "GOOGL",
+    "side": "sell",
+    "qty": "11",
+    "price": "349.58",
+    "filled_at": "2026-07-21T13:35:23.007976Z"
+  },
+  {
+    "fill_id": "20260721093520573::9f2d4fde-0b0a-4e29-8dd5-f93a0058b8ce",
+    "order_id": "bda06ba8-ed04-4759-9fb1-5aec6f9a9352",
+    "symbol": "GOOGL",
+    "side": "sell",
+    "qty": "90",
+    "price": "349.55",
+    "filled_at": "2026-07-21T13:35:20.573192Z"
+  },
+  {
+    "fill_id": "20260720155526560::b8d153b6-c198-42a1-b0bd-b42bbab5e5e0",
+    "order_id": "9fb26145-9fde-4fe8-b166-a5f889240009",
+    "symbol": "PANW",
+    "side": "sell",
+    "qty": "50",
+    "price": "348.77",
+    "filled_at": "2026-07-20T19:55:26.56095Z"
+  },
+  {
+    "fill_id": "20260720155524074::8f358690-c741-484f-855a-a1d92dd6f276",
+    "order_id": "9fb26145-9fde-4fe8-b166-a5f889240009",
+    "symbol": "PANW",
+    "side": "sell",
+    "qty": "40",
+    "price": "348.79",
+    "filled_at": "2026-07-20T19:55:24.074212Z"
+  },
+  {
+    "fill_id": "20260720093635135::419f7c06-c558-4109-b005-f3ed50e4ecad",
+    "order_id": "ec684ef0-0f81-408d-a99b-e148115e7443",
+    "symbol": "HPQ",
+    "side": "buy",
+    "qty": "253",
+    "price": "24.1",
+    "filled_at": "2026-07-20T13:36:35.135944Z"
+  },
+  {
+    "fill_id": "20260720093620624::cbaff76c-7541-4906-861d-f47d86565628",
+    "order_id": "58f1ba80-a51e-4061-a5f9-40b58245e9b3",
+    "symbol": "META",
+    "side": "buy",
+    "qty": "18",
+    "price": "639.69",
+    "filled_at": "2026-07-20T13:36:20.624619Z"
+  },
+  {
+    "fill_id": "20260720093617157::92aada32-0722-4977-ba61-5f4ce228e497",
+    "order_id": "ec684ef0-0f81-408d-a99b-e148115e7443",
+    "symbol": "HPQ",
+    "side": "buy",
+    "qty": "321",
+    "price": "24.11",
+    "filled_at": "2026-07-20T13:36:17.157088Z"
+  },
+  {
+    "fill_id": "20260720093613987::55c40b0e-37c0-41d9-898e-457a0febfba7",
+    "order_id": "58f1ba80-a51e-4061-a5f9-40b58245e9b3",
+    "symbol": "META",
+    "side": "buy",
+    "qty": "14",
+    "price": "640.76",
+    "filled_at": "2026-07-20T13:36:13.987996Z"
+  },
+  {
+    "fill_id": "20260720093609345::24e40086-4e9c-437b-84e2-d22c133c1d8e",
+    "order_id": "ec684ef0-0f81-408d-a99b-e148115e7443",
+    "symbol": "HPQ",
+    "side": "buy",
+    "qty": "292",
+    "price": "24.09",
+    "filled_at": "2026-07-20T13:36:09.345787Z"
+  },
+  {
+    "fill_id": "20260717093639345::a2a60caa-bad5-4ef6-ae2d-d440c5d7d34c",
+    "order_id": "3daf2a88-854d-4300-a725-d2f843eb1bf5",
+    "symbol": "SNOW",
+    "side": "sell",
+    "qty": "14",
+    "price": "264",
+    "filled_at": "2026-07-17T13:36:39.345306Z"
+  },
+  {
+    "fill_id": "20260717093632731::c190f498-d5c4-42da-8b46-eb145cdc4bf7",
+    "order_id": "3daf2a88-854d-4300-a725-d2f843eb1bf5",
+    "symbol": "SNOW",
+    "side": "sell",
+    "qty": "5",
+    "price": "265.74",
+    "filled_at": "2026-07-17T13:36:32.731492Z"
+  },
+  {
+    "fill_id": "20260717093625533::6e1ac246-f206-4af9-a720-b0ccf294ddb4",
+    "order_id": "3daf2a88-854d-4300-a725-d2f843eb1bf5",
+    "symbol": "SNOW",
+    "side": "sell",
+    "qty": "4",
+    "price": "265.74",
+    "filled_at": "2026-07-17T13:36:25.533349Z"
+  },
+  {
+    "fill_id": "20260717093621834::a7ac4e23-d119-46a3-aaee-6d252cbbfe08",
+    "order_id": "3daf2a88-854d-4300-a725-d2f843eb1bf5",
+    "symbol": "SNOW",
+    "side": "sell",
+    "qty": "11",
+    "price": "265.79",
+    "filled_at": "2026-07-17T13:36:21.834795Z"
+  },
+  {
+    "fill_id": "20260717093605773::4dc5e5b3-cf67-4fa6-8fe1-a79b51da52ac",
+    "order_id": "3daf2a88-854d-4300-a725-d2f843eb1bf5",
+    "symbol": "SNOW",
+    "side": "sell",
+    "qty": "64",
+    "price": "264.04",
+    "filled_at": "2026-07-17T13:36:05.773206Z"
+  },
+  {
+    "fill_id": "20260717093548041::2fa6262b-82a3-46cf-a15a-22752724427c",
+    "order_id": "3daf2a88-854d-4300-a725-d2f843eb1bf5",
+    "symbol": "SNOW",
+    "side": "sell",
+    "qty": "25",
+    "price": "265",
+    "filled_at": "2026-07-17T13:35:48.041713Z"
+  },
+  {
+    "fill_id": "20260717093547386::c8b55ce6-e418-40d1-8fa3-fe4e6f879151",
+    "order_id": "815932dd-e8ab-438a-ba3d-ac55f9df5781",
+    "symbol": "META",
+    "side": "sell",
+    "qty": "78",
+    "price": "643.59",
+    "filled_at": "2026-07-17T13:35:47.386554Z"
+  },
+  {
+    "fill_id": "20260716120043683::eef2f0db-f22b-4de3-9038-0625ead50df2",
+    "order_id": "620ce2c0-ffb3-4fd7-9e26-b6e1c8b774bd",
+    "symbol": "GOOGL",
+    "side": "buy",
+    "qty": "28",
+    "price": "370.67",
+    "filled_at": "2026-07-16T16:00:43.683062Z"
+  },
+  {
+    "fill_id": "20260716120043071::0ce997eb-799e-4278-8eec-901cc9167771",
+    "order_id": "620ce2c0-ffb3-4fd7-9e26-b6e1c8b774bd",
+    "symbol": "GOOGL",
+    "side": "buy",
+    "qty": "15",
+    "price": "370.67",
+    "filled_at": "2026-07-16T16:00:43.071865Z"
+  },
+  {
+    "fill_id": "20260716120042445::262e7891-6390-4857-a162-e0ba14157bf8",
+    "order_id": "620ce2c0-ffb3-4fd7-9e26-b6e1c8b774bd",
+    "symbol": "GOOGL",
+    "side": "buy",
+    "qty": "13",
+    "price": "370.69",
+    "filled_at": "2026-07-16T16:00:42.445923Z"
+  },
+  {
+    "fill_id": "20260716120039619::7d89d50c-f338-4371-bc60-385f3df0709a",
+    "order_id": "affd8bd9-c526-49db-b22d-feddf23f7d03",
+    "symbol": "DELL",
+    "side": "sell",
+    "qty": "46",
+    "price": "400.03",
+    "filled_at": "2026-07-16T16:00:39.619294Z"
+  },
+  {
+    "fill_id": "20260716093535764::58c43a23-60f0-47f0-a554-97106faca926",
+    "order_id": "eb1ff364-30d4-4519-aad1-271ab80725fe",
+    "symbol": "GOOGL",
+    "side": "buy",
+    "qty": "9",
+    "price": "370.52",
+    "filled_at": "2026-07-16T13:35:35.764912Z"
+  },
+  {
+    "fill_id": "20260716093534697::85763325-0fb7-40d4-8b87-cb749fbe5ba7",
+    "order_id": "eb1ff364-30d4-4519-aad1-271ab80725fe",
+    "symbol": "GOOGL",
+    "side": "buy",
+    "qty": "1",
+    "price": "370.39",
+    "filled_at": "2026-07-16T13:35:34.69791Z"
+  },
+  {
+    "fill_id": "20260716093533345::5f6c7cb8-d668-4a5d-bb98-4e253cf7f88e",
+    "order_id": "eb1ff364-30d4-4519-aad1-271ab80725fe",
+    "symbol": "GOOGL",
+    "side": "buy",
+    "qty": "46",
+    "price": "370.34",
+    "filled_at": "2026-07-16T13:35:33.345944Z"
+  },
+  {
+    "fill_id": "20260716093532401::8fde2087-ee4e-4cea-8aaf-0ef43d3c0fcb",
+    "order_id": "fa468d0f-b052-4d8f-836c-9151c8b58a95",
+    "symbol": "NOW",
+    "side": "sell",
+    "qty": "274",
+    "price": "101.54",
+    "filled_at": "2026-07-16T13:35:32.401726Z"
+  },
+  {
+    "fill_id": "20260716093530732::1cb9515a-9eb4-4753-a4df-f86332b7ef24",
+    "order_id": "556bd677-63a0-4ada-9374-bfa6ad4741ec",
+    "symbol": "FTNT",
+    "side": "sell",
+    "qty": "7",
+    "price": "162.03",
+    "filled_at": "2026-07-16T13:35:30.732206Z"
+  },
+  {
+    "fill_id": "20260716093529917::8815390d-69d4-490c-8209-977b77d03ac0",
+    "order_id": "556bd677-63a0-4ada-9374-bfa6ad4741ec",
+    "symbol": "FTNT",
+    "side": "sell",
+    "qty": "123",
+    "price": "162.03",
+    "filled_at": "2026-07-16T13:35:29.917872Z"
+  },
+  {
+    "fill_id": "20260715155537730::9a5dc5b7-b306-4eb8-bebc-11479b0ad0ca",
+    "order_id": "928c787f-d7eb-4536-a39d-c130bea4ef67",
+    "symbol": "DDOG",
+    "side": "buy",
+    "qty": "20",
+    "price": "265.16",
+    "filled_at": "2026-07-15T19:55:37.730486Z"
+  },
+  {
+    "fill_id": "20260715155536975::0da28bea-d154-4e52-8ca0-b75dd2501251",
+    "order_id": "928c787f-d7eb-4536-a39d-c130bea4ef67",
+    "symbol": "DDOG",
+    "side": "buy",
+    "qty": "43",
+    "price": "265.16",
+    "filled_at": "2026-07-15T19:55:36.975088Z"
+  },
+  {
+    "fill_id": "20260715155536499::bc0e1c64-c73b-4d13-99f2-bf8b3383cac8",
+    "order_id": "928c787f-d7eb-4536-a39d-c130bea4ef67",
+    "symbol": "DDOG",
+    "side": "buy",
+    "qty": "14",
+    "price": "265.16",
+    "filled_at": "2026-07-15T19:55:36.499628Z"
+  },
+  {
+    "fill_id": "20260715155535574::273db2d3-a3f7-4a62-9377-20ed28b4d3a5",
+    "order_id": "928c787f-d7eb-4536-a39d-c130bea4ef67",
+    "symbol": "DDOG",
+    "side": "buy",
+    "qty": "24",
+    "price": "265.16",
+    "filled_at": "2026-07-15T19:55:35.574739Z"
+  },
+  {
+    "fill_id": "20260715155535253::32dc062b-c8cd-4da2-a728-d59e01c417da",
+    "order_id": "928c787f-d7eb-4536-a39d-c130bea4ef67",
+    "symbol": "DDOG",
+    "side": "buy",
+    "qty": "12",
+    "price": "265.16",
+    "filled_at": "2026-07-15T19:55:35.25343Z"
+  },
+  {
+    "fill_id": "20260715120102037::ad1f67cb-0db7-42e2-866e-e07026ceeb97",
+    "order_id": "e7fd3b05-4867-45af-865b-fc28875c0a4f",
+    "symbol": "MSFT",
+    "side": "buy",
+    "qty": "53",
+    "price": "397.2",
+    "filled_at": "2026-07-15T16:01:02.037799Z"
+  },
+  {
+    "fill_id": "20260715120057000::195b5d43-575b-4360-b56f-b1864e2de25b",
+    "order_id": "81a2a895-3322-4b9d-aa3b-b918312b5e6b",
+    "symbol": "AMZN",
+    "side": "buy",
+    "qty": "82",
+    "price": "254.93",
+    "filled_at": "2026-07-15T16:00:57.000605Z"
+  },
+  {
+    "fill_id": "20260715120055391::0eca4c3e-0a90-4a1d-b92e-bb518e01bff8",
+    "order_id": "151aa390-cb47-4740-b858-08b2001cf326",
+    "symbol": "QTEC",
+    "side": "sell",
+    "qty": "111",
+    "price": "310.91",
+    "filled_at": "2026-07-15T16:00:55.391796Z"
+  },
+  {
+    "fill_id": "20260715120054756::5581fceb-eccf-4b68-aa65-07f21cc4e7dd",
+    "order_id": "151aa390-cb47-4740-b858-08b2001cf326",
+    "symbol": "QTEC",
+    "side": "sell",
+    "qty": "20",
+    "price": "310.86",
+    "filled_at": "2026-07-15T16:00:54.756352Z"
+  },
+  {
+    "fill_id": "20260715120052031::de4f41eb-d222-41db-8106-99f353bfa5bb",
+    "order_id": "8ba80575-3634-4635-987c-08120f6ad324",
+    "symbol": "DDOG",
+    "side": "sell",
+    "qty": "116",
+    "price": "265.62",
+    "filled_at": "2026-07-15T16:00:52.031328Z"
+  },
+  {
+    "fill_id": "20260715120050700::d8fcbb63-1378-4d83-b639-27f9d9b51816",
+    "order_id": "57cdbb96-e29b-4429-a60a-264b40159d50",
+    "symbol": "CRWD",
+    "side": "sell",
+    "qty": "25",
+    "price": "208.73",
+    "filled_at": "2026-07-15T16:00:50.70001Z"
+  },
+  {
+    "fill_id": "20260715120050161::ad8be891-7144-4120-ac99-90d56101a02e",
+    "order_id": "57cdbb96-e29b-4429-a60a-264b40159d50",
+    "symbol": "CRWD",
+    "side": "sell",
+    "qty": "26",
+    "price": "208.73",
+    "filled_at": "2026-07-15T16:00:50.161307Z"
+  },
+  {
+    "fill_id": "20260715120049772::abe8e00f-caaa-491f-bd3c-e94e08725c80",
+    "order_id": "57cdbb96-e29b-4429-a60a-264b40159d50",
+    "symbol": "CRWD",
+    "side": "sell",
+    "qty": "103",
+    "price": "208.73",
+    "filled_at": "2026-07-15T16:00:49.772934Z"
+  },
+  {
+    "fill_id": "20260715120047012::17a8d0ab-8a80-4cc5-b627-3c5115171bc8",
+    "order_id": "eb5e36a8-180f-492d-b909-7cff53d76f08",
+    "symbol": "ANET",
+    "side": "sell",
+    "qty": "159",
+    "price": "169.19",
+    "filled_at": "2026-07-15T16:00:47.012334Z"
+  },
+  {
+    "fill_id": "20260715120044145::0e34f711-7620-48f8-9fb8-6084fbbaf5d2",
+    "order_id": "c0e05cbd-19e9-49ea-a01a-562e4ec08bb3",
+    "symbol": "AMD",
+    "side": "sell",
+    "qty": "58",
+    "price": "518.35",
+    "filled_at": "2026-07-15T16:00:44.145792Z"
+  },
+  {
+    "fill_id": "20260715093556360::d6c98605-faa1-4ca7-886b-6effc4f7fb7d",
+    "order_id": "21b2300c-f6b5-437c-904e-f075c10020c4",
+    "symbol": "MSFT",
+    "side": "buy",
+    "qty": "17",
+    "price": "390.29",
+    "filled_at": "2026-07-15T13:35:56.360367Z"
+  },
+  {
+    "fill_id": "20260715093555563::a2d68db0-9464-4450-a743-8ea4f43a887c",
+    "order_id": "21b2300c-f6b5-437c-904e-f075c10020c4",
+    "symbol": "MSFT",
+    "side": "buy",
+    "qty": "37",
+    "price": "390.37",
+    "filled_at": "2026-07-15T13:35:55.563041Z"
+  },
+  {
+    "fill_id": "20260715093554149::2390bdcd-132f-45a7-827c-f80d38937ff3",
+    "order_id": "6c1c195e-1ef2-4a41-b9f0-af3aaa45dd2d",
+    "symbol": "DELL",
+    "side": "buy",
+    "qty": "1",
+    "price": "453.63",
+    "filled_at": "2026-07-15T13:35:54.149168Z"
+  },
+  {
+    "fill_id": "20260715093553491::e10a7f61-c5b1-463b-af15-66f25201901a",
+    "order_id": "6c1c195e-1ef2-4a41-b9f0-af3aaa45dd2d",
+    "symbol": "DELL",
+    "side": "buy",
+    "qty": "13",
+    "price": "452.99",
+    "filled_at": "2026-07-15T13:35:53.491308Z"
+  },
+  {
+    "fill_id": "20260715093552914::f7f35266-9b26-4132-a1a1-43f1feab4e93",
+    "order_id": "6c1c195e-1ef2-4a41-b9f0-af3aaa45dd2d",
+    "symbol": "DELL",
+    "side": "buy",
+    "qty": "32",
+    "price": "452.99",
+    "filled_at": "2026-07-15T13:35:52.914612Z"
+  },
+  {
+    "fill_id": "20260715093547503::5b8aebce-f1ad-428d-b804-8b4b134fe336",
+    "order_id": "91d62921-34ec-4fc8-b740-cee18ce4ffc3",
+    "symbol": "AMZN",
+    "side": "buy",
+    "qty": "21",
+    "price": "251.99",
+    "filled_at": "2026-07-15T13:35:47.503865Z"
+  },
+  {
+    "fill_id": "20260715093546997::34965989-797a-4fd7-a871-ac1945275d0f",
+    "order_id": "91d62921-34ec-4fc8-b740-cee18ce4ffc3",
+    "symbol": "AMZN",
+    "side": "buy",
+    "qty": "63",
+    "price": "251.92",
+    "filled_at": "2026-07-15T13:35:46.997433Z"
+  },
+  {
+    "fill_id": "20260715093545688::a4d697c7-dd15-41a1-9760-8347a9f2228a",
+    "order_id": "1258a2b2-1529-47c4-8bf2-64b8c1e7cd9d",
+    "symbol": "PLTR",
+    "side": "buy",
+    "qty": "166",
+    "price": "135.74",
+    "filled_at": "2026-07-15T13:35:45.688222Z"
+  },
+  {
+    "fill_id": "20260715093545132::b9706264-c476-473a-b323-161c0b55c63e",
+    "order_id": "1258a2b2-1529-47c4-8bf2-64b8c1e7cd9d",
+    "symbol": "PLTR",
+    "side": "buy",
+    "qty": "59",
+    "price": "135.73",
+    "filled_at": "2026-07-15T13:35:45.1329Z"
+  },
+  {
+    "fill_id": "20260714093542266::11f78171-5f5a-4dca-9479-cc484b1b911f",
+    "order_id": "9e91bf98-44cb-435a-9fa8-1ac1f735c499",
+    "symbol": "CRWD",
+    "side": "buy",
+    "qty": "91",
+    "price": "196.75",
+    "filled_at": "2026-07-14T13:35:42.266524Z"
+  },
+  {
+    "fill_id": "20260714093541648::d4388c87-7a74-4ce8-a332-2a4116b27b31",
+    "order_id": "9e91bf98-44cb-435a-9fa8-1ac1f735c499",
+    "symbol": "CRWD",
+    "side": "buy",
+    "qty": "20",
+    "price": "196.75",
+    "filled_at": "2026-07-14T13:35:41.648816Z"
+  },
+  {
+    "fill_id": "20260714093541329::1b3d587f-7576-445e-b7e9-929fab4fb26b",
+    "order_id": "9e91bf98-44cb-435a-9fa8-1ac1f735c499",
+    "symbol": "CRWD",
+    "side": "buy",
+    "qty": "43",
+    "price": "196.63",
+    "filled_at": "2026-07-14T13:35:41.329201Z"
+  },
+  {
+    "fill_id": "20260714093539388::b16bd4d1-6624-426c-a75c-90998acccd47",
+    "order_id": "2234a890-26e0-40bd-94e5-b7da24a48ac3",
+    "symbol": "DDOG",
+    "side": "buy",
+    "qty": "116",
+    "price": "261.04",
+    "filled_at": "2026-07-14T13:35:39.388652Z"
+  },
+  {
+    "fill_id": "20260713155520619::07e50527-1230-49ec-858e-ce105d0d6bdf",
+    "order_id": "83fcc46e-4d46-4aee-a07b-7568f63dc21b",
+    "symbol": "FRWD",
+    "side": "sell",
+    "qty": "780",
+    "price": "31.54",
+    "filled_at": "2026-07-13T19:55:20.61925Z"
+  },
+  {
+    "fill_id": "20260713155518077::25ebcdf6-9e16-4843-bd42-4a4f31474828",
+    "order_id": "83fcc46e-4d46-4aee-a07b-7568f63dc21b",
+    "symbol": "FRWD",
+    "side": "sell",
+    "qty": "502",
+    "price": "31.53",
+    "filled_at": "2026-07-13T19:55:18.077495Z"
+  },
+  {
+    "fill_id": "20260713093730107::c3da2a42-7f40-4f9e-945c-163022b940d4",
+    "order_id": "826754a1-9f94-43e8-b66c-c294550a6940",
+    "symbol": "RBRK",
+    "side": "sell",
+    "qty": "2",
+    "price": "81.51",
+    "filled_at": "2026-07-13T13:37:30.107597Z"
+  },
+  {
+    "fill_id": "20260713093727658::3a794aa6-4162-4eff-8757-a7f9067f29da",
+    "order_id": "826754a1-9f94-43e8-b66c-c294550a6940",
+    "symbol": "RBRK",
+    "side": "sell",
+    "qty": "6",
+    "price": "81.51",
+    "filled_at": "2026-07-13T13:37:27.658372Z"
+  },
+  {
+    "fill_id": "20260713093725663::25431e46-cd44-470d-82b7-a3cb4005e3b1",
+    "order_id": "4f778048-3051-4119-a4ff-3c8da5c57f9c",
+    "symbol": "MDB",
+    "side": "sell",
+    "qty": "1",
+    "price": "343.75",
+    "filled_at": "2026-07-13T13:37:25.663659Z"
+  }
+]

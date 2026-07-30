@@ -1,0 +1,14 @@
+{
+  "config_hash": "H_cc05de54c2219208",
+  "created_at": "2026-06-29T13:35:04.086188+00:00",
+  "experiment_id": "H_8dcd5776cc7e45d0",
+  "feature_schema_version": "features-v1",
+  "mode": "paper",
+  "notes": "",
+  "owner": "hirotomookawasaki",
+  "prompt_version": "prompt-v1",
+  "run_id": "H_55fdab905c81792f",
+  "source_commit": "84531553829e1c411e7935caa7303a3ba91a6584",
+  "strategy_version": "swing-v1",
+  "tags": []
+}

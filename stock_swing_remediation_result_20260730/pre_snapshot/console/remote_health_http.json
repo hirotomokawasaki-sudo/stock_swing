@@ -1,0 +1,19 @@
+{
+  "status": 200,
+  "headers": {
+    "Server": "StockSwingRemoteReadonly/1.0 Python/3.13.10",
+    "Date": "Thu, 30 Jul 2026 01:24:37 GMT",
+    "Content-Type": "application/json; charset=utf-8",
+    "Content-Length": "120",
+    "Cache-Control": "no-store",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY"
+  },
+  "body": "{\n  \"ok\": true,\n  \"read_only\": true,\n  \"token_configured\": true,\n  \"summary_mtime\": \"2026-07-29T19:55:17.855179+00:00\"\n}",
+  "body_json": {
+    "ok": true,
+    "read_only": true,
+    "token_configured": true,
+    "summary_mtime": "2026-07-29T19:55:17.855179+00:00"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "feature_name": "price_momentum",
+  "symbol": "GOOGL",
+  "computed_at": "2026-04-21T06:15:26.678029+00:00",
+  "values": {
+    "momentum": 0.12,
+    "trend": "bullish",
+    "bars_used": 5,
+    "atr": 4.5479999999999965,
+    "risk_per_share": 9.095999999999993,
+    "stop_price": 109.62400000000001,
+    "latest_close": 118.72
+  },
+  "metadata": {
+    "earliest_time": "2026-04-17T06:15:08+00:00",
+    "latest_time": "2026-04-21T06:15:08+00:00"
+  },
+  "quality_flags": []
+}

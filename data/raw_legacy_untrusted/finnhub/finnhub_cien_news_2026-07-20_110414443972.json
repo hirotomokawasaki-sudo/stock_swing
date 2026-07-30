@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-07-20T11:04:14.443972+00:00",
+  "request_params": {
+    "symbol": "CIEN",
+    "from": "2026-07-17",
+    "to": "2026-07-20"
+  },
+  "payload": {
+    "symbol": "CIEN",
+    "news": [
+      {
+        "headline": "CIEN momentum update",
+        "summary": "CIEN shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/cien",
+        "datetime": 1784545454,
+        "source": "synthetic",
+        "related": "CIEN"
+      }
+    ]
+  }
+}

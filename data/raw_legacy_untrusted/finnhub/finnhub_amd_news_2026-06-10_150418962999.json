@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-10T15:04:18.962999+00:00",
+  "request_params": {
+    "symbol": "AMD",
+    "from": "2026-06-07",
+    "to": "2026-06-10"
+  },
+  "payload": {
+    "symbol": "AMD",
+    "news": [
+      {
+        "headline": "AMD momentum update",
+        "summary": "AMD shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/amd",
+        "datetime": 1781103858,
+        "source": "synthetic",
+        "related": "AMD"
+      }
+    ]
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "captured_at_utc": "2026-07-30T01:24:06.434442+00:00",
+  "combined_sha256": "b878e8e44404154390c594781f97de5b680bd19d92c2f900fe9345139a7d6664",
+  "files": [
+    {
+      "path": "config/accounts.json",
+      "sha256": "0d8dc429f40a1929ed98cd105b439d8bee77af4ff3c177b40f36ced8380d2ef2",
+      "bytes": 1241
+    },
+    {
+      "path": "config/ai/ai_runtime.yaml",
+      "sha256": "ec0791a164a4fd5790f387c0c0489bd4f377ce166ac0fc9e29b2ebfd1fdb0ef5",
+      "bytes": 343
+    },
+    {
+      "path": "config/environments/local.yaml",
+      "sha256": "812beb1aa5e01a68663c2892f4e402ef81602036b7e4216a1688519ef4607e77",
+      "bytes": 74
+    },
+    {
+      "path": "config/experiments/ab_buckets.yaml",
+      "sha256": "4464f572de59dcc8866f3327ed4ef310cf2e2a36d5c7693c45d5ba9ef9c3dc29",
+      "bytes": 237
+    },
+    {
+      "path": "config/experiments/default_experiment.yaml",
+      "sha256": "900758254618590c7d00065a6366df6ed273df6f3fecb76f62b7aa5c8d352bdc",
+      "bytes": 164
+    },
+    {
+      "path": "config/features/intraday_momentum.yaml",
+      "sha256": "17f401488b8bc01925abb86590bf1edd60875e6116487cc1c1531498b0780196",
+      "bytes": 1348
+    },
+    {
+      "path": "config/guardrails/autonomous_stop.yaml",
+      "sha256": "89dde5ef01f3c0fe1f4f2248497a3ead39b3ed88f67cd98cde559120ef202603",
+      "bytes": 1512
+    },
+    {
+      "path": "config/reference/symbol_registry.yaml",
+      "sha256": "b9cc1e991e89781bb62a00aafd226ce0de011cf677c525bff2189b72036c7aa3",
+      "bytes": 12501
+    },
+    {
+      "path": "config/runtime/current_mode.yaml",
+      "sha256": "3f70ba4f79687e0df7c729e493a17be6796d31c22fa60f3459970338e269b8e0",
+      "bytes": 4727
+    },
+    {
+      "path": "config/sources/broker.yaml",
+      "sha256": "13d6583125ccf695c99d1f8f88a7acbfcbce632f62cde92b908bdd3223f69e75",
+      "bytes": 264
+    },
+    {
+      "path": "config/sources/finnhub.yaml",
+      "sha256": "64459c0c51ed74a3fa4b50060a819e6adee3f0483fa3b339a0287ffe1b45de17",
+      "bytes": 257
+    },
+    {
+      "path": "config/sources/fred.yaml",
+      "sha256": "edcf4562a1e1f4b4878e927847e37b7b3f2db961680285756f6d1baba42fa1f2",
+      "bytes": 309
+    },
+    {
+      "path": "config/sources/sec.yaml",
+      "sha256": "9e15d23a5306c6dfa899d761be1363ce44d76ec3783073e10b4ac37413014a00",
+      "bytes": 258
+    },
+    {
+      "path": "config/strategy/breakout_momentum_v1.yaml",
+      "sha256": "af1c67510e391d3e0f4c306d9ef308ba305c1fed3536f75622dec61fe4567bf7",
+      "bytes": 133
+    },
+    {
+      "path": "config/strategy/entry_filters.yaml",
+      "sha256": "f877a48ee92ec1d60319b347cf42568da9f36a4fb5af055a0029a7f3468249ab",
+      "bytes": 1568
+    },
+    {
+      "path": "config/strategy/event_swing_v1.yaml",
+      "sha256": "2c3f2ae24fc26ba89b1ef597429267ab4c63db97101b37cfb34756d2575df7bc",
+      "bytes": 124
+    },
+    {
+      "path": "config/strategy/open_shock_cooldown.yaml",
+      "sha256": "94c648f4127d165d4e4731fd4149abed78c8803eed2152f24c2567991f6de6dc",
+      "bytes": 543
+    },
+    {
+      "path": "config/strategy/portfolio_allocation.yaml",
+      "sha256": "d89a0828ff737e400b7b6e8edf6fe8c80c91231e114752a9aeb0daed3a696011",
+      "bytes": 2612
+    },
+    {
+      "path": "config/strategy/simple_exit_v2.yaml",
+      "sha256": "9e2754359e3e4c5fd7ecdefe7d7ded9180f9739f5b6527ed4b7889926afd3544",
+      "bytes": 3860
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-05-05T15:16:00.505147+00:00",
+  "request_params": {
+    "symbol": "RBRK",
+    "from": "2026-05-02",
+    "to": "2026-05-05"
+  },
+  "payload": {
+    "symbol": "RBRK",
+    "news": [
+      {
+        "headline": "RBRK momentum update",
+        "summary": "RBRK shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/rbrk",
+        "datetime": 1777994160,
+        "source": "synthetic",
+        "related": "RBRK"
+      }
+    ]
+  }
+}

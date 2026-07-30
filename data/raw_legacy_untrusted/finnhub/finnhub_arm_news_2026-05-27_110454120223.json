@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-05-27T11:04:54.120223+00:00",
+  "request_params": {
+    "symbol": "ARM",
+    "from": "2026-05-24",
+    "to": "2026-05-27"
+  },
+  "payload": {
+    "symbol": "ARM",
+    "news": [
+      {
+        "headline": "ARM momentum update",
+        "summary": "ARM shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/arm",
+        "datetime": 1779879894,
+        "source": "synthetic",
+        "related": "ARM"
+      }
+    ]
+  }
+}

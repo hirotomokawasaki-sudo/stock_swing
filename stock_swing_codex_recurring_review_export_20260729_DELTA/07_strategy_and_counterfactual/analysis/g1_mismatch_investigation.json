@@ -1,0 +1,52 @@
+{
+  "generated_at": "2026-07-25T00:40:49.635632+00:00",
+  "circuit_breaker": {
+    "action": "halt",
+    "clear_note": null,
+    "cleared_at": null,
+    "cleared_by": null,
+    "reason": "guardrail_halt",
+    "status": "halted",
+    "triggered_at": "2026-07-24T13:35:20.729734+00:00",
+    "triggered_rules": [
+      {
+        "action": 5,
+        "metric": "broker_tracker_mismatch_count",
+        "name": "broker_tracker_mismatch",
+        "observed": 1.0,
+        "operator": ">=",
+        "severity": "critical",
+        "threshold": 1.0
+      }
+    ]
+  },
+  "skyy_phantom": [],
+  "meta_lots": [
+    {
+      "trade_id": "broker_open_0141_META",
+      "symbol": "META",
+      "strategy_id": "broker_reconstructed",
+      "side": "buy",
+      "qty": 32,
+      "entry_price": 640.16,
+      "exit_price": null,
+      "entry_time": "2026-07-20T13:36:20.624619Z",
+      "exit_time": null,
+      "pnl": null,
+      "return_pct": null,
+      "status": "open",
+      "account_id": null,
+      "strategy_version_id": "broker_reconstructed",
+      "broker_order_id": "58f1ba80-a51e-4061-a5f9-40b58245e9b3",
+      "original_strategy_id": "broker_reconstructed",
+      "exit_strategy_id": null,
+      "exit_reason": null,
+      "peak_price": 649.2821
+    }
+  ],
+  "meta_tracker_total_qty": 32,
+  "meta_broker_qty": 33,
+  "root_cause": "Orders submitted immediately before circuit breaker halt at 2026-07-10T13:35:56Z",
+  "resolution_required": true,
+  "blocker": "Must verify broker order status before clearing circuit breaker"
+}

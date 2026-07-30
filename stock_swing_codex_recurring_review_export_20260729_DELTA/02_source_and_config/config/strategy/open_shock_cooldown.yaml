@@ -1,0 +1,23 @@
+enabled: true
+
+# Stronger "Tier2-ish" default for current high-volatility tape.
+# This is an execution-time guard only: it does not rewrite strategy logic.
+window_minutes: 60
+activation_min_signals: 2
+
+# Benchmarks
+spy_gap_pct: -0.0125
+qqq_gap_pct: -0.02
+
+# Breadth
+losers_ratio: 0.60
+avg_gap_pct: -0.02
+
+# Exit classes to hold during the cooldown window
+hold_trailing_stop: true
+hold_breakeven_stop: true
+hold_stop_loss: true
+
+# Override protection: still sell truly broken names
+force_sell_return_pct: -0.12
+force_sell_symbol_gap_pct: -0.15

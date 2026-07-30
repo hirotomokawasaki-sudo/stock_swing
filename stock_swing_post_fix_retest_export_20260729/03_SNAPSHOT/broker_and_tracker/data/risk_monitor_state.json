@@ -1,0 +1,8 @@
+{
+  "equity_start": 1000000.0,
+  "equity_peak": 1100000.0,
+  "equity_day_start": 1000000.0,
+  "current_date": "2026-05-01",
+  "kill_switch_activated": true,
+  "warnings_sent": []
+}

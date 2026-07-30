@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-05-27T15:06:47.420112+00:00",
+  "request_params": {
+    "symbol": "NOW",
+    "from": "2026-05-24",
+    "to": "2026-05-27"
+  },
+  "payload": {
+    "symbol": "NOW",
+    "news": [
+      {
+        "headline": "NOW momentum update",
+        "summary": "NOW shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/now",
+        "datetime": 1779894407,
+        "source": "synthetic",
+        "related": "NOW"
+      }
+    ]
+  }
+}

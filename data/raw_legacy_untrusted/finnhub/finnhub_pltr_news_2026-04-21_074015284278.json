@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-04-21T07:40:15.284278+00:00",
+  "request_params": {
+    "symbol": "PLTR",
+    "from": "2026-04-18",
+    "to": "2026-04-21"
+  },
+  "payload": {
+    "symbol": "PLTR",
+    "news": [
+      {
+        "headline": "PLTR momentum update",
+        "summary": "PLTR shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/pltr",
+        "datetime": 1776757215,
+        "source": "synthetic",
+        "related": "PLTR"
+      }
+    ]
+  }
+}

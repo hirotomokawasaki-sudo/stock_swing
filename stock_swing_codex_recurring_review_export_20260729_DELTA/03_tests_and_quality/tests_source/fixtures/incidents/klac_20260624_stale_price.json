@@ -1,0 +1,17 @@
+{
+  "incident": "KLAC stale broker paper bar false trailing stop",
+  "symbol": "KLAC",
+  "stale_broker_bar": {
+    "close": 2010.21,
+    "timestamp": "2026-05-26T00:00:00Z"
+  },
+  "fresh_market_price": 245.09,
+  "stale_entry_price": 2010.21,
+  "stale_peak_price": 2010.21,
+  "broker_position_avg_entry_price": 245.09,
+  "expected": {
+    "entry_price_after_reconcile": 245.09,
+    "peak_price_after_reconcile": 245.09,
+    "exit_signal_should_fire": false
+  }
+}

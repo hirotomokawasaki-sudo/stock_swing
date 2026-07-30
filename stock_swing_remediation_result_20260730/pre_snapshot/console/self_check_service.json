@@ -1,0 +1,52 @@
+{
+  "ok": true,
+  "root": "/Users/hirotomookawasaki/stock_swing",
+  "generated_at": "2026-07-30T01:24:37.055659+00:00",
+  "checks": {
+    "pnl_state": {
+      "ok": true,
+      "path": "data/tracking/pnl_state.json"
+    },
+    "recent_decisions": {
+      "ok": false,
+      "path": "data/decisions/recent_decisions.json",
+      "severity": "warning"
+    },
+    "exports_summary_stats": {
+      "ok": false,
+      "path": "exports/summary_stats.json",
+      "severity": "warning"
+    },
+    "exports_closed_trades": {
+      "ok": false,
+      "path": "exports/closed_trades.csv",
+      "severity": "warning"
+    },
+    "exports_open_positions": {
+      "ok": false,
+      "path": "exports/open_positions.csv",
+      "severity": "warning"
+    },
+    "price_overrides": {
+      "ok": true,
+      "path": "data/price_overrides.json",
+      "severity": "ok"
+    },
+    "pending_exit_reasons": {
+      "ok": true,
+      "path": "data/tracking/pending_exit_reasons.json",
+      "severity": "ok"
+    },
+    "static_ui": {
+      "ok": true,
+      "path": "console/ui",
+      "severity": "ok"
+    }
+  },
+  "warnings": [
+    "Optional file missing: data/decisions/recent_decisions.json — some analytics will be unavailable.",
+    "Optional file missing: exports/summary_stats.json — some analytics will be unavailable.",
+    "Optional file missing: exports/closed_trades.csv — some analytics will be unavailable.",
+    "Optional file missing: exports/open_positions.csv — some analytics will be unavailable."
+  ]
+}

@@ -1,0 +1,439 @@
+{
+  "run": {
+    "mode": "paper",
+    "status": "OK",
+    "run_id": "paper_demo-20260728T133503Z-2071c213",
+    "experiment_id": "exp-20260728-swing-v1-prompt-v1-0bd99cac-63890d53",
+    "timestamp": "2026-07-28T13:35:26.156176+00:00",
+    "duration_seconds": null,
+    "guardrail_status": "ok",
+    "last_run": {
+      "status": "OK",
+      "as_of": "2026-07-28T13:35:26.156176+00:00",
+      "guardrail": "ok"
+    },
+    "data_quality": {
+      "status": "VALID",
+      "as_of": "2026-07-28T13:35:26.156176+00:00",
+      "details": {
+        "overlap": 0,
+        "reversed_chronology": 0,
+        "holding_days_missing": 0,
+        "attribution_coverage_pct": 98.5
+      }
+    }
+  },
+  "health": {
+    "status": "OK",
+    "critical_count": 0,
+    "warning_count": 0,
+    "stale_price_count": 0,
+    "broker_tracker_mismatch_count": 1,
+    "api_error_count": 0,
+    "guardrail_status": "ok",
+    "attribution_coverage_pct": 98.5,
+    "quarantined_trades": 100,
+    "ledger_gate_status": "VALID",
+    "circuit_breaker_detail": {
+      "status": "ok",
+      "triggered_at": "2026-07-24T13:35:20.729734+00:00",
+      "triggered_rules": [
+        {
+          "action": 5,
+          "metric": "broker_tracker_mismatch_count",
+          "name": "broker_tracker_mismatch",
+          "observed": 1.0,
+          "operator": ">=",
+          "severity": "critical",
+          "threshold": 1.0
+        }
+      ],
+      "reason": "guardrail_halt",
+      "clear_note": "SKYY phantom resolved: sell 07-22T19:55 (210 shares filled) was not recorded in tracker. Rebuild from broker completed. Verified mismatch=0 across 7 positions."
+    },
+    "equity_bridge": {
+      "baseline_equity": 1000000.0,
+      "tracker_realized": -65458.55,
+      "tracker_unrealized": -9869.56,
+      "fees": 0.0,
+      "tracker_computed": 924671.89,
+      "broker_equity": 977818.52,
+      "diff_usd": 53146.63,
+      "diff_bp": 543.5,
+      "quarantined_pnl": 0.0,
+      "unexplained_diff": 53146.63,
+      "within_tolerance": true,
+      "tolerance_usd": 100000.0
+    }
+  },
+  "portfolio": {
+    "equity": 977818.52,
+    "realized_pnl": -65458.55,
+    "unrealized_pnl": -9869.56,
+    "total_pnl": -75328.11,
+    "open_positions": 6,
+    "asset_class_breakdown": {
+      "etf": {
+        "count": 35,
+        "wins": 21,
+        "losses": 14,
+        "win_rate": 0.6,
+        "profit_factor": 1.311,
+        "net_pnl": 14777.4,
+        "gross_profit": 62283.73,
+        "gross_loss": 47506.33
+      },
+      "stock": {
+        "count": 161,
+        "wins": 68,
+        "losses": 93,
+        "win_rate": 0.4224,
+        "profit_factor": 0.566,
+        "net_pnl": -80235.95,
+        "gross_profit": 104626.76,
+        "gross_loss": 184862.71
+      },
+      "all": {
+        "count": 196,
+        "wins": 89,
+        "losses": 107,
+        "win_rate": 0.4541,
+        "profit_factor": 0.718,
+        "net_pnl": -65458.55,
+        "gross_profit": 166910.49,
+        "gross_loss": 232369.04
+      }
+    },
+    "exit_attribution_breakdown": {
+      "by_reason": {
+        "trailing_stop": {
+          "count": 72,
+          "wins": 58,
+          "losses": 14,
+          "win_rate": 0.8056,
+          "profit_factor": 6.303,
+          "net_pnl": 90979.87,
+          "gross_profit": 108137.53,
+          "gross_loss": 17157.66
+        },
+        "time_based": {
+          "count": 10,
+          "wins": 7,
+          "losses": 3,
+          "win_rate": 0.7,
+          "profit_factor": 2.44,
+          "net_pnl": 14581.23,
+          "gross_profit": 24708.1,
+          "gross_loss": 10126.87
+        },
+        "broker_fill": {
+          "count": 3,
+          "wins": 1,
+          "losses": 2,
+          "win_rate": 0.3333,
+          "profit_factor": 0.582,
+          "net_pnl": -99.73,
+          "gross_profit": 138.83,
+          "gross_loss": 238.56
+        },
+        "corporate_action": {
+          "count": 2,
+          "wins": 1,
+          "losses": 1,
+          "win_rate": 0.5,
+          "profit_factor": 0.169,
+          "net_pnl": -3026.59,
+          "gross_profit": 617.13,
+          "gross_loss": 3643.72
+        },
+        "breakeven_stop": {
+          "count": 43,
+          "wins": 9,
+          "losses": 34,
+          "win_rate": 0.2093,
+          "profit_factor": 0.648,
+          "net_pnl": -7979.78,
+          "gross_profit": 14679.32,
+          "gross_loss": 22659.1
+        },
+        "stop_loss": {
+          "count": 66,
+          "wins": 13,
+          "losses": 53,
+          "win_rate": 0.197,
+          "profit_factor": 0.104,
+          "net_pnl": -159913.55,
+          "gross_profit": 18629.58,
+          "gross_loss": 178543.13
+        }
+      },
+      "unknown_count": 3
+    },
+    "open_position_details": [
+      {
+        "symbol": "DELL",
+        "total_qty": 93,
+        "lots": 2,
+        "avg_entry_price": 438.7916,
+        "avg_ess": 0.5619,
+        "min_ess": 0.5047,
+        "max_ess": 0.6192,
+        "asset_class": "stock",
+        "entry_time_earliest": "2026-07-22T13:35:27.128085Z",
+        "current_price": 385.1838,
+        "market_value": 35822.0934,
+        "unrealized_plpc": -0.12217,
+        "unrealized_pnl": -4985.526609
+      },
+      {
+        "symbol": "HPE",
+        "total_qty": 611,
+        "lots": 1,
+        "avg_entry_price": 48.59,
+        "avg_ess": 0.9016,
+        "min_ess": 0.9016,
+        "max_ess": 0.9016,
+        "asset_class": "stock",
+        "entry_time_earliest": "2026-07-22T13:35:25.212282Z",
+        "current_price": 44.5241,
+        "market_value": 27204.2251,
+        "unrealized_plpc": -0.08368,
+        "unrealized_pnl": -2484.2649
+      },
+      {
+        "symbol": "DDOG",
+        "total_qty": 113,
+        "lots": 1,
+        "avg_entry_price": 265.16,
+        "avg_ess": 0.9918,
+        "min_ess": 0.9918,
+        "max_ess": 0.9918,
+        "asset_class": "stock",
+        "entry_time_earliest": "2026-07-15T19:55:37.730486Z",
+        "current_price": 247.6925,
+        "market_value": 27989.2525,
+        "unrealized_plpc": -0.06588,
+        "unrealized_pnl": -1973.8275
+      },
+      {
+        "symbol": "ANET",
+        "total_qty": 117,
+        "lots": 1,
+        "avg_entry_price": 176.03,
+        "avg_ess": null,
+        "min_ess": null,
+        "max_ess": null,
+        "asset_class": "stock",
+        "entry_time_earliest": null,
+        "current_price": 163.475,
+        "market_value": 19126.575,
+        "unrealized_plpc": -0.07132,
+        "unrealized_pnl": -1468.935
+      },
+      {
+        "symbol": "HPQ",
+        "total_qty": 412,
+        "lots": 1,
+        "avg_entry_price": 25.25,
+        "avg_ess": 0.5487,
+        "min_ess": 0.5487,
+        "max_ess": 0.5487,
+        "asset_class": "stock",
+        "entry_time_earliest": "2026-07-24T13:35:20.782958Z",
+        "current_price": 27.01,
+        "market_value": 11128.12,
+        "unrealized_plpc": 0.06977,
+        "unrealized_pnl": 725.780024
+      },
+      {
+        "symbol": "MSFT",
+        "total_qty": 107,
+        "lots": 1,
+        "avg_entry_price": 393.74,
+        "avg_ess": null,
+        "min_ess": null,
+        "max_ess": null,
+        "asset_class": "stock",
+        "entry_time_earliest": null,
+        "current_price": 396.705,
+        "market_value": 42447.435,
+        "unrealized_plpc": 0.00753,
+        "unrealized_pnl": 317.214982
+      },
+      {
+        "symbol": "ADBE",
+        "total_qty": 160,
+        "lots": 1,
+        "avg_entry_price": 245.53,
+        "avg_ess": 0.5565,
+        "min_ess": 0.5565,
+        "max_ess": 0.5565,
+        "asset_class": "stock",
+        "entry_time_earliest": "2026-07-28T13:35:21.175186+00:00",
+        "current_price": null,
+        "market_value": null,
+        "unrealized_plpc": null,
+        "unrealized_pnl": null
+      }
+    ]
+  },
+  "stop_loss_health": {
+    "tiered_min_hold_enabled": true,
+    "recent_30d": {
+      "count": 24,
+      "net_pnl": -68524.84,
+      "avg_ret_pct": -8.7
+    },
+    "suppression": {
+      "total": 0
+    },
+    "post_exit_check": {
+      "checked": 1,
+      "correct_stops": 1,
+      "correct_rate": 1.0
+    }
+  },
+  "decision_funnel": {
+    "candidates": 4,
+    "buy": 2,
+    "sell": 2,
+    "deny": 0,
+    "submitted": 3,
+    "rejected": 0,
+    "blocked": 0,
+    "deny_reasons": {},
+    "stages": {
+      "generated": 4,
+      "risk_denied": 0,
+      "entry_blocked": 0,
+      "cluster_blocked": 0,
+      "allocation_blocked": 1,
+      "guardrail_blocked": 0,
+      "qty_zero": 0,
+      "submitted": 3,
+      "accepted": 0,
+      "filled": 0,
+      "reconciled": 3
+    },
+    "stock_reduced_blocked": 0,
+    "stock_reduced_blocked_symbols": [],
+    "buy_stop_list": [
+      {
+        "symbol": "MDB",
+        "n_trades": 6,
+        "profit_factor": 0.0,
+        "reason": "rolling_pf_gate",
+        "reason_detail": "PF=0.000 < 0.70 (n=6, min_n=5)"
+      },
+      {
+        "symbol": "KLAC",
+        "n_trades": 6,
+        "profit_factor": 0.028,
+        "reason": "rolling_pf_gate",
+        "reason_detail": "PF=0.028 < 0.70 (n=6, min_n=5)"
+      },
+      {
+        "symbol": "RBRK",
+        "n_trades": 5,
+        "profit_factor": 0.088,
+        "reason": "rolling_pf_gate",
+        "reason_detail": "PF=0.088 < 0.70 (n=5, min_n=5)"
+      },
+      {
+        "symbol": "SMCI",
+        "n_trades": 5,
+        "profit_factor": 0.31,
+        "reason": "rolling_pf_gate",
+        "reason_detail": "PF=0.310 < 0.70 (n=5, min_n=5)"
+      },
+      {
+        "symbol": "AMD",
+        "n_trades": 8,
+        "profit_factor": 0.602,
+        "reason": "rolling_pf_gate",
+        "reason_detail": "PF=0.602 < 0.70 (n=8, min_n=5)"
+      }
+    ]
+  },
+  "broker_tracker_diff": {
+    "broker_count": 6,
+    "tracker_count": 7,
+    "mismatch_count": 1,
+    "broker_only": [],
+    "tracker_only": [
+      "ADBE"
+    ],
+    "qty_mismatches": [],
+    "lag_excused_presence": [
+      "ADBE"
+    ],
+    "lag_excused_qty": [],
+    "real_mismatch_count": 0
+  },
+  "risk": {
+    "cluster_blocks": [],
+    "risk_budget_pct": 0.011,
+    "market_regime": "cautious"
+  },
+  "price_integrity": {
+    "fresh_price_count": 3,
+    "stale_price_count": 0,
+    "fallback_price_count": 3,
+    "top_stale_symbols": [],
+    "price_source_breakdown": {
+      "none": 2,
+      "decision_latest_close": 1
+    }
+  },
+  "api": {
+    "call_count": 2,
+    "error_count": 0,
+    "p50_latency_ms": 500.7,
+    "p95_latency_ms": 500.7,
+    "slowest_endpoints": [
+      {
+        "endpoint": "broker.fetch_account",
+        "duration_ms": 500.7
+      },
+      {
+        "endpoint": "broker.fetch_positions",
+        "duration_ms": 485.1
+      }
+    ]
+  },
+  "ai": {
+    "calls": 4,
+    "skipped": 0,
+    "input_tokens": 495,
+    "output_tokens": 94,
+    "daily_token_budget": 300000,
+    "context_pack_counts": {
+      "evidence_v1": 4
+    },
+    "model_counts": {
+      "breakout_momentum_v1": 2,
+      "simple_exit_v2": 2
+    }
+  },
+  "alerts": [],
+  "missing_metrics": [],
+  "ledger_quality": {
+    "clean_closed": 196,
+    "quarantined": 100,
+    "negative_holding_days_in_clean": 0,
+    "no_exit_attribution": 3,
+    "no_metadata": 196,
+    "total_closed": 196,
+    "attribution_coverage_pct": 98.5
+  },
+  "sector_shock_shadow": {
+    "shadow_count": 0
+  },
+  "_remote_meta": {
+    "available": true,
+    "path": "/Users/hirotomookawasaki/stock_swing/reports/console/latest_console_summary.json",
+    "mtime": "2026-07-28T13:35:26.158977+00:00",
+    "age_seconds": 74127.1199438572,
+    "read_only": true
+  }
+}

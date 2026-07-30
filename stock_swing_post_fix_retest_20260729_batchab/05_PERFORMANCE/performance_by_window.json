@@ -1,0 +1,45 @@
+[
+  {
+    "window": "all",
+    "as_of_utc": "2026-07-29T11:34:31.916374+00:00",
+    "n": 197,
+    "pf": 0.843,
+    "wr_pct": 45.2,
+    "total_pnl": -30983.5,
+    "gross_profit": 166910.49,
+    "gross_loss": -197893.99,
+    "validity": "VALID",
+    "invalid_cohort_excluded": true,
+    "note": "status=closed only; quarantined excluded"
+  },
+  {
+    "window": "30d",
+    "as_of_utc": "2026-07-29T11:34:31.916374+00:00",
+    "n": 45,
+    "pf": 0.218,
+    "wr_pct": 28.9,
+    "total_pnl": -55293.25,
+    "gross_profit": 15422.14,
+    "gross_loss": -70715.39,
+    "validity": "VALID",
+    "invalid_cohort_excluded": true,
+    "note": "status=closed only; quarantined excluded"
+  },
+  {
+    "window": "90d",
+    "as_of_utc": "2026-07-29T11:34:31.916374+00:00",
+    "n": 176,
+    "pf": 0.888,
+    "wr_pct": 46.0,
+    "total_pnl": -19772.87,
+    "gross_profit": 156715.77,
+    "gross_loss": -176488.64,
+    "validity": "VALID",
+    "invalid_cohort_excluded": true,
+    "note": "status=closed only; quarantined excluded"
+  },
+  {
+    "window": "since_baseline_20260729",
+    "n": 0
+  }
+]

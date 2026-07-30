@@ -1,0 +1,4 @@
+{
+  "error": "read_only",
+  "message": "POST is disabled on this server."
+}

@@ -1,0 +1,6 @@
+{
+  "ok": true,
+  "read_only": true,
+  "token_configured": true,
+  "summary_mtime": "2026-07-28T13:35:26.158977+00:00"
+}

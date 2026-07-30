@@ -1,0 +1,100 @@
+{
+  "captured_at_utc": "2026-07-30T01:36:59.921515+00:00",
+  "project_root": "/Users/hirotomookawasaki/stock_swing",
+  "snapshot_dir": "/Users/hirotomookawasaki/stock_swing/stock_swing_remediation_result_20260730/post_snapshot",
+  "items": {
+    "meta/git_branch_status.txt": {
+      "sha256": "a24fc61cb3a19ac2b9845f5a9dcfc5323dea307d9dc561b4c6e5472411fbe55d",
+      "bytes": 2575
+    },
+    "meta/git_head.txt": {
+      "sha256": "567e31d0deed4813a59287c084e5d63462d8ce41e36178dc1ec40ef82d30cbbf",
+      "bytes": 56
+    },
+    "meta/git_diff_stat.txt": {
+      "sha256": "d9e875fadf2282e024e3b1e137d73892b4098bc7a4158a8e2dffe8d3c8ddbd87",
+      "bytes": 2273
+    },
+    "console/system_status_service.json": {
+      "sha256": "130220c7b07b412914565265a403eb29703e34f57c9e6027debc14ed0b5c6fcb",
+      "bytes": 2860
+    },
+    "console/overview_service.json": {
+      "sha256": "ab38b11738eba00e542dea2623921d985900e5eef74a8b49a6acba113357ad31",
+      "bytes": 2099
+    },
+    "console/self_check_service.json": {
+      "sha256": "32f2216b8e36fbd2d6d2762936842c9aaba90377192f268a2e3d61159a9bb030",
+      "bytes": 4371
+    },
+    "console_api_snapshots/system_status.json": {
+      "sha256": "a8edad3db60ce49be1bae892b7e4224f1fe94fba5f7b75707eea0ba757600010",
+      "bytes": 2860
+    },
+    "console_api_snapshots/overview.json": {
+      "sha256": "082474a4192348d027c8e3fa62d84679ea82037c7ceeb3a19743ee8e8b2bde5c",
+      "bytes": 2099
+    },
+    "console_api_snapshots/self_check.json": {
+      "sha256": "d1b15f36e3ae92c631a9a0a1fede53a32157d1b2202a66b8b2afc03b2e3ebd35",
+      "bytes": 4371
+    },
+    "cron/cron_parse_coverage.json": {
+      "sha256": "d6babb9ec52131a65f95add4b3fbb65d0e17977c6d9ccfed9a21879ab5b7d892",
+      "bytes": 110
+    },
+    "cron_parse_coverage.json": {
+      "sha256": "d6babb9ec52131a65f95add4b3fbb65d0e17977c6d9ccfed9a21879ab5b7d892",
+      "bytes": 110
+    },
+    "broker/account.json": {
+      "sha256": "5ffbbbded0abb151644a9692a583151922300f5e1ea326cf5b53b705dd139956",
+      "bytes": 1210
+    },
+    "broker/positions.json": {
+      "sha256": "9d947c922849f653f908296f8dd42d2d0e24782c0fa2d2b83b935e04b39b1951",
+      "bytes": 2888
+    },
+    "broker/orders.json": {
+      "sha256": "960e91db3bcc858205b9e7beae25bdd097d353cb419cba603dc4d1a3f6480f52",
+      "bytes": 554243
+    },
+    "broker/activities.json": {
+      "sha256": "689508706fb0adfc45f3f7facf26186a02ae994fa596bca02af784f274a85fcd",
+      "bytes": 40335
+    },
+    "broker/immutable_fill_snapshot.json": {
+      "sha256": "a83f0cc35fdcb4cd3af0c96ab0592811941aa6c95d634a4cded27413126d0fed",
+      "bytes": 26713
+    },
+    "immutable_fill_ledger.json": {
+      "sha256": "a83f0cc35fdcb4cd3af0c96ab0592811941aa6c95d634a4cded27413126d0fed",
+      "bytes": 26713
+    },
+    "source_sla_and_synthetic_result.json": {
+      "sha256": "4135801ef1318a1c51de1a620291af86140caf546bf7ba167bd79f1538c8a082",
+      "bytes": 17662
+    },
+    "ai_usage_source_breakdown.json": {
+      "sha256": "839fd3adc4fbed818a3a6c4c22910dde642063024f9cffb35fbfaf147704e026",
+      "bytes": 77
+    },
+    "p6_join_coverage.json": {
+      "sha256": "674bd2832ed44d44b631fc77f9732fa132801f1e645ae00911cfa75adb0db813",
+      "bytes": 105
+    },
+    "guardrail_fault_injection_result.json": {
+      "sha256": "ac01416412c365b66f04ed306ab42f5d81cec1a71f677bb66d4d1f089f1e2ecf",
+      "bytes": 78
+    },
+    "idempotency_result.json": {
+      "sha256": "5713ede0f098953ecaeec90ef2c5cfd47fdc116678f29e5b791f3e892a5691cc",
+      "bytes": 152
+    },
+    "clean_epoch_manifest.json": {
+      "sha256": "9b4ff4e69aa7bbc53c839b1193b746f9afaa58280579fd77fbcf438c697d0822",
+      "bytes": 112
+    }
+  },
+  "failures": []
+}

@@ -1,0 +1,45 @@
+{
+  "snapshot_id": "0288631a317e14a941d9",
+  "as_of_utc": "2026-07-29T10:18:06.302948+00:00",
+  "raw_json_files_scanned": 34556,
+  "synthetic_record_count": 1136,
+  "synthetic_file_count": 568,
+  "sources": [
+    {
+      "source": "finnhub_news",
+      "rows": 44,
+      "ok": 41,
+      "coverage_pct": 93.182,
+      "as_of": "2026-07-29T07:04:18.198275+00:00",
+      "timed_out": false
+    },
+    {
+      "source": "broker",
+      "raw_file_count": 25,
+      "latest_mtime_utc": "2026-04-21T06:15:08.596495+00:00",
+      "freshness_hours": 2380.05,
+      "coverage_pct": null
+    },
+    {
+      "source": "fred",
+      "raw_file_count": 4,
+      "latest_mtime_utc": "2026-04-21T06:15:08.596586+00:00",
+      "freshness_hours": 2380.05,
+      "coverage_pct": 0
+    },
+    {
+      "source": "sec",
+      "raw_file_count": 10,
+      "latest_mtime_utc": "2026-04-21T06:11:59.093670+00:00",
+      "freshness_hours": 2380.1,
+      "coverage_pct": 0
+    },
+    {
+      "source": "massive",
+      "raw_file_count": 85,
+      "latest_mtime_utc": "2026-05-19T00:05:32.849526+00:00",
+      "freshness_hours": 1714.21,
+      "coverage_pct": null
+    }
+  ]
+}

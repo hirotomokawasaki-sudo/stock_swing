@@ -1,0 +1,5 @@
+{
+  "status": "BLOCKED",
+  "reason": "Non-mutating remediation snapshot; write probe intentionally not executed.",
+  "captured_at_utc": "2026-07-30T01:24:06.434442+00:00"
+}

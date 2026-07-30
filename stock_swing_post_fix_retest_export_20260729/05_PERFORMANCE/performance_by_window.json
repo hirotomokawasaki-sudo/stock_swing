@@ -1,0 +1,55 @@
+{
+  "snapshot_id": "0288631a317e14a941d9",
+  "as_of_utc": "2026-07-29T10:18:06.302948+00:00",
+  "windows": {
+    "all": {
+      "n": 198,
+      "wins": 89,
+      "losses": 109,
+      "gross_profit": 166910.49,
+      "gross_loss": -237235.88,
+      "net_pnl": -70325.39,
+      "profit_factor": 0.7036,
+      "win_rate": 0.4495,
+      "avg_win": 1875.4,
+      "avg_loss": -2176.48,
+      "expectancy": -355.18,
+      "avg_return_pct": 0.0329,
+      "cvar_5pct_trade_pnl": -8377.24
+    },
+    "30d": {
+      "n": 56,
+      "wins": 16,
+      "losses": 40,
+      "gross_profit": 17634.61,
+      "gross_loss": -85653.75,
+      "net_pnl": -68019.14,
+      "profit_factor": 0.2059,
+      "win_rate": 0.2857,
+      "avg_win": 1102.16,
+      "avg_loss": -2141.34,
+      "expectancy": -1214.63,
+      "avg_return_pct": -0.0375,
+      "cvar_5pct_trade_pnl": -5490.91
+    },
+    "since_fix": {
+      "n": 0,
+      "wins": 0,
+      "losses": 0,
+      "gross_profit": 0,
+      "gross_loss": 0,
+      "net_pnl": 0,
+      "profit_factor": null,
+      "win_rate": null,
+      "avg_win": null,
+      "avg_loss": null,
+      "expectancy": null,
+      "avg_return_pct": null,
+      "cvar_5pct_trade_pnl": null
+    }
+  },
+  "equity_curve_summary": {
+    "rows": 131,
+    "max_drawdown_pct": -12.7081
+  }
+}

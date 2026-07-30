@@ -1,0 +1,19 @@
+[
+  {
+    "dimension": "sector",
+    "value": "UNKNOWN",
+    "n": 198,
+    "wins": 89,
+    "losses": 109,
+    "gross_profit": 166910.49,
+    "gross_loss": -237235.88,
+    "net_pnl": -70325.39,
+    "profit_factor": 0.7036,
+    "win_rate": 0.4495,
+    "avg_win": 1875.4,
+    "avg_loss": -2176.48,
+    "expectancy": -355.18,
+    "avg_return_pct": 0.0329,
+    "cvar_5pct_trade_pnl": -8377.24
+  }
+]

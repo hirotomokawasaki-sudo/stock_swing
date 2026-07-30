@@ -1,0 +1,29 @@
+stock_swing post-fix retest mail-safe bundle
+source_export: stock_swing_post_fix_retest_export_20260729
+generated_at_utc: 2026-07-29T10:20:53.399094+00:00
+part_count: 10
+source_file_count: 2386
+bundled_file_count: 2386
+excluded_file_count: 0
+FILE_START_count: 2386
+FILE_END_count: 2386
+restore_hash_verification: PASS
+secret_scan: PASS
+whole_parts_sha256: 0e594c9d8d46a521464ef14ce130ad20866637c683340ae9bd717553f429c3de
+
+parts:
+- stock_swing_post_fix_retest_mail_safe_part_001.txt size=1457284 sha256=33b767c0cfadb066804fdfea5d7d7e5035ec2121850e3a96ac1ebbd205835b4b
+- stock_swing_post_fix_retest_mail_safe_part_002.txt size=1015440 sha256=7efae7f8cc3ab6e7d7ed4f39222eaa4a5fa7f3e7d71adeb2fc9d455ba9e4c438
+- stock_swing_post_fix_retest_mail_safe_part_003.txt size=1483301 sha256=e2bc7ecbaf2a6a57306f9fe6896bd3bc6c007f59c9840f4993ab2ea2d19575cb
+- stock_swing_post_fix_retest_mail_safe_part_004.txt size=1477812 sha256=2f95b1162d5df0b2b0f0b93fc15ced5339e5c312717abbdea13b88a332d65e11
+- stock_swing_post_fix_retest_mail_safe_part_005.txt size=1499322 sha256=62e5b5f94cc3a7232d00041052a9d1c1e4920639e58484ffee328fcc678713fe
+- stock_swing_post_fix_retest_mail_safe_part_006.txt size=1499440 sha256=86a1981c4ca245763e4b64c46ca4ce1af600d4ddccb9acad9c6511e0185447e6
+- stock_swing_post_fix_retest_mail_safe_part_007.txt size=1498997 sha256=53fadd9064af17521122cc923bc9cf8ad43c1b2781f5e561c79484acf6746eef
+- stock_swing_post_fix_retest_mail_safe_part_008.txt size=1447066 sha256=c8fbdaa88f0fbea06010bc5a0150c8107e793abc7a2122c3fba52d39e8722528
+- stock_swing_post_fix_retest_mail_safe_part_009.txt size=1494029 sha256=19a7bbedde361ac823b6be9ee05d4b9f628767ef646c0287d2ab001444c4e0e1
+- stock_swing_post_fix_retest_mail_safe_part_010.txt size=13526 sha256=0639e5fe76cfe6bc7fac4abe594d6ae1c9883417001d387457ce7f03c3bf1895
+
+restore_method:
+Concatenate part_*.txt in numeric order, split records between FILE_START/FILE_END, restore content bytes as UTF-8, verify with FILE_MAP.csv sha256_original.
+
+No ZIP/archive/base64/password/encryption is used in this mail-safe output. Source code is embedded as inert plain text records.

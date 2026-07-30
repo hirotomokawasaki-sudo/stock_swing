@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-03T11:04:01.133301+00:00",
+  "request_params": {
+    "symbol": "ASML",
+    "from": "2026-05-31",
+    "to": "2026-06-03"
+  },
+  "payload": {
+    "symbol": "ASML",
+    "news": [
+      {
+        "headline": "ASML momentum update",
+        "summary": "ASML shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/asml",
+        "datetime": 1780484641,
+        "source": "synthetic",
+        "related": "ASML"
+      }
+    ]
+  }
+}

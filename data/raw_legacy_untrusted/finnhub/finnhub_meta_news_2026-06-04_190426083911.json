@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-04T19:04:26.083911+00:00",
+  "request_params": {
+    "symbol": "META",
+    "from": "2026-06-01",
+    "to": "2026-06-04"
+  },
+  "payload": {
+    "symbol": "META",
+    "news": [
+      {
+        "headline": "META momentum update",
+        "summary": "META shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/meta",
+        "datetime": 1780599866,
+        "source": "synthetic",
+        "related": "META"
+      }
+    ]
+  }
+}

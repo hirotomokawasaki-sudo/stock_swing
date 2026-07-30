@@ -1,0 +1,428 @@
+[
+  {
+    "window": "all",
+    "as_of_utc": "2026-07-29T02:23:31.959162+00:00",
+    "validity_status": "VALID",
+    "invalid_cohort_excluded": false,
+    "n": 205,
+    "total_realized_pnl": 0,
+    "gross_profit": 0,
+    "gross_loss": 0,
+    "profit_factor": null,
+    "win_rate_pct": 0.0,
+    "average_win": null,
+    "average_loss": null,
+    "payoff_ratio": null,
+    "expectancy_per_trade": 0.0,
+    "by_asset_class": {
+      "stock": {
+        "n": 170,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "etf": {
+        "n": 35,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      }
+    },
+    "by_exit_reason": {
+      "stop_loss": {
+        "n": 69,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "trailing_stop": {
+        "n": 72,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "breakeven_stop": {
+        "n": 43,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "broker_fill": {
+        "n": 3,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "corporate_action": {
+        "n": 2,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "time_based": {
+        "n": 10,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "unknown": {
+        "n": 6,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      }
+    },
+    "date_range": {
+      "start": "2026-05-14T15:14:07.870845+00:00",
+      "end": "2026-07-28T13:45:08.602019+00:00"
+    },
+    "population_note": "closed trades only, quarantined excluded, n=205",
+    "cost_slippage_treatment": "NOT_INCLUDED_in_realized_pnl"
+  },
+  {
+    "window": "30d",
+    "as_of_utc": "2026-07-29T02:23:31.959162+00:00",
+    "validity_status": "VALID",
+    "invalid_cohort_excluded": false,
+    "n": 57,
+    "total_realized_pnl": 0,
+    "gross_profit": 0,
+    "gross_loss": 0,
+    "profit_factor": null,
+    "win_rate_pct": 0.0,
+    "average_win": null,
+    "average_loss": null,
+    "payoff_ratio": null,
+    "expectancy_per_trade": 0.0,
+    "by_asset_class": {
+      "stock": {
+        "n": 47,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "etf": {
+        "n": 10,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      }
+    },
+    "by_exit_reason": {
+      "trailing_stop": {
+        "n": 17,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "stop_loss": {
+        "n": 28,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "breakeven_stop": {
+        "n": 9,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "corporate_action": {
+        "n": 1,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "time_based": {
+        "n": 2,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      }
+    },
+    "date_range": {
+      "start": "2026-06-29T13:38:02.494997+00:00",
+      "end": "2026-07-28T13:45:08.602019+00:00"
+    },
+    "population_note": "closed trades only, quarantined excluded, n=57",
+    "cost_slippage_treatment": "NOT_INCLUDED_in_realized_pnl"
+  },
+  {
+    "window": "90d",
+    "as_of_utc": "2026-07-29T02:23:31.959162+00:00",
+    "validity_status": "VALID",
+    "invalid_cohort_excluded": false,
+    "n": 199,
+    "total_realized_pnl": 0,
+    "gross_profit": 0,
+    "gross_loss": 0,
+    "profit_factor": null,
+    "win_rate_pct": 0.0,
+    "average_win": null,
+    "average_loss": null,
+    "payoff_ratio": null,
+    "expectancy_per_trade": 0.0,
+    "by_asset_class": {
+      "stock": {
+        "n": 164,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "etf": {
+        "n": 35,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      }
+    },
+    "by_exit_reason": {
+      "stop_loss": {
+        "n": 69,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "trailing_stop": {
+        "n": 72,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "breakeven_stop": {
+        "n": 43,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "broker_fill": {
+        "n": 3,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "corporate_action": {
+        "n": 2,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "time_based": {
+        "n": 10,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      }
+    },
+    "date_range": {
+      "start": "2026-05-14T15:14:07.870845+00:00",
+      "end": "2026-07-28T13:45:08.602019+00:00"
+    },
+    "population_note": "closed trades only, quarantined excluded, n=199",
+    "cost_slippage_treatment": "NOT_INCLUDED_in_realized_pnl"
+  },
+  {
+    "window": "180d",
+    "as_of_utc": "2026-07-29T02:23:31.959162+00:00",
+    "validity_status": "VALID",
+    "invalid_cohort_excluded": false,
+    "n": 199,
+    "total_realized_pnl": 0,
+    "gross_profit": 0,
+    "gross_loss": 0,
+    "profit_factor": null,
+    "win_rate_pct": 0.0,
+    "average_win": null,
+    "average_loss": null,
+    "payoff_ratio": null,
+    "expectancy_per_trade": 0.0,
+    "by_asset_class": {
+      "stock": {
+        "n": 164,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "etf": {
+        "n": 35,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      }
+    },
+    "by_exit_reason": {
+      "stop_loss": {
+        "n": 69,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "trailing_stop": {
+        "n": 72,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "breakeven_stop": {
+        "n": 43,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "broker_fill": {
+        "n": 3,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "corporate_action": {
+        "n": 2,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "time_based": {
+        "n": 10,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      }
+    },
+    "date_range": {
+      "start": "2026-05-14T15:14:07.870845+00:00",
+      "end": "2026-07-28T13:45:08.602019+00:00"
+    },
+    "population_note": "closed trades only, quarantined excluded, n=199",
+    "cost_slippage_treatment": "NOT_INCLUDED_in_realized_pnl"
+  },
+  {
+    "window": "365d",
+    "as_of_utc": "2026-07-29T02:23:31.959162+00:00",
+    "validity_status": "VALID",
+    "invalid_cohort_excluded": false,
+    "n": 199,
+    "total_realized_pnl": 0,
+    "gross_profit": 0,
+    "gross_loss": 0,
+    "profit_factor": null,
+    "win_rate_pct": 0.0,
+    "average_win": null,
+    "average_loss": null,
+    "payoff_ratio": null,
+    "expectancy_per_trade": 0.0,
+    "by_asset_class": {
+      "stock": {
+        "n": 164,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "etf": {
+        "n": 35,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      }
+    },
+    "by_exit_reason": {
+      "stop_loss": {
+        "n": 69,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "trailing_stop": {
+        "n": 72,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "breakeven_stop": {
+        "n": 43,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "broker_fill": {
+        "n": 3,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "corporate_action": {
+        "n": 2,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "time_based": {
+        "n": 10,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      }
+    },
+    "date_range": {
+      "start": "2026-05-14T15:14:07.870845+00:00",
+      "end": "2026-07-28T13:45:08.602019+00:00"
+    },
+    "population_note": "closed trades only, quarantined excluded, n=199",
+    "cost_slippage_treatment": "NOT_INCLUDED_in_realized_pnl"
+  },
+  {
+    "window": "since_baseline",
+    "as_of_utc": "2026-07-29T02:23:31.959162+00:00",
+    "validity_status": "VALID",
+    "invalid_cohort_excluded": false,
+    "n": 13,
+    "total_realized_pnl": 0,
+    "gross_profit": 0,
+    "gross_loss": 0,
+    "profit_factor": null,
+    "win_rate_pct": 0.0,
+    "average_win": null,
+    "average_loss": null,
+    "payoff_ratio": null,
+    "expectancy_per_trade": 0.0,
+    "by_asset_class": {
+      "stock": {
+        "n": 12,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "etf": {
+        "n": 1,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      }
+    },
+    "by_exit_reason": {
+      "stop_loss": {
+        "n": 10,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "breakeven_stop": {
+        "n": 1,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      },
+      "trailing_stop": {
+        "n": 2,
+        "pf": null,
+        "win_rate_pct": 0.0,
+        "total_pnl": 0
+      }
+    },
+    "date_range": {
+      "start": "2026-07-21T13:35:24.766814+00:00",
+      "end": "2026-07-28T13:45:08.602019+00:00"
+    },
+    "population_note": "closed trades only, quarantined excluded, n=13",
+    "cost_slippage_treatment": "NOT_INCLUDED_in_realized_pnl"
+  }
+]

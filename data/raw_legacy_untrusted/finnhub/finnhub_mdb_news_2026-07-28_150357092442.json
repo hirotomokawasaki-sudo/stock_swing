@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-07-28T15:03:57.092442+00:00",
+  "request_params": {
+    "symbol": "MDB",
+    "from": "2026-07-25",
+    "to": "2026-07-28"
+  },
+  "payload": {
+    "symbol": "MDB",
+    "news": [
+      {
+        "headline": "MDB momentum update",
+        "summary": "MDB shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/mdb",
+        "datetime": 1785251037,
+        "source": "synthetic",
+        "related": "MDB"
+      }
+    ]
+  }
+}

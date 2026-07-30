@@ -1,0 +1,9 @@
+enabled: false
+base_url: https://api.stlouisfed.org/fred
+timeout_seconds: 15
+retry_attempts: 3
+raw_partition: fred
+# FIX-SOURCE-4: optional source — not yet implemented; failure records degraded status
+required: false
+not_implemented: true
+description: "Macro data (FRED) — real client not yet connected"

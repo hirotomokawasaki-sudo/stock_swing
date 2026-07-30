@@ -1,0 +1,23 @@
+{
+  "strategy_id": "breakout_momentum_v1",
+  "symbol": "AAPL",
+  "action": "buy",
+  "signal_strength": 1.0,
+  "generated_at": "2026-04-21T06:15:08.660214+00:00",
+  "time_horizon": "2d",
+  "confidence": 0.85,
+  "reasoning": "Strong bullish momentum (12.00%) indicates breakout",
+  "feature_refs": [
+    "price_momentum"
+  ],
+  "metadata": {
+    "momentum": 0.12,
+    "trend": "bullish",
+    "bars_used": 5,
+    "macro_regime": "expansion",
+    "risk_per_share": 8.576000000000004,
+    "stop_price": 103.42399999999999,
+    "latest_close": 112.0,
+    "atr": 4.288000000000002
+  }
+}

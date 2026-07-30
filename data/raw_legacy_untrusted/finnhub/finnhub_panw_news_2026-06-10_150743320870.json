@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-10T15:07:43.320870+00:00",
+  "request_params": {
+    "symbol": "PANW",
+    "from": "2026-06-07",
+    "to": "2026-06-10"
+  },
+  "payload": {
+    "symbol": "PANW",
+    "news": [
+      {
+        "headline": "PANW momentum update",
+        "summary": "PANW shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/panw",
+        "datetime": 1781104063,
+        "source": "synthetic",
+        "related": "PANW"
+      }
+    ]
+  }
+}

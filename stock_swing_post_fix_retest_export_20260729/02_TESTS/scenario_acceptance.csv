@@ -1,0 +1,18 @@
+id,scenario,status,evidence
+SCN-001,past SELL then same symbol reBUY,PASS,02_TESTS/scenario_pytest_output.txt::test_sell_then_rebuy_same_symbol_not_suppressed + test_reconcile_skips_fill_absent_from_state_but_in_trade_events
+SCN-002,partial fill multiple arrivals,PASS,02_TESTS/scenario_pytest_output.txt::test_partial_fill_completion_records_remaining_qty/test_partial_fill_already_complete_is_not_replayed
+SCN-003,same reconcile run multiple times,PASS,02_TESTS/scenario_pytest_output.txt::test_partial_fill_already_complete_is_not_replayed
+SCN-004,old SELL not applied after rebuild to new position,PASS,02_TESTS/scenario_pytest_output.txt::ADBE phantom regression
+SCN-005,actual ProposedOrder.qty 85/15 projected allocation,PASS,02_TESTS/scenario_pytest_output.txt::test_allocation_uses_qty_not_quantity_attribute
+SCN-006,sequential multiple BUY projected band breach,PASS,02_TESTS/scenario_pytest_output.txt::test_allocation_sequential_adds_block_at_cap
+SCN-007,one corrupt event log line,PASS,02_TESTS/fault_injection_pytest_output.txt::test_malformed_lines_skipped
+SCN-008,broker position reflection delay,PASS,02_TESTS/scenario_pytest_output.txt::test_g1v2_postrun_lag_exclusion
+SCN-009,stale price,PASS,02_TESTS/scenario_pytest_output.txt::test_price_resolver/test_p0c_p0d coverage
+SCN-010,required source 401/429/timeout/empty,PASS,02_TESTS/source_error_pytest_output.txt + collect_data_fix001
+SCN-011,synthetic record in production data,FAIL,07_DATA/synthetic_records.csv
+SCN-012,day-start equity snapshot missing/stale,FAIL,06_GUARDRAILS/guardrail_verification.json
+SCN-013,guardrail setup/post-run update failure fail-closed,PASS,02_TESTS/scenario_pytest_output.txt::test_guardrail_missing_metric_not_zero
+SCN-014,P6 decision->order->fill->trade->outcome join,FAIL,04_LEDGER/metadata_join_coverage.json
+SCN-015,state PnL nonzero but performance all zero,PASS,05_PERFORMANCE/performance_by_window.json
+SCN-016,console unauth parameter apply/rollback,PASS,08_CONSOLE/console_api_snapshots/console_api_results.json
+SCN-017,remote read-only console query token usage,FAIL,08_CONSOLE/console_api_snapshots/console_api_results.json::remote_summary_query_token status 200

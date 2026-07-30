@@ -1,0 +1,107 @@
+{
+  "snapshot_id": "0288631a317e14a941d9",
+  "scenario_results": [
+    {
+      "id": "SCN-001",
+      "scenario": "past SELL then same symbol reBUY",
+      "status": "PASS",
+      "evidence": "02_TESTS/scenario_pytest_output.txt::test_sell_then_rebuy_same_symbol_not_suppressed + test_reconcile_skips_fill_absent_from_state_but_in_trade_events"
+    },
+    {
+      "id": "SCN-002",
+      "scenario": "partial fill multiple arrivals",
+      "status": "PASS",
+      "evidence": "02_TESTS/scenario_pytest_output.txt::test_partial_fill_completion_records_remaining_qty/test_partial_fill_already_complete_is_not_replayed"
+    },
+    {
+      "id": "SCN-003",
+      "scenario": "same reconcile run multiple times",
+      "status": "PASS",
+      "evidence": "02_TESTS/scenario_pytest_output.txt::test_partial_fill_already_complete_is_not_replayed"
+    },
+    {
+      "id": "SCN-004",
+      "scenario": "old SELL not applied after rebuild to new position",
+      "status": "PASS",
+      "evidence": "02_TESTS/scenario_pytest_output.txt::ADBE phantom regression"
+    },
+    {
+      "id": "SCN-005",
+      "scenario": "actual ProposedOrder.qty 85/15 projected allocation",
+      "status": "PASS",
+      "evidence": "02_TESTS/scenario_pytest_output.txt::test_allocation_uses_qty_not_quantity_attribute"
+    },
+    {
+      "id": "SCN-006",
+      "scenario": "sequential multiple BUY projected band breach",
+      "status": "PASS",
+      "evidence": "02_TESTS/scenario_pytest_output.txt::test_allocation_sequential_adds_block_at_cap"
+    },
+    {
+      "id": "SCN-007",
+      "scenario": "one corrupt event log line",
+      "status": "PASS",
+      "evidence": "02_TESTS/fault_injection_pytest_output.txt::test_malformed_lines_skipped"
+    },
+    {
+      "id": "SCN-008",
+      "scenario": "broker position reflection delay",
+      "status": "PASS",
+      "evidence": "02_TESTS/scenario_pytest_output.txt::test_g1v2_postrun_lag_exclusion"
+    },
+    {
+      "id": "SCN-009",
+      "scenario": "stale price",
+      "status": "PASS",
+      "evidence": "02_TESTS/scenario_pytest_output.txt::test_price_resolver/test_p0c_p0d coverage"
+    },
+    {
+      "id": "SCN-010",
+      "scenario": "required source 401/429/timeout/empty",
+      "status": "PASS",
+      "evidence": "02_TESTS/source_error_pytest_output.txt + collect_data_fix001"
+    },
+    {
+      "id": "SCN-011",
+      "scenario": "synthetic record in production data",
+      "status": "FAIL",
+      "evidence": "07_DATA/synthetic_records.csv"
+    },
+    {
+      "id": "SCN-012",
+      "scenario": "day-start equity snapshot missing/stale",
+      "status": "FAIL",
+      "evidence": "06_GUARDRAILS/guardrail_verification.json"
+    },
+    {
+      "id": "SCN-013",
+      "scenario": "guardrail setup/post-run update failure fail-closed",
+      "status": "PASS",
+      "evidence": "02_TESTS/scenario_pytest_output.txt::test_guardrail_missing_metric_not_zero"
+    },
+    {
+      "id": "SCN-014",
+      "scenario": "P6 decision->order->fill->trade->outcome join",
+      "status": "FAIL",
+      "evidence": "04_LEDGER/metadata_join_coverage.json"
+    },
+    {
+      "id": "SCN-015",
+      "scenario": "state PnL nonzero but performance all zero",
+      "status": "PASS",
+      "evidence": "05_PERFORMANCE/performance_by_window.json"
+    },
+    {
+      "id": "SCN-016",
+      "scenario": "console unauth parameter apply/rollback",
+      "status": "PASS",
+      "evidence": "08_CONSOLE/console_api_snapshots/console_api_results.json"
+    },
+    {
+      "id": "SCN-017",
+      "scenario": "remote read-only console query token usage",
+      "status": "FAIL",
+      "evidence": "08_CONSOLE/console_api_snapshots/console_api_results.json::remote_summary_query_token status 200"
+    }
+  ]
+}

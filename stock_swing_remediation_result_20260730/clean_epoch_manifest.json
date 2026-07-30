@@ -1,0 +1,4 @@
+{
+  "status": "BLOCKED",
+  "reason": "Requires 20 clean scheduled runs and 5 market sessions after deployment"
+}

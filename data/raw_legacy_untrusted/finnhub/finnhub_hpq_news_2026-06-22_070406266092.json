@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-22T07:04:06.266092+00:00",
+  "request_params": {
+    "symbol": "HPQ",
+    "from": "2026-06-19",
+    "to": "2026-06-22"
+  },
+  "payload": {
+    "symbol": "HPQ",
+    "news": [
+      {
+        "headline": "HPQ momentum update",
+        "summary": "HPQ shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/hpq",
+        "datetime": 1782111846,
+        "source": "synthetic",
+        "related": "HPQ"
+      }
+    ]
+  }
+}

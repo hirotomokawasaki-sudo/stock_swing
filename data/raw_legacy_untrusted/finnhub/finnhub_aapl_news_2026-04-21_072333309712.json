@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-04-21T07:23:33.309712+00:00",
+  "request_params": {
+    "symbol": "AAPL",
+    "from": "2026-04-18",
+    "to": "2026-04-21"
+  },
+  "payload": {
+    "symbol": "AAPL",
+    "news": [
+      {
+        "headline": "AAPL momentum update",
+        "summary": "AAPL shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/aapl",
+        "datetime": 1776756213,
+        "source": "synthetic",
+        "related": "AAPL"
+      }
+    ]
+  }
+}

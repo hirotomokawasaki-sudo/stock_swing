@@ -1,0 +1,1 @@
+{"source": "broker", "endpoint": "quotes/latest", "fetched_at": "2026-04-21T06:10:02.229375+00:00", "request_params": {"symbol": "AMZN"}, "payload": {"symbol": "AMZN", "quote": {"bp": 107.5, "ap": 107.7, "t": "2026-04-21T06:10:02.229373+00:00"}}}

@@ -1,0 +1,12 @@
+{
+  "total_decisions": 200,
+  "by_usage_source": {
+    "unknown": {
+      "n": 200,
+      "input_actual": 0,
+      "input_estimated": 0
+    }
+  },
+  "actual_and_estimated_separated": true,
+  "note": "rule_based_zero decisions have input_tokens_actual=0 (FIX-TOKEN-7)"
+}

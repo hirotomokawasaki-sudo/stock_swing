@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-05-28T15:03:50.936351+00:00",
+  "request_params": {
+    "symbol": "MSFT",
+    "from": "2026-05-25",
+    "to": "2026-05-28"
+  },
+  "payload": {
+    "symbol": "MSFT",
+    "news": [
+      {
+        "headline": "MSFT momentum update",
+        "summary": "MSFT shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/msft",
+        "datetime": 1779980630,
+        "source": "synthetic",
+        "related": "MSFT"
+      }
+    ]
+  }
+}

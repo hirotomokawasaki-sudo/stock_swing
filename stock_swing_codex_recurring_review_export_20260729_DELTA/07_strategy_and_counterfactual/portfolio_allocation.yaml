@@ -1,0 +1,62 @@
+# config/strategy/portfolio_allocation.yaml
+# SOURCE OF TRUTH: Stock 85% / ETF 15%前後
+# Updated: 2026-07-21 (Merge Spec 訂正: ETF-first → Stock 85 / ETF 15)
+# Backup: portfolio_allocation.yaml.bak_20260721 (旧: ETF=0.85 / Stock=0.15)
+#
+# 経緯:
+#   旧設定 (〜2026-07-21): ETF-first / stock_reduced モード (ETF 85% / Stock 15%)
+#   根拠だった ETF PF=1.353 vs Stock PF=0.772 は 07-14 rebuild 前の汚染データ
+#   現行方針 (ユーザー承認済み): Stock 85% / ETF 15% 前後
+#   実ポートフォリオ 07-21: Stock 90.9% / ETF 9.1% → 方針内で許容
+#
+# IMPORTANT: この値の変更にはユーザー承認が必要。ETF-first / stock-shadow への反転禁止。
+
+operating_mode: stock_primary
+# Modes: stock_primary | balanced | etf_primary
+# stock_primary: Stock 85% / ETF 15% 前後。現在の唯一の正式モード。
+# balanced: 50/50（将来の A/B 用）
+# etf_primary: 廃止。ユーザー承認なしに使用不可。
+
+portfolio:
+  allocation:
+    # Stock 85% / ETF 15% 前後が正式方針
+    stocks: 0.85
+    ETFs: 0.15
+  allocation_band:
+    # 推奨許容バンド（market value / equity ベース）
+    # stocks_max: Stock MV / equity（Stock+ETF+Cash）が85%を超えたら BUY ブロック
+    # 2026-07-28: 0.92 → 0.85（ユーザー指示: 資産全体の85%上限）
+    stocks_min: 0.70
+    stocks_max: 0.85
+    etf_min: 0.08
+    etf_max: 0.20
+  # order 後の projected allocation で判定
+  use_projected_allocation: true
+
+# position sizing multipliers
+# これらは戦略配分ではなく一時的 risk adjustment
+# R0-v2 完了後に見直し予定
+stock_new_buy_multiplier: 1.00
+# 2026-07-28: 0.25 → 0.50 → 1.00（ユーザー指示: paper はフルサイズ）
+# R0-v2/R1-v2/R2-v2 VERIFIED_COMPLETE + ledger VALID 達成のため引き上げ
+# 08-01 リアルトレード開始も 50% サイズ予定 → paper も同条件で検証
+# 1.0 = full size (08-01 以降の状況次第で昇格)
+# Note: multiplier は final qty に実際に適用し、console に before/after qty を表示すること
+
+etf_new_buy_multiplier: 1.0
+
+# Cluster / sector concentration caps
+sector_cap_pct: 0.80
+correlated_cluster_cap_pct: 0.40
+
+allocation_hard_limit_threshold: 0.10
+
+promotion_gate:
+  stock_full_size_multiplier_requires:
+    - min_clean_closed_trades: 30
+    - min_profit_factor: 1.0
+    - min_attribution_coverage_pct: 98.0
+    - max_consecutive_stop_loss: 5
+    - circuit_breaker_status: ok
+    - ledger_quality: VALID
+  # NOTE: promotion gate は汚染台帳コホートを入力に使わないこと (R0-v2 完了まで凍結)

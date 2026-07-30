@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-04T19:07:36.604495+00:00",
+  "request_params": {
+    "symbol": "CRM",
+    "from": "2026-06-01",
+    "to": "2026-06-04"
+  },
+  "payload": {
+    "symbol": "CRM",
+    "news": [
+      {
+        "headline": "CRM momentum update",
+        "summary": "CRM shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/crm",
+        "datetime": 1780600056,
+        "source": "synthetic",
+        "related": "CRM"
+      }
+    ]
+  }
+}

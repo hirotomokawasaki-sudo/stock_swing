@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-09T19:03:39.428778+00:00",
+  "request_params": {
+    "symbol": "NVDA",
+    "from": "2026-06-06",
+    "to": "2026-06-09"
+  },
+  "payload": {
+    "symbol": "NVDA",
+    "news": [
+      {
+        "headline": "NVDA momentum update",
+        "summary": "NVDA shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/nvda",
+        "datetime": 1781031819,
+        "source": "synthetic",
+        "related": "NVDA"
+      }
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "feature_name": "macro_regime",
+  "symbol": null,
+  "computed_at": "2026-04-21T06:11:59.139532+00:00",
+  "values": {
+    "regime": "expansion",
+    "confidence": 0.7
+  },
+  "metadata": {
+    "input_records": 6,
+    "indicators_used": [
+      "CPIAUCSL"
+    ]
+  },
+  "quality_flags": []
+}

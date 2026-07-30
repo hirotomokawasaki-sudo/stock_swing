@@ -1,0 +1,10 @@
+{
+  "market_date": "2026-07-29",
+  "captured_at": "2026-07-29T13:25:09.247971+00:00",
+  "source": "tracker_estimate",
+  "day_start_equity": null,
+  "day_start_unrealized": -1705.169994,
+  "missing_fields": [
+    "day_start_equity"
+  ]
+}

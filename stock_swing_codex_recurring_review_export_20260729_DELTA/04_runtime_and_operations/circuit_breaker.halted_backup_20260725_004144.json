@@ -1,0 +1,20 @@
+{
+  "action": "halt",
+  "clear_note": null,
+  "cleared_at": null,
+  "cleared_by": null,
+  "reason": "guardrail_halt",
+  "status": "halted",
+  "triggered_at": "2026-07-24T13:35:20.729734+00:00",
+  "triggered_rules": [
+    {
+      "action": 5,
+      "metric": "broker_tracker_mismatch_count",
+      "name": "broker_tracker_mismatch",
+      "observed": 1.0,
+      "operator": ">=",
+      "severity": "critical",
+      "threshold": 1.0
+    }
+  ]
+}

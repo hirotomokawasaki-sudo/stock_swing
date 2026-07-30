@@ -1,0 +1,5 @@
+{
+  "status": "BLOCKED",
+  "reason": "SourceValidationError: [broker] tried to set the page size to 200, but the maximum is 100",
+  "captured_at_utc": "2026-07-30T01:24:06.434442+00:00"
+}

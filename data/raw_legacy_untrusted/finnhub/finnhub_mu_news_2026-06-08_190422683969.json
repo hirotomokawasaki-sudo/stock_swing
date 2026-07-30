@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-08T19:04:22.683969+00:00",
+  "request_params": {
+    "symbol": "MU",
+    "from": "2026-06-05",
+    "to": "2026-06-08"
+  },
+  "payload": {
+    "symbol": "MU",
+    "news": [
+      {
+        "headline": "MU momentum update",
+        "summary": "MU shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/mu",
+        "datetime": 1780945462,
+        "source": "synthetic",
+        "related": "MU"
+      }
+    ]
+  }
+}

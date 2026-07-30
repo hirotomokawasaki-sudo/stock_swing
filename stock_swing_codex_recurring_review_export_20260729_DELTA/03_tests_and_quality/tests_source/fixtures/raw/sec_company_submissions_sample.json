@@ -1,0 +1,52 @@
+{
+  "cik": "320193",
+  "entityType": "operating",
+  "sic": "3571",
+  "sicDescription": "Electronic Computers",
+  "name": "Apple Inc.",
+  "tickers": ["AAPL"],
+  "exchanges": ["Nasdaq"],
+  "filings": {
+    "recent": {
+      "accessionNumber": [
+        "0000320193-26-000012",
+        "0000320193-26-000008",
+        "0000320193-25-000124"
+      ],
+      "filingDate": [
+        "2026-03-05",
+        "2026-02-01",
+        "2025-11-02"
+      ],
+      "reportDate": [
+        "2026-03-04",
+        "2025-12-28",
+        "2025-09-28"
+      ],
+      "acceptanceDateTime": [
+        "2026-03-05T21:32:00.000Z",
+        "2026-02-01T16:30:00.000Z",
+        "2025-11-02T16:30:00.000Z"
+      ],
+      "act": ["34", "34", "34"],
+      "form": ["8-K", "10-Q", "10-K"],
+      "fileNumber": ["001-36743", "001-36743", "001-36743"],
+      "filmNumber": ["26678901", "26567890", "25987654"],
+      "items": ["2.02, 9.01", "", ""],
+      "size": [123456, 987654, 1234567],
+      "isXBRL": [0, 1, 1],
+      "isInlineXBRL": [0, 1, 1],
+      "primaryDocument": [
+        "aapl-20260304.htm",
+        "aapl-20251228.htm",
+        "aapl-20250928.htm"
+      ],
+      "primaryDocDescription": [
+        "8-K",
+        "10-Q",
+        "10-K"
+      ]
+    }
+  },
+  "note": "Sample SEC company submissions response for Apple Inc. (CIK 0000320193)"
+}

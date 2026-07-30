@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-07-25T03:03:52.562062+00:00",
+  "request_params": {
+    "symbol": "SNOW",
+    "from": "2026-07-22",
+    "to": "2026-07-25"
+  },
+  "payload": {
+    "symbol": "SNOW",
+    "news": [
+      {
+        "headline": "SNOW momentum update",
+        "summary": "SNOW shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/snow",
+        "datetime": 1784948632,
+        "source": "synthetic",
+        "related": "SNOW"
+      }
+    ]
+  }
+}

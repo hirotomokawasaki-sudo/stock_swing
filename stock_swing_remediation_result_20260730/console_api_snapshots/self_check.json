@@ -1,0 +1,153 @@
+{
+  "ok": true,
+  "root": "/Users/hirotomookawasaki/stock_swing",
+  "generated_at": "2026-07-30T01:38:05.477935+00:00",
+  "checks": {
+    "pnl_state": {
+      "ok": true,
+      "path": "data/tracking/pnl_state.json"
+    },
+    "recent_decisions": {
+      "ok": false,
+      "path": "data/decisions/recent_decisions.json",
+      "severity": "warning"
+    },
+    "exports_summary_stats": {
+      "ok": false,
+      "path": "exports/summary_stats.json",
+      "severity": "warning"
+    },
+    "exports_closed_trades": {
+      "ok": false,
+      "path": "exports/closed_trades.csv",
+      "severity": "warning"
+    },
+    "exports_open_positions": {
+      "ok": false,
+      "path": "exports/open_positions.csv",
+      "severity": "warning"
+    },
+    "price_overrides": {
+      "ok": true,
+      "path": "data/price_overrides.json",
+      "severity": "ok"
+    },
+    "pending_exit_reasons": {
+      "ok": true,
+      "path": "data/tracking/pending_exit_reasons.json",
+      "severity": "ok"
+    },
+    "static_ui": {
+      "ok": true,
+      "path": "console/ui",
+      "severity": "ok"
+    }
+  },
+  "warnings": [
+    "Optional file missing: data/decisions/recent_decisions.json — some analytics will be unavailable.",
+    "Optional file missing: exports/summary_stats.json — some analytics will be unavailable.",
+    "Optional file missing: exports/closed_trades.csv — some analytics will be unavailable.",
+    "Optional file missing: exports/open_positions.csv — some analytics will be unavailable.",
+    "Critical operational evidence missing: ledger_validity, guardrail_metric_freshness, console_summary_freshness, source_sla"
+  ],
+  "health_status": "blocked",
+  "health_score": 49,
+  "health_evidence_status": "invalid",
+  "critical_missing": [
+    "ledger_validity",
+    "guardrail_metric_freshness",
+    "console_summary_freshness",
+    "source_sla"
+  ],
+  "health_evidence": {
+    "ledger_validity": {
+      "critical": true,
+      "ok": false,
+      "status": "VALID",
+      "last_checked": "2026-07-28",
+      "age_seconds": 178675,
+      "stale": true,
+      "detail": "config/runtime/current_mode.yaml:ledger_quality_gate"
+    },
+    "guardrail_metric_freshness": {
+      "critical": true,
+      "ok": false,
+      "cb_status": "ok",
+      "cb_as_of": "2026-07-25T00:41:44.275439+00:00",
+      "cb_age_seconds": 435371,
+      "market_date": "2026-07-29",
+      "expected_market_date": "2026-07-30",
+      "captured_at": "2026-07-29T13:25:09.247971+00:00",
+      "captured_age_seconds": 43966,
+      "source": "tracker_estimate",
+      "missing_fields": [
+        "day_start_equity"
+      ],
+      "problems": [
+        "stale_circuit_breaker",
+        "market_date_mismatch",
+        "missing_day_start_metrics"
+      ],
+      "detail": "data/guardrails/circuit_breaker.json + day_start_snapshot.json"
+    },
+    "broker_tracker_reconciliation": {
+      "critical": true,
+      "ok": true,
+      "as_of": "2026-07-30T01:30:04.990377+00:00",
+      "age_seconds": 470,
+      "mismatch_count": 0,
+      "stale": false,
+      "detail": "data/audits/reconcile_status.json"
+    },
+    "console_summary_freshness": {
+      "critical": true,
+      "ok": false,
+      "age_seconds": 20557,
+      "stale": true,
+      "detail": "reports/console/latest_console_summary.json"
+    },
+    "source_sla": {
+      "critical": true,
+      "ok": false,
+      "required_sources": [
+        "broker",
+        "finnhub"
+      ],
+      "failing_sources": [
+        "broker",
+        "finnhub"
+      ],
+      "sources": [
+        {
+          "source": "broker",
+          "ok": false,
+          "reason": "missing_status"
+        },
+        {
+          "source": "finnhub",
+          "ok": false,
+          "as_of": "2026-07-29T23:04:26.288621+00:00",
+          "age_seconds": 9209,
+          "timed_out": false,
+          "coverage_ratio": 0.977273,
+          "coverage_pct": 97.727,
+          "required_min_coverage": 0.995,
+          "failure_reasons": [
+            "no_company_news"
+          ],
+          "stale": false
+        }
+      ],
+      "detail": "config/sources/*.yaml + data/audits/*_status.json"
+    },
+    "cron_run_history": {
+      "critical": true,
+      "ok": true,
+      "enabled_jobs": 12,
+      "parsed_jobs": 12,
+      "parse_coverage": 1.0,
+      "parse_errors": [],
+      "detail": "openclaw cron list --json + openclaw cron runs --limit"
+    }
+  }
+}

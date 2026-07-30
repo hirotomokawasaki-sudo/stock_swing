@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-08T19:03:33.287857+00:00",
+  "request_params": {
+    "symbol": "GOOGL",
+    "from": "2026-06-05",
+    "to": "2026-06-08"
+  },
+  "payload": {
+    "symbol": "GOOGL",
+    "news": [
+      {
+        "headline": "GOOGL momentum update",
+        "summary": "GOOGL shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/googl",
+        "datetime": 1780945413,
+        "source": "synthetic",
+        "related": "GOOGL"
+      }
+    ]
+  }
+}

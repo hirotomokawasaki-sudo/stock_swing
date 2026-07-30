@@ -1,0 +1,6 @@
+requirement_id,path_or_dataset,missing_scope,reason,review_impact,recovery_action,owner
+M1,run_id/experiment_id coverage (closed trades),legacy trades pre-2026-07-29,these trades predate P6 fix; only new runs will have coverage,MEDIUM,wait for live paper runs post-fix,system
+M2,broker account/positions snapshot,fresh broker API data,console not running at retest time; market closed or service unavailable,HIGH,run during market hours with console up,system
+M3,p6_join_coverage.json actual data,file requires live paper_demo run,retest snapshot did not include a newly generated join coverage file,MEDIUM,will be generated on next scheduled run,system
+M4,fill_ledger.jsonl populated,requires live reconcile run,no live runs yet with new fill ledger code,MEDIUM,will populate on next reconcile run,system
+M5,source coverage >=99.5%,aggregate real-time coverage metric,snapshot contains per-symbol status but no explicit aggregate coverage ratio,MEDIUM,check news_collection_status.json after market open / next SLA report,system

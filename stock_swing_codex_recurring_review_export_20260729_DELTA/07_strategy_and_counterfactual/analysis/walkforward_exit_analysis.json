@@ -1,0 +1,41 @@
+{
+  "trades_analysed": 228,
+  "scenarios": {
+    "current": {
+      "total_pnl": 109573.79,
+      "win_count": 126,
+      "delta_vs_current": 0.0
+    },
+    "tighter_stop": {
+      "total_pnl": 126768.7,
+      "win_count": 126,
+      "delta_vs_current": 17194.92
+    },
+    "wider_stop": {
+      "total_pnl": 102748.81,
+      "win_count": 126,
+      "delta_vs_current": -6824.98
+    },
+    "earlier_trail": {
+      "total_pnl": 115848.53,
+      "win_count": 127,
+      "delta_vs_current": 6274.75
+    },
+    "later_trail": {
+      "total_pnl": 104765.12,
+      "win_count": 126,
+      "delta_vs_current": -4808.67
+    },
+    "aggressive": {
+      "total_pnl": 133043.45,
+      "win_count": 127,
+      "delta_vs_current": 23469.66
+    },
+    "conservative": {
+      "total_pnl": 94352.46,
+      "win_count": 126,
+      "delta_vs_current": -15221.32
+    }
+  },
+  "best_scenario": "aggressive"
+}

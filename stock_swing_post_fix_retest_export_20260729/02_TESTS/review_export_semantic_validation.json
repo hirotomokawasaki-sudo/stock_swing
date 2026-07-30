@@ -1,0 +1,38 @@
+{
+  "snapshot_id": "0288631a317e14a941d9",
+  "previous_review_export_path": "/Users/hirotomookawasaki/stock_swing/stock_swing_codex_recurring_review_export_20260729_DELTA",
+  "checks": [
+    {
+      "id": "previous_export_required_file_00_control/EXPORT_MANIFEST.json",
+      "status": "PASS",
+      "path": "00_control/EXPORT_MANIFEST.json"
+    },
+    {
+      "id": "previous_export_required_file_00_control/EXPORT_VALIDATION.json",
+      "status": "PASS",
+      "path": "00_control/EXPORT_VALIDATION.json"
+    },
+    {
+      "id": "previous_export_required_file_00_control/CHECKSUMS.sha256",
+      "status": "PASS",
+      "path": "00_control/CHECKSUMS.sha256"
+    },
+    {
+      "id": "previous_export_checksum_match",
+      "status": "FAIL",
+      "checked": 518,
+      "mismatches": [
+        {
+          "path": "00_control/GENERATION_LOG.txt",
+          "expected": "610a5b295797e7ac19586143e8e340d667cccc36cff6134c52640341ec8ff987",
+          "actual": "a47c26d642d07bb1dc020e9b2a50517389cfb973b0571c6a9ae854dabfc17f2c"
+        },
+        {
+          "path": "03_tests_and_quality/pytest_output_plain.txt",
+          "expected": "865c5be7234c9a7ba732a52d7aedd815fa505b406ba4e4c1a1a9b03508955f15",
+          "actual": "328f272380212ad2f8ea25ff99bf79343fd36ad26c3f1ba931738ffd366e7d56"
+        }
+      ]
+    }
+  ]
+}

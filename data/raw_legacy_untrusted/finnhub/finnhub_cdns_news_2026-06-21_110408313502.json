@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-21T11:04:08.313502+00:00",
+  "request_params": {
+    "symbol": "CDNS",
+    "from": "2026-06-18",
+    "to": "2026-06-21"
+  },
+  "payload": {
+    "symbol": "CDNS",
+    "news": [
+      {
+        "headline": "CDNS momentum update",
+        "summary": "CDNS shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/cdns",
+        "datetime": 1782039848,
+        "source": "synthetic",
+        "related": "CDNS"
+      }
+    ]
+  }
+}

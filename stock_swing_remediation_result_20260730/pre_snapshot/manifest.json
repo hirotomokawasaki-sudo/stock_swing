@@ -1,0 +1,237 @@
+{
+  "captured_at_utc": "2026-07-30T01:24:06.434442+00:00",
+  "project_root": "/Users/hirotomookawasaki/stock_swing",
+  "snapshot_dir": "/Users/hirotomookawasaki/stock_swing/stock_swing_remediation_snapshot_20260730",
+  "items": {
+    "meta/git_branch_status.txt": {
+      "sha256": "f178beedaa414cccc4fb929ae8241bba1c038f26605995dd48bac53b11e7631d",
+      "bytes": 1880
+    },
+    "meta/git_head.txt": {
+      "sha256": "567e31d0deed4813a59287c084e5d63462d8ce41e36178dc1ec40ef82d30cbbf",
+      "bytes": 56
+    },
+    "meta/git_diff_stat.txt": {
+      "sha256": "01b9843256e825c0c991d89f2cb33056ad2f8519658e0a3f23e98d4f982a9e35",
+      "bytes": 1853
+    },
+    "meta/git_diff.patch": {
+      "sha256": "3103e277adc2edceed5cc9a16afd348cd5882af969629846523419156954303f",
+      "bytes": 172314
+    },
+    "meta/python_version.txt": {
+      "sha256": "6cd8b205836d3764ad985a37efdbec8c740dcf0a85fa4078d2aafbcd62b9b09a",
+      "bytes": 28
+    },
+    "meta/pytest_version.txt": {
+      "sha256": "2730898c97bea04dd92eb6237d5d393482f1aeb4c99a4aad106751015abda9bb",
+      "bytes": 101
+    },
+    "meta/pip_freeze.txt": {
+      "sha256": "e8b80e314719fb622d1e4ab1828ce0c37e7049f2c87e258009af1119f24c5784",
+      "bytes": 1043
+    },
+    "config/config_hash_manifest.json": {
+      "sha256": "2da27204a72b54c231ed6050e70790954c00f048e92ef870f88e464569caf551",
+      "bytes": 3341
+    },
+    "config/current_mode.yaml.txt": {
+      "sha256": "3f70ba4f79687e0df7c729e493a17be6796d31c22fa60f3459970338e269b8e0",
+      "bytes": 4727
+    },
+    "config/autonomous_stop.yaml.txt": {
+      "sha256": "89dde5ef01f3c0fe1f4f2248497a3ead39b3ed88f67cd98cde559120ef202603",
+      "bytes": 1512
+    },
+    "config/portfolio_allocation.yaml.txt": {
+      "sha256": "d89a0828ff737e400b7b6e8edf6fe8c80c91231e114752a9aeb0daed3a696011",
+      "bytes": 2612
+    },
+    "config/default_experiment.yaml.txt": {
+      "sha256": "900758254618590c7d00065a6366df6ed273df6f3fecb76f62b7aa5c8d352bdc",
+      "bytes": 164
+    },
+    "config/finnhub.yaml.txt": {
+      "sha256": "64459c0c51ed74a3fa4b50060a819e6adee3f0483fa3b339a0287ffe1b45de17",
+      "bytes": 257
+    },
+    "config/fred.yaml.txt": {
+      "sha256": "edcf4562a1e1f4b4878e927847e37b7b3f2db961680285756f6d1baba42fa1f2",
+      "bytes": 309
+    },
+    "config/sec.yaml.txt": {
+      "sha256": "9e15d23a5306c6dfa899d761be1363ce44d76ec3783073e10b4ac37413014a00",
+      "bytes": 258
+    },
+    "config/broker.yaml.txt": {
+      "sha256": "13d6583125ccf695c99d1f8f88a7acbfcbce632f62cde92b908bdd3223f69e75",
+      "bytes": 264
+    },
+    "broker/account.json": {
+      "sha256": "dc3950f191110daa83bb52c32067ff2cb3e5b62b1277df8245e69d480f175407",
+      "bytes": 1212
+    },
+    "broker/positions.json": {
+      "sha256": "610e54fa36782112c0f9b5a6d9e4c79c2c65c49213be0d79a144037cef5637ce",
+      "bytes": 2894
+    },
+    "broker/orders.json": {
+      "sha256": "960e91db3bcc858205b9e7beae25bdd097d353cb419cba603dc4d1a3f6480f52",
+      "bytes": 554243
+    },
+    "broker/activities.json": {
+      "sha256": "ded4a798337d2d8f94ed44f21c3a241fc4e06ef463f83e0d2dbfe2ef4b09f92a",
+      "bytes": 187
+    },
+    "broker/immutable_fill_snapshot.json": {
+      "sha256": "86ab9e39bd8bfac05e230fa4065098940548aab3b573d3d196b99f18a9df9169",
+      "bytes": 157
+    },
+    "tracker/pnl_state.json": {
+      "sha256": "d7a4b44db0ee3ba3e3a2babbd9ad88257e8fcb3f75eee9c5f6f27a1f778f6c7a",
+      "bytes": 380575
+    },
+    "tracker/trade_events.jsonl": {
+      "sha256": "86dfa4d0b5beefc5c033166df36476158617eed052fcc85b3314ce63a21e7902",
+      "bytes": 137485
+    },
+    "tracker/fill_ledger.jsonl": {
+      "sha256": "95710262487fb00fcfb7be2defc8d6d27c4d93d938f0e4c61e8894c0a3e2666d",
+      "bytes": 139
+    },
+    "tracker/fill_consumed_ledger.json": {
+      "sha256": "da1daebaa30574bfe7813f6cc098e05dbf788fa6b9478ed1ca1d6c62a23f2737",
+      "bytes": 147
+    },
+    "guardrails/circuit_breaker.json": {
+      "sha256": "8d56a8ac8b4bcd1e3ed7249d8cb5738777c6016f096f2368520630171978b914",
+      "bytes": 681
+    },
+    "guardrails/risk_monitor_state.json": {
+      "sha256": "145adc6772d88573424c1e37197bdbd86ff5bfa97695c8430f6ccb36fcac31d6",
+      "bytes": 147
+    },
+    "guardrails/day_start_snapshot.json": {
+      "sha256": "46cf00c04febdad283d07626ffc7bebc3de0b0af81614ce17f316f893c22273a",
+      "bytes": 236
+    },
+    "console/reconcile_status.json": {
+      "sha256": "f7527c190ff332025b5ecb6b1e6914b9c1563f8914bd49a5d030cd79ca5ec651",
+      "bytes": 204
+    },
+    "console/latest_console_summary.json": {
+      "sha256": "220a8ef77216183dadfce6491752a7949905401e0da58d6b8ed006deee5be387",
+      "bytes": 10675
+    },
+    "data_quality/token_usage.csv": {
+      "sha256": "17f855b086e2c7d240e9b4be05212f1f761c17929164e00959fe4ec58dd1e988",
+      "bytes": 342455
+    },
+    "tracker/trade_state_summary.json": {
+      "sha256": "3cae7e52b8875d449fab500ee13c9ece80ce3a4ac9bd80eefd35671eae74923a",
+      "bytes": 166
+    },
+    "cron/cron_list_raw.json": {
+      "sha256": "cb1b2292e9687ddfabf2cdd63cdcd92a1e86327fef7147c5c1a49ad0d32208e4",
+      "bytes": 33989
+    },
+    "cron/cron_list_parsed.json": {
+      "sha256": "c94a6260abee8f06f8e4d6099df1dc10b74e5e1add37d28c67459c80ff9bea94",
+      "bytes": 31019
+    },
+    "cron/cron_runs_raw.json": {
+      "sha256": "e097626fde1f8632adef5e5f44b49292999c67302bbd67bb51ce0b2a99d5ea23",
+      "bytes": 2222
+    },
+    "cron/cron_parse_coverage.json": {
+      "sha256": "503944044928975dd9a24c8fa8c01757f55d9549f07c5c3378c2cfbec915db44",
+      "bytes": 110
+    },
+    "console/system_status_service.json": {
+      "sha256": "ad12ff97e8869c71b88509655676d9899eb5658569607eef524196e8ac684a5c",
+      "bytes": 5681
+    },
+    "console/overview_service.json": {
+      "sha256": "79616c3a1b59a006f860bb44cee2290b21664049234229d1a4aa23a127c3c107",
+      "bytes": 2104
+    },
+    "console/cron_jobs_service.json": {
+      "sha256": "5c31142fbdc2a3a1a21249e3e8d7ca91ed8fb6f9bc13045b3086802c6092d920",
+      "bytes": 34484
+    },
+    "console/self_check_service.json": {
+      "sha256": "05cc481de03be96961aaab15a27e83faadb4928f646ce46312b31fc0ee945705",
+      "bytes": 1511
+    },
+    "console/console_health_http.json": {
+      "sha256": "3ad1dda96bb9da025042d26c75554e35d5ec988732650ca3d18e0b6fe7782af6",
+      "bytes": 153
+    },
+    "console/console_dashboard_http.json": {
+      "sha256": "3ad1dda96bb9da025042d26c75554e35d5ec988732650ca3d18e0b6fe7782af6",
+      "bytes": 153
+    },
+    "console/remote_health_http.json": {
+      "sha256": "0592db4dd9a73378574a086707af5d26203b8e00509337335b04831660a0f3b4",
+      "bytes": 629
+    },
+    "console/remote_query_token_probe.json": {
+      "sha256": "0c5b0bb715cec5ce5753c485cf5ad92315397d427e8cee84b2390d8390bd06d5",
+      "bytes": 137
+    },
+    "console/parameter_write_probe.json": {
+      "sha256": "50e0d11af5cf63892f59d626614ae075d4ab10f9ad3c0859f5944eba720ce48f",
+      "bytes": 172
+    },
+    "data_quality/source_lineage_scan.json": {
+      "sha256": "4135801ef1318a1c51de1a620291af86140caf546bf7ba167bd79f1538c8a082",
+      "bytes": 17662
+    },
+    "hashes/target_files_sha256.json": {
+      "sha256": "80476ecbb0e371da3ad5f95872b1b5b5328c3f5801874aa5af81ca9dd21fd9c2",
+      "bytes": 2878
+    }
+  },
+  "failures": [
+    {
+      "path": "broker/activities.json",
+      "status": "BLOCKED",
+      "reason": "SourceValidationError: [broker] tried to set the page size to 200, but the maximum is 100"
+    },
+    {
+      "path": "broker/immutable_fill_snapshot.json",
+      "status": "MISSING",
+      "reason": "No fill activities returned from broker activities endpoint"
+    },
+    {
+      "path": "tracker/fill_ledger.jsonl",
+      "status": "MISSING",
+      "reason": "data/tracking/fill_ledger.jsonl not found"
+    },
+    {
+      "path": "tracker/fill_consumed_ledger.json",
+      "status": "MISSING",
+      "reason": "data/tracking/fill_consumed_ledger.json not found"
+    },
+    {
+      "path": "guardrails/risk_monitor_state.json",
+      "status": "MISSING",
+      "reason": "data/guardrails/risk_monitor_state.json not found"
+    },
+    {
+      "path": "console/console_health_http.json",
+      "status": "BLOCKED",
+      "reason": "URLError: <urlopen error [Errno 61] Connection refused>"
+    },
+    {
+      "path": "console/console_dashboard_http.json",
+      "status": "BLOCKED",
+      "reason": "URLError: <urlopen error [Errno 61] Connection refused>"
+    },
+    {
+      "path": "console/remote_query_token_probe.json",
+      "status": "BLOCKED",
+      "reason": "HTTPError: HTTP Error 401: Unauthorized"
+    }
+  ]
+}

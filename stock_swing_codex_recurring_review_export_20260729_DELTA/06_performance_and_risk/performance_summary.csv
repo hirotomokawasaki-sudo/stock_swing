@@ -1,0 +1,7 @@
+window,n,total_realized_pnl,profit_factor,win_rate_pct,average_win,average_loss,payoff_ratio,expectancy_per_trade
+all,205,0,,0.0,,,,0.0
+30d,57,0,,0.0,,,,0.0
+90d,199,0,,0.0,,,,0.0
+180d,199,0,,0.0,,,,0.0
+365d,199,0,,0.0,,,,0.0
+since_baseline,13,0,,0.0,,,,0.0

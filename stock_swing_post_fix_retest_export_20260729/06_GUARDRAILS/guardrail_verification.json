@@ -1,0 +1,38 @@
+{
+  "snapshot_id": "0288631a317e14a941d9",
+  "as_of_utc": "2026-07-29T10:18:06.302948+00:00",
+  "circuit_breaker_status": "ok",
+  "risk_monitor_state_current_date": "2026-05-01",
+  "risk_monitor_state_age_days": 89.43,
+  "fail_closed_evidence": {
+    "hard_mode_setup_postrun_tests": "tests/unit/test_guardrail_fix005.py passed in scenario run",
+    "missing_metric_not_zero": "test_guardrail_missing_metric_not_zero passed",
+    "console_status_if_stale": "see console snapshots"
+  },
+  "metric_sources": [
+    {
+      "metric": "daily_total_loss_pct",
+      "value": null,
+      "source": "computed runtime RiskSnapshot; no current raw metric file",
+      "freshness": "stale_or_missing"
+    },
+    {
+      "metric": "weekly_total_loss_pct",
+      "value": null,
+      "source": "not present in current snapshot",
+      "freshness": "stale_or_missing"
+    },
+    {
+      "metric": "broker_tracker_mismatch_count",
+      "value": 1,
+      "source": "reports/console/latest_console_summary.json",
+      "freshness": "snapshot"
+    },
+    {
+      "metric": "circuit_breaker_status",
+      "value": "ok",
+      "source": "data/guardrails/circuit_breaker.json",
+      "freshness": "snapshot"
+    }
+  ]
+}

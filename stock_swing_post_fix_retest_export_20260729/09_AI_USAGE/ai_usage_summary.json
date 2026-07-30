@@ -1,0 +1,18 @@
+{
+  "snapshot_id": "0288631a317e14a941d9",
+  "as_of_utc": "2026-07-29T10:18:06.302948+00:00",
+  "rows": 1965,
+  "by_usage_source": {
+    "estimated_rule_based": {
+      "rows": 1939,
+      "tokens": 416578.0
+    },
+    "UNKNOWN": {
+      "rows": 26,
+      "tokens": 36778.0
+    }
+  },
+  "actual_provider_tokens": 0,
+  "estimated_tokens": 453356.0,
+  "rule_based_zero_tokens": 0
+}

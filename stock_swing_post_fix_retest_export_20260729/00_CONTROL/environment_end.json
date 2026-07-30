@@ -1,0 +1,5 @@
+{
+  "finished_at_utc": "2026-07-29T10:21:23.092167+00:00",
+  "git_commit_end": "f407b27162e7e7d3f8aed8c8a8e3ce82b1e0b3e5",
+  "git_status_short": " M data/tracking/trade_events.jsonl\n?? data/tracking/pnl_state.json.backup_hd_fix_20260729_185838\n?? stock_swing_codex_recurring_review_export_20260729_DELTA/\n?? stock_swing_post_fix_retest_export_20260729/\n?? stock_swing_post_fix_retest_mail_safe_20260729/\n?? stock_swing_review_mail_safe_20260729/\n"
+}

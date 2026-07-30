@@ -1,0 +1,19 @@
+{
+  "feature_name": "price_momentum",
+  "symbol": "AMZN",
+  "computed_at": "2026-04-21T06:15:08.659764+00:00",
+  "values": {
+    "momentum": 0.04798165137614682,
+    "trend": "bullish",
+    "bars_used": 5,
+    "atr": 3.3419999999999987,
+    "risk_per_share": 6.6839999999999975,
+    "stop_price": 107.546,
+    "latest_close": 114.23
+  },
+  "metadata": {
+    "earliest_time": "2026-04-17T06:15:08+00:00",
+    "latest_time": "2026-04-21T06:15:08+00:00"
+  },
+  "quality_flags": []
+}

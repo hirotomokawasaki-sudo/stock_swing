@@ -1,0 +1,1 @@
+{"source": "broker", "endpoint": "quotes/latest", "fetched_at": "2026-04-21T06:11:59.093052+00:00", "request_params": {"symbol": "TSLA"}, "payload": {"symbol": "TSLA", "quote": {"bp": 110.0, "ap": 110.2, "t": "2026-04-21T06:11:59.093051+00:00"}}}

@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-22T07:04:07.293910+00:00",
+  "request_params": {
+    "symbol": "SNPS",
+    "from": "2026-06-19",
+    "to": "2026-06-22"
+  },
+  "payload": {
+    "symbol": "SNPS",
+    "news": [
+      {
+        "headline": "SNPS momentum update",
+        "summary": "SNPS shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/snps",
+        "datetime": 1782111847,
+        "source": "synthetic",
+        "related": "SNPS"
+      }
+    ]
+  }
+}

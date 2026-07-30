@@ -1,0 +1,4 @@
+{
+  "error": "unauthorized",
+  "message": "Set REMOTE_READONLY_TOKEN on the server and send Authorization: Bearer <token>."
+}

@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-08T19:05:47.245943+00:00",
+  "request_params": {
+    "symbol": "ADBE",
+    "from": "2026-06-05",
+    "to": "2026-06-08"
+  },
+  "payload": {
+    "symbol": "ADBE",
+    "news": [
+      {
+        "headline": "ADBE momentum update",
+        "summary": "ADBE shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/adbe",
+        "datetime": 1780945547,
+        "source": "synthetic",
+        "related": "ADBE"
+      }
+    ]
+  }
+}

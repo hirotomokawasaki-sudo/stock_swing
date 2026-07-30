@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-07-11T15:03:56.821689+00:00",
+  "request_params": {
+    "symbol": "FICO",
+    "from": "2026-07-08",
+    "to": "2026-07-11"
+  },
+  "payload": {
+    "symbol": "FICO",
+    "news": [
+      {
+        "headline": "FICO momentum update",
+        "summary": "FICO shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/fico",
+        "datetime": 1783782236,
+        "source": "synthetic",
+        "related": "FICO"
+      }
+    ]
+  }
+}

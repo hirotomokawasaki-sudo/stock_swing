@@ -1,0 +1,6 @@
+{
+  "ok": true,
+  "service": "stock_swing_console",
+  "time": "2026-07-29T19:10:44.254054+09:00",
+  "project_root": "/Users/hirotomookawasaki/stock_swing"
+}

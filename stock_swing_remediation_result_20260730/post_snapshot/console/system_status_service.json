@@ -1,0 +1,107 @@
+{
+  "time": "2026-07-30T10:37:00.024296+09:00",
+  "runtime_mode": "paper",
+  "api_keys_configured": true,
+  "venv_exists": true,
+  "score": 49,
+  "status": "blocked",
+  "evidence": {
+    "ledger_validity": {
+      "critical": true,
+      "ok": false,
+      "status": "VALID",
+      "last_checked": "2026-07-28",
+      "age_seconds": 178620,
+      "stale": true,
+      "detail": "config/runtime/current_mode.yaml:ledger_quality_gate"
+    },
+    "guardrail_metric_freshness": {
+      "critical": true,
+      "ok": false,
+      "cb_status": "ok",
+      "cb_as_of": "2026-07-25T00:41:44.275439+00:00",
+      "cb_age_seconds": 435316,
+      "market_date": "2026-07-29",
+      "expected_market_date": "2026-07-30",
+      "captured_at": "2026-07-29T13:25:09.247971+00:00",
+      "captured_age_seconds": 43911,
+      "source": "tracker_estimate",
+      "missing_fields": [
+        "day_start_equity"
+      ],
+      "problems": [
+        "stale_circuit_breaker",
+        "market_date_mismatch",
+        "missing_day_start_metrics"
+      ],
+      "detail": "data/guardrails/circuit_breaker.json + day_start_snapshot.json"
+    },
+    "broker_tracker_reconciliation": {
+      "critical": true,
+      "ok": true,
+      "as_of": "2026-07-30T01:30:04.990377+00:00",
+      "age_seconds": 415,
+      "mismatch_count": 0,
+      "stale": false,
+      "detail": "data/audits/reconcile_status.json"
+    },
+    "console_summary_freshness": {
+      "critical": true,
+      "ok": false,
+      "age_seconds": 20502,
+      "stale": true,
+      "detail": "reports/console/latest_console_summary.json"
+    },
+    "source_sla": {
+      "critical": true,
+      "ok": false,
+      "required_sources": [
+        "broker",
+        "finnhub"
+      ],
+      "failing_sources": [
+        "broker",
+        "finnhub"
+      ],
+      "sources": [
+        {
+          "source": "broker",
+          "ok": false,
+          "reason": "missing_status"
+        },
+        {
+          "source": "finnhub",
+          "ok": false,
+          "as_of": "2026-07-29T23:04:26.288621+00:00",
+          "age_seconds": 9154,
+          "timed_out": false,
+          "coverage_ratio": 0.977273,
+          "coverage_pct": 97.727,
+          "required_min_coverage": 0.995,
+          "failure_reasons": [
+            "no_company_news"
+          ],
+          "stale": false
+        }
+      ],
+      "detail": "config/sources/*.yaml + data/audits/*_status.json"
+    },
+    "cron_run_history": {
+      "critical": true,
+      "ok": true,
+      "enabled_jobs": 12,
+      "parsed_jobs": 12,
+      "parse_coverage": 1.0,
+      "parse_errors": [],
+      "detail": "openclaw cron list --json + openclaw cron runs --limit"
+    }
+  },
+  "critical_missing": [
+    "ledger_validity",
+    "guardrail_metric_freshness",
+    "console_summary_freshness",
+    "source_sla"
+  ],
+  "noncritical_issues": [],
+  "evidence_status": "invalid"
+}

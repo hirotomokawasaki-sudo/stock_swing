@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-06-11T19:04:13.505802+00:00",
+  "request_params": {
+    "symbol": "TSLA",
+    "from": "2026-06-08",
+    "to": "2026-06-11"
+  },
+  "payload": {
+    "symbol": "TSLA",
+    "news": [
+      {
+        "headline": "TSLA momentum update",
+        "summary": "TSLA shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/tsla",
+        "datetime": 1781204653,
+        "source": "synthetic",
+        "related": "TSLA"
+      }
+    ]
+  }
+}

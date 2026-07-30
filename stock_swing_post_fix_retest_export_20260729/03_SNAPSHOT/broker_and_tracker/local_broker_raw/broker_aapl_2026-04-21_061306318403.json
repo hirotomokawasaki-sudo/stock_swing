@@ -1,0 +1,1 @@
+{"source": "broker", "endpoint": "quotes/latest", "fetched_at": "2026-04-21T06:13:06.318403+00:00", "request_params": {"symbol": "AAPL"}, "payload": {"symbol": "AAPL", "quote": {"bp": 100.0, "ap": 100.2, "t": "2026-04-21T06:13:06.318278+00:00"}}}

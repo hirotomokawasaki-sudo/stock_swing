@@ -1,0 +1,36 @@
+[
+  {
+    "dimension": "asset_class",
+    "value": "etf",
+    "n": 35,
+    "wins": 21,
+    "losses": 14,
+    "gross_profit": 62283.73,
+    "gross_loss": -47506.33,
+    "net_pnl": 14777.4,
+    "profit_factor": 1.3111,
+    "win_rate": 0.6,
+    "avg_win": 2965.89,
+    "avg_loss": -3393.31,
+    "expectancy": 422.21,
+    "avg_return_pct": 0.0295,
+    "cvar_5pct_trade_pnl": -5593.55
+  },
+  {
+    "dimension": "asset_class",
+    "value": "stock",
+    "n": 163,
+    "wins": 68,
+    "losses": 95,
+    "gross_profit": 104626.76,
+    "gross_loss": -189729.55,
+    "net_pnl": -85102.79,
+    "profit_factor": 0.5515,
+    "win_rate": 0.4172,
+    "avg_win": 1538.63,
+    "avg_loss": -1997.15,
+    "expectancy": -522.1,
+    "avg_return_pct": 0.0337,
+    "cvar_5pct_trade_pnl": -8136.66
+  }
+]

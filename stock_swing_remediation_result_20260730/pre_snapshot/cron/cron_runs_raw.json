@@ -1,0 +1,62 @@
+{
+  "0a5ae126-cc03-44af-b4a8-b12b9821bd6f": {
+    "returncode": 1,
+    "stdout": "",
+    "stderr": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help\n"
+  },
+  "46c13997-20ef-43d5-bb39-f0e710c45ede": {
+    "returncode": 1,
+    "stdout": "",
+    "stderr": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help\n"
+  },
+  "d4fb64ec-6b22-4985-8945-552f986eec2b": {
+    "returncode": 1,
+    "stdout": "",
+    "stderr": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help\n"
+  },
+  "4a16593b-d0e6-482b-9165-5d4709660398": {
+    "returncode": 1,
+    "stdout": "",
+    "stderr": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help\n"
+  },
+  "6eda856d-915a-4605-9428-8d5d13553176": {
+    "returncode": 1,
+    "stdout": "",
+    "stderr": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help\n"
+  },
+  "32c3be71-3e86-470f-92e1-f50d8c77d533": {
+    "returncode": 1,
+    "stdout": "",
+    "stderr": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help\n"
+  },
+  "a2986600-6e6a-4712-afa1-0ac8062e90fd": {
+    "returncode": 1,
+    "stdout": "",
+    "stderr": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help\n"
+  },
+  "fc5f2185-2117-4413-9684-da79ac428869": {
+    "returncode": 1,
+    "stdout": "",
+    "stderr": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help\n"
+  },
+  "c118d9f3-beea-4da0-899d-8f549ed15baa": {
+    "returncode": 1,
+    "stdout": "",
+    "stderr": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help\n"
+  },
+  "be4838ae-9d76-458a-aa1e-d3c968750d65": {
+    "returncode": 1,
+    "stdout": "",
+    "stderr": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help\n"
+  },
+  "494e46d9-9214-492f-b83c-18a5e59bd5f7": {
+    "returncode": 1,
+    "stdout": "",
+    "stderr": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help\n"
+  },
+  "6a97221b-5d6d-450f-9eec-8a5f4d0249a6": {
+    "returncode": 1,
+    "stdout": "",
+    "stderr": "OpenClaw does not recognize option \"--json\".\nTry: openclaw cron runs --help\n"
+  }
+}

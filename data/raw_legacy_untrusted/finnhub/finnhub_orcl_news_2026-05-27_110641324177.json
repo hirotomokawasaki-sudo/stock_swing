@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-05-27T11:06:41.324177+00:00",
+  "request_params": {
+    "symbol": "ORCL",
+    "from": "2026-05-24",
+    "to": "2026-05-27"
+  },
+  "payload": {
+    "symbol": "ORCL",
+    "news": [
+      {
+        "headline": "ORCL momentum update",
+        "summary": "ORCL shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/orcl",
+        "datetime": 1779880001,
+        "source": "synthetic",
+        "related": "ORCL"
+      }
+    ]
+  }
+}

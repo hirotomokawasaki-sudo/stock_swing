@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-05-27T11:04:30.309540+00:00",
+  "request_params": {
+    "symbol": "INTC",
+    "from": "2026-05-24",
+    "to": "2026-05-27"
+  },
+  "payload": {
+    "symbol": "INTC",
+    "news": [
+      {
+        "headline": "INTC momentum update",
+        "summary": "INTC shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/intc",
+        "datetime": 1779879870,
+        "source": "synthetic",
+        "related": "INTC"
+      }
+    ]
+  }
+}

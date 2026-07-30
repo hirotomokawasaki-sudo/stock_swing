@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-07-05T15:04:10.724292+00:00",
+  "request_params": {
+    "symbol": "CRDO",
+    "from": "2026-07-02",
+    "to": "2026-07-05"
+  },
+  "payload": {
+    "symbol": "CRDO",
+    "news": [
+      {
+        "headline": "CRDO momentum update",
+        "summary": "CRDO shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/crdo",
+        "datetime": 1783263850,
+        "source": "synthetic",
+        "related": "CRDO"
+      }
+    ]
+  }
+}

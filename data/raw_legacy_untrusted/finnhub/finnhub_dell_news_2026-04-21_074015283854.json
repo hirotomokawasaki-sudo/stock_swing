@@ -1,0 +1,23 @@
+{
+  "source": "finnhub",
+  "endpoint": "company-news",
+  "fetched_at": "2026-04-21T07:40:15.283854+00:00",
+  "request_params": {
+    "symbol": "DELL",
+    "from": "2026-04-18",
+    "to": "2026-04-21"
+  },
+  "payload": {
+    "symbol": "DELL",
+    "news": [
+      {
+        "headline": "DELL momentum update",
+        "summary": "DELL shows notable market activity relevant for swing trading.",
+        "url": "https://example.local/news/dell",
+        "datetime": 1776757215,
+        "source": "synthetic",
+        "related": "DELL"
+      }
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "config_hash": "63890d531d52efb4",
+  "created_at": "2026-06-25T00:49:21.789720+00:00",
+  "experiment_id": "exp-20260625-swing-v1-prompt-v1-b1c17264-63890d53",
+  "extra": {
+    "config_path": "[USER_HOME]/stock_swing/config/experiments/default_experiment.yaml"
+  },
+  "feature_schema_version": "features-v1",
+  "mode": "paper",
+  "notes": "default paper experiment",
+  "owner": "hirotomookawasaki",
+  "prompt_version": "prompt-v1",
+  "run_id": "start_experiment-20260625T004921Z-7709ce4f",
+  "source_commit": "b1c17264bef01ef0ec3c452f884673b43d0bae55",
+  "strategy_version": "swing-v1",
+  "tags": [
+    "paper",
+    "baseline"
+  ]
+}

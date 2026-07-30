@@ -1,0 +1,18 @@
+{
+  "_schema": "corporate_actions_v1",
+  "_note": "Manual registry of corporate actions affecting tracked positions. Updated when events are confirmed.",
+  "actions": [
+    {
+      "symbol": "CRWD",
+      "type": "split",
+      "ratio": 4,
+      "ex_date": "2026-07-02",
+      "direction": "forward",
+      "pre_split_price_approx": 721.0,
+      "post_split_price_approx": 180.0,
+      "applied_to_tracker": true,
+      "applied_date": "2026-07-03",
+      "note": "CrowdStrike 4:1 forward split. Tracker manually adjusted: entry $721.12 -> $180.28, qty 43 held in Alpaca (paper acct does not auto-adjust qty). Reopened as open on 2026-07-06."
+    }
+  ]
+}

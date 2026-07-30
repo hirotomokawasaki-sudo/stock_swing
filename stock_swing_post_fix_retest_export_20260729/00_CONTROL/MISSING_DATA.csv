@@ -1,0 +1,5 @@
+requirement_id,path_or_dataset,missing_scope,reason,review_impact,recovery_action,owner
+DATA.current_broker_snapshot,data/raw/broker,freshness,latest broker raw file age_hours=2380.0,current broker/account/position/fill validation is stale/BLOCKED,collect fresh paper broker account/positions/orders/fills snapshot,stock_swing
+PERF.exit_recovery,pnl_state.trades,all,no 5/10/15/20-session post-exit recovery fields in closed trades,exit counterfactual review BLOCKED,run PIT exit recovery/replay job,stock_swing
+DATA.synthetic_production_records,data/raw,synthetic_records,1136 synthetic markers found in production raw/audit data,critical acceptance FAIL: synthetic production records != 0,quarantine manifest and exclude/remediate historical synthetic records,stock_swing
+DATA.broker_fills_exactly_once,broker fills / activities,current exact fill quantity by broker fill ID,no fresh broker activities/fills snapshot or immutable fill ledger available in export source,"duplicate fill consumption cannot be independently proven; gate is BLOCKED, not PASS",collect paper broker activities/fills and canonical immutable fill ledger keyed by broker fill ID,stock_swing

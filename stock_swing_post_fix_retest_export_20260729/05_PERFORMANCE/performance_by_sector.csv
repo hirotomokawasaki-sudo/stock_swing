@@ -1,0 +1,2 @@
+dimension,value,n,wins,losses,gross_profit,gross_loss,net_pnl,profit_factor,win_rate,avg_win,avg_loss,expectancy,avg_return_pct,cvar_5pct_trade_pnl
+sector,UNKNOWN,198,89,109,166910.49,-237235.88,-70325.39,0.7036,0.4495,1875.4,-2176.48,-355.18,0.0329,-8377.24

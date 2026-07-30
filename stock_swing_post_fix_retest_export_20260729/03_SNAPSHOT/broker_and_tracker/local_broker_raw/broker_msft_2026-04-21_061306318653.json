@@ -1,0 +1,1 @@
+{"source": "broker", "endpoint": "quotes/latest", "fetched_at": "2026-04-21T06:13:06.318653+00:00", "request_params": {"symbol": "MSFT"}, "payload": {"symbol": "MSFT", "quote": {"bp": 102.5, "ap": 102.7, "t": "2026-04-21T06:13:06.318650+00:00"}}}

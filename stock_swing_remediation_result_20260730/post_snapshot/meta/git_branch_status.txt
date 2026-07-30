@@ -1,0 +1,64 @@
+## main...origin/main
+ M console/adapters/cron_adapter.py
+ M console/adapters/system_adapter.py
+ M console/app.py
+ M console/services/console_self_check_service.py
+ M console/services/dashboard_service.py
+ M data/analysis/api_latency.csv
+ M data/analysis/broker_tracker_reconciliation.md
+ M data/analysis/token_usage.csv
+ M data/audits/reconcile_status.json
+ M data/benchmarks/QQQ_daily.json
+ M data/benchmarks/SMH_daily.json
+ M data/benchmarks/SOXQ_daily.json
+ M data/benchmarks/SOXX_daily.json
+ M data/benchmarks/SPY_daily.json
+ M data/benchmarks/benchmark_prices.csv
+ M data/benchmarks/benchmark_returns.csv
+ M data/experiments/experiments.jsonl
+ M data/price_overrides.json
+ M data/tracking/pnl_state.json
+ M data/tracking/trade_events.jsonl
+ M docs/daily_logs/2026-07-29.md
+ M reports/console/latest_console_summary.json
+ M scripts/check_cron_health.py
+ M src/stock_swing/cli/collect_data.py
+ M src/stock_swing/cli/paper_demo.py
+ M src/stock_swing/cli/reconcile_orders.py
+ M src/stock_swing/core/types.py
+ M src/stock_swing/decision_engine/decision_engine.py
+ M src/stock_swing/guardrails/day_start_snapshot.py
+ M src/stock_swing/guardrails/risk_snapshot.py
+ M src/stock_swing/tracking/fill_ledger.py
+ M src/stock_swing/tracking/pnl_tracker.py
+ M src/stock_swing/utils/context_budget.py
+ M tests/unit/test_batch_b_fixes.py
+ M tests/unit/test_reconcile_orders.py
+?? console/utils/structured_json.py
+?? data/experiments/exp-20260729-swing-v1-prompt-v1-99d04de6-63890d53/
+?? data/experiments/exp-20260729-swing-v1-prompt-v1-d6b936e0-63890d53/
+?? data/guardrails/day_start_snapshot.json
+?? data/raw_legacy_untrusted/
+?? data/tracking/fill_consumed_ledger.json
+?? data/tracking/fill_ledger.jsonl
+?? data/tracking/pnl_state.json.backup_hd_fix_20260729_185838
+?? data/tracking/pnl_state.json.backup_klac_split_20260729_202010
+?? stock_swing_codex_recurring_review_export_20260729_DELTA/
+?? stock_swing_post_fix_retest_20260729_batchab/
+?? stock_swing_post_fix_retest_export_20260729/
+?? stock_swing_post_fix_retest_mail_safe_20260729/
+?? stock_swing_post_fix_retest_mail_safe_20260729_batchab/
+?? stock_swing_remediation_result_20260730/
+?? stock_swing_remediation_snapshot_20260730/
+?? stock_swing_review_mail_safe_20260729/
+?? tests/integration/test_p6_end_to_end.py
+?? tests/unit/test_cron_observability.py
+?? tests/unit/test_cumulative_allocation.py
+?? tests/unit/test_fill_ledger_exactly_once.py
+?? tests/unit/test_guardrail_day_start.py
+?? tests/unit/test_remediation_20260730.py
+?? tests/unit/test_source_lineage.py
+?? tests/unit/test_token_accounting.py
+
+[exit_code]
+0

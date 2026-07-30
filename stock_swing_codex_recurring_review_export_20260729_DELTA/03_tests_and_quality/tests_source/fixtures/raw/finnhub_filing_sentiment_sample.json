@@ -1,0 +1,23 @@
+{
+  "accessNumber": "0000320193-26-000012",
+  "symbol": "AAPL",
+  "cik": "0000320193",
+  "sentiment": {
+    "positiveScore": 0.82,
+    "negativeScore": 0.18,
+    "positiveWordCount": 124,
+    "negativeWordCount": 28
+  },
+  "highlight": {
+    "positive": [
+      "strong performance",
+      "revenue growth",
+      "innovation"
+    ],
+    "negative": [
+      "supply chain challenges",
+      "regulatory headwinds"
+    ]
+  },
+  "note": "Sample Finnhub filing sentiment response"
+}

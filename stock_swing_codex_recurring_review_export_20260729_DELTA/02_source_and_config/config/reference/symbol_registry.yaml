@@ -1,0 +1,427 @@
+# config/reference/symbol_registry.yaml
+# G6: Canonical asset_class / sector registry
+# 変更時は必ず record_submission / reconcile / export すべてで同じ値が使われること
+
+_meta:
+  version: "1.0.0"
+  updated_at: "2026-07-13"
+  description: "Canonical symbol classification registry for ETF/stock/sector assignment"
+  source_files:
+    - "src/stock_swing/cli/paper_demo.py"
+    - "src/stock_swing/risk/position_sizing.py"
+
+symbols:
+  AAPL:
+    asset_class: stock
+    sector: hardware_consumer
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Apple Inc."
+  ADBE:
+    asset_class: stock
+    sector: software
+    benchmark_symbols: [SKYY, QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Adobe Inc."
+  AMAT:
+    asset_class: stock
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "Applied Materials Inc."
+  AMD:
+    asset_class: stock
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "Advanced Micro Devices Inc."
+  AMZN:
+    asset_class: stock
+    sector: internet_platform
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Amazon.com Inc."
+  ANET:
+    asset_class: stock
+    sector: networking_infrastructure
+    benchmark_symbols: [QTEC, QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Arista Networks Inc."
+  ARM:
+    asset_class: stock
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "Arm Holdings plc"
+  ASML:
+    asset_class: stock
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "ASML Holding N.V."
+  AVGO:
+    asset_class: stock
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "Broadcom Inc."
+  BOTZ:
+    asset_class: etf
+    sector: robotics_ai
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Global X Robotics & Artificial Intelligence ETF"
+  CHPS:
+    asset_class: etf
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "Xtrackers Semiconductor Select Equity ETF"
+  CHPX:
+    asset_class: etf
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "Exchange Traded Concepts Semiconductor ETF"
+  CDNS:
+    asset_class: stock
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "Cadence Design Systems Inc."
+  CIEN:
+    asset_class: stock
+    sector: networking_infrastructure
+    benchmark_symbols: [QTEC, QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Ciena Corporation"
+  CRM:
+    asset_class: stock
+    sector: software
+    benchmark_symbols: [SKYY, QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Salesforce Inc."
+  CRDO:
+    asset_class: stock
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "Credo Technology Group Holding Ltd"
+  CRWD:
+    asset_class: stock
+    sector: cybersecurity
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "CrowdStrike Holdings Inc."
+  CSCO:
+    asset_class: stock
+    sector: networking_infrastructure
+    benchmark_symbols: [QTEC, QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Cisco Systems Inc."
+  DDOG:
+    asset_class: stock
+    sector: cloud_software
+    benchmark_symbols: [SKYY, QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Datadog Inc."
+  DELL:
+    asset_class: stock
+    sector: hardware_enterprise
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Dell Technologies Inc."
+  FICO:
+    asset_class: stock
+    sector: software
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Fair Isaac Corporation"
+  FRWD:
+    asset_class: etf
+    sector: software
+    benchmark_symbols: [QTEC, QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Engine No. 1 Transform 500 ETF"
+  FTXL:
+    asset_class: etf
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "First Trust Nasdaq Semiconductor ETF"
+  FTNT:
+    asset_class: stock
+    sector: cybersecurity
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Fortinet Inc."
+  GOOGL:
+    asset_class: stock
+    sector: internet_platform
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Alphabet Inc."
+  GTOP:
+    asset_class: etf
+    sector: software
+    benchmark_symbols: [QTEC, QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Goldman Sachs Innovate Equity ETF"
+  HPE:
+    asset_class: stock
+    sector: hardware_enterprise
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Hewlett Packard Enterprise Company"
+  HPQ:
+    asset_class: stock
+    sector: hardware_consumer
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "HP Inc."
+  IBM:
+    asset_class: stock
+    sector: enterprise_it
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "International Business Machines Corporation"
+  INTC:
+    asset_class: stock
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "Intel Corporation"
+  INTU:
+    asset_class: stock
+    sector: software
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Intuit Inc."
+  KLAC:
+    asset_class: stock
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "KLA Corporation"
+  LRCX:
+    asset_class: stock
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "Lam Research Corporation"
+  MA:
+    asset_class: stock
+    sector: fintech
+    benchmark_symbols: [SPY]
+    is_semiconductor_related: false
+    description: "Mastercard Incorporated"
+  MDB:
+    asset_class: stock
+    sector: cloud_software
+    benchmark_symbols: [SKYY, QQQ, SPY]
+    is_semiconductor_related: false
+    description: "MongoDB Inc."
+  META:
+    asset_class: stock
+    sector: internet_platform
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Meta Platforms Inc."
+  MRVL:
+    asset_class: stock
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "Marvell Technology Inc."
+  MSFT:
+    asset_class: stock
+    sector: software
+    benchmark_symbols: [SKYY, QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Microsoft Corporation"
+  MU:
+    asset_class: stock
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "Micron Technology Inc."
+  NBIS:
+    asset_class: stock
+    sector: networking_infrastructure
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Nebius Group N.V."
+  NOW:
+    asset_class: stock
+    sector: software
+    benchmark_symbols: [SKYY, QQQ, SPY]
+    is_semiconductor_related: false
+    description: "ServiceNow Inc."
+  NVDA:
+    asset_class: stock
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "NVIDIA Corporation"
+  ORCL:
+    asset_class: stock
+    sector: software
+    benchmark_symbols: [SKYY, QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Oracle Corporation"
+  PANW:
+    asset_class: stock
+    sector: cybersecurity
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Palo Alto Networks Inc."
+  PATH:
+    asset_class: stock
+    sector: software
+    benchmark_symbols: [SKYY, QQQ, SPY]
+    is_semiconductor_related: false
+    description: "UiPath Inc."
+  PLTR:
+    asset_class: stock
+    sector: software
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Palantir Technologies Inc."
+  PSCT:
+    asset_class: etf
+    sector: software
+    benchmark_symbols: [QTEC, QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Invesco S&P SmallCap Information Technology ETF"
+  PTF:
+    asset_class: etf
+    sector: software
+    benchmark_symbols: [QTEC, QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Invesco Dorsey Wright Technology Momentum ETF"
+  QCOM:
+    asset_class: stock
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "QUALCOMM Incorporated"
+  QQQ:
+    asset_class: etf
+    sector: technology
+    benchmark_symbols: [SPY]
+    is_semiconductor_related: false
+    description: "Invesco QQQ Trust"
+  QTEC:
+    asset_class: etf
+    sector: software
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "First Trust NASDAQ-100-Technology Sector Index Fund"
+  QTUM:
+    asset_class: etf
+    sector: quantum_computing
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Defiance Quantum ETF"
+  RBRK:
+    asset_class: stock
+    sector: cybersecurity
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Rubrik Inc."
+  ROBO:
+    asset_class: etf
+    sector: robotics_ai
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "ROBO Global Robotics and Automation Index ETF"
+  SHOC:
+    asset_class: etf
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "Strive U.S. Semiconductor ETF"
+  SKYY:
+    asset_class: etf
+    sector: technology_cloud
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "First Trust Cloud Computing ETF"
+  SMCI:
+    asset_class: stock
+    sector: ai_infrastructure
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "Super Micro Computer Inc."
+  SMH:
+    asset_class: etf
+    sector: semiconductor
+    benchmark_symbols: [SOXX, SOXQ, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "VanEck Semiconductor ETF"
+  SMHX:
+    asset_class: etf
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "VanEck Fabless Semiconductor ETF"
+  SNOW:
+    asset_class: stock
+    sector: cloud_software
+    benchmark_symbols: [SKYY, QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Snowflake Inc."
+  SNPS:
+    asset_class: stock
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "Synopsys Inc."
+  SOXQ:
+    asset_class: etf
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "Invesco PHLX Semiconductor ETF"
+  SOXX:
+    asset_class: etf
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXQ, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "iShares Semiconductor ETF"
+  SPY:
+    asset_class: etf
+    sector: broad_market
+    benchmark_symbols: []
+    is_semiconductor_related: false
+    description: "SPDR S&P 500 ETF Trust"
+  TSLA:
+    asset_class: stock
+    sector: internet_platform
+    benchmark_symbols: [QQQ, SPY]
+    is_semiconductor_related: false
+    description: "Tesla Inc."
+  TSM:
+    asset_class: stock
+    sector: semiconductor
+    benchmark_symbols: [SMH, SOXX, QQQ, SPY]
+    is_semiconductor_related: true
+    description: "Taiwan Semiconductor Manufacturing Company"
+  TDIV:
+    asset_class: etf
+    sector: software
+    benchmark_symbols: [QTEC, QQQ, SPY]
+    is_semiconductor_related: false
+    description: "First Trust NASDAQ Technology Dividend Index Fund"
+  TTEQ:
+    asset_class: etf
+    sector: software
+    benchmark_symbols: [QTEC, QQQ, SPY]
+    is_semiconductor_related: false
+    description: "T. Rowe Price Technology ETF"
+  V:
+    asset_class: stock
+    sector: fintech
+    benchmark_symbols: [SPY]
+    is_semiconductor_related: false
+    description: "Visa Inc."

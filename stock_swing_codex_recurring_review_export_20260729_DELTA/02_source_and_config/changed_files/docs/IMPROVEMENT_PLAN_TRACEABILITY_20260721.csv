@@ -1,0 +1,32 @@
+old_task_id,h_task_id,final_r_task_id,old_status,new_status,evidence,acceptance_criteria
+R0,H0+H1+H2+H4,R0-v2,✅完了,REOPENED,9 rules / 5 metrics supplied; daily_loss/weekly_loss/consec/token未接続; record_submission未渡し; join 0/259,全9 metrics 実測供給; 全5 action E2E; 10 scheduled runs unexplained=0
+P9 GuardrailEngine,H2,R0-v2-C,✅完了,REOPENED,"reduce_size破棄, ai_pause/flatten_risky経路なし, api_error_rate=0.0固定",全configuredルールにtest; 5 action E2E
+P6 ExperimentContext,H4,R0-v2-D,✅完了,REOPENED,decision->trade join 0/259; run_id/exp_id/config_hash not passed to record_submission,join ≥99%; coverage ≥99%
+RF-1 quarantine gate,H1,R0-v2-B,✅完了,REOPENED,closed/quarantine overlap 41件; 54件 quarantineだが41件がclosed台帳に再混入,overlap=0; chronology_reversed=0; holding_days_missing=0
+G3 PnL source-of-truth,H1,R0-v2-B,✅完了,REOPENED,closed sum = state (diff=$0); brokerとのequity bridgeなし,broker equity bridge diff ≤$1 or 1bp
+R1 exit attribution,H1+H4,R1-v2,✅完了,REOPENED,holding_days None=245; asset_class unknown=245; chronology reversed=62,missing hd=0; unknown ac=0; reversed=0; rebuild idempotent
+RF-3 atomic write,H1,R1-v2,✅完了,VERIFIED_COMPLETE,atomic write implemented; test_atomic_write.py passing,no partial-write data corruption
+RF-4 durable metadata,H4,R0-v2-D,✅完了,REOPENED,fields defined in schema; but not passed to record_submission at runtime,runtime join ≥99%
+RF-8b attribution recovery,H4,R1-v2,✅完了,VERIFIED_COMPLETE,attribution 98.8% (3件のみbroker_fill残: 2026-05 AMZN),≥98% maintained after rebuild with --preserve-attribution
+R2 ETF/Stock 分離,H5,R2-v2,✅完了,REOPENED,portfolio_allocation.yaml ETF=0.85/Stock=0.15 (逆転); asset_class unknown=245,unknown=0; config unified to Stock85/ETF15
+G8 portfolio stock_reduced,H5,R2-v2,✅完了,REOPENED,operating_mode=stock_reduced (ETF-first); corrected to Stock85/ETF15,portfolio_allocation.yaml Stock=0.85; all references unified
+R2-A asset_class backfill,H5,R2-v2,✅完了,REOPENED,259 closed中245件がasset_class unknown → R2-A backfillが失われた,unknown=0 after idempotent backfill
+R3-A counterfactual script,H6,R3-v2,✅完了,REOPENED,"counterfactual は $0仮定, 実価格path未使用; sector shock 22件の$0置換は実際の保有継続結果でない",実価格path replay (1/3/5/10d MFE/MAE); hold $0仮定は使用禁止
+R3-B exit replay,H6,R3-v2,✅完了,BLOCKED_BY_DATA,valid sector_shock trigger=0 (3件はsoft_stop/no_sector_data); days_held未persistent,historical replay ≥100; forward shadow ≥10; 2指標改善
+RF-7 sector_shock shadow,H6,R3-v2,✅完了,BLOCKED_BY_DATA,shadow module exists; valid trigger=0; days_held未persistent; benchmark routing=SMH固定,symbol-specific benchmark; days_held persistent; forward shadow ≥10
+R4-A signal saturation調査,H7,R4-v2,✅完了,VERIFIED_COMPLETE,saturation確認済み: 73% at 1.0,documented saturation pattern
+R4-B min_signal_strength調整,H7,R4-v2,✅完了,IMPLEMENTED_UNVERIFIED,confidence ≥0.40 filter deployed; saturation still 73% at 1.0,decile PF validation (R4-C)
+R4-C decile analysis,H7,R4-v2,🔲未着手,PLANNED,data insufficient (<300 post-fix clean trades),decile PF/expectancy/coverage table; calibration curve
+R5 昇格ゲート,H5+H7,R5-v2,🔲PLANNED,REOPENED,promotion gate入力に汚染コホート; allocation policy逆転,data_quality=VALID入力のみ; Stock85/ETF15 band実装
+R6 Console C1-F/GW/LS,H3+H9,R6-v2,✅完了,IMPLEMENTED_UNVERIFIED,panels exist; but ledger_quality={} in non-dry-run; status混在,non-dry-run ledger_quality表示; current/last_run分離
+G2 console false-OK fix,H3,R6-v2,✅完了,VERIFIED_COMPLETE,mismatch>0 → HALTED表示 confirmed in test,test_console_summary.py passing
+R7-A corporate action台帳,H8,R7-v2,✅完了,VERIFIED_COMPLETE,corporate_actions.json; auto-detection cron; CRWD split fix,check_corporate_actions.py clean
+R7-B/C WebSocket/news,H8,R7-v2,🔲未着手,PLANNED,not started,09月以降
+R8 ML,H7,R8-v2,🔲未着手,BLOCKED_BY_DATA,clean joinable outcomes=0 (need ≥300); join 0/259,R0-v2完了 + clean labels ≥300
+G1 circuit breaker解除,—,R0-v2-C,✅完了,VERIFIED_COMPLETE,3秒wait追加; test passing,G1-v2でlag_excused logic追加済み
+G1-v2 lag exclusion,—,R0-v2-C,✅完了,IMPLEMENTED_UNVERIFIED,commit 84e4532; 11 tests; 1 clean run post-fix needed,10 scheduled runs consecutive unexplained_mismatch=0
+G5 token telemetry backfill,—,R0-v2-D,✅完了,IMPLEMENTED_UNVERIFIED,1939/1951件がestimated_rule_based; actual API coverage低い,actual_provider_usage と estimated を分離表示
+G6 symbol_registry,—,R2-v2,✅完了,IMPLEMENTED_UNVERIFIED,69シンボル; だがclosed台帳のasset_class unknown=245,unknown=0 after idempotent backfill
+G9 min_hold 1日,—,R3-v2 dependency,✅完了,VERIFIED_COMPLETE,post-07-14 stop_loss: 5件全て hd>1日; hd=0発動ゼロ確認,min_hold working confirmed 2026-07-17
+RF-8b-v2 attribution recovery,—,R1-v2,✅完了,VERIFIED_COMPLETE,70.7%→98.8%; trade_events 15件+decisions 58件; 残3件(2026-05 AMZN)回復不可,≥98% after rebuild with --preserve-attribution
+RF-6b stock-reduced cron,—,R2-v2(history),✅完了,REOPENED,cron設定済み; だがstock_reduced自体がETF-first前提の旧方針,R2-v2でStock85/ETF15統一後に再検討

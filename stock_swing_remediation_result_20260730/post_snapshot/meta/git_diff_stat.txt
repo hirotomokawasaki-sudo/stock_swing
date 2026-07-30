@@ -1,0 +1,39 @@
+ console/adapters/cron_adapter.py                   |  62 ++-
+ console/adapters/system_adapter.py                 | 499 ++++++++++-------
+ console/app.py                                     |  38 +-
+ console/services/console_self_check_service.py     |  17 +
+ console/services/dashboard_service.py              |   7 +-
+ data/analysis/api_latency.csv                      |   8 +
+ data/analysis/broker_tracker_reconciliation.md     |   8 +-
+ data/analysis/token_usage.csv                      |   3 +
+ data/audits/reconcile_status.json                  |   5 +-
+ data/benchmarks/QQQ_daily.json                     |  20 +-
+ data/benchmarks/SMH_daily.json                     |  22 +-
+ data/benchmarks/SOXQ_daily.json                    |  22 +-
+ data/benchmarks/SOXX_daily.json                    |  22 +-
+ data/benchmarks/SPY_daily.json                     |  20 +-
+ data/benchmarks/benchmark_prices.csv               |  20 +-
+ data/benchmarks/benchmark_returns.csv              | 610 ++++++++++-----------
+ data/experiments/experiments.jsonl                 |   4 +
+ data/price_overrides.json                          |   2 +-
+ data/tracking/pnl_state.json                       | 126 ++++-
+ data/tracking/trade_events.jsonl                   |   5 +
+ docs/daily_logs/2026-07-29.md                      |  10 +
+ reports/console/latest_console_summary.json        | 326 ++++++-----
+ scripts/check_cron_health.py                       |  17 +-
+ src/stock_swing/cli/collect_data.py                | 107 +++-
+ src/stock_swing/cli/paper_demo.py                  | 112 +++-
+ src/stock_swing/cli/reconcile_orders.py            | 164 +++++-
+ src/stock_swing/core/types.py                      |   6 +-
+ src/stock_swing/decision_engine/decision_engine.py |   5 +-
+ src/stock_swing/guardrails/day_start_snapshot.py   | 186 +++----
+ src/stock_swing/guardrails/risk_snapshot.py        |  46 +-
+ src/stock_swing/tracking/fill_ledger.py            | 246 +++++++--
+ src/stock_swing/tracking/pnl_tracker.py            |  33 +-
+ src/stock_swing/utils/context_budget.py            |  30 +-
+ tests/unit/test_batch_b_fixes.py                   |  13 +
+ tests/unit/test_reconcile_orders.py                | 242 ++++++++
+ 35 files changed, 2056 insertions(+), 1007 deletions(-)
+
+[exit_code]
+0
