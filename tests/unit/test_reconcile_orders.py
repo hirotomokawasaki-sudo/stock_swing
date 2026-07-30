@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 import tempfile
@@ -13,6 +14,7 @@ sys.modules.setdefault("massive", massive_stub)
 
 from stock_swing.cli import reconcile_orders
 from stock_swing.cli.cron_summary import CRON_SUMMARY_PREFIX
+from stock_swing.tracking.fill_ledger import FillLedger
 from stock_swing.tracking.pnl_tracker import PnLTracker
 
 
@@ -662,3 +664,243 @@ def test_quarantined_trade_fill_not_replayed():
     )
     # Closed NVDA must still be counted
     assert result.get("aaaa-bbbb") == 50
+
+
+def test_reconcile_orders_uses_fill_ledger_to_block_replay_after_state_reset(monkeypatch, capsys):
+    """Production reconcile loop must block re-consuming the same sell fill.
+
+    This exercises the actual reconcile_orders.main() path, not helper-only logic.
+    After the first close consumes the sell fill in fill_ledger.jsonl, we remove
+    state/trade_events evidence and open a new position. The stale sell must still
+    NOT close the new position because the fill ledger remains authoritative.
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        project_root = Path(tmpdir)
+        tracker = PnLTracker(project_root)
+        tracker.record_submission(
+            symbol="ORCL",
+            strategy_id="test_strategy",
+            side="buy",
+            qty=10,
+            price=200.0,
+            broker_order_id="buy-order-old",
+            decision_id="decision-buy-old",
+        )
+
+        class StubBroker:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def fetch_orders(self, status="all", limit=500):
+                return SimpleNamespace(payload=[{
+                    "id": "sell-order-123",
+                    "symbol": "ORCL",
+                    "side": "sell",
+                    "status": "filled",
+                    "filled_qty": 10,
+                    "filled_avg_price": 210.0,
+                    "submitted_at": "2026-06-04T14:15:00+00:00",
+                    "updated_at": "2026-06-04T14:15:02+00:00",
+                }])
+
+            def fetch_latest_quote(self, symbol):
+                return SimpleNamespace(payload={"quote": {"bp": 209.5, "ap": 210.5}})
+
+        monkeypatch.setattr(reconcile_orders, "project_root", project_root)
+        monkeypatch.setattr(reconcile_orders, "_load_env", lambda path: None)
+        monkeypatch.setattr(reconcile_orders, "BrokerClient", StubBroker)
+        monkeypatch.setattr(reconcile_orders, "PnLTracker", lambda root: tracker)
+        monkeypatch.setattr(reconcile_orders, "cancel_stale_buy_orders", lambda broker: [])
+        monkeypatch.setattr(reconcile_orders, "cancel_stale_sell_orders", lambda broker, root, **kw: [])
+        monkeypatch.setattr(reconcile_orders, "reconcile_filled_buys", lambda broker, tracker, recently_sold_symbols: 0)
+        monkeypatch.setattr(
+            reconcile_orders,
+            "load_recent_submissions",
+            lambda audits_dir, limit=100: [{
+                "ts": "2026-06-04T14:15:00+00:00",
+                "submission_id": "sub-1",
+                "side": "sell",
+                "qty": 10,
+                "symbol": "ORCL",
+            }],
+        )
+        monkeypatch.setattr(reconcile_orders, "read_exit_reason", lambda root, broker_order_id: None)
+        monkeypatch.setattr(reconcile_orders, "delete_exit_reason", lambda root, broker_order_id: None)
+        monkeypatch.setattr(reconcile_orders, "purge_old_entries", lambda root, max_age_days=7: None)
+        monkeypatch.setenv("BROKER_API_KEY", "key")
+        monkeypatch.setenv("BROKER_API_SECRET", "secret")
+
+        assert reconcile_orders.main() == 0
+        capsys.readouterr()
+
+        ledger = FillLedger(project_root)
+        rec = ledger.get("sell-order-123")
+        assert rec is not None
+        assert rec["consumed_qty"] == 10
+        assert rec["consumed"] is True
+
+        tracker.state.trades = []
+        tracker.state.quarantined_trades = []
+        tracker._save_state()
+        trade_events_path = project_root / "data" / "tracking" / "trade_events.jsonl"
+        trade_events_path.unlink(missing_ok=True)
+
+        tracker.record_submission(
+            symbol="ORCL",
+            strategy_id="test_strategy",
+            side="buy",
+            qty=20,
+            price=205.0,
+            broker_order_id="buy-order-new",
+            decision_id="decision-buy-new",
+        )
+
+        assert reconcile_orders.main() == 0
+        out = capsys.readouterr().out
+        summary_line = [line for line in out.splitlines() if line.startswith(CRON_SUMMARY_PREFIX)][-1]
+        payload = json.loads(summary_line.split("=", 1)[1])
+        assert payload["filled_exits_recorded"] == 0
+
+        open_positions = tracker.get_open_positions()
+        assert len(open_positions) == 1
+        assert open_positions[0]["symbol"] == "ORCL"
+        assert open_positions[0]["qty"] == 20
+
+
+def test_reconcile_orders_quarantines_missing_timestamp_fill(monkeypatch, capsys):
+    """Sell fills without usable timestamp must be quarantined and skipped."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        project_root = Path(tmpdir)
+        tracker = PnLTracker(project_root)
+        tracker.record_submission(
+            symbol="MSFT",
+            strategy_id="test_strategy",
+            side="buy",
+            qty=15,
+            price=300.0,
+            broker_order_id="buy-msft",
+            decision_id="decision-msft",
+        )
+
+        class StubBroker:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def fetch_orders(self, status="all", limit=500):
+                return SimpleNamespace(payload=[{
+                    "id": "sell-order-no-ts",
+                    "symbol": "MSFT",
+                    "side": "sell",
+                    "status": "filled",
+                    "filled_qty": 15,
+                    "filled_avg_price": 305.0,
+                }])
+
+            def fetch_latest_quote(self, symbol):
+                return SimpleNamespace(payload={"quote": {"bp": 304.5, "ap": 305.5}})
+
+        monkeypatch.setattr(reconcile_orders, "project_root", project_root)
+        monkeypatch.setattr(reconcile_orders, "_load_env", lambda path: None)
+        monkeypatch.setattr(reconcile_orders, "BrokerClient", StubBroker)
+        monkeypatch.setattr(reconcile_orders, "PnLTracker", lambda root: tracker)
+        monkeypatch.setattr(reconcile_orders, "cancel_stale_buy_orders", lambda broker: [])
+        monkeypatch.setattr(reconcile_orders, "cancel_stale_sell_orders", lambda broker, root, **kw: [])
+        monkeypatch.setattr(reconcile_orders, "reconcile_filled_buys", lambda broker, tracker, recently_sold_symbols: 0)
+        monkeypatch.setattr(
+            reconcile_orders,
+            "load_recent_submissions",
+            lambda audits_dir, limit=100: [{
+                "ts": "2026-06-24T15:00:00+00:00",
+                "submission_id": "sub-msft",
+                "side": "sell",
+                "qty": 15,
+                "symbol": "MSFT",
+            }],
+        )
+        monkeypatch.setattr(reconcile_orders, "read_exit_reason", lambda root, broker_order_id: None)
+        monkeypatch.setattr(reconcile_orders, "delete_exit_reason", lambda root, broker_order_id: None)
+        monkeypatch.setattr(reconcile_orders, "purge_old_entries", lambda root, max_age_days=7: None)
+        monkeypatch.setenv("BROKER_API_KEY", "key")
+        monkeypatch.setenv("BROKER_API_SECRET", "secret")
+
+        assert reconcile_orders.main() == 0
+        out = capsys.readouterr().out
+        summary_line = [line for line in out.splitlines() if line.startswith(CRON_SUMMARY_PREFIX)][-1]
+        payload = json.loads(summary_line.split("=", 1)[1])
+        assert payload["filled_exits_recorded"] == 0
+        assert tracker.get_open_positions()[0]["qty"] == 15
+
+        ledger = FillLedger(project_root)
+        rec = ledger.get("sell-order-no-ts")
+        assert rec is not None
+        assert rec["quarantine_reason"] == "missing_timestamp"
+
+
+def test_reconcile_orders_state_and_ledger_sha_stable_across_three_runs(monkeypatch, capsys):
+    """Repeated reconcile runs against the same snapshot must converge to stable SHA."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        project_root = Path(tmpdir)
+        tracker = PnLTracker(project_root)
+        tracker.record_submission(
+            symbol="NVDA",
+            strategy_id="test_strategy",
+            side="buy",
+            qty=12,
+            price=500.0,
+            broker_order_id="buy-nvda",
+            decision_id="decision-nvda",
+        )
+
+        class StubBroker:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def fetch_orders(self, status="all", limit=500):
+                return SimpleNamespace(payload=[{
+                    "id": "sell-nvda-12",
+                    "symbol": "NVDA",
+                    "side": "sell",
+                    "status": "filled",
+                    "filled_qty": 12,
+                    "filled_avg_price": 510.0,
+                    "submitted_at": "2026-06-24T15:00:00+00:00",
+                    "updated_at": "2026-06-24T15:00:05+00:00",
+                }])
+
+            def fetch_latest_quote(self, symbol):
+                return SimpleNamespace(payload={"quote": {"bp": 509.0, "ap": 511.0}})
+
+        monkeypatch.setattr(reconcile_orders, "project_root", project_root)
+        monkeypatch.setattr(reconcile_orders, "_load_env", lambda path: None)
+        monkeypatch.setattr(reconcile_orders, "BrokerClient", StubBroker)
+        monkeypatch.setattr(reconcile_orders, "PnLTracker", lambda root: tracker)
+        monkeypatch.setattr(reconcile_orders, "cancel_stale_buy_orders", lambda broker: [])
+        monkeypatch.setattr(reconcile_orders, "cancel_stale_sell_orders", lambda broker, root, **kw: [])
+        monkeypatch.setattr(reconcile_orders, "reconcile_filled_buys", lambda broker, tracker, recently_sold_symbols: 0)
+        monkeypatch.setattr(
+            reconcile_orders,
+            "load_recent_submissions",
+            lambda audits_dir, limit=100: [{
+                "ts": "2026-06-24T15:00:00+00:00",
+                "submission_id": "sub-nvda",
+                "side": "sell",
+                "qty": 12,
+                "symbol": "NVDA",
+            }],
+        )
+        monkeypatch.setattr(reconcile_orders, "read_exit_reason", lambda root, broker_order_id: None)
+        monkeypatch.setattr(reconcile_orders, "delete_exit_reason", lambda root, broker_order_id: None)
+        monkeypatch.setattr(reconcile_orders, "purge_old_entries", lambda root, max_age_days=7: None)
+        monkeypatch.setenv("BROKER_API_KEY", "key")
+        monkeypatch.setenv("BROKER_API_SECRET", "secret")
+
+        state_shas = []
+        ledger_shas = []
+        for _ in range(3):
+            assert reconcile_orders.main() == 0
+            capsys.readouterr()
+            state_shas.append(hashlib.sha256((project_root / "data" / "tracking" / "pnl_state.json").read_bytes()).hexdigest())
+            ledger_shas.append(hashlib.sha256((project_root / "data" / "tracking" / "fill_ledger.jsonl").read_bytes()).hexdigest())
+
+        assert len(set(state_shas)) == 1
+        assert len(set(ledger_shas)) == 1

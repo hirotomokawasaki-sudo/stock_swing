@@ -1,0 +1,53 @@
+{
+  "generated_at": "2026-07-30T01:30:04.988460+00:00",
+  "fills": [
+    {
+      "fill_id": "64c05f0f-4c84-4cef-ab6b-f7469cff6794",
+      "order_id": "64c05f0f-4c84-4cef-ab6b-f7469cff6794",
+      "symbol": "HPQ",
+      "side": "sell",
+      "qty": 866.0,
+      "consumed_qty": 0.0,
+      "consumed": false,
+      "consumed_by": null,
+      "consumption_events": [],
+      "quarantine_reason": null
+    },
+    {
+      "fill_id": "95a52b5f-79d0-4b3c-b342-d3ac9acd83dc",
+      "order_id": "95a52b5f-79d0-4b3c-b342-d3ac9acd83dc",
+      "symbol": "ANET",
+      "side": "sell",
+      "qty": 117.0,
+      "consumed_qty": 0.0,
+      "consumed": false,
+      "consumed_by": null,
+      "consumption_events": [],
+      "quarantine_reason": null
+    },
+    {
+      "fill_id": "ac62b2a0-97ed-4491-8ec8-caadd6522eaa",
+      "order_id": "ac62b2a0-97ed-4491-8ec8-caadd6522eaa",
+      "symbol": "DELL",
+      "side": "sell",
+      "qty": 93.0,
+      "consumed_qty": 0.0,
+      "consumed": false,
+      "consumed_by": null,
+      "consumption_events": [],
+      "quarantine_reason": null
+    },
+    {
+      "fill_id": "e03c16d8-e849-43f2-9590-2ef80bd670be",
+      "order_id": "e03c16d8-e849-43f2-9590-2ef80bd670be",
+      "symbol": "META",
+      "side": "sell",
+      "qty": 32.0,
+      "consumed_qty": 0.0,
+      "consumed": false,
+      "consumed_by": null,
+      "consumption_events": [],
+      "quarantine_reason": null
+    }
+  ]
+}

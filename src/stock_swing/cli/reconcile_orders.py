@@ -17,6 +17,7 @@ from stock_swing.cli.paper_demo import _load_env
 from stock_swing.core.run_context import RunContext
 from stock_swing.sources.broker_client import BrokerClient
 from stock_swing.tracking.exit_reason_store import delete_exit_reason, purge_old_entries, read_exit_reason
+from stock_swing.tracking.fill_ledger import FillAlreadyConsumedError, FillLedger, FillQuarantinedError
 from stock_swing.tracking.pnl_tracker import PnLTracker
 from stock_swing.tracking.trade_event_store import TradeEvent
 from stock_swing.utils.market_calendar import MarketCalendar
@@ -57,6 +58,57 @@ def load_recent_submissions(audits_dir: Path, limit: int = 100):
 
 
 RECENTLY_SOLD_WINDOW_MINUTES = 30
+
+
+class ReconcileProcessingError(RuntimeError):
+    """Raised when reconcile detects a critical per-order processing failure."""
+
+
+def _write_reconcile_status(
+    *,
+    newly_recorded_buys: int,
+    filled_exits_recorded: int,
+    checked_sell_submissions: int,
+    status: str,
+    error: str | None = None,
+) -> None:
+    reconcile_status = {
+        "as_of": datetime.now(timezone.utc).isoformat(),
+        "status": status,
+        "unexplained_mismatch_count": 0 if status == "ok" else 1,
+        "newly_recorded_buys": newly_recorded_buys,
+        "filled_exits_recorded": filled_exits_recorded,
+        "checked_sell_submissions": checked_sell_submissions,
+        "job": "reconcile_orders",
+    }
+    if error:
+        reconcile_status["error"] = error
+    try:
+        status_path = project_root / "data" / "audits" / "reconcile_status.json"
+        status_path.parent.mkdir(parents=True, exist_ok=True)
+        status_path.write_text(
+            json.dumps(reconcile_status, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+    except Exception as exc:
+        print(f"WARN: Failed to write reconcile_status.json: {exc}", file=sys.stderr)
+
+
+def _build_fill_snapshot_from_order(order: dict) -> dict:
+    return {
+        "id": order.get("fill_id") or order.get("id"),
+        "fill_id": order.get("fill_id"),
+        "order_id": order.get("order_id") or order.get("id"),
+        "symbol": order.get("symbol"),
+        "side": order.get("side"),
+        "qty": order.get("filled_qty") or order.get("qty"),
+        "filled_qty": order.get("filled_qty") or order.get("qty"),
+        "filled_avg_price": order.get("filled_avg_price") or order.get("price"),
+        "filled_at": order.get("filled_at") or order.get("updated_at") or order.get("submitted_at"),
+        "updated_at": order.get("updated_at"),
+        "submitted_at": order.get("submitted_at"),
+        "created_at": order.get("created_at"),
+    }
 
 
 def _build_recorded_qty_by_order_id(trades: list[dict]) -> dict[str, int]:
@@ -711,6 +763,7 @@ def main() -> int:
     broker = BrokerClient(api_key=api_key, api_secret=api_secret, paper_mode=True)
     tracker = PnLTracker(project_root)
     tracker.state = tracker._load_state()
+    fill_ledger = FillLedger(project_root)
 
     # Step 0: Cancel stale open orders from previous sessions.
     cancelled_stale_buys = cancel_stale_buy_orders(broker)
@@ -824,7 +877,7 @@ def main() -> int:
     # position whose sell fill is already consumed does not trigger the partial-fill
     # path on every reconcile cycle ("Skipping exit: no open trade found" loop).
     recorded_qty_by_order_id: dict[str, int] = _build_recorded_qty_by_order_id(
-        tracker.state.trades
+        list(tracker.state.trades) + list(tracker.state.quarantined_trades)
     )
 
     submissions = load_recent_submissions(project_root / "data" / "audits")
@@ -835,6 +888,7 @@ def main() -> int:
         if sub["side"] != "sell":
             continue
         checked += 1
+        broker_order_id = None
         try:
             # --- Timestamp-based matching ---
             # Prefer a broker order whose submitted_at is within MATCH_WINDOW_SECONDS
@@ -898,6 +952,25 @@ def main() -> int:
                 continue
             
             broker_order_id = match.get("id")
+            fill_key = fill_ledger.ingest(
+                _build_fill_snapshot_from_order(match),
+                quarantine_on_missing=True,
+            )
+            fill_record = fill_ledger.get(fill_key) or {}
+            if fill_record.get("quarantine_reason"):
+                print(
+                    f"WARN: Skipping quarantined sell fill {fill_key} for {sub['symbol']}: "
+                    f"{fill_record.get('quarantine_reason')}",
+                    file=sys.stderr,
+                )
+                continue
+            broker_filled_total = int(float(match.get("filled_qty", 0) or 0))
+            ledger_consumed_qty = int(round(float(fill_record.get("consumed_qty") or 0)))
+            already_recorded = (
+                recorded_qty_by_order_id.get(broker_order_id, 0)
+                if broker_order_id else 0
+            )
+            already_consumed = max(already_recorded, ledger_consumed_qty)
             
             # Dedupe / partial-fill completion guard.
             # A sell order whose broker_order_id is already in used_sell_order_ids was
@@ -906,10 +979,8 @@ def main() -> int:
             # If it does, the inline paper_demo reconciler caught only an early partial
             # fill; we process the unrecorded remainder here rather than skipping.
             remaining_fill_qty: int | None = None
-            if broker_order_id and broker_order_id in used_sell_order_ids:
-                broker_filled_total = int(float(match.get("filled_qty", 0) or 0))
-                already_recorded = recorded_qty_by_order_id.get(broker_order_id, 0)
-                remaining = broker_filled_total - already_recorded
+            if broker_order_id and (broker_order_id in used_sell_order_ids or already_consumed > 0):
+                remaining = broker_filled_total - already_consumed
                 if remaining <= 0:
                     continue  # fully recorded — true duplicate, skip
                 # Temporal guard for partial-fill completion: the unrecorded remainder
@@ -949,7 +1020,7 @@ def main() -> int:
                 print(
                     f"INFO: partial-fill completion: {sub['symbol']} "
                     f"order={broker_order_id[:8]} broker_total={broker_filled_total} "
-                    f"recorded={already_recorded} remaining={remaining}",
+                    f"recorded={already_consumed} remaining={remaining}",
                     file=sys.stderr,
                 )
 
@@ -1069,8 +1140,14 @@ def main() -> int:
                     broker_order_id=broker_order_id,
                     exit_strategy_id=resolved_exit_strategy,
                     exit_reason=resolved_exit_reason,
+                    fill_id=fill_key,
                 )
                 if updated:
+                    consume_ref = (
+                        f"{sub.get('submission_id') or broker_order_id or fill_key}:"
+                        f"{already_consumed}->{already_consumed + effective_fill_qty}"
+                    )
+                    fill_ledger.consume(fill_key, trade_id=consume_ref, qty=effective_fill_qty)
                     filled_exits += 1
                     # Mark this sell order as used to prevent re-use within same run
                     if broker_order_id:
@@ -1087,8 +1164,54 @@ def main() -> int:
                     # Clean up the stored exit reason after successful recording
                     if broker_order_id and stored:
                         delete_exit_reason(project_root, broker_order_id)
-        except Exception:
-            continue
+        except (FillAlreadyConsumedError, FillQuarantinedError, ReconcileProcessingError) as exc:
+            error = (
+                f"critical_reconcile_failure symbol={sub.get('symbol')} "
+                f"submission_id={sub.get('submission_id')} "
+                f"broker_order_id={broker_order_id or 'unknown'} error={exc}"
+            )
+            print(f"ERROR: {error}", file=sys.stderr)
+            _write_reconcile_status(
+                newly_recorded_buys=newly_recorded_buys,
+                filled_exits_recorded=filled_exits,
+                checked_sell_submissions=checked,
+                status="error",
+                error=error,
+            )
+            emit_cron_summary({
+                "job": "reconcile_orders",
+                "status": "error",
+                "reason": error,
+                "cancelled_stale_orders": len(cancelled_stale),
+                "newly_recorded_buys": newly_recorded_buys,
+                "checked_sell_submissions": checked,
+                "filled_exits_recorded": filled_exits,
+            })
+            return 1
+        except Exception as exc:
+            error = (
+                f"critical_reconcile_failure symbol={sub.get('symbol')} "
+                f"submission_id={sub.get('submission_id')} "
+                f"broker_order_id={broker_order_id or 'unknown'} error={type(exc).__name__}: {exc}"
+            )
+            print(f"ERROR: {error}", file=sys.stderr)
+            _write_reconcile_status(
+                newly_recorded_buys=newly_recorded_buys,
+                filled_exits_recorded=filled_exits,
+                checked_sell_submissions=checked,
+                status="error",
+                error=error,
+            )
+            emit_cron_summary({
+                "job": "reconcile_orders",
+                "status": "error",
+                "reason": error,
+                "cancelled_stale_orders": len(cancelled_stale),
+                "newly_recorded_buys": newly_recorded_buys,
+                "checked_sell_submissions": checked,
+                "filled_exits_recorded": filled_exits,
+            })
+            return 1
 
     # Purge exit_reason entries older than 7 days
     purge_old_entries(project_root, max_age_days=7)
@@ -1128,25 +1251,12 @@ def main() -> int:
     }
     print(json.dumps(summary_payload, ensure_ascii=False, indent=2))
 
-    # FIX-OBSERVE-1: Write reconcile_status.json for console health evidence.
-    # Contains broker/tracker mismatch count so health score can degrade when stale.
-    _reconcile_status = {
-        "as_of": datetime.now(timezone.utc).isoformat(),
-        "unexplained_mismatch_count": 0,  # If we reach this point, reconcile succeeded
-        "newly_recorded_buys": newly_recorded_buys,
-        "filled_exits_recorded": filled_exits,
-        "checked_sell_submissions": checked,
-        "job": "reconcile_orders",
-    }
-    try:
-        _status_path = project_root / "data" / "audits" / "reconcile_status.json"
-        _status_path.parent.mkdir(parents=True, exist_ok=True)
-        _status_path.write_text(
-            json.dumps(_reconcile_status, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
-    except Exception as _e:
-        print(f"WARN: Failed to write reconcile_status.json: {_e}", file=sys.stderr)
+    _write_reconcile_status(
+        newly_recorded_buys=newly_recorded_buys,
+        filled_exits_recorded=filled_exits,
+        checked_sell_submissions=checked,
+        status="ok",
+    )
 
     emit_cron_summary({
         "job": "reconcile_orders",

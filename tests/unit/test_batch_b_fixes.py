@@ -60,6 +60,19 @@ class TestFillLedger:
         ledger.consume(key, trade_id="trade-001")
         assert ledger.is_consumed(key)
 
+    def test_partial_consumption_persists_consumed_qty(self, tmp_path):
+        from stock_swing.tracking.fill_ledger import FillLedger
+        ledger = FillLedger(tmp_path)
+        fill = self._make_fill(qty=100)
+        key = ledger.ingest(fill)
+        ledger.consume(key, trade_id="trade-001", qty=40)
+        rec = ledger.get(key)
+        assert rec is not None
+        assert rec["consumed_qty"] == 40
+        assert not rec["consumed"]
+        ledger.consume(key, trade_id="trade-002", qty=60)
+        assert ledger.is_consumed(key)
+
     def test_double_consume_raises(self, tmp_path):
         """Consuming same fill_id twice must raise FillAlreadyConsumedError."""
         from stock_swing.tracking.fill_ledger import FillLedger, FillAlreadyConsumedError

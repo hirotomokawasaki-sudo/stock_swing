@@ -59,6 +59,8 @@ class TradeEntry:
     experiment_id: str | None = None
     prompt_version: str | None = None
     config_hash: str | None = None
+    entry_fill_id: str | None = None
+    exit_fill_id: str | None = None
     # F1: Holding-period integrity
     holding_days: float | None = None  # computed from entry_time/exit_time; None if open
     quarantine_reason: str | None = None  # set when status="quarantined"
@@ -205,6 +207,7 @@ class PnLTracker:
         account_id: str | None = None,
         signal_strength: float | None = None,
         asset_class: str | None = None,
+        fill_id: str | None = None,
         # F4: durable decision metadata
         run_id: str | None = None,
         experiment_id: str | None = None,
@@ -260,6 +263,7 @@ class PnLTracker:
             experiment_id=experiment_id,
             prompt_version=prompt_version,
             config_hash=config_hash,
+            entry_fill_id=fill_id,
         )
         self.state.trades.append(asdict(trade))
         self.state.total_trades += 1
@@ -275,6 +279,7 @@ class PnLTracker:
                 "qty": qty,
                 "strategy_id": strategy_id,
                 "signal_strength": round(float(signal_strength), 4) if signal_strength is not None else None,
+                "entry_fill_id": fill_id,
             },
         ))
         return trade_id
@@ -287,6 +292,7 @@ class PnLTracker:
         broker_order_id: str | None = None,
         exit_strategy_id: str | None = None,
         exit_reason: str | None = None,
+        fill_id: str | None = None,
     ) -> TradeEntry | None:
         """Mark open trades for a symbol as closed (supports partial fills).
         
@@ -356,6 +362,8 @@ class PnLTracker:
                     closed_portion["exit_strategy_id"] = exit_strategy_id
                 if exit_reason:
                     closed_portion["exit_reason"] = exit_reason
+                if fill_id:
+                    closed_portion["exit_fill_id"] = fill_id
 
                 # F1: Validate holding period; quarantine if entry_time > exit_time
                 hd = _compute_holding_days(closed_portion.get("entry_time"), now)
@@ -439,6 +447,8 @@ class PnLTracker:
                 trade_dict["exit_strategy_id"] = exit_strategy_id
             if exit_reason:
                 trade_dict["exit_reason"] = exit_reason
+            if fill_id:
+                trade_dict["exit_fill_id"] = fill_id
 
             # R0-v2-B: canonical validator gate — quarantine instead of closing if invalid
             _quar_ids = {t.get("trade_id") for t in self.state.quarantined_trades}
@@ -466,6 +476,7 @@ class PnLTracker:
             
             closed_trade = TradeEntry(**trade_dict)
 
+        self._refresh_cumulative_metrics_from_closed_trades()
         self.state.last_updated = now
         self._save_state()
         if closed_trade:
@@ -479,6 +490,7 @@ class PnLTracker:
                     "exit_qty": exit_qty,
                     "exit_reason": exit_reason,
                     "pnl": closed_trade.pnl,
+                    "exit_fill_id": fill_id,
                 },
             ))
         return closed_trade
@@ -577,7 +589,10 @@ class PnLTracker:
             "losing_trades": len(losses),
             "flat_trades": len(flat),
             "win_rate": round(win_rate, 4),
-            "cumulative_realized_pnl": round(self.state.cumulative_realized_pnl, 2),
+            "cumulative_realized_pnl": round(
+                sum(t.get("pnl", 0) or 0 for t in closed) if closed else self.state.cumulative_realized_pnl,
+                2,
+            ),
             "avg_return_per_trade": round(avg_return, 4) if avg_return is not None else None,
             "avg_pnl_per_trade": round(avg_pnl, 2),
             "valid_return_trade_count": len(closed_with_valid_return),
@@ -1208,7 +1223,9 @@ class PnLTracker:
                     logger.warning(f"Ignoring unknown PnL state keys: {unknown_keys}")
                     data = {k: v for k, v in data.items() if k in allowed}
 
-                return PnLState(**data)
+                state = PnLState(**data)
+                self._refresh_cumulative_metrics_from_closed_trades(state)
+                return state
             except Exception as e:
                 logger.error(f"Failed to load state: {e}")
                 pass
@@ -1244,3 +1261,15 @@ class PnLTracker:
             except Exception:
                 pass
             raise
+
+    def _refresh_cumulative_metrics_from_closed_trades(self, state: PnLState | None = None) -> None:
+        """Keep aggregate counters derived from canonical closed trades."""
+        target = state or self.state
+        closed = [t for t in target.trades if t.get("status") == "closed"]
+        if closed:
+            target.cumulative_realized_pnl = round(
+                sum(float(t.get("pnl", 0) or 0) for t in closed),
+                2,
+            )
+        target.winning_trades = sum(1 for t in closed if float(t.get("pnl", 0) or 0) > 0)
+        target.losing_trades = sum(1 for t in closed if float(t.get("pnl", 0) or 0) < 0)
