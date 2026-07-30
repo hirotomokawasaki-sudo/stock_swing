@@ -20,6 +20,8 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+_UNSET = object()
+
 
 @dataclass
 class RiskSnapshot:
@@ -126,9 +128,9 @@ def compute_consecutive_losing_trades(trades: list[dict[str, Any]]) -> int:
 def build_risk_snapshot(
     *,
     trades: list[dict[str, Any]],
-    equity: float,
-    unrealized_pnl: float = 0.0,
-    prev_unrealized_pnl: float = 0.0,
+    equity: float | None,
+    unrealized_pnl: float | None | object = _UNSET,
+    prev_unrealized_pnl: float | None | object = _UNSET,
     stale_price_event_count: int = 0,
     broker_tracker_mismatch_count: int = 0,
     api_error_rate_pct: float = 0.0,
@@ -152,17 +154,33 @@ def build_risk_snapshot(
     """
     missing: list[str] = []
 
-    daily_realized = compute_daily_realized_loss_pct(trades, equity, reference_date)
-    weekly_total = compute_weekly_total_loss_pct(trades, equity, reference_date)
+    effective_equity = float(equity or 0.0)
+    unrealized_missing = unrealized_pnl is None
+    prev_unrealized_missing = prev_unrealized_pnl is None
+    effective_unrealized = 0.0 if unrealized_pnl is _UNSET else float(unrealized_pnl or 0.0)
+    effective_prev_unrealized = 0.0 if prev_unrealized_pnl is _UNSET else (
+        None if prev_unrealized_pnl is None else float(prev_unrealized_pnl)
+    )
+
+    if equity is None or effective_equity <= 0:
+        missing.append("equity")
+    if prev_unrealized_missing:
+        missing.append("day_start_unrealized")
+    if unrealized_missing:
+        missing.append("unrealized_pnl")
+
+    daily_realized = compute_daily_realized_loss_pct(trades, effective_equity, reference_date)
+    weekly_total = compute_weekly_total_loss_pct(trades, effective_equity, reference_date)
     consecutive = compute_consecutive_losing_trades(trades)
 
     # daily_total includes unrealized delta since start of run
-    unrealized_delta = unrealized_pnl - prev_unrealized_pnl
-    daily_realized_abs = daily_realized / 100 * equity if equity else 0.0
-    daily_total_pct = round((daily_realized_abs + unrealized_delta) / equity * 100, 4) if equity else 0.0
-
-    if equity <= 0:
-        missing.append("equity")
+    if effective_prev_unrealized is None or effective_equity <= 0:
+        unrealized_delta = 0.0
+        daily_total_pct = 0.0
+    else:
+        unrealized_delta = effective_unrealized - effective_prev_unrealized
+        daily_realized_abs = daily_realized / 100 * effective_equity
+        daily_total_pct = round((daily_realized_abs + unrealized_delta) / effective_equity * 100, 4)
 
     return RiskSnapshot(
         stale_price_event_count=stale_price_event_count,
@@ -181,9 +199,9 @@ def build_risk_snapshot(
 def compute_risk_snapshot(
     *,
     trades: list[dict[str, Any]],
-    equity: float,
-    unrealized_pnl: float = 0.0,
-    prev_unrealized_pnl: float = 0.0,
+    equity: float | None,
+    unrealized_pnl: float | None | object = _UNSET,
+    prev_unrealized_pnl: float | None | object = _UNSET,
     stale_price_event_count: int = 0,
     broker_tracker_mismatch_count: int = 0,
     api_error_rate_pct: float = 0.0,

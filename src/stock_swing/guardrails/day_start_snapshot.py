@@ -1,37 +1,5 @@
-"""Day-start equity / unrealized baseline for guardrail daily-loss calculation.
+"""Day-start equity / unrealized baseline for fail-closed guardrails."""
 
-FIX-GUARDRAIL-2: Replaces the implicit prev_unrealized_pnl=0 fallback with an
-explicit day-start snapshot written once per trading day.
-
-File format (data/guardrails/day_start_snapshot.json):
-    {
-        "market_date":          "YYYY-MM-DD",
-        "captured_at":          "<ISO-8601 UTC>",
-        "source":               "broker_api" | "tracker_estimate" | "unknown",
-        "day_start_equity":     <float | null>,
-        "day_start_unrealized": <float | null>,
-        "missing_fields":       ["day_start_equity", ...]  # empty if all present
-    }
-
-Usage in paper_demo.py (pre-run):
-    from stock_swing.guardrails.day_start_snapshot import (
-        load_or_capture_day_start, DayStartMissingError
-    )
-    try:
-        snapshot = load_or_capture_day_start(broker=broker, tracker=tracker)
-        prev_unrealized = snapshot.day_start_unrealized
-    except DayStartMissingError as exc:
-        # BUY must be halted — do not fall back to 0
-        raise
-
-Safety rules:
-- If the stored snapshot is from a previous trading day, it is stale and must
-  not be used as today's baseline.  The caller receives an error and MUST halt
-  new BUY orders.
-- 0-fallback is NEVER performed automatically.  Missing values are surfaced to
-  the caller as missing_metrics.
-- All mutations are atomic (write-to-tmp then rename).
-"""
 from __future__ import annotations
 
 import json
@@ -40,44 +8,56 @@ import tempfile
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Optional
 
 _SNAPSHOT_RELATIVE = Path("data/guardrails/day_start_snapshot.json")
 
 
 class DayStartMissingError(RuntimeError):
-    """Raised when day-start baseline is unavailable or stale.
+    """Raised when day-start baseline is unavailable or stale."""
 
-    BUY orders MUST be halted until the snapshot is refreshed.
-    """
+
+def current_market_date() -> str:
+    """Return the current runtime date used by guardrail snapshots."""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 
 @dataclass
 class DayStartSnapshot:
     market_date: str
     captured_at: str
-    source: str  # "broker_api" | "tracker_estimate" | "unknown"
+    source: str
     day_start_equity: Optional[float]
     day_start_unrealized: Optional[float]
-    missing_fields: List[str] = field(default_factory=list)
+    missing_fields: list[str] = field(default_factory=list)
 
-    def is_valid_for_today(self) -> bool:
-        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        return self.market_date == today
+    def is_valid_for_market_date(self, market_date: str | None = None) -> bool:
+        return self.market_date == (market_date or current_market_date())
+
+    def validation_errors(self, market_date: str | None = None) -> list[str]:
+        errors = list(self.missing_fields)
+        expected_market_date = market_date or current_market_date()
+        if self.market_date != expected_market_date:
+            errors.append("market_date")
+        if not self.captured_at:
+            errors.append("captured_at")
+        if not self.source:
+            errors.append("source")
+        if self.day_start_equity is None and "day_start_equity" not in errors:
+            errors.append("day_start_equity")
+        if self.day_start_unrealized is None and "day_start_unrealized" not in errors:
+            errors.append("day_start_unrealized")
+        return errors
 
     def to_dict(self) -> dict:
         return asdict(self)
 
 
-def _today_utc() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
-
-
 def _write_atomic(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_fd, tmp_path = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
+    fd, tmp_path = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
     try:
-        with os.fdopen(tmp_fd, "w", encoding="utf-8") as fh:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
             json.dump(data, fh, ensure_ascii=False, indent=2)
         os.replace(tmp_path, path)
     except Exception:
@@ -89,22 +69,21 @@ def _write_atomic(path: Path, data: dict) -> None:
 
 
 def load_snapshot(project_root: Path) -> Optional[DayStartSnapshot]:
-    """Load stored snapshot; return None if missing or corrupt."""
     path = project_root / _SNAPSHOT_RELATIVE
     if not path.exists():
         return None
     try:
-        d = json.loads(path.read_text(encoding="utf-8"))
-        return DayStartSnapshot(
-            market_date=d.get("market_date", ""),
-            captured_at=d.get("captured_at", ""),
-            source=d.get("source", "unknown"),
-            day_start_equity=d.get("day_start_equity"),
-            day_start_unrealized=d.get("day_start_unrealized"),
-            missing_fields=d.get("missing_fields", []),
-        )
+        data = json.loads(path.read_text(encoding="utf-8"))
     except Exception:
         return None
+    return DayStartSnapshot(
+        market_date=str(data.get("market_date") or ""),
+        captured_at=str(data.get("captured_at") or ""),
+        source=str(data.get("source") or ""),
+        day_start_equity=data.get("day_start_equity"),
+        day_start_unrealized=data.get("day_start_unrealized"),
+        missing_fields=list(data.get("missing_fields") or []),
+    )
 
 
 def capture_snapshot(
@@ -113,25 +92,26 @@ def capture_snapshot(
     equity: Optional[float],
     unrealized_pnl: Optional[float],
     source: str = "unknown",
+    market_date: str | None = None,
 ) -> DayStartSnapshot:
-    """Write a fresh day-start snapshot for today."""
-    today = _today_utc()
-    missing: List[str] = []
+    missing: list[str] = []
     if equity is None:
         missing.append("day_start_equity")
     if unrealized_pnl is None:
         missing.append("day_start_unrealized")
+    if not source:
+        missing.append("source")
 
-    snap = DayStartSnapshot(
-        market_date=today,
+    snapshot = DayStartSnapshot(
+        market_date=market_date or current_market_date(),
         captured_at=datetime.now(timezone.utc).isoformat(),
-        source=source,
+        source=source or "unknown",
         day_start_equity=equity,
         day_start_unrealized=unrealized_pnl,
         missing_fields=missing,
     )
-    _write_atomic(project_root / _SNAPSHOT_RELATIVE, snap.to_dict())
-    return snap
+    _write_atomic(project_root / _SNAPSHOT_RELATIVE, snapshot.to_dict())
+    return snapshot
 
 
 def load_or_capture_day_start(
@@ -141,41 +121,30 @@ def load_or_capture_day_start(
     unrealized_pnl: Optional[float] = None,
     source: str = "unknown",
     allow_missing: bool = False,
+    market_date: str | None = None,
 ) -> DayStartSnapshot:
-    """Load today's snapshot or capture a new one if today's is absent.
-
-    Raises DayStartMissingError when required fields are missing AND
-    allow_missing=False (the default — callers that block BUY should not pass
-    allow_missing=True).
-
-    Args:
-        project_root: Repository root path.
-        equity: Current broker equity to capture if no snapshot yet.
-        unrealized_pnl: Current unrealized PnL to capture if no snapshot yet.
-        source: Label for the capture source (e.g. "broker_api").
-        allow_missing: If True, return the snapshot even when fields are None.
-            Only use this in read-only reporting paths.
-    """
+    expected_market_date = market_date or current_market_date()
     existing = load_snapshot(project_root)
-
-    if existing and existing.is_valid_for_today():
-        snap = existing
+    if existing is not None and existing.is_valid_for_market_date(expected_market_date):
+        snapshot = existing
     else:
-        # Stale or absent — write fresh snapshot with what we have.
-        snap = capture_snapshot(
+        snapshot = capture_snapshot(
             project_root,
             equity=equity,
             unrealized_pnl=unrealized_pnl,
             source=source,
+            market_date=expected_market_date,
         )
 
-    if not allow_missing and snap.missing_fields:
-        raise DayStartMissingError(
-            f"Day-start snapshot is missing required fields: {snap.missing_fields}. "
-            "BUY orders must be halted until snapshot is refreshed."
-        )
-
-    return snap
+    errors = snapshot.validation_errors(expected_market_date)
+    if errors:
+        snapshot.missing_fields = sorted(set(errors))
+        if not allow_missing:
+            raise DayStartMissingError(
+                f"day-start snapshot invalid: {snapshot.missing_fields}. "
+                "BUY orders must remain halted until a fresh baseline is captured."
+            )
+    return snapshot
 
 
 def get_prev_unrealized_for_guardrail(
@@ -184,34 +153,19 @@ def get_prev_unrealized_for_guardrail(
     equity: Optional[float] = None,
     unrealized_pnl: Optional[float] = None,
     source: str = "unknown",
-) -> tuple[float, list[str]]:
-    """Return (prev_unrealized_pnl, missing_metrics) for guardrail calculation.
-
-    Never returns 0 silently.  If the value is unknown, it is returned as None
-    and 'day_start_unrealized' is added to missing_metrics.
-
-    Returns:
-        (prev_unrealized, missing_metrics) where prev_unrealized is the
-        day-start unrealized PnL baseline, or None if unavailable.
-    """
+    market_date: str | None = None,
+) -> tuple[float | None, list[str]]:
     try:
-        snap = load_or_capture_day_start(
+        snapshot = load_or_capture_day_start(
             project_root,
             equity=equity,
             unrealized_pnl=unrealized_pnl,
             source=source,
-            allow_missing=True,  # caller handles missing
+            allow_missing=True,
+            market_date=market_date,
         )
     except Exception:
-        return 0.0, ["day_start_unrealized", "day_start_equity"]
+        return None, ["day_start_equity", "day_start_unrealized", "captured_at", "source"]
 
-    missing: list[str] = list(snap.missing_fields)
-    prev = snap.day_start_unrealized
-
-    if prev is None:
-        # Do not fall back to 0 — surface as missing metric
-        if "day_start_unrealized" not in missing:
-            missing.append("day_start_unrealized")
-        return 0.0, missing  # 0 used only as a type-safe sentinel; caller checks missing
-
-    return prev, missing
+    missing = sorted(set(snapshot.validation_errors(market_date)))
+    return snapshot.day_start_unrealized, missing

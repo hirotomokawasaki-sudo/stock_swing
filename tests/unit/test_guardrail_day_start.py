@@ -1,0 +1,169 @@
+from __future__ import annotations
+
+import json
+import sys
+import types
+from datetime import datetime, timezone
+from types import SimpleNamespace
+
+massive_stub = types.ModuleType("massive")
+massive_stub.RESTClient = object
+sys.modules.setdefault("massive", massive_stub)
+
+from stock_swing.cli import paper_demo
+from stock_swing.cli.cron_summary import CRON_SUMMARY_PREFIX
+from stock_swing.core.types import CanonicalRecord
+from stock_swing.feature_engine.base_feature import FeatureResult
+from stock_swing.strategy_engine.base_strategy import CandidateSignal
+
+
+def test_build_risk_snapshot_marks_missing_day_start_metric() -> None:
+    from stock_swing.guardrails.risk_snapshot import build_risk_snapshot
+
+    snapshot = build_risk_snapshot(
+        trades=[],
+        equity=100_000.0,
+        unrealized_pnl=-2_500.0,
+        prev_unrealized_pnl=None,
+    )
+
+    assert "day_start_unrealized" in snapshot.missing_metrics
+
+
+def test_paper_demo_halts_buy_when_day_start_missing(monkeypatch, tmp_path, capsys) -> None:
+    """
+    Regression: REM-P0-002 / 2026-07-29 retest.
+    Missing day-start baseline must reject BUYs on the production paper_demo path
+    and persist HALT state instead of silently using numeric zero.
+    """
+    monkeypatch.setattr(paper_demo, "project_root", tmp_path)
+    monkeypatch.setattr(paper_demo, "should_skip_non_market_day", lambda: (False, ""))
+    monkeypatch.setattr(paper_demo, "read_runtime_mode", lambda root: "paper")
+    monkeypatch.setattr(
+        paper_demo,
+        "read_ledger_quality_gate",
+        lambda root: {"current_status": "VALID", "enforce_invalid_ledger_blocks_live_ready": False},
+    )
+    monkeypatch.setattr(paper_demo.MarketCalendar, "is_market_open", lambda now=None: (True, "open"))
+    monkeypatch.setattr(paper_demo.MarketCalendar, "is_regular_market_hours", lambda now=None: (True, "open"))
+    monkeypatch.setenv("BROKER_API_KEY", "key")
+    monkeypatch.setenv("BROKER_API_SECRET", "secret")
+    monkeypatch.setenv("BROKER_BASE_URL", "https://paper.example")
+
+    guardrail_cfg = tmp_path / "config" / "guardrails" / "autonomous_stop.yaml"
+    guardrail_cfg.parent.mkdir(parents=True, exist_ok=True)
+    guardrail_cfg.write_text("paper_warning_only: false\nrules: {}\n", encoding="utf-8")
+
+    class _KillSwitch:
+        def __init__(self, state_file):
+            self.state_file = state_file
+
+        def check(self):
+            return None
+
+    class _Broker:
+        def __init__(self, *args, **kwargs):
+            self.base_url = "https://paper.example"
+
+        def fetch_account(self):
+            return SimpleNamespace(payload={"status": "ACTIVE", "equity": "100000", "buying_power": "100000"})
+
+        def get_account(self):
+            return {"equity": "100000"}
+
+        def fetch_positions(self):
+            return SimpleNamespace(payload=[])
+
+    class _Fetcher:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def fetch_bars(self, symbol, timeframe="1Day", limit=20):
+            record = CanonicalRecord(
+                record_id="r1",
+                schema_version="v1",
+                source="massive",
+                source_type="bars",
+                symbol=symbol,
+                event_type="bar",
+                event_time=datetime.now(timezone.utc),
+                as_of="2026-07-30",
+                ingested_at=datetime.now(timezone.utc),
+                timezone="UTC",
+                payload_version="v1",
+                payload={"close": 100.0},
+            )
+            return [record], "massive"
+
+    def _momentum_results(self, records):
+        return [
+            FeatureResult(
+                feature_name="price_momentum",
+                symbol="AAPL",
+                computed_at=datetime.now(timezone.utc),
+                values={"momentum": 0.08, "trend": "up", "bars_used": 20, "latest_close": 100.0},
+            )
+        ]
+
+    def _macro_results(self, records):
+        return []
+
+    def _buy_signal(self, features):
+        return [
+            CandidateSignal(
+                strategy_id="breakout_momentum_v1",
+                symbol="AAPL",
+                action="buy",
+                signal_strength=0.95,
+                generated_at=datetime.now(timezone.utc),
+                time_horizon="3d",
+                confidence=0.9,
+                reasoning="test buy",
+                metadata={"latest_close": 100.0},
+            )
+        ]
+
+    def _no_signals(self, *args, **kwargs):
+        return []
+
+    class _EntryFilterResult:
+        passed = None
+        blocked: list[tuple[str, str]] = []
+        stats: dict[str, object] = {}
+
+    def _filter_identity(self, decisions, records_by_symbol, closed_trades, etf_symbols):
+        result = _EntryFilterResult()
+        result.passed = decisions
+        return result
+
+    monkeypatch.setattr(paper_demo, "KillSwitch", _KillSwitch)
+    monkeypatch.setattr(paper_demo, "BrokerClient", _Broker)
+    monkeypatch.setattr("stock_swing.sources.hybrid_data_fetcher.HybridDataFetcher", _Fetcher)
+    monkeypatch.setattr(paper_demo.PriceMomentumFeature, "compute", _momentum_results)
+    monkeypatch.setattr(paper_demo.MacroRegimeFeature, "compute", _macro_results)
+    monkeypatch.setattr(paper_demo.BreakoutMomentumStrategy, "generate", _buy_signal)
+    monkeypatch.setattr(paper_demo.EventSwingStrategy, "generate", _no_signals)
+    monkeypatch.setattr(paper_demo.SimpleExitV2Strategy, "generate", _no_signals)
+    monkeypatch.setattr(paper_demo.EntryFilterEngine, "filter", _filter_identity)
+    monkeypatch.setattr(paper_demo, "get_permanent_block_summary", lambda **kwargs: [])
+    monkeypatch.setattr(paper_demo, "prioritize_buy_signals", lambda entry_signals, *args, **kwargs: entry_signals)
+    monkeypatch.setattr(paper_demo, "prioritize_buy_signals_v2", lambda entry_signals, *args, **kwargs: entry_signals)
+    monkeypatch.setattr(
+        "stock_swing.guardrails.day_start_snapshot.get_prev_unrealized_for_guardrail",
+        lambda *args, **kwargs: (None, ["day_start_unrealized"]),
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["paper_demo", "--dry-run", "--cron-summary-json", "--symbols", "AAPL"],
+    )
+
+    exit_code = paper_demo.main()
+    out = capsys.readouterr().out
+    summary_line = [line for line in out.splitlines() if line.startswith(CRON_SUMMARY_PREFIX)][-1]
+    summary = json.loads(summary_line.split("=", 1)[1])
+    breaker = json.loads((tmp_path / "data" / "guardrails" / "circuit_breaker.json").read_text(encoding="utf-8"))
+
+    assert exit_code == 1
+    assert summary["status"] == "error"
+    assert breaker["status"] == "halted"

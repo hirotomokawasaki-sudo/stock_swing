@@ -511,6 +511,9 @@ def main() -> int:  # noqa: C901
         symbols = DEFAULT_SYMBOLS
 
     latency_tracker: LatencyTracker | None = None
+    _final_exit_code = 0
+    _final_reason: str | None = None
+    _buy_halt_reasons: list[str] = []
 
     def finish(
         exit_code: int,
@@ -576,7 +579,10 @@ def main() -> int:  # noqa: C901
         print(f"  experiment_id : {experiment_context.experiment_id}")
         print(f"  config_hash   : {experiment_context.config_hash}")
     except Exception as _exc:
-        logger.warning("ExperimentContext setup failed (non-fatal): %s", _exc)
+        logger.error("ExperimentContext setup failed — BUYs will be halted: %s", _exc)
+        _buy_halt_reasons.append("experiment_context_unavailable")
+        _final_exit_code = 1
+        _final_reason = _final_reason or "experiment_context_unavailable"
         experiment_context = None
     # --- end R0-A ---
 
@@ -986,7 +992,7 @@ def main() -> int:  # noqa: C901
         print(f"  WARN: Could not fetch positions for exit strategy: {exc}")
 
     # FIX-GUARDRAIL-2: Use day-start snapshot; never fall back to 0 silently.
-    _day_start_unrealized: float = 0.0
+    _day_start_unrealized: float | None = None
     _day_start_missing_metrics: list[str] = []
     try:
         from stock_swing.guardrails.day_start_snapshot import get_prev_unrealized_for_guardrail
@@ -1014,13 +1020,17 @@ def main() -> int:  # noqa: C901
         )
         if _day_start_missing_metrics:
             print(
-                f"  WARN [FIX-GUARDRAIL-2]: day-start snapshot missing fields: "
-                f"{_day_start_missing_metrics}. Guardrail daily_loss may be inaccurate.",
+                f"  ERROR [FIX-GUARDRAIL-2]: day-start snapshot missing fields: "
+                f"{_day_start_missing_metrics}. BUYs must remain halted.",
                 file=sys.stderr,
             )
+            _final_exit_code = 1
+            _final_reason = _final_reason or "guardrail_missing_day_start"
     except Exception as _dss_exc:
-        print(f"  WARN [FIX-GUARDRAIL-2]: day-start snapshot error: {_dss_exc}", file=sys.stderr)
-        _day_start_missing_metrics = ["day_start_unrealized", "day_start_equity"]
+        print(f"  ERROR [FIX-GUARDRAIL-2]: day-start snapshot error: {_dss_exc}", file=sys.stderr)
+        _day_start_missing_metrics = ["day_start_unrealized", "day_start_equity", "captured_at", "source"]
+        _final_exit_code = 1
+        _final_reason = _final_reason or "guardrail_missing_day_start"
 
     # Entry strategies: first pass on daily features only.
     breakout_strat = BreakoutMomentumStrategy(
@@ -1430,7 +1440,11 @@ def main() -> int:  # noqa: C901
     if not all_signals:
         print(f"\n  No signals. Try --min-momentum 0.01 to lower threshold.")
         _print_summary([], [], equity, args.dry_run)
-        return finish(0, equity_value=equity, extra={"reason": "no_signals"})
+        return finish(
+            _final_exit_code,
+            equity_value=equity,
+            extra={"reason": _final_reason or "no_signals"},
+        )
 
     # 8. Decisions
     _section("8. Decision Engine")
@@ -1647,7 +1661,34 @@ def main() -> int:  # noqa: C901
             details=f"{len(_ef_result.blocked)} buy(s): {[s for s, _ in _ef_result.blocked[:5]]}",
         )
 
-    if _guard_engine is not None and apply_to_buy_candidate is not None and not _warning_only:
+    _critical_buy_halt_reasons = list(dict.fromkeys(_buy_halt_reasons + _day_start_missing_metrics))
+    if _critical_buy_halt_reasons:
+        try:
+            from stock_swing.guardrails.rule_engine import GuardAction as _CriticalGuardAction, GuardDecision as _CriticalGuardDecision
+
+            if "_breaker_store" in dir() and _breaker_store is not None:
+                _breaker_state = _breaker_store.apply_decision(
+                    _CriticalGuardDecision(action=_CriticalGuardAction.halt, triggered=[])
+                )
+        except Exception as _guard_halt_exc:
+            logger.warning("guardrail fail-closed HALT persistence failed: %s", _guard_halt_exc)
+        _blocked_symbols = [getattr(_cand, "symbol", "") for _cand in actionable if getattr(_cand, "action", "") == "buy"]
+        actionable = [d for d in actionable if getattr(d, "action", "") != "buy"]
+        if _blocked_symbols:
+            print(
+                "  🛡 Guardrail fail-closed: blocked "
+                f"{len(_blocked_symbols)} buy(s) due to critical missing evidence: "
+                f"{', '.join(_critical_buy_halt_reasons)}"
+            )
+        _final_exit_code = 1
+        _final_reason = _final_reason or "guardrail_missing_metrics"
+
+    if (
+        not _critical_buy_halt_reasons
+        and _guard_engine is not None
+        and apply_to_buy_candidate is not None
+        and not _warning_only
+    ):
         # F2: compute real broker/tracker mismatch count instead of hardcoded 0
         _bt_diff_prebuy = _build_broker_tracker_diff(
             list(current_positions_full.values()) if current_positions_full else [],
@@ -1659,9 +1700,13 @@ def main() -> int:  # noqa: C901
             equity=equity,
             unrealized_pnl=sum(float(p.get("unrealized_pl", 0) or 0)
                                for p in current_positions_full.values()) if current_positions_full else 0.0,
+            prev_unrealized_pnl=_day_start_unrealized,
             stale_price_event_count=len(stale_symbols) if "stale_symbols" in dir() else 0,
             broker_tracker_mismatch_count=_bt_diff_prebuy["mismatch_count"],
         )
+        for _missing_metric in _day_start_missing_metrics:
+            if _missing_metric not in _prebuy_snapshot.missing_metrics:
+                _prebuy_snapshot.missing_metrics.append(_missing_metric)
         _guard_metrics_now = _prebuy_snapshot.to_metrics()
         _guard_decision_now = _guard_engine.evaluate(_guard_metrics_now)
 
@@ -1800,7 +1845,12 @@ def main() -> int:  # noqa: C901
             ),
         )
         console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
-        return finish(0, decisions=decisions, equity_value=equity, extra={"reason": "dry_run"})
+        return finish(
+            _final_exit_code,
+            decisions=decisions,
+            equity_value=equity,
+            extra={"reason": _final_reason or "dry_run"},
+        )
 
     # R2-v2 / H5: pass AllocationConfig so PositionSizingPolicy uses same YAML multipliers
     executor = PaperExecutor(runtime_mode=runtime_mode, broker_client=broker, alloc_config=_ALLOC_CONFIG)
@@ -1833,9 +1883,17 @@ def main() -> int:  # noqa: C901
     if not actionable:
         print("\n  No actionable decisions after exposure preflight.")
         _print_summary(decisions, [], equity, args.dry_run)
-        return finish(0, decisions=decisions, equity_value=equity, extra={"reason": "no_actionable_decisions"})
+        return finish(
+            _final_exit_code,
+            decisions=decisions,
+            equity_value=equity,
+            extra={"reason": _final_reason or "no_actionable_decisions"},
+        )
 
     submissions: list[OrderSubmission] = []
+    _projected_positions_for_band = {
+        sym: dict(pos) for sym, pos in (current_positions_full or {}).items()
+    }
     
     # Symbol-level position size limit.
     # 2026-05-15 risk tightening: stocks use 6% of equity, ETFs use 70% of that cap
@@ -1917,7 +1975,7 @@ def main() -> int:  # noqa: C901
                     band_result = portfolio_allocator.check_projected_band(
                         o.symbol,
                         projected_notional,
-                        current_positions_full,
+                        _projected_positions_for_band,
                         equity,
                     )
                     if not band_result.allowed:
@@ -1994,6 +2052,13 @@ def main() -> int:  # noqa: C901
                     )
 
                 if o.side == "buy":
+                    _existing_projected = _projected_positions_for_band.get(o.symbol, {})
+                    _existing_value = float(_existing_projected.get("market_value", 0) or 0)
+                    _projected_positions_for_band[o.symbol] = {
+                        **_existing_projected,
+                        "symbol": o.symbol,
+                        "market_value": _existing_value + float(sub.qty) * float(current_price),
+                    }
                     # Only buy submissions create new open trades in the P&L tracker.
                     # Sell submissions are exits and must be recorded only after actual fills
                     # are confirmed during reconciliation.
@@ -2206,8 +2271,21 @@ def main() -> int:  # noqa: C901
                 for _mm in _day_start_missing_metrics:
                     if _mm not in _postrun_snapshot.missing_metrics:
                         _postrun_snapshot.missing_metrics.append(_mm)
-            _post_metrics = _postrun_snapshot.to_metrics()
-            _post_state = post_run_update(_post_metrics, _guard_engine, _breaker_store)
+            if _postrun_snapshot.missing_metrics:
+                from stock_swing.guardrails.rule_engine import GuardAction as _PostGuardAction, GuardDecision as _PostGuardDecision
+
+                _post_state = _breaker_store.apply_decision(
+                    _PostGuardDecision(action=_PostGuardAction.halt, triggered=[])
+                )
+                _final_exit_code = 1
+                _final_reason = _final_reason or "guardrail_missing_metrics"
+                logger.error(
+                    "guardrail_post_run_missing_metrics=%s",
+                    sorted(set(_postrun_snapshot.missing_metrics)),
+                )
+            else:
+                _post_metrics = _postrun_snapshot.to_metrics()
+                _post_state = post_run_update(_post_metrics, _guard_engine, _breaker_store)
 
             # R0-v2-A: recovery_pending → ok 遷移（clean scheduled run 検証）
             if _post_state.status == "recovery_pending" and _adjusted_mismatch == 0:
@@ -2425,7 +2503,13 @@ def main() -> int:  # noqa: C901
             exit_strat=exit_strat if "exit_strat" in dir() else None,
         )
 
-    return finish(0, decisions=decisions, submissions=submissions, equity_value=equity)
+    return finish(
+        _final_exit_code,
+        decisions=decisions,
+        submissions=submissions,
+        equity_value=equity,
+        extra={"reason": _final_reason} if _final_reason else None,
+    )
 
 
 def _build_equity_bridge(
