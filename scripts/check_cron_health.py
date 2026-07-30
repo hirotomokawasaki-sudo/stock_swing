@@ -18,6 +18,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 
+from console.utils.structured_json import parse_json_from_output
+
 
 @dataclass
 class Thresholds:
@@ -154,10 +156,17 @@ def run_openclaw_json(args: List[str]) -> Dict:
     )
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or result.stdout.strip() or "openclaw command failed")
-    try:
-        return json.loads(result.stdout)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError(f"failed to parse JSON from openclaw {' '.join(args)}: {exc}")
+    parsed = parse_json_from_output(result.stdout)
+    if not parsed.ok:
+        raise RuntimeError(
+            f"failed to parse JSON from openclaw {' '.join(args)}: {parsed.error}"
+        )
+    if not isinstance(parsed.data, dict):
+        raise RuntimeError(
+            f"unexpected JSON payload type from openclaw {' '.join(args)}: "
+            f"{type(parsed.data).__name__}"
+        )
+    return parsed.data
 
 
 def parse_args() -> argparse.Namespace:

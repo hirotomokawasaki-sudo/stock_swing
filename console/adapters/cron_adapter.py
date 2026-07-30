@@ -1,10 +1,14 @@
 """Adapter for cron jobs data."""
 
+from __future__ import annotations
+
 import json
 import subprocess
-from pathlib import Path
-from typing import List, Dict, Any
 from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List
+
+from console.utils.structured_json import parse_json_from_output
 
 
 class CronAdapter:
@@ -42,12 +46,64 @@ class CronAdapter:
                 if result.returncode != 0:
                     return self._get_from_backup()
 
-                data = json.loads(result.stdout)
+                parsed = parse_json_from_output(result.stdout)
+                if not parsed.ok or not isinstance(parsed.data, dict):
+                    return self._get_from_backup()
+                data = parsed.data
                 jobs = data.get("jobs", [])
             except Exception:
                 return self._get_from_backup()
 
         return self._enrich_jobs(jobs)
+
+    def get_run_history(self, job_id: str, *, limit: int = 3) -> Dict[str, Any]:
+        """Return sanitized recent run history for a cron job.
+
+        OpenClaw's `cron runs` command emits JSON by default, but some versions do
+        not accept `--json`. We therefore parse the balanced JSON fragment from the
+        plain stdout and treat any parse failure as critical evidence loss.
+        """
+        try:
+            result = subprocess.run(
+                ['openclaw', 'cron', 'runs', '--id', job_id, '--limit', str(limit)],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+        except Exception as exc:
+            return {"ok": False, "runs": [], "error": str(exc), "job_id": job_id}
+
+        if result.returncode != 0:
+            return {
+                "ok": False,
+                "runs": [],
+                "job_id": job_id,
+                "error": result.stderr.strip() or result.stdout.strip() or "command_failed",
+            }
+
+        parsed = parse_json_from_output(result.stdout)
+        if not parsed.ok or not isinstance(parsed.data, dict):
+            return {
+                "ok": False,
+                "runs": [],
+                "job_id": job_id,
+                "error": parsed.error or "invalid_json",
+                "sanitized_text": parsed.sanitized_text,
+            }
+
+        payload = parsed.data
+        runs = payload.get("entries")
+        if not isinstance(runs, list):
+            runs = payload.get("runs")
+        if not isinstance(runs, list):
+            runs = []
+        return {
+            "ok": True,
+            "job_id": job_id,
+            "runs": runs,
+            "total": payload.get("total"),
+            "limit": payload.get("limit"),
+        }
     
     def _get_from_backup(self) -> List[Dict[str, Any]]:
         """Fallback: get jobs from backup file."""

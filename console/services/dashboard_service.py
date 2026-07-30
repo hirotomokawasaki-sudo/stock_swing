@@ -2325,16 +2325,21 @@ class DashboardService:
                 continue
             if obj.get("endpoint") != "company-news":
                 continue
+            if obj.get("is_synthetic") or str(obj.get("quality_status") or "").lower() == "synthetic":
+                continue
             payload = obj.get("payload", {})
             symbol = str(payload.get("symbol") or obj.get("request_params", {}).get("symbol") or "UNKNOWN").upper()
             grouped.setdefault(symbol, [])
             for idx, article in enumerate(payload.get("news", [])):
+                source = str(article.get("source") or "finnhub")
+                url = str(article.get("url") or "")
+                if source.lower() == "synthetic" or "example.local" in url:
+                    continue
                 headline = str(article.get("headline") or "")
                 summary = str(article.get("summary") or "")
                 sentiment_label, sentiment_score = self._infer_sentiment_from_text(f"{headline} {summary}")
                 impact_label, impact_score = self._infer_impact_from_text(f"{headline} {summary}")
                 ja_texts = self._build_ja_news_texts_from_external(symbol, headline, summary, sentiment_label, impact_label)
-                source = article.get("source") or "finnhub"
                 source_reliability = self._source_reliability(source)
                 grouped[symbol].append({
                     "id": f"external_news_{symbol}_{idx}_{path.stem}",

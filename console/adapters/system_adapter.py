@@ -1,32 +1,45 @@
-"""Adapter for system health status.
+"""Adapter for evidence-based system health."""
 
-FIX-OBSERVE-1: health_score=100 and status='healthy' are PROHIBITED when any
-critical evidence input is missing, stale, or invalid.  The score is now
-derived from a mandatory evidence checklist rather than simple api-key presence.
-"""
+from __future__ import annotations
 
 import json
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import yaml
 
-# Maximum age (seconds) before an evidence source is considered stale.
-_LEDGER_STALENESS_S = 86400      # 24 h
-_GUARDRAIL_STALENESS_S = 3600   # 1 h
-_BROKER_STALENESS_S = 3600      # 1 h
-_CONSOLE_STALENESS_S = 900      # 15 min
+from console.utils.structured_json import parse_json_from_output
+
+_LEDGER_STALENESS_S = 86400
+_GUARDRAIL_STALENESS_S = 18 * 3600
+_BROKER_STALENESS_S = 3600
+_CONSOLE_STALENESS_S = 900
+_SOURCE_STALENESS_S = 48 * 3600
+_CRON_TIMEOUT_S = 10
+_REQUIRED_FINNHUB_COVERAGE = 0.995
+_CURRENT_CONSOLE_SUMMARY = Path("reports/console/latest_console_summary.json")
 
 
-def _age_seconds(iso_str: Optional[str]) -> Optional[float]:
+def _age_seconds(iso_str: str | None) -> float | None:
     if not iso_str:
         return None
     try:
         dt = datetime.fromisoformat(str(iso_str).replace("Z", "+00:00"))
-        return (datetime.now(timezone.utc) - dt).total_seconds()
-    except Exception:
+    except ValueError:
         return None
+    return max(0.0, (datetime.now(timezone.utc) - dt.astimezone(timezone.utc)).total_seconds())
+
+
+def _mtime_age_seconds(path: Path) -> float | None:
+    if not path.exists():
+        return None
+    return max(0.0, datetime.now(timezone.utc).timestamp() - path.stat().st_mtime)
+
+
+def _current_market_date() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 
 class SystemAdapter:
@@ -37,49 +50,37 @@ class SystemAdapter:
         self.runtime_config = project_root / "config" / "runtime" / "current_mode.yaml"
         self.env_file = project_root / ".env"
 
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
-
-    def get_health(self) -> Dict[str, Any]:
-        """Return health dict with evidence-based score.
-
-        CRITICAL RULE: score=100 / status='healthy' is only possible when ALL
-        critical evidence inputs are present, fresh, and valid.  Any missing
-        or stale critical evidence caps the score at 70 (degraded).
-        """
+    def get_health(self) -> dict[str, Any]:
         runtime_mode = self._get_runtime_mode()
         api_ok = self._check_api_keys()
         venv_ok = (self.project_root / "venv").exists()
 
         evidence = self._collect_evidence()
-        critical_missing = [k for k, v in evidence.items() if v["critical"] and not v["ok"]]
+        critical_failures = [name for name, row in evidence.items() if row["critical"] and not row["ok"]]
+        noncritical_issues = [name for name, row in evidence.items() if not row["critical"] and not row["ok"]]
 
-        # Base score from infrastructure
         score = 0
-        if runtime_mode in ["research", "paper"]:
-            score += 40
+        if runtime_mode == "paper":
+            score += 25
         if api_ok:
-            score += 20
+            score += 15
         if venv_ok:
             score += 10
 
-        # Evidence bonus — each healthy critical evidence adds points
-        critical_ok = sum(1 for v in evidence.values() if v["critical"] and v["ok"])
-        critical_total = sum(1 for v in evidence.values() if v["critical"])
-        if critical_total > 0:
-            score += int(30 * critical_ok / critical_total)
+        total = len(evidence)
+        ok_count = sum(1 for row in evidence.values() if row["ok"])
+        if total:
+            score += round(50 * ok_count / total)
 
-        # Hard cap: any missing critical evidence => max 70 (degraded)
-        if critical_missing:
-            score = min(score, 70)
-
-        if score >= 80 and not critical_missing:
-            status = "healthy"
-        elif score >= 50:
+        if critical_failures:
+            score = min(score, 49)
+            status = "blocked"
+        elif noncritical_issues:
+            score = min(score, 79)
             status = "degraded"
         else:
-            status = "unhealthy"
+            score = min(score, 100)
+            status = "healthy"
 
         return {
             "runtime_mode": runtime_mode,
@@ -88,206 +89,322 @@ class SystemAdapter:
             "score": score,
             "status": status,
             "evidence": evidence,
-            "critical_missing": critical_missing,
-            "evidence_status": "invalid" if critical_missing else "valid",
+            "critical_missing": critical_failures,
+            "noncritical_issues": noncritical_issues,
+            "evidence_status": "invalid" if critical_failures else "valid",
         }
 
-    # ------------------------------------------------------------------
-    # Evidence checklist
-    # ------------------------------------------------------------------
+    def _collect_evidence(self) -> dict[str, dict[str, Any]]:
+        return {
+            "ledger_validity": self._check_ledger_validity(),
+            "guardrail_metric_freshness": self._check_guardrail_freshness(),
+            "broker_tracker_reconciliation": self._check_broker_tracker_freshness(),
+            "console_summary_freshness": self._check_console_summary_freshness(),
+            "source_sla": self._check_source_sla(),
+            "cron_run_history": self._check_cron_run_history(),
+        }
 
-    def _collect_evidence(self) -> Dict[str, Dict[str, Any]]:
-        """Build evidence checklist for all critical inputs."""
-        ev: Dict[str, Dict[str, Any]] = {}
-
-        # 1. Ledger validity
-        ev["ledger_validity"] = self._check_ledger_validity()
-
-        # 2. Guardrail metric freshness
-        ev["guardrail_metric_freshness"] = self._check_guardrail_freshness()
-
-        # 3. Broker/tracker reconciliation freshness
-        ev["broker_tracker_reconciliation"] = self._check_broker_tracker_freshness()
-
-        # 4. Console summary freshness
-        ev["console_summary_freshness"] = self._check_console_summary_freshness()
-
-        # 5. Source SLA (at least one primary data source collected today)
-        ev["source_sla"] = self._check_source_sla()
-
-        # 6. Cron run history parse coverage
-        ev["cron_run_history"] = self._check_cron_parse_coverage()
-
-        return ev
-
-    def _check_ledger_validity(self) -> Dict[str, Any]:
-        cfg_path = self.runtime_config
+    def _check_ledger_validity(self) -> dict[str, Any]:
         try:
-            cfg = yaml.safe_load(cfg_path.read_text()) if cfg_path.exists() else {}
-            gate = cfg.get("ledger_quality_gate", {})
-            status = gate.get("current_status", "UNKNOWN")
+            cfg = yaml.safe_load(self.runtime_config.read_text(encoding="utf-8")) if self.runtime_config.exists() else {}
+            gate = cfg.get("ledger_quality_gate", {}) or {}
+            status = str(gate.get("current_status", "UNKNOWN")).upper()
             last_checked = gate.get("last_checked")
-            ok = status == "VALID"
-            age = _age_seconds(last_checked + "T00:00:00+00:00") if last_checked else None
-            stale = age is not None and age > _LEDGER_STALENESS_S
+            age = _age_seconds(f"{last_checked}T00:00:00+00:00") if last_checked else None
+            stale = age is None or age > _LEDGER_STALENESS_S
             return {
-                "critical": True, "ok": ok and not stale,
-                "status": status, "last_checked": last_checked,
-                "stale": stale, "detail": "ledger_quality_gate.current_status",
+                "critical": True,
+                "ok": status == "VALID" and not stale,
+                "status": status,
+                "last_checked": last_checked,
+                "age_seconds": None if age is None else round(age),
+                "stale": stale,
+                "detail": "config/runtime/current_mode.yaml:ledger_quality_gate",
             }
         except Exception as exc:
             return {"critical": True, "ok": False, "error": str(exc)}
 
-    def _check_guardrail_freshness(self) -> Dict[str, Any]:
+    def _check_guardrail_freshness(self) -> dict[str, Any]:
         cb_path = self.project_root / "data" / "guardrails" / "circuit_breaker.json"
+        day_start_path = self.project_root / "data" / "guardrails" / "day_start_snapshot.json"
         try:
-            d = json.loads(cb_path.read_text()) if cb_path.exists() else {}
-            cleared_at = d.get("cleared_at") or d.get("triggered_at")
-            age = _age_seconds(cleared_at)
-            stale = age is not None and age > _GUARDRAIL_STALENESS_S
-            status = d.get("status", "unknown")
-            ok = status == "ok" and not stale
-            return {
-                "critical": True, "ok": ok,
-                "cb_status": status, "as_of": cleared_at,
-                "stale": stale, "detail": "circuit_breaker.json",
-            }
+            cb = json.loads(cb_path.read_text(encoding="utf-8")) if cb_path.exists() else {}
+            day_start = json.loads(day_start_path.read_text(encoding="utf-8")) if day_start_path.exists() else {}
         except Exception as exc:
             return {"critical": True, "ok": False, "error": str(exc)}
 
-    def _check_broker_tracker_freshness(self) -> Dict[str, Any]:
+        market_date = _current_market_date()
+        cb_as_of = cb.get("cleared_at") or cb.get("triggered_at")
+        cb_age = _age_seconds(cb_as_of)
+        cb_status = str(cb.get("status") or "unknown")
+        day_start_missing = list(day_start.get("missing_fields") or [])
+        day_start_age = _age_seconds(day_start.get("captured_at"))
+        problems: list[str] = []
+        if not cb_path.exists():
+            problems.append("missing_circuit_breaker")
+        if cb_age is None or cb_age > _GUARDRAIL_STALENESS_S:
+            problems.append("stale_circuit_breaker")
+        if not day_start_path.exists():
+            problems.append("missing_day_start_snapshot")
+        if day_start.get("market_date") != market_date:
+            problems.append("market_date_mismatch")
+        if not day_start.get("captured_at"):
+            problems.append("missing_captured_at")
+        if not day_start.get("source"):
+            problems.append("missing_source")
+        if day_start_age is None or day_start_age > _GUARDRAIL_STALENESS_S:
+            problems.append("stale_day_start_snapshot")
+        if day_start_missing:
+            problems.append("missing_day_start_metrics")
+
+        return {
+            "critical": True,
+            "ok": not problems and cb_status in {"ok", "degraded", "recovery_pending", "halted"},
+            "cb_status": cb_status,
+            "cb_as_of": cb_as_of,
+            "cb_age_seconds": None if cb_age is None else round(cb_age),
+            "market_date": day_start.get("market_date"),
+            "expected_market_date": market_date,
+            "captured_at": day_start.get("captured_at"),
+            "captured_age_seconds": None if day_start_age is None else round(day_start_age),
+            "source": day_start.get("source"),
+            "missing_fields": day_start_missing,
+            "problems": problems,
+            "detail": "data/guardrails/circuit_breaker.json + day_start_snapshot.json",
+        }
+
+    def _check_broker_tracker_freshness(self) -> dict[str, Any]:
         audit_path = self.project_root / "data" / "audits" / "reconcile_status.json"
         try:
             if not audit_path.exists():
                 return {
-                    "critical": True, "ok": False,
-                    "detail": "reconcile_status.json not found — run reconcile first",
+                    "critical": True,
+                    "ok": False,
+                    "detail": "data/audits/reconcile_status.json missing",
                 }
-            d = json.loads(audit_path.read_text())
-            as_of = d.get("as_of") or d.get("time")
+            data = json.loads(audit_path.read_text(encoding="utf-8"))
+            as_of = data.get("as_of") or data.get("time")
             age = _age_seconds(as_of)
-            stale = age is not None and age > _BROKER_STALENESS_S
-            mismatch = int(d.get("unexplained_mismatch_count", 1))
-            ok = not stale and mismatch == 0
+            mismatch = int(data.get("unexplained_mismatch_count", 1))
+            stale = age is None or age > _BROKER_STALENESS_S
             return {
-                "critical": True, "ok": ok,
-                "mismatch_count": mismatch, "as_of": as_of,
-                "stale": stale, "detail": "data/audits/reconcile_status.json",
+                "critical": True,
+                "ok": mismatch == 0 and not stale,
+                "as_of": as_of,
+                "age_seconds": None if age is None else round(age),
+                "mismatch_count": mismatch,
+                "stale": stale,
+                "detail": "data/audits/reconcile_status.json",
             }
         except Exception as exc:
             return {"critical": True, "ok": False, "error": str(exc)}
 
-    def _check_console_summary_freshness(self) -> Dict[str, Any]:
-        summary_path = self.project_root / "data" / "config" / "latest_console_summary.json"
+    def _check_console_summary_freshness(self) -> dict[str, Any]:
+        summary_path = self.project_root / _CURRENT_CONSOLE_SUMMARY
         try:
-            if not summary_path.exists():
-                return {"critical": False, "ok": False, "detail": "latest_console_summary.json not found"}
-            import os
-            mtime = os.path.getmtime(summary_path)
-            age = datetime.now(timezone.utc).timestamp() - mtime
-            stale = age > _CONSOLE_STALENESS_S
+            age = _mtime_age_seconds(summary_path)
+            stale = age is None or age > _CONSOLE_STALENESS_S
             return {
-                "critical": False, "ok": not stale,
-                "age_seconds": round(age), "stale": stale,
-                "detail": "data/config/latest_console_summary.json",
+                "critical": True,
+                "ok": not stale,
+                "age_seconds": None if age is None else round(age),
+                "stale": stale,
+                "detail": str(_CURRENT_CONSOLE_SUMMARY),
             }
         except Exception as exc:
-            return {"critical": False, "ok": False, "error": str(exc)}
+            return {"critical": True, "ok": False, "error": str(exc)}
 
-    def _check_source_sla(self) -> Dict[str, Any]:
-        status_path = self.project_root / "data" / "audits" / "news_collection_status.json"
+    def _check_source_sla(self) -> dict[str, Any]:
+        sources_dir = self.project_root / "config" / "sources"
+        required_sources: list[str] = []
         try:
+            for path in sorted(sources_dir.glob("*.yaml")):
+                cfg = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+                if cfg.get("required"):
+                    required_sources.append(path.stem)
+        except Exception as exc:
+            return {"critical": True, "ok": False, "error": str(exc)}
+
+        required_results: list[dict[str, Any]] = []
+        failures: list[str] = []
+        for source in required_sources:
+            row = self._evaluate_required_source(source)
+            required_results.append(row)
+            if not row["ok"]:
+                failures.append(source)
+
+        return {
+            "critical": True,
+            "ok": not failures,
+            "required_sources": required_sources,
+            "failing_sources": failures,
+            "sources": required_results,
+            "detail": "config/sources/*.yaml + data/audits/*_status.json",
+        }
+
+    def _evaluate_required_source(self, source: str) -> dict[str, Any]:
+        if source == "finnhub":
+            status_path = self.project_root / "data" / "audits" / "news_collection_status.json"
             if not status_path.exists():
-                return {"critical": True, "ok": False, "detail": "news_collection_status.json not found"}
-            d = json.loads(status_path.read_text())
-            as_of = d.get("time")
-            age = _age_seconds(as_of)
-            stale = age is not None and age > 86400 * 2  # allow up to 2 days (weekends)
-            symbols = d.get("symbols", [])
-            ok_count = sum(1 for s in symbols if not s.get("used_fallback") and s.get("news_count", 0) > 0)
-            total = max(len(symbols), 1)
-            coverage = round(ok_count / total, 3)
-            ok = not stale and coverage >= 0.5  # >=50% symbols have real news
+                return {"source": source, "ok": False, "reason": "missing_status"}
+            data = json.loads(status_path.read_text(encoding="utf-8"))
+            rows = list(data.get("symbols") or [])
+            age = _age_seconds(data.get("time"))
+            total = len(rows)
+            ok_rows = sum(
+                1
+                for row in rows
+                if row.get("news_count", 0) > 0
+                and not row.get("used_fallback")
+                and str(row.get("reason") or "ok") == "ok"
+            )
+            coverage = (ok_rows / total) if total else 0.0
+            failure_reasons = sorted(
+                {
+                    str(row.get("reason") or "unknown")
+                    for row in rows
+                    if str(row.get("reason") or "ok") != "ok" or int(row.get("news_count", 0) or 0) <= 0
+                }
+            )
+            stale = age is None or age > _SOURCE_STALENESS_S
+            ok = not stale and not data.get("timed_out") and coverage >= _REQUIRED_FINNHUB_COVERAGE and not failure_reasons
             return {
-                "critical": True, "ok": ok,
-                "coverage": coverage, "as_of": as_of,
-                "stale": stale, "ok_symbols": ok_count, "total_symbols": total,
-                "detail": "data/audits/news_collection_status.json",
+                "source": source,
+                "ok": ok,
+                "as_of": data.get("time"),
+                "age_seconds": None if age is None else round(age),
+                "timed_out": bool(data.get("timed_out")),
+                "coverage_ratio": round(coverage, 6),
+                "coverage_pct": round(coverage * 100, 3),
+                "required_min_coverage": _REQUIRED_FINNHUB_COVERAGE,
+                "failure_reasons": failure_reasons,
+                "stale": stale,
             }
+
+        status_candidates = [
+            self.project_root / "data" / "audits" / f"{source}_collection_status.json",
+            self.project_root / "data" / "audits" / f"{source}_quotes_status.json",
+            self.project_root / "data" / "audits" / f"{source}_bars_status.json",
+        ]
+        found = [path for path in status_candidates if path.exists()]
+        if not found:
+            return {"source": source, "ok": False, "reason": "missing_status"}
+        statuses: list[dict[str, Any]] = []
+        ok = True
+        for path in found:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            status = str(data.get("status") or "unknown")
+            age = _age_seconds(data.get("time"))
+            stale = age is None or age > _SOURCE_STALENESS_S
+            row_ok = status == "ok" and not stale
+            ok = ok and row_ok
+            statuses.append(
+                {
+                    "path": path.name,
+                    "status": status,
+                    "age_seconds": None if age is None else round(age),
+                    "stale": stale,
+                }
+            )
+        return {"source": source, "ok": ok, "statuses": statuses}
+
+    def _check_cron_run_history(self) -> dict[str, Any]:
+        try:
+            jobs_payload = self._run_openclaw_json(["cron", "list", "--json"])
         except Exception as exc:
             return {"critical": True, "ok": False, "error": str(exc)}
 
-    def _check_cron_parse_coverage(self) -> Dict[str, Any]:
-        """Check cron run history parse coverage via last-run summary files."""
-        # We infer parse health from the presence of cron_summary files written
-        # by the most recent runs.  A parse error would leave the file absent or corrupt.
-        summaries_dir = self.project_root / "data" / "audits"
-        try:
-            cron_summaries = list(summaries_dir.glob("cron_run_summary_*.json")) if summaries_dir.exists() else []
-            valid = 0
-            invalid = 0
-            for f in cron_summaries:
-                try:
-                    json.loads(f.read_text())
-                    valid += 1
-                except Exception:
-                    invalid += 1
-            total = valid + invalid
-            coverage = round(valid / total, 3) if total > 0 else None
-            ok = coverage is not None and coverage >= 1.0
-            return {
-                "critical": False, "ok": ok,
-                "valid_count": valid, "invalid_count": invalid,
-                "parse_coverage": coverage,
-                "detail": "data/audits/cron_run_summary_*.json",
-            }
-        except Exception as exc:
-            return {"critical": False, "ok": False, "error": str(exc)}
+        jobs = list(jobs_payload.get("jobs") or [])
+        enabled_jobs = [job for job in jobs if job.get("enabled", True)]
+        parse_errors: list[dict[str, Any]] = []
+        parsed_jobs = 0
+        total_jobs = len(enabled_jobs)
 
-    # ------------------------------------------------------------------
-    # Private helpers
-    # ------------------------------------------------------------------
+        for job in enabled_jobs:
+            job_id = str(job.get("id") or "")
+            if not job_id:
+                parse_errors.append({"job": job.get("name") or "unknown", "error": "missing_job_id"})
+                continue
+            result = subprocess.run(
+                ["openclaw", "cron", "runs", "--id", job_id, "--limit", "3"],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=_CRON_TIMEOUT_S,
+            )
+            if result.returncode != 0:
+                parse_errors.append(
+                    {
+                        "job": job.get("name") or job_id,
+                        "job_id": job_id,
+                        "error": result.stderr.strip() or result.stdout.strip() or "command_failed",
+                    }
+                )
+                continue
+            parsed = parse_json_from_output(result.stdout)
+            if not parsed.ok:
+                parse_errors.append(
+                    {
+                        "job": job.get("name") or job_id,
+                        "job_id": job_id,
+                        "error": parsed.error,
+                    }
+                )
+                continue
+            if not isinstance(parsed.data, dict):
+                parse_errors.append(
+                    {
+                        "job": job.get("name") or job_id,
+                        "job_id": job_id,
+                        "error": f"unexpected payload type: {type(parsed.data).__name__}",
+                    }
+                )
+                continue
+            parsed_jobs += 1
+
+        coverage = (parsed_jobs / total_jobs) if total_jobs else 0.0
+        return {
+            "critical": True,
+            "ok": total_jobs > 0 and not parse_errors and coverage == 1.0,
+            "enabled_jobs": total_jobs,
+            "parsed_jobs": parsed_jobs,
+            "parse_coverage": round(coverage, 6),
+            "parse_errors": parse_errors,
+            "detail": "openclaw cron list --json + openclaw cron runs --limit",
+        }
+
+    def _run_openclaw_json(self, args: list[str]) -> dict[str, Any]:
+        result = subprocess.run(
+            ["openclaw"] + args,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=_CRON_TIMEOUT_S,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip() or result.stdout.strip() or "openclaw command failed")
+        parsed = parse_json_from_output(result.stdout)
+        if not parsed.ok:
+            raise RuntimeError(parsed.error or "invalid JSON")
+        if not isinstance(parsed.data, dict):
+            raise RuntimeError(f"unexpected payload type: {type(parsed.data).__name__}")
+        return parsed.data
 
     def _get_runtime_mode(self) -> str:
         if not self.runtime_config.exists():
             return "unknown"
         try:
-            data = yaml.safe_load(self.runtime_config.read_text())
-            return data.get("mode", "unknown")
+            data = yaml.safe_load(self.runtime_config.read_text(encoding="utf-8")) or {}
+            return str(data.get("mode", "unknown"))
         except Exception:
             return "error"
 
     def _check_api_keys(self) -> bool:
         if not self.env_file.exists():
             return False
-        content = self.env_file.read_text()
+        content = self.env_file.read_text(encoding="utf-8")
         required_keys = ["FINNHUB_API_KEY"]
         for key in required_keys:
             if f"{key}=your_key_here" in content or f"{key}=" not in content:
                 return False
-        return True
-    
-    def _get_runtime_mode(self) -> str:
-        """Get current runtime mode."""
-        if not self.runtime_config.exists():
-            return "unknown"
-        
-        try:
-            data = yaml.safe_load(self.runtime_config.read_text())
-            return data.get("mode", "unknown")
-        except Exception:
-            return "error"
-    
-    def _check_api_keys(self) -> bool:
-        """Check if API keys are configured."""
-        if not self.env_file.exists():
-            return False
-        
-        content = self.env_file.read_text()
-        required_keys = ["FINNHUB_API_KEY", "FRED_API_KEY"]
-        
-        for key in required_keys:
-            if f"{key}=your_key_here" in content or f"{key}=" not in content:
-                return False
-        
         return True

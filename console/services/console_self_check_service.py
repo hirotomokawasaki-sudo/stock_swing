@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from console.adapters.system_adapter import SystemAdapter
+
 
 # Files that must exist for JSON APIs to work (critical)
 _CRITICAL_FILES: list[tuple[str, str]] = [
@@ -67,10 +69,25 @@ def run_self_check(project_root: Path) -> dict[str, Any]:
         if not ok:
             warnings.append(f"Optional UI assets missing: {rel} — JSON APIs can still operate.")
 
+    system_health = SystemAdapter(project_root).get_health()
+    health_status = system_health.get("status", "unknown")
+    health_score = int(system_health.get("score", 0) or 0)
+    critical_missing = list(system_health.get("critical_missing") or [])
+    if critical_missing:
+        warnings.append(
+            "Critical operational evidence missing: "
+            + ", ".join(critical_missing)
+        )
+
     return {
         "ok": not any_critical_missing,
         "root": str(project_root),
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "checks": checks,
         "warnings": warnings,
+        "health_status": health_status,
+        "health_score": health_score,
+        "health_evidence_status": system_health.get("evidence_status", "unknown"),
+        "critical_missing": critical_missing,
+        "health_evidence": system_health.get("evidence", {}),
     }

@@ -119,6 +119,34 @@ def _compute_once(key: str, fn, ttl: float = 60.0):
             ev2.set()
 
 
+def _apply_critical_evidence_gate(payload: dict | None, self_check: dict | None = None) -> dict:
+    """Clamp health surfaces when critical evidence is missing."""
+    gated = dict(payload or {})
+    check = self_check or run_self_check(PROJECT_ROOT)
+    critical_missing = list(check.get("critical_missing") or [])
+    evidence_invalid = check.get("health_evidence_status") == "invalid"
+    if not critical_missing and not evidence_invalid:
+        return gated
+
+    forced_status = check.get("health_status") or "blocked"
+    raw_score = int(check.get("health_score", 49) or 49)
+    forced_score = min(raw_score, 49 if forced_status == "blocked" else 79)
+
+    if "health_status" in gated:
+        gated["health_status"] = forced_status
+    if "health_score" in gated:
+        gated["health_score"] = forced_score
+    if gated.get("status") == "healthy" or "status" in gated:
+        gated["status"] = forced_status
+    if "score" in gated:
+        gated["score"] = min(int(gated.get("score", forced_score) or forced_score), forced_score)
+    if "ok" in gated:
+        gated["ok"] = forced_status == "healthy"
+    gated.setdefault("critical_missing", critical_missing)
+    gated.setdefault("evidence_status", check.get("health_evidence_status"))
+    return gated
+
+
 class ConsoleHandler(BaseHTTPRequestHandler):
     """HTTP request handler for Stock Swing Console."""
     
@@ -210,12 +238,12 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         
         # Health check
         if p == "/health":
-            return self._json({
+            return self._json(_apply_critical_evidence_gate({
                 "ok": True,
                 "service": "stock_swing_console",
                 "time": now_iso(),
                 "project_root": str(PROJECT_ROOT),
-            })
+            }))
         
         # API endpoints
         if p == "/api/dashboard":
@@ -249,7 +277,7 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         
         if p == "/api/overview":
             try:
-                data = dashboard.get_overview()
+                data = _apply_critical_evidence_gate(dashboard.get_overview())
                 return self._json(data)
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
@@ -267,7 +295,7 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         
         if p == "/api/system_status":
             try:
-                data = dashboard.get_system_status()
+                data = _apply_critical_evidence_gate(dashboard.get_system_status())
                 return self._json(data)
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
@@ -446,7 +474,7 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         # C0: Console self-check
         if p == "/api/console/self_check":
             try:
-                return self._json(run_self_check(PROJECT_ROOT))
+                return self._json(_apply_critical_evidence_gate(run_self_check(PROJECT_ROOT)))
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
 
