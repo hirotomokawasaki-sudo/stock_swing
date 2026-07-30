@@ -157,9 +157,15 @@ class SystemAdapter:
         if day_start_missing:
             problems.append("missing_day_start_metrics")
 
+        # recovery_pending = circuit breaker was manually cleared but a clean run has
+        # not yet confirmed broker/tracker parity.  Surface as a non-blocking warning
+        # (not ok) so the operator knows a clean scheduled run is still required.
+        if cb_status == "recovery_pending" and not problems:
+            problems.append("cb_recovery_pending")
+
         return {
             "critical": True,
-            "ok": not problems and cb_status in {"ok", "degraded", "recovery_pending", "halted"},
+            "ok": not problems and cb_status in {"ok"},
             "cb_status": cb_status,
             "cb_as_of": cb_as_of,
             "cb_age_seconds": None if cb_age is None else round(cb_age),

@@ -99,6 +99,10 @@ class ConsoleSummary:
 
     # --- Plan A: Stop Loss Health (2026-07-27) ---
     stop_loss_health: dict[str, Any] = field(default_factory=dict)
+
+    # --- R7-v2-A: Source SLA (2026-07-30) ---
+    source_sla: dict[str, Any] = field(default_factory=dict)
+    # { "ok": bool, "required_sources": [...], "failing_sources": [...], "sources": [...] }
     # {
     #   "recent_30d": {count, net_pnl, avg_ret_pct},  # 30日以内の止損サマリー
     #   "suppression": {noise_7d, mid_3d, severe_1d, total},  # 今回 run の min_hold 抑制数
@@ -206,6 +210,8 @@ class ConsoleSummary:
             "sector_shock_shadow": {
                 "shadow_count": self.sector_shock_shadow_count,
             },
+            # R7-v2-A: Source SLA
+            "source_sla": self.source_sla,
         }
         return base
 
@@ -290,6 +296,8 @@ class ConsoleSummary:
         circuit_breaker_detail: dict | None = None,
         # Plan A: Stop Loss Health (2026-07-27)
         stop_loss_health: dict[str, Any] | None = None,
+        # R7-v2-A: Source SLA (2026-07-30)
+        source_sla: dict[str, Any] | None = None,
     ) -> "ConsoleSummary":
         decisions = decisions or []
         submissions = submissions or []
@@ -446,4 +454,5 @@ class ConsoleSummary:
             open_position_details=open_position_details or [],
             circuit_breaker_detail=circuit_breaker_detail or {},
             stop_loss_health=stop_loss_health or {},
+            source_sla=source_sla or {},
         )

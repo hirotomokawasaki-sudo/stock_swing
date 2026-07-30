@@ -1843,6 +1843,8 @@ def main() -> int:  # noqa: C901
                 current_prices={sym: float(pos.get("current_price", 0) or 0)
                                 for sym, pos in (current_positions_full or {}).items()},
             ),
+            # R7-v2-A: Source SLA
+            source_sla=_get_source_sla(project_root),
         )
         console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
         return finish(
@@ -2469,6 +2471,8 @@ def main() -> int:  # noqa: C901
             current_prices={sym: float(pos.get("current_price", 0) or 0)
                             for sym, pos in (current_positions_full or {}).items()},
         ),
+        # R7-v2-A: Source SLA
+        source_sla=_get_source_sla(project_root),
     )
     console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
 
@@ -2720,6 +2724,25 @@ def _build_stop_loss_health(
         "suppression": suppression,
         "post_exit_check": post_exit_check,
     }
+
+
+def _get_source_sla(project_root: Path) -> dict:
+    """R7-v2-A: Fetch source SLA status from SystemAdapter (fail-silent)."""
+    try:
+        from console.adapters.system_adapter import SystemAdapter
+        adapter = SystemAdapter(project_root)
+        sla = adapter._check_source_sla()
+        return {
+            "ok": sla.get("ok", False),
+            "required_sources": sla.get("required_sources", []),
+            "failing_sources": sla.get("failing_sources", []),
+            "sources": [
+                {"source": s.get("source"), "ok": s.get("ok"), "coverage": s.get("coverage")}
+                for s in (sla.get("sources") or [])
+            ],
+        }
+    except Exception as exc:
+        return {"ok": False, "error": str(exc), "required_sources": [], "failing_sources": [], "sources": []}
 
 
 def _build_price_integrity(

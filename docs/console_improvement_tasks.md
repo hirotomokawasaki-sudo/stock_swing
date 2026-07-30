@@ -155,9 +155,9 @@
                    ✅ Circuit Breaker  HALT クリア（09:39 JST）
                       根本原因: 07-21 market_open cron (META+HPQ) API lag
 
-2026-07-28〜07-30  🔴 hard-halt 環境でのペーパー最終確認（BLOCKING）
+2026-07-28〜07-30  ✅ hard-halt 環境でのペーパー最終確認（完了）
 
-2026-07-31         🔴 Go/No-Go 最終判定（BLOCKING）
+2026-07-31         🔴 Go/No-Go 最終判定（本日予定）
 
 2026-08-20以降 🚀 リアルトレード開始（延期: 2026-07-28ユーザー指示）
 
@@ -226,7 +226,7 @@ R8-v2 ML               ← R0-v2 完了 + clean labels ≥300 後のみ開始可
 
 ### 🔴 R0-v2: Safety Containment, Ledger, Guardrail, Metadata Gate
 
-**Status**: REOPENED  
+**Status**: VERIFIED_COMPLETE (2026-07-30 Remediation 7フェーズ完了)  
 **Priority**: P0（全ロードマップのブロッカー）  
 **統合元**: H0 + H1 + H2 + H4 + 旧R0 + P6 + P9  
 **Target date**: 2026-07-23〜07-31
