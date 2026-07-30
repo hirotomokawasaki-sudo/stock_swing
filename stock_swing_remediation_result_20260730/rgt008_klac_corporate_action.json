@@ -1,0 +1,31 @@
+{
+  "gate": "RGT-008",
+  "area": "corporate_action",
+  "assessed_at_utc": "2026-07-30T05:03:30.005766+00:00",
+  "verdict": "VERIFIED_COMPLETE",
+  "anomalous_trade": {
+    "trade_id": "broker_match_0117_KLAC",
+    "symbol": "KLAC",
+    "entry_price_pre_split": 2126.92,
+    "exit_price_post_split": 253.5,
+    "qty": 21,
+    "pnl_recorded": -39341.89,
+    "status": "quarantined",
+    "quarantine_reason": "klac_split_anomaly",
+    "split_analysis": {
+      "implied_ratio": "~8.4x (pre/post avg: 2090/246)",
+      "split_date_range": "2026-06-09 to 2026-06-23",
+      "corrected_pnl_if_8x": -259.67,
+      "corrected_pnl_if_4x": -5842.83,
+      "other_pre_split_trade": "broker_match_0116_KLAC (entry=2052.94, status=closed, pnl=-656.96)",
+      "first_post_split_trade": "closed trade on 2026-06-23 at entry=246.70"
+    }
+  },
+  "resolution": "Trade broker_match_0117_KLAC already quarantined with reason klac_split_anomaly. No additional data repair needed. Legacy contaminated record is isolated in quarantined_trades and excluded from clean epoch performance. qinv_broker_match_0116/0117/0118_KLAC also quarantined due to reversed chronology.",
+  "pnl_impact": {
+    "with_anomaly": -70325.39,
+    "without_anomaly": -30983.5,
+    "difference": -39341.89
+  },
+  "clean_epoch_impact": "broker_match_0117_KLAC predates clean_epoch_20260730_014631 \u2192 excluded from clean performance"
+}

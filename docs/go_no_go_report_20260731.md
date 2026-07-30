@@ -157,3 +157,43 @@ _注: KLAC broker_match_0117（-$39,342 split anomaly）は quarantine 済み_ |
 | state PnL vs sum差 -$2,869 | LOW | pre-epoch分、許容範囲 |
 | run_id coverage closed trades 0% | MEDIUM | 新規決定から有効（既存未遡及） |
 | tiered min_hold: paper評価なし | MEDIUM | baseline=disable中 |
+
+
+---
+
+## 9. 2026-07-30 追加対応（EPB-010 CONTROLLED_PAPER_BUY_GO後）
+
+### EPB Gate Matrix 最終判定（14:00 JST）
+
+**`decision=CONTROLLED_PAPER_BUY_GO`** ✅
+
+| Gate | 状態 |
+|---|---|
+| EPB-001〜007, 009 | ✅ VERIFIED_COMPLETE |
+| EPB-008 changed-line coverage | ✅ **90%達成**（閾値90%）|
+| EPB-010 approval | ✅ VERIFIED_COMPLETE |
+
+commit: `73e1ad0` / 全suite: 1253 passed
+
+### RGT-008: KLAC corporate action 検証完了
+
+- `broker_match_0117_KLAC`: entry=\$2126.92（pre-split）vs exit=\$253.5（post-split）
+- 価格比 ~8.4x、split日: 2026-06-09〜06-23の間
+- **すでにquarantine済み（klac_split_anomaly）→ 追加修正不要** ✅
+- 証跡: `stock_swing_remediation_result_20260730/rgt008_klac_corporate_action.json`
+- **RGT-008: VERIFIED_COMPLETE**
+
+### ANET holding_days=None 修正
+
+- `broker_open_0247_ANET`: entry_timeがnullだったためquarantine
+- trade_eventsから entry_time=2026-07-22T16:00:27 / broker_order_id を特定・復元
+- holding_days = **5.906日** に修正
+- ledger_quality_gate: 影響なし（quarantine status維持）
+- commit: 本日のpatchに含む
+
+### PAPER BUY 再開状態
+
+- `PAPER_DEMO_EXIT_ONLY` 環境変数: **未設定（BUY有効）**
+- clean_epoch_id: `clean_epoch_20260730_014631` → 新規fillは独立集計
+- 次回paper_demo（22:25 JST ET 09:25）から新規BUY評価が有効
+- 監視: 最初の20 clean runsでEPB状態を毎回記録
