@@ -1,6 +1,6 @@
 # Go/No-Go 事前レポート — 2026-07-31 判定用
 
-**作成日**: 2026-07-28 / **最終更新**: 2026-07-29 20:26 JST（Batch A/B + KLAC quarantine後）
+**作成日**: 2026-07-28 / **最終更新**: 2026-07-30 09:53 JST（paper 3日確認完了 + 07-30修正追記）
 **判定予定**: 2026-07-31
 **リアルトレード想定開始**: 2026-08-20以降（延期済）
 **開始サイズ**: 50%（stock_new_buy_multiplier = 0.50）
@@ -19,9 +19,9 @@
 | broker/tracker mismatch | ✅ **0** | 07-29現在 |
 | cron ジョブ正常稼働 | ✅ **全13本** | consecutiveErrors=0 |
 | guardrail hard-halt | ✅ **有効** | hard mode（config/runtime/current_mode.yaml） |
-| paper 最終確認（07-28〜30） | 🔄 **進行中** | 07-29完了、07-30最終確認予定 |
+| paper 最終確認（07-28〜30） | ✅ **完了** | 07-28 ok / 07-29 ok / 07-30 ok（04:55 JST）|
 
-**→ Required 条件: 6/7 確認済み。残1件（paper 3日確認）は07-30完了予定。**
+**→ Required 条件: 7/7 全て達成 ✅**
 
 ---
 
@@ -31,8 +31,8 @@
 
 | 条件 | 状態 | 値 | 目標 |
 |------|------|-----|------|
-| overall PF（全期間 199件） | ❌ **0.699** | wins=89 / losses=110 | 1.20 |
-| overall WR | ❌ **44.7%** | n=199 | 50% |
+| overall PF（全期間 197件） | ❌ **0.843** | wins=89 / losses=108 | 1.20 |
+| overall WR | ❌ **45.2%** | n=197（07-29 Batch A/B後） | 50% |
 | trailing_stop PF | ✅ **6.30** | n=72 / WR=80.6% / net=+$90,980 | 機能確認 |
 | stop_loss 正しい止損率 | ✅ **推定95%+** | 07-10以降: avg_ret=-7.1% | ≥70% |
 | sector_shock shadow | ⚠️ **3件** | A/B 開始に10件必要 | ≥10 |
@@ -132,6 +132,19 @@ _注: KLAC broker_match_0117（-$39,342 split anomaly）は quarantine 済み_ |
 > 07-31の状況次第だが、paper 3日間正常稼働確認ができれば「50%サイズ Go」の条件を満たす。
 > ただし sector_shock_hold A/B が完了する08-20以降の開始が当初判断通り適切。
 > 07-31は「準備完了確認」として Go/No-Go を記録し、08-20の実際の移行判断を別途行うのが妥当。
+
+---
+
+## 8. 2026-07-30 実施済み修正（Go/No-Go 前日）
+
+| 修正 | commit | 内容 |
+|------|--------|------|
+| 有効上限 60K→80K | `d6b936e` | DEFAULT_MAX_POSITION_NOTIONAL_PCT: 0.06→0.08 |
+| AMD 購入制限解除 | `d6b936e` | rolling_pf_gate bypass (PF=0.60, pf_gate_skip_symbols) |
+| ANET reconcile WARNループ修正 | `3a67a48` | quarantined trade を recorded_qty に含める |
+| Decision allocation_blocked バグ修正 | `0857b2f` | position_limit_pct を alloc_config 統一（legacy STOCK_MULTIPLIER 二重適用を排除） |
+
+次回 paper_demo（07-30 22:25 JST〜）から全修正が有効になる。
 
 ---
 
