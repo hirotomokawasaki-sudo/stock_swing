@@ -256,14 +256,34 @@ def attach_ai_telemetry(
     #
     # Rule: rule_based_zero decisions MUST have 0 actual/estimated tokens.
     #       Do NOT copy heuristic token counts into actual fields.
-    _is_rule_based = (
-        effective_model == "rule-based"
-        or str(effective_model).startswith("rule")
-        or getattr(decision, "strategy_id", "") in {
-            "breakout_momentum_v1", "event_swing_v1", "exit_strategy"
-        }
-    )
+    def _looks_like_llm_identifier(value: Any) -> bool:
+        ident = str(value or "").strip().lower()
+        if not ident:
+            return False
+        llm_markers = (
+            "gpt",
+            "o1",
+            "o3",
+            "o4",
+            "claude",
+            "gemini",
+            "llama",
+            "deepseek",
+            "mistral",
+        )
+        return any(marker in ident for marker in llm_markers)
+
+    strategy_id = getattr(decision, "strategy_id", "")
     provider_response = getattr(decision, "_provider_response", None)
+    _is_rule_based = (
+        str(effective_model).strip().lower() in {"rule-based", "rule_based", "rules"}
+        or str(effective_model).startswith("rule")
+        or (
+            provider_response is None
+            and not _looks_like_llm_identifier(effective_model)
+            and not _looks_like_llm_identifier(strategy_id)
+        )
+    )
 
     if _is_rule_based:
         # Rule-based: actual = 0 (no LLM call occurred); estimated = None
