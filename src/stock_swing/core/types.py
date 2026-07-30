@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
+
+TokenUsageSource = Literal["provider_actual", "estimated", "rule_based_zero", "unknown"]
 
 
 @dataclass
@@ -69,7 +71,7 @@ class DecisionRecord:
     skip_reason: str | None = None
     deny_reason: str | None = None
     block_reason: str | None = None
-    usage_source: str | None = None
+    usage_source: TokenUsageSource | None = None
     input_tokens_actual: int | None = None
     output_tokens_actual: int | None = None
     input_tokens_estimated: int | None = None

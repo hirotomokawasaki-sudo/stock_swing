@@ -15,7 +15,7 @@ import hashlib
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal
 
 from stock_swing.core.runtime import RuntimeMode
 from stock_swing.decision_engine.risk_validator import RiskState, RiskValidator
@@ -128,7 +128,7 @@ class DecisionRecord:
     skip_reason: str | None = None
     deny_reason: str | None = None
     block_reason: str | None = None
-    usage_source: str | None = None
+    usage_source: TokenUsageSource | None = None
     input_tokens_actual: int | None = None
     output_tokens_actual: int | None = None
     input_tokens_estimated: int | None = None
@@ -281,3 +281,4 @@ class DecisionEngine:
         )
         hash_digest = hashlib.sha256(content.encode()).digest()
         return str(uuid.UUID(bytes=hash_digest[:16]))
+TokenUsageSource = Literal["provider_actual", "estimated", "rule_based_zero", "unknown"]
