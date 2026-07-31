@@ -1006,12 +1006,9 @@ def main() -> int:  # noqa: C901
                 )
             except Exception:
                 pass
-        _broker_equity_for_capture: float | None = None
-        try:
-            _acct = broker.get_account()
-            _broker_equity_for_capture = float(_acct.get("equity", 0) or 0) or None
-        except Exception:
-            pass
+        # FIX: reuse already-fetched equity (broker.get_account() does not exist;
+        # the correct method is fetch_account(), already called above at startup).
+        _broker_equity_for_capture: float | None = equity if equity and equity > 0 else None
         _day_start_unrealized, _day_start_missing_metrics = get_prev_unrealized_for_guardrail(
             project_root,
             equity=_broker_equity_for_capture,

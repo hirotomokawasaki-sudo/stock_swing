@@ -125,13 +125,35 @@ def load_or_capture_day_start(
 ) -> DayStartSnapshot:
     expected_market_date = market_date or current_market_date()
     existing = load_snapshot(project_root)
-    if existing is not None and existing.is_valid_for_market_date(expected_market_date):
+
+    _existing_has_missing = existing is not None and bool(existing.missing_fields)
+    _incoming_has_equity = equity is not None
+    _incoming_has_unrealized = unrealized_pnl is not None
+
+    # Use existing snapshot only when:
+    #  1. It is for today, AND
+    #  2. It has no missing fields OR the incoming call cannot improve it
+    # If existing is missing fields and incoming call has better data, re-capture.
+    _can_improve = _existing_has_missing and (_incoming_has_equity or _incoming_has_unrealized)
+    if (
+        existing is not None
+        and existing.is_valid_for_market_date(expected_market_date)
+        and not _can_improve
+    ):
         snapshot = existing
     else:
+        # Prefer existing partial values when incoming values are None
+        _equity = equity
+        _unrealized = unrealized_pnl
+        if existing is not None and existing.is_valid_for_market_date(expected_market_date):
+            if _equity is None and existing.day_start_equity is not None:
+                _equity = existing.day_start_equity
+            if _unrealized is None and existing.day_start_unrealized is not None:
+                _unrealized = existing.day_start_unrealized
         snapshot = capture_snapshot(
             project_root,
-            equity=equity,
-            unrealized_pnl=unrealized_pnl,
+            equity=_equity,
+            unrealized_pnl=_unrealized,
             source=source,
             market_date=expected_market_date,
         )

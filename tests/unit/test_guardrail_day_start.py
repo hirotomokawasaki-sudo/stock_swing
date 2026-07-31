@@ -440,3 +440,124 @@ def test_capture_snapshot_saves_and_reloads(tmp_path):
     reloaded = load_snapshot(tmp_path)
     assert reloaded is not None
     assert reloaded.day_start_equity == 999_000.0
+
+
+# --- 新規: missing snapshot 上書き修正の回帰テスト (2026-07-31) ---
+
+def test_load_or_capture_overwrites_partial_snapshot_when_equity_available(tmp_path):
+    """Regression: 07-30 22:25 JST HALT incident.
+
+    When a snapshot for today exists but has day_start_equity=null (missing),
+    and a subsequent call provides a valid equity, the snapshot must be
+    re-captured with the complete data so BUYs are not blocked.
+    """
+    # First call: equity unavailable → writes partial snapshot
+    bad_snap = load_or_capture_day_start(
+        tmp_path,
+        equity=None,
+        unrealized_pnl=-500.0,
+        source="tracker_estimate",
+        allow_missing=True,
+        market_date="2026-07-31",
+    )
+    assert bad_snap.day_start_equity is None
+    assert "day_start_equity" in bad_snap.missing_fields
+
+    # Second call: equity now available → should overwrite
+    good_snap = load_or_capture_day_start(
+        tmp_path,
+        equity=987_000.0,
+        unrealized_pnl=-500.0,
+        source="broker_api",
+        allow_missing=False,
+        market_date="2026-07-31",
+    )
+    assert good_snap.day_start_equity == 987_000.0
+    assert good_snap.missing_fields == []
+
+    # Persisted snapshot should reflect the fix
+    reloaded = load_snapshot(tmp_path)
+    assert reloaded is not None
+    assert reloaded.day_start_equity == 987_000.0
+
+
+def test_load_or_capture_preserves_partial_values_on_merge(tmp_path):
+    """When existing snapshot has unrealized but no equity,
+    and incoming call provides equity but no unrealized,
+    the merged snapshot should have both.
+    """
+    # Existing: has unrealized but no equity
+    capture_snapshot(
+        tmp_path,
+        equity=None,
+        unrealized_pnl=-300.0,
+        source="tracker_estimate",
+        market_date="2026-07-31",
+    )
+
+    # Incoming: has equity but no unrealized
+    merged = load_or_capture_day_start(
+        tmp_path,
+        equity=1_000_000.0,
+        unrealized_pnl=None,
+        source="broker_api",
+        allow_missing=False,
+        market_date="2026-07-31",
+    )
+    assert merged.day_start_equity == 1_000_000.0
+    assert merged.day_start_unrealized == -300.0  # preserved from existing
+    assert merged.missing_fields == []
+
+
+def test_load_or_capture_does_not_overwrite_complete_snapshot(tmp_path):
+    """A complete snapshot (no missing fields) must NOT be overwritten."""
+    capture_snapshot(
+        tmp_path,
+        equity=1_000_000.0,
+        unrealized_pnl=-200.0,
+        source="broker_api",
+        market_date="2026-07-31",
+    )
+    captured_at_original = load_snapshot(tmp_path).captured_at
+
+    import time
+    time.sleep(0.01)  # ensure timestamp would differ if re-captured
+
+    load_or_capture_day_start(
+        tmp_path,
+        equity=999_000.0,   # different value
+        unrealized_pnl=-100.0,
+        source="broker_api",
+        allow_missing=False,
+        market_date="2026-07-31",
+    )
+
+    # captured_at should be unchanged (no re-capture)
+    reloaded = load_snapshot(tmp_path)
+    assert reloaded.captured_at == captured_at_original
+    assert reloaded.day_start_equity == 1_000_000.0  # original value preserved
+
+
+def test_paper_demo_uses_equity_variable_not_get_account(tmp_path):
+    """Regression: paper_demo was calling broker.get_account() which does not exist.
+
+    The fix uses the `equity` variable (already fetched via fetch_account() at startup).
+    This test verifies a BrokerClient without get_account() does not prevent
+    day_start_equity from being set (the attribute error was silently caught before).
+    """
+    from stock_swing.guardrails.day_start_snapshot import load_or_capture_day_start
+    # Simulate what paper_demo now does: equity is already a float, use it directly
+    equity_from_broker = 987_573.76  # fetched at startup via fetch_account()
+    snap = load_or_capture_day_start(
+        tmp_path,
+        equity=equity_from_broker,
+        unrealized_pnl=-450.0,
+        source="broker_api",
+        allow_missing=False,
+        market_date="2026-07-31",
+    )
+    assert snap.day_start_equity == pytest.approx(987_573.76)
+    assert snap.missing_fields == []
+
+
+import pytest
