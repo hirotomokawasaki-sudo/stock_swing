@@ -196,7 +196,57 @@ class BrokerClient(SourceClient):
             request_params["limit"] = limit
             api_params["limit"] = limit
 
-        data_url = f"https://data.alpaca.markets/v2/stocks/{symbol}/bars"
+        payload = self._fetch_market_data_endpoint(
+            f"v2/stocks/{symbol}/bars",
+            api_params,
+            not_found_message=f"resource not found: v2/stocks/{symbol}/bars",
+        )
+        return self._build_envelope(f"v2/stocks/{symbol}/bars", request_params, payload)
+
+    def fetch_latest_quote(self, symbol: str) -> RawEnvelope:
+        """Fetch latest quote for a symbol.
+
+        Args:
+            symbol: Stock symbol (e.g., "AAPL").
+
+        Returns:
+            RawEnvelope with latest bid/ask data.
+
+        Note:
+            2026-08-01 fix: quotes (like bars) live on Alpaca's market-data
+            host (data.alpaca.markets), NOT the trading-account host
+            (self.base_url / paper-api.alpaca.markets). The previous
+            implementation routed this through self.fetch(), which hits
+            self.base_url and always 404'd ("resource not found"), silently
+            making every quote lookup fail. Callers (e.g. paper_demo.py's
+            get_mid_price()) caught the exception and fell back to 0.0,
+            which — combined with the 2026-07-29 FIX-002 change that blocks
+            BUYs outright when price is unavailable — halted all new BUY
+            submissions in production from 2026-07-29 18:44 JST onward
+            without raising any error.
+        """
+        endpoint = f"v2/stocks/{symbol}/quotes/latest"
+        payload = self._fetch_market_data_endpoint(
+            endpoint,
+            {"feed": "iex"},
+            not_found_message=f"resource not found: {endpoint}",
+        )
+        return self._build_envelope(endpoint, {"symbol": symbol}, payload)
+
+    def _fetch_market_data_endpoint(
+        self,
+        path: str,
+        params: dict[str, Any],
+        *,
+        not_found_message: str,
+    ) -> dict[str, Any]:
+        """Shared GET helper for Alpaca market-data endpoints (data.alpaca.markets).
+
+        Used by fetch_bars() and fetch_latest_quote(). Both live on the
+        market-data host, distinct from self.base_url (the trading-account
+        host used by fetch_account/fetch_positions/fetch_orders/submit_order).
+        """
+        data_url = f"https://data.alpaca.markets/{path.lstrip('/')}"
         headers = {
             "APCA-API-KEY-ID": self.api_key,
             "APCA-API-SECRET-KEY": self.api_secret,
@@ -205,16 +255,16 @@ class BrokerClient(SourceClient):
         def fetch_func() -> dict[str, Any]:
             try:
                 with httpx.Client(timeout=self.retry_config.timeout) as client:
-                    response = client.get(data_url, headers=headers, params=api_params)
+                    response = client.get(data_url, headers=headers, params=params)
             except Exception as e:
-                raise SourceConnectionError(self.name, f"failed to fetch bars: {e}", original_error=e)
+                raise SourceConnectionError(self.name, f"failed to fetch {path}: {e}", original_error=e)
 
             if response.status_code == 401:
                 raise SourceAuthenticationError(self.name, "invalid API credentials")
             if response.status_code == 403:
                 raise SourceAuthenticationError(self.name, "API key does not have permission for this operation")
             if response.status_code == 404:
-                raise SourceNotFoundError(self.name, f"resource not found: v2/stocks/{symbol}/bars")
+                raise SourceNotFoundError(self.name, not_found_message)
             if response.status_code == 422:
                 try:
                     error_data = response.json()
@@ -237,19 +287,7 @@ class BrokerClient(SourceClient):
             except Exception as e:
                 raise SourceResponseError(self.name, f"failed to parse JSON response: {e}", original_error=e)
 
-        payload = self._fetch_with_retry(fetch_func)
-        return self._build_envelope(f"v2/stocks/{symbol}/bars", request_params, payload)
-
-    def fetch_latest_quote(self, symbol: str) -> RawEnvelope:
-        """Fetch latest quote for a symbol.
-        
-        Args:
-            symbol: Stock symbol (e.g., "AAPL").
-            
-        Returns:
-            RawEnvelope with latest bid/ask data.
-        """
-        return self.fetch(endpoint=f"v2/stocks/{symbol}/quotes/latest")
+        return self._fetch_with_retry(fetch_func)
 
     def fetch_account(self) -> RawEnvelope:
         """Fetch account information.

@@ -115,6 +115,71 @@ def test_fetch_latest_quote_success(mock_client_class: Mock) -> None:
 
 
 @patch("httpx.Client")
+def test_fetch_latest_quote_hits_market_data_host_not_trading_host(mock_client_class: Mock) -> None:
+    """Regression (2026-08-01): fetch_latest_quote must hit data.alpaca.markets.
+
+    Root cause: fetch_latest_quote() previously routed through self.fetch(),
+    which builds URLs against self.base_url (the trading-account host,
+    e.g. paper-api.alpaca.markets). Alpaca quotes only exist on the
+    market-data host (data.alpaca.markets), so every call 404'd, was caught
+    by callers (paper_demo.get_mid_price()), and silently returned price=0.0.
+    Combined with the 2026-07-29 FIX-002 change that hard-blocks BUYs when
+    price is unavailable, this halted ALL new BUY submissions in production
+    from 2026-07-29 18:44 JST onward with no visible error.
+
+    This test asserts the actual request URL/host, which the pre-fix mock
+    above never checked — that gap is exactly how the bug went undetected.
+    """
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "quote": {"t": "2026-03-06T09:30:00Z", "bp": 183.25, "ap": 183.30},
+    }
+
+    mock_client = Mock()
+    mock_client.__enter__ = Mock(return_value=mock_client)
+    mock_client.__exit__ = Mock(return_value=False)
+    mock_client.get.return_value = mock_response
+    mock_client_class.return_value = mock_client
+
+    # Use a trading-host base_url distinct from the market-data host, so a
+    # regression (routing through self.base_url again) is unambiguous.
+    client = create_client()
+    assert "paper-api.alpaca.markets" in client.base_url
+
+    client.fetch_latest_quote("AAPL")
+
+    assert mock_client.get.called, "fetch_latest_quote did not make an HTTP GET call"
+    called_url = mock_client.get.call_args.args[0] if mock_client.get.call_args.args else mock_client.get.call_args.kwargs.get("url")
+    assert called_url is not None
+    assert called_url.startswith("https://data.alpaca.markets/"), (
+        f"fetch_latest_quote must call data.alpaca.markets, not the trading-account "
+        f"host. Got: {called_url}"
+    )
+    assert "paper-api.alpaca.markets" not in called_url
+
+
+@patch("httpx.Client")
+def test_fetch_bars_hits_market_data_host(mock_client_class: Mock) -> None:
+    """fetch_bars must also hit data.alpaca.markets (shared helper regression guard)."""
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"bars": []}
+
+    mock_client = Mock()
+    mock_client.__enter__ = Mock(return_value=mock_client)
+    mock_client.__exit__ = Mock(return_value=False)
+    mock_client.get.return_value = mock_response
+    mock_client_class.return_value = mock_client
+
+    client = create_client()
+    client.fetch_bars("AAPL", timeframe="1Day")
+
+    called_url = mock_client.get.call_args.args[0] if mock_client.get.call_args.args else mock_client.get.call_args.kwargs.get("url")
+    assert called_url.startswith("https://data.alpaca.markets/")
+
+
+@patch("httpx.Client")
 def test_fetch_account_success(mock_client_class: Mock) -> None:
     """Test successful account fetch."""
     mock_response = Mock()
