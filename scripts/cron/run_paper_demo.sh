@@ -40,8 +40,13 @@ export ENTRY_FILTER_STOCK_REDUCED_PF_GATE=0.35
 
 # 2026-07-30: AMD rolling_pf_gate バイパス（ユーザー指示: 購入制限解除）
 #   AMD rolling PF=0.60 < gate=0.70 → Gate 3 にブロックされていた
+# 2026-08-01: HPE も追加（ユーザー指示: 購入制限解除）
+#   HPE rolling PF=0.632 < gate=0.70 → Gate 3 にブロックされていた
+#   trailing_stop は機能している（+59%/+79%の勝ちトレード2件）。
+#   損失はプロジェクト全体で既知の stop_loss/breakeven_stop の弱点由来であり
+#   AMD/HPE 固有の構造的問題ではないと判断。
 #   pf_gate_skip_symbols で Gate 3 をスキップ（他の gate は有効のまま）
-export ENTRY_FILTER_PF_GATE_SKIP_SYMBOLS=AMD
+export ENTRY_FILTER_PF_GATE_SKIP_SYMBOLS=AMD,HPE
 
 # Run paper demo with outside-hours allowed (will queue orders).
 # Keep cron stdout tiny; detailed logs go to the log file.
