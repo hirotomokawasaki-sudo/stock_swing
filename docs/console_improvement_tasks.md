@@ -698,7 +698,7 @@ asset_class unknown in closed: 245件
 **sector_shock_shadow 0件の調査結果（2026-08-01）**: `data/sector_shock_shadow_log.jsonl` 全17件（07-23〜07-30）を全件確認。分類ロジック（`SectorShockAnalyzer.classify()`）は実装として正しく動作しており、監査期間中の `avg_sector_return_pct` の最大下落はMETA(07-27)の-2.38%で、`sector_shock_threshold_pct=-3.0%`に一度も到達していない。つまり「bugではなく、単に監査期間中にSMH/SOXX/QQQ/SPY等が-3%以上一日下落するほどのセクター全体ショックが一度も発生していない」というのが真相。A/B開始条件（有効shadow≥10件）の達成は、実際のセクターショック発生を待つ必要があり、人為的に促進するべきではない。
 | R4-v2 Signal Calibration | REOPENED | 未再検証、未対応 |
 | R5-v2 Portfolio/Promotion | REOPENED | 未再検証、未対応 |
-| R6-v2 Console | IMPLEMENTED_UNVERIFIED | FIX-009でconsole securityは対応済み（127.0.0.1 bind、write endpointデフォルトoff）。P6 join_coverageはFIX-006でjoin metadataは完了だが、2026-08-01に別途発見された `import json` 欠落バグで実際のレポートファイルは一度も書き出されていなかった（commit `968c1cc`で修正済み） |
+| R6-v2 Console | IMPLEMENTED_UNVERIFIED | FIX-009でconsole securityは対応済み（127.0.0.1 bind、write endpointデフォルトoff）。P6 join_coverageはFIX-006でjoin metadataは完了だが、2026-08-01に別途発見された `import json` 欠落バグで実際のレポートファイルは一度も書き出されていなかった（commit `968c1cc`で修正済み）。source_sla（R7-v2-A）は`broker`ソースが`required: true`なのに一度も収集されず`failing_sources`固定だった問題も同日発見し、`collect_broker`/`collect_broker_bars`を実装しcronに組み込み解消（commit `6f48954`） |
 | R7-v2 Data Reliability | REOPENED | FIX-001でsynthetic dataはproduction分離済み。残余リスクは未再検証 |
 | R8-v2 Learning/ML | BLOCKED_BY_DATA | 変更なし |
 
