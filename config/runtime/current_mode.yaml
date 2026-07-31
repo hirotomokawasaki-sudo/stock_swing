@@ -27,7 +27,7 @@ ledger_quality_gate:
     max_asset_class_unknown_count: 0           # currently 245 → INVALID
     broker_equity_bridge_tolerance_usd: 1.0   # abs(sum - broker) ≤ $1
 
-  # Current status (as of 2026-07-28 full data repair):
+  # Current status (as of 2026-07-28 full data repair; re-verified 2026-08-01):
   # ALL data-level checks PASS:
   #   overlap=0 ✅  reversed=0 ✅  hd_missing=0 ✅  ac_unknown=0 ✅  pnl_diff=0.0 ✅
   # Repairs applied:
@@ -36,9 +36,11 @@ ledger_quality_gate:
   #   - holding_days=None 202件を timestamps から再計算
   #   - reversed 7件（entry>exit, FIFOミスマッチ）を quarantine 移動
   #   - asset_class を rebuild 後に自動 backfill（構造修正）
+  # 2026-08-01: python scripts/audit_trades_with_market_data.py で ALL PASSED 再確認。
+  # 数値自体の変更なし（status/last_checkedのみ更新）。
   # Update this field after each ledger repair run:
   current_status: VALID
-  last_checked: "2026-07-28"
+  last_checked: "2026-08-01"
 
 # ── Circuit breaker recovery ─────────────────────────────────────────
 circuit_breaker:
@@ -67,7 +69,16 @@ sector_shock_hold:
   #   - 2 metrics improvement vs baseline (PF, CVaR, or max_drawdown)
   mode: shadow   # shadow | paper_ab | active
   ab_start_condition_shadow_count: 10
-  current_valid_shadow_count: 3   # post-07-17 fix; update after each run
+  # 2026-08-01 確認: data/sector_shock_shadow_log.jsonl 全17件を監査した結果、
+  # classification=sector_shock_hold の件数は 0（全件 soft_stop）。
+  # 既記の「3」はpost-07-17時点の古い手動集計で、その後の07-28 per-symbol
+  # benchmark修正後の実際のログと不一致していたため 0 に修正。
+  # 原因: 監査期間中のavg_sector_return_pctの最大下落はMETA(07-27)の-2.38%で、
+  # sector_shock_threshold_pct=-3.0% に一度も到達していない（分類ロジック自体の
+  # 不具合ではなく、単に監査期間中に-3%以上のセクター全体下落が発生していない）。
+  # このフィールドはどのコードからも参照されない手動集計メモであり、
+  # 自動更新されないため run ごとに手動で確認すること。
+  current_valid_shadow_count: 0   # 2026-08-01 実ログ確認（post-07-28 per-symbol benchmark fix）
 
 # ── Go/No-Go gate ───────────────────────────────────────────────────
 go_no_go:

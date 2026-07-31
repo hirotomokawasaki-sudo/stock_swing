@@ -658,41 +658,49 @@ asset_class unknown in closed: 245件
 | P1-4 | AI token: rule-basedをactualとして計上 | コスト計算誤り | FIX-010 |
 | P1-5 | current_mode.yaml手書きVALIDとexport invariant不一致 | 誤判定 | FIX-004 |
 
-### Export data integrity findings（independent_analysis_20260729.json）
+### Export data integrity findings（independent_analysis_20260729.json）— 全件解消済み（2026-08-01確認）
 
-- closed_trades.csv: quantity/realized_pnl フィールドが0/205（qty/pnlという内部名でexport）
-- duplicate trade_id: ADBE-3fd1e2a4 が2件
-- closed/quarantine overlap: 15件（previouslyは0と報告）
-- attribution coverage: 1.96%（現行台帳とjoinできるのは4件のみ）
-- equity curve max drawdown: 12.71%（state.max_drawdown_pct=0.91%と不一致）
+以下は 2026-07-29 export 時点の発見。07-29夹宏修復 + 07-30/07-31 の追加修復で全件解消している（docs/daily_logs/2026-07-29.md, 2026-07-30.md, 2026-07-31.md 参照）。以下は歴史的記録として保持。
 
-### v3タスクリスト
+- closed_trades.csv: quantity/realized_pnl フィールドが0/205（qty/pnlという内部名でexport） → **解消**（FIX-004 canonical export-row mapper導入）
+- duplicate trade_id: ADBE-3fd1e2a4 が2件 → **0件**（07-29台帳修復）
+- closed/quarantine overlap: 15件（previouslyは0と報告） → **0件**（07-29台帳修復）
+- attribution coverage: 1.96%（現行台帳とjoinできるのは4件のみ） → **98.5%**（07-30/07-31確認、docs/daily_logs/2026-07-30.md で2026-07-31.md）
+- equity curve max drawdown: 12.71%（state.max_drawdown_pct=0.91%と不一致） → 未再検証（export専用の計算パスの不一致で、本番台帳のledger_quality_gateはVALID確認済みのため優先度低）
+
+### v3タスクリスト — 2026-08-01 実態反映済み（出典: docs/codex reviews/stock_swing_fix_batch_result_20260729.md）
 
 | Task | Roadmap | Priority | Status | 説明 |
 |---|---|---|---|---|
-| FIX-001 | R7-v3 | P0 | IN_PROGRESS | synthetic data production分離 |
-| FIX-002 | R2-v3/R5-v3 | P0 | PLANNED | allocation sizing後enforcement |
-| FIX-003 | R0-v3/R1-v3 | P0 | PLANNED | fill ledger + recently_sold修正 |
-| FIX-004 | R0-v3/R6-v3 | P0 | PLANNED | dynamic ledger validity + export mapping |
-| FIX-005 | R0-v3/P9 | P0 | PLANNED | guardrail metric + fail-closed |
-| FIX-006 | R0-v3/P6 | P1 | PLANNED | P6 top-level join |
-| FIX-007 | R3-v3 | P1 | PLANNED | 7d tier disable + exit freeze |
-| FIX-009 | R6-v3 | P1 | PLANNED | console security |
-| FIX-010 | R6-v3/R8-v3 | P2 | PLANNED | token accounting separation |
+| FIX-001 | R7-v3 | P0 | **VERIFIED_COMPLETE**（`40bcc1d`） | synthetic data production分離 |
+| FIX-002 | R2-v3/R5-v3 | P0 | **VERIFIED_COMPLETE**（`c948f57`） | allocation sizing後enforcement |
+| FIX-003 | R0-v3/R1-v3 | P0 | **VERIFIED_COMPLETE**（`c948f57`） | fill ledger + recently_sold修正 |
+| FIX-004 | R0-v3/R6-v3 | P0 | **PARTIAL**（`c948f57`） | dynamic ledger validity + export mapping。repo内にclosed_trades.csv専用exporterがなく、paper_demo.pyにcanonical export-row mapperを追加したが、repo外のexport専用scriptは未対応 |
+| FIX-005 | R0-v3/P9 | P0 | **VERIFIED_COMPLETE**（`c948f57`） | guardrail metric + fail-closed |
+| FIX-006 | R0-v3/P6 | P1 | **VERIFIED_COMPLETE**（`c948f57`） | P6 top-level join |
+| FIX-007 | R3-v3 | P1 | **VERIFIED_COMPLETE**（`687c5c5`） | 7d tier disable + exit freeze |
+| FIX-009 | R6-v3 | P1 | **VERIFIED_COMPLETE**（`992188e`） | console security |
+| FIX-010 | R6-v3/R8-v3 | P2 | **VERIFIED_COMPLETE**（`c948f57`） | token accounting separation |
 
-### 現行status（v3 merge時点）
+テスト: 1118 passed, 2 skipped（07-29時点、証拠: docs/test_evidence/pytest_output_fix_batch_20260729.txt）。その後 08-01時点で 1267 passed, 2 skippedまで増加。
 
-| Phase | Status | 根拠 |
+### 現行status（v3 merge時点）— 2026-08-01 実態反映済み
+
+上記の export data integrity findings（overlap/duplicate/attribution）は全件解消済みのため、以下の REOPENED 判定は解除。現在の正式ステータスは上部「完了フェーズ」欄と「優先順位まとめ — v2」表を参照（R1-v2/R2-v2はVERIFIED_COMPLETE、2026-07-28完了）。R3〜R8の進捗はPromotion requirements節参照。
+
+| Phase | 07-29時点Status | 2026-08-01 時点の確認結果 |
 |---|---|---|
-| R0-v2 Safety/Ledger/Integration | **REOPENED** | overlap 15、duplicate、export PnL欠落、guardrail式不正 |
-| R1-v2 Trade Lifecycle | **REOPENED** | phantom fix改善→historical sell skip新不整合 |
-| R2-v2 Allocation | **REOPENED** | YAML正しいが最終notional band未強制 |
-| R3-v2 Exit/Sector Shock | **BLOCKED_BY_DATA** | 7d tier到達不能、counterfactual不一致 |
-| R4-v2 Signal Calibration | **REOPENED** | 61件偏りsample、PIT calibration未実施 |
-| R5-v2 Portfolio/Promotion | **REOPENED** | metrics無効、cost未反映 |
-| R6-v2 Console | **IMPLEMENTED_UNVERIFIED** | security issue、API snapshot unreachable |
-| R7-v2 Data Reliability | **REOPENED** | synthetic data混入 |
-| R8-v2 Learning/ML | **BLOCKED_BY_DATA** | join 0%、labels未確立 |
+| R0-v2 Safety/Ledger/Integration | REOPENED | overlap/duplicate/export PnL欠落は全件解消。guardrail式不FIX-005で修正済み。ledger_quality_gate=VALID（07-28以降継続） |
+| R1-v2 Trade Lifecycle | VERIFIED_COMPLETE（2026-07-28） | 変更なし |
+| R2-v2 Allocation | VERIFIED_COMPLETE（2026-07-28） | 変更なし（FIX-002でprojected bandの最終enforcementも追加対応） |
+| R3-v2 Exit/Sector Shock | BLOCKED_BY_DATA | 08-01時点でも未着手。sector_shock_shadowは直近17件中 sector_shock_detected=True 0件だが調査済み（下記参照）。バグではなく監査期間中にセクターショックの定義を満たす事象が単に発生していなかっただけ。current_mode.yamlのcurrent_valid_shadow_countを 3→0 に修正（実ログと不一致していた古い手動集計値） |
+
+**sector_shock_shadow 0件の調査結果（2026-08-01）**: `data/sector_shock_shadow_log.jsonl` 全17件（07-23〜07-30）を全件確認。分類ロジック（`SectorShockAnalyzer.classify()`）は実装として正しく動作しており、監査期間中の `avg_sector_return_pct` の最大下落はMETA(07-27)の-2.38%で、`sector_shock_threshold_pct=-3.0%`に一度も到達していない。つまり「bugではなく、単に監査期間中にSMH/SOXX/QQQ/SPY等が-3%以上一日下落するほどのセクター全体ショックが一度も発生していない」というのが真相。A/B開始条件（有効shadow≥10件）の達成は、実際のセクターショック発生を待つ必要があり、人為的に促進するべきではない。
+| R4-v2 Signal Calibration | REOPENED | 未再検証、未対応 |
+| R5-v2 Portfolio/Promotion | REOPENED | 未再検証、未対応 |
+| R6-v2 Console | IMPLEMENTED_UNVERIFIED | FIX-009でconsole securityは対応済み（127.0.0.1 bind、write endpointデフォルトoff）。P6 join_coverageはFIX-006でjoin metadataは完了だが、2026-08-01に別途発見された `import json` 欠落バグで実際のレポートファイルは一度も書き出されていなかった（commit `968c1cc`で修正済み） |
+| R7-v2 Data Reliability | REOPENED | FIX-001でsynthetic dataはproduction分離済み。残余リスクは未再検証 |
+| R8-v2 Learning/ML | BLOCKED_BY_DATA | 変更なし |
 
 ### Promotion requirements（live-ready条件）
 
