@@ -1,0 +1,10 @@
+{
+  "action": "halt",
+  "clear_note": null,
+  "cleared_at": null,
+  "cleared_by": null,
+  "reason": "guardrail_halt",
+  "status": "halted",
+  "triggered_at": "2026-07-30T13:25:15.334671+00:00",
+  "triggered_rules": []
+}
