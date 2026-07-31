@@ -566,3 +566,69 @@ def test_inline_reconcile_registers_fill_in_fill_ledger(monkeypatch, tmp_path, c
     from stock_swing.tracking.fill_ledger import FillAlreadyConsumedError
     with pytest.raises(FillAlreadyConsumedError):
         ledger.consume(fill_rec["fill_id"], trade_id="simulated_cron_reconcile", qty=100.0)
+
+
+def test_p6_join_coverage_does_not_error_missing_json_import(monkeypatch, tmp_path, capsys, caplog):
+    """Regression: paper_demo.py used `json.dumps(...)` in the P6 join_coverage
+    block (build the report + write data/audits/p6_join_coverage.json) without
+    ever importing the top-level `json` module (only local `import json as _json`
+    aliases existed inside two unrelated functions). Every run silently hit
+    `NameError: name 'json' is not defined`, caught by the surrounding bare
+    `except Exception`, logged only as a WARNING, and the join-coverage report
+    was never written — observed live on 2026-08-01 during an unrelated test run.
+
+    KILLS mutation: if the top-level `import json` is removed/reverted, this
+    test's caplog assertion catches the WARNING and fails.
+    """
+    _set_common_patches(monkeypatch, tmp_path, _BrokerSellFillOnce)
+
+    monkeypatch.setattr(
+        "stock_swing.sources.hybrid_data_fetcher.HybridDataFetcher",
+        _generic_bars_fetcher(),
+    )
+    monkeypatch.setattr(paper_demo.PriceMomentumFeature, "compute", _momentum_result_for("AAPL"))
+    monkeypatch.setattr(paper_demo.MacroRegimeFeature, "compute", _no_signals)
+    monkeypatch.setattr(paper_demo.BreakoutMomentumStrategy, "generate", _no_signals)
+    monkeypatch.setattr(paper_demo.EventSwingStrategy, "generate", _no_signals)
+    monkeypatch.setattr(paper_demo.EntryFilterEngine, "filter", _passthrough_filter)
+
+    def _sell_signal(self, all_features, positions):
+        return [CandidateSignal(
+            strategy_id="simple_exit_v2",
+            symbol="AAPL",
+            action="sell",
+            signal_strength=1.0,
+            generated_at=datetime.now(timezone.utc),
+            time_horizon="0d",
+            confidence=1.0,
+            reasoning="mutation test: P6 join_coverage json import",
+            metadata={},
+        )]
+    monkeypatch.setattr(paper_demo.SimpleExitV2Strategy, "generate", _sell_signal)
+
+    from stock_swing.execution.paper_executor import PaperExecutor
+    def _mock_size(self, decision, *, market_regime="neutral", exposure_cap_override=None):
+        return 100, {"final_shares": 100, "shares_by_risk": 100, "shares_by_notional": 100,
+                     "skip_reason": None, "latest_close": 150.0,
+                     "current_price": 150.0, "regime_used": "cautious",
+                     "asset_class_used": "stock", "applied_constraint": "risk"}
+    monkeypatch.setattr(PaperExecutor, "_calculate_position_size", _mock_size)
+
+    monkeypatch.setattr(sys, "argv", [
+        "paper_demo", "--cron-summary-json", "--symbols", "AAPL",
+    ])
+
+    import logging
+    with caplog.at_level(logging.WARNING, logger="stock_swing.cli.paper_demo"):
+        paper_demo.main()
+
+    failures = [r for r in caplog.records if "P6 join_coverage report failed" in r.getMessage()]
+    assert not failures, (
+        f"P6 join_coverage report failed (json import regression?): "
+        f"{[r.getMessage() for r in failures]}"
+    )
+
+    report_path = tmp_path / "data" / "audits" / "p6_join_coverage.json"
+    assert report_path.exists(), "p6_join_coverage.json was not written"
+    report = json.loads(report_path.read_text())
+    assert "this_run_decisions" in report
