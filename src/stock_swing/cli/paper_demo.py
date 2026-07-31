@@ -1958,7 +1958,13 @@ def main() -> int:  # noqa: C901
                 # Estimate order value (qty * current_price)
                 current_price = get_mid_price(o.symbol)
                 if current_price <= 0:
+                    _reason = "allocation_blocked: price_unavailable (position_limit check)"
                     print(f"\n  SKIP BUY {o.symbol}: allocation price unavailable")
+                    decision.block_reason = _reason
+                    logger.warning(
+                        "buy_skipped_allocation_blocked symbol=%s reason=%s decision_id=%s",
+                        o.symbol, _reason, decision.decision_id,
+                    )
                     _allocation_blocked_count += 1
                     continue
                 estimated_order_value = preview_qty * current_price
@@ -1967,7 +1973,18 @@ def main() -> int:  # noqa: C901
                 
                 if total_value > max_position_value:
                     asset_type = "ETF" if is_etf else "Stock"
+                    _reason = (
+                        f"allocation_blocked: position_limit "
+                        f"existing=${existing_value:.0f} + order=${estimated_order_value:.0f} "
+                        f"= ${total_value:.0f} > cap=${max_position_value:.0f} "
+                        f"({position_limit_pct:.0%} of equity, {asset_type})"
+                    )
                     print(f"\n  SKIP {o.side.upper()} {preview_qty} {o.symbol} ({asset_type}): Position limit (${existing_value:.0f} + ${estimated_order_value:.0f} = ${total_value:.0f} > ${max_position_value:.0f} [{position_limit_pct:.0%}])")
+                    decision.block_reason = _reason
+                    logger.warning(
+                        "buy_skipped_allocation_blocked symbol=%s reason=%s decision_id=%s",
+                        o.symbol, _reason, decision.decision_id,
+                    )
                     _allocation_blocked_count += 1
                     continue
             
@@ -1988,14 +2005,26 @@ def main() -> int:  # noqa: C901
                         equity,
                     )
                     if not band_result.allowed:
+                        _reason = f"allocation_blocked: {band_result.reason} (projected_notional=${projected_notional:,.0f})"
                         print(
                             f"\n  SKIP BUY {o.symbol}: {band_result.reason} "
                             f"(projected_notional=${projected_notional:,.0f})"
                         )
+                        decision.block_reason = _reason
+                        logger.warning(
+                            "buy_skipped_allocation_blocked symbol=%s reason=%s decision_id=%s",
+                            o.symbol, _reason, decision.decision_id,
+                        )
                         _allocation_blocked_count += 1
                         continue
                 else:
+                    _reason = "allocation_blocked: price_unavailable (projected_band check)"
                     print(f"\n  SKIP BUY {o.symbol}: allocation price unavailable")
+                    decision.block_reason = _reason
+                    logger.warning(
+                        "buy_skipped_allocation_blocked symbol=%s reason=%s decision_id=%s",
+                        o.symbol, _reason, decision.decision_id,
+                    )
                     _allocation_blocked_count += 1
                     continue
             preview_basis = ""

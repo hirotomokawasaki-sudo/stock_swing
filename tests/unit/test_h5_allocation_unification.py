@@ -82,7 +82,9 @@ def _make_config(
 def _decision(symbol: str, side: str = "buy", qty: int = 10, price: float = 100.0) -> Any:
     """Minimal duck-typed decision object."""
     order = SimpleNamespace(symbol=symbol, side=side, quantity=qty, limit_price=price, notional=qty * price)
-    return SimpleNamespace(proposed_order=order)
+    # block_reason mirrors DecisionRecord.block_reason (default None); allocator
+    # sets it when a BUY is blocked so callers can persist a durable reason.
+    return SimpleNamespace(proposed_order=order, block_reason=None)
 
 
 def _pos(market_value: float) -> dict[str, Any]:
@@ -349,6 +351,72 @@ class TestTargetBandBlocksProjectedOverweight:
         # Even with 50% ETF, projected check is disabled
         band = alloc.check_projected_band("SMH", proposed_notional=500_000, current_positions={}, equity=1_000_000)
         assert band.allowed, "projected check disabled → always allowed"
+
+
+class TestBlockReasonRecordedOnAllocationBlock:
+    """2026-08-01: allocation_blocked decisions must record decision.block_reason.
+
+    Background: MSFT BUY on 2026-07-31 was blocked at the allocation stage but
+    no durable reason was persisted to data/decisions/*.json, making later
+    diagnosis ("was it a signal threshold or an allocation gate?") impossible
+    without reading ephemeral cron stdout. This test locks in that
+    filter_decisions_by_allocation() always writes a human-readable
+    block_reason back onto the blocked decision object.
+    """
+
+    def test_unknown_symbol_sets_block_reason(self) -> None:
+        registry = _make_registry(["SMH"], ["NVDA"])
+        config = _make_config()
+        alloc = PortfolioAllocator(config=config, registry=registry)
+
+        decisions = [_decision("UNKNOWN_TICKER")]
+        result = alloc.filter_decisions_by_allocation(
+            decisions, current_positions={}, account_equity=1_000_000
+        )
+        assert result == []
+        assert decisions[0].block_reason is not None
+        assert "unknown_symbol" in decisions[0].block_reason
+
+    def test_projected_band_overweight_sets_block_reason(self) -> None:
+        registry = _make_registry(["SMH"], ["NVDA"])
+        config = _make_config(etf_max=0.20)
+        alloc = PortfolioAllocator(config=config, registry=registry)
+        # ETF already at 190k/1M = 19%. Proposed buy pushes to 20.2% > 20% cap.
+        positions = {"SMH": _pos(190_000)}
+        decisions = [_decision("SMH", qty=120, price=100.0)]
+        result = alloc.filter_decisions_by_allocation(
+            decisions, current_positions=positions, account_equity=1_000_000
+        )
+        assert result == []
+        assert decisions[0].block_reason is not None
+        assert "allocation_blocked" in decisions[0].block_reason
+
+    def test_price_unavailable_sets_block_reason(self) -> None:
+        registry = _make_registry(["SMH"], ["NVDA"])
+        config = _make_config()
+        alloc = PortfolioAllocator(config=config, registry=registry)
+        # notional=None forces the price-based fallback path (qty * limit_price);
+        # limit_price=0.0 triggers the price_unavailable branch.
+        order = SimpleNamespace(symbol="NVDA", side="buy", quantity=10, limit_price=0.0, notional=None)
+        decisions = [SimpleNamespace(proposed_order=order, block_reason=None)]
+        result = alloc.filter_decisions_by_allocation(
+            decisions, current_positions={}, account_equity=1_000_000
+        )
+        assert result == []
+        assert decisions[0].block_reason is not None
+        assert "price_unavailable" in decisions[0].block_reason
+
+    def test_allowed_decision_leaves_block_reason_unset(self) -> None:
+        """Regression guard: a passing BUY must NOT get a stray block_reason."""
+        registry = _make_registry(["SMH"], ["NVDA"])
+        config = _make_config()
+        alloc = PortfolioAllocator(config=config, registry=registry)
+        decisions = [_decision("NVDA", qty=10, price=100.0)]
+        result = alloc.filter_decisions_by_allocation(
+            decisions, current_positions={}, account_equity=1_000_000
+        )
+        assert len(result) == 1
+        assert decisions[0].block_reason is None
 
 
 class TestStockMultiplierChangesFinalQty:

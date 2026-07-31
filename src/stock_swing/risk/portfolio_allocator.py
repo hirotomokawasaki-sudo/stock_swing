@@ -254,6 +254,11 @@ class PortfolioAllocator:
             # --- Rule 1: unknown symbol ---
             if self._registry and self.classify(symbol) == "unknown":
                 blocked_unknown += 1
+                _reason = "allocation_blocked: unknown_symbol (not in symbol_registry.yaml)"
+                try:
+                    d.block_reason = _reason
+                except Exception:
+                    pass
                 logger.warning(
                     "PortfolioAllocator: blocking BUY %s – not in symbol_registry. "
                     "Add to config/reference/symbol_registry.yaml to allow.",
@@ -270,6 +275,11 @@ class PortfolioAllocator:
                     price = getattr(d.proposed_order, "limit_price", None) or getattr(d.proposed_order, "price", 0) or 0
                     if float(price) <= 0:
                         blocked_band += 1
+                        _reason = "allocation_blocked: price_unavailable (pre-filter)"
+                        try:
+                            d.block_reason = _reason
+                        except Exception:
+                            pass
                         logger.info(
                             "PortfolioAllocator: blocking BUY %s – price_unavailable",
                             symbol,
@@ -282,6 +292,11 @@ class PortfolioAllocator:
                     band_result = self.check_projected_band(symbol, notional, running_positions, equity)
                     if not band_result.allowed:
                         blocked_band += 1
+                        _reason = f"allocation_blocked: {band_result.reason} (cumulative projection)"
+                        try:
+                            d.block_reason = _reason
+                        except Exception:
+                            pass
                         logger.info(
                             "PortfolioAllocator: blocking BUY %s – %s (cumulative projection)",
                             symbol, band_result.reason,
@@ -336,6 +351,14 @@ class PortfolioAllocator:
             is_etf_buy = symbol.upper() in effective_etf_syms
             if is_etf_buy and etf_over_cap:
                 blocked_etf += 1
+                _reason = (
+                    f"allocation_blocked: etf_hard_cap mv=${etf_mv_running:.0f} "
+                    f">= cap=${etf_cap_usd:.0f}"
+                )
+                try:
+                    d.block_reason = _reason
+                except Exception:
+                    pass
                 logger.info(
                     "PortfolioAllocator: blocking ETF BUY %s – ETF mv $%.0f >= cap $%.0f",
                     symbol, etf_mv_running, etf_cap_usd,
