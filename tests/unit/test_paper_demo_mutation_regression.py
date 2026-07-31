@@ -39,6 +39,7 @@ from stock_swing.core.types import CanonicalRecord  # noqa: E402
 from stock_swing.feature_engine.base_feature import FeatureResult  # noqa: E402
 from stock_swing.strategy_engine.base_strategy import CandidateSignal  # noqa: E402
 from stock_swing.risk.entry_filter import EntryFilterResult  # noqa: E402
+from stock_swing.tracking.fill_ledger import FillLedger  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -431,3 +432,137 @@ def test_paper_demo_allocation_uses_alloc_config_not_legacy_multiplier(
         "With fix reverted, existing $42K > old limit $39.2K → blocked (mutation killed). "
         "If this assertion passes with the fix, the position was correctly NOT blocked."
     )
+
+
+# ===========================================================================
+# TEST 3: FillLedger race-condition fix (2026-07-31) — mutation-killer
+# ===========================================================================
+
+class _BrokerSellFillOnce:
+    """Broker stub: one open AAPL position, one sell order that reports filled."""
+
+    def __init__(self, *a, **kw):
+        self.base_url = "https://paper.example"
+
+    def fetch_account(self):
+        return SimpleNamespace(payload={
+            "status": "ACTIVE", "equity": "980000", "buying_power": "1944000",
+        })
+
+    def fetch_positions(self):
+        return SimpleNamespace(payload=[{
+            "symbol": "AAPL", "qty": "100", "side": "long",
+            "market_value": "15000", "unrealized_pl": "200",
+            "current_price": "150.0", "avg_entry_price": "148.0",
+        }])
+
+    def fetch_latest_quote(self, symbol):
+        return SimpleNamespace(payload={"ap": 150.05, "bp": 149.95})
+
+    def submit_order(self, symbol, side, order_type, qty, time_in_force, **kw):
+        return {"id": "sell-order-fixed-id", "status": "accepted"}
+
+    def get_order(self, order_id):
+        # Broker reports the sell as fully filled — same order_id every reconcile call.
+        return SimpleNamespace(payload={
+            "id": order_id,
+            "symbol": "AAPL",
+            "side": "sell",
+            "qty": "100",
+            "status": "filled",
+            "filled_qty": "100",
+            "filled_avg_price": "150.00",
+            "filled_at": "2026-07-31T00:00:00Z",
+        })
+
+    def fetch_orders(self, *a, **kw):
+        return SimpleNamespace(payload=[])
+
+    def cancel_order(self, order_id):
+        return {}
+
+
+def test_inline_reconcile_registers_fill_in_fill_ledger(monkeypatch, tmp_path, capsys):
+    """Regression: FIX-LEDGER-RACE (2026-07-31).
+
+    Prior to the fix, paper_demo's inline reconciler called
+    pnl_tracker.record_exit() directly without ever touching FillLedger.
+    This meant the 15-minute reconcile_orders.py cron and the inline
+    reconciler could independently consume overlapping quantity from the
+    same broker fill with no cross-process coordination, silently losing
+    consumption_events history (observed in production on 2026-07-30: ADBE
+    fill 5768e63e... showed only the 35-share event, the 125-share event
+    from the inline path was overwritten).
+
+    After the fix, the inline reconciler must ingest+consume the sell fill
+    through the same FillLedger used by reconcile_orders.py, so that:
+      1. The fill is present in fill_ledger.jsonl / fill_consumed_ledger.json
+      2. A second consumption attempt for the same qty raises FillAlreadyConsumedError
+         (which the caller catches and skips re-recording the exit).
+
+    KILLS mutation: if the FillLedger.ingest()/.consume() calls are removed from
+    the inline reconciler (reverting to direct record_exit() only), the fill
+    never appears in fill_ledger.jsonl and this test's assertion fails.
+    """
+    _set_common_patches(monkeypatch, tmp_path, _BrokerSellFillOnce)
+
+    monkeypatch.setattr(
+        "stock_swing.sources.hybrid_data_fetcher.HybridDataFetcher",
+        _generic_bars_fetcher(),
+    )
+    monkeypatch.setattr(paper_demo.PriceMomentumFeature, "compute", _momentum_result_for("AAPL"))
+    monkeypatch.setattr(paper_demo.MacroRegimeFeature, "compute", _no_signals)
+    monkeypatch.setattr(paper_demo.BreakoutMomentumStrategy, "generate", _no_signals)
+    monkeypatch.setattr(paper_demo.EventSwingStrategy, "generate", _no_signals)
+    monkeypatch.setattr(paper_demo.EntryFilterEngine, "filter", _passthrough_filter)
+
+    def _sell_signal(self, all_features, positions):
+        return [CandidateSignal(
+            strategy_id="simple_exit_v2",
+            symbol="AAPL",
+            action="sell",
+            signal_strength=1.0,
+            generated_at=datetime.now(timezone.utc),
+            time_horizon="0d",
+            confidence=1.0,
+            reasoning="mutation test: fill ledger race",
+            metadata={},
+        )]
+    monkeypatch.setattr(paper_demo.SimpleExitV2Strategy, "generate", _sell_signal)
+
+    from stock_swing.execution.paper_executor import PaperExecutor
+    def _mock_size(self, decision, *, market_regime="neutral", exposure_cap_override=None):
+        return 100, {"final_shares": 100, "shares_by_risk": 100, "shares_by_notional": 100,
+                     "skip_reason": None, "latest_close": 150.0,
+                     "current_price": 150.0, "regime_used": "cautious",
+                     "asset_class_used": "stock", "applied_constraint": "risk"}
+    monkeypatch.setattr(PaperExecutor, "_calculate_position_size", _mock_size)
+
+    monkeypatch.setattr(sys, "argv", [
+        "paper_demo", "--cron-summary-json", "--symbols", "AAPL",
+    ])
+
+    paper_demo.main()
+
+    # Verify the fill was registered in FillLedger (production path, not a helper stub).
+    ledger = FillLedger(tmp_path)
+    all_fills = ledger.all_fills()
+    assert all_fills, (
+        "FillLedger has no records after inline reconcile. "
+        "The inline reconciler in paper_demo.py must call fill_ledger.ingest()+consume() "
+        "for every sell fill it processes, not just pnl_tracker.record_exit()."
+    )
+    aapl_fills = [f for f in all_fills if f.get("symbol") == "AAPL"]
+    assert aapl_fills, f"No AAPL fill in ledger. All fills: {all_fills}"
+    fill_rec = aapl_fills[0]
+    assert fill_rec.get("consumed") is True, f"Fill not marked consumed: {fill_rec}"
+    assert fill_rec.get("consumed_qty") == pytest.approx(100.0), (
+        f"consumed_qty={fill_rec.get('consumed_qty')} expected 100.0"
+    )
+
+    # A second identical consume attempt (simulating the cron reconciler racing
+    # on the same fill) must be rejected — proving exactly-once semantics hold
+    # across the inline path and any other consumer of the same ledger.
+    from stock_swing.tracking.fill_ledger import FillAlreadyConsumedError
+    with pytest.raises(FillAlreadyConsumedError):
+        ledger.consume(fill_rec["fill_id"], trade_id="simulated_cron_reconcile", qty=100.0)

@@ -82,6 +82,7 @@ from stock_swing.strategy_engine.sector_shock_hold import (
 from stock_swing.tracking.exit_reason_store import delete_exit_reason, write_exit_reason
 from stock_swing.tracking.trade_event_store import TradeEvent
 from stock_swing.tracking.pnl_tracker import PnLTracker
+from stock_swing.tracking.fill_ledger import FillLedger, FillAlreadyConsumedError, FillQuarantinedError
 from stock_swing.guardrails.risk_snapshot import build_risk_snapshot
 from stock_swing.reporting.equity_bridge import compute_equity_bridge
 from stock_swing.utils.context_budget import (
@@ -919,6 +920,15 @@ def main() -> int:  # noqa: C901
     _section("7. Strategy Signals")
 
     pnl_tracker = PnLTracker(project_root)
+    # FIX-LEDGER-RACE (2026-07-31): exactly-once fill consumption guard for the
+    # inline reconciler below. Without this, the same broker sell fill can be
+    # partially consumed both here AND by the 15-min reconcile_orders.py cron,
+    # with no cross-process coordination (both read/append fill_ledger.jsonl
+    # independently). This does not corrupt PnL by itself (FIFO qty accounting
+    # in pnl_tracker.record_exit is still correct), but it silently loses the
+    # earlier consumption_events entry on the next append, and provides no
+    # protection against double-consuming a partial fill under raciness.
+    fill_ledger = FillLedger(project_root)
 
     # First, get current positions for exit strategy
     current_positions_full: dict[str, dict] = {}
@@ -2168,24 +2178,60 @@ def main() -> int:  # noqa: C901
                     
                     # Only record if we have actual fill data
                     if exit_price and exit_price > 0:
-                        # Use the correct decision for THIS submission (not outer-scope variable)
-                        decision_for_sub = decision_by_id.get(sub.decision_id)
-                        notes_text = " ".join(
-                            (getattr(decision_for_sub, 'evidence', None) or {}).get("notes") or []
-                        ) if decision_for_sub else ""
-                        _exit_trigger, exit_reason = _classify_exit_reason_from_notes(notes_text)
-                        pnl_tracker.record_exit(
-                            symbol=sub.symbol,
-                            exit_price=exit_price,
-                            exit_qty=exit_qty,
-                            broker_order_id=sub.broker_order_id,
-                            exit_strategy_id=getattr(decision_for_sub, 'strategy_id', 'unknown'),
-                            exit_reason=exit_reason,
-                        )
-                        # R1-B: inline reconcile consumed this fill; remove from
-                        # pending_exit_reasons so cron reconcile doesn't re-process.
+                        # FIX-LEDGER-RACE (2026-07-31): ingest+consume this fill through
+                        # FillLedger BEFORE recording the exit. This makes the inline
+                        # reconciler participate in the same exactly-once ledger used by
+                        # reconcile_orders.py cron, so a fill cannot be silently
+                        # double-consumed (or have its consumption_events overwritten)
+                        # by the two independent reconcile paths racing on the same
+                        # broker fill within the 15-minute cron window.
+                        _fill_already_consumed = False
+                        _fill_quarantined = False
                         if sub.broker_order_id:
-                            delete_exit_reason(project_root, sub.broker_order_id)
+                            try:
+                                _fk = fill_ledger.ingest(
+                                    {
+                                        "id": sub.broker_order_id,
+                                        "order_id": sub.broker_order_id,
+                                        "symbol": sub.symbol,
+                                        "side": "sell",
+                                        "qty": exit_qty,
+                                        "filled_avg_price": exit_price,
+                                        "filled_at": datetime.now(timezone.utc).isoformat(),
+                                    },
+                                    quarantine_on_missing=True,
+                                )
+                                fill_ledger.consume(
+                                    _fk,
+                                    trade_id=f"inline_reconcile:{sub.submission_id}",
+                                    qty=exit_qty,
+                                )
+                            except FillQuarantinedError as _fq_exc:
+                                _fill_quarantined = True
+                                print(f"  WARN: {sub.symbol} fill quarantined, skipping exit record: {_fq_exc}")
+                            except FillAlreadyConsumedError as _fac_exc:
+                                _fill_already_consumed = True
+                                print(f"  INFO: {sub.symbol} fill already consumed (race with cron reconcile?): {_fac_exc}")
+
+                        if not _fill_already_consumed and not _fill_quarantined:
+                            # Use the correct decision for THIS submission (not outer-scope variable)
+                            decision_for_sub = decision_by_id.get(sub.decision_id)
+                            notes_text = " ".join(
+                                (getattr(decision_for_sub, 'evidence', None) or {}).get("notes") or []
+                            ) if decision_for_sub else ""
+                            _exit_trigger, exit_reason = _classify_exit_reason_from_notes(notes_text)
+                            pnl_tracker.record_exit(
+                                symbol=sub.symbol,
+                                exit_price=exit_price,
+                                exit_qty=exit_qty,
+                                broker_order_id=sub.broker_order_id,
+                                exit_strategy_id=getattr(decision_for_sub, 'strategy_id', 'unknown'),
+                                exit_reason=exit_reason,
+                            )
+                            # R1-B: inline reconcile consumed this fill; remove from
+                            # pending_exit_reasons so cron reconcile doesn't re-process.
+                            if sub.broker_order_id:
+                                delete_exit_reason(project_root, sub.broker_order_id)
 
                 audit_log.log_reconciliation(sub.submission_id, sub.broker_order_id, result.status_matched, result.discrepancies)
                 _reconciled_count = _reconciled_count + 1 if "_reconciled_count" in dir() else 1
