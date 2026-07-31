@@ -471,26 +471,162 @@ def collect_sec(symbols, store):
     return []
 
 
+def _make_broker_client():
+    """Construct a BrokerClient from environment credentials, or None if unavailable.
+
+    Returns:
+        (client, error_message) tuple. client is None when credentials are
+        missing or construction fails; error_message explains why.
+    """
+    try:
+        from stock_swing.cli.paper_demo import _load_env, project_root as demo_project_root
+        _load_env(demo_project_root / '.env')
+    except Exception:
+        pass
+
+    api_key = os.environ.get("BROKER_API_KEY", "")
+    api_secret = os.environ.get("BROKER_API_SECRET", "")
+    base_url = os.environ.get("BROKER_BASE_URL")
+    if not api_key or not api_secret:
+        return None, "missing BROKER_API_KEY/BROKER_API_SECRET"
+
+    try:
+        from stock_swing.sources.broker_client import BrokerClient
+        client = BrokerClient(
+            api_key=api_key,
+            api_secret=api_secret,
+            paper_mode=True,
+            base_url=base_url,
+            retry_config=RetryConfig(
+                max_attempts=2,
+                initial_delay=1.0,
+                max_delay=3.0,
+                backoff_factor=2.0,
+                timeout=10.0,
+            ),
+        )
+        return client, None
+    except Exception as e:
+        return None, f"BrokerClient init failed: {e}"
+
+
 def collect_broker(symbols, store):
-    status_path = project_root / "data" / "audits" / "broker_quotes_status.json"
-    status_path.parent.mkdir(parents=True, exist_ok=True)
-    status_path.write_text(json.dumps({
+    """Collect account + positions + per-symbol latest quotes from the broker.
+
+    2026-08-01: replaced the 'not_implemented' placeholder with a real
+    implementation. BrokerClient.fetch_latest_quote() was fixed the same day
+    (it was silently 404'ing against the wrong Alpaca host), which is what
+    made this source usable. Writes broker_quotes_status.json honestly
+    reflecting success/failure so config/sources/broker.yaml's
+    required: true is backed by real data instead of a permanent stub.
+    """
+    written = []
+    client, client_err = _make_broker_client()
+    status = {
         "time": datetime.now(timezone.utc).isoformat(),
-        "status": "not_implemented",
-        "note": "FIX-001: fixed broker quote payload removed. Broker quotes via reconcile_orders instead.",
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
-    return []
+        "status": "unknown",
+        "symbols_requested": len(symbols),
+        "symbols_ok": 0,
+        "symbols_failed": [],
+    }
+
+    if client is None:
+        status["status"] = "failed"
+        status["reason"] = client_err
+        _write_broker_status("broker_quotes_status.json", status)
+        return written
+
+    # Account + positions: single non-symbol-scoped snapshot per run.
+    try:
+        account_env = client.fetch_account()
+        path = _write_raw_snapshot(
+            store, "broker", "account", "v2/account", account_env.payload,
+        )
+        written.append(str(path))
+    except Exception as e:
+        status.setdefault("account_error", str(e))
+
+    try:
+        positions_env = client.fetch_positions()
+        path = _write_raw_snapshot(
+            store, "broker", "positions", "v2/positions", positions_env.payload,
+        )
+        written.append(str(path))
+    except Exception as e:
+        status.setdefault("positions_error", str(e))
+
+    # Per-symbol latest quotes.
+    failed_symbols = []
+    for symbol in symbols:
+        try:
+            quote_env = client.fetch_latest_quote(symbol)
+            path = _write_raw_snapshot(
+                store, "broker", symbol, "quotes/latest", quote_env.payload,
+                {"symbol": symbol},
+            )
+            written.append(str(path))
+            status["symbols_ok"] += 1
+        except Exception as e:
+            failed_symbols.append({"symbol": symbol, "error": str(e)})
+
+    status["symbols_failed"] = failed_symbols
+    status["status"] = "ok" if not failed_symbols and status["symbols_ok"] > 0 else (
+        "degraded" if status["symbols_ok"] > 0 else "failed"
+    )
+    _write_broker_status("broker_quotes_status.json", status)
+    return written
 
 
-def collect_broker_bars(symbols, store):
-    status_path = project_root / "data" / "audits" / "broker_bars_status.json"
-    status_path.parent.mkdir(parents=True, exist_ok=True)
-    status_path.write_text(json.dumps({
+def collect_broker_bars(symbols, store, timeframe="1Day", limit=5):
+    """Collect daily bars per symbol directly from the broker (Alpaca market-data host).
+
+    2026-08-01: replaced the 'not_implemented' placeholder. See collect_broker()
+    docstring for context on why this was blocked until the fetch_latest_quote
+    host-routing bug was fixed.
+    """
+    written = []
+    client, client_err = _make_broker_client()
+    status = {
         "time": datetime.now(timezone.utc).isoformat(),
-        "status": "not_implemented",
-        "note": "FIX-001: fixed broker_bars payload removed. Use massive/finnhub for price data.",
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
-    return []
+        "status": "unknown",
+        "symbols_requested": len(symbols),
+        "symbols_ok": 0,
+        "symbols_failed": [],
+    }
+
+    if client is None:
+        status["status"] = "failed"
+        status["reason"] = client_err
+        _write_broker_status("broker_bars_status.json", status)
+        return written
+
+    failed_symbols = []
+    for symbol in symbols:
+        try:
+            bars_env = client.fetch_bars(symbol, timeframe=timeframe, limit=limit)
+            path = _write_raw_snapshot(
+                store, "broker", symbol, "marketdata/bars", bars_env.payload,
+                {"symbol": symbol, "timeframe": timeframe},
+            )
+            written.append(str(path))
+            status["symbols_ok"] += 1
+        except Exception as e:
+            failed_symbols.append({"symbol": symbol, "error": str(e)})
+
+    status["symbols_failed"] = failed_symbols
+    status["status"] = "ok" if not failed_symbols and status["symbols_ok"] > 0 else (
+        "degraded" if status["symbols_ok"] > 0 else "failed"
+    )
+    _write_broker_status("broker_bars_status.json", status)
+    return written
+
+
+def _write_broker_status(filename, status):
+    status_path = project_root / "data" / "audits" / filename
+    status_path.parent.mkdir(parents=True, exist_ok=True)
+    status_path.write_text(
+        json.dumps(status, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
 
 def collect_massive(symbols, store, days=30, timeframe="daily"):
