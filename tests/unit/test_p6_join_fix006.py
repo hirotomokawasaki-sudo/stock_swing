@@ -117,3 +117,81 @@ def test_join_coverage_all_fields_present(tmp_path):
 
     for field in ["run_id", "experiment_id", "config_hash", "decision_time", "usage_source"]:
         assert payload.get(field), f"Missing top-level field: {field}"
+
+
+def _decision_stub_variant(*, decision_id: str, action: str, symbol: str = "AAPL"):
+    d = _decision_stub()
+    d.decision_id = decision_id
+    d.action = action
+    d.symbol = symbol
+    d.proposed_order = SimpleNamespace(
+        symbol=symbol,
+        side=action if action in ("buy", "sell") else "buy",
+        order_type="market",
+        qty=5,
+        time_in_force="day",
+        limit_price=None,
+    )
+    return d
+
+
+def test_same_symbol_same_run_decisions_do_not_overwrite_each_other(tmp_path):
+    """Regression (2026-08-01): decision files for the same symbol within the
+    same run must not collide/overwrite.
+
+    Root cause: _save_decisions() previously wrote to
+    f"decision_{symbol}_{ts_tag}.json" where ts_tag is fixed for the entire
+    run. Any symbol with more than one decision in a single run (e.g. a new
+    BUY signal from BreakoutMomentum AND a SELL/exit signal from
+    SimpleExitV2 for an existing position in the same symbol — a common,
+    routine occurrence) collided on this exact filename. The later write
+    silently overwrote the earlier decision's full evidence/sizing/
+    confidence with no error, no warning, and no way to recover the lost
+    decision short of a single audit-log line.
+
+    Scanning the full decision audit-log history (2026-04 through 2026-07)
+    found 700+ such same-symbol/same-run collision groups.
+
+    Fix: filename now includes decision_id (unique per decision), so
+    same-symbol/same-run decisions can never collide.
+
+    KILLS mutation: reverting the filename back to
+    f"decision_{symbol}_{ts_tag}.json" (dropping the decision_id suffix)
+    causes this test to find only 1 saved file instead of 2, with the BUY
+    decision's content silently missing.
+    """
+    from stock_swing.cli.paper_demo import _save_decisions
+
+    buy_decision = _decision_stub_variant(decision_id="buy-dec-1", action="buy", symbol="MSFT")
+    sell_decision = _decision_stub_variant(decision_id="sell-dec-1", action="sell", symbol="MSFT")
+
+    store = _make_store(tmp_path)
+    # Same ts_tag for both, simulating both decisions generated within one run.
+    _save_decisions(
+        [buy_decision, sell_decision],
+        store,
+        "20260801T000000Z",
+        run_id="run-1",
+        experiment_id="exp-1",
+        config_hash="cfg-1",
+    )
+
+    saved_files = sorted((tmp_path / "data" / "decisions").glob("decision_MSFT_*.json"))
+    assert len(saved_files) == 2, (
+        f"Expected 2 distinct saved decision files (buy + sell for MSFT in the "
+        f"same run), got {len(saved_files)}: {[f.name for f in saved_files]}. "
+        f"This means same-symbol/same-run decisions are still colliding/"
+        f"overwriting each other."
+    )
+
+    saved_actions = set()
+    saved_decision_ids = set()
+    for f in saved_files:
+        payload = json.loads(f.read_text(encoding="utf-8"))
+        saved_actions.add(payload["action"])
+        saved_decision_ids.add(payload["decision_id"])
+
+    assert saved_actions == {"buy", "sell"}, (
+        f"Both the buy and sell decision content must survive; got actions: {saved_actions}"
+    )
+    assert saved_decision_ids == {"buy-dec-1", "sell-dec-1"}

@@ -2926,7 +2926,17 @@ def _save_decisions(
                     "skip_reason": d.sizing.skip_reason,
                 },
             }
-            store.write_decisions(f"decision_{d.symbol}_{ts_tag}.json", doc)
+            # 2026-08-01 fix: ts_tag is fixed for the whole run (set once in main()),
+            # so any symbol with >1 decision in the same run (e.g. a new BUY signal
+            # AND a SELL/exit signal for an existing position on the same symbol)
+            # collided on this filename and the later write silently overwrote the
+            # earlier one. Audit-log scan across the full decision history (2026-04
+            # through 2026-07) found 700+ such collision groups — every overwritten
+            # decision's full evidence/sizing/confidence was permanently lost, with
+            # only a single audit-log line surviving as evidence it ever existed.
+            # Fix: suffix the filename with the decision_id (unique per decision)
+            # so same-symbol/same-run decisions never collide.
+            store.write_decisions(f"decision_{d.symbol}_{ts_tag}_{d.decision_id}.json", doc)
         except Exception:
             pass
 

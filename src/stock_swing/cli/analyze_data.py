@@ -211,7 +211,10 @@ def create_decisions(signals, runtime_mode, store):
     current_positions = {}
     for sig in signals:
         decision = engine.process(sig, current_positions=current_positions)
-        filename = f"decision_{decision.symbol}_{decision.generated_at.strftime('%Y%m%d_%H%M%S')}.json"
+        # 2026-08-01 fix: same collision bug as paper_demo.py's _save_decisions() —
+        # a symbol with >1 decision at the same timestamp resolution silently
+        # overwrote earlier decisions. Suffix with decision_id (unique) to avoid it.
+        filename = f"decision_{decision.symbol}_{decision.generated_at.strftime('%Y%m%d_%H%M%S')}_{decision.decision_id}.json"
         store.write_decisions(filename, asdict(decision))
         decisions.append(decision)
     return decisions
