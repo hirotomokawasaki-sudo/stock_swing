@@ -14,7 +14,9 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
 DECISIONS_DIR = PROJECT_ROOT / "data/decisions"
-TOKEN_USAGE_CSV = PROJECT_ROOT / "data/analysis/token_usage.csv"
+# 2026-08-01: removed TOKEN_USAGE_CSV constant (pointed at the live tracker's
+# file with an incompatible schema). See BACKFILL_CSV below for this script's
+# own dedicated output file.
 
 
 def _tok(obj) -> int:
@@ -115,10 +117,18 @@ def main():
                 fp.write(json.dumps(row, ensure_ascii=False) + "\n")
         print(f"  Usage JSONL: {usage_out} ({len(usage_rows)} rows)")
 
-        # Also append to token_usage.csv
+        # 2026-08-01 fix: this backfill schema (decision_id/symbol/context_pack/
+        # telemetry_source) is NOT compatible with TokenUsageTracker.flush()'s live
+        # schema (success/retry_count/error/skip_reason) in context_budget.py.
+        # Appending backfill rows directly into token_usage.csv previously produced
+        # a file where column 8-11 meant different things depending on which row
+        # you were looking at (1939 backfill-schema rows silently mixed with
+        # tracker-schema rows under one header). Write backfill rows to their own
+        # dedicated file instead so token_usage.csv stays single-schema.
+        BACKFILL_CSV = PROJECT_ROOT / "data/analysis/token_usage_backfill.csv"
         import csv
-        csv_exists = TOKEN_USAGE_CSV.exists()
-        with open(TOKEN_USAGE_CSV, "a", newline="", encoding="utf-8") as f:
+        csv_exists = BACKFILL_CSV.exists()
+        with open(BACKFILL_CSV, "a", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
             if not csv_exists:
                 w.writerow(["timestamp", "workflow_name", "model", "input_tokens",
@@ -131,7 +141,7 @@ def main():
                     0.0, row["decision_id"], row["symbol"], row["context_pack"],
                     row["telemetry_source"],
                 ])
-        print(f"  Token usage CSV: {TOKEN_USAGE_CSV} ({len(usage_rows)} rows appended)")
+        print(f"  Token usage backfill CSV: {BACKFILL_CSV} ({len(usage_rows)} rows appended)")
 
     print(f"\n  ✅ Done. New decisions will have real telemetry after next paper_demo run.")
     return 0
