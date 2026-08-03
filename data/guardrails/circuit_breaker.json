@@ -1,11 +1,21 @@
 {
   "action": "none",
-  "clear_note": "day_start_equity null triggered fail-closed at 07-30 22:25 JST; broker/tracker verified clean (mismatch=0, DDOG only); manual clear authorized by operator 07-31 09:31 JST",
-  "cleared_at": "2026-07-31T00:31:28.221432+00:00",
+  "clear_note": "SNOW BUY-add-to-existing-position qty lag (broker=116 tracker=232 momentarily); fresh broker fetch confirms all 7 symbols qty-match tracker exactly (mismatch=0). Root cause fixed in G1-v2-d (postrun_mismatch.py).",
+  "cleared_at": "2026-08-03T23:41:56.912274+00:00",
   "cleared_by": "HirotomoO",
   "reason": "guardrail_halt",
   "status": "ok",
-  "triggered_at": "2026-07-30T13:25:15.334671+00:00",
-  "triggered_rules": [],
+  "triggered_at": "2026-08-03T19:55:27.054477+00:00",
+  "triggered_rules": [
+    {
+      "action": 5,
+      "metric": "broker_tracker_mismatch_count",
+      "name": "broker_tracker_mismatch",
+      "observed": 1.0,
+      "operator": ">=",
+      "severity": "critical",
+      "threshold": 1.0
+    }
+  ],
   "clear_confirmed_mismatch_count": 0
 }

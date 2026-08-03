@@ -14,6 +14,20 @@ History:
     was not previously lag-excused.  This triggered a false HALT on 2026-07-24
     (SKYY phantom; see docs/daily_logs/2026-07-25.md).  The reconcile_orders cron
     fixes the tracker within minutes, so this is always a transient condition.
+  G1-v2-d (2026-08-04): exclude qty-mismatch lag on BUY that adds to an EXISTING
+    open position (as opposed to a brand-new position, which is already handled
+    by the tracker_only presence-lag rule above).
+    Root cause: when a BUY is submitted for a symbol that already has an open
+    tracker position (e.g. adding a second lot), the tracker records the new
+    entry the instant the order is submitted, summing qty across both lots
+    immediately.  The broker position qty only reflects the fill once Alpaca's
+    fill confirmation + API propagation completes (observed lag: several
+    seconds).  During that window broker_qty < tracker_qty for the symbol,
+    which the pre-existing qty_mismatches check flags as a real integrity
+    issue and HALTs the circuit breaker.
+    Incident: 2026-08-03 19:55 JST SNOW false HALT (existing 116-share position
+    + new 116-share BUY; postrun check ran ~4s before the second fill
+    propagated; broker=116 vs tracker=232). See docs/daily_logs/2026-08-04.md.
 """
 from __future__ import annotations
 
@@ -49,9 +63,18 @@ def apply_lag_exclusion(
       - tracker_only ∩ new_buy_symbols  → BUY just submitted; broker API lag
       - broker_only  ∩ new_sell_symbols → SELL just submitted; broker still shows position
 
-    G1-v2-b (qty-mismatch lag):
+    G1-v2-b (qty-mismatch lag, SELL):
       - qty_mismatches whose symbol ∈ new_sell_symbols
         → partial fill creates transient qty discrepancy; not a real integrity issue
+
+    G1-v2-d (qty-mismatch lag, BUY add-to-existing-position):
+      - qty_mismatches whose symbol ∈ new_buy_symbols AND tracker_qty > broker_qty
+        → BUY submitted for a symbol that already has an open position; tracker
+          sums the new lot's qty immediately on submission, but broker qty only
+          catches up once the fill is confirmed + propagated (several seconds).
+          Only excused when tracker is *ahead* of broker (the expected direction
+          for this lag); if broker_qty > tracker_qty for a BUY symbol that is a
+          different, real issue and is NOT excused.
 
     G1-v2-c (fast-fill SELL phantom lag):
       - tracker_only ∩ new_sell_symbols
@@ -84,10 +107,19 @@ def apply_lag_exclusion(
     )
 
     # G1-v2-b: qty-mismatch lag on SELL submissions only
+    # G1-v2-d: qty-mismatch lag on BUY submissions that add to an existing
+    #   open position, only when tracker is ahead of broker (tracker_qty >
+    #   broker_qty) — the expected direction for this specific lag. A BUY
+    #   symbol where broker_qty > tracker_qty is a different, real issue and
+    #   must NOT be excused here.
     excused_qty: list[str] = [
         q["symbol"]
         for q in bt_diff.get("qty_mismatches", [])
         if q["symbol"] in new_sell_symbols
+        or (
+            q["symbol"] in new_buy_symbols
+            and float(q.get("tracker_qty", 0)) > float(q.get("broker_qty", 0))
+        )
     ]
 
     raw = bt_diff.get("mismatch_count", 0)
