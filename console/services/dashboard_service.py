@@ -1557,7 +1557,21 @@ class DashboardService:
                 "action_hint": "Inspect collection and analysis outputs",
                 "updated_at": now_iso(),
             })
-        
+
+        # Circuit breaker HALT / RECOVERY_PENDING visibility.
+        #
+        # Regression: 2026-08-03 19:55 JST SNOW HALT sat undetected in
+        # data/guardrails/circuit_breaker.json for ~13 hours because nothing on
+        # the main console surfaced it (only the mobile read-only monitor and
+        # ConsoleRenderer's text banner showed circuit_breaker status, and both
+        # require an operator to actively check them). This alert makes an
+        # active HALT/RECOVERY_PENDING appear directly in the main dashboard's
+        # top-level alerts list, which is rendered prominently by the console UI
+        # and the mobile read-only monitor. See docs/daily_logs/2026-08-04.md.
+        cb_alert = self._check_circuit_breaker_alert()
+        if cb_alert:
+            alerts.append(cb_alert)
+
         # Check broker-tracker consistency
         consistency = self.check_broker_tracker_consistency()
         if consistency.get("available"):
@@ -1686,6 +1700,60 @@ class DashboardService:
 
         severity_order = {"critical": 0, "warning": 1, "info": 2}
         return sorted(alerts, key=lambda a: severity_order.get(a.get("severity", "info"), 99))
+
+    def _check_circuit_breaker_alert(self) -> Optional[Dict[str, Any]]:
+        """Return a critical/warning alert dict when the circuit breaker is
+        HALTED or RECOVERY_PENDING, else None.
+
+        Reads data/guardrails/circuit_breaker.json directly so this alert
+        reflects the live state even between paper_demo runs (it does not
+        depend on latest_console_summary.json being fresh).
+        """
+        cb_path = self.project_root / "data" / "guardrails" / "circuit_breaker.json"
+        if not cb_path.exists():
+            return None
+        try:
+            cb = json.loads(cb_path.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+
+        status = str(cb.get("status") or "").lower()
+        if status not in {"halted", "recovery_pending"}:
+            return None
+
+        triggered_rules = cb.get("triggered_rules") or []
+        rule_names = [str(r.get("name") or r.get("metric") or "unknown") for r in triggered_rules]
+        triggered_at = cb.get("triggered_at")
+
+        if status == "halted":
+            return {
+                "severity": "critical",
+                "code": "guardrail_halted",
+                "title": "Circuit breaker HALTED — all BUYs blocked",
+                "message": (
+                    f"Guardrail circuit breaker is HALTED since {triggered_at or 'unknown time'}"
+                    + (f" (rule: {', '.join(rule_names)})" if rule_names else "")
+                ),
+                "action_hint": (
+                    "Verify broker/tracker parity, then run "
+                    "scripts/clear_circuit_breaker.py --confirmed-mismatch-count 0 "
+                    "to resume BUYs."
+                ),
+                "updated_at": now_iso(),
+            }
+
+        # recovery_pending: manually cleared but not yet re-verified by a clean run.
+        return {
+            "severity": "warning",
+            "code": "guardrail_recovery_pending",
+            "title": "Circuit breaker RECOVERY_PENDING",
+            "message": (
+                "Circuit breaker was manually cleared but a clean scheduled run "
+                "has not yet confirmed broker/tracker parity."
+            ),
+            "action_hint": "Wait for the next scheduled paper_demo run to verify clean state.",
+            "updated_at": now_iso(),
+        }
 
     def _build_integrity(self, counts: Dict[str, int], freshness: Dict[str, Any]) -> Dict[str, Any]:
         checks = []
