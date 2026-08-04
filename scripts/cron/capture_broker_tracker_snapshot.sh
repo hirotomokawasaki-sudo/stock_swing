@@ -24,7 +24,7 @@ mkdir -p "$OUT_DIR"
 OUT_FILE="$OUT_DIR/snapshot_${TIMESTAMP}.json"
 
 "$VENV" - << PYEOF
-import json, sys
+import json, os, sys
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -32,10 +32,31 @@ sys.path.insert(0, '$PROJECT_ROOT/src')
 project_root = Path('$PROJECT_ROOT')
 
 try:
-    from stock_swing.brokers.broker_factory import create_broker_client
+    from stock_swing.sources.broker_client import BrokerClient
     from stock_swing.tracking.pnl_tracker import PnLTracker
 
-    broker = create_broker_client(project_root)
+    # Load .env the same way paper_demo.py does (os.environ.setdefault, so
+    # already-set env vars from the shell take priority).
+    _env_path = project_root / '.env'
+    if _env_path.exists():
+        for _line in _env_path.read_text(encoding='utf-8').splitlines():
+            _s = _line.strip()
+            if not _s or _s.startswith('#') or '=' not in _s:
+                continue
+            _k, _v = _s.split('=', 1)
+            os.environ.setdefault(_k.strip(), _v.strip().strip('"').strip("'"))
+
+    _api_key = os.environ.get('BROKER_API_KEY')
+    _api_secret = os.environ.get('BROKER_API_SECRET')
+    if not _api_key or not _api_secret:
+        raise RuntimeError('BROKER_API_KEY / BROKER_API_SECRET not set (checked shell env + .env)')
+
+    broker = BrokerClient(
+        api_key=_api_key,
+        api_secret=_api_secret,
+        paper_mode=True,
+        base_url=os.environ.get('BROKER_BASE_URL'),
+    )
     tracker = PnLTracker(project_root)
 
     pos_env = broker.fetch_positions()

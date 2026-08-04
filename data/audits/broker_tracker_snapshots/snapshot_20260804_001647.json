@@ -1,0 +1,18 @@
+{
+  "as_of_utc": "2026-08-04T00:16:48.142328+00:00",
+  "mismatch_count": 0,
+  "only_in_broker": [],
+  "only_in_tracker": [],
+  "broker_position_count": 7,
+  "tracker_open_count": 7,
+  "common_symbols": [
+    "ADBE",
+    "AMZN",
+    "CRM",
+    "DDOG",
+    "HPQ",
+    "MSFT",
+    "SNOW"
+  ],
+  "rgt_011_pass": true
+}
