@@ -6,6 +6,8 @@ import types
 from datetime import datetime, timezone
 from pathlib import Path
 
+import pytest
+
 massive_stub = types.ModuleType("massive")
 massive_stub.RESTClient = object
 sys.modules.setdefault("massive", massive_stub)
@@ -35,7 +37,14 @@ def test_collect_data_main_fails_closed_on_coverage_breach(monkeypatch, tmp_path
                 "timed_out": False,
                 "symbols": [
                     {"symbol": "AAPL", "news_count": 1, "used_fallback": False, "reason": "ok"},
-                    {"symbol": "MSFT", "news_count": 0, "used_fallback": False, "reason": "no_company_news"},
+                    # NOTE (2026-08-04): 'no_company_news' is now treated as a
+                    # successful-but-empty result (see collect_data.
+                    # finnhub_news_row_succeeded), not a failure, since it just
+                    # means the API call succeeded and the symbol legitimately
+                    # has no articles (e.g. RBRK). Use 'rate_limit' here so this
+                    # test still exercises a genuine collector failure causing
+                    # a coverage breach.
+                    {"symbol": "MSFT", "news_count": 0, "used_fallback": False, "reason": "rate_limit"},
                 ],
             },
         )
@@ -216,3 +225,82 @@ def test_evaluate_required_source_generic_status_invalid_json(tmp_path):
     (status_dir / "fred_quotes_status.json").write_text("{broken}")
     failures = _evaluate_required_source_failures(tmp_path, "fred", written=["f.json"])
     assert any("invalid" in f.lower() or "json" in f.lower() for f in failures)
+
+
+# --- finnhub_news_row_succeeded / no_company_news handling (2026-08-04) ----
+#
+# Regression: RBRK legitimately has zero Finnhub company-news articles in
+# most 3-day lookback windows. Prior to this fix, the collector's
+# 'no_company_news' reason (a *successful* API call with an empty, correct
+# result) was counted the same as a real failure (rate_limit/auth_error/
+# timeout/api_error), causing stock_swing_news_collection to report a
+# coverage breach and fail almost every run from 2026-07-30 onward even
+# though every symbol was queried successfully. See docs/daily_logs/2026-08-04.md.
+
+def test_finnhub_news_row_succeeded_no_company_news_counts_as_success():
+    """AC: 'no_company_news' (legitimately empty result) is NOT a failure."""
+    from stock_swing.cli.collect_data import finnhub_news_row_succeeded
+    row = {"symbol": "RBRK", "news_count": 0, "used_fallback": False, "reason": "no_company_news"}
+    assert finnhub_news_row_succeeded(row) is True
+
+
+@pytest.mark.parametrize("reason", ["rate_limit", "auth_error", "timeout", "api_error", "empty_response"])
+def test_finnhub_news_row_succeeded_real_failures_not_counted_as_success(reason):
+    """Genuine collector failures must remain failures, unaffected by the
+    no_company_news exemption."""
+    from stock_swing.cli.collect_data import finnhub_news_row_succeeded
+    row = {"symbol": "MSFT", "news_count": 0, "used_fallback": False, "reason": reason}
+    assert finnhub_news_row_succeeded(row) is False
+
+
+def test_finnhub_news_row_succeeded_used_fallback_not_success():
+    """used_fallback rows are never counted as success, regardless of reason."""
+    from stock_swing.cli.collect_data import finnhub_news_row_succeeded
+    row = {"symbol": "MSFT", "news_count": 1, "used_fallback": True, "reason": "ok"}
+    assert finnhub_news_row_succeeded(row) is False
+
+
+def test_finnhub_news_row_succeeded_ok_with_zero_count_not_success():
+    """reason='ok' with news_count=0 is an inconsistent/edge-case row and
+    must NOT be treated as success (only explicit no_company_news is)."""
+    from stock_swing.cli.collect_data import finnhub_news_row_succeeded
+    row = {"symbol": "MSFT", "news_count": 0, "used_fallback": False, "reason": "ok"}
+    assert finnhub_news_row_succeeded(row) is False
+
+
+def test_evaluate_required_source_failures_regression_rbrk_no_company_news_passes(tmp_path):
+    """
+    Regression: 2026-08-03/04 stock_swing_news_collection failures.
+    43/44 symbols 'ok' + 1 symbol (RBRK) 'no_company_news' must be treated
+    as 100% coverage (44/44 successful calls), not a coverage breach.
+    """
+    from stock_swing.cli.collect_data import _evaluate_required_source_failures
+    status_dir = tmp_path / "data" / "audits"
+    status_dir.mkdir(parents=True)
+    symbols = [{"symbol": f"S{i}", "news_count": 3, "used_fallback": False, "reason": "ok"} for i in range(43)]
+    symbols.append({"symbol": "RBRK", "news_count": 0, "used_fallback": False, "reason": "no_company_news"})
+    status = {"symbols": symbols, "timed_out": False}
+    (status_dir / "news_collection_status.json").write_text(json.dumps(status))
+
+    failures = _evaluate_required_source_failures(tmp_path, "finnhub", written=["f.json"], timed_out=False)
+
+    assert failures == [], f"no_company_news alone must not cause a failure, got: {failures}"
+
+
+def test_evaluate_required_source_failures_real_failure_still_breaches_coverage(tmp_path):
+    """A genuine collector failure (rate_limit) alongside no_company_news
+    must still be reported (the no_company_news exemption must not mask
+    other real failures)."""
+    from stock_swing.cli.collect_data import _evaluate_required_source_failures
+    status_dir = tmp_path / "data" / "audits"
+    status_dir.mkdir(parents=True)
+    symbols = [{"symbol": f"S{i}", "news_count": 3, "used_fallback": False, "reason": "ok"} for i in range(5)]
+    symbols.append({"symbol": "RBRK", "news_count": 0, "used_fallback": False, "reason": "no_company_news"})
+    symbols.append({"symbol": "BADSYM", "news_count": 0, "used_fallback": False, "reason": "rate_limit"})
+    status = {"symbols": symbols, "timed_out": False}
+    (status_dir / "news_collection_status.json").write_text(json.dumps(status))
+
+    failures = _evaluate_required_source_failures(tmp_path, "finnhub", written=["f.json"], timed_out=False)
+
+    assert any("rate_limit" in f for f in failures), f"rate_limit failure must still be reported: {failures}"
+    assert not any("no_company_news" in f for f in failures), f"no_company_news must not appear as a failure: {failures}"

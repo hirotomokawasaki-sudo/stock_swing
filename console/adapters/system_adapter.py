@@ -12,6 +12,21 @@ import yaml
 
 from console.utils.structured_json import parse_json_from_output
 
+try:
+    import sys as _sys
+    from pathlib import Path as _Path
+
+    _sys.path.insert(0, str(_Path(__file__).resolve().parents[2] / "src"))
+    from stock_swing.cli.collect_data import finnhub_news_row_succeeded
+except Exception:  # pragma: no cover - defensive fallback if import layout changes
+    def finnhub_news_row_succeeded(row: dict) -> bool:  # type: ignore[misc]
+        if row.get("used_fallback"):
+            return False
+        reason = str(row.get("reason") or "ok")
+        if reason == "ok":
+            return int(row.get("news_count", 0) or 0) > 0
+        return reason == "no_company_news"
+
 _LEDGER_STALENESS_S = 86400
 _GUARDRAIL_STALENESS_S = 18 * 3600
 _BROKER_STALENESS_S = 3600
@@ -257,19 +272,17 @@ class SystemAdapter:
             rows = list(data.get("symbols") or [])
             age = _age_seconds(data.get("time"))
             total = len(rows)
-            ok_rows = sum(
-                1
-                for row in rows
-                if row.get("news_count", 0) > 0
-                and not row.get("used_fallback")
-                and str(row.get("reason") or "ok") == "ok"
-            )
+            # 2026-08-04: 'no_company_news' is a legitimate successful-but-empty
+            # result (see collect_data.finnhub_news_row_succeeded docstring),
+            # not a collection failure. Shared with collect_data.py so the
+            # cron pass/fail decision and this health check agree.
+            ok_rows = sum(1 for row in rows if finnhub_news_row_succeeded(row))
             coverage = (ok_rows / total) if total else 0.0
             failure_reasons = sorted(
                 {
                     str(row.get("reason") or "unknown")
                     for row in rows
-                    if str(row.get("reason") or "ok") != "ok" or int(row.get("news_count", 0) or 0) <= 0
+                    if not finnhub_news_row_succeeded(row)
                 }
             )
             stale = age is None or age > _SOURCE_STALENESS_S

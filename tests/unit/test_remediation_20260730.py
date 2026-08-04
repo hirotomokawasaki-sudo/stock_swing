@@ -149,7 +149,14 @@ def test_collect_data_main_fails_closed_on_coverage_breach(monkeypatch, tmp_path
                 "timed_out": False,
                 "symbols": [
                     {"symbol": "AAPL", "news_count": 1, "used_fallback": False, "reason": "ok"},
-                    {"symbol": "MSFT", "news_count": 0, "used_fallback": False, "reason": "no_company_news"},
+                    # NOTE (2026-08-04): 'no_company_news' is now treated as a
+                    # successful-but-empty result (see collect_data.
+                    # finnhub_news_row_succeeded), not a failure, since it just
+                    # means the API call succeeded and the symbol legitimately
+                    # has no articles (e.g. RBRK). Use 'rate_limit' here so this
+                    # test still exercises a genuine collector failure causing
+                    # a coverage breach.
+                    {"symbol": "MSFT", "news_count": 0, "used_fallback": False, "reason": "rate_limit"},
                 ],
             },
         )

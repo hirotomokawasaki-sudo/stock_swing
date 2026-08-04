@@ -29,6 +29,26 @@ from stock_swing.sources.retry import RetryConfig
 DEFAULT_SYMBOLS = "NVDA,MSFT,GOOGL,AMZN,META,TSLA,AVGO,AMD,TSM,ASML,INTC,MU,ARM,AMAT,LRCX,KLAC,QCOM,MRVL,PLTR,ADBE,CRM,ORCL,NOW,SNOW,MDB,DDOG,PATH,FICO,SMCI,PANW,CRWD,FTNT,ANET,CSCO,IBM,HPE,DELL,HPQ,SNPS,CDNS,V,MA,INTU,NBIS,CRDO,RBRK,CIEN,SHOC,SOXQ,SOXX,SMH,FTXL,PTF,SMHX,FRWD,TTEQ,GTOP,CHPX,CHPS,PSCT,QTEC,TDIV,SKYY,QTUM"
 _REQUIRED_FINNHUB_COVERAGE = 0.995
 
+# 2026-08-04: shared with console/adapters/system_adapter.py so the cron
+# pass/fail decision and the console's source_sla health check agree on what
+# counts as a successful Finnhub news row. 'no_company_news' is a legitimate
+# empty result (the API call succeeded; the symbol just has no articles in
+# the lookback window -- e.g. RBRK), not a collector malfunction like
+# rate_limit/auth_error/timeout/api_error/empty_response.
+SUCCESSFUL_EMPTY_NEWS_REASONS = frozenset({"no_company_news"})
+
+
+def finnhub_news_row_succeeded(row: dict) -> bool:
+    """Return True if a news_collection_status.json row represents a
+    successful Finnhub call, whether or not any articles were returned.
+    """
+    if row.get("used_fallback"):
+        return False
+    reason = str(row.get("reason") or "ok")
+    if reason == "ok":
+        return int(row.get("news_count", 0) or 0) > 0
+    return reason in SUCCESSFUL_EMPTY_NEWS_REASONS
+
 
 def _load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
@@ -53,19 +73,23 @@ def _evaluate_required_source_failures(project_root: Path, source: str, written:
             return failures
 
         rows = list(status.get("symbols") or [])
-        ok_rows = sum(
-            1
-            for row in rows
-            if row.get("news_count", 0) > 0
-            and not row.get("used_fallback")
-            and str(row.get("reason") or "ok") == "ok"
-        )
+        # 2026-08-04: 'no_company_news' means the Finnhub API call succeeded
+        # and legitimately returned zero articles for that symbol/window (a
+        # real data characteristic for thinly-covered small/mid-caps such as
+        # RBRK) -- it is NOT a collection failure like rate_limit/auth_error/
+        # timeout/api_error/empty_response (unexpected payload shape), which
+        # DO indicate the collector malfunctioned. Counting 'no_company_news'
+        # as a coverage/required-source failure caused stock_swing_news_
+        # collection to fail nearly every run from 07-30 onward purely
+        # because RBRK has sparse news coverage, even though every symbol was
+        # queried successfully. See docs/daily_logs/2026-08-04.md.
+        ok_rows = sum(1 for row in rows if finnhub_news_row_succeeded(row))
         coverage = (ok_rows / len(rows)) if rows else 0.0
         bad_reasons = sorted(
             {
                 str(row.get("reason") or "unknown")
                 for row in rows
-                if str(row.get("reason") or "ok") != "ok" or int(row.get("news_count", 0) or 0) <= 0
+                if not finnhub_news_row_succeeded(row)
             }
         )
         if coverage < _REQUIRED_FINNHUB_COVERAGE:
