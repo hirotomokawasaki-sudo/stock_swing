@@ -3017,12 +3017,30 @@ class DashboardService:
         return bool(dt and dt >= self._current_account_cutoff())
 
     def _load_recent_decisions(self, limit: int = 500) -> List[Dict[str, Any]]:
+        """Load the `limit` most recent decision files, ordered by the
+        decision's own recorded time (generated_at/created_at/decision_time,
+        falling back to a timestamp parsed from the filename), NOT by
+        filesystem mtime.
+
+        Regression (2026-08-04): a 2026-07-13 bulk rebuild/backfill operation
+        touched (mtime) ~1956 old decision files without changing their
+        content or decision date. Sorting by st_mtime and truncating to
+        `limit` BEFORE reading content meant that batch of stale files
+        permanently occupied the mtime-sorted top slots forever after --
+        every dashboard call effectively got a random old snapshot of ~500
+        decisions dominated by that one rebuild event, hard-capping displayed
+        counts (e.g. the Trading tab funnel's "Decisions" metric) at exactly
+        500 and freezing them at 07-13-era data, even though thousands of
+        newer decisions existed. Fix: parse every file's actual decision
+        timestamp first, then sort/truncate by that, so filesystem mtime
+        noise (rebuilds, backups, rsync, etc.) can never distort which
+        decisions are considered "recent". See docs/daily_logs/2026-08-04.md.
+        """
         decisions_dir = self.project_root / "data" / "decisions"
         if not decisions_dir.exists():
             return []
-        files = sorted(decisions_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:limit]
         results: List[Dict[str, Any]] = []
-        for path in files:
+        for path in decisions_dir.glob("*.json"):
             try:
                 decision = json.loads(path.read_text(encoding="utf-8"))
                 decision["strategy_id"] = resolve_strategy_key(decision, path=path)
@@ -3031,7 +3049,15 @@ class DashboardService:
                 results.append(decision)
             except Exception:
                 continue
-        return results
+
+        def _sort_key(decision: Dict[str, Any]) -> float:
+            dt = extract_decision_dt(decision, path=decision.get("_source_file"))
+            if dt is None:
+                return 0.0
+            return dt.timestamp()
+
+        results.sort(key=_sort_key, reverse=True)
+        return results[:limit]
 
     def _load_recent_audit_lines(self, limit: int = 500) -> List[Dict[str, Any]]:
         audits_dir = self.project_root / "data" / "audits"

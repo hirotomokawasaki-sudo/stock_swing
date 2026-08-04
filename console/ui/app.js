@@ -840,10 +840,17 @@ class Console {
             </div>
         </div>`;
 
+        // NOTE (2026-08-04): funnel.decisions is capped at the 500 most
+        // recent decision files (DashboardService._load_recent_decisions),
+        // used for the by_strategy/by_symbol/deny-reason breakdowns below.
+        // Once total lifetime decisions exceed 500 this metric will always
+        // read exactly 500 -- that is expected, not a data bug. The true
+        // lifetime decision file count is shown separately via
+        // counts.decisions in the "features / signals / decisions" row below.
         return `
         <div class="grid funnel-grid">
             <div class="funnel-item"><div>
-                <div class="perf-label">Decisions</div>
+                <div class="perf-label">Decisions (直近500件)</div>
                 <div class="perf-value">${funnel.decisions || p.total_signals || '0'}</div>
             </div></div>
             <div class="funnel-item"><div>
