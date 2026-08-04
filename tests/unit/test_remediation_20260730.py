@@ -82,14 +82,20 @@ def test_dashboard_system_status_blocks_on_cron_parse_error(monkeypatch, tmp_pat
         },
     )
 
-    def _fake_run(args, capture_output, text, check, timeout):
-        if args[:4] == ["openclaw", "cron", "list", "--json"]:
+    # 2026-08-04: system_adapter now resolves an absolute path for the
+    # openclaw binary (see _resolve_openclaw_bin) instead of the bare name
+    # "openclaw", and passes an explicit env= kwarg (see _subprocess_env),
+    # so subprocess.run is invoked as [<resolved-path>, ...] with env=...
+    # rather than ["openclaw", ...] with no env kwarg. Match on the cron
+    # subcommand only, and accept the env kwarg.
+    def _fake_run(args, capture_output, text, check, timeout, env=None):
+        if args[1:4] == ["cron", "list", "--json"]:
             return SimpleNamespace(
                 returncode=0,
                 stdout='banner {"jobs":[{"id":"job-1","name":"paper_demo","enabled":true}]} tail',
                 stderr="",
             )
-        if args[:4] == ["openclaw", "cron", "runs", "--id"]:
+        if args[1:4] == ["cron", "runs", "--id"]:
             return SimpleNamespace(returncode=0, stdout='{"runs":[{"id":"r1"}', stderr="")
         raise AssertionError(args)
 

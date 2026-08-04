@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import shutil
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -11,6 +13,55 @@ from typing import Any
 import yaml
 
 from console.utils.structured_json import parse_json_from_output
+
+# 2026-08-04: the console HTTP server is started by launchd (see
+# ~/Library/LaunchAgents/com.hirotomookawasaki.stock_swing.console.watchdog.plist),
+# whose default environment PATH is only /usr/bin:/bin:/usr/sbin:/sbin -- it
+# does NOT include /opt/homebrew/bin, where `openclaw` actually lives on this
+# host. shutil.which("openclaw") under that inherited PATH silently returns
+# None, so subprocess.run(["openclaw", ...]) always raised
+# FileNotFoundError, making cron_run_history permanently "critical: not ok"
+# and keeping the overall system health score capped at 49 ("blocked") around
+# the clock, even when everything else was fine. Resolve a usable absolute
+# path once at import time, falling back to common install locations when
+# PATH doesn't have it. See docs/daily_logs/2026-08-04.md.
+_OPENCLAW_FALLBACK_PATHS = (
+    "/opt/homebrew/bin/openclaw",
+    "/usr/local/bin/openclaw",
+)
+
+
+def _resolve_openclaw_bin() -> str:
+    found = shutil.which("openclaw")
+    if found:
+        return found
+    for candidate in _OPENCLAW_FALLBACK_PATHS:
+        if os.path.exists(candidate):
+            return candidate
+    return "openclaw"  # preserve original behavior/error message if truly absent
+
+
+def _subprocess_env() -> dict[str, str]:
+    """Env for subprocess calls to `openclaw`.
+
+    `openclaw` is a `#!/usr/bin/env node` script, so PATH must also resolve
+    `node`, not just the `openclaw` binary itself. Under launchd's minimal
+    default PATH (/usr/bin:/bin:/usr/sbin:/sbin), `env node` fails even after
+    resolving an absolute path to `openclaw`. Augment PATH with the same
+    Homebrew bin directories used to locate `openclaw`, without discarding
+    whatever PATH the process already has.
+    """
+    env = dict(os.environ)
+    extra_dirs = ["/opt/homebrew/bin", "/opt/homebrew/sbin", "/usr/local/bin"]
+    current = env.get("PATH", "")
+    current_parts = current.split(os.pathsep) if current else []
+    merged = current_parts + [d for d in extra_dirs if d not in current_parts]
+    env["PATH"] = os.pathsep.join(merged)
+    return env
+
+
+_OPENCLAW_BIN = _resolve_openclaw_bin()
+_OPENCLAW_ENV = _subprocess_env()
 
 try:
     import sys as _sys
@@ -345,11 +396,12 @@ class SystemAdapter:
                 parse_errors.append({"job": job.get("name") or "unknown", "error": "missing_job_id"})
                 continue
             result = subprocess.run(
-                ["openclaw", "cron", "runs", "--id", job_id, "--limit", "3"],
+                [_OPENCLAW_BIN, "cron", "runs", "--id", job_id, "--limit", "3"],
                 capture_output=True,
                 text=True,
                 check=False,
                 timeout=_CRON_TIMEOUT_S,
+                env=_OPENCLAW_ENV,
             )
             if result.returncode != 0:
                 parse_errors.append(
@@ -394,11 +446,12 @@ class SystemAdapter:
 
     def _run_openclaw_json(self, args: list[str]) -> dict[str, Any]:
         result = subprocess.run(
-            ["openclaw"] + args,
+            [_OPENCLAW_BIN] + args,
             capture_output=True,
             text=True,
             check=False,
             timeout=_CRON_TIMEOUT_S,
+            env=_OPENCLAW_ENV,
         )
         if result.returncode != 0:
             raise RuntimeError(result.stderr.strip() or result.stdout.strip() or "openclaw command failed")
