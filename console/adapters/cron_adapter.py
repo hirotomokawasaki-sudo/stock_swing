@@ -3,12 +3,55 @@
 from __future__ import annotations
 
 import json
+import os
+import shutil
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
 from console.utils.structured_json import parse_json_from_output
+
+# 2026-08-04: same launchd-minimal-PATH issue as console/adapters/
+# system_adapter.py (see that file's module docstring for full context).
+# Without this, subprocess.run(["openclaw", ...]) always raised
+# FileNotFoundError under the console's actual launchd environment, and
+# get_jobs() silently fell through to _get_from_backup() -- a cron_backup/
+# jobs.json snapshot last written 2026-05-01, ~3 months stale. This made
+# every cron-derived dashboard metric (lag_seconds, last_run, last_status,
+# schedule) wrong for the entire time the console ran under launchd,
+# producing e.g. a "7 scheduled job(s) appear behind schedule" alert with
+# lag values in the millions of seconds that were actually just comparing
+# "now" against a next_run computed from May 1st data. See
+# docs/daily_logs/2026-08-04.md.
+_OPENCLAW_FALLBACK_PATHS = (
+    "/opt/homebrew/bin/openclaw",
+    "/usr/local/bin/openclaw",
+)
+
+
+def _resolve_openclaw_bin() -> str:
+    found = shutil.which("openclaw")
+    if found:
+        return found
+    for candidate in _OPENCLAW_FALLBACK_PATHS:
+        if os.path.exists(candidate):
+            return candidate
+    return "openclaw"
+
+
+def _subprocess_env() -> dict[str, str]:
+    env = dict(os.environ)
+    extra_dirs = ["/opt/homebrew/bin", "/opt/homebrew/sbin", "/usr/local/bin"]
+    current = env.get("PATH", "")
+    current_parts = current.split(os.pathsep) if current else []
+    merged = current_parts + [d for d in extra_dirs if d not in current_parts]
+    env["PATH"] = os.pathsep.join(merged)
+    return env
+
+
+_OPENCLAW_BIN = _resolve_openclaw_bin()
+_OPENCLAW_ENV = _subprocess_env()
 
 
 class CronAdapter:
@@ -37,10 +80,11 @@ class CronAdapter:
             # Fallback: try CLI
             try:
                 result = subprocess.run(
-                    ['openclaw', 'cron', 'list', '--json'],
+                    [_OPENCLAW_BIN, 'cron', 'list', '--json'],
                     capture_output=True,
                     text=True,
-                    timeout=10
+                    timeout=10,
+                    env=_OPENCLAW_ENV,
                 )
 
                 if result.returncode != 0:
@@ -65,10 +109,11 @@ class CronAdapter:
         """
         try:
             result = subprocess.run(
-                ['openclaw', 'cron', 'runs', '--id', job_id, '--limit', str(limit)],
+                [_OPENCLAW_BIN, 'cron', 'runs', '--id', job_id, '--limit', str(limit)],
                 capture_output=True,
                 text=True,
                 timeout=10,
+                env=_OPENCLAW_ENV,
             )
         except Exception as exc:
             return {"ok": False, "runs": [], "error": str(exc), "job_id": job_id}

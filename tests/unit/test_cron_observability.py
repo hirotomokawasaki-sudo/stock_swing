@@ -77,8 +77,12 @@ def _minimal_project_root(tmp_path: Path) -> Path:
 def test_cron_adapter_run_history_parse_error_returns_not_ok(monkeypatch, tmp_path: Path) -> None:
     adapter = CronAdapter(tmp_path)
 
-    def _fake_run(args, capture_output, text, timeout):
-        assert args[:4] == ["openclaw", "cron", "runs", "--id"]
+    # 2026-08-04: cron_adapter now resolves an absolute path for the
+    # openclaw binary (see _resolve_openclaw_bin) instead of the bare name
+    # "openclaw", and passes an explicit env= kwarg (see _subprocess_env).
+    # Match on the cron subcommand only, and accept the env kwarg.
+    def _fake_run(args, capture_output, text, timeout, env=None):
+        assert args[1:4] == ["cron", "runs", "--id"]
         return SimpleNamespace(returncode=0, stdout='{"entries":[{"id":"r1"}', stderr="")
 
     monkeypatch.setattr("console.adapters.cron_adapter.subprocess.run", _fake_run)
