@@ -34,6 +34,7 @@ def check() -> dict[str, dict]:
     summary = _load(summary_path)
     health = summary.get("health", {})
     cb = health.get("circuit_breaker_detail", {})
+    broker_tracker_diff = summary.get("broker_tracker_diff", {})
 
     # cron jobs最新run確認
     cron_path = PROJECT_ROOT / "data" / "audits" / "reconcile_status.json"
@@ -60,9 +61,29 @@ def check() -> dict[str, dict]:
     }
 
     # 3. broker/tracker mismatch == 0
-    mismatch = health.get("broker_tracker_mismatch_count", -1)
+    #
+    # 2026-08-05 fix: previously read health.broker_tracker_mismatch_count,
+    # which is the RAW mismatch count before G1-v2/v2-b/v2-c/v2-d lag
+    # exclusion is applied (e.g. new-BUY qty lag, SELL qty lag, fast-fill
+    # phantom, add-to-existing-position qty lag -- see
+    # src/stock_swing/guardrails/postrun_mismatch.py). That raw count can be
+    # nonzero for perfectly normal, already-excused timing lag (as seen
+    # 2026-08-05: raw=2 for NBIS qty lag, while the lag-exclusion logic
+    # itself reports real_mismatch_count=0), causing a false NO-GO here even
+    # though circuit_breaker correctly stayed "ok". Use
+    # broker_tracker_diff.real_mismatch_count (the same field the live
+    # circuit breaker guardrail acts on) so this check matches actual
+    # operational risk instead of raw noise.
+    if "real_mismatch_count" in broker_tracker_diff:
+        mismatch = broker_tracker_diff.get("real_mismatch_count", -1)
+        mismatch_label = "broker_tracker_mismatch (real, lag-excused)"
+    else:
+        # Fallback for older console_summary snapshots that predate the
+        # real_mismatch_count field.
+        mismatch = health.get("broker_tracker_mismatch_count", -1)
+        mismatch_label = "broker_tracker_mismatch (raw, real_mismatch_count unavailable)"
     results["mismatch"] = {
-        "label": "broker_tracker_mismatch",
+        "label": mismatch_label,
         "pass": mismatch == 0,
         "actual": mismatch,
         "required": 0,

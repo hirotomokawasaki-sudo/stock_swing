@@ -565,6 +565,22 @@ class ConsoleRenderer:
 
                 lines.append(f"  {sym:<6} {n_t:>3}  {pf_v:>6.3f}  {detail}")
 
+        # 2026-08-05: 小サンプルウォッチリスト（可視化のみ、自動ブロックしない）
+        # min_n=5のstock_reduced gateには届かないがn=2【4ですでに大幅赤字の銘柄を
+        # 可視化することで、オペレータが手動でdeny-list追加・監視判断できるようにする。
+        watchlist = funnel.get("small_sample_watchlist", [])
+        if watchlist:
+            lines.append("")
+            lines.append("  ⚠️ SMALL-SAMPLE WATCHLIST  (n=2～4、既に赤字。自動ブロック対象外、手動判断推奨)")
+            lines.append(f"  {'sym':<6} {'n':>3}  {'net_pnl':>10}  {'WR':>5}")
+            lines.append(f"  {'-'*6} {'-'*3}  {'-'*10}  {'-'*5}")
+            for entry in watchlist:
+                sym    = entry.get("symbol", "")[:6]
+                n_t    = entry.get("n_trades", 0)
+                pnl    = entry.get("net_pnl", 0)
+                wr     = entry.get("win_rate", 0)
+                lines.append(f"  {sym:<6} {n_t:>3}  {pnl:>10.2f}  {wr*100:>4.0f}%")
+
         return lines
 
     def _api_ai(self, d: dict) -> str:

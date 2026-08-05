@@ -54,7 +54,12 @@ from stock_swing.decision_engine.decision_engine import DecisionEngine, Decision
 from stock_swing.decision_engine.risk_validator import RiskValidator
 from stock_swing.execution.paper_executor import OrderSubmission, PaperExecutor
 from stock_swing.execution.reconciler import Reconciler
-from stock_swing.risk.entry_filter import EntryFilterConfig, EntryFilterEngine, get_permanent_block_summary
+from stock_swing.risk.entry_filter import (
+    EntryFilterConfig,
+    EntryFilterEngine,
+    get_permanent_block_summary,
+    get_small_sample_watchlist,
+)
 from stock_swing.risk.open_shock_cooldown import apply_open_shock_cooldown
 from stock_swing.risk.portfolio_allocator import PortfolioAllocator
 from stock_swing.risk.allocation_config import (
@@ -1656,6 +1661,16 @@ def main() -> int:  # noqa: C901
         etf_symbols=set(ETF_SYMBOLS),
     )
     _ef_result.stats["buy_stop_list"] = _buy_stop_list
+    # 2026-08-05: small-sample watchlist (observability only, does not block
+    # buys). Surfaces individual stocks with n=2..4 closed trades and already
+    # sharply negative net PnL that the stock_reduced gate (min_n=5) cannot
+    # yet statistically justify blocking.
+    _small_sample_watchlist = get_small_sample_watchlist(
+        closed_trades=pnl_tracker.get_clean_closed_trades(),
+        config=_ef_config,
+        etf_symbols=set(ETF_SYMBOLS),
+    )
+    _ef_result.stats["small_sample_watchlist"] = _small_sample_watchlist
     actionable = _ef_result.passed
     if _ef_result.blocked:
         _vol_n = len(_ef_result.stats.get("volume_blocked", []))

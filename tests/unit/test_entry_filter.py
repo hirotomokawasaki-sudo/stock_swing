@@ -15,6 +15,7 @@ from stock_swing.risk.entry_filter import (
     SymbolMarketStats,
     compute_market_stats,
     compute_rolling_pf,
+    get_small_sample_watchlist,
 )
 
 
@@ -416,3 +417,84 @@ def test_stock_reduced_env_default_reads_5(monkeypatch):
     monkeypatch.delenv("ENTRY_FILTER_STOCK_REDUCED_MIN_TRADES", raising=False)
     cfg = EntryFilterConfig.from_env()
     assert cfg.stock_reduced_min_trades == 5
+
+
+# ===========================================================================
+# get_small_sample_watchlist (2026-08-05, observability-only, does not block)
+# ===========================================================================
+
+def test_watchlist_surfaces_small_sample_net_negative_stock():
+    """n=3 < min_n=5, net PnL sharply negative -> appears on watchlist."""
+    trades = _closed_trades("IBM", [-4011.19, -4382.52, -119.42])
+    result = get_small_sample_watchlist(trades)
+    symbols = {r["symbol"] for r in result}
+    assert "IBM" in symbols
+    entry = next(r for r in result if r["symbol"] == "IBM")
+    assert entry["n_trades"] == 3
+    assert entry["net_pnl"] < 0
+    assert entry["win_rate"] == 0.0
+
+
+def test_watchlist_excludes_symbols_at_or_above_stock_reduced_min_trades():
+    """n >= stock_reduced_min_trades (5) is already covered by the real
+    stock_reduced gate; it must NOT also appear on the watchlist."""
+    trades = _closed_trades("MDB", [-100, -200, -300, -400, -500])
+    result = get_small_sample_watchlist(trades)
+    symbols = {r["symbol"] for r in result}
+    assert "MDB" not in symbols
+
+
+def test_watchlist_excludes_net_positive_symbols():
+    """A small-sample symbol with net positive PnL should not be flagged."""
+    trades = _closed_trades("MRVL", [500, -100])
+    result = get_small_sample_watchlist(trades)
+    symbols = {r["symbol"] for r in result}
+    assert "MRVL" not in symbols
+
+
+def test_watchlist_excludes_single_trade_symbols_by_default():
+    """A single losing trade (n=1) is not even weak evidence; excluded by
+    default min_trades=2."""
+    trades = _closed_trades("CRDO", [-1000])
+    result = get_small_sample_watchlist(trades)
+    symbols = {r["symbol"] for r in result}
+    assert "CRDO" not in symbols
+
+
+def test_watchlist_excludes_etf_symbols():
+    """ETF symbols are out of scope for this stock-only watchlist."""
+    trades = _closed_trades("SMH", [-1000, -2000])
+    result = get_small_sample_watchlist(trades, etf_symbols={"SMH"})
+    symbols = {r["symbol"] for r in result}
+    assert "SMH" not in symbols
+
+
+def test_watchlist_excludes_pf_gate_skip_symbols():
+    """Symbols in pf_gate_skip_symbols are exempted from the watchlist too
+    (consistent with the real gates' skip-list behavior)."""
+    cfg = EntryFilterConfig(pf_gate_skip_symbols=["AMD"])
+    trades = _closed_trades("AMD", [-1000, -2000])
+    result = get_small_sample_watchlist(trades, config=cfg)
+    symbols = {r["symbol"] for r in result}
+    assert "AMD" not in symbols
+
+
+def test_watchlist_sorted_worst_first():
+    """Results are sorted by net_pnl ascending (worst loss first)."""
+    trades = (
+        _closed_trades("AAA", [-100, -200])
+        + _closed_trades("BBB", [-5000, -3000])
+        + _closed_trades("CCC", [-500, -600])
+    )
+    result = get_small_sample_watchlist(trades)
+    symbols_in_order = [r["symbol"] for r in result]
+    assert symbols_in_order == ["BBB", "CCC", "AAA"]
+
+
+def test_watchlist_does_not_mutate_input_or_block_anything():
+    """Sanity check: this is observability-only. Returned dicts carry a note
+    string documenting they are not auto-blocked."""
+    trades = _closed_trades("PLTR", [-3824.68, -2887.71])
+    result = get_small_sample_watchlist(trades)
+    entry = next(r for r in result if r["symbol"] == "PLTR")
+    assert "not auto-blocked" in entry["note"]

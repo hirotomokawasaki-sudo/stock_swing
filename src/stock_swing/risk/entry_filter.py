@@ -134,6 +134,7 @@ class SymbolPFStats:
     symbol: str
     closed_count: int = 0
     profit_factor: float | None = None   # None = no qualifying trades
+    win_rate: float | None = None        # None = no closed trades at all
 
 
 def compute_rolling_pf(
@@ -158,13 +159,19 @@ def compute_rolling_pf(
 
     result: dict[str, SymbolPFStats] = {}
     for sym, pnls in by_symbol.items():
-        if len(pnls) < min_trades:
-            result[sym] = SymbolPFStats(symbol=sym, closed_count=len(pnls), profit_factor=None)
+        n = len(pnls)
+        wr = sum(1 for p in pnls if p > 0) / n if n > 0 else None
+        if n < min_trades:
+            result[sym] = SymbolPFStats(
+                symbol=sym, closed_count=n, profit_factor=None, win_rate=wr
+            )
             continue
         wins = sum(p for p in pnls if p > 0)
         losses = abs(sum(p for p in pnls if p < 0))
         pf = wins / losses if losses > 0 else (999.0 if wins > 0 else 0.0)
-        result[sym] = SymbolPFStats(symbol=sym, closed_count=len(pnls), profit_factor=round(pf, 3))
+        result[sym] = SymbolPFStats(
+            symbol=sym, closed_count=n, profit_factor=round(pf, 3), win_rate=wr
+        )
 
     return result
 
@@ -426,4 +433,90 @@ def get_permanent_block_summary(
 
     # Sort: worst PF first
     result.sort(key=lambda r: (r["reason"], r["profit_factor"]))
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Small-sample watchlist (observability only, 2026-08-05) — NOT an auto-block
+# ---------------------------------------------------------------------------
+
+def get_small_sample_watchlist(
+    closed_trades: list[dict],
+    config: EntryFilterConfig | None = None,
+    etf_symbols: set[str] | None = None,
+    min_trades: int = 2,
+) -> list[dict]:
+    """Surface non-ETF symbols with n < stock_reduced_min_trades whose net PnL
+    is already sharply negative, so they are visible on the console even
+    though the automatic stock_reduced gate cannot statistically justify
+    blocking them yet (n=5 is the current gate threshold; see EntryFilterConfig).
+
+    Motivation (2026-08-05 review, "현状の戦略で他に検証・検討が必要なこと"):
+    a scan of closed trades found several stocks with catastrophic PnL on only
+    2-4 trades (e.g. IBM n=3 pnl=-$8,513 WR=0%, ORCL n=3 pnl=-$8,306 WR=33%,
+    PLTR n=2 pnl=-$6,712 WR=0%, CDNS n=2 pnl=-$5,940 WR=0%) that the
+    stock_reduced gate (min_n=5) has not yet flagged and likely never will at
+    this trade cadence. This function does NOT block anything -- it is
+    read-only observability so an operator can decide whether to manually
+    add a symbol to a deny-list, watch it, or wait for more data.
+
+    Args:
+        closed_trades: All closed trades from pnl_state.
+        config:        EntryFilterConfig to use (defaults to from_env()).
+        etf_symbols:   Set of ETF symbols (excluded -- this watchlist is for
+                      individual stocks only, matching stock_reduced_mode's scope).
+        min_trades:    Minimum closed trades required to appear on the
+                      watchlist at all (default 2 -- a single trade is not
+                      even weak evidence).
+
+    Returns:
+        List of dicts sorted by net_pnl ascending (worst first), for symbols
+        with 2 <= n < stock_reduced_min_trades AND net_pnl < 0::
+
+            [
+              {
+                "symbol": "IBM",
+                "n_trades": 3,
+                "net_pnl": -8513.13,
+                "win_rate": 0.0,
+                "note": "n=3 < min_n=5 for stock_reduced gate; not auto-blocked",
+              },
+              ...
+            ]
+    """
+    cfg = config or EntryFilterConfig.from_env()
+    etf_syms = etf_symbols or set()
+
+    only_closed = [t for t in closed_trades if t.get("status") == "closed"]
+
+    by_symbol: dict[str, list[float]] = {}
+    for t in only_closed:
+        sym = t.get("symbol") or ""
+        pnl = t.get("pnl")
+        if sym and pnl is not None and sym not in etf_syms:
+            by_symbol.setdefault(sym, []).append(float(pnl))
+
+    result: list[dict] = []
+    for sym, pnls in by_symbol.items():
+        n = len(pnls)
+        if n < min_trades or n >= cfg.stock_reduced_min_trades:
+            continue  # either too few to say anything, or already covered by the real gate
+        if sym in cfg.pf_gate_skip_symbols:
+            continue
+        net_pnl = sum(pnls)
+        if net_pnl >= 0:
+            continue  # only surface symbols that are already net-negative
+        wins = sum(1 for p in pnls if p > 0)
+        result.append({
+            "symbol": sym,
+            "n_trades": n,
+            "net_pnl": round(net_pnl, 2),
+            "win_rate": round(wins / n, 3),
+            "note": (
+                f"n={n} < min_n={cfg.stock_reduced_min_trades} for stock_reduced gate; "
+                f"not auto-blocked"
+            ),
+        })
+
+    result.sort(key=lambda r: r["net_pnl"])
     return result

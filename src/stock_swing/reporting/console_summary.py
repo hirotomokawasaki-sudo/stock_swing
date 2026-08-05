@@ -187,6 +187,8 @@ class ConsoleSummary:
                 ),
                 # BUY STOP LIST: 永続的にブロックされている全銘柄（run非依存）
                 "buy_stop_list": self.entry_filter_stats.get("buy_stop_list", []),
+                # 2026-08-05: 小サンプルウォッチリスト（可視化のみ、自動ブロックしない）
+                "small_sample_watchlist": self.entry_filter_stats.get("small_sample_watchlist", []),
             },
             "broker_tracker_diff": self.broker_tracker_diff,
             "risk": {

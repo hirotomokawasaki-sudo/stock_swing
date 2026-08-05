@@ -543,6 +543,32 @@ floorを段階的に引き上げ（ratchet）:
 
 **Learning 制約**: recommendation-only。自動本番反映禁止。
 
+#### R4-v2-Watchlist: 小サンプルウォッチリスト（可視化のみ、自動ブロックなし）
+
+**Status**: IMPLEMENTED_UNVERIFIED（2026-08-05）  
+**Priority**: P2（entry filterの可視化拡張、自動ブロックは含まないため即日実施可）
+
+**背景**: stock_reduced gate（min_n=5）はPF<1.0の銘柄を自動ブロックするが、
+n=2【4の小サンプルですでに大幅赤字の銘柄（IBM n=3 pnl=-$8,513 WR=0%、
+ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 WR=0%）
+が検知されずに放置されていた。
+
+**方針判断**: min_nを単純に下げると小サンプルでの誤判定リスクが上がるため、
+**自動ブロックの拡張ではなく可視化の追加**という保守的なアプローチを採用。
+
+**実装内容**:
+- `entry_filter.py`: `get_small_sample_watchlist()` 新規関数
+  - 対象: 非ETF、n=2〜4件（stock_reduced_min_trades未満）、net_pnl<0
+  - `pf_gate_skip_symbols` は除外（既存のゲートと一貫）
+  - **何もブロックしない（read-only observability）**
+- `paper_demo.py`: run毎に計算して`entry_filter_stats`に格納
+- `console_summary.py` / `console_renderer.py`: BUY STOP LISTの下に
+  「⚠️ SMALL-SAMPLE WATCHLIST」としてコンソール表示
+- テスト: `test_entry_filter.py` に8件新規追加
+
+**今後の検討事項**: このウォッチリストに一定期間以上載った銘柄を手動で
+`pf_gate_skip_symbols`の逆（deny-list）に追加するフローを次回検討する価値がある。
+
 ---
 
 ### 🔴 R5-v2: Portfolio Risk and Promotion Gates
@@ -792,6 +818,7 @@ floorを段階的に引き上げ（ratchet）:
 | R5-v2 Portfolio/Promotion | REOPENED | 未再検証、未対応 |
 | R6-v2 Console | IMPLEMENTED_UNVERIFIED | FIX-009でconsole securityは対応済み（127.0.0.1 bind、write endpointデフォルトoff）。P6 join_coverageはFIX-006でjoin metadataは完了だが、2026-08-01に別途発見された `import json` 欠落バグで実際のレポートファイルは一度も書き出されていなかった（commit `968c1cc`で修正済み）。source_sla（R7-v2-A）は`broker`ソースが`required: true`なのに一度も収集されず`failing_sources`固定だった問題も同日発見し、`collect_broker`/`collect_broker_bars`を実装しcronに組み込み解消（commit `6f48954`） |
 | R7-v2 Data Reliability | REOPENED | FIX-001でsynthetic dataはproduction分離済み。残余リスクは未再検証 |
+| check_go_no_go.py mismatch誤検知 | (未発見) | **修正済み（2026-08-05）**。生のhealth.broker_tracker_mismatch_count（G1-v2-d等のlag除外前）を見ていたため、除外済みmismatch=0でもfalse NO-GOを出していた。broker_tracker_diff.real_mismatch_countを優先使用するよう修正。テスト5件追加（tests/unit/test_check_go_no_go.py） |
 | R8-v2 Learning/ML | BLOCKED_BY_DATA | 変更なし |
 
 ### Promotion requirements（live-ready条件）
