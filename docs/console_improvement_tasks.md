@@ -438,6 +438,37 @@ asset_class unknown in closed: 245件
 - forward valid stop-trigger shadow ≥10
 - treatment が baseline より costs 込み expectancy、CVaR、max drawdown で 2 指標改善
 
+#### R3-v2-Stop: Tiered min_hold v2（offset_pct 再設計・再有効化）
+
+**Status**: IMPLEMENTED_UNVERIFIED（2026-08-05）  
+**Priority**: P2（sector_shock A/B とは独立、R0-v2完了済みのため即日実施可）  
+**経緯**: 07-27 Plan A（`52736ca`）→ 07-29 FIX-007（`687c5c5`）で無効化（絶対
+return_pct基準の7日tierがstandard/high-conviction銘柄で到達不可能だったため）
+→ 08-05 offset_pctベースに再設計して再有効化（commit `27a8742`）。
+
+**実装内容**:
+- tier判定を「発火した有効stop閾値からの相対オフセット（offset_pct）」で行うよう変更
+  （`offset_pct = (return_pct - eff_stop_loss_pct) * 100`）
+- conviction tier（-5%/-7%/-9%）に依存せず全tierで到達可能に
+- `config/strategy/simple_exit_v2.yaml`: `tiered_min_hold_enabled: true`（offset_pct: -2.0pp→7日
+  / -5.0pp→3日 / それ以上→base 1日）
+- テスト: Plan Aテスト群全面更新（+2件 low/high conviction到達性回帰テスト）。
+  フルスイート 1325 passed / 2 skipped（既知の無関係つ2件のみ）
+
+**未実施（フォローアップ課題）**:
+- 07-27時点のシミュレーション根拠（+$41K改善）は絶対値ベースのバックテストだった
+  ため、offset_pctベースでの再シミュレーションが未実施
+- paper実測での効果検証（「正しい止損率」の改善確認）も未実施
+
+**Acceptance criteria**（次回フォローアップで確認）**:
+- `scripts/analyze_stop_loss_post_exit.py` で offset_pct 導入後の新規 stop_loss tradeを
+  別集計し、正しい止損率が向上（目標≥70%）するかを確認
+- 直近30日 stop_loss net_pnl（console `stop_loss_health.recent_30d`）が悪化していないことを
+  確認
+- 目安確認日: 2026-08-19頃（08-05導入から約2週間の段階で一度中間レビュー）
+
+**ロールバック**: `tiered_min_hold_enabled: false` に戻すだけ
+
 ---
 
 ### 🟡 R4-v2: Signal and Confidence Calibration
@@ -591,6 +622,10 @@ asset_class unknown in closed: 245件
 
 2026-08-20以降 🚀（予定）  リアルトレード開始（50%サイズ）
 
+2026-08-05          ✅ R3-v2-Stop  tiered min_hold v2（offset_pct再設計・再有効化、commit 27a8742）
+
+2026-08-19頃          🔲 R3-v2-Stop 中間レビュー: post-exit drift再分析で「正しい止損率」改善確認
+
 2026-08-03〜08-14  R3-v2    exit replay / sector shock shadow（R0-v2 完了後のみ）
                    R7-v2    data SLA / source lineage
 
@@ -629,7 +664,7 @@ asset_class unknown in closed: 245件
 | ✅ P1 | R1-v2 | VERIFIED_COMPLETE | 2026-07-28 完了 |
 | ✅ P1 | R2-v2 | VERIFIED_COMPLETE | 2026-07-28 完了 |
 | 🟡 P1 | R6-v2 | IMPLEMENTED_UNVERIFIED | R0-v2 と並行 |
-| 🟡 P2 | R3-v2 | BLOCKED_BY_DATA | R0-v2 完了後のみ |
+| 🟡 P2 | R3-v2 | BLOCKED_BY_DATA | R0-v2 完了後のみ（sector_shock A/B）。R3-v2-Stop（tiered min_hold v2）は独立して2026-08-05実装済み・IMPLEMENTED_UNVERIFIED |
 | 🟡 P2 | R4-v2 | IMPLEMENTED_UNVERIFIED | R0-v2 完了推奨後 |
 | 🔴 P2 | R5-v2 | REOPENED | R0-v2 完了後 |
 | 🟢 P2 | R7-v2 | IN_PROGRESS | R0-v2 完了後 parallel |
