@@ -1215,6 +1215,9 @@ def main() -> int:  # noqa: C901
             tiered_min_hold_levels=exit_config.get('tiered_min_hold_levels', []),
             # broker_recon graduation (改善点1 2026-07-16)
             broker_recon_graduation_days=exit_config.get('broker_recon_graduation_days', 5),
+            # Staged breakeven floor (2026-08-05)
+            staged_breakeven_enabled=exit_config.get('staged_breakeven_enabled', False),
+            staged_breakeven_levels=exit_config.get('staged_breakeven_levels', []),
         )
     else:
         # Fallback to default values

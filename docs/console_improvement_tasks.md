@@ -438,6 +438,19 @@ asset_class unknown in closed: 245件
 - forward valid stop-trigger shadow ≥10
 - treatment が baseline より costs 込み expectancy、CVaR、max drawdown で 2 指標改善
 
+**進捗（2026-08-05）**: `scripts/sector_shock_historical_replay.py` で過去の
+loss-mitigation exit（stop_loss + breakeven_stop、計111件、2026-05-14〜07-30）を
+当時の実際のセクターベンチマークリターン（data/benchmarks/benchmark_returns.csv）で
+再分類し、**historical shock replay 111件（目標100件を達成）** を記録
+（`data/sector_shock_historical_replay_log.jsonl`）。ただし有効な
+sector-shock context（sector_shock_hold + relative_weakness_exit）は **1件のみ**
+（TSM 2026-07-01）。forward valid stop-trigger shadow（目標10件）も現在0件
+（data/sector_shock_shadow_log.jsonlは全件17件が soft_stop）。
+**結論**: historical replay件数は達成したが、「有効なショック事例」の蓄積は
+依然として不足。実際のセクター全体ショック（-3%閾値超え）自体が監査期間中に
+ほとんど発生していないのが根本原因であり、A/B開始は引き続き市場のショック
+発生待ち。阀値見直し（例: -3.0% → -2.0%）の検討はこのデータを基に行う。
+
 #### R3-v2-Stop: Tiered min_hold v2（offset_pct 再設計・再有効化）
 
 **Status**: IMPLEMENTED_UNVERIFIED（2026-08-05）  
@@ -468,6 +481,38 @@ return_pct基準の7日tierがstandard/high-conviction銘柄で到達不可能�
 - 目安確認日: 2026-08-19頃（08-05導入から約2週間の段階で一度中間レビュー）
 
 **ロールバック**: `tiered_min_hold_enabled: false` に戻すだけ
+
+#### R3-v2-Breakeven: Staged Floor（段階的floor、Breakeven Stop）
+
+**Status**: IMPLEMENTED_UNVERIFIED（2026-08-05）  
+**Priority**: P2（sector_shock A/Bとは独立、即日実施可）
+
+**背景**: Breakeven Stop（peak_returnが活性化ライン到達後、return≤40%で即exit、
+floor固定0%）はPF 0.7前後・WR 20〜27%とExit 3戦略中最弱。Post-exit driftシミュレー
+ション（breakeven_stop発火43件、`scripts/analyze_breakeven_staged_floor.py`）で、
+固定0%floorがさらなる上昇を見逃して早利確しすぎているケースが確認された（見込み
+改善額 +$4,979、n=43、6件改善/0件悪化）。
+
+**実装内容**: Trailing Stopのstaged_trailingと同じ発想で、peak_returnが上がるほど
+floorを段階的に引き上げ（ratchet）:
+- peak +5%到達 → floor 0%（現行ルールと完全一致）
+- peak +8%到達 → floor +3%
+- peak +12%到達 → floor +6%
+- `config/strategy/simple_exit_v2.yaml`: `staged_breakeven_enabled: true`
+- 実装: `SimpleExitV2Strategy._resolve_breakeven_floor()`（commit 参照）
+- テスト: +9件新規追加。フルスイート 1333 passed / 2 skipped（既知の無関係つ2件のみ）
+
+**未実施（フォローアップ課題）**:
+- シミュレーションはyfinance日次OHLCの近似であり、n=43と少ない。paper実測での
+  効果検証が未実施
+
+**Acceptance criteria**（次回フォローアップで確認）**:
+- breakeven_stop発火トレードのexit_reason別内訳を確認（"Staged breakeven stop"が
+  実際に発火しているか）
+- 直近30日のbreakeven_stop net_pnlが改善傾向にあるかを確認
+- 目安確認日: **2026-09-05**（08-05導入から1ヶ月後）
+
+**ロールバック**: `staged_breakeven_enabled: false` に戻すだけ
 
 ---
 
@@ -624,7 +669,13 @@ return_pct基準の7日tierがstandard/high-conviction銘柄で到達不可能�
 
 2026-08-05          ✅ R3-v2-Stop  tiered min_hold v2（offset_pct再設計・再有効化、commit 27a8742）
 
+2026-08-05          ✅ R3-v2-Breakeven  staged floor（段階的floor導入）
+
+2026-08-05          ✅ R3-v2  sector_shock historical replay 111件蓄積開始（目標100件達成）
+
 2026-08-19頃          🔲 R3-v2-Stop 中間レビュー: post-exit drift再分析で「正しい止損率」改善確認
+
+2026-09-05          🔲 R3-v2-Breakeven 中間レビュー: staged floorのpaper実測での改善確認（08-05導入から1ヶ月後）
 
 2026-08-03〜08-14  R3-v2    exit replay / sector shock shadow（R0-v2 完了後のみ）
                    R7-v2    data SLA / source lineage

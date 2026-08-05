@@ -63,6 +63,16 @@ class SimpleExitV2Strategy(BaseStrategy):
         # After holding >= broker_recon_graduation_days, unknown-strength positions
         # graduate from conservative -5% stop to the standard stop_loss_pct (-7%).
         broker_recon_graduation_days: int | None = 5,
+        # Staged breakeven floor (2026-08-05)
+        # Post-exit drift simulation (43 breakeven_stop trades, scripts/
+        # analyze_breakeven_staged_floor.py) showed the current fixed 0% floor
+        # exits too early when a position keeps climbing past the activation
+        # level. A staged floor (same design as staged_trailing) that ratchets
+        # up as peak_return climbs further captured +$4,979 (simulated, 6 trades
+        # improved / 0 worsened) vs the current rule on the same historical set.
+        # Disabled by default; enable via config to run as a live improvement.
+        staged_breakeven_enabled: bool = False,
+        staged_breakeven_levels: list[dict[str, float]] | None = None,
     ):
         """Initialize simple exit V2 strategy.
 
@@ -132,6 +142,12 @@ class SimpleExitV2Strategy(BaseStrategy):
         self._suppression_counts: dict[str, int] = {}
         # broker_recon threshold graduation
         self.broker_recon_graduation_days = broker_recon_graduation_days
+        # Staged breakeven floor (2026-08-05)
+        self.staged_breakeven_enabled = staged_breakeven_enabled
+        self.staged_breakeven_levels = sorted(
+            staged_breakeven_levels or [],
+            key=lambda row: float(row.get("activation_pct", 0.0)),
+        )
 
     def _effective_min_hold_days(
         self, return_pct: float, eff_stop_loss_pct: float | None = None
@@ -274,7 +290,46 @@ class SimpleExitV2Strategy(BaseStrategy):
             float(active_level.get("trailing_stop_pct", self.trailing_stop_pct)),
             active_level,
         )
-    
+
+    def _resolve_breakeven_floor(
+        self,
+        peak_return_pct: float,
+        eff_breakeven_activation_pct: float,
+    ) -> tuple[bool, float, dict[str, Any] | None]:
+        """Return (activated, floor_pct, optional staged level) for breakeven stop.
+
+        Staged breakeven (2026-08-05): mirrors staged_trailing's design. Once
+        peak_return_pct crosses successive activation thresholds, the floor
+        ratchets up instead of staying fixed at 0%. This lets a position that
+        keeps climbing past the initial breakeven trigger retain more of its
+        gain before the breakeven stop exits it.
+
+        When staged_breakeven_enabled=False (default), behaves exactly like
+        the legacy rule: activated once peak_return_pct >= activation_pct,
+        floor fixed at 0%.
+        """
+        if not self.staged_breakeven_enabled or not self.staged_breakeven_levels:
+            return (
+                peak_return_pct >= eff_breakeven_activation_pct,
+                0.0,
+                None,
+            )
+
+        active_level: dict[str, Any] | None = None
+        for level in self.staged_breakeven_levels:
+            activation_pct = float(level.get("activation_pct", 0.0))
+            if peak_return_pct >= activation_pct:
+                active_level = level
+
+        if active_level is None:
+            return False, 0.0, None
+
+        return (
+            True,
+            float(active_level.get("floor_pct", 0.0)),
+            active_level,
+        )
+
     def generate(
         self,
         features: list[FeatureResult],
@@ -499,16 +554,29 @@ class SimpleExitV2Strategy(BaseStrategy):
                     signal_strength = 0.95
 
             # 2. Breakeven stop (protect profits once PEAK return >= breakeven_activation_pct)
-            elif peak_return_pct >= self.breakeven_activation_pct:
+            elif (
+                _be_activated := self._resolve_breakeven_floor(
+                    peak_return_pct, self.breakeven_activation_pct
+                )
+            )[0]:
+                _be_floor_pct, _be_staged_level = _be_activated[1], _be_activated[2]
                 # Peak ever reached the activation threshold — never let it
-                # turn into a loss.  Exit as soon as current return falls to or below 0%.
-                if return_pct <= 0.0:
+                # fall below the (possibly staged) floor.
+                if return_pct <= _be_floor_pct:
+                    _be_label = "Staged breakeven stop" if _be_staged_level is not None else "Breakeven stop"
+                    _be_stage_text = (
+                        f", stage activation={float(_be_staged_level.get('activation_pct', 0.0)):.0%}, "
+                        f"stage floor={_be_floor_pct:.0%}"
+                        if _be_staged_level is not None
+                        else ""
+                    )
                     exit_reason = (
-                        f"Breakeven stop triggered: return {return_pct:.2%} <= 0% "
-                        f"(had reached breakeven_activation={self.breakeven_activation_pct:.0%})"
+                        f"{_be_label} triggered: return {return_pct:.2%} <= {_be_floor_pct:.2%} "
+                        f"(had reached breakeven_activation={self.breakeven_activation_pct:.0%}"
+                        f"{_be_stage_text})"
                     )
                     signal_strength = 0.95
-                # else: still in profit but not yet at trailing level → hold
+                # else: still in profit but not yet below the active floor → hold
 
             # 3. Initial stop loss (position never reached breakeven zone)
             elif return_pct <= eff_stop_loss_pct:
@@ -613,6 +681,7 @@ class SimpleExitV2Strategy(BaseStrategy):
                             peak_return_pct >= self.breakeven_activation_pct
                             and not trailing_active
                         ),
+                        "staged_breakeven_enabled": self.staged_breakeven_enabled,
                         "entry_signal_strength": entry_signal_strength,
                         "eff_stop_loss_pct": eff_stop_loss_pct,
                         "eff_trailing_activation_pct": eff_trailing_activation_pct,

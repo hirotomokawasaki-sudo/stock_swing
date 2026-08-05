@@ -155,6 +155,136 @@ def test_breakeven_stop_not_active_when_below_activation():
     assert len(signals) == 0
 
 
+# ── Staged Breakeven Floor tests (2026-08-05) ────────────────────────────
+# Post-exit drift simulation (scripts/analyze_breakeven_staged_floor.py,
+# 43 breakeven_stop trades) showed the fixed 0% floor exits too early when a
+# position keeps climbing past activation. Staged floor ratchets up floor as
+# peak_return climbs further, mirroring staged_trailing's design.
+
+STAGED_BREAKEVEN_LEVELS = [
+    {"activation_pct": 0.05, "floor_pct": 0.0},
+    {"activation_pct": 0.08, "floor_pct": 0.03},
+    {"activation_pct": 0.12, "floor_pct": 0.06},
+]
+
+
+def _make_strat_staged_breakeven(**kwargs) -> SimpleExitV2Strategy:
+    defaults = dict(
+        stop_loss_pct=-0.07,
+        breakeven_activation_pct=0.05,
+        trailing_activation_pct=0.20,  # kept high so trailing never preempts breakeven in these tests
+        trailing_stop_pct=0.04,
+        max_hold_days=20,
+        staged_breakeven_enabled=True,
+        staged_breakeven_levels=STAGED_BREAKEVEN_LEVELS,
+    )
+    defaults.update(kwargs)
+    return SimpleExitV2Strategy(**defaults)
+
+
+def test_staged_breakeven_disabled_behaves_like_legacy():
+    """staged_breakeven_enabled=False: legacy fixed-0%-floor behavior unchanged."""
+    strat = SimpleExitV2Strategy(
+        stop_loss_pct=-0.07,
+        breakeven_activation_pct=0.05,
+        trailing_activation_pct=0.20,
+        staged_breakeven_enabled=False,
+        staged_breakeven_levels=STAGED_BREAKEVEN_LEVELS,
+    )
+    activated, floor_pct, level = strat._resolve_breakeven_floor(0.10, 0.05)
+    assert activated is True
+    assert floor_pct == 0.0
+    assert level is None
+
+
+def test_staged_breakeven_first_level_matches_legacy_activation():
+    """First staged level (peak>=5% -> floor 0%) matches the legacy rule exactly."""
+    strat = _make_strat_staged_breakeven()
+    activated, floor_pct, level = strat._resolve_breakeven_floor(0.06, 0.05)
+    assert activated is True
+    assert floor_pct == 0.0
+    assert level is not None
+
+
+def test_staged_breakeven_second_level_raises_floor():
+    """peak_return >= +8% -> floor ratchets up to +3%."""
+    strat = _make_strat_staged_breakeven()
+    activated, floor_pct, level = strat._resolve_breakeven_floor(0.09, 0.05)
+    assert activated is True
+    assert floor_pct == 0.03
+
+
+def test_staged_breakeven_third_level_raises_floor_further():
+    """peak_return >= +12% -> floor ratchets up to +6%."""
+    strat = _make_strat_staged_breakeven()
+    activated, floor_pct, level = strat._resolve_breakeven_floor(0.13, 0.05)
+    assert activated is True
+    assert floor_pct == 0.06
+
+
+def test_staged_breakeven_not_activated_below_first_level():
+    """peak_return below the first activation level -> not activated at all."""
+    strat = _make_strat_staged_breakeven()
+    activated, floor_pct, level = strat._resolve_breakeven_floor(0.02, 0.05)
+    assert activated is False
+
+
+def test_staged_breakeven_holds_when_above_ratcheted_floor():
+    """Position peaked at +9% (floor=+3%), currently at +4% (still above floor) -> hold."""
+    strat = _make_strat_staged_breakeven()
+    current_price = 104.0  # +4%
+    pos = _make_position("TEST", 100.0, current_price, entry_hours_ago=48.0, peak_price=109.0)  # peak +9%
+    features = [_make_feature("TEST", current_price)]
+    signals = strat.generate(features, {"TEST": pos})
+    assert len(signals) == 0, (
+        f"Peak +9% ratchets floor to +3%; current +4% is still above floor -> should hold, got: {signals}"
+    )
+
+
+def test_staged_breakeven_fires_when_below_ratcheted_floor():
+    """Position peaked at +9% (floor=+3%), currently at +2% (below floor) -> staged breakeven fires."""
+    strat = _make_strat_staged_breakeven()
+    current_price = 102.0  # +2%, below the +3% ratcheted floor
+    pos = _make_position("TEST", 100.0, current_price, entry_hours_ago=48.0, peak_price=109.0)  # peak +9%
+    features = [_make_feature("TEST", current_price)]
+    signals = strat.generate(features, {"TEST": pos})
+    assert len(signals) == 1, (
+        f"Peak +9% ratchets floor to +3%; current +2% is below floor -> should fire, got: {signals}"
+    )
+    assert signals[0].action == "sell"
+    assert "Staged breakeven stop" in signals[0].reasoning
+
+
+def test_staged_breakeven_captures_more_gain_than_legacy():
+    """Regression for the core improvement: legacy (floor=0%) exits at return=0%,
+    but staged (floor=+3% after peak>=8%) should never fire at return=0% once
+    peak has passed +8% -- it should have already exited earlier at the higher
+    floor, capturing more gain than the legacy rule would have on the same path.
+    """
+    staged = _make_strat_staged_breakeven()
+    legacy = SimpleExitV2Strategy(
+        stop_loss_pct=-0.07,
+        breakeven_activation_pct=0.05,
+        trailing_activation_pct=0.20,
+        staged_breakeven_enabled=False,
+    )
+    # Position peaked at +9%, now back down to return=0% (legacy fires here)
+    current_price = 100.0  # 0% return
+    pos_legacy = _make_position("TEST", 100.0, current_price, entry_hours_ago=48.0, peak_price=109.0)
+    pos_staged = _make_position("TEST", 100.0, current_price, entry_hours_ago=48.0, peak_price=109.0)
+    features = [_make_feature("TEST", current_price)]
+
+    legacy_signals = legacy.generate(features, {"TEST": pos_legacy})
+    staged_signals = staged.generate(features, {"TEST": pos_staged})
+
+    assert len(legacy_signals) == 1, "Legacy rule should fire at return=0% once peak>=5%"
+    assert len(staged_signals) == 1, "Staged rule should also have fired by now (floor=+3% was breached earlier)"
+    # The staged rule's exit reason should reference the higher, ratcheted floor,
+    # not the legacy 0% floor -- demonstrating it would have triggered (and exited
+    # at a better price) before the position fell all the way back to 0%.
+    assert "stage floor=3%" in staged_signals[0].reasoning
+
+
 # ── Entry signal strength dynamic threshold tests ────────────────────────
 
 def test_high_strength_entry_gets_wider_stop():
