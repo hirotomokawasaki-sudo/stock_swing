@@ -101,17 +101,31 @@ class SimpleExitV2Strategy(BaseStrategy):
         self.min_hold_days = min_hold_days
         self.min_hold_days_enabled = min_hold_days_enabled
         self.emergency_stop_bypass_pct = emergency_stop_bypass_pct
-        # Plan A: tiered min_hold
+        # Plan A / v2 (2026-08-05 redesign): tiered min_hold
+        # v1 (disabled by FIX-007, 2026-07-29) used *absolute* return_pct thresholds
+        # (e.g. "return > -5%"). That is unreachable whenever the effective stop
+        # threshold itself is already <= -5% (standard -7% / high-conviction -9%
+        # tiers), because the stop_loss branch only evaluates once
+        # return_pct <= eff_stop_loss_pct. Only the -5% low-conviction tier could
+        # ever reach the -5% noise band, so the 7-day tier was dead code for the
+        # vast majority of positions.
+        #
+        # v2 fix: tiers are now defined as an *offset in percentage points from the
+        # effective stop threshold that just fired* (offset_pct), not an absolute
+        # return level. This makes the tiering meaningful regardless of conviction:
+        #   offset_pct = (return_pct - eff_stop_loss_pct) * 100
+        #   e.g. eff_stop=-7%, return=-7.5% → offset=-0.5pp (barely breached → noise)
+        #        eff_stop=-7%, return=-15%  → offset=-8.0pp (deeply breached → severe)
         self.tiered_min_hold_enabled = tiered_min_hold_enabled
-        # Sort levels descending by threshold so the first match wins
-        # e.g. [(-5.0, 7), (-8.0, 3)] → ret=-3% → 7d, ret=-6% → 3d, ret=-10% → base
+        # Sort levels descending by offset so the first match wins
+        # e.g. [(-2.0, 7), (-5.0, 3)] → offset=-1pp → 7d, offset=-3pp → 3d, offset=-8pp → base
         self.tiered_min_hold_levels: list[tuple[float, int]] = sorted(
             [
-                (float(lv["threshold_pct"]), int(lv["min_hold_days"]))
+                (float(lv["offset_pct"]), int(lv["min_hold_days"]))
                 for lv in (tiered_min_hold_levels or [])
             ],
             key=lambda x: x[0],
-            reverse=True,  # highest threshold first
+            reverse=True,  # least-negative (closest to threshold) first
         )
         # Run-level suppression tracking (reset each paper_demo run)
         # Key: tier label ("noise_7d" / "mid_3d" / "severe_1d" / "legacy")
@@ -119,19 +133,33 @@ class SimpleExitV2Strategy(BaseStrategy):
         # broker_recon threshold graduation
         self.broker_recon_graduation_days = broker_recon_graduation_days
 
-    def _effective_min_hold_days(self, return_pct: float) -> int:
+    def _effective_min_hold_days(
+        self, return_pct: float, eff_stop_loss_pct: float | None = None
+    ) -> int:
         """Return the effective min_hold_days for the given current return.
 
-        Plan A (2026-07-27): tiered thresholds based on post-exit drift analysis.
+        Plan A v2 (2026-08-05 redesign): tiers based on *offset from the
+        effective stop threshold that fired*, not an absolute return level.
 
-        Post-exit analysis of 48 true stop_loss trades:
-          - avg_ret=-2.9% (noise zone)  → 78% recover within 15 days → wait 7 days
-          - avg_ret=-8.2% (true stop)   → >30 days / never recover   → exit quickly
+        Rationale: post-exit drift analysis (48 true stop_loss trades) found
+        that losses just past the stop threshold recover far more often than
+        losses deeply past it, regardless of the exact threshold value used
+        (which itself varies -5%/-7%/-9% by conviction tier). Using an
+        absolute return_pct cutoff (v1 / Plan A original) made the 7-day tier
+        unreachable for standard/high-conviction positions, since their stop
+        only fires once return_pct is already <= -7%/-9% (FIX-007, 2026-07-29).
 
-        Tiers (when tiered_min_hold_enabled=True):
-          return_pct > -5%  → 7 days  (high recovery probability, 1-week noise zone)
-          return_pct > -8%  → 3 days  (medium: give a few days to breathe)
-          return_pct <= -8% → base min_hold_days (default 1, exit quickly)
+        Args:
+            return_pct: current position return (negative for a loss).
+            eff_stop_loss_pct: the effective (conviction-adjusted) stop-loss
+                threshold that triggered this check. Defaults to the base
+                stop_loss_pct if not provided (e.g. legacy callers/tests).
+
+        Tiers (when tiered_min_hold_enabled=True), offset_pct = how many
+        percentage points past the threshold the position has fallen:
+          offset_pct > -2pp  → 7 days  (barely breached → likely noise)
+          offset_pct > -5pp  → 3 days  (moderately breached → give it a few days)
+          offset_pct <= -5pp → base min_hold_days (default 1, exit quickly)
 
         The emergency_stop_bypass_pct (-12%) is checked upstream and always takes
         priority over any min_hold value returned here.
@@ -140,10 +168,14 @@ class SimpleExitV2Strategy(BaseStrategy):
         """
         if not self.tiered_min_hold_enabled or not self.tiered_min_hold_levels:
             return self.min_hold_days
-        for threshold_pct, hold_days in self.tiered_min_hold_levels:
-            if return_pct > threshold_pct / 100.0:
+        threshold = (
+            eff_stop_loss_pct if eff_stop_loss_pct is not None else self.stop_loss_pct
+        )
+        offset_pct = (return_pct - threshold) * 100.0
+        for offset_threshold_pct, hold_days in self.tiered_min_hold_levels:
+            if offset_pct > offset_threshold_pct:
                 return hold_days
-        # Severe loss zone: fall back to base min_hold_days (typically 1)
+        # Deeply breached: fall back to base min_hold_days (typically 1)
         return self.min_hold_days
 
     def _tier_label(self, return_pct: float, eff_min_hold: int) -> str:
@@ -485,7 +517,9 @@ class SimpleExitV2Strategy(BaseStrategy):
                 #   return > -5% → 7d wait (noise zone)
                 #   return > -8% → 3d wait (borderline zone)
                 #   return <= -8% → base min_hold (1d, exit quickly)
-                eff_min_hold = self._effective_min_hold_days(return_pct)
+                eff_min_hold = self._effective_min_hold_days(
+                    return_pct, eff_stop_loss_pct=eff_stop_loss_pct
+                )
                 _suppress = False
                 if (
                     self.min_hold_days_enabled

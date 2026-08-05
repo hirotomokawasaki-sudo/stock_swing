@@ -678,7 +678,7 @@ asset_class unknown in closed: 245件
 | FIX-004 | R0-v3/R6-v3 | P0 | **PARTIAL**（`c948f57`） | dynamic ledger validity + export mapping。repo内にclosed_trades.csv専用exporterがなく、paper_demo.pyにcanonical export-row mapperを追加したが、repo外のexport専用scriptは未対応 |
 | FIX-005 | R0-v3/P9 | P0 | **VERIFIED_COMPLETE**（`c948f57`） | guardrail metric + fail-closed |
 | FIX-006 | R0-v3/P6 | P1 | **VERIFIED_COMPLETE**（`c948f57`） | P6 top-level join |
-| FIX-007 | R3-v3 | P1 | **VERIFIED_COMPLETE**（`687c5c5`） | 7d tier disable + exit freeze |
+| FIX-007 | R3-v3 | P1 | **VERIFIED_COMPLETE**（`687c5c5`）→ **v2再設計・再有効化**（2026-08-05） | 7d tier disable + exit freeze。08-05: offset_pct（有効stop閾値からの相対オフセット）ベースに再設計し、conviction tierに依存せず到達可能にした上で再有効化。詳細は下記「2026-08-05 Stop Loss tiered min_hold v2」参照 |
 | FIX-009 | R6-v3 | P1 | **VERIFIED_COMPLETE**（`992188e`） | console security |
 | FIX-010 | R6-v3/R8-v3 | P2 | **VERIFIED_COMPLETE**（`c948f57`） | token accounting separation |
 
@@ -712,5 +712,58 @@ asset_class unknown in closed: 245件
 - sum(closed.pnl) vs state cumulative PnL差 <= $1
 - run_id/experiment_id/config_hash coverage >=99%
 - required source coverage >=99.5%、synthetic production records=0
+
+---
+
+## 2026-08-05 Stop Loss tiered min_hold v2（FIX-007再設計・再有効化）
+
+**背景**: 07-27 Plan A（commit `52736ca`）で導入した tiered min_hold は、
+return_pct の絶対値（例: 「return > -5% → 7日」）で tier 判定していたが、
+07-29 FIX-007（commit `687c5c5`）で無効化された。理由: standard(-7%)/
+high-conviction(-9%) の stop_loss は、その閾値に到達した時点で既に
+return ≤ -7%/-9% であり、「-5%より大きい」を満たすことが構造的に
+不可能だった（7日 tier が事実上デッドコード化していたのは low-conviction
+(-5%)銘柄のみ）。
+
+**再設計方針**: 絶対 return_pct ではなく、**発火した有効 stop 閾値からの
+相対オフセット（offset_pct、単位: percentage point）** で tier 判定するよう
+変更。
+```
+offset_pct = (return_pct - eff_stop_loss_pct) * 100
+```
+conviction tier（-5%/-7%/-9%）に関わらず、閾値をわずかに超えた直後は
+常に offset_pct ≈ 0（ノイズ域）、深く超えるほど offset_pct が大きくマイナス
+（真の止損域）になるため、全ての conviction tier で 7日 tier が到達可能に
+なった。
+
+**設定変更**（`config/strategy/simple_exit_v2.yaml`）:
+```yaml
+tiered_min_hold_enabled: true   # false → true に復帰
+tiered_min_hold_levels:
+  - offset_pct: -2.0   # 閾値超過が2pp以内 → 7日様子見（ノイズ域）
+    min_hold_days: 7
+  - offset_pct: -5.0   # 閾値超過が2〜5pp    → 3日様子見（中間域）
+    min_hold_days: 3
+  # 閾値超過が5pp超               → base min_hold_days (1日、真の止損域)
+```
+
+**実装変更**: `SimpleExitV2Strategy._effective_min_hold_days()` が
+`eff_stop_loss_pct`（conviction調整後の実際の閾値）を引数に取り、
+offset_pct を計算するように変更。呼び出し元（stop_loss 判定ブロック）も
+連動して更新。
+
+**テスト**: `test_simple_exit_v2_strategy.py` の Plan A テスト群を
+offset_pct ベースに全面更新（+2件: low/high conviction 到達性の回帰テスト）。
+`test_fix007_yaml_disable.py` も「再有効化されている」ことを検証する内容に更新
+（+1件: 全 conviction tier での到達可能性検証）。
+フルテストスイート: 1325 passed / 2 skipped（既存の無関係な2件の失敗のみ）。
+
+**ロールバック**: `tiered_min_hold_enabled: false` に戻すだけで即座に
+旧動作（一律 min_hold_days=1）に戻る。
+
+**期待効果**: 07-27時点のシミュレーション根拠（stop_loss損失 -$167K→-$126K、
++$41K改善）と同じ post-exit drift の知見を、conviction tier非依存の形で
+再現。ただし v2 の offset_pct ベースでの再シミュレーション・paper実測での
+効果検証は未実施（次回フォローアップ課題）。
 - console current snapshot reachable、freshness SLA内
 - post-fix clean paper cohortでcost-adjusted PF >1、expectancy >0

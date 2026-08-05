@@ -49,23 +49,41 @@ min_hold_days: 1              # tiered 無効時の基本値 / severe loss (< -8
 emergency_stop_bypass_pct: -0.12  # -12%以下の大幅損失は min_hold を迂回して即時退場
 # ロールバック: min_hold_days_enabled: false に変更するだけで即座に旧動作に戻る
 
-# ── Plan A: Tiered min_hold (2026-07-27) ─────────────────────────────────────
-# Post-exit drift 分析（48件）の結果:
-#   avg_ret=-2.9% (noise zone)  → 78% が15日以内に回復 → 1週間待つ
-#   avg_ret=-8.2% (true stop)   → 30日超/未回復       → 素早く exit
+# ── Plan A v2: Tiered min_hold — offset-based redesign (2026-08-05) ─────────
+# 履歴: 2026-07-27 に導入（commit 52736ca）→ 2026-07-29 に FIX-007 で無効化。
 #
-# シミュレーション結果: 全48件で現行比 +$41,054 改善 (-$167K → -$126K)
+# FIX-007 で判明した問題: v1 は「絶対 return_pct」で tier を判定していた
+# （例: 「return > -5% ならノイズ域」）。しかし standard/high-conviction 銘柄は
+# stop_loss 自体が -7%/-9% でしか発火しないため、この判定に入った時点で
+# return はすでに -7%/-9% 以下 → 「-5%より大きい」を満たすことが構造的に
+# 不可能で、7日 tier が事実上デッドコードだった（-5%閾値のlow-conviction
+# 銘柄以外では絶対に届かない）。
+#
+# v2 修正: 絶対 return ではなく「発火した有効ストップ閾値からの相対オフセット
+# （offset_pct、単位: percentage point）」で tier 判定する。
+#   offset_pct = (return_pct - eff_stop_loss_pct) * 100
+#   例: eff_stop=-7%, return=-7.5% → offset=-0.5pp（僅かに超過 → ノイズの可能性）
+#       eff_stop=-7%, return=-15%  → offset=-8.0pp（大きく超過 → 真の止損）
+# これにより conviction tier（-5%/-7%/-9%）に関わらず、tier 判定が意味を持つ。
+#
+# 元の post-exit drift 分析（48件）の知見は維持:
+#   閾値をわずかに超えた程度 → 78%が15日以内に回復（ノイズ域）→ 1週間様子見
+#   閾値を大きく超えた       → 30日超/未回復（真の止損）→ 素早く exit
+#
+# シミュレーション根拠（v1、48件、絶対値ベースだが同じ知見）: +$41,054 改善見込み
+# (-$167K → -$126K)。v2 は同じ知見を conviction tier 非依存の形で再実装。
 #
 # tiered_min_hold_levels の各エントリ:
-#   threshold_pct: この値 (%) より大きい return なら min_hold_days を適用
+#   offset_pct: 有効ストップ閾値からのオフセット（pp）。この値より大きい
+#               （＝閾値超過が浅い）場合に min_hold_days を適用。
 #   min_hold_days: 当該 tier での最低保有営業日数
-# エントリは threshold_pct 降順で評価され、最初にマッチした tier が採用される。
-# どの tier にもマッチしない（loss >= -8%）場合は base min_hold_days (1日) を使用。
-tiered_min_hold_enabled: false
-tiered_min_hold_disable_reason: "FIX-007: 7d tier unreachable (return > -5% impossible when stop triggers at <= -5%)"
+# エントリは offset_pct 降順で評価され、最初にマッチした tier が採用される。
+# どの tier にもマッチしない（大幅超過）場合は base min_hold_days (1日) を使用。
+# ロールバック: tiered_min_hold_enabled: false に変更するだけで即座に旧動作（一律 min_hold_days）に戻る。
+tiered_min_hold_enabled: true
 tiered_min_hold_levels:
-  - threshold_pct: -5.0   # return > -5%:  ノイズ域    → 7日様子見
+  - offset_pct: -2.0   # 閾値超過が2pp以内: ノイズ域    → 7日様子見
     min_hold_days: 7
-  - threshold_pct: -8.0   # return > -8%:  中間域      → 3日様子見
+  - offset_pct: -5.0   # 閾値超過が2〜5pp:  中間域      → 3日様子見
     min_hold_days: 3
-  # return <= -8%: 真の止損域 → base min_hold_days (1日) で素早く exit
+  # 閾値超過が5pp超: 真の止損域 → base min_hold_days (1日) で素早く exit

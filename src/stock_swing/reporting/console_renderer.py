@@ -340,7 +340,7 @@ class ConsoleRenderer:
 
         lines = ["STOP LOSS HEALTH", _SEP]
         tiered = slh.get("tiered_min_hold_enabled", False)
-        lines.append(f"  tiered_min_hold = {'ON  (noise>-5%→7d | mid>-8%→3d | severe→1d)' if tiered else 'OFF (legacy 1d)'}")
+        lines.append(f"  tiered_min_hold = {'ON  (offset>-2pp→7d | offset>-5pp→3d | severe→1d)' if tiered else 'OFF (legacy 1d)'}")
 
         # ── 30日以内の止損サマリー
         r30 = slh.get("recent_30d", {})

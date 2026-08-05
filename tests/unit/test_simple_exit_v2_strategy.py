@@ -710,15 +710,23 @@ def test_min_hold_does_not_affect_trailing_stop():
 
 
 # ────────────────────────────────────────────────────────────────
-# Plan A: Tiered min_hold tests (2026-07-27)
-# Incident: post-exit drift analysis showed avg_ret=-2.9% recovers
-# within 15d (noise), avg_ret=-8.2% never recovers (true stop).
-# Tiered approach reduces false stops by +$41K on 48-trade dataset.
+# Plan A v2: Tiered min_hold tests — offset-based redesign (2026-08-05)
+#
+# History: v1 (2026-07-27, commit 52736ca) used *absolute* return_pct
+# thresholds ("return > -5% → 7d"). FIX-007 (2026-07-29, commit 687c5c5)
+# disabled it because standard/high-conviction stops (-7%/-9%) can never
+# satisfy "return > -5%" — the 7-day tier was dead code for those tiers.
+#
+# v2 (2026-08-05): tiers are now based on offset_pct = how many percentage
+# points *past the effective stop threshold that fired* the position has
+# fallen. This is reachable regardless of conviction tier. Same underlying
+# post-exit drift knowledge (shallow breach → recovers 78% of the time →
+# wait longer; deep breach → rarely recovers → exit fast) is preserved.
 # ────────────────────────────────────────────────────────────────
 
 TIERED_LEVELS = [
-    {"threshold_pct": -5.0, "min_hold_days": 7},
-    {"threshold_pct": -8.0, "min_hold_days": 3},
+    {"offset_pct": -2.0, "min_hold_days": 7},
+    {"offset_pct": -5.0, "min_hold_days": 3},
 ]
 
 
@@ -743,123 +751,141 @@ def test_tiered_min_hold_disabled_uses_base():
         tiered_min_hold_enabled=False,
         tiered_min_hold_levels=TIERED_LEVELS,
     )
-    assert strat._effective_min_hold_days(-0.03) == 3
-    assert strat._effective_min_hold_days(-0.06) == 3
-    assert strat._effective_min_hold_days(-0.10) == 3
+    assert strat._effective_min_hold_days(-0.03, eff_stop_loss_pct=-0.07) == 3
+    assert strat._effective_min_hold_days(-0.10, eff_stop_loss_pct=-0.07) == 3
 
 
 def test_tiered_min_hold_noise_zone():
-    """return > -5%: min_hold = 7 days (noise zone)."""
+    """Shallow breach (offset > -2pp past the stop threshold): min_hold = 7 days."""
     strat = _make_strat_tiered()
-    assert strat._effective_min_hold_days(-0.03) == 7   # -3%  → noise
-    assert strat._effective_min_hold_days(-0.049) == 7  # -4.9% → noise
+    # eff_stop=-7%: return=-7.5% → offset=-0.5pp (shallow) → 7d
+    assert strat._effective_min_hold_days(-0.075, eff_stop_loss_pct=-0.07) == 7
+    # return=-7.01% → offset≈-0.01pp (barely breached) → 7d
+    assert strat._effective_min_hold_days(-0.0701, eff_stop_loss_pct=-0.07) == 7
 
 
 def test_tiered_min_hold_mid_zone():
-    """-8% < return <= -5%: min_hold = 3 days (borderline zone)."""
+    """Moderate breach (-5pp < offset <= -2pp): min_hold = 3 days."""
     strat = _make_strat_tiered()
-    assert strat._effective_min_hold_days(-0.05) == 3   # exactly -5% → mid
-    assert strat._effective_min_hold_days(-0.06) == 3   # -6%   → mid
-    assert strat._effective_min_hold_days(-0.079) == 3  # -7.9% → mid
+    # eff_stop=-7%: return=-9.5% → offset=-2.5pp (clearly inside mid zone) → mid (3d)
+    assert strat._effective_min_hold_days(-0.095, eff_stop_loss_pct=-0.07) == 3
+    # return=-11% → offset=-4.0pp → mid
+    assert strat._effective_min_hold_days(-0.11, eff_stop_loss_pct=-0.07) == 3
 
 
 def test_tiered_min_hold_severe_zone():
-    """return <= -8%: falls back to base min_hold_days (1 day → fast exit)."""
+    """Deep breach (offset <= -5pp): falls back to base min_hold_days (fast exit)."""
     strat = _make_strat_tiered()
-    assert strat._effective_min_hold_days(-0.08) == 1   # exactly -8% → severe
-    assert strat._effective_min_hold_days(-0.10) == 1   # -10%  → severe
-    assert strat._effective_min_hold_days(-0.15) == 1   # -15%  → severe
+    # eff_stop=-7%: return=-12.5% → offset=-5.5pp (clearly inside severe zone) → base (1d)
+    assert strat._effective_min_hold_days(-0.125, eff_stop_loss_pct=-0.07) == 1
+    # return=-15% → offset=-8.0pp → severe
+    assert strat._effective_min_hold_days(-0.15, eff_stop_loss_pct=-0.07) == 1
+
+
+def test_tiered_min_hold_reachable_at_low_conviction_threshold():
+    """FIX-007 v2 regression: unlike v1, the noise tier must be reachable even
+    when the effective stop threshold is the low-conviction -5% (the only
+    tier that could reach v1's absolute -5% cutoff at all).
+    """
+    strat = _make_strat_tiered()
+    # eff_stop=-5% (low conviction): return=-5.5% → offset=-0.5pp → noise (7d)
+    assert strat._effective_min_hold_days(-0.055, eff_stop_loss_pct=-0.05) == 7
+
+
+def test_tiered_min_hold_reachable_at_high_conviction_threshold():
+    """FIX-007 v2 regression: the noise tier must also be reachable for the
+    high-conviction -9% stop threshold, which v1's absolute -5% cutoff could
+    never satisfy (return would need to be > -5% while also <= -9%).
+    """
+    strat = _make_strat_tiered()
+    # eff_stop=-9% (high conviction): return=-9.5% → offset=-0.5pp → noise (7d)
+    assert strat._effective_min_hold_days(-0.095, eff_stop_loss_pct=-0.09) == 7
 
 
 def test_tiered_stop_suppressed_in_noise_zone_within_7d():
-    """Plan A: small loss (-3%) with hold=3d < 7d → stop_loss suppressed."""
+    """Shallow breach (-7.5%, standard -7% stop) with hold=3d < 7d → suppressed."""
     strat = _make_strat_tiered()
-    current_price = 97.0  # -3% from 100
+    current_price = 92.5  # -7.5% from 100, offset=-0.5pp past the -7% stop
     pos = _make_position("TEST", 100.0, current_price, entry_hours_ago=72.0)  # 3 days
     features = [_make_feature("TEST", current_price)]
     signals = strat.generate(features, {"TEST": pos})
     assert len(signals) == 0, (
-        f"Plan A: -3% loss at 3d hold should be suppressed (min_hold=7d), got: {signals}"
+        f"Plan A v2: -7.5% loss (shallow breach) at 3d hold should be suppressed "
+        f"(min_hold=7d), got: {signals}"
     )
 
 
 def test_tiered_stop_fires_in_noise_zone_after_7d():
-    """Plan A: small loss (-3%) with hold >= 7d → stop_loss fires normally."""
+    """Shallow breach (-7.5%) with hold >= 7d → stop_loss fires normally."""
     strat = _make_strat_tiered()
-    current_price = 97.0  # -3% loss — below stop_loss_pct threshold? No, -3% < -7%.
-    # Use -8% to actually trigger stop_loss_pct=-7% check... wait, need loss >= 7%
-    # Use price that triggers the threshold: -7.5% loss
-    current_price = 92.5  # -7.5% from 100 → triggers stop_loss_pct=-7%
+    current_price = 92.5  # -7.5% from 100 → triggers stop_loss_pct=-7%, offset=-0.5pp
     pos = _make_position("TEST", 100.0, current_price, entry_hours_ago=24 * 8)  # 8 days
     features = [_make_feature("TEST", current_price)]
     signals = strat.generate(features, {"TEST": pos})
     assert len(signals) == 1, (
-        f"Plan A: -7.5% loss at 8d hold (>= 7d min_hold for noise zone) should fire, got: {signals}"
+        f"Plan A v2: -7.5% loss at 8d hold (>= 7d min_hold for noise zone) should fire, got: {signals}"
     )
     assert signals[0].action == "sell"
     assert "tiered" in signals[0].reasoning
 
 
 def test_tiered_stop_suppressed_in_mid_zone_within_3d():
-    """Plan A: mid loss (-6%) with hold=1d < 3d → stop_loss suppressed."""
+    """Moderate breach (-9.5%, offset=-2.5pp) with hold<3d → stop_loss suppressed."""
     strat = _make_strat_tiered()
-    current_price = 94.0  # -6% from 100 → triggers stop_loss_pct=-7%? No, -6% > -7%.
-    # Need loss >= 7% to hit stop_loss_pct
-    current_price = 93.5  # -6.5% — still not enough. Use -7.5%.
-    current_price = 92.5  # -7.5% → mid zone (-5% to -8%)
-    pos = _make_position("TEST", 100.0, current_price, entry_hours_ago=20.0)  # < 1 day in hold_days
+    current_price = 90.5  # -9.5% from 100 → mid zone (offset=-2.5pp past -7% stop)
+    pos = _make_position("TEST", 100.0, current_price, entry_hours_ago=20.0)  # < 1 day
     features = [_make_feature("TEST", current_price)]
     signals = strat.generate(features, {"TEST": pos})
     assert len(signals) == 0, (
-        f"Plan A: -7.5% at <1d hold (min_hold=3d for mid zone) should be suppressed, got: {signals}"
+        f"Plan A v2: -9.5% at <1d hold (min_hold=3d for mid zone) should be suppressed, got: {signals}"
     )
 
 
 def test_tiered_stop_fires_in_mid_zone_after_3d():
-    """Plan A: mid loss (-7.5%) with hold >= 3d → stop_loss fires."""
+    """Moderate breach (-9.5%) with hold >= 3d → stop_loss fires."""
     strat = _make_strat_tiered()
-    current_price = 92.5  # -7.5% → mid zone, triggers stop_loss_pct=-7%
+    current_price = 90.5  # -9.5% → mid zone, triggers stop_loss_pct=-7%
     pos = _make_position("TEST", 100.0, current_price, entry_hours_ago=24 * 4)  # 4 days
     features = [_make_feature("TEST", current_price)]
     signals = strat.generate(features, {"TEST": pos})
     assert len(signals) == 1, (
-        f"Plan A: -7.5% at 4d hold (>= 3d min_hold for mid zone) should fire, got: {signals}"
+        f"Plan A v2: -9.5% at 4d hold (>= 3d min_hold for mid zone) should fire, got: {signals}"
     )
     assert signals[0].action == "sell"
 
 
 def test_tiered_stop_fires_immediately_in_severe_zone():
-    """Plan A: severe loss (-9%) → min_hold=1 day, fires after 1 day."""
+    """Deep breach (-12.5%, offset=-5.5pp) → severe zone min_hold=1 day, fires after 1 day."""
     strat = _make_strat_tiered()
-    current_price = 91.0  # -9% from 100 → severe zone (< -8%)
+    current_price = 87.5  # -12.5% from 100 → severe zone (offset=-5.5pp past -7% stop)
     pos = _make_position("TEST", 100.0, current_price, entry_hours_ago=26.0)  # 1+ day
     features = [_make_feature("TEST", current_price)]
     signals = strat.generate(features, {"TEST": pos})
     assert len(signals) == 1, (
-        f"Plan A: -9% loss at 1+ day (severe zone min_hold=1d) should fire, got: {signals}"
+        f"Plan A v2: -12.5% loss at 1+ day (severe zone min_hold=1d) should fire, got: {signals}"
     )
     assert signals[0].action == "sell"
 
 
 def test_tiered_emergency_bypass_overrides_all_tiers():
-    """Plan A: emergency_stop_bypass_pct (-12%) overrides even 7-day noise tier."""
+    """emergency_stop_bypass_pct (-12%) overrides even the 7-day noise tier."""
     strat = _make_strat_tiered()
     current_price = 85.0  # -15%: breaches emergency_stop_bypass_pct=-12%
     pos = _make_position("TEST", 100.0, current_price, entry_hours_ago=2.0)  # well within 7d
     features = [_make_feature("TEST", current_price)]
     signals = strat.generate(features, {"TEST": pos})
     assert len(signals) == 1, (
-        f"Plan A: emergency bypass should fire regardless of tiered min_hold, got: {signals}"
+        f"Plan A v2: emergency bypass should fire regardless of tiered min_hold, got: {signals}"
     )
     assert "Emergency stop" in signals[0].reasoning
 
 
 def test_tiered_levels_sorted_correctly():
-    """Plan A: tiered levels must be stored highest-threshold-first for correct matching."""
+    """Tiered levels must be stored least-negative-offset-first for correct matching."""
     strat = _make_strat_tiered()
     levels = strat.tiered_min_hold_levels
     assert len(levels) == 2
-    # Highest threshold (-5.0) must come before lower (-8.0)
-    assert levels[0][0] > levels[1][0], "Levels must be sorted descending by threshold"
-    assert levels[0] == (-5.0, 7)
-    assert levels[1] == (-8.0, 3)
+    # Least-negative offset (-2.0, shallowest breach) must come before -5.0
+    assert levels[0][0] > levels[1][0], "Levels must be sorted descending by offset_pct"
+    assert levels[0] == (-2.0, 7)
+    assert levels[1] == (-5.0, 3)
