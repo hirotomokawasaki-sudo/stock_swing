@@ -338,8 +338,23 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                 return self._json({"error": str(e)}, status=500)
         
         if p == "/api/overview":
+            # NOTE: dashboard.get_overview() -> get_system_status() ->
+            # SystemAdapter.get_health() -> _check_cron_run_history() shells
+            # out to `openclaw cron runs` once per enabled cron job (~11.7s
+            # observed with 14 jobs; see 2026-08-06 /health incident). Cache
+            # the response and use the non-blocking self-check snapshot for
+            # the evidence gate so this endpoint can't reproduce that stall.
             try:
-                data = _apply_critical_evidence_gate(dashboard.get_overview())
+                cached = _get_cached("overview")
+                if cached is not None:
+                    return self._json(cached)
+                data = _compute_once(
+                    "overview",
+                    lambda: _apply_critical_evidence_gate(
+                        dashboard.get_overview(), self_check=_get_self_check_snapshot()
+                    ),
+                    ttl=30.0,
+                )
                 return self._json(data)
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
@@ -356,8 +371,19 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                 return self._json({"error": str(e)}, status=500)
         
         if p == "/api/system_status":
+            # See /api/overview note above: get_system_status() hits the
+            # same slow cron-subprocess path. Cache + non-blocking gate.
             try:
-                data = _apply_critical_evidence_gate(dashboard.get_system_status())
+                cached = _get_cached("system_status")
+                if cached is not None:
+                    return self._json(cached)
+                data = _compute_once(
+                    "system_status",
+                    lambda: _apply_critical_evidence_gate(
+                        dashboard.get_system_status(), self_check=_get_self_check_snapshot()
+                    ),
+                    ttl=30.0,
+                )
                 return self._json(data)
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
@@ -534,9 +560,14 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                 return self._json({"error": str(e)}, status=500)
         
         # C0: Console self-check
+        # Serve the same background-refreshed snapshot used by /health
+        # (see docstring on _get_self_check_snapshot) instead of calling
+        # run_self_check() inline, which can block ~11s on the cron
+        # subprocess check.
         if p == "/api/console/self_check":
             try:
-                return self._json(_apply_critical_evidence_gate(run_self_check(PROJECT_ROOT)))
+                snapshot = _get_self_check_snapshot()
+                return self._json(_apply_critical_evidence_gate(snapshot, self_check=snapshot))
             except Exception as e:
                 return self._json({"error": str(e)}, status=500)
 
