@@ -62,6 +62,67 @@ _cache_lock = threading.Lock()
 _cache: dict = {}       # key -> {"data": ..., "ts": float, "ttl": float}
 _in_flight: dict = {}   # key -> threading.Event  (set when result is ready)
 
+# Background self-check refresher for /health.
+#
+# run_self_check() -> _check_cron_run_history() shells out to
+# `openclaw cron runs --id ...` once per enabled cron job (14+ subprocess
+# calls), which alone can take >10s. The external watchdog's /health probe
+# uses a 5s timeout, so computing this synchronously inside the request
+# path caused every single probe to time out -> watchdog restarts the
+# process -> new process is equally slow on its first request -> infinite
+# unhealthy/restart loop (observed 2026-08-06, ~1h of continuous restarts).
+#
+# /health must therefore never block on this. A background thread refreshes
+# the cached value periodically; the request handler only ever reads the
+# last-known snapshot (or a fast "not_yet_computed" placeholder before the
+# first refresh completes).
+_self_check_lock = threading.Lock()
+_self_check_cache: dict | None = None
+_SELF_CHECK_REFRESH_S = 30.0
+
+
+def _self_check_refresh_loop():
+    global _self_check_cache
+    while True:
+        try:
+            result = run_self_check(PROJECT_ROOT)
+            with _self_check_lock:
+                _self_check_cache = result
+        except Exception as exc:  # pragma: no cover - background loop must never die
+            with _self_check_lock:
+                _self_check_cache = {
+                    "ok": False,
+                    "error": str(exc),
+                    "health_status": "blocked",
+                    "health_score": 0,
+                    "health_evidence_status": "invalid",
+                    "critical_missing": ["self_check_refresh_error"],
+                }
+        time.sleep(_SELF_CHECK_REFRESH_S)
+
+
+def _get_self_check_snapshot() -> dict:
+    """Non-blocking read of the last self-check result.
+
+    Returns a lightweight "not_yet_computed" placeholder before the
+    background refresher has produced its first result. Never runs
+    run_self_check() inline.
+    """
+    with _self_check_lock:
+        if _self_check_cache is not None:
+            return _self_check_cache
+    return {
+        "ok": True,
+        "health_status": "unknown",
+        "health_score": 0,
+        "health_evidence_status": "unknown",
+        "critical_missing": [],
+        "note": "self_check not yet computed (background refresh pending)",
+    }
+
+
+threading.Thread(target=_self_check_refresh_loop, daemon=True).start()
+
 
 def _get_cached(key: str):
     """Return cached data if still valid, else None."""
@@ -237,13 +298,14 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             return self._file(ROOT / "ui" / "test-phase3.html", "text/html; charset=utf-8")
         
         # Health check
+        # See _get_self_check_snapshot() docstring: this must stay non-blocking.
         if p == "/health":
             return self._json(_apply_critical_evidence_gate({
                 "ok": True,
                 "service": "stock_swing_console",
                 "time": now_iso(),
                 "project_root": str(PROJECT_ROOT),
-            }))
+            }, self_check=_get_self_check_snapshot()))
         
         # API endpoints
         if p == "/api/dashboard":
