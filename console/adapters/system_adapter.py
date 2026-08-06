@@ -6,6 +6,7 @@ import json
 import os
 import shutil
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -378,6 +379,43 @@ class SystemAdapter:
             )
         return {"source": source, "ok": ok, "statuses": statuses}
 
+    def _fetch_one_job_runs(self, job: dict[str, Any]) -> dict[str, Any] | None:
+        """Fetch run history for a single cron job. Returns an error dict on
+        failure, or None on success. Runs in a worker thread; subprocess.run
+        releases the GIL while waiting on the child process, so this is safe
+        to parallelize across jobs.
+        """
+        job_id = str(job.get("id") or "")
+        if not job_id:
+            return {"job": job.get("name") or "unknown", "error": "missing_job_id"}
+        try:
+            result = subprocess.run(
+                [_OPENCLAW_BIN, "cron", "runs", "--id", job_id, "--limit", "3"],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=_CRON_TIMEOUT_S,
+                env=_OPENCLAW_ENV,
+            )
+        except Exception as exc:
+            return {"job": job.get("name") or job_id, "job_id": job_id, "error": str(exc)}
+        if result.returncode != 0:
+            return {
+                "job": job.get("name") or job_id,
+                "job_id": job_id,
+                "error": result.stderr.strip() or result.stdout.strip() or "command_failed",
+            }
+        parsed = parse_json_from_output(result.stdout)
+        if not parsed.ok:
+            return {"job": job.get("name") or job_id, "job_id": job_id, "error": parsed.error}
+        if not isinstance(parsed.data, dict):
+            return {
+                "job": job.get("name") or job_id,
+                "job_id": job_id,
+                "error": f"unexpected payload type: {type(parsed.data).__name__}",
+            }
+        return None
+
     def _check_cron_run_history(self) -> dict[str, Any]:
         try:
             jobs_payload = self._run_openclaw_json(["cron", "list", "--json"])
@@ -387,52 +425,24 @@ class SystemAdapter:
         jobs = list(jobs_payload.get("jobs") or [])
         enabled_jobs = [job for job in jobs if job.get("enabled", True)]
         parse_errors: list[dict[str, Any]] = []
-        parsed_jobs = 0
         total_jobs = len(enabled_jobs)
 
-        for job in enabled_jobs:
-            job_id = str(job.get("id") or "")
-            if not job_id:
-                parse_errors.append({"job": job.get("name") or "unknown", "error": "missing_job_id"})
-                continue
-            result = subprocess.run(
-                [_OPENCLAW_BIN, "cron", "runs", "--id", job_id, "--limit", "3"],
-                capture_output=True,
-                text=True,
-                check=False,
-                timeout=_CRON_TIMEOUT_S,
-                env=_OPENCLAW_ENV,
-            )
-            if result.returncode != 0:
-                parse_errors.append(
-                    {
-                        "job": job.get("name") or job_id,
-                        "job_id": job_id,
-                        "error": result.stderr.strip() or result.stdout.strip() or "command_failed",
-                    }
-                )
-                continue
-            parsed = parse_json_from_output(result.stdout)
-            if not parsed.ok:
-                parse_errors.append(
-                    {
-                        "job": job.get("name") or job_id,
-                        "job_id": job_id,
-                        "error": parsed.error,
-                    }
-                )
-                continue
-            if not isinstance(parsed.data, dict):
-                parse_errors.append(
-                    {
-                        "job": job.get("name") or job_id,
-                        "job_id": job_id,
-                        "error": f"unexpected payload type: {type(parsed.data).__name__}",
-                    }
-                )
-                continue
-            parsed_jobs += 1
+        # 2026-08-06: this used to shell out to `openclaw cron runs` once per
+        # job, sequentially. With 14 enabled jobs that took ~11.7s total,
+        # which was slower than the console watchdog's 5s /health timeout
+        # and caused an infinite restart loop (see docs/daily_logs/2026-08-06.md).
+        # Run the subprocess calls concurrently instead; each call still has
+        # its own _CRON_TIMEOUT_S timeout, so a single slow/hung job can no
+        # longer stall the whole check by (jobs * timeout).
+        if total_jobs:
+            with ThreadPoolExecutor(max_workers=min(total_jobs, 8)) as pool:
+                futures = [pool.submit(self._fetch_one_job_runs, job) for job in enabled_jobs]
+                for future in as_completed(futures):
+                    err = future.result()
+                    if err is not None:
+                        parse_errors.append(err)
 
+        parsed_jobs = total_jobs - len(parse_errors)
         coverage = (parsed_jobs / total_jobs) if total_jobs else 0.0
         return {
             "critical": True,
