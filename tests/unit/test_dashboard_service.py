@@ -294,3 +294,90 @@ class TestGetBuyStopList:
         result = svc._get_buy_stop_list()
         symbols = [r["symbol"] for r in result]
         assert "NEWCO" not in symbols, "Under min_trades threshold should not be blocked"
+
+
+# ---------------------------------------------------------------------------
+# _get_small_sample_watchlist
+# ---------------------------------------------------------------------------
+
+class TestGetSmallSampleWatchlist:
+    """Unit tests for DashboardService._get_small_sample_watchlist().
+
+    2026-08-06: added web-dashboard wiring for the small_sample_watchlist
+    feature (2026-08-05, entry_filter.get_small_sample_watchlist) which had
+    only been exposed via the CLI console summary until now.
+
+    testing_standards.md: 1-A (normal / boundary / file-missing / corrupt).
+    """
+
+    def _write_pnl_with_closed(self, tmp_path: Path, trades: list[dict]) -> None:
+        state_path = tmp_path / "data" / "tracking" / "pnl_state.json"
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        state_path.write_text(json.dumps({"trades": trades}))
+
+    def _closed_trade(self, symbol: str, pnl: float) -> dict:
+        return {"symbol": symbol, "status": "closed", "qty": 100,
+                "entry_price": 100.0, "exit_price": 100.0 + pnl / 100,
+                "pnl": pnl, "return_pct": pnl / 10000}
+
+    def test_returns_list_type(self, tmp_path):
+        """Normal: always returns a list (never None)."""
+        self._write_pnl_with_closed(tmp_path, [])
+        svc = _StubService(tmp_path)
+        result = svc._get_small_sample_watchlist()
+        assert isinstance(result, list), "Must return a list"
+
+    def test_missing_pnl_state_returns_empty(self, tmp_path):
+        """File-missing: no pnl_state.json → empty list (no crash)."""
+        svc = _StubService(tmp_path)
+        result = svc._get_small_sample_watchlist()
+        assert result == [], "Missing file should return []"
+
+    def test_corrupt_pnl_state_returns_empty(self, tmp_path):
+        """Corrupt: invalid JSON → empty list (no crash)."""
+        state_path = tmp_path / "data" / "tracking" / "pnl_state.json"
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        state_path.write_text("INVALID{{{")
+        svc = _StubService(tmp_path)
+        result = svc._get_small_sample_watchlist()
+        assert result == [], "Corrupt JSON should return []"
+
+    def test_small_sample_negative_pnl_symbol_appears(self, tmp_path):
+        """Normal: n=3 (< min_n=5), net PnL<0 → appears on watchlist."""
+        trades = [self._closed_trade("IBM", pnl=-2000) for _ in range(3)]
+        self._write_pnl_with_closed(tmp_path, trades)
+        svc = _StubService(tmp_path)
+        result = svc._get_small_sample_watchlist()
+        symbols = [r["symbol"] for r in result]
+        assert "IBM" in symbols, f"IBM (n=3, net_pnl<0) should be on watchlist; got {symbols}"
+
+    def test_result_entries_have_required_fields(self, tmp_path):
+        """Normal: each entry has symbol, n_trades, net_pnl, win_rate, note."""
+        trades = [self._closed_trade("IBM", pnl=-2000) for _ in range(3)]
+        self._write_pnl_with_closed(tmp_path, trades)
+        svc = _StubService(tmp_path)
+        result = svc._get_small_sample_watchlist()
+        if result:
+            entry = result[0]
+            for field in ("symbol", "n_trades", "net_pnl", "win_rate", "note"):
+                assert field in entry, f"Missing field: {field}"
+
+    def test_enough_trades_for_stock_reduced_gate_excluded(self, tmp_path):
+        """Boundary: n=5 (== min_n for stock_reduced gate) → not on this
+        watchlist; that symbol belongs to the auto-block (buy_stop_list)
+        path instead, not the small-sample observability path."""
+        trades = [self._closed_trade("BADCO", pnl=-100) for _ in range(5)]
+        self._write_pnl_with_closed(tmp_path, trades)
+        svc = _StubService(tmp_path)
+        result = svc._get_small_sample_watchlist()
+        symbols = [r["symbol"] for r in result]
+        assert "BADCO" not in symbols, "n>=min_n should not appear on small-sample watchlist"
+
+    def test_positive_pnl_symbol_excluded(self, tmp_path):
+        """Boundary: small sample but net PnL>=0 → not on watchlist (not a loser)."""
+        trades = [self._closed_trade("WINCO", pnl=500) for _ in range(3)]
+        self._write_pnl_with_closed(tmp_path, trades)
+        svc = _StubService(tmp_path)
+        result = svc._get_small_sample_watchlist()
+        symbols = [r["symbol"] for r in result]
+        assert "WINCO" not in symbols, "Positive net PnL should not appear on loss watchlist"

@@ -1007,6 +1007,7 @@ class DashboardService:
             "positions_opened": position_count,
             "positions_closed": trading.get("summary", {}).get("closed_trades", 0) if trading else 0,
             "buy_stop_list": self._get_buy_stop_list(),
+            "small_sample_watchlist": self._get_small_sample_watchlist(),
         }
 
         by_strategy: Dict[str, Dict[str, Any]] = {}
@@ -2077,6 +2078,47 @@ class DashboardService:
                 }
 
             return get_permanent_block_summary(
+                closed_trades,
+                config=EntryFilterConfig.from_env(),
+                etf_symbols=etf_syms,
+            )
+        except Exception:
+            return []
+
+    def _get_small_sample_watchlist(self) -> list[dict]:
+        """Return the small-sample watchlist (2026-08-05, read-only observability).
+
+        Surfaces non-ETF symbols with 2-4 closed trades and already-negative
+        net PnL that the automatic stock_reduced gate (min_n=5) cannot yet
+        statistically justify blocking. Does not block anything.
+
+        2026-08-06: this was implemented for the CLI/paper_demo console
+        summary (src/stock_swing/reporting/console_summary.py ->
+        decision_funnel.small_sample_watchlist) but never wired into the web
+        dashboard (this file / console/app.py), so it was invisible to
+        anyone looking at the web console UI. Mirrors _get_buy_stop_list()
+        above. Returns [] on any error.
+        """
+        try:
+            import yaml
+            from stock_swing.risk.entry_filter import get_small_sample_watchlist, EntryFilterConfig
+
+            state_path = self.project_root / "data" / "tracking" / "pnl_state.json"
+            if not state_path.exists():
+                return []
+            state = DashboardService._load_json_cached(state_path)
+            closed_trades = [t for t in state.get("trades", []) if t.get("status") == "closed"]
+
+            etf_syms: set[str] = set()
+            reg_path = self.project_root / "config" / "reference" / "symbol_registry.yaml"
+            if reg_path.exists():
+                reg = yaml.safe_load(reg_path.read_text())
+                etf_syms = {
+                    sym for sym, info in (reg.get("symbols") or {}).items()
+                    if (info or {}).get("asset_class") == "etf"
+                }
+
+            return get_small_sample_watchlist(
                 closed_trades,
                 config=EntryFilterConfig.from_env(),
                 etf_symbols=etf_syms,

@@ -874,6 +874,7 @@ class Console {
         ${pipelineStageHtml}
         ${this._renderDenyBySymbol(p)}
         ${this._renderBuyStopList(funnel)}
+        ${this._renderSmallSampleWatchlist(funnel)}
         ${this._renderPaperRuns(p)}`;
     }
 
@@ -934,6 +935,37 @@ class Console {
             <h4 style="margin:0 0 8px">🚫 BUY STOP LIST <span class="muted small" style="font-weight:normal">（永続ブロック中 ${list.length}件）</span></h4>
             <div class="table-wrap"><table><thead><tr>
                 <th>銘柄</th><th>取引数</th><th>PF</th><th>理由</th><th>詳細</th>
+            </tr></thead><tbody>${rows}</tbody></table></div>
+        </div>`;
+    }
+
+    // 2026-08-06: small_sample_watchlist was already computed on the backend
+    // (2026-08-05, entry_filter.get_small_sample_watchlist) and wired into
+    // the CLI console summary, but had no web dashboard panel. Read-only
+    // observability — never blocks anything.
+    _renderSmallSampleWatchlist(funnel) {
+        const list = funnel.small_sample_watchlist || [];
+        if (list.length === 0) return '';
+
+        const rows = list.map(item => {
+            const wr = item.win_rate;
+            const wrStr = wr != null ? (wr * 100).toFixed(0) + '%' : '—';
+            const pnl = item.net_pnl;
+            const pnlStr = pnl != null ? pnl.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : '—';
+            return `<tr>
+                <td><strong>${this.escapeHtml(item.symbol || '—')}</strong></td>
+                <td class="small">${item.n_trades ?? '—'}</td>
+                <td class="small danger">${pnlStr}</td>
+                <td class="small">${wrStr}</td>
+                <td class="small muted">${this.escapeHtml(item.note || '—')}</td>
+            </tr>`;
+        }).join('');
+
+        return `
+        <div class="card" style="margin-top:8px">
+            <h4 style="margin:0 0 8px">⚠️ SMALL-SAMPLE WATCHLIST <span class="muted small" style="font-weight:normal">（n=2〜4、既に赤字、自動ブロック対象外・手動判断推奨 ${list.length}件）</span></h4>
+            <div class="table-wrap"><table><thead><tr>
+                <th>銘柄</th><th>取引数</th><th>Net PnL</th><th>勝率</th><th>備考</th>
             </tr></thead><tbody>${rows}</tbody></table></div>
         </div>`;
     }
