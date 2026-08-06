@@ -578,6 +578,13 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 **今後の検討事項**: このウォッチリストに一定期間以上載った銘柄を手動で
 `pf_gate_skip_symbols`の逆（deny-list）に追加するフローを次回検討する価値がある。
 
+**2026-08-06 追記**: 上記実装はCLI/`paper_demo`のconsole summary（Telegram等）にのみ
+配線されており、Web console（`console/app.py` + `dashboard_service.py`）には未配線で
+ダッシュボードUIからは見えない状態だったことが判明。`DashboardService._get_small_sample_watchlist()`
+を新規追加（既存の`_get_buy_stop_list()`と同パターン）し、`funnel.small_sample_watchlist`として
+`/api/dashboard`経由で配信、UI（`console/ui/app.js`）にBUY STOP LISTと並ぶパネルとして追加（commit
+`962fbc8`）。ブロック挙動の変更なし（read-only observability継続）。
+
 ---
 
 ### 🔴 R5-v2: Portfolio Risk and Promotion Gates
