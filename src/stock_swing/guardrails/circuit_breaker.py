@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import dataclasses
 import json
 import os
 import tempfile
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -25,6 +26,14 @@ class CircuitBreakerState:
     triggered_rules: list[dict[str, Any]] = field(default_factory=list)
     cleared_by: str | None = None
     clear_note: str | None = None
+    # Heartbeat timestamp: stamped on every apply_decision() call (whether or
+    # not the status changes) so freshness checks (console self-check) can
+    # tell "guardrail is actively being evaluated" apart from "guardrail
+    # last changed state N days ago". Without this, a long-running healthy
+    # ('ok', no halts) period looks indistinguishable from a stale/dead
+    # guardrail loop, since the file was previously only rewritten on state
+    # transitions (see 2026-08-07 self-check false-positive investigation).
+    last_evaluated_at: str | None = None
 
     @property
     def is_halted(self) -> bool:
@@ -46,7 +55,6 @@ class CircuitBreakerStore:
             return CircuitBreakerState()
         data = json.loads(self.path.read_text(encoding="utf-8"))
         # Strip unknown keys (e.g. operator notes added by clear_circuit_breaker.py)
-        import dataclasses
         known = {f.name for f in dataclasses.fields(CircuitBreakerState)}
         return CircuitBreakerState(**{k: v for k, v in data.items() if k in known})
 
@@ -66,16 +74,20 @@ class CircuitBreakerStore:
 
     def apply_decision(self, decision: GuardDecision) -> CircuitBreakerState:
         current = self.load()
+        now = _now()
         if current.is_halted:
-            return current
+            stamped = replace(current, last_evaluated_at=now)
+            self.save(stamped)
+            return stamped
 
         if decision.action == GuardAction.halt:
             state = CircuitBreakerState(
                 status="halted",
                 action=decision.action.name,
-                triggered_at=_now(),
+                triggered_at=now,
                 reason="guardrail_halt",
                 triggered_rules=[asdict(item) for item in decision.triggered],
+                last_evaluated_at=now,
             )
             self.save(state)
             return state
@@ -84,9 +96,10 @@ class CircuitBreakerStore:
             state = CircuitBreakerState(
                 status="degraded",
                 action=decision.action.name,
-                triggered_at=_now(),
+                triggered_at=now,
                 reason="guardrail_degraded",
                 triggered_rules=[asdict(item) for item in decision.triggered],
+                last_evaluated_at=now,
             )
             self.save(state)
             return state
@@ -94,14 +107,22 @@ class CircuitBreakerStore:
         # R0-v2-A: recovery_pending can only exit via mark_clean_run_complete().
         # Do NOT auto-clear to ok here; a verified clean scheduled run is required.
         if current.is_recovery_pending:
-            return current
+            stamped = replace(current, last_evaluated_at=now)
+            self.save(stamped)
+            return stamped
 
         if current.status != "ok":
-            state = CircuitBreakerState(status="ok", action="allow", cleared_at=_now(), reason="metrics_normalized")
+            state = CircuitBreakerState(
+                status="ok", action="allow", cleared_at=now, reason="metrics_normalized", last_evaluated_at=now
+            )
             self.save(state)
             return state
 
-        return current
+        # Status stays 'ok' and unchanged: still heartbeat-stamp so freshness
+        # checks can distinguish "actively evaluated, healthy" from "stale".
+        stamped = replace(current, last_evaluated_at=now)
+        self.save(stamped)
+        return stamped
 
     def clear(
         self,
@@ -122,13 +143,15 @@ class CircuitBreakerStore:
         """
         status = "recovery_pending" if require_verification else "ok"
         reason = "manual_clear" if require_verification else "manual_clear_force_ok"
+        now = _now()
         state = CircuitBreakerState(
             status=status,
             action="allow",
-            cleared_at=_now(),
+            cleared_at=now,
             reason=reason,
             cleared_by=cleared_by,
             clear_note=note,
+            last_evaluated_at=now,
         )
         self.save(state)
         return state
@@ -143,11 +166,13 @@ class CircuitBreakerStore:
         current = self.load()
         if not current.is_recovery_pending:
             return current
+        now = _now()
         state = CircuitBreakerState(
             status="ok",
             action="allow",
-            cleared_at=_now(),
+            cleared_at=now,
             reason="clean_run_verified",
+            last_evaluated_at=now,
         )
         self.save(state)
         return state

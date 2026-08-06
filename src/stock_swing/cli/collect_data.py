@@ -358,12 +358,20 @@ def collect_finnhub(symbols, store, max_runtime_seconds=0):
         try:
             client = FinnhubClient(
                 api_key=api_key,
+                # 2026-08-07: bumped from (max_attempts=2, timeout=5.0) after a
+                # cron run showed 6/44 symbols (MSFT/ASML/SMCI/FTNT/NBIS/RBRK)
+                # failing as api_error/timeout, dropping source_sla coverage to
+                # 86.4% (required >=99.5%) and tripping the console self-check's
+                # critical 'source_sla' evidence gate even though the ledger and
+                # broker/tracker state were fine. A 5s per-attempt timeout with
+                # only 1 retry is tight for Finnhub's company-news endpoint,
+                # which can occasionally be slow without being truly down.
                 retry_config=RetryConfig(
-                    max_attempts=2,
+                    max_attempts=3,
                     initial_delay=1.0,
-                    max_delay=3.0,
+                    max_delay=6.0,
                     backoff_factor=2.0,
-                    timeout=5.0,
+                    timeout=10.0,
                 ),
             )
         except Exception:

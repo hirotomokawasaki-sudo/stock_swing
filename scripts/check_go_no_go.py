@@ -10,6 +10,7 @@ Required 条件7件をシステム状態から自動確認し、
 from __future__ import annotations
 
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,6 +19,7 @@ import zoneinfo
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 JST = zoneinfo.ZoneInfo("Asia/Tokyo")
+CURRENT_MODE_PATH = PROJECT_ROOT / "config" / "runtime" / "current_mode.yaml"
 
 
 def _load(path: Path) -> dict:
@@ -132,6 +134,45 @@ def check() -> dict[str, dict]:
     return results
 
 
+def _update_ledger_gate_last_checked(ledger_pass: bool, now_jst: datetime) -> None:
+    """Stamp ledger_quality_gate.last_checked in current_mode.yaml.
+
+    console self-check (console/adapters/system_adapter.py::_check_ledger_validity)
+    treats ledger_quality_gate as stale (and therefore reports it as a
+    'critical_missing' evidence failure) if last_checked is more than 24h
+    old, even when the gate is genuinely VALID and re-confirmed daily by
+    this script. Previously last_checked was only ever bumped by manual
+    edits during ledger repair work, so it silently went stale between
+    repairs (observed 2026-08-01 -> 2026-08-07, 6 days unedited) and caused
+    a false-positive 'blocked' /health status even though everything was
+    actually fine. Bump it here on every --save run so daily re-verification
+    is reflected without a manual edit each time.
+
+    Only touches the `current_status:` and `last_checked:` lines via
+    targeted regex substitution (not a full YAML round-trip) to avoid
+    stripping the extensive human-authored comments in this file.
+    """
+    if not ledger_pass or not CURRENT_MODE_PATH.exists():
+        return
+    text = CURRENT_MODE_PATH.read_text(encoding="utf-8")
+    today = now_jst.strftime("%Y-%m-%d")
+    new_text, n1 = re.subn(
+        r'(?m)^(  current_status:\s*)\S+(.*)$',
+        lambda m: f"{m.group(1)}VALID{m.group(2)}",
+        text,
+        count=1,
+    )
+    new_text, n2 = re.subn(
+        r'(?m)^(  last_checked:\s*)"?[0-9-]+"?(.*)$',
+        lambda m: f'{m.group(1)}"{today}"{m.group(2)}',
+        new_text,
+        count=1,
+    )
+    if n1 and n2 and new_text != text:
+        CURRENT_MODE_PATH.write_text(new_text, encoding="utf-8")
+        print(f"[updated] {CURRENT_MODE_PATH} ledger_quality_gate.last_checked -> {today}", file=sys.stderr)
+
+
 def format_report(results: dict[str, dict], save: bool = False) -> str:
     now_jst = datetime.now(JST)
     all_pass = all(r["pass"] for r in results.values())
@@ -178,6 +219,8 @@ def format_report(results: dict[str, dict], save: bool = False) -> str:
         out = PROJECT_ROOT / "docs" / f"go_no_go_result_{now_jst.strftime('%Y%m%d')}.md"
         out.write_text(report, encoding="utf-8")
         print(f"[saved] {out}", file=sys.stderr)
+        ledger_pass = results.get("ledger_quality", {}).get("pass", False)
+        _update_ledger_gate_last_checked(ledger_pass, now_jst)
 
     return report
 

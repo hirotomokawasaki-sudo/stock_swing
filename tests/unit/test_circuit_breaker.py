@@ -205,3 +205,105 @@ def test_circuit_breaker_degraded_state(tmp_path: Path) -> None:
     state = store.apply_decision(decision)
     assert state.status == "degraded"
     assert not state.is_halted
+
+
+# ── 2026-08-07: last_evaluated_at heartbeat stamp ────────────────────────── #
+# console self-check (system_adapter._check_guardrail_freshness) treats the
+# circuit breaker as "stale" purely from cleared_at/triggered_at age, which
+# stays fixed while the breaker sits healthily in 'ok' for days. These tests
+# lock in that apply_decision()/clear()/mark_clean_run_complete() always
+# refresh last_evaluated_at, including on every no-op 'still ok' call, so a
+# freshness check reading last_evaluated_at reflects "actively evaluated"
+# rather than "last changed state".
+
+
+def test_apply_decision_stamps_last_evaluated_at_on_first_allow(tmp_path: Path) -> None:
+    store = CircuitBreakerStore(tmp_path / "cb.json")
+    state = store.apply_decision(_allow_decision())
+    assert state.status == "ok"
+    assert state.last_evaluated_at is not None
+
+
+def test_apply_decision_stamps_last_evaluated_at_on_repeated_ok(tmp_path: Path) -> None:
+    """Repeated allow decisions while already 'ok' still bump the heartbeat."""
+    store = CircuitBreakerStore(tmp_path / "cb.json")
+    first = store.apply_decision(_allow_decision())
+    assert first.status == "ok"
+    import time as _time
+    _time.sleep(0.01)
+    second = store.apply_decision(_allow_decision())
+    assert second.status == "ok"
+    assert second.last_evaluated_at is not None
+    assert second.last_evaluated_at != first.last_evaluated_at
+
+
+def test_apply_decision_stamps_last_evaluated_at_when_halted(tmp_path: Path) -> None:
+    store = CircuitBreakerStore(tmp_path / "cb.json")
+    halted = store.apply_decision(_halt_decision())
+    assert halted.last_evaluated_at is not None
+
+
+def test_apply_decision_stamps_last_evaluated_at_while_already_halted(tmp_path: Path) -> None:
+    """Subsequent evaluations while already halted still refresh the heartbeat
+    (the halted-state early-return path must not skip stamping)."""
+    store = CircuitBreakerStore(tmp_path / "cb.json")
+    first = store.apply_decision(_halt_decision())
+    import time as _time
+    _time.sleep(0.01)
+    second = store.apply_decision(_allow_decision())
+    assert second.is_halted
+    assert second.last_evaluated_at is not None
+    assert second.last_evaluated_at != first.last_evaluated_at
+
+
+def test_apply_decision_stamps_last_evaluated_at_during_recovery_pending(tmp_path: Path) -> None:
+    store = CircuitBreakerStore(tmp_path / "cb.json")
+    store.apply_decision(_halt_decision())
+    store.clear(cleared_by="op", note="safe", require_verification=True)
+    import time as _time
+    _time.sleep(0.01)
+    state = store.apply_decision(_allow_decision())
+    assert state.status == "recovery_pending"
+    assert state.last_evaluated_at is not None
+
+
+def test_clear_stamps_last_evaluated_at(tmp_path: Path) -> None:
+    store = CircuitBreakerStore(tmp_path / "cb.json")
+    store.apply_decision(_halt_decision())
+    state = store.clear(cleared_by="operator", note="verified safe to resume")
+    assert state.last_evaluated_at is not None
+    assert state.last_evaluated_at == state.cleared_at
+
+
+def test_mark_clean_run_complete_stamps_last_evaluated_at(tmp_path: Path) -> None:
+    store = CircuitBreakerStore(tmp_path / "cb.json")
+    store.apply_decision(_halt_decision())
+    store.clear(cleared_by="op", note="safe", require_verification=True)
+    state = store.mark_clean_run_complete()
+    assert state.status == "ok"
+    assert state.last_evaluated_at is not None
+
+
+def test_last_evaluated_at_persists_across_reload(tmp_path: Path) -> None:
+    store = CircuitBreakerStore(tmp_path / "cb.json")
+    state = store.apply_decision(_allow_decision())
+
+    store2 = CircuitBreakerStore(tmp_path / "cb.json")
+    reloaded = store2.load()
+    assert reloaded.last_evaluated_at == state.last_evaluated_at
+
+
+def test_load_defaults_last_evaluated_at_to_none_for_legacy_file(tmp_path: Path) -> None:
+    """Old circuit_breaker.json files written before this field existed must
+    still load cleanly (dataclass default) rather than raising."""
+    import json as _json
+
+    path = tmp_path / "cb.json"
+    path.write_text(
+        _json.dumps({"status": "ok", "action": "allow", "reason": "metrics_normalized"}),
+        encoding="utf-8",
+    )
+    store = CircuitBreakerStore(path)
+    state = store.load()
+    assert state.status == "ok"
+    assert state.last_evaluated_at is None

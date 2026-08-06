@@ -201,7 +201,12 @@ class SystemAdapter:
             return {"critical": True, "ok": False, "error": str(exc)}
 
         market_date = _current_market_date()
-        cb_as_of = cb.get("cleared_at") or cb.get("triggered_at")
+        # Prefer last_evaluated_at (heartbeat stamp written on every guardrail
+        # evaluation, even when status is unchanged 'ok'; added 2026-08-07).
+        # Fall back to cleared_at/triggered_at for older circuit_breaker.json
+        # files written before that field existed, so a long stretch of
+        # healthy 'ok' status doesn't look falsely stale.
+        cb_as_of = cb.get("last_evaluated_at") or cb.get("cleared_at") or cb.get("triggered_at")
         cb_age = _age_seconds(cb_as_of)
         cb_status = str(cb.get("status") or "unknown")
         day_start_missing = list(day_start.get("missing_fields") or [])
