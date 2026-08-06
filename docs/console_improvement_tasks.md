@@ -533,9 +533,18 @@ floorを段階的に引き上げ（ratchet）:
 - R4-A: signal_strength 飽和原因調査 ✅
 - R4-B: min_signal_strength 調整（confidence ≥0.40 filter） ✅
 
-**未実装 / 未検証**:
-- saturation: 73% が strength=1.0 → R4-B 後も改善なし
-- R4-C: デサイル別 PF スクリプト（post-launch 予定、データ不足で今は実施不可）
+**検証結果（2026-08-05、実データ再集計）— R4-Bは実は大きく改善していた**:
+旧記載は「R4-B後も改善なし」だったが、全 decisions（breakout_momentum系、2026選)を
+実際に集計したところ誤りだったことが判明:
+- R4-B実装前（〜07-01）: n=1,579 、飽和（strength≥09.99）**74.3%**
+- R4-B実装後（07-02〜）: n=399、飽和 **14.8%**
+- 07-02当日に明確な転換点（56%→30%）が確認でき〇07-07以降は10〜20%台で安定
+- つまりR4-B（飽和閾値 0.10→0.20）は**意図通りの大幅改善を達成済み**だった。
+  旧記載は途中集計ノイズ（集計期間がR4-B前後をまたぐ含み値だった可能性）による誤記載だったと推定
+
+**未実装 / 未検証（修正後の残項）**:
+- R4-C: デサイル別 PF スクリプト（post-launch 予定、データ不足で今は実施不可。さだしR4-B後の
+  飽和率は十分低下しているため、nが蓄積されればR4-C実施の障壁は下がっている）
 - raw score / normalized score / cross-sectional percentile 保存
 - confidence を calibration 可能な probability として定義（固定 0.85 多発の解消）
 - feature snapshot を decision 時点の as-of データで immutable 保存
