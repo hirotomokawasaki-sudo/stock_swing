@@ -61,6 +61,7 @@ from stock_swing.risk.entry_filter import (
     get_small_sample_watchlist,
 )
 from stock_swing.risk.open_shock_cooldown import apply_open_shock_cooldown
+from stock_swing.risk.same_symbol_cooldown import filter_buys_by_same_symbol_cooldown
 from stock_swing.risk.portfolio_allocator import PortfolioAllocator
 from stock_swing.risk.allocation_config import (
     get_etf_symbols_from_registry,
@@ -1534,6 +1535,22 @@ def main() -> int:  # noqa: C901
     decision_engine = DecisionEngine(runtime_mode=runtime_mode, risk_validator=risk_validator)
     decisions: list[DecisionRecord] = []
 
+    # Plan B / Plan C shadow diagnostics (2026-08-07, NBIS incident follow-up):
+    # observability-only checks that log what *would* happen under a
+    # volatility-cap gate (Plan B) or a post-drop-bounce flag (Plan C), but
+    # never block a BUY while in shadow mode. Loaded once per run; per-symbol
+    # Finnhub metric lookup is best-effort (4h-stale news-collection cron
+    # data) and must never fail the run if unavailable.
+    from stock_swing.risk.volatility_gate import VolatilityGateConfig, classify_buy_volatility, log_shadow as log_volatility_shadow
+    from stock_swing.risk.distance_from_high import DistanceFromHighConfig, classify_bounce_candidate, log_observation as log_distance_observation
+    from stock_swing.risk.finnhub_metric_lookup import load_latest_finnhub_metric
+
+    _vol_gate_config = VolatilityGateConfig.from_env()
+    _dfh_config = DistanceFromHighConfig.from_env()
+    _finnhub_raw_dir = project_root / "data" / "raw" / "finnhub"
+    _vol_shadow_log_path = project_root / "data" / "volatility_gate_shadow_log.jsonl"
+    _dfh_log_path = project_root / "data" / "distance_from_high_log.jsonl"
+
     for signal in all_signals:
         decision = decision_engine.process(signal, current_positions=current_positions)
         if isinstance(decision.evidence, dict):
@@ -1541,6 +1558,33 @@ def main() -> int:  # noqa: C901
             decision.evidence["macro_regime_raw"] = detected_regime
             decision.evidence["price_regime_raw"] = price_based_regime
         decisions.append(decision)
+
+        if decision.action == "buy":
+            try:
+                _metric = load_latest_finnhub_metric(decision.symbol, _finnhub_raw_dir)
+                if _vol_gate_config.is_enabled():
+                    _vol_result = classify_buy_volatility(decision.symbol, _metric, _vol_gate_config)
+                    log_volatility_shadow(_vol_result, shadow_log_path=_vol_shadow_log_path)
+                if not _dfh_config.disabled:
+                    _latest_close = None
+                    _momentum_pct = None
+                    if isinstance(decision.evidence, dict):
+                        _latest_close = decision.evidence.get("latest_close")
+                    _sig_metadata = getattr(signal, "metadata", None)
+                    if isinstance(_sig_metadata, dict) and _sig_metadata.get("momentum") is not None:
+                        try:
+                            _momentum_pct = float(_sig_metadata["momentum"]) * 100.0
+                        except (TypeError, ValueError):
+                            _momentum_pct = None
+                    _dfh_result = classify_bounce_candidate(
+                        decision.symbol, _latest_close, _momentum_pct, _metric, _dfh_config,
+                    )
+                    log_distance_observation(_dfh_result, log_path=_dfh_log_path)
+            except Exception as _shadow_exc:
+                logger.warning(
+                    "volatility_gate/distance_from_high shadow check failed for %s (non-fatal): %s",
+                    decision.symbol, _shadow_exc,
+                )
     attach_run_context(decisions, run_context)
     if experiment_context is not None:
         for _d in decisions:
@@ -1685,6 +1729,28 @@ def main() -> int:  # noqa: C901
         audit_log.log_system_event(
             "entry_filter_blocked_buys",
             details=f"{len(_ef_result.blocked)} buy(s): {[s for s, _ in _ef_result.blocked[:5]]}",
+        )
+
+    # Same-symbol buy cooldown (2026-08-07, NBIS incident): block additional
+    # BUYs into a symbol that already has an open tracker position entered
+    # within the cooldown window (default 24h). See same_symbol_cooldown.py
+    # module docstring for the incident this addresses (3 NBIS buys within
+    # ~37h, all stopped out together for -$7,774). Narrow, local guard --
+    # does not touch volatility scoring or signal-strength calculation.
+    # Disable: export SAME_SYMBOL_COOLDOWN_DISABLED=true
+    actionable, _cooldown_blocked = filter_buys_by_same_symbol_cooldown(
+        actionable,
+        pnl_tracker.get_open_positions(),
+    )
+    if _cooldown_blocked:
+        print(
+            f"  \u23f1  Same-symbol cooldown blocked {len(_cooldown_blocked)} buy(s): "
+            + ", ".join(f"{sym}" for sym, _ in _cooldown_blocked[:5])
+            + (" ..." if len(_cooldown_blocked) > 5 else "")
+        )
+        audit_log.log_system_event(
+            "same_symbol_cooldown_blocked_buys",
+            details=f"{len(_cooldown_blocked)} buy(s): {[s for s, _ in _cooldown_blocked[:5]]}",
         )
 
     _critical_buy_halt_reasons = list(dict.fromkeys(_buy_halt_reasons + _day_start_missing_metrics))

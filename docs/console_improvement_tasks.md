@@ -902,3 +902,110 @@ offset_pct ベースに全面更新（+2件: low/high conviction 到達性の回
 効果検証は未実施（次回フォローアップ課題）。
 - console current snapshot reachable、freshness SLA内
 - post-fix clean paper cohortでcost-adjusted PF >1、expectancy >0
+
+---
+
+## R9: NBIS 高掴みインシデント follow-up（2026-08-07）
+
+**背景**: 2026-08-04〜06、NBIS（3ヶ月年率換算リターン標準偏差 ~130%、当時
+52週高値$299.86から>25%下落済み）に対し、36時間で3回連続BUY（$221〜226
+レンジ）が発生。いずれも「5日モメンタム+12〜31%」の強気シグナルで発火した
+が、実態はショック後の反発（デッドキャットバウンス）だった可能性が高い。
+08-06 19:55 UTC に3ロット一括 stop_loss、合計 **-$7,774**。
+
+ユーザーとの協議で3方向の対策を「全部同時」ではなく **段階的ロールアウト**
+（Plan A即時実装 → Plan B/Cは shadow/observability-only で検証してから
+昇格判断）で進めることに合意。理由: Plan Aは局所的・低リスクで効果測定が
+容易な一方、Plan B（ボラ上限ゲート）・Plan Cは既存の勝ちトレード（同じ
+高ボラ・大幅下落プロファイルの NBIS 06-25 クローズ +$5,288 など）を巻き
+込むリスクがあり、無検証での即時本番反映は avoid（`やらないこと` 節の
+精神と整合）。
+
+### Plan A: 同一銘柄クールダウン（実装完了・有効化済み）
+
+- **モジュール**: `src/stock_swing/risk/same_symbol_cooldown.py`
+- **ロジック**: 既存オープンポジションの直近エントリー時刻から
+  `cooldown_hours`（デフォルト24h）以内は同一銘柄への追加BUYをブロック
+  （複数ロットがある場合は最新ロットの時刻を使用）
+- **wiring**: `paper_demo.py` の entry_filter（rolling PF gate）通過後、
+  guardrail fail-closed チェックの直前に追加
+- **無効化**: `SAME_SYMBOL_COOLDOWN_DISABLED=true`
+- **閾値変更**: `SAME_SYMBOL_COOLDOWN_HOURS`（デフォルト24）
+- **status**: ✅ **VERIFIED_COMPLETE**（2026-08-07、commit予定）。
+  テスト17件（正常系/境界値/複数ロット/欠損データ/disabled/config）
+
+### Plan B: ボラティリティ上限ゲート（shadow mode で稼働開始）
+
+- **モジュール**: `src/stock_swing/risk/volatility_gate.py`
+  + `src/stock_swing/risk/finnhub_metric_lookup.py`（共通の Finnhub
+  `stock/metric` スナップショット読み込みヘルパー、Plan Cと共用）
+- **ロジック**: Finnhub `3MonthADReturnStd`（3ヶ月年率換算リターン標準偏差）
+  が閾値超の銘柄BUYを「ブロック相当」として分類・ログするが、
+  **shadow モードでは一切ブロックしない**（sector_shock_hold.py と同じ
+  ロールアウトパターン）
+- **初期閾値**: `VOLATILITY_GATE_MAX_3M_STD_PCT=120.0`（2026-08-07時点の
+  ユニバース全44銘柄スキャンで GOOGL ~38% 〜 NBIS ~133% の分布を確認。
+  自然な閾値は見えず、まず現状最も極端な1銘柄のみを判定対象とする保守的
+  な初期値。要再検証）
+- **モード**: `VOLATILITY_GATE_MODE`（shadow=デフォルト / paper_ab / active
+  / disabled）。**active への昇格はユーザー承認必須**
+- **shadow ログ**: `data/volatility_gate_shadow_log.jsonl`
+- **wiring**: `paper_demo.py` の DecisionEngine.process() 直後、BUY
+  アクションのみ評価
+- **status**: ✅ shadow mode 実装・有効化済み（2026-08-07）。実データで
+  NBIS を正しく検知済み（3m_std=132.6% > cap=120.0%）
+- **次のマイルストーン**:
+  - **2026-08-14〜21 (1週間分shadowログ蓄積)**: `data/volatility_gate_shadow_log.jsonl`
+    に十分な件数（目標: would_block=True 少なくとも5件以上）が溜まったら、
+    その期間の実トレード結果（勝敗）と突き合わせ、閾値が偽陽性で勝ちトレード
+    を潰していないか確認
+  - **2026-08-21頃 中間レビュー**: shadowログ集計結果をレビューし、
+    (a) 閾値を現状維持/調整、(b) `paper_ab` へ昇格、(c) 見送り、を判断
+  - **paper_ab 移行後 最低20件のA/B比較後**: `active` への昇格判断（要ユーザー承認）
+
+### Plan C: 52週高値乖離診断（observability-only、戦略には未接続）
+
+- **モジュール**: `src/stock_swing/risk/distance_from_high.py`
+  （+ `finnhub_metric_lookup.py` 共用）
+- **ロジック**: 52週高値からの下落率が閾値以下（デフォルト-20%以下）かつ
+  モメンタムが閾値以上（デフォルト+10%以上）の BUY を「反発バウンス候補」
+  として **ログするのみ**（signal_strength・sizing・exit閾値には一切接続しない）
+- **接続しない理由**: signal_strength は sizing と exit conviction tier
+  （simple_exit_v2_strategy.py の HIGH/LOW 閾値分岐）の両方を駆動している
+  ため、ここに直接ペナルティを組み込むと、52週高値付近の正当なブレイク
+  アウトまで無検証で巻き込むリスクがある。small_sample_watchlist と同じ
+  「まず可視化のみ」パターンを踏襲
+- **診断ログ**: `data/distance_from_high_log.jsonl`
+- **無効化**: `DISTANCE_FROM_HIGH_DISABLED=true`
+- **wiring**: `paper_demo.py` の DecisionEngine.process() 直後、BUYの
+  momentum（CandidateSignal.metadata）+ Finnhub 52WeekHigh を突き合わせ
+- **status**: ✅ observability実装・有効化済み（2026-08-07）。実データで
+  NBIS のインシデントプロファイル（-36.7% below high, momentum +11.9%）を
+  正しく検知済み
+- **次のマイルストーン**:
+  - **2026-08-21頃**: Plan Bの中間レビューと合わせて
+    `distance_from_high_log.jsonl` の bounce_candidate 件数とその後の
+    値動き（反発 vs さらなる下落）を確認。相関が弱ければこの診断軸は
+    見送り、強ければ Plan B 同様の shadow→paper_ab 検討に進める
+  - 本モジュールは現時点で **戦略ロジック（signal_strength/exit閾値）へ
+    接続する計画なし**。あくまで診断データの蓄積が先
+
+### 実装状況まとめ
+
+| Plan | 内容 | モード | ブロック有無 | 次のレビュー |
+|---|---|---|---|---|
+| A | 同一銘柄24hクールダウン | active（有効） | ブロックする | 不要（完了） |
+| B | ボラ上限ゲート | shadow | ブロックしない | 2026-08-21 |
+| C | 52週高値乖離診断 | observability | ブロックしない | 2026-08-21 |
+
+**テスト**: 3モジュール合計 69件追加（same_symbol_cooldown 17件 /
+finnhub_metric_lookup 11件 / volatility_gate 19件 / distance_from_high
+22件）。フルテストスイート: 1441 passed / 2 skipped（既存の無関係な
+2件の失敗のみ、変更前から再現確認済み）。
+
+**やらないこと（追加）**:
+```
+❌ Plan B/C を shadow ログ蓄積・レビュー前に active モードへ昇格しない
+❌ signal_strength / sizing / exit閾値に Plan B/C の判定結果を接続しない
+  （ユーザー承認と paper A/B 検証を経るまで）
+```
