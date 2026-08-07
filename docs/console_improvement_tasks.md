@@ -1105,14 +1105,60 @@ Massive barsだ60/60成功、broker quotes/barsと44/44成功）。代わりに�
 - min_signal_strength（現行0.60）でevent_swing_v1が実際にどの頻度で信号を通過するかの実測リフレクションを
   1週間後に一回実施（target: 2026-08-14）
 
-### 未対応（2026-08-07時点。優先度1のニュースセンチメントは2026-08-08にPlan Dとして着手・完了 — 上記参照）
+### 未対応（2026-08-07時点。優先度1/2は2026-08-08にPlan D/Eとして着手・完了 — 上記参照）
 
-インサイダー取引・Filing sentiment・SMA/RSI・FREDマクロは、いずれも
-現在の戦略の動作を直接阻害していないため引き続き未対応。優先度順：
+インサイダー取引・Filing sentiment・FREDマクロは、いずれも現在の戦略の
+動作を直接阻害していないため引き続き未対応。優先度順：
 1. ~~ニュースセンチメントのトレード接続~~ → ✅ 2026-08-08 Plan D として shadow mode 実装完了
-2. Massive SMA/RSIの接続（既実装関数の活用）
+2. ~~Massive SMA/RSIの接続~~ → ✅ 2026-08-08 Plan E（RSI診断のみ）として shadow mode 実装完了
 3. インサイダー取引・Filing sentiment（新規契約は不要、追加実装のみ）
 4. FREDマキロ（R8-v2のMLフェーズまでは優先度低）
+
+### Plan E: Massive RSI 過熱診断（shadow mode で稼働開始、2026-08-08）
+
+- **背景**: `MassiveClient.fetch_sma()` / `fetch_rsi()`
+  （`src/stock_swing/sources/massive_client.py`）は Massive API 移行時から
+  実装済みだったが一度も呼ばれていなかった。既存の `PriceMomentumFeature`
+  は自前の ATR 近似（生の OHLC バーからの True Range 平均）で
+  stop_price を算出しており、RSIとは無関係。BreakoutMomentumStrategy は
+  純粋に5日モメンタムのみで発火するため、既に「買われすぎ」の水準にある
+  銘柄に飛び乗るリスクがある（NBIS の post-drop-bounce パターン＝Plan C
+  とは別種の失敗モード）。
+- **モジュール**: `src/stock_swing/risk/rsi_diagnostic.py`
+- **ロジック**: BUY決定ごとに Massive API から RSI(14) の最新値を取得し、
+  閾値（デフォルト75.0）以上なら `is_overbought` として分類・ログするが、
+  **shadow モードでは一切ブロックしない**（Plan B/C/D と同じロールアウト
+  パターン）。この戦略の実トレード結果に対して RSI(14) は一度も検証されて
+  おらず、優良なブレイクアウトの多くは定義上「買われすぎ」水準で発火する
+  可能性があるため、閾値を signal_strength やサイジングに直接組み込む前に
+  データ蓄積が必要
+- **APIコール範囲**: 全銘柄（ユニバース44銘柄）ではなく、**BUY決定が出た
+  銘柄のみ**RSIを取得（Plan B/C/D と同じパターン。Massive APIコール量の
+  無用な倍増を避けるため）
+- **初期閾値**: `RSI_DIAGNOSTIC_OVERBOUGHT_THRESHOLD=75.0`（標準的な
+  「買われすぎ」閾値。要再検証）
+- **無効化**: `RSI_DIAGNOSTIC_DISABLED=true`
+- **shadow ログ**: `data/rsi_diagnostic_shadow_log.jsonl`
+- **wiring**: `paper_demo.py` の Plan B/C/D と同じ箇所（BUY 決定直後、
+  `not args.dry_run` ガード内）。MassiveClient はラン開始時に1回だけ
+  best-effort で構築し、初期化失敗時は当該ランの RSI 診断のみ無効化
+  （ランは失敗させない）
+- **status**: ✅ shadow mode 実装・有効化済み（2026-08-08）。同日の
+  `stock_swing_paper_demo_market_close` 本番cronで実データにより動作確認
+  済み（MSFT RSI=78.3 overbought / SNOW RSI=80.5 overbought / 他16銘柄
+  not_flagged、エラーなし）
+- **次のマイルストーン**:
+  - Plan B/C/D と同じ 2026-08-21 中間レビュー時に、shadowログの
+    `is_overbought=true` 件数とその後のトレード結果を突き合わせ、
+    (a) 閾値維持/調整、(b) `paper_ab` へ昇格検討、(c) 見送り、を判断
+  - signal_strength / sizing / exit閾値への接続は、Plan B/C/D 同様
+    ユーザー承認と paper A/B 検証を経るまで行わない
+
+**テスト**: +19件（rsi_diagnostic.py: classify_rsi_overbought 正常系/
+境界値/欠損データフォールバック/disabled/config、fetch_latest_rsi
+クライアント例外耐性/欠損値/型エラー耐性、log_shadow JSONL書き込み）。
+フルテストスイート: 1520 passed → **1539 passed** / 2 skipped
+（既存の無関係な2件の失敗のみ、変更前から再現確認済み）。
 
 **新規契約が必要な候補（ユーザー判断待ち）**:
 - オプションフロー / Put-Call比率

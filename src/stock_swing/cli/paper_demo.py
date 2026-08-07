@@ -1591,14 +1591,38 @@ def main() -> int:  # noqa: C901
     # and logs BUYs that fire alongside clearly negative recent news flow.
     # Never blocks a decision. See src/stock_swing/risk/news_sentiment.py.
     from stock_swing.risk.news_sentiment import NewsSentimentConfig, classify_news_sentiment, load_latest_finnhub_news, log_observation as log_news_sentiment_observation
+    # Plan E (2026-08-08, R10 follow-up #2): Massive RSI overbought shadow
+    # diagnostic. MassiveClient.fetch_rsi() was implemented but never
+    # called anywhere; this logs whether a BUY fires while RSI(14) is
+    # already overbought. Never blocks. See
+    # src/stock_swing/risk/rsi_diagnostic.py.
+    from stock_swing.risk.rsi_diagnostic import RsiDiagnosticConfig, classify_rsi_overbought, fetch_latest_rsi, log_shadow as log_rsi_shadow
 
     _vol_gate_config = VolatilityGateConfig.from_env()
     _dfh_config = DistanceFromHighConfig.from_env()
     _news_sentiment_config = NewsSentimentConfig.from_env()
+    _rsi_diag_config = RsiDiagnosticConfig.from_env()
     _finnhub_raw_dir = project_root / "data" / "raw" / "finnhub"
     _vol_shadow_log_path = project_root / "data" / "volatility_gate_shadow_log.jsonl"
     _dfh_log_path = project_root / "data" / "distance_from_high_log.jsonl"
     _news_sentiment_log_path = project_root / "data" / "news_sentiment_shadow_log.jsonl"
+    _rsi_shadow_log_path = project_root / "data" / "rsi_diagnostic_shadow_log.jsonl"
+    # Lazy, best-effort MassiveClient for the RSI shadow diagnostic only.
+    # Constructed once per run (not per-symbol) and never allowed to fail
+    # the run: if MASSIVE_API_KEY is missing or the SDK errors, the RSI
+    # diagnostic simply logs "no_data" for every BUY, same as a missing
+    # Finnhub metric snapshot does for Plan B/C/D.
+    _rsi_massive_client = None
+    if not _rsi_diag_config.disabled:
+        try:
+            from stock_swing.sources.massive_client import MassiveClient as _RsiMassiveClient
+            _rsi_massive_client = _RsiMassiveClient(api_key=os.environ.get("MASSIVE_API_KEY"))
+        except Exception as _rsi_client_exc:
+            logger.warning(
+                "rsi_diagnostic: could not initialize MassiveClient, RSI shadow "
+                "checks disabled for this run (non-fatal): %s", _rsi_client_exc,
+            )
+            _rsi_massive_client = None
 
     for signal in all_signals:
         decision = decision_engine.process(signal, current_positions=current_positions)
@@ -1641,9 +1665,17 @@ def main() -> int:  # noqa: C901
                         decision.symbol, _news_items, _news_sentiment_config,
                     )
                     log_news_sentiment_observation(_news_result, log_path=_news_sentiment_log_path)
+                if not _rsi_diag_config.disabled and _rsi_massive_client is not None:
+                    _rsi_value = fetch_latest_rsi(
+                        decision.symbol, _rsi_massive_client, window=_rsi_diag_config.window,
+                    )
+                    _rsi_result = classify_rsi_overbought(
+                        decision.symbol, _rsi_value, _rsi_diag_config,
+                    )
+                    log_rsi_shadow(_rsi_result, shadow_log_path=_rsi_shadow_log_path)
             except Exception as _shadow_exc:
                 logger.warning(
-                    "volatility_gate/distance_from_high/news_sentiment shadow check failed for %s (non-fatal): %s",
+                    "volatility_gate/distance_from_high/news_sentiment/rsi_diagnostic shadow check failed for %s (non-fatal): %s",
                     decision.symbol, _shadow_exc,
                 )
     attach_run_context(decisions, run_context)
