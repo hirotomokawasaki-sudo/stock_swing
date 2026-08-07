@@ -1003,6 +1003,48 @@ finnhub_metric_lookup 11件 / volatility_gate 19件 / distance_from_high
 22件）。フルテストスイート: 1441 passed / 2 skipped（既存の無関係な
 2件の失敗のみ、変更前から再現確認済み）。
 
+### Plan D: ニュースセンチメント診断（shadow mode で稼働開始、2026-08-08）
+
+- **背景**: R10（2026-08-07）で「既に契約・実装済みだが戦略に一切接続されて
+  いないデータ」の筆頭として企業ニュースが挙がった。`stock_swing_news_
+  collection` cron（4時間おき）が既に全銘柄の Finnhub company-news を
+  `data/raw/finnhub/finnhub_{symbol}_news_*.json` に保存しているが、
+  コンソール表示のみでトレード判断には未接続だった。新規契約不要・
+  既存データの活用のみでコストゼロという優先度1の項目として着手。
+- **モジュール**: `src/stock_swing/risk/news_sentiment.py`
+- **ロジック**: 見出し・要約に対する軽量キーワード辞書ベースのセンチメント
+  判定（vaderSentiment 等の外部ライブラリは未インストールのため、
+  Plan B/C と同じ透明性重視のシンプル実装を踏襲）。直近記事
+  （デフォルト3日以内）でネガティブ系キーワード（fraud/investigation/
+  downgrade/lawsuit等）とポジティブ系キーワード（beats estimates/
+  upgrade/raises guidance等）のヒット数から net_score を算出し、
+  閾値以下かつ最低記事数以上の場合に `negative_sentiment_buy` として
+  分類・ログするが、**shadow モードでは一切ブロックしない**
+  （Plan B/C と同じロールアウトパターン）
+- **初期閾値**: `NEWS_SENTIMENT_NEGATIVE_THRESHOLD=-0.34`（net_score
+  <= -0.34）、`NEWS_SENTIMENT_MIN_ARTICLES=2`、
+  `NEWS_SENTIMENT_MAX_ARTICLE_AGE_DAYS=3`。閾値は保守的な初期値であり
+  要再検証（Plan B/C と同様、蓄積データを見て調整予定）
+- **無効化**: `NEWS_SENTIMENT_DISABLED=true`
+- **shadow ログ**: `data/news_sentiment_shadow_log.jsonl`
+- **wiring**: `paper_demo.py` の Plan B/C と同じ箇所（BUY 決定直後、
+  `not args.dry_run` ガード内）。--dry-run 実行時はログ汚染しない
+  （2026-08-07 の Plan B/C dry-run 汚染修正パターンを最初から踏襲）
+- **status**: ✅ shadow mode 実装・有効化済み（2026-08-08）
+- **次のマイルストーン**:
+  - Plan B/C と同じ 2026-08-21 中間レビュー時に、shadowログの
+    `negative_sentiment_buy=true` 件数とその後のトレード結果を突き合わせ、
+    (a) 閾値維持/調整、(b) `paper_ab` へ昇格検討、(c) 見送り、を判断
+  - signal_strength / sizing / exit閾値への接続は、Plan B/C 同様
+    ユーザー承認と paper A/B 検証を経るまで行わない
+
+**テスト**: +26件（news_sentiment.py: classify_news_sentiment 正常系/
+境界値/記事鮮度フィルタ/最低記事数閾値/欠損データフォールバック/
+disabled/config、load_latest_finnhub_news ファイル検出/鮮度選択/
+大文字小文字非依存/不正JSON、log_observation JSONL書き込み）。
+フルテストスイート: 1494 passed → **1520 passed** / 2 skipped
+（既存の無関係な2件の失敗のみ、変更前から再現確認済み）。
+
 **やらないこと（追加）**:
 ```
 ❌ Plan B/C を shadow ログ蓄積・レビュー前に active モードへ昇格しない
@@ -1063,11 +1105,11 @@ Massive barsだ60/60成功、broker quotes/barsと44/44成功）。代わりに�
 - min_signal_strength（現行0.60）でevent_swing_v1が実際にどの頻度で信号を通過するかの実測リフレクションを
   1週間後に一回実施（target: 2026-08-14）
 
-### 未対応（本日は見送り）
+### 未対応（2026-08-07時点。優先度1のニュースセンチメントは2026-08-08にPlan Dとして着手・完了 — 上記参照）
 
-企業ニュース・インサイダー取引・Filing sentiment・SMA/RSI・FREDマクロは、いずれも
-現在の戦略の動作を直接阵害していないため本日は未対応。優先度順：
-1. ニュースセンチメントのトレード接続（既取得データの活用、コストゼロ）
+インサイダー取引・Filing sentiment・SMA/RSI・FREDマクロは、いずれも
+現在の戦略の動作を直接阻害していないため引き続き未対応。優先度順：
+1. ~~ニュースセンチメントのトレード接続~~ → ✅ 2026-08-08 Plan D として shadow mode 実装完了
 2. Massive SMA/RSIの接続（既実装関数の活用）
 3. インサイダー取引・Filing sentiment（新規契約は不要、追加実装のみ）
 4. FREDマキロ（R8-v2のMLフェーズまでは優先度低）

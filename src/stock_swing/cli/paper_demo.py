@@ -1585,12 +1585,20 @@ def main() -> int:  # noqa: C901
     from stock_swing.risk.volatility_gate import VolatilityGateConfig, classify_buy_volatility, log_shadow as log_volatility_shadow
     from stock_swing.risk.distance_from_high import DistanceFromHighConfig, classify_bounce_candidate, log_observation as log_distance_observation
     from stock_swing.risk.finnhub_metric_lookup import load_latest_finnhub_metric
+    # Plan D (2026-08-08, R10 follow-up): news-sentiment shadow diagnostic.
+    # Same shadow-only pattern as Plan B/C -- reads already-collected Finnhub
+    # company-news snapshots (stock_swing_news_collection cron, every 4h)
+    # and logs BUYs that fire alongside clearly negative recent news flow.
+    # Never blocks a decision. See src/stock_swing/risk/news_sentiment.py.
+    from stock_swing.risk.news_sentiment import NewsSentimentConfig, classify_news_sentiment, load_latest_finnhub_news, log_observation as log_news_sentiment_observation
 
     _vol_gate_config = VolatilityGateConfig.from_env()
     _dfh_config = DistanceFromHighConfig.from_env()
+    _news_sentiment_config = NewsSentimentConfig.from_env()
     _finnhub_raw_dir = project_root / "data" / "raw" / "finnhub"
     _vol_shadow_log_path = project_root / "data" / "volatility_gate_shadow_log.jsonl"
     _dfh_log_path = project_root / "data" / "distance_from_high_log.jsonl"
+    _news_sentiment_log_path = project_root / "data" / "news_sentiment_shadow_log.jsonl"
 
     for signal in all_signals:
         decision = decision_engine.process(signal, current_positions=current_positions)
@@ -1627,9 +1635,15 @@ def main() -> int:  # noqa: C901
                         decision.symbol, _latest_close, _momentum_pct, _metric, _dfh_config,
                     )
                     log_distance_observation(_dfh_result, log_path=_dfh_log_path)
+                if not _news_sentiment_config.disabled:
+                    _news_items = load_latest_finnhub_news(decision.symbol, _finnhub_raw_dir)
+                    _news_result = classify_news_sentiment(
+                        decision.symbol, _news_items, _news_sentiment_config,
+                    )
+                    log_news_sentiment_observation(_news_result, log_path=_news_sentiment_log_path)
             except Exception as _shadow_exc:
                 logger.warning(
-                    "volatility_gate/distance_from_high shadow check failed for %s (non-fatal): %s",
+                    "volatility_gate/distance_from_high/news_sentiment shadow check failed for %s (non-fatal): %s",
                     decision.symbol, _shadow_exc,
                 )
     attach_run_context(decisions, run_context)
