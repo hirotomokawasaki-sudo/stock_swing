@@ -71,12 +71,48 @@ class MarketCalendar:
         if month == 11 and 22 <= day <= 28 and weekday == 3:  # 4th Thursday
             return True, "Thanksgiving"
 
-        # Good Friday (complex calculation - approximate)
-        # TODO: Implement proper Easter calculation if needed
-        if month == 4 and 15 <= day <= 22 and weekday == 4:  # Approximate
-            return True, "Good Friday (approximate)"
+        # Good Friday: NYSE/Nasdaq close on Good Friday every year.
+        # 2026-08-07 fix: the old "month==4 and 15<=day<=22 and weekday==4"
+        # approximation only matched Good Fridays that happen to fall in
+        # mid-to-late April (true only ~1 year in 6; e.g. 2025-04-18 matched,
+        # but 2026-04-03, 2027-03-26, 2028-04-14, 2029-03-30 do NOT and were
+        # silently treated as regular trading days). Replaced with an exact
+        # Good Friday date (Easter Sunday - 2 days) via the Anonymous
+        # Gregorian algorithm, which is a fixed, well-tested date computation
+        # (no external dependency needed).
+        good_friday = MarketCalendar._good_friday(date.year)
+        if date.month == good_friday.month and date.day == good_friday.day:
+            return True, "Good Friday"
 
         return False, ""
+
+    @staticmethod
+    def _good_friday(year: int) -> "datetime.date":
+        """Return the date of Good Friday (Easter Sunday - 2 days) for *year*.
+
+        Uses the Anonymous Gregorian algorithm (a.k.a. Meeus/Jones/Butcher
+        algorithm) to compute Easter Sunday, which is exact for the Gregorian
+        calendar (valid for any year >= 1583). Good Friday is always exactly
+        2 days before Easter Sunday.
+        """
+        from datetime import date as _date
+
+        a = year % 19
+        b = year // 100
+        c = year % 100
+        d = b // 4
+        e = b % 4
+        f = (b + 8) // 25
+        g = (b - f + 1) // 3
+        h = (19 * a + b - d - g + 15) % 30
+        i = c // 4
+        k = c % 4
+        l = (32 + 2 * e + 2 * i - h - k) % 7
+        m = (a + 11 * h + 22 * l) // 451
+        month = (h + l - 7 * m + 114) // 31
+        day = ((h + l - 7 * m + 114) % 31) + 1
+        easter_sunday = _date(year, month, day)
+        return easter_sunday - timedelta(days=2)
 
     @staticmethod
     def is_daylight_saving_time(date: datetime) -> bool:

@@ -651,7 +651,7 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
   - daily bar: 前営業日 close 確定後
   - sector benchmark: exit 判断時点と同じ as-of
 - `event_time` / `available_at` / `ingested_at` / `source` / `revision_id` / `quality_status` を canonical schema へ追加
-- Massive client の connection pool 共有（`Connection pool is full` 解消）
+- ~~Massive client の connection pool 共有（`Connection pool is full` 解消）~~ → **VERIFIED_COMPLETE**（2026-07-23, commit `399fe2f`。本節が長期間 未実装 のまま記載され続けていたのを 2026-08-07 訂正）
 - market closed 時は maintenance job 以外早期終了
 - macro (FRED) の regime lineup（現在 unknown のまま）
 - R7-B/C: WebSocket / ニュース感情評価
