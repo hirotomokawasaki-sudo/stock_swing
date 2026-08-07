@@ -1600,7 +1600,13 @@ def main() -> int:  # noqa: C901
             decision.evidence["price_regime_raw"] = price_based_regime
         decisions.append(decision)
 
-        if decision.action == "buy":
+        # 2026-08-07 fix: dry-run smoke tests were silently polluting the
+        # production shadow-log files (data/volatility_gate_shadow_log.jsonl,
+        # data/distance_from_high_log.jsonl) that the 2026-08-14/08-21 R9
+        # review schedule depends on for real accumulated evidence. --dry-run
+        # must never write to any persistent log a real cron run also writes
+        # to, exactly like it never writes real decision/order state.
+        if decision.action == "buy" and not args.dry_run:
             try:
                 _metric = load_latest_finnhub_metric(decision.symbol, _finnhub_raw_dir)
                 if _vol_gate_config.is_enabled():

@@ -568,6 +568,116 @@ def test_inline_reconcile_registers_fill_in_fill_ledger(monkeypatch, tmp_path, c
         ledger.consume(fill_rec["fill_id"], trade_id="simulated_cron_reconcile", qty=100.0)
 
 
+# ===========================================================================
+# TEST 4: dry-run must not write to shared Plan B/C shadow-log files (2026-08-07)
+# ===========================================================================
+
+class _BrokerBuySignalOnly:
+    """Broker stub: no existing positions, account fetch only (for a BUY-only run)."""
+
+    def __init__(self, *a, **kw):
+        self.base_url = "https://paper.example"
+
+    def fetch_account(self):
+        return SimpleNamespace(payload={
+            "status": "ACTIVE", "equity": "980000", "buying_power": "1944000",
+        })
+
+    def fetch_positions(self):
+        return SimpleNamespace(payload=[])
+
+    def fetch_latest_quote(self, symbol):
+        return SimpleNamespace(payload={"ap": 150.05, "bp": 149.95})
+
+
+def _run_paper_demo_buy_only(monkeypatch, tmp_path, dry_run: bool):
+    _set_common_patches(monkeypatch, tmp_path, _BrokerBuySignalOnly)
+
+    monkeypatch.setattr(
+        "stock_swing.sources.hybrid_data_fetcher.HybridDataFetcher",
+        _generic_bars_fetcher(),
+    )
+    monkeypatch.setattr(paper_demo.PriceMomentumFeature, "compute", _momentum_result_for("AAPL"))
+    monkeypatch.setattr(paper_demo.MacroRegimeFeature, "compute", _no_signals)
+    monkeypatch.setattr(paper_demo.EventSwingStrategy, "generate", _no_signals)
+    monkeypatch.setattr(paper_demo.SimpleExitV2Strategy, "generate", _no_signals)
+    monkeypatch.setattr(paper_demo.EntryFilterEngine, "filter", _passthrough_filter)
+
+    def _buy_aapl_signal(self, features):
+        return [CandidateSignal(
+            strategy_id="breakout_momentum_v1",
+            symbol="AAPL",
+            action="buy",
+            signal_strength=0.95,
+            generated_at=datetime.now(timezone.utc),
+            time_horizon="3d",
+            confidence=0.9,
+            reasoning="mutation test: dry-run shadow log pollution",
+            metadata={"latest_close": 150.0, "momentum": 0.08},
+        )]
+    monkeypatch.setattr(paper_demo.BreakoutMomentumStrategy, "generate", _buy_aapl_signal)
+
+    from stock_swing.execution.paper_executor import PaperExecutor
+    def _mock_size(self, decision, *, market_regime="neutral", exposure_cap_override=None):
+        return 100, {"final_shares": 100, "shares_by_risk": 100, "shares_by_notional": 100,
+                     "skip_reason": None, "latest_close": 150.0,
+                     "current_price": 150.0, "regime_used": "cautious",
+                     "asset_class_used": "stock", "applied_constraint": "risk"}
+    monkeypatch.setattr(PaperExecutor, "_calculate_position_size", _mock_size)
+
+    argv = ["paper_demo", "--cron-summary-json", "--symbols", "AAPL"]
+    if dry_run:
+        argv.insert(1, "--dry-run")
+    monkeypatch.setattr(sys, "argv", argv)
+
+    paper_demo.main()
+
+
+def test_dry_run_does_not_write_volatility_gate_shadow_log(monkeypatch, tmp_path, capsys):
+    """Regression (2026-08-07): --dry-run smoke tests were silently polluting
+    the production shadow-log files that the 2026-08-14/08-21 R9 review
+    schedule depends on for real accumulated evidence (found live: 4 entries
+    in data/volatility_gate_shadow_log.jsonl and
+    data/distance_from_high_log.jsonl came from dry-run smoke tests run
+    earlier the same day, not from any real cron execution).
+
+    KILLS mutation: if the `and not args.dry_run` guard is removed from the
+    `if decision.action == "buy":` check in paper_demo.py, this test's
+    assertion (log file does not exist after a --dry-run run) fails.
+    """
+    _run_paper_demo_buy_only(monkeypatch, tmp_path, dry_run=True)
+
+    shadow_log = tmp_path / "data" / "volatility_gate_shadow_log.jsonl"
+    assert not shadow_log.exists(), (
+        f"volatility_gate_shadow_log.jsonl was written during --dry-run: "
+        f"{shadow_log.read_text() if shadow_log.exists() else ''}"
+    )
+
+
+def test_dry_run_does_not_write_distance_from_high_log(monkeypatch, tmp_path, capsys):
+    """Same regression as above, for the Plan C observability log."""
+    _run_paper_demo_buy_only(monkeypatch, tmp_path, dry_run=True)
+
+    dfh_log = tmp_path / "data" / "distance_from_high_log.jsonl"
+    assert not dfh_log.exists(), (
+        f"distance_from_high_log.jsonl was written during --dry-run: "
+        f"{dfh_log.read_text() if dfh_log.exists() else ''}"
+    )
+
+
+def test_real_run_still_writes_volatility_gate_shadow_log(monkeypatch, tmp_path, capsys):
+    """Sanity check: the dry-run guard must not silently disable shadow
+    logging for real (non-dry-run) runs too -- only --dry-run should be
+    exempt."""
+    _run_paper_demo_buy_only(monkeypatch, tmp_path, dry_run=False)
+
+    shadow_log = tmp_path / "data" / "volatility_gate_shadow_log.jsonl"
+    assert shadow_log.exists(), (
+        "volatility_gate_shadow_log.jsonl was not written during a real "
+        "(non-dry-run) run -- shadow logging must still work for actual cron runs."
+    )
+
+
 def test_p6_join_coverage_does_not_error_missing_json_import(monkeypatch, tmp_path, capsys, caplog):
     """Regression: paper_demo.py used `json.dumps(...)` in the P6 join_coverage
     block (build the report + write data/audits/p6_join_coverage.json) without
