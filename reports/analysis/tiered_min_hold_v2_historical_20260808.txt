@@ -1,0 +1,102 @@
+==============================================================================
+Tiered min_hold v2 (offset_pct) — Full-History Retrospective Simulation
+==============================================================================
+tiered_min_hold_enabled (live config): True
+tiered_min_hold_levels: [{'offset_pct': -2.0, 'min_hold_days': 7}, {'offset_pct': -5.0, 'min_hold_days': 3}]
+emergency_stop_bypass_pct: -0.12
+
+Total historical stop_loss closed trades: 71
+
+Symbol   ActExit        ActPnL | Outcome                     V2PnL
+------------------------------------------------------------------------------
+AMD      2026-05-14 $  -882.18 | extended_to_2026-05-26 $+13804.29
+AMD      2026-07-15 $ -1873.98 | no_change                     n/a
+AMZN     2026-07-23 $ -1316.39 | no_change                     n/a
+AMZN     2026-07-23 $ -1530.44 | no_change                     n/a
+AVGO     2026-05-14 $ -1550.04 | extended_to_2026-05-26 $ -3716.16
+AVGO     2026-05-15 $   -12.33 | extended_to_2026-05-26 $   -18.40
+CDNS     2026-06-08 $ -4057.11 | extended_to_2026-06-15 $ -2023.98
+CDNS     2026-06-25 $ -1882.66 | no_change                     n/a
+CHPS     2026-06-04 $ +3587.50 | no_change                     n/a
+CHPS     2026-07-02 $ -5295.75 | emergency_bypass              n/a
+CHPX     2026-06-04 $ +4211.76 | no_change                     n/a
+CHPX     2026-07-07 $ -5159.55 | emergency_bypass              n/a
+CRDO     2026-06-25 $ +1445.13 | extended_to_2026-07-06 $  -348.50
+CRDO     2026-06-29 $ -2513.88 | extended_to_2026-07-07 $ -2061.42
+CRM      2026-06-09 $ -3795.07 | no_change                     n/a
+CRWD     2026-06-03 $  +898.10 | no_change                     n/a
+DDOG     2026-06-02 $ +1124.27 | no_change                     n/a
+DDOG     2026-07-13 $ -2012.29 | no_change                     n/a
+DELL     2026-06-02 $ +3464.72 | no_change                     n/a
+DELL     2026-06-02 $ +2085.47 | no_change                     n/a
+DELL     2026-07-16 $ -2436.80 | extended_to_2026-07-20 $ -3300.50
+FTNT     2026-07-08 $  +183.60 | no_change                     n/a
+FTXL     2026-07-02 $ -5891.35 | emergency_bypass              n/a
+GOOGL    2026-06-01 $  -474.76 | no_change                     n/a
+GOOGL    2026-07-21 $ -1165.14 | extended_to_2026-07-27 $ -2453.36
+GOOGL    2026-07-21 $ -1182.21 | extended_to_2026-07-27 $ -2470.16
+GTOP     2026-05-14 $  +112.50 | extended_to_2026-05-26 $ +1050.75
+GTOP     2026-05-15 $ -1306.98 | extended_to_2026-05-26 $ +1274.19
+HPE      2026-05-14 $ -3066.70 | extended_to_2026-05-26 $ +7711.51
+HPE      2026-06-04 $  -172.37 | extended_to_2026-06-15 $ -3098.57
+HPQ      2026-06-09 $ -2979.72 | extended_to_2026-06-15 $ -2678.40
+HPQ      2026-06-22 $ -1788.39 | no_change                     n/a
+IBM      2026-06-08 $ -4011.19 | no_change                     n/a
+IBM      2026-06-22 $ -4382.52 | no_change                     n/a
+INTC     2026-05-14 $  -864.15 | extended_to_2026-05-26 $ +5933.83
+INTC     2026-07-07 $ -4098.01 | emergency_bypass              n/a
+LRCX     2026-06-08 $ -1647.76 | extended_to_2026-06-15 $+10846.73
+LRCX     2026-07-06 $ -2616.84 | extended_to_2026-07-13 $ -5215.59
+MDB      2026-06-08 $ -3773.69 | no_change                     n/a
+META     2026-07-09 $ -1936.48 | no_change                     n/a
+MU       2026-06-08 $ -1910.25 | extended_to_2026-06-15 $ +4229.67
+MU       2026-06-25 $  +185.28 | extended_to_2026-07-07 $ -5938.83
+NOW      2026-06-08 $ -3424.15 | no_change                     n/a
+NOW      2026-07-16 $ -2459.21 | no_change                     n/a
+ORCL     2026-06-08 $ -4410.10 | no_change                     n/a
+PATH     2026-06-08 $ -2646.00 | no_change                     n/a
+PATH     2026-07-09 $ -1996.31 | no_change                     n/a
+PLTR     2026-06-08 $ -3824.68 | extended_to_2026-06-15 $ -4553.59
+PLTR     2026-07-23 $ -2887.71 | no_change                     n/a
+PSCT     2026-05-14 $  +180.75 | extended_to_2026-05-26 $ +5480.34
+PSCT     2026-05-14 $  -171.36 | extended_to_2026-05-26 $ +3608.08
+QCOM     2026-06-08 $ -2943.16 | no_change                     n/a
+QTEC     2026-07-15 $ -2186.67 | no_change                     n/a
+SHOC     2026-05-14 $  +557.55 | extended_to_2026-05-26 $ +3238.16
+SHOC     2026-05-15 $ -4794.78 | extended_to_2026-05-26 $ +3359.76
+SKYY     2026-07-22 $ -2129.39 | no_change                     n/a
+SMCI     2026-06-10 $ -3655.45 | emergency_bypass              n/a
+SMH      2026-05-14 $  +592.95 | extended_to_2026-05-26 $ +4462.17
+SMH      2026-07-07 $ -4458.86 | no_change                     n/a
+SMHX     2026-07-07 $ -3946.79 | no_change                     n/a
+SNOW     2026-06-09 $ -2724.79 | extended_to_2026-06-15 $ -1425.56
+SOXX     2026-05-15 $ -3524.06 | extended_to_2026-05-26 $ +8461.37
+SOXX     2026-07-07 $ -5285.63 | emergency_bypass              n/a
+TSLA     2026-07-06 $ -2653.83 | extended_to_2026-07-13 $ -2537.25
+DELL     2026-07-28 $ -2250.36 | no_change                     n/a
+DELL     2026-07-28 $ -2616.48 | emergency_bypass              n/a
+META     2026-07-27 $ -1491.33 | no_change                     n/a
+HPE      2026-07-30 $ -1619.15 | extended_to_2026-08-07 $ +2682.29
+NBIS     2026-08-06 $ -2304.63 | emergency_bypass              n/a
+NBIS     2026-08-06 $ -2378.58 | emergency_bypass              n/a
+NBIS     2026-08-06 $ -3090.58 | emergency_bypass              n/a
+------------------------------------------------------------------------------
+
+==============================================================================
+サマリー
+==============================================================================
+総 stop_loss トレード数: 71
+  データ不足でスキップ: 0
+  変化なし（既にmin_hold以上保有 or emergency bypass）: 42
+  v2により保有延長がシミュレートされた: 29
+
+延長シミュレート対象 29 件のうち:
+  改善（v2 PnL > 実績PnL）: 19件
+  悪化（v2 PnL < 実績PnL）: 10件
+  ほぼ同じ: 0件
+
+実績PnL合計（延長対象のみ）      : $-44,602.95
+v2シミュレーションPnL合計（延長対象のみ）: $+34,302.89
+見込み改善額（v2 - 実績、延長対象のみ）: $+78,905.84
+
+全stop_lossトレード実績PnL合計（参考、全71件）: $-134,831.44
