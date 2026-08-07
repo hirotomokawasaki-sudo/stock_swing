@@ -229,6 +229,17 @@ def main():
                     timed_out=source_timed_out,
                 ):
                     required_failures.append(f"{source}: {failure}")
+        elif source == "earnings_calendar":
+            # 2026-08-07: feeds EarningsEventFeature -> EventSwingStrategy
+            # (event_swing_v1), which had never produced a decision because
+            # its required input was never collected. Not marked 'required'
+            # in config/sources -- a missed earnings-calendar fetch degrades
+            # event_swing_v1 to 0 signals for that run (its pre-existing,
+            # long-standing behavior) rather than failing the whole cron job.
+            source_written, _ec_status = collect_earnings_calendar(symbols, store)
+            written.extend(source_written)
+            if _ec_status.get("status") == "failed":
+                degraded_sources.append(f"earnings_calendar:{_ec_status.get('reason')}")
         elif source == "fred":
             if _is_not_implemented(source):
                 degraded_sources.append("fred:not_implemented")
@@ -479,6 +490,128 @@ def collect_finnhub(symbols, store, max_runtime_seconds=0):
         'symbols': coverage_status,
     }, ensure_ascii=False, indent=2), encoding='utf-8')
     return written, timed_out
+
+
+def collect_earnings_calendar(symbols, store, lookahead_days=10):
+    """Fetch upcoming earnings dates for the trading universe from Finnhub.
+
+    2026-08-07: EventSwingStrategy (event_swing_v1) requires an
+    'earnings_calendar' canonical record per symbol (consumed by
+    EarningsEventFeature) but no collector ever called
+    FinnhubClient.fetch_earnings_calendar() -- collect_finnhub() only ever
+    fetched stock/metric and company-news. As a result event_swing_v1 has
+    never produced a single decision in production (0/2306 decision files
+    as of 2026-08-07): the strategy code path is correct, but its required
+    input was simply never collected.
+
+    Finnhub's /calendar/earnings endpoint accepts an optional date range
+    with NO symbol filter and returns all companies reporting in that
+    window, so this is a single API call (not one per symbol) -- far
+    cheaper than the per-symbol pattern used for metric/news. Results are
+    filtered locally to the requested *symbols* universe before being
+    written, so raw snapshots only cover companies we actually trade.
+
+    Args:
+        symbols: Trading universe to filter the calendar to.
+        store: StageStore for persisting raw snapshots.
+        lookahead_days: How many days ahead to request (default 10, wider
+            than EarningsEventFeature's own 7-day lookahead window so a
+            symbol's event doesn't fall out of range between collection
+            runs before the feature re-evaluates it).
+
+    Returns:
+        (written_paths, status_dict) tuple.
+    """
+    written: list[str] = []
+    try:
+        from stock_swing.cli.paper_demo import _load_env, project_root as demo_project_root
+        _load_env(demo_project_root / '.env')
+    except Exception:
+        pass
+
+    api_key = os.environ.get('FINNHUB_API_KEY', '')
+    symbol_set = {s.strip().upper() for s in symbols if s.strip()}
+    status = {
+        "time": datetime.now(timezone.utc).isoformat(),
+        "status": "unknown",
+        "symbols_requested": len(symbol_set),
+        "symbols_with_upcoming_earnings": 0,
+        "reason": None,
+    }
+
+    if not api_key:
+        status["status"] = "failed"
+        status["reason"] = "missing_client"
+        _write_earnings_calendar_status(status)
+        return written, status
+
+    try:
+        client = FinnhubClient(
+            api_key=api_key,
+            retry_config=RetryConfig(
+                max_attempts=3,
+                initial_delay=1.0,
+                max_delay=6.0,
+                backoff_factor=2.0,
+                timeout=10.0,
+            ),
+        )
+    except Exception as exc:
+        status["status"] = "failed"
+        status["reason"] = f"client_init_failed: {exc}"
+        _write_earnings_calendar_status(status)
+        return written, status
+
+    today = datetime.now(timezone.utc).date()
+    from_date = today.isoformat()
+    to_date = (today + timedelta(days=lookahead_days)).isoformat()
+
+    try:
+        env = client.fetch_earnings_calendar(from_date=from_date, to_date=to_date)
+        rows = list((env.payload or {}).get("earningsCalendar") or [])
+    except Exception as exc:
+        msg = str(exc).lower()
+        if '429' in msg or 'rate limit' in msg:
+            reason = 'rate_limit'
+        elif '401' in msg or '403' in msg or 'unauthorized' in msg or 'forbidden' in msg:
+            reason = 'auth_error'
+        elif 'timeout' in msg:
+            reason = 'timeout'
+        else:
+            reason = 'api_error'
+        status["status"] = "failed"
+        status["reason"] = reason
+        _write_earnings_calendar_status(status)
+        return written, status
+
+    matched_rows = [row for row in rows if str(row.get("symbol") or "").upper() in symbol_set]
+
+    if matched_rows:
+        path = _write_raw_snapshot(
+            store,
+            "finnhub",
+            "earnings_calendar",
+            "calendar/earnings",
+            {"earningsCalendar": matched_rows},
+            {"from": from_date, "to": to_date, "universe_size": len(symbol_set)},
+            quality_status="ok",
+            is_synthetic=False,
+        )
+        written.append(str(path))
+
+    status["status"] = "ok"
+    status["symbols_with_upcoming_earnings"] = len({str(r.get("symbol") or "").upper() for r in matched_rows})
+    status["total_calendar_rows_fetched"] = len(rows)
+    status["from"] = from_date
+    status["to"] = to_date
+    _write_earnings_calendar_status(status)
+    return written, status
+
+
+def _write_earnings_calendar_status(status: dict) -> None:
+    status_path = project_root / "data" / "audits" / "earnings_calendar_status.json"
+    status_path.parent.mkdir(parents=True, exist_ok=True)
+    status_path.write_text(json.dumps(status, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def collect_fred(store):

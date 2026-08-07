@@ -48,7 +48,7 @@ _load_env(project_root / ".env")
 from stock_swing.core.path_manager import PathManager
 from stock_swing.core.run_context import RunContext, attach_run_context
 from stock_swing.core.runtime import RuntimeMode, RuntimeModeError, read_runtime_mode, read_ledger_quality_gate, read_circuit_breaker_config
-from stock_swing.core.types import CanonicalRecord
+from stock_swing.core.types import CanonicalRecord, RawEnvelope
 from stock_swing.cli.cron_summary import emit_cron_summary
 from stock_swing.decision_engine.decision_engine import DecisionEngine, DecisionRecord
 from stock_swing.decision_engine.risk_validator import RiskValidator
@@ -69,6 +69,7 @@ from stock_swing.risk.allocation_config import (
     read_symbol_registry,
 )
 from stock_swing.risk.position_sizing import DEFAULT_MAX_POSITION_NOTIONAL_PCT
+from stock_swing.feature_engine.earnings_event_feature import EarningsEventFeature
 from stock_swing.feature_engine.macro_regime_feature import MacroRegimeFeature
 from stock_swing.feature_engine.price_momentum_feature import PriceMomentumFeature
 from stock_swing.feature_engine.intraday_momentum_feature import IntradayMomentumFeature
@@ -887,7 +888,46 @@ def main() -> int:  # noqa: C901
     macro_based_regime = 'bullish' if detected_regime == 'expansion' else ('cautious' if detected_regime in {'recession', 'high_volatility'} else 'neutral')
     price_based_regime = _infer_price_based_regime(momentum_results)
     regime_for_sizing = price_based_regime if detected_regime == 'unknown' else macro_based_regime
-    daily_features = momentum_results + macro_results
+
+    # 2026-08-07: EarningsEventFeature -> EventSwingStrategy (event_swing_v1)
+    # had never produced a single decision (0/2306 as of 2026-08-07) because
+    # no collector ever fetched Finnhub's earnings calendar; the strategy
+    # code path itself was correct but always received zero earnings_event
+    # features. collect_data.py's new 'earnings_calendar' source now writes
+    # the most recent snapshot to data/raw/finnhub/finnhub_earnings_calendar_*.json
+    # (stock_swing_news_collection cron, every 4h). Load it here, best-effort:
+    # a missing/stale snapshot must not fail paper_demo -- it just means
+    # event_swing_v1 sees 0 candidates for this run, same as it always has.
+    earnings_event_results = []
+    try:
+        from stock_swing.normalization.finnhub_normalizer import FinnhubNormalizer
+        _earnings_raw_dir = project_root / "data" / "raw" / "finnhub"
+        _earnings_files = sorted(_earnings_raw_dir.glob("finnhub_earnings_calendar_*.json"))
+        if _earnings_files:
+            _latest_earnings_raw = json.loads(_earnings_files[-1].read_text(encoding="utf-8"))
+            _earnings_envelope = RawEnvelope(
+                source=_latest_earnings_raw.get("source", "finnhub"),
+                endpoint=_latest_earnings_raw.get("endpoint", "calendar/earnings"),
+                fetched_at=datetime.fromisoformat(_latest_earnings_raw["fetched_at"]),
+                request_params=_latest_earnings_raw.get("request_params") or {},
+                payload=_latest_earnings_raw.get("payload") or {},
+            )
+            _earnings_records = FinnhubNormalizer().normalize(_earnings_envelope)
+            # Only keep records for symbols in this run's universe.
+            _earnings_records = [r for r in _earnings_records if r.symbol in set(symbols)]
+            earnings_event_feat = EarningsEventFeature()
+            earnings_event_results = earnings_event_feat.compute(_earnings_records)
+            _upcoming = [r for r in earnings_event_results if r.values.get("has_upcoming_event")]
+            if _upcoming:
+                print(
+                    f"  Earnings calendar: {len(_upcoming)} symbol(s) with upcoming earnings "
+                    f"(from {_earnings_files[-1].name})"
+                )
+    except Exception as _earnings_exc:
+        logger.warning("earnings_calendar load failed (non-fatal, event_swing_v1 sees 0 candidates): %s", _earnings_exc)
+        earnings_event_results = []
+
+    daily_features = momentum_results + macro_results + earnings_event_results
 
     # Data freshness validation (2026-05-15: prevent stale price data)
     stale_symbols = set()
@@ -908,7 +948,8 @@ def main() -> int:  # noqa: C901
         )
         # Filter out stale symbols from features
         momentum_results = [f for f in momentum_results if f.symbol not in stale_symbols]
-        daily_features = momentum_results + macro_results
+        earnings_event_results = [f for f in earnings_event_results if f.symbol not in stale_symbols]
+        daily_features = momentum_results + macro_results + earnings_event_results
 
     print(f"  Macro regime: {detected_regime}")
     print(f"  Price regime: {price_based_regime}")

@@ -1009,3 +1009,70 @@ finnhub_metric_lookup 11件 / volatility_gate 19件 / distance_from_high
 ❌ signal_strength / sizing / exit閾値に Plan B/C の判定結果を接続しない
   （ユーザー承認と paper A/B 検証を経るまで）
 ```
+
+---
+
+## R10: 既存契約データの未接続発見 + 決算カレンダー接続（2026-08-07）
+
+**背景**: 「現在の取得失敗・将来必要なデータ」のレビュー依頼で全コードを走査したところ、
+**取得自体の失敗は現時点でなかった**（本日初日のFinnhub retry強化でnews/metricは0/44失敗、
+Massive barsだ60/60成功、broker quotes/barsと44/44成功）。代わりに、
+**既に契約・実装済みなのに戦略ロジックに一切接続されていないデータが複数発見された。
+
+### 発見一覧
+
+| データ | 取得関数 | 状況 |
+|---|---|---|
+| 決算カレンダー | `FinnhubClient.fetch_earnings_calendar()` | 実装済みだが一度も呼ばれていない。`EventSwingStrategy`（event_swing_v1）は
+  `earnings_event`フィーチャを必要とするが一度も来なかったため、2306件の全decisionファイル中
+  event_swing_v1の決定は**0件**。リアルトレードで実装されていた戦略が事実上死コードだった |
+| 企業ニュース | `collect_finnhub()`内で既に4時間おきに取得中 | コンソールUI表示のみ、トレード判断に一切接続していない |
+| インサイダー取引 | `fetch_insider_transactions()` | 実装済みだが一度も呼ばれていない |
+| Filing sentiment | `fetch_filing_sentiment()` | 実装済みだが一度も呼ばれていない |
+| Massive SMA/RSI | `fetch_sma()`/`fetch_rsi()` | 実装済みだが一度も呼ばれていない（自前ATR近似で代用中） |
+| FREDマキロ | `collect_fred()` | `not_implemented`のスタブ。`MacroRegimeFeature.compute([])`に常に空リストを
+  渡しているためマクロレジームは常に`unknown`（価格ベースの簡易フォーリフポバックで代用中） |
+
+### 対応完了: 決算カレンダー接続
+
+**実装内容**:
+1. `collect_data.py`: `collect_earnings_calendar()` 新規追加
+   - Finnhub `/calendar/earnings` はシンボルフィルターなしの日付範囲検索のため、
+     シンボルごとのループではなく**1回のAPIコール**でターコスパタ向け全カレンダーを取得し、
+     ローカルでユニバースにフィルタリングして保存（実測: 1418件→ガイダンス対象1418件→3件）
+   - lookahead 10日（`EarningsEventFeature`の7日windowより広めに取って、収集サイズとズドレを避ける）
+   - `config/sources/`に`required: true`としては登録していない（未取得時はevent_swing_v1が
+     0件候補となるのみで、cron全体を失敗させない）
+2. `paper_demo.py`: earnings_calendarスナップショットを毎回読み込み、`FinnhubNormalizer`で正規化し、
+   `EarningsEventFeature`で計算して`daily_features`に合流（ベストエフォート、失敗してもランは失敗させない）
+3. `stock_swing_news_collection`クロン（4時間おき）の`--sources`に`earnings_calendar`を追加
+
+**実データでのE2E確認（2026-08-07）**:
+- 実 API 呼び出しで直近決算予定3銘柄（AMAT 08-13, NBIS 08-12, SMCI 08-11）を正しく取得
+- `paper_demo.py --dry-run` で `event_swing_v1` が実際にBUY信号（NBIS, strength=0.65）を生成することを確認
+  （この戦略のパイプライン接続を初めて実確認）
+- なお、NBISは本日別途導入したPlan Aのrolling PF gate（PF=0.453 < 0.70）でBUY STOP LISTに入っているため、
+  この信号自体は実際にはブロックされる。既存ガードレールとの適切な連携を確認できた
+
+**テスト**: +15件（collect_earnings_calendar 10件 / normalize→feature→strategyのE2E統合 5件）。
+フルテストスイート: 1465 passed / 2 skipped（既存の無関係な2件の失敗のみ）。
+
+**今後のフォローアップ**:
+- 初回リアルクリハンクトはnews_collection cronの次回実行時（本日中）。event_swing_v1の
+  実際の信号生成・ブロッカーとの干渉を数日間観測し、目立った問題がないか確認
+- min_signal_strength（現行0.60）でevent_swing_v1が実際にどの頻度で信号を通過するかの実測リフレクションを
+  1週間後に一回実施（target: 2026-08-14）
+
+### 未対応（本日は見送り）
+
+企業ニュース・インサイダー取引・Filing sentiment・SMA/RSI・FREDマクロは、いずれも
+現在の戦略の動作を直接阵害していないため本日は未対応。優先度順：
+1. ニュースセンチメントのトレード接続（既取得データの活用、コストゼロ）
+2. Massive SMA/RSIの接続（既実装関数の活用）
+3. インサイダー取引・Filing sentiment（新規契約は不要、追加実装のみ）
+4. FREDマキロ（R8-v2のMLフェーズまでは優先度低）
+
+**新規契約が必要な候補（ユーザー判断待ち）**:
+- オプションフロー / Put-Call比率
+- ショートインタレスト
+- セキトー全体の時列列ADR/ボラティリティデータ（Plan Bの単発スナップショットを時列列化）
