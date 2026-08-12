@@ -90,6 +90,14 @@ class DailySnapshot:
     # the console charts substituted the *current* live count for every
     # historical point instead of recording the count at snapshot time).
     open_position_count: int | None = None
+    # Number of decision records this run produced (bug fix 2026-08-13:
+    # previously the console's "decisions" delta card computed
+    # cumulative_decisions_now - (cumulative_decisions_now - latest_signals),
+    # which algebraically collapses to just latest_signals -- a number with
+    # no relationship to actual decision counts. Recording this per-run,
+    # analogous to signals_generated/orders_submitted, lets the delta be a
+    # real run-over-run comparison instead of a math no-op.)
+    decisions_generated: int | None = None
 
 
 @dataclass
@@ -504,6 +512,7 @@ class PnLTracker:
         equity: float,
         signals_generated: int = 0,
         orders_submitted: int = 0,
+        decisions_generated: int = 0,
         current_prices: dict[str, float] | None = None,
     ) -> DailySnapshot:
         """Record end-of-day snapshot."""
@@ -555,6 +564,7 @@ class PnLTracker:
             cumulative_win_rate=cum_wr,
             cumulative_closed_trades=cum_closed,
             open_position_count=len(open_trades),
+            decisions_generated=decisions_generated,
         )
         self.state.daily_snapshots.append(asdict(snap))
         self._record_strategy_daily_snapshots(today=today, current_prices=current_prices)

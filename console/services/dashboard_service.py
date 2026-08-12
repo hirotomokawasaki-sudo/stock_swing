@@ -837,12 +837,22 @@ class DashboardService:
         prev_signals = previous.get("signals_generated")
         latest_orders = latest.get("orders_submitted")
         prev_orders = previous.get("orders_submitted")
-        decisions_now = (self.data_adapter.get_counts() or {}).get("decisions", 0)
-        decisions_prev = max(0, decisions_now - (latest_signals or 0))
+        # Bug fix (2026-08-13): this previously computed
+        # decisions_now - (decisions_now - latest_signals), which algebraically
+        # collapses to just latest_signals -- a number with no relationship to
+        # actual decision counts (confirmed against real data: filename-derived
+        # decision counts went 51 -> 64 across two days while this formula
+        # only ever surfaced the current run's signal count, e.g. 21).
+        # record_daily_snapshot() now records decisions_generated per-run
+        # (analogous to signals_generated/orders_submitted); use that directly
+        # for a real run-over-run comparison. Older snapshots recorded before
+        # this field existed report None (no fabricated fallback).
+        latest_decisions = latest.get("decisions_generated")
+        prev_decisions = previous.get("decisions_generated")
         return {
             "equity_vs_prev_snapshot": self._safe_delta(latest_equity, prev_equity),
             "open_trades_vs_prev_snapshot": None,
-            "decisions_vs_prev_snapshot": decisions_now - decisions_prev,
+            "decisions_vs_prev_snapshot": self._safe_delta(latest_decisions, prev_decisions),
             "signals_vs_prev_snapshot": self._safe_delta(latest_signals, prev_signals),
             "orders_vs_prev_snapshot": self._safe_delta(latest_orders, prev_orders),
             "equity_vs_prev_day": self._safe_delta(summary.get("peak_equity"), latest_equity),

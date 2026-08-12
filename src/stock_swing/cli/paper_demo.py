@@ -2348,6 +2348,7 @@ def main() -> int:  # noqa: C901
                 equity=equity,
                 signals_generated=len(all_signals),
                 orders_submitted=len([s for s in submissions if s.status == "submitted"]),
+                decisions_generated=len(decisions),
             )
             print("  ✓ Daily snapshot recorded")
     except Exception as e:
