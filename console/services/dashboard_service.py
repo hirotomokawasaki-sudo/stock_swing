@@ -862,6 +862,17 @@ class DashboardService:
         open_positions = []
         signals_orders = []
 
+        # Bug fix (2026-08-13): this loop previously stamped every historical
+        # point with the *current live* position count (positions.get("count")),
+        # producing a flat line equal to today's count across the whole chart
+        # instead of the actual historical open-position trend. Snapshots
+        # recorded after this fix carry their own open_position_count; older
+        # snapshots (recorded before the field existed) have no reliable
+        # historical value, so we surface those points as None (gap in the
+        # chart) rather than fabricate them from live data. The most recent
+        # snapshot falls back to the live count only if it doesn't already
+        # have its own recorded value.
+        last_idx = len(filtered_snapshots) - 1
         for idx, snap in enumerate(filtered_snapshots):
             ts = f"{snap.get('date', '')}T00:00:00"
             eq = snap.get("equity")
@@ -870,7 +881,10 @@ class DashboardService:
                 dd = max(0.0, (peak_equity - eq) / peak_equity)
             equity.append({"ts": ts, "value": eq})
             drawdown_pct.append({"ts": ts, "value": dd})
-            open_positions.append({"ts": ts, "value": positions.get("count", 0)})
+            snap_open_count = snap.get("open_position_count")
+            if snap_open_count is None and idx == last_idx:
+                snap_open_count = positions.get("count")
+            open_positions.append({"ts": ts, "value": snap_open_count})
             signals_orders.append({
                 "ts": ts,
                 "signals": snap.get("signals_generated"),

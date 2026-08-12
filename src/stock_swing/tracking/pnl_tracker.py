@@ -86,6 +86,10 @@ class DailySnapshot:
     cumulative_profit_factor: float | None = None
     cumulative_win_rate: float | None = None
     cumulative_closed_trades: int | None = None
+    # Open position count as of this snapshot (bug fix 2026-08-13: previously
+    # the console charts substituted the *current* live count for every
+    # historical point instead of recording the count at snapshot time).
+    open_position_count: int | None = None
 
 
 @dataclass
@@ -550,6 +554,7 @@ class PnLTracker:
             cumulative_profit_factor=cum_pf,
             cumulative_win_rate=cum_wr,
             cumulative_closed_trades=cum_closed,
+            open_position_count=len(open_trades),
         )
         self.state.daily_snapshots.append(asdict(snap))
         self._record_strategy_daily_snapshots(today=today, current_prices=current_prices)

@@ -50,6 +50,77 @@ def _make_trade(symbol: str, hours_ago: float) -> dict:
     }
 
 
+class TestGetChartsOpenPositions:
+    """Bug fix 2026-08-13: Open Positions chart previously stamped every
+    historical point with the *current live* position count instead of the
+    count recorded at snapshot time, producing a flat line equal to today's
+    count across the whole chart.
+    """
+
+    def test_uses_per_snapshot_recorded_value_not_live_count(self, tmp_path):
+        svc = _StubService(tmp_path)
+        trading = {
+            "daily_snapshots": [
+                {"date": "2026-08-01", "equity": 1000000.0, "open_position_count": 3},
+                {"date": "2026-08-02", "equity": 1001000.0, "open_position_count": 5},
+                {"date": "2026-08-03", "equity": 1002000.0, "open_position_count": 2},
+            ],
+            "summary": {"peak_equity": 1002000.0},
+        }
+        # Live count (e.g. from broker) is deliberately different from every
+        # historical snapshot value to prove it is NOT substituted in.
+        positions = {"count": 28}
+
+        charts = svc.get_charts(trading=trading, positions=positions, period="all")
+        values = [p["value"] for p in charts["overview"]["open_positions"]]
+
+        assert values == [3, 5, 2]
+
+    def test_most_recent_snapshot_falls_back_to_live_count_when_missing(self, tmp_path):
+        svc = _StubService(tmp_path)
+        trading = {
+            "daily_snapshots": [
+                {"date": "2026-08-01", "equity": 1000000.0, "open_position_count": 3},
+                {"date": "2026-08-02", "equity": 1001000.0},  # not yet recorded (pre-fix data)
+            ],
+            "summary": {"peak_equity": 1001000.0},
+        }
+        positions = {"count": 7}
+
+        charts = svc.get_charts(trading=trading, positions=positions, period="all")
+        values = [p["value"] for p in charts["overview"]["open_positions"]]
+
+        assert values == [3, 7]
+
+    def test_older_snapshots_missing_value_surface_as_none_not_live_count(self, tmp_path):
+        svc = _StubService(tmp_path)
+        trading = {
+            "daily_snapshots": [
+                {"date": "2026-08-01", "equity": 1000000.0},  # pre-fix, no recorded value
+                {"date": "2026-08-02", "equity": 1001000.0},  # pre-fix, no recorded value
+                {"date": "2026-08-03", "equity": 1002000.0, "open_position_count": 4},
+            ],
+            "summary": {"peak_equity": 1002000.0},
+        }
+        positions = {"count": 99}
+
+        charts = svc.get_charts(trading=trading, positions=positions, period="all")
+        values = [p["value"] for p in charts["overview"]["open_positions"]]
+
+        # Only the last point is allowed to fall back to live count; the two
+        # earlier gaps must not be silently filled with 99.
+        assert values == [None, None, 4]
+
+    def test_empty_snapshots_returns_empty_chart(self, tmp_path):
+        svc = _StubService(tmp_path)
+        trading = {"daily_snapshots": [], "summary": {}}
+        positions = {"count": 5}
+
+        charts = svc.get_charts(trading=trading, positions=positions, period="all")
+
+        assert charts["overview"]["open_positions"] == []
+
+
 def test_select_recent_closed_trades_prefers_last_48_hours():
     trades = [_make_trade(f"RECENT{i}", i % 24) for i in range(60)]
     trades += [_make_trade(f"OLD{i}", 72 + i) for i in range(10)]
