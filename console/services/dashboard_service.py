@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 from collections import Counter, defaultdict
@@ -516,7 +516,17 @@ class DashboardService:
                 "summary": summary,
                 "recent_trades": recent,
                 "closed_trades": closed_trades,
-                "daily_snapshots": daily_snapshots[-30:],
+                # Bug fix (2026-08-13): previously daily_snapshots[-30:] (last
+                # 30 *records*). daily_snapshots can hold multiple records per
+                # calendar day (one per paper_demo run), so on busy days the
+                # last 30 records could span as little as ~8-11 calendar days
+                # instead of 30, silently shrinking every period-filtered view
+                # downstream (Alpha/Beta/Sharpe 'month' window, charts, etc.).
+                # _keep_recent_calendar_days keeps everything within the last
+                # N calendar days (record-count-agnostic), with a generous
+                # record-count safety cap to bound response size as history
+                # grows.
+                "daily_snapshots": self._keep_recent_calendar_days(daily_snapshots, days=90, max_records=2000),
                 "strategy_daily_snapshots": list(self._tracker.state.strategy_daily_snapshots)[-200:],
                 "open_positions": open_positions,
                 "current_prices": current_prices,
@@ -914,21 +924,119 @@ class DashboardService:
             "comparison": comparison_chart,
         }
     
-    def _filter_by_period(self, snapshots: List[Dict[str, Any]], period: str) -> List[Dict[str, Any]]:
-        """Filter snapshots by time period."""
+    def _keep_recent_calendar_days(
+        self,
+        snapshots: List[Dict[str, Any]],
+        days: int,
+        max_records: int | None = None,
+    ) -> List[Dict[str, Any]]:
+        """Keep snapshots within the last `days` calendar days (by each
+        snapshot's own `date` field, anchored on the most recent snapshot's
+        date), optionally capped to `max_records` most recent records as a
+        safety bound on response size. Unlike a plain [-N:] record slice,
+        this does not shrink when multiple runs land on the same day.
+        """
         if not snapshots:
             return []
-        
-        if period == 'day':
-            return snapshots[-1:]
-        elif period == '3days':
-            return snapshots[-3:]
-        elif period == 'week':
-            return snapshots[-7:]
-        elif period == 'month':
-            return snapshots[-30:]
-        else:  # 'all'
+
+        latest_date_str = None
+        for snap in reversed(snapshots):
+            if snap.get("date"):
+                latest_date_str = str(snap["date"])
+                break
+        if latest_date_str is None:
+            return snapshots[-max_records:] if max_records else snapshots
+
+        try:
+            latest_date = datetime.fromisoformat(latest_date_str).date()
+        except ValueError:
+            return snapshots[-max_records:] if max_records else snapshots
+
+        cutoff_date = latest_date - timedelta(days=days - 1)
+
+        kept = []
+        for snap in snapshots:
+            snap_date_str = snap.get("date")
+            if not snap_date_str:
+                continue
+            try:
+                snap_date = datetime.fromisoformat(str(snap_date_str)).date()
+            except ValueError:
+                continue
+            if snap_date >= cutoff_date:
+                kept.append(snap)
+
+        if max_records is not None and len(kept) > max_records:
+            kept = kept[-max_records:]
+        return kept
+
+    # Number of calendar days each period label represents. Used by
+    # _filter_by_period to select snapshots by actual date range rather than
+    # by a fixed record count (see bug note below).
+    _PERIOD_DAYS = {
+        "day": 1,
+        "3days": 3,
+        "week": 7,
+        "month": 30,
+    }
+
+    def _filter_by_period(self, snapshots: List[Dict[str, Any]], period: str) -> List[Dict[str, Any]]:
+        """Filter snapshots by time period.
+
+        Bug fix (2026-08-13): this previously sliced by *record count*
+        (e.g. snapshots[-30:] for 'month'), but daily_snapshots can contain
+        multiple records per calendar day (one per paper_demo run --
+        premarket/open/midday/close, observed up to 8/day in practice).
+        On busy days the last-30-records window could span as little as
+        ~8-11 calendar days instead of 30, silently shrinking the Alpha/
+        Beta/Sharpe calculation window and any other period-filtered
+        analysis (e.g. 'week' shrinking to 2-3 real calendar days). This
+        made short-window statistics like Sharpe wildly unstable and
+        inconsistent with the period label shown in the UI.
+
+        Now filters by each snapshot's own `date` field falling within the
+        last N calendar days (based on the most recent snapshot's date),
+        so 'month' always covers up to 30 real calendar days regardless of
+        how many runs happened on any given day.
+        """
+        if not snapshots:
+            return []
+
+        if period == 'all' or period not in self._PERIOD_DAYS:
             return snapshots
+
+        days = self._PERIOD_DAYS[period]
+
+        # Anchor on the most recent snapshot's own date (not "now") so this
+        # works consistently in tests and for any data recency.
+        latest_date_str = None
+        for snap in reversed(snapshots):
+            if snap.get("date"):
+                latest_date_str = str(snap["date"])
+                break
+        if latest_date_str is None:
+            return snapshots
+
+        try:
+            latest_date = datetime.fromisoformat(latest_date_str).date()
+        except ValueError:
+            return snapshots
+
+        cutoff_date = latest_date - timedelta(days=days - 1)
+
+        filtered = []
+        for snap in snapshots:
+            snap_date_str = snap.get("date")
+            if not snap_date_str:
+                continue
+            try:
+                snap_date = datetime.fromisoformat(str(snap_date_str)).date()
+            except ValueError:
+                continue
+            if cutoff_date <= snap_date <= latest_date:
+                filtered.append(snap)
+
+        return filtered
     
     def _get_comparison_chart(self, snapshots: List[Dict[str, Any]], period: str) -> Dict[str, Any]:
         """Get portfolio vs benchmark comparison chart data."""
