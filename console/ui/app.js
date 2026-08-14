@@ -875,6 +875,7 @@ class Console {
         ${this._renderDenyBySymbol(p)}
         ${this._renderBuyStopList(funnel)}
         ${this._renderSmallSampleWatchlist(funnel)}
+        ${this._renderClusterExposure(funnel)}
         ${this._renderPaperRuns(p)}`;
     }
 
@@ -966,6 +967,36 @@ class Console {
             <h4 style="margin:0 0 8px">⚠️ SMALL-SAMPLE WATCHLIST <span class="muted small" style="font-weight:normal">（n=2〜4、既に赤字、自動ブロック対象外・手動判断推奨 ${list.length}件）</span></h4>
             <div class="table-wrap"><table><thead><tr>
                 <th>銘柄</th><th>取引数</th><th>Net PnL</th><th>勝率</th><th>備考</th>
+            </tr></thead><tbody>${rows}</tbody></table></div>
+        </div>`;
+    }
+
+    // R5-v2 (2026-08-14): correlation_cluster.compute_cluster_exposures() was
+    // already enforced as a hard BUY block in paper_demo (P4-B) but had zero
+    // visibility in the web dashboard -- only indirect via deny_reasons text.
+    // Read-only observability, mirrors _renderSmallSampleWatchlist above.
+    _renderClusterExposure(funnel) {
+        const list = funnel.cluster_exposure || [];
+        if (list.length === 0) return '';
+
+        const rows = list.map(item => {
+            const util = item.utilization_pct ?? 0;
+            const utilCls = item.over_cap ? 'danger' : util >= 80 ? 'warn' : 'success';
+            const symbols = (item.symbols || []).join(', ');
+            return `<tr>
+                <td><strong>${this.escapeHtml(item.cluster_name || '—')}</strong></td>
+                <td class="small">${(item.current_notional ?? 0).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}</td>
+                <td class="small">${(item.cap_notional ?? 0).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}</td>
+                <td class="small ${utilCls}">${util.toFixed(0)}%${item.over_cap ? ' 🚫' : ''}</td>
+                <td class="small muted">${this.escapeHtml(symbols)}</td>
+            </tr>`;
+        }).join('');
+
+        return `
+        <div class="card" style="margin-top:8px">
+            <h4 style="margin:0 0 8px">🔗 CORRELATION CLUSTER EXPOSURE <span class="muted small" style="font-weight:normal">（BUY自動ブロックは既存実装、本パネルは可視化のみ ${list.length}件）</span></h4>
+            <div class="table-wrap"><table><thead><tr>
+                <th>クラスタ</th><th>現在エクスポージャー</th><th>上限</th><th>使用率</th><th>構成銘柄</th>
             </tr></thead><tbody>${rows}</tbody></table></div>
         </div>`;
     }

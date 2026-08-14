@@ -601,6 +601,14 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 - promotion gate が汚染台帳コホートを入力に使っている
 - allocation policy が逆転していた（→ R2-v2 で訂正済み）
 - market beta / sector/factor exposure / pairwise correlation / top-5 concentration 未実装
+  → **2026-08-14 部分対応**: correlation cluster exposure（`correlation_cluster.compute_cluster_exposures()`、
+  semis/cloud_software/hyperscale/cybersecurity等6クラスタ）は既にBUY自動ブロックとして実装済み
+  （paper_demo `_filter_buys_by_cluster_cap()`）だったが、web dashboardに可視化が一切なかった
+  （deny_reasonsテキスト経由の間接的な把握のみ）。`DashboardService._get_cluster_exposure()`を新規追加し
+  `funnel.cluster_exposure`として配信、UI（`console/ui/app.js`）に「🔗 CORRELATION CLUSTER EXPOSURE」
+  パネルとして追加（read-only observability、ブロック挙動の変更なし）。テスト9件追加。
+  market beta（ポートフォリオ全体のbeta/alpha/Sharpeは`benchmark_service.py`に既存実装あり）と
+  pairwise correlation / top-5 concentrationの明示的な promotion gate 連携は依然未実装のまま。
 
 **実装内容**:
 1. Stock 85% / ETF 15% 前後を allocation band (target + threshold) で実装

@@ -1140,6 +1140,7 @@ class DashboardService:
             "positions_closed": trading.get("summary", {}).get("closed_trades", 0) if trading else 0,
             "buy_stop_list": self._get_buy_stop_list(),
             "small_sample_watchlist": self._get_small_sample_watchlist(),
+            "cluster_exposure": self._get_cluster_exposure(trading=trading),
         }
 
         by_strategy: Dict[str, Dict[str, Any]] = {}
@@ -2255,6 +2256,49 @@ class DashboardService:
                 config=EntryFilterConfig.from_env(),
                 etf_symbols=etf_syms,
             )
+        except Exception:
+            return []
+
+    def _get_cluster_exposure(self, trading: Dict[str, Any] | None = None) -> list[dict]:
+        """R5-v2 (2026-08-14): read-only correlation cluster exposure panel.
+
+        Surfaces src/stock_swing/risk/correlation_cluster.py's
+        compute_cluster_exposures() (already enforced as a hard BUY-block in
+        paper_demo._filter_buys_by_cluster_cap()) in the web dashboard, which
+        previously had no visibility into cluster concentration at all --
+        only the block/no-block decision was visible indirectly via
+        deny_reasons text. Mirrors _get_small_sample_watchlist() /
+        _get_buy_stop_list() (read-only observability, no behavior change).
+
+        Returns [] on any error (missing broker/tracker positions, account
+        info, etc.) rather than failing the whole dashboard payload.
+        """
+        try:
+            from stock_swing.risk.correlation_cluster import compute_cluster_exposures
+
+            positions_snapshot = self.get_positions(trading=trading)
+            if not positions_snapshot.get("available"):
+                return []
+            positions = positions_snapshot.get("positions") or []
+            account = self._get_account_info()
+            equity = float(account.get("portfolio_value") or account.get("equity") or 0.0)
+            if equity <= 0:
+                return []
+
+            exposures = compute_cluster_exposures(positions, equity)
+            return [
+                {
+                    "cluster_name": exp.cluster_name,
+                    "symbols": exp.symbols,
+                    "current_notional": exp.current_notional,
+                    "cap_notional": exp.cap_notional,
+                    "cap_pct": exp.cap_pct,
+                    "over_cap": exp.over_cap,
+                    "utilization_pct": exp.utilization_pct,
+                }
+                for exp in exposures
+                if exp.current_notional > 0  # omit empty clusters from the panel
+            ]
         except Exception:
             return []
 
