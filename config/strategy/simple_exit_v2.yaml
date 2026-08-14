@@ -132,9 +132,19 @@ staged_breakeven_levels:
 # trailing_stop / breakeven_stop には適用しない（両者は既に良好に機能しており、
 # スコープを「役割純化」した stop_loss（初期損切り分岐）のみに限定）。
 #
-# デフォルトは無効（既存動作を一切変更しない）。paper で有効化して
-# 効果測定してから本番判断する想定。
+# 2026-08-14 paper有効化: ヒストリカル検証2段階（simulate_volatility_adjusted_
+# stop.py簡易版 + simulate_daily_path_volatility_stop.py日次パス版、実コードの
+# exit優先順位を忠実に再現）で以下を確認済み:
+#   - 全228 closed tradeを対象にした日次パス検証で、狭めた閾値による新規誤発動
+#     （元々non-stop_loss exitだったトレードの誤爆）= 0件
+#   - 全体集計（195件、同日決済除く）: 正味+$22,900の改善方向
+#     （改善17件+$28,597 / 悪化10件-$5,697 / 変化なし168件）
+# ただしATR%はエントリー時点固定・universe平均は近似・日次終値のみという
+# 制約があるため、paper実測での最終確認を継続する。中間レビュー: 2026-08-28頃
+# （約2週間後、cron登録済み: stock_swing_volatility_adjusted_stop_review_20260828）。
+# 詳細: docs/daily_logs/2026-08-14.md「ATR動的閾値のヒストリカル検証」節。
+#
 # ロールバック: volatility_adjusted_stop_enabled: false に戻すだけ。
-volatility_adjusted_stop_enabled: false
+volatility_adjusted_stop_enabled: true
 volatility_multiplier_min: 0.5   # 低ボラ銘柄でも閾値を半分以下には縮めない
 volatility_multiplier_max: 1.75  # 高ボラ銘柄でも閾値を1.75倍超には広げない

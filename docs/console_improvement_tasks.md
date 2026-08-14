@@ -599,13 +599,16 @@ loss halt、circuit breaker、promotion_gate）に委ねる。**max_hold_daysは
    - 象徴例: NBIS(06-04) stop_loss -$3,415 → trailing_stopまで生存 +$4,594
    - テスト13件追加（`test_simulate_daily_path_volatility_stop.py`）
 
+**paper有効化（2026-08-14）**: ヒストリカル検証2段階の結果（新規誤発動0件・正味
++$22,900改善方向）を踏まえ、`volatility_adjusted_stop_enabled: true`に変更し
+paper環境で有効化。中間レビューは**2026-08-28頃**（cron登録済み:
+`stock_swing_volatility_adjusted_stop_review_20260828`）。
+
 **未実施（今後の検証課題）**:
-- 上記はエントリー時点ATR固定・±3日窓universe近似・日次終値のみという制約あり
-  （詳細はスクリプト内docstring参照）。paper実測による最終確認は引き続き必要
+- ヒストリカル検証はエントリー時点ATR固定・±3日窓universe近似・日次終値のみ
+  という制約あり（詳細はスクリプト内docstring参照）。paper実測が最終確認となる
 - ATR閾値のmultiplier範囲（0.5〜1.75）・sector_shockのrolling閾値（-5.0%）は
-  初期値であり、paper運用データでの再検討が必要
-- 09-15リアルトレード移行までの延期期間（08-24〜09-04 promotion gate観測期間と
-  重複可）でpaper検証を実施する想定
+  初期値であり、08-28中間レビューでのpaper運用データに基づく再検討が必要
 
 **やらないこと（今回のスコープ外、明示的に見送り）**:
 ```
