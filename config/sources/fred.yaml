@@ -1,9 +1,13 @@
-enabled: false
+enabled: true
 base_url: https://api.stlouisfed.org/fred
 timeout_seconds: 15
 retry_attempts: 3
 raw_partition: fred
-# FIX-SOURCE-4: optional source — not yet implemented; failure records degraded status
+# R7-v2 (2026-08-14): real FredClient wired up (collect_data.collect_fred());
+# feeds MacroRegimeFeature's expansion/high_volatility/recession/unknown
+# classification. Kept required: false -- macro regime classification
+# degrades to price-based regime inference on failure (see paper_demo.py
+# regime_for_sizing fallback), it does not block trading.
 required: false
-not_implemented: true
-description: "Macro data (FRED) — real client not yet connected"
+not_implemented: false
+description: "Macro data (FRED) — CPI/UNRATE/T10Y2Y/ICSA for regime classification"

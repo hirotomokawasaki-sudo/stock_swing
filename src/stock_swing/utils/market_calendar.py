@@ -286,6 +286,53 @@ class MarketCalendar:
 
         return False, "Market closed: Outside trading hours"
 
+    @staticmethod
+    def previous_trading_close_utc(dt: datetime = None, max_lookback_days: int = 10) -> datetime:
+        """Return the UTC datetime of the most recently *completed* regular
+        session close (16:00 ET) at or before ``dt``.
+
+        R7-v2 (2026-08-14): used by the console's daily-bar source SLA check
+        ("daily bar: 前営業日 close 確定後") to compute how stale the most
+        recent broker/benchmark daily bar snapshot is relative to the last
+        confirmed close, instead of a fixed wall-clock staleness window that
+        doesn't account for weekends/holidays.
+
+        Args:
+            dt: Reference datetime (defaults to now, any tz or naive-as-ET).
+            max_lookback_days: Safety bound on how many calendar days to walk
+                back searching for a trading day (handles long holiday runs).
+
+        Returns:
+            Timezone-aware UTC datetime for the 16:00 ET close of the most
+            recent trading day whose close has already occurred at ``dt``.
+        """
+        if dt is None:
+            dt = datetime.now(ZoneInfo("UTC"))
+
+        et_tz = ZoneInfo("America/New_York")
+        dt_et = dt.astimezone(et_tz) if dt.tzinfo is not None else dt.replace(tzinfo=et_tz)
+
+        candidate_date = dt_et.date()
+        # If dt is on a trading day but before today's close has happened yet,
+        # start the search from the previous calendar day instead.
+        is_holiday, _ = MarketCalendar.is_us_holiday(dt_et)
+        is_weekend = dt_et.weekday() >= 5
+        today_close = datetime.combine(candidate_date, MarketCalendar.REGULAR_END, tzinfo=et_tz)
+        if is_weekend or is_holiday or dt_et < today_close:
+            candidate_date = candidate_date - timedelta(days=1)
+
+        for _ in range(max_lookback_days):
+            probe_dt = datetime.combine(candidate_date, time(12, 0), tzinfo=et_tz)
+            is_holiday, _ = MarketCalendar.is_us_holiday(probe_dt)
+            if probe_dt.weekday() < 5 and not is_holiday:
+                close_et = datetime.combine(candidate_date, MarketCalendar.REGULAR_END, tzinfo=et_tz)
+                return close_et.astimezone(ZoneInfo("UTC"))
+            candidate_date = candidate_date - timedelta(days=1)
+
+        # Fallback: should not happen with a sane max_lookback_days, but avoid
+        # raising in a health-check code path -- return dt itself as UTC.
+        return dt_et.astimezone(ZoneInfo("UTC"))
+
 
 # Convenience functions
 def is_market_open(dt: datetime = None) -> bool:

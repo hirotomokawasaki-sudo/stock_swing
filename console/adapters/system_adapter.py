@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import yaml
 
@@ -70,6 +71,7 @@ try:
 
     _sys.path.insert(0, str(_Path(__file__).resolve().parents[2] / "src"))
     from stock_swing.cli.collect_data import finnhub_news_row_succeeded
+    from stock_swing.utils.market_calendar import MarketCalendar
 except Exception:  # pragma: no cover - defensive fallback if import layout changes
     def finnhub_news_row_succeeded(row: dict) -> bool:  # type: ignore[misc]
         if row.get("used_fallback"):
@@ -79,6 +81,8 @@ except Exception:  # pragma: no cover - defensive fallback if import layout chan
             return int(row.get("news_count", 0) or 0) > 0
         return reason == "no_company_news"
 
+    MarketCalendar = None  # type: ignore[assignment,misc]
+
 _LEDGER_STALENESS_S = 86400
 _GUARDRAIL_STALENESS_S = 18 * 3600
 _BROKER_STALENESS_S = 3600
@@ -87,6 +91,24 @@ _SOURCE_STALENESS_S = 48 * 3600
 _CRON_TIMEOUT_S = 10
 _REQUIRED_FINNHUB_COVERAGE = 0.995
 _CURRENT_CONSOLE_SUMMARY = Path("reports/console/latest_console_summary.json")
+
+# R7-v2 (2026-08-14): per-source-type SLA thresholds, distinct from the
+# generic 48h _SOURCE_STALENESS_S fallback used for sources without a
+# dedicated evaluator. These express the actual acceptance criteria from
+# docs/console_improvement_tasks.md R7-v2 ("source ごとの SLA + quality
+# report"):
+#   - broker position/order: <=30s        (see _check_broker_tracker_freshness)
+#   - intraday quote: market open中 <=2分  (_evaluate_intraday_quote_sla)
+#   - daily bar: 前営業日 close 確定後       (_evaluate_daily_bar_sla)
+#   - sector benchmark: exit判断時点と同asof (_evaluate_sector_benchmark_sla)
+_INTRADAY_QUOTE_SLA_S = 2 * 60
+# Benchmark files are refreshed once/day by stock_swing_update_benchmark_all
+# (weekdays ~08:30 JST); allow slack for that cron's own schedule/retry
+# window plus the close->availability lag, rather than requiring the
+# close-confirmation to be instantaneous.
+_DAILY_BAR_SLA_SLACK_S = 20 * 3600
+_SECTOR_BENCHMARK_SLA_SLACK_S = 20 * 3600
+_SECTOR_BENCHMARK_SYMBOLS = ("SMH", "SOXX", "QQQ", "SPY", "SOXQ")
 
 
 def _age_seconds(iso_str: str | None) -> float | None:
@@ -311,13 +333,145 @@ class SystemAdapter:
             if not row["ok"]:
                 failures.append(source)
 
+        # R7-v2 (2026-08-14): the per-source-type SLA checks below are
+        # non-blocking evidence (informational), distinct from the required-
+        # source gate above. They are only meaningful while the US market is
+        # open (intraday quote) or once a session has closed (daily bar /
+        # sector benchmark), so each evaluator internally no-ops with
+        # ok=True/"not_applicable" outside its relevant window rather than
+        # flapping the console's health status on nights/weekends.
+        session_sla = {
+            "intraday_quote": self._evaluate_intraday_quote_sla(),
+            "daily_bar": self._evaluate_daily_bar_sla(),
+            "sector_benchmark": self._evaluate_sector_benchmark_sla(),
+        }
+
         return {
             "critical": True,
             "ok": not failures,
             "required_sources": required_sources,
             "failing_sources": failures,
             "sources": required_results,
+            "session_sla": session_sla,
             "detail": "config/sources/*.yaml + data/audits/*_status.json",
+        }
+
+    def _evaluate_intraday_quote_sla(self) -> dict[str, Any]:
+        """R7-v2-A: intraday quote freshness must be <=2 min while the market
+        is open. Uses broker_quotes_status.json (written by
+        collect_data.collect_broker()), which is the source of per-symbol
+        latest-quote snapshots consumed by paper_demo pricing.
+        """
+        if MarketCalendar is None:
+            return {"ok": True, "applicable": False, "reason": "market_calendar_unavailable"}
+
+        is_open, market_status = MarketCalendar.is_market_open()
+        if not is_open:
+            return {
+                "ok": True,
+                "applicable": False,
+                "reason": "market_closed",
+                "market_status": market_status,
+            }
+
+        status_path = self.project_root / "data" / "audits" / "broker_quotes_status.json"
+        if not status_path.exists():
+            return {"ok": False, "applicable": True, "reason": "missing_status"}
+        try:
+            data = json.loads(status_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            return {"ok": False, "applicable": True, "error": str(exc)}
+
+        age = _age_seconds(data.get("time"))
+        stale = age is None or age > _INTRADAY_QUOTE_SLA_S
+        return {
+            "ok": not stale and str(data.get("status")) in {"ok", "degraded"},
+            "applicable": True,
+            "as_of": data.get("time"),
+            "age_seconds": None if age is None else round(age),
+            "sla_seconds": _INTRADAY_QUOTE_SLA_S,
+            "stale": stale,
+            "status": data.get("status"),
+            "detail": "data/audits/broker_quotes_status.json",
+        }
+
+    def _evaluate_daily_bar_sla(self) -> dict[str, Any]:
+        """R7-v2-A: daily bar snapshot must reflect the most recently
+        confirmed regular-session close (16:00 ET). Uses
+        broker_bars_status.json (written by collect_data.collect_broker_bars()).
+        """
+        if MarketCalendar is None:
+            return {"ok": True, "applicable": False, "reason": "market_calendar_unavailable"}
+
+        status_path = self.project_root / "data" / "audits" / "broker_bars_status.json"
+        if not status_path.exists():
+            return {"ok": False, "applicable": True, "reason": "missing_status"}
+        try:
+            data = json.loads(status_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            return {"ok": False, "applicable": True, "error": str(exc)}
+
+        as_of = data.get("time")
+        age = _age_seconds(as_of)
+        expected_close = MarketCalendar.previous_trading_close_utc()
+        expected_close_age_s = max(
+            0.0, (datetime.now(timezone.utc) - expected_close).total_seconds()
+        )
+        # Snapshot must be no older than the last confirmed close, plus slack
+        # for the collector's own run cadence.
+        sla_seconds = expected_close_age_s + _DAILY_BAR_SLA_SLACK_S
+        stale = age is None or age > sla_seconds
+        return {
+            "ok": not stale and str(data.get("status")) in {"ok", "degraded"},
+            "applicable": True,
+            "as_of": as_of,
+            "age_seconds": None if age is None else round(age),
+            "expected_close_utc": expected_close.isoformat(),
+            "sla_seconds": round(sla_seconds),
+            "stale": stale,
+            "status": data.get("status"),
+            "detail": "data/audits/broker_bars_status.json",
+        }
+
+    def _evaluate_sector_benchmark_sla(self) -> dict[str, Any]:
+        """R7-v2-A: sector benchmark bars (SMH/SOXX/QQQ/SPY/SOXQ, feeding
+        sector_shock_hold) must be as-of the same trading day used for exit
+        decisions -- i.e. no older than the most recently confirmed close.
+        """
+        if MarketCalendar is None:
+            return {"ok": True, "applicable": False, "reason": "market_calendar_unavailable"}
+
+        benchmarks_dir = self.project_root / "data" / "benchmarks"
+        expected_close = MarketCalendar.previous_trading_close_utc()
+        expected_date = expected_close.astimezone(ZoneInfo("America/New_York")).date().isoformat()
+
+        symbol_rows: list[dict[str, Any]] = []
+        stale_symbols: list[str] = []
+        for symbol in _SECTOR_BENCHMARK_SYMBOLS:
+            path = benchmarks_dir / f"{symbol}_daily.json"
+            if not path.exists():
+                symbol_rows.append({"symbol": symbol, "ok": False, "reason": "missing_file"})
+                stale_symbols.append(symbol)
+                continue
+            try:
+                bars = json.loads(path.read_text(encoding="utf-8"))
+                latest_date = bars[-1]["date"] if bars else None
+            except Exception as exc:
+                symbol_rows.append({"symbol": symbol, "ok": False, "error": str(exc)})
+                stale_symbols.append(symbol)
+                continue
+            row_ok = latest_date is not None and latest_date >= expected_date
+            symbol_rows.append({"symbol": symbol, "ok": row_ok, "latest_date": latest_date})
+            if not row_ok:
+                stale_symbols.append(symbol)
+
+        return {
+            "ok": not stale_symbols,
+            "applicable": True,
+            "expected_min_date": expected_date,
+            "symbols": symbol_rows,
+            "stale_symbols": stale_symbols,
+            "detail": "data/benchmarks/{SYMBOL}_daily.json",
         }
 
     def _evaluate_required_source(self, source: str) -> dict[str, Any]:

@@ -882,7 +882,39 @@ def main() -> int:  # noqa: C901
     momentum_feat = PriceMomentumFeature(period_days=args.bar_limit)
     macro_feat = MacroRegimeFeature()
     momentum_results = momentum_feat.compute(all_records)
-    macro_results = macro_feat.compute([])
+
+    # R7-v2 (2026-08-14): load the most recent FRED raw snapshots (written by
+    # collect_data.collect_fred(), one file per series_id) and normalize them
+    # into CanonicalRecords for MacroRegimeFeature. Previously this always
+    # called compute([]) -> permanently "unknown" regime, since FRED
+    # collection was a not_implemented stub until today. Best-effort: a
+    # missing/stale/malformed FRED snapshot must not fail paper_demo -- it
+    # just means macro_regime falls back to "unknown", same as it always has,
+    # and regime_for_sizing falls back to the price-based regime below.
+    macro_records: list[CanonicalRecord] = []
+    try:
+        from stock_swing.normalization.fred_normalizer import FredNormalizer
+        from stock_swing.cli.collect_data import FRED_MACRO_SERIES
+        _fred_raw_dir = project_root / "data" / "raw" / "fred"
+        _fred_normalizer = FredNormalizer()
+        for _series_id in FRED_MACRO_SERIES:
+            _fred_files = sorted(_fred_raw_dir.glob(f"fred_{_series_id.lower()}_*.json"))
+            if not _fred_files:
+                continue
+            _latest_fred_raw = json.loads(_fred_files[-1].read_text(encoding="utf-8"))
+            _fred_envelope = RawEnvelope(
+                source=_latest_fred_raw.get("source", "fred"),
+                endpoint=_latest_fred_raw.get("endpoint", "series/observations"),
+                fetched_at=datetime.fromisoformat(_latest_fred_raw["fetched_at"]),
+                request_params=_latest_fred_raw.get("request_params") or {"series_id": _series_id},
+                payload=_latest_fred_raw.get("payload") or {},
+            )
+            macro_records.extend(_fred_normalizer.normalize(_fred_envelope))
+    except Exception as _fred_exc:
+        logger.warning("FRED macro data load failed (non-fatal, macro_regime falls back to unknown): %s", _fred_exc)
+        macro_records = []
+
+    macro_results = macro_feat.compute(macro_records)
 
     detected_regime = macro_results[0].values.get('regime', 'unknown') if macro_results else 'unknown'
     macro_based_regime = 'bullish' if detected_regime == 'expansion' else ('cautious' if detected_regime in {'recession', 'high_volatility'} else 'neutral')

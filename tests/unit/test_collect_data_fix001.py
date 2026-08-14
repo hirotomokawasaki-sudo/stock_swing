@@ -53,16 +53,24 @@ def test_collect_finnhub_no_synthetic_news_fallback(tmp_path, monkeypatch):
                 assert "example.local" not in item.get("url", ""), f"Synthetic URL found in {raw_file.name}"
 
 
-def test_collect_fred_returns_empty_no_write(tmp_path, monkeypatch):
-    """collect_fred should record status only and write no raw CPI payload."""
+def test_collect_fred_returns_empty_no_write_without_api_key(tmp_path, monkeypatch):
+    """FIX-001 (updated 2026-08-14 for R7-v2): collect_fred() no longer writes
+    synthetic/hash-generated payloads. It now makes a real FredClient call,
+    but with no FRED_API_KEY configured it must fail closed -- record a
+    'failed' status and write zero raw snapshots -- rather than falling back
+    to any synthetic data. See test_collect_data_fred.py for the full
+    real-client success/failure coverage (mocked FredClient)."""
     from stock_swing.cli import collect_data as module
+    import stock_swing.cli.paper_demo as paper_demo
 
     monkeypatch.setattr(module, "project_root", tmp_path)
+    monkeypatch.setattr(paper_demo, "_load_env", lambda _path: None)
+    monkeypatch.delenv("FRED_API_KEY", raising=False)
     written = module.collect_fred(_make_store(tmp_path))
 
     assert written == []
     raw_files = list((tmp_path / "data" / "raw").rglob("*.json"))
-    assert raw_files == [], f"collect_fred should not write raw snapshots: {raw_files}"
+    assert raw_files == [], f"collect_fred should not write raw snapshots without an API key: {raw_files}"
 
 
 def test_collect_sec_returns_empty_no_write(tmp_path, monkeypatch):

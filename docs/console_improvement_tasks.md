@@ -543,12 +543,15 @@ floorを段階的に引き上げ（ratchet）:
   旧記載は途中集計ノイズ（集計期間がR4-B前後をまたぐ含み値だった可能性）による誤記載だったと推定
 
 **未実装 / 未検証（修正後の残項）**:
-- R4-C: デサイル別 PF スクリプト（post-launch 予定、データ不足で今は実施不可。さだしR4-B後の
-  飽和率は十分低下しているため、nが蓄積されればR4-C実施の障壁は下がっている）
+- ~~R4-C: デサイル別 PF スクリプト~~ → **既に実装済み（`scripts/analyze_signal_strength_decile.py`）だったことを2026-08-14に確認**。
+  n=86（closed かつ signal_strength 記録済み）で実行、decile 5（0.753–0.821）が PF=2.455 で最良、
+  decile 1（0.476–0.533）が PF=0.020 で最悪。テスト13件を新規追加（未検証のまま放置されていた）。
+  週次cron（`stock_swing_r4c_signal_strength_decile`、月曜09:00 JST）を新規登録し read-only で
+  `reports/signal_strength_decile.json` を継続更新（learning制約: recommendation-only、自動閾値変更なし）
 - raw score / normalized score / cross-sectional percentile 保存
 - confidence を calibration 可能な probability として定義（固定 0.85 多発の解消）
 - feature snapshot を decision 時点の as-of データで immutable 保存
-- decile 別 PF / expectancy / calibration curve 生成
+- decile 別 expectancy / calibration curve 生成（PF/WRは実装済み、expectancy/calibration curveは未着手）
 
 **Learning 制約**: recommendation-only。自動本番反映禁止。
 
@@ -653,7 +656,7 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 - `event_time` / `available_at` / `ingested_at` / `source` / `revision_id` / `quality_status` を canonical schema へ追加
 - ~~Massive client の connection pool 共有（`Connection pool is full` 解消）~~ → **VERIFIED_COMPLETE**（2026-07-23, commit `399fe2f`。本節が長期間 未実装 のまま記載され続けていたのを 2026-08-07 訂正）
 - ~~market closed 時は maintenance job 以外早期終了~~ → **VERIFIED_COMPLETE**（2026-08-14）: `market_guard.should_skip_outside_market_hours()` を新規実装し、weekday/holiday判定に加えてET dead zone（after-hours終了20:00〜pre-market開始04:00）中も早期終了するよう拡張。`collect_data.py` に `--require-market-session` フラグを追加し、`stock_swing_news_collection` cron（0 */4 * * *、終日実行）に適用。maintenance job（reconcile_orders等）やhistorical/bulk source（massive）は対象外のまま。テスト13件追加（全39件 pass, 回帰なし）
-- macro (FRED) の regime lineup（現在 unknown のまま）
+- ~~macro (FRED) の regime lineup（現在 unknown のまま）~~ → **VERIFIED_COMPLETE**（2026-08-14）: `collect_data.collect_fred()` を not_implemented スタブから実装に変更（CPIAUCSL/UNRATE/T10Y2Y/ICSA を FredClient 経由で取得、`config/sources/fred.yaml` の `not_implemented: false` に変更）。`MacroRegimeFeature` を単一指標（CPI水準 vs 固定閾値320、recession検知不可能だった旧実装）から CPI YoY / UNRATE trend / T10Y2Y yield curve inversion / ICSA claims trend の4指標合成判定に書き換え。`paper_demo.py` に FRED raw snapshot ロード配線を追加（best-effort、失敗時は従来通り price-based regime にフォールバック）。テスト35件追加（macro_regime_feature 16件 + collect_fred 6件 + fred/regime整合性1件、既存 test_collect_data_fix001.py の stub 前提テスト1件を実装後の挙動に更新）
 - R7-B/C: WebSocket / ニュース感情評価
 
 ---

@@ -630,15 +630,76 @@ def _write_earnings_calendar_status(status: dict) -> None:
     status_path.write_text(json.dumps(status, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+# R7-v2 (2026-08-14): macro regime lineup series. See
+# feature_engine/macro_regime_feature.py for how these feed the
+# expansion/high_volatility/recession/unknown classification.
+#   - CPIAUCSL: CPI (inflation level, monthly) -> YoY inflation rate
+#   - UNRATE: unemployment rate (monthly) -> trend direction
+#   - T10Y2Y: 10Y-2Y treasury spread (daily) -> yield curve inversion signal
+#   - ICSA: initial jobless claims (weekly) -> labor market stress trend
+FRED_MACRO_SERIES = ("CPIAUCSL", "UNRATE", "T10Y2Y", "ICSA")
+
+
 def collect_fred(store):
+    """Collect macro regime series from FRED.
+
+    R7-v2 (2026-08-14): replaces the long-standing not_implemented stub.
+    config/sources/fred.yaml's not_implemented flag is flipped alongside this
+    (collect_data.py's main() only calls this when not_implemented is False).
+    """
     status_path = project_root / "data" / "audits" / "fred_collection_status.json"
     status_path.parent.mkdir(parents=True, exist_ok=True)
-    status_path.write_text(json.dumps({
+    written: list[str] = []
+
+    try:
+        from stock_swing.cli.paper_demo import _load_env, project_root as demo_project_root
+        _load_env(demo_project_root / '.env')
+    except Exception:
+        pass
+
+    api_key = os.environ.get("FRED_API_KEY", "")
+    status = {
         "time": datetime.now(timezone.utc).isoformat(),
-        "status": "not_implemented",
-        "note": "FIX-001: fixed FRED payload removed. Real API client required.",
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
-    return []
+        "status": "unknown",
+        "series_requested": len(FRED_MACRO_SERIES),
+        "series_ok": 0,
+        "series_failed": [],
+    }
+
+    if not api_key:
+        status["status"] = "failed"
+        status["reason"] = "FRED_API_KEY not configured"
+        status_path.write_text(json.dumps(status, ensure_ascii=False, indent=2), encoding="utf-8")
+        return written
+
+    try:
+        from stock_swing.sources.fred_client import FredClient
+        client = FredClient(api_key=api_key)
+    except Exception as e:
+        status["status"] = "failed"
+        status["reason"] = f"FredClient init failed: {e}"
+        status_path.write_text(json.dumps(status, ensure_ascii=False, indent=2), encoding="utf-8")
+        return written
+
+    failed_series: list[dict] = []
+    for series_id in FRED_MACRO_SERIES:
+        try:
+            env = client.fetch_series_observations(series_id, limit=24, sort_order="desc")
+            path = _write_raw_snapshot(
+                store, "fred", series_id, "series/observations", env.payload,
+                {"series_id": series_id},
+            )
+            written.append(str(path))
+            status["series_ok"] += 1
+        except Exception as e:
+            failed_series.append({"series_id": series_id, "error": str(e)})
+
+    status["series_failed"] = failed_series
+    status["status"] = "ok" if not failed_series and status["series_ok"] > 0 else (
+        "degraded" if status["series_ok"] > 0 else "failed"
+    )
+    status_path.write_text(json.dumps(status, ensure_ascii=False, indent=2), encoding="utf-8")
+    return written
 
 
 def collect_sec(symbols, store):
