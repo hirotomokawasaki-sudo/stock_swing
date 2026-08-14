@@ -1103,10 +1103,37 @@ confidence <  0.60 → multiplier = 0.7（sizing縮小）
 （現状目安10月以降）を再評価する。
 
 ### 🟢 穴5: sector_shock_hold ローリング判定導入後の活性化条件（shadow≥10件）が未再検討
-**Status**: 未着手（優先度低）
+**対応状況**: ✅ **VERIFIED_COMPLETE（2026-08-14、実データ検証込み）**
 
-本日実装したローリング判定でshadow検知頻度が変わる可能性があるが、A/B活性化条件
-「有効forward shadow≥10件」は単日判定時代のまま。
+**検証内容**: `scripts/sector_shock_historical_replay.py`に`--rolling`オプションを
+追加し、本日実装したローリング3日判定（sector_shock_hold.py）を過去103件の
+stop_lossトレードに再適用して、単日判定版と分類結果を比較した。
+
+**実データ検証結果（意外な結果）**:
+```
+単日判定版:   有効ショック件数（sector_shock_hold + relative_weakness_exit）= 1件
+ローリング版: 有効ショック件数（同上）= 1件
+103件中、分類が変化したトレード: 0件
+```
+**結論**: 本日のローリング判定追加は、実運用（06-08 LRCXケース）では単日判定が
+見逃したショックを正しく検知したことを個別に確認済みだが、**この過去103件の
+historical replayデータセットには単日判定とローリング判定の差が出るパターンが
+たまたま存在しなかった**。つまり「ローリング判定でshadow検知頻度が有意に増える」
+という当初の仮説は、少なくともこの過去データでは支持されなかった。
+
+**活性化条件（forward valid stop-trigger shadow≥10件）への含意**: この閾値を
+今すぐ変更する根拠はない。ローリング判定の効果は、過去データの再分類ではなく
+**今後の実運用（forward）でのshadow蓄積を待って評価すべき**。08-21のR9 Plan
+B/C/D/E中間レビュー時に、2026-08-14以降の`data/sector_shock_shadow_log.jsonl`
+新規エントリを確認し、ローリング判定が実際に新規検知を増やしているか確認する
+（既存レビューの一部として自然に組み込み可能なため、新規cronは追加しない）。
+
+**実装内容**:
+- `load_benchmark_rolling_returns_by_date()`をhistorical replayスクリプトに追加
+  （`benchmark_returns.csv`の`return_3d`列を読み込み）
+- `--rolling`フラグで既存ロジックと並行実行可能に（デフォルト動作は変更なし、
+  別ログファイル`sector_shock_historical_replay_log_rolling.jsonl`に出力）
+- テスト4件追加（`test_sector_shock_historical_replay_rolling.py`）
 
 ### 🟢 穴6: quarantine 102件の増減トレンドが未追跡
 **Status**: 未着手（優先度低）

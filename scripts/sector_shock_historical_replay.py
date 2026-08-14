@@ -80,6 +80,32 @@ def load_benchmark_returns_by_date() -> dict[str, dict[str, float]]:
     return dict(by_date)
 
 
+def load_benchmark_rolling_returns_by_date(column: str = "return_3d") -> dict[str, dict[str, float]]:
+    """R7-v2 / R3-v2 (2026-08-14, roadmap gap #5): date -> {benchmark_symbol:
+    rolling N-day return}, read from benchmark_returns.csv's precomputed
+    return_3d column (same column consumed by paper_demo.py's live
+    sector_shock_hold rolling check added 2026-08-14 -- see sector_shock_
+    hold.py's sector_shock_rolling_threshold_pct docstring). Used to re-run
+    this historical replay with the rolling-window fix applied, to check
+    whether the R3-v2 activation criteria's "forward valid stop-trigger
+    shadow >= 10" threshold is still an appropriate bar now that rolling
+    detection catches shocks the single-day check missed.
+    """
+    csv_path = ROOT / "data" / "benchmarks" / "benchmark_returns.csv"
+    by_date: dict[str, dict[str, float]] = defaultdict(dict)
+    with open(csv_path, newline="") as f:
+        for row in csv.DictReader(f):
+            date = row.get("date", "")
+            sym = row.get("symbol", "")
+            ret_str = row.get(column, "")
+            if date and sym and ret_str:
+                try:
+                    by_date[date][sym] = float(ret_str)
+                except (TypeError, ValueError):
+                    pass
+    return dict(by_date)
+
+
 # In production (paper_demo.py), SectorShockAnalyzer.classify() is applied to
 # ALL exit_signals regardless of exit_reason, not just stop_loss. To match
 # that behavior and accumulate more historical replay events toward the R3-v2
@@ -151,15 +177,38 @@ def fetch_symbol_return_1d(symbol: str, exit_date_str: str) -> float | None:
 
 
 def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Sector shock historical replay")
+    parser.add_argument(
+        "--rolling", action="store_true",
+        help=(
+            "R7-v2/R3-v2 (2026-08-14, roadmap gap #5): also pass rolling "
+            "3-day sector returns to classify() (the same rolling check "
+            "added to the live paper_demo.py path on 2026-08-14). Writes "
+            "to a separate log file (sector_shock_historical_replay_log_"
+            "rolling.jsonl) so it does not mix with the original single-"
+            "day-only replay log."
+        ),
+    )
+    args = parser.parse_args()
+
     symbol_registry = load_symbol_registry()
     benchmark_by_date = load_benchmark_returns_by_date()
+    benchmark_rolling_by_date = load_benchmark_rolling_returns_by_date() if args.rolling else {}
     trades = load_stop_loss_trades()
 
     config = SectorShockHoldConfig.from_env()
     analyzer = SectorShockAnalyzer(config)
 
+    replay_log_path = REPLAY_LOG_PATH
+    if args.rolling:
+        replay_log_path = ROOT / "data" / "sector_shock_historical_replay_log_rolling.jsonl"
+
     print(f"Historical stop_loss trades: {len(trades)}")
     print(f"Benchmark return dates available: {len(benchmark_by_date)}")
+    if args.rolling:
+        print(f"Rolling (3d) benchmark return dates available: {len(benchmark_rolling_by_date)}")
 
     symbol_exit_dates: dict[str, list[str]] = defaultdict(list)
     for t in trades:
@@ -200,11 +249,22 @@ def main():
             fallback_benchmarks=config.benchmark_symbols,
         )
 
+        sector_rolling_returns = None
+        if args.rolling:
+            all_benchmark_rolling = benchmark_rolling_by_date.get(exit_date, {})
+            sector_rolling_returns = get_symbol_sector_returns(
+                symbol=symbol,
+                all_benchmark_returns=all_benchmark_rolling,
+                symbol_registry=symbol_registry,
+                fallback_benchmarks=config.benchmark_symbols,
+            )
+
         result = analyzer.classify(
             symbol=symbol,
             current_return_pct=return_pct,
             symbol_1d_return_pct=symbol_1d_return,
             sector_1d_return_pcts=sector_1d_returns,
+            sector_rolling_return_pcts=sector_rolling_returns,
             days_held=int(holding_days),
         )
 
@@ -224,8 +284,8 @@ def main():
             "reasoning": result.reasoning,
             **result.shadow_log,
         }
-        REPLAY_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with open(REPLAY_LOG_PATH, "a", encoding="utf-8") as fh:
+        replay_log_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(replay_log_path, "a", encoding="utf-8") as fh:
             fh.write(json.dumps(record, ensure_ascii=False) + "\n")
 
     print("=" * 70)
@@ -247,7 +307,7 @@ def main():
     print(f"Current progress: {n_replayed} historical trades replayed "
           f"({valid_shock_events} occurred during a detected sector shock)")
     print()
-    print(f"Log written to: {REPLAY_LOG_PATH}")
+    print(f"Log written to: {replay_log_path}")
 
 
 if __name__ == "__main__":
