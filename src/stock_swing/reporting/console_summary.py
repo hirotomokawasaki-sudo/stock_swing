@@ -80,6 +80,13 @@ class ConsoleSummary:
     # --- R2-B: ETF vs Stock breakdown ---
     asset_class_breakdown: dict[str, Any] = field(default_factory=dict)
 
+    # --- 2026-08-14: attribution-quality breakdown (attributable vs
+    # untracked-origin trades). See PnlTracker.get_attribution_quality_
+    # breakdown() docstring for why this exists: the blended "overall PF"
+    # conflates a materially-different-performing bucket of pre-2026-07-22
+    # broker-reconstructed trades with no decision provenance.
+    attribution_quality_breakdown: dict[str, Any] = field(default_factory=dict)
+
     # --- R6-E: Exit attribution breakdown ---
     exit_attribution_breakdown: dict[str, Any] = field(default_factory=dict)
 
@@ -164,6 +171,7 @@ class ConsoleSummary:
                 "total_pnl": round(self.realized_pnl + self.unrealized_pnl, 2),
                 "open_positions": self.open_position_count,
                 "asset_class_breakdown": self.asset_class_breakdown,
+                "attribution_quality_breakdown": self.attribution_quality_breakdown,
                 "exit_attribution_breakdown": self.exit_attribution_breakdown,
                 "open_position_details": self.open_position_details,
             },
@@ -278,6 +286,8 @@ class ConsoleSummary:
         ai_metrics: dict[str, Any] | None = None,
         # R2-B: ETF vs Stock breakdown (optional)
         asset_class_breakdown: dict[str, Any] | None = None,
+        # 2026-08-14: attribution-quality breakdown (optional)
+        attribution_quality_breakdown: dict[str, Any] | None = None,
         # R6-E: exit attribution breakdown (optional)
         exit_attribution_breakdown: dict[str, Any] | None = None,
         # R6-D: Broker/Tracker diff (optional)
@@ -444,6 +454,7 @@ class ConsoleSummary:
             api_metrics=api_metrics or {},
             ai_metrics=ai_metrics or {},
             asset_class_breakdown=asset_class_breakdown or {},
+            attribution_quality_breakdown=attribution_quality_breakdown or {},
             exit_attribution_breakdown=exit_attribution_breakdown or {},
             deny_reason_counts=deny_reason_counts,
             broker_tracker_diff=broker_tracker_diff or {},

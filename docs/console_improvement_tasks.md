@@ -956,6 +956,82 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 
 ---
 
+## 2026-08-14 ロードマップ穴分析（客観的レビュー、ユーザー依頼）
+
+**背景**: 「現在の改善計画で改善が見込めない部分や穴になる部分」を客観的に分析
+するようユーザーから依頼を受け、既存ロードマップ・実データを再検証した結果、
+以下6件の構造的な穴を発見。優先度順に対応する。
+
+### 🔴 穴1: 戦略ポートフォリオが実質1本しかなく、起源不明トレードが全体PFを歪めている
+**対応状況**: ✅ **VERIFIED_COMPLETE（2026-08-14）**
+
+**発見内容**: closed trade 228件中、`original_strategy_id`別内訳:
+```
+broker_reconstructed: 197件（意思決定ログとの紐付けなし、ブローカー生履歴からの逆算）
+breakout_momentum_v1:  25件（実際に戦略ロジックを通過）
+reconciled_from_broker: 6件（reconcile_ordersのstale position復旧、紐付けなし）
+```
+実データで両者のPFを分離計算すると:
+```
+attributable（追跡可能）PF=1.317, net +$4,951, n=25
+untracked_origin（起源不明）PF=0.882, net -$23,514, n=203
+overall（ブレンド） PF=0.914, net -$18,563, n=228
+```
+**重要な含意**: 従来「overall PF=0.914」として扱ってきた数字は、実際に機能している
+戦略（PF 1.317）を、追跡不能な過去ポジション（PF 0.882）が押し下げているだけだった
+可能性が高い。R4-v2のdecile分析・R5-v2のclean_cohort_pf基準など、PF/WRベースの
+判断は全てこの偏りを踏まえて解釈する必要がある。
+
+**実装内容**:
+- `PnlTracker.get_attribution_quality_breakdown()`新規追加
+  - `UNTRACKED_ORIGIN_STRATEGY_IDS = {"broker_reconstructed", "reconciled_from_broker"}`
+    に該当するトレードを`untracked_origin`、それ以外を`attributable`として分離集計
+  - `original_strategy_id`が欠損している場合は`strategy_id`にフォールバック
+- `ConsoleSummary` / `console_renderer.py`に`ATTRIBUTION QUALITY`セクション追加
+  （`asset_class_breakdown`と同じ表示パターン、ledger INVALID時はNOT_VALID表示）
+- `paper_demo.py`の2箇所の`ConsoleSummary.build()`呼び出しに配線
+- テスト14件追加（`test_attribution_quality_breakdown.py`）、実データ確認済み
+- `--dry-run`でconsole出力に正しく表示されることを確認
+
+**今後の運用**: R4-v2/R5-v2のPF系判断は、今後`attribution_quality_breakdown`の
+`attributable`バケットも必ず併読する。ロールバック不要（read-only observability、
+既存の`asset_class_breakdown`と並列表示するのみで挙動変更なし）。
+
+### 🔴 穴2: R5-v2 promotion gateの「観測後の分岐条件」が未定義
+**Status**: 未着手（次に対応）
+
+top5_concentration=52.0%（閾値40%超過）、clean_cohort_pf=0.914（閾値1.0未達）は
+**現時点で既に不合格**。08-24〜09-04の2週間paper観測を予定しているが、「観測して
+何がどうなったら昇格/見送りか」の判断ルールが未定義のまま。新規BUYの集中抑制は
+現状observability-onlyのため、自然に改善する保証がない。
+
+### 🟡 穴3: R4-v2「confidence較正」が、confidence自体の利用実態を棚卸しせず着手予定
+**Status**: 未着手
+
+`confidence=signal_strength*0.85`（breakout_momentum）/ `confidence=0.85`固定
+（simple_exit v1）/ `confidence=0.90`固定（simple_exit_v2、exit全般）と、そもそも
+`confidence`値がsizing/exit判断にどこまで使われているか不明なまま較正計画がある。
+
+### 🟡 穴4: R8-v2「clean labels」定義が起源追跡可能性を問うていない
+**Status**: 未着手
+
+「clean joinable outcomes ≥300」は件数条件のみ。穴1のattribution_quality_breakdown
+実装により、今後は「300件のうちattributableは何件か」を機械的に確認できるように
+なったため、R8-v2着手条件に「attributable比率」の閾値を追加すべき。
+
+### 🟢 穴5: sector_shock_hold ローリング判定導入後の活性化条件（shadow≥10件）が未再検討
+**Status**: 未着手（優先度低）
+
+本日実装したローリング判定でshadow検知頻度が変わる可能性があるが、A/B活性化条件
+「有効forward shadow≥10件」は単日判定時代のまま。
+
+### 🟢 穴6: quarantine 102件の増減トレンドが未追跡
+**Status**: 未着手（優先度低）
+
+quarantine件数は都度health表示されるが、新規発生 vs 過去分累積の区別ができない。
+
+---
+
 ## Codex Review 2026-07-29（SSR-20260729-01）対応 — R0-v3以降
 
 **レビュー日**: 2026-07-29

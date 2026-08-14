@@ -2047,6 +2047,7 @@ def main() -> int:  # noqa: C901
                 {},
             ),
             asset_class_breakdown=pnl_tracker.get_asset_class_breakdown(),
+            attribution_quality_breakdown=pnl_tracker.get_attribution_quality_breakdown(),
             exit_attribution_breakdown=pnl_tracker.get_exit_attribution_breakdown(),
             broker_tracker_diff=_build_broker_tracker_diff(
                 list(current_positions_full.values()) if current_positions_full else [],
@@ -2747,6 +2748,7 @@ def main() -> int:  # noqa: C901
             ps_sources,
         ),
         asset_class_breakdown=pnl_tracker.get_asset_class_breakdown(),
+        attribution_quality_breakdown=pnl_tracker.get_attribution_quality_breakdown(),
         exit_attribution_breakdown=pnl_tracker.get_exit_attribution_breakdown(),
         broker_tracker_diff=_build_broker_tracker_diff_with_lag(
             list(current_positions_full.values()) if current_positions_full else [],

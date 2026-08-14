@@ -677,6 +677,93 @@ class PnLTracker:
             "all": _metrics(closed),
         }
 
+    # Origins that carry no real strategy-decision provenance: trades
+    # reconstructed purely from broker fill history (no decision_id/run_id
+    # ever existed for them), rather than trades that actually went through
+    # DecisionEngine.process(). See get_attribution_quality_breakdown()
+    # docstring for the analysis that motivated tracking this separately.
+    UNTRACKED_ORIGIN_STRATEGY_IDS = frozenset({"broker_reconstructed", "reconciled_from_broker"})
+
+    def get_attribution_quality_breakdown(self) -> dict[str, Any]:
+        """Return performance split by whether a trade's origin is
+        attributable to a real strategy decision, or was reconstructed
+        purely from broker fill history with no decision provenance.
+
+        Background (2026-08-14, roadmap gap analysis): a large fraction of
+        this system's closed trades (197/228 as of 2026-08-14) carry
+        original_strategy_id="broker_reconstructed" -- meaning
+        rebuild_pnl_state_from_broker.py had to synthesize a trade record
+        purely from Alpaca's raw fill history for a position opened before
+        R0-v2-D's metadata-join work (2026-07-22) started attaching
+        decision_id/run_id/experiment_id to every new submission. These
+        trades have no link back to any DecisionEngine.process() call, any
+        strategy signal, or any entry_signal_strength in most cases -- they
+        are legitimate realized P&L, but their "cause" is unknown.
+        A smaller number (original_strategy_id="reconciled_from_broker")
+        come from reconcile_orders.py's stale-position recovery path,
+        which is similarly unattributed to a specific strategy decision
+        (uses a synthetic decision_id placeholder, not a real one).
+
+        Real-data check (2026-08-14): attributable trades (n=25,
+        strategy_id="breakout_momentum_v1") show PF=1.317, net +$4,951.
+        Untracked-origin trades (n=203) show PF=0.882, net -$23,514. The
+        commonly-quoted "overall PF=0.914" blends these two very different
+        populations -- a materially positive attributable-strategy result
+        is being pulled down by a much larger bucket of trades whose entry
+        rationale can no longer be reconstructed. Any PF/WR-based decision
+        (e.g. R5-v2 promotion gate's clean_cohort_pf criterion, R4-v2 signal
+        calibration) should be read alongside this breakdown, not just the
+        blended "all" figure, since the blended figure conflates "is the
+        currently-running strategy logic working" with "how did a set of
+        pre-2026-07-22 broker positions with unknown origins perform".
+
+        Returns a dict with keys 'attributable', 'untracked_origin', 'all',
+        each containing the same shape as get_asset_class_breakdown()'s
+        per-bucket metrics (count, wins, losses, win_rate, profit_factor,
+        net_pnl, gross_profit, gross_loss).
+        """
+        closed = [t for t in self.state.trades if t["status"] == "closed"]
+
+        def _metrics(trades: list) -> dict[str, Any]:
+            wins = [t for t in trades if (t.get("pnl") or 0) > 0]
+            losses = [t for t in trades if (t.get("pnl") or 0) < 0]
+            gross_profit = sum(t["pnl"] for t in wins)
+            gross_loss = abs(sum(t["pnl"] for t in losses))
+            pf: float | None
+            if gross_loss > 0:
+                pf = round(gross_profit / gross_loss, 3)
+            elif gross_profit > 0:
+                pf = None  # infinity
+            else:
+                pf = 0.0
+            net_pnl = sum(t.get("pnl") or 0 for t in trades)
+            win_rate = len(wins) / len(trades) if trades else 0.0
+            return {
+                "count": len(trades),
+                "wins": len(wins),
+                "losses": len(losses),
+                "win_rate": round(win_rate, 4),
+                "profit_factor": pf,
+                "net_pnl": round(net_pnl, 2),
+                "gross_profit": round(gross_profit, 2),
+                "gross_loss": round(gross_loss, 2),
+            }
+
+        attributable: list = []
+        untracked: list = []
+        for t in closed:
+            origin = t.get("original_strategy_id") or t.get("strategy_id") or ""
+            if origin in self.UNTRACKED_ORIGIN_STRATEGY_IDS:
+                untracked.append(t)
+            else:
+                attributable.append(t)
+
+        return {
+            "attributable": _metrics(attributable),
+            "untracked_origin": _metrics(untracked),
+            "all": _metrics(closed),
+        }
+
     def get_exit_attribution_breakdown(self) -> dict[str, Any]:
         """Return performance grouped by exit reason.
 

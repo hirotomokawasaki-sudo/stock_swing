@@ -249,6 +249,33 @@ class ConsoleRenderer:
                     lines.append(
                         f"  {ac.upper():<6} n={cnt:<4} PF={pf_str:<7} WR={wr*100:.1f}%  net=${net:+,.0f}"
                     )
+
+        # 2026-08-14: attribution-quality breakdown (attributable vs
+        # untracked-origin trades). See PnlTracker.get_attribution_quality_
+        # breakdown() docstring: the blended "all" PF/WR above conflates a
+        # materially-different-performing bucket of pre-2026-07-22
+        # broker-reconstructed trades with no decision provenance.
+        attr_quality = p.get("attribution_quality_breakdown", {})
+        if attr_quality:
+            lines.append("")
+            lines.append("  ATTRIBUTION QUALITY  (closed trades; blended PF/WR above may be misleading)")
+            if ledger_invalid:
+                lines.append("  PF / WR       = NOT_VALID (台帳 INVALID の間は非表示)")
+            else:
+                labels = {"attributable": "TRACKED", "untracked_origin": "UNTRACKED"}
+                for key, label in labels.items():
+                    m = attr_quality.get(key, {})
+                    if not m or m.get("count", 0) == 0:
+                        continue
+                    pf = m.get("profit_factor")
+                    pf_str = f"{pf:.3f}" if pf is not None else "∞"
+                    wr = m.get("win_rate", 0)
+                    net = m.get("net_pnl", 0)
+                    cnt = m.get("count", 0)
+                    lines.append(
+                        f"  {label:<10} n={cnt:<4} PF={pf_str:<7} WR={wr*100:.1f}%  net=${net:+,.0f}"
+                    )
+
         risk = d.get("risk", {})
         regime = risk.get("market_regime", "unknown")
         budget = risk.get("risk_budget_pct")
