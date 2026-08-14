@@ -426,6 +426,7 @@ class PaperExecutor:
             "max_sector_exposure_usd": result.max_sector_exposure_usd,
             "remaining_sector_capacity_usd": result.remaining_sector_capacity_usd,
             "confidence": decision.confidence,
+            "confidence_multiplier": result.confidence_multiplier,
             "applied_constraint": applied_constraint,
             "skip_reason": result.skip_reason,
             # R2-v2 / H5: before/after multiplier qty for console display
@@ -460,6 +461,7 @@ class PaperExecutor:
                 decision.sizing.remaining_sector_capacity_usd = result.remaining_sector_capacity_usd
                 decision.sizing.risk_per_share = result.risk_per_share_used
                 decision.sizing.confidence = decision.confidence
+                decision.sizing.confidence_multiplier = result.confidence_multiplier
                 decision.sizing.applied_constraint = applied_constraint
                 decision.sizing.skip_reason = result.skip_reason
         return result.final_shares, details

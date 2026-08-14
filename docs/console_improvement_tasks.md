@@ -1029,11 +1029,43 @@ top5_concentration=52.0%（閾値40%超過）、clean_cohort_pf=0.914（閾値1.
   / portfolio_beta ✅0.704 / clean_cohort_pf ❌0.914 / pairwise_correlation ❌6ペア）
 
 ### 🟡 穴3: R4-v2「confidence較正」が、confidence自体の利用実態を棚卸しせず着手予定
-**Status**: 未着手
+**対応状況**: ✅ **VERIFIED_COMPLETE（2026-08-14）**
 
-`confidence=signal_strength*0.85`（breakout_momentum）/ `confidence=0.85`固定
-（simple_exit v1）/ `confidence=0.90`固定（simple_exit_v2、exit全般）と、そもそも
-`confidence`値がsizing/exit判断にどこまで使われているか不明なまま較正計画がある。
+**棚卸し結果**: `confidence`値の生成元は3パターン
+（`confidence=signal_strength*0.85`（breakout_momentum）/ `confidence=0.85`固定
+（simple_exit v1）/ `confidence=0.90`固定（simple_exit_v2、exit全般））。
+実際の利用先は`PositionSizingPolicy.size()`のみで、以下のtier分岐でsizingの
+`confidence_multiplier`を決定していた:
+```
+confidence >= 0.80 → multiplier = 1.2（sizing拡大）
+confidence <  0.60 → multiplier = 0.7（sizing縮小）
+それ以外           → multiplier = 1.0（変化なし）
+```
+**重大な発見**: この`confidence_multiplier`は実際にsizingへ影響を与えていた
+にもかかわらず、`PositionSizingResult`にも`DecisionRecord.evidence.sizing`にも
+**一切記録されていなかった**。つまりR4-v2の「confidence較正」計画は、そもそも
+較正対象の値が過去の意思決定ログに残っておらず、着手時点でヒストリカル分析
+すら不可能な状態だった。
+
+**実装内容**:
+- `PositionSizingResult`（`position_sizing.py`）に`confidence_multiplier`
+  フィールドを新規追加、`PositionSizingPolicy.size()`の戻り値に含める
+- `DecisionRecord.sizing`（`PositionSizingSnapshot`、`decision_engine.py`）に
+  同フィールドを追加
+- `PaperExecutor._calculate_position_size()`のevidence dict・sizing snapshot
+  両方に配線（`paper_executor.py`）
+- テスト7件追加（`test_confidence_multiplier_recording.py`）
+  - テスト作成中に実装の仕様を確認: `confidence=None`時は`confidence_multiplier
+    =1.0`（中立値）として記録される。「データなし」と「confidence=0.60〜0.80の
+    中間tier」は`confidence_multiplier`単体では区別できないため、今後の較正分析
+    では`confidence`フィールドと併読する必要がある（テストにコメントで明記）
+- 実データ確認: `--dry-run`でエラーなく動作、既存の`before_multiplier_qty`等と
+  同じ evidence 経路に正しく記録されることを確認
+
+**今後の運用**: この変更以降に生成される決定ログから、confidence_multiplierの
+実際の分布・sizing影響を蓄積できるようになった。R4-v2の「confidence較正」は
+**この蓄積が一定量（目安: 100件程度）に達してから着手**するのが妥当。
+既存の過去ログ（本変更前）にはこのフィールドがないため、遡及分析は不可。
 
 ### 🟡 穴4: R8-v2「clean labels」定義が起源追跡可能性を問うていない
 **Status**: 未着手

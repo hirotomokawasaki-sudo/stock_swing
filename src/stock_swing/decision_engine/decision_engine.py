@@ -71,6 +71,10 @@ class PositionSizingSnapshot:
     confidence: float | None = None
     applied_constraint: str | None = None
     skip_reason: str | None = None
+    # 2026-08-14 (roadmap gap #3): see PositionSizingResult.confidence_multiplier
+    # docstring for why this exists -- confidence's actual sizing impact was
+    # computed but never recorded until now.
+    confidence_multiplier: float | None = None
 
 
 @dataclass

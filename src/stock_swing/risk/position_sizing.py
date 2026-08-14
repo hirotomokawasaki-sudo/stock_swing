@@ -91,6 +91,15 @@ class PositionSizingResult:
     before_multiplier_qty: int | None = None   # qty before asset-class multiplier
     after_multiplier_qty: int | None = None    # qty after multiplier (== final_shares when multiplier < 1)
     multiplier_applied: float | None = None    # the multiplier value used
+    # 2026-08-14 (roadmap gap #3): confidence_multiplier was computed and
+    # applied to sizing (see PositionSizingPolicy.compute()'s
+    # confidence_multiplier local var) but never recorded anywhere -- a
+    # roadmap gap analysis found R4-v2's "confidence calibration" plan had
+    # no record of confidence's actual sizing impact to calibrate against.
+    # This field makes that value visible in DecisionRecord.evidence.sizing
+    # going forward (existing historical decisions predating this change
+    # will not have it -- see docs/console_improvement_tasks.md 穴3 対応).
+    confidence_multiplier: float | None = None
 
 
 def classify_asset_class(symbol: str | None, asset_class: str | None = None) -> str:
@@ -247,6 +256,7 @@ class PositionSizingPolicy:
             before_multiplier_qty=before_multiplier_qty,
             after_multiplier_qty=after_multiplier_qty,
             multiplier_applied=asset_multiplier,
+            confidence_multiplier=confidence_multiplier,
         )
 
     def _empty(self, inputs: PositionSizingInputs, regime: str, reason: str) -> PositionSizingResult:
