@@ -68,8 +68,14 @@ def test_collect_data_main_fails_closed_on_coverage_breach(monkeypatch, tmp_path
 
 
 def test_dashboard_filters_synthetic_external_news(tmp_path: Path) -> None:
+    # 2026-08-14 fix: same root cause as the identical test in
+    # test_remediation_20260730.py -- _load_external_news_items() only scans
+    # files whose embedded filename date is within the last 5 days. A
+    # hardcoded historical date ages out of that window and makes the file
+    # invisible before any synthetic-filtering logic runs. Use today's date.
+    _today = datetime.now().strftime("%Y-%m-%d")
     _write_json(
-        tmp_path / "data" / "raw" / "finnhub" / "finnhub_aapl_news_2026-07-30_000000.json",
+        tmp_path / "data" / "raw" / "finnhub" / f"finnhub_aapl_news_{_today}_000000.json",
         {
             "endpoint": "company-news",
             "payload": {

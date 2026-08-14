@@ -110,8 +110,17 @@ def test_dashboard_system_status_blocks_on_cron_parse_error(monkeypatch, tmp_pat
 
 
 def test_dashboard_filters_synthetic_external_news(tmp_path):
+    # 2026-08-14 fix: _load_external_news_items() only scans files whose
+    # embedded filename date falls within the last 5 days (recency window,
+    # see dashboard_service.py). The date used here must stay "recent"
+    # relative to whenever this test runs, not a fixed historical date --
+    # a hardcoded date (e.g. "2026-07-30") silently ages out of that window
+    # and makes the file invisible to _load_external_news_items() long
+    # before any synthetic-filtering logic is exercised, turning this into
+    # a false negative rather than a real regression. Use today's date.
+    _today = datetime.now().strftime("%Y-%m-%d")
     _write_json(
-        tmp_path / "data" / "raw" / "finnhub" / "finnhub_aapl_news_2026-07-30_000000.json",
+        tmp_path / "data" / "raw" / "finnhub" / f"finnhub_aapl_news_{_today}_000000.json",
         {
             "endpoint": "company-news",
             "payload": {
