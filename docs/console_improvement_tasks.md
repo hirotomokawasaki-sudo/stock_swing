@@ -609,6 +609,16 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
   パネルとして追加（read-only observability、ブロック挙動の変更なし）。テスト9件追加。
   market beta（ポートフォリオ全体のbeta/alpha/Sharpeは`benchmark_service.py`に既存実装あり）と
   pairwise correlation / top-5 concentrationの明示的な promotion gate 連携は依然未実装のまま。
+  → **2026-08-14 追加対応**: `src/stock_swing/risk/promotion_gate.py`を新規実装し、
+  cluster_cap / top5_concentration（閾値40%、`AllocationConfig.correlated_cluster_cap_pct`と整合）/
+  portfolio_beta（閾値1.5、`benchmark_service._interpret_beta()`の"High volatility"閾値と整合）/
+  clean_cohort_pf（閾値1.0、n≥20）の4条件を組み合わせたfail-closed判定を実装（pure function、I/Oなし）。
+  `scripts/check_go_no_go.py`に`check_promotion_readiness()`として配線し、`--save`時に
+  「補足: R5-v2 Promotion Gate」セクションとしてレポートに追記（Required判定・GO/NO-GO最終判定・
+  戻り値には一切影響しない、参考情報のみ）。実データ確認: top5_concentration=52.0%（閾値40%超過）、
+  clean_cohort_pf=0.914（閾値1.0未達、n=228）、cluster_cap/beta（0.704）は両方pass。
+  テスト33件追加（`test_promotion_gate.py` 27件 + `test_check_go_no_go_promotion.py` 6件）。
+  pairwise correlationのみ引き続き未実装（cluster単位のグルーピングはあるが銘柄間の実相関係数計算はなし）。
 
 **実装内容**:
 1. Stock 85% / ETF 15% 前後を allocation band (target + threshold) で実装

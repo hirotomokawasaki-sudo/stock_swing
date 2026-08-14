@@ -18,6 +18,9 @@ from pathlib import Path
 import zoneinfo
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+sys.path.insert(0, str(PROJECT_ROOT))  # for `console.*` imports (promotion readiness)
+
 JST = zoneinfo.ZoneInfo("Asia/Tokyo")
 CURRENT_MODE_PATH = PROJECT_ROOT / "config" / "runtime" / "current_mode.yaml"
 
@@ -134,6 +137,61 @@ def check() -> dict[str, dict]:
     return results
 
 
+def check_promotion_readiness() -> dict[str, dict] | None:
+    """R5-v2 (2026-08-14): supplementary, non-required promotion-gate check.
+
+    Separate from the Required conditions in check() above -- this covers
+    the previously-missing "market beta / cluster cap / top-5 concentration
+    / clean cohort PF" combination called out as the R5-v2 REOPENED reason.
+    Recommendation-only: does not affect the overall Go/No-Go decision or
+    return code, since these were never part of the original 07-31 Required
+    checklist. Returns None (not evaluated) if promotion_gate.py or its
+    inputs are unavailable, rather than raising.
+    """
+    try:
+        from stock_swing.risk.promotion_gate import evaluate_promotion_readiness
+        from console.services.dashboard_service import DashboardService
+        from console.services.benchmark_service import BenchmarkService
+    except Exception:
+        return None
+
+    try:
+        dash = DashboardService(PROJECT_ROOT)
+        cluster_exposures = dash._get_cluster_exposure()
+        positions = dash.get_positions()
+        top5 = None
+        if positions.get("available"):
+            summary = dash._summarize_positions(positions.get("positions") or [])
+            top5 = summary.get("top5_concentration")
+
+        pnl_state_path = PROJECT_ROOT / "data" / "tracking" / "pnl_state.json"
+        pnl_state = _load(pnl_state_path)
+        closed_trades = [t for t in pnl_state.get("trades", []) if t.get("status") == "closed"]
+
+        bench = BenchmarkService(PROJECT_ROOT)
+        daily_snapshots = pnl_state.get("daily_snapshots", [])
+        beta_data = bench.calculate_beta(daily_snapshots)
+
+        readiness = evaluate_promotion_readiness(
+            cluster_exposures=cluster_exposures,
+            top5_concentration=top5,
+            beta_data=beta_data,
+            closed_trades=closed_trades,
+        )
+        return {
+            c.name: {
+                "label": c.name,
+                "pass": c.passed,
+                "actual": c.actual,
+                "required": c.required,
+                "detail": c.detail,
+            }
+            for c in readiness.criteria
+        }
+    except Exception as exc:
+        return {"error": {"label": "promotion_readiness_check_error", "pass": False, "actual": str(exc), "required": "no error", "detail": ""}}
+
+
 def _update_ledger_gate_last_checked(ledger_pass: bool, now_jst: datetime) -> None:
     """Stamp ledger_quality_gate.last_checked in current_mode.yaml.
 
@@ -173,7 +231,7 @@ def _update_ledger_gate_last_checked(ledger_pass: bool, now_jst: datetime) -> No
         print(f"[updated] {CURRENT_MODE_PATH} ledger_quality_gate.last_checked -> {today}", file=sys.stderr)
 
 
-def format_report(results: dict[str, dict], save: bool = False) -> str:
+def format_report(results: dict[str, dict], save: bool = False, promotion: dict[str, dict] | None = None) -> str:
     now_jst = datetime.now(JST)
     all_pass = all(r["pass"] for r in results.values())
     decision = "🟢 **GO**（準備完了 / 08-20以降にリアルトレード開始）" if all_pass else "🔴 **NO-GO**"
@@ -198,6 +256,18 @@ def format_report(results: dict[str, dict], save: bool = False) -> str:
         f"**全件 Pass**: {all_pass}",
         "",
     ]
+
+    if promotion is not None:
+        lines += [
+            "## 補足: R5-v2 Promotion Gate（参考情報、Required判定には含まれない）",
+            "",
+            "| 条件 | 判定 | 実測値 | 必要値 | 詳細 |",
+            "|------|------|--------|--------|------|",
+        ]
+        for r in promotion.values():
+            mark = "✅" if r["pass"] else "❌"
+            lines.append(f"| {r['label']} | {mark} | {r['actual']} | {r['required']} | {r.get('detail', '')} |")
+        lines.append("")
 
     if all_pass:
         lines += [
@@ -228,7 +298,8 @@ def format_report(results: dict[str, dict], save: bool = False) -> str:
 def main() -> int:
     save = "--save" in sys.argv
     results = check()
-    report = format_report(results, save=save)
+    promotion = check_promotion_readiness()
+    report = format_report(results, save=save, promotion=promotion)
     print(report)
     all_pass = all(r["pass"] for r in results.values())
     return 0 if all_pass else 1
