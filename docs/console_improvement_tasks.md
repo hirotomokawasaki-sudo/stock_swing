@@ -652,7 +652,7 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
   - sector benchmark: exit 判断時点と同じ as-of
 - `event_time` / `available_at` / `ingested_at` / `source` / `revision_id` / `quality_status` を canonical schema へ追加
 - ~~Massive client の connection pool 共有（`Connection pool is full` 解消）~~ → **VERIFIED_COMPLETE**（2026-07-23, commit `399fe2f`。本節が長期間 未実装 のまま記載され続けていたのを 2026-08-07 訂正）
-- market closed 時は maintenance job 以外早期終了
+- ~~market closed 時は maintenance job 以外早期終了~~ → **VERIFIED_COMPLETE**（2026-08-14）: `market_guard.should_skip_outside_market_hours()` を新規実装し、weekday/holiday判定に加えてET dead zone（after-hours終了20:00〜pre-market開始04:00）中も早期終了するよう拡張。`collect_data.py` に `--require-market-session` フラグを追加し、`stock_swing_news_collection` cron（0 */4 * * *、終日実行）に適用。maintenance job（reconcile_orders等）やhistorical/bulk source（massive）は対象外のまま。テスト13件追加（全39件 pass, 回帰なし）
 - macro (FRED) の regime lineup（現在 unknown のまま）
 - R7-B/C: WebSocket / ニュース感情評価
 
@@ -1003,6 +1003,34 @@ finnhub_metric_lookup 11件 / volatility_gate 19件 / distance_from_high
 22件）。フルテストスイート: 1441 passed / 2 skipped（既存の無関係な
 2件の失敗のみ、変更前から再現確認済み）。
 
+### 1週間観測結果（2026-08-14, 2026-08-07〜08-13 US）
+
+- **Plan B shadow log**: `data/volatility_gate_shadow_log.jsonl`
+  380件中 **would_block=true 21件**（5.5%）。
+  内訳は **SMCI 16件 / NBIS 5件**。
+- **Plan C observability log**: `data/distance_from_high_log.jsonl`
+  380件中 **is_bounce_candidate=true 132件**（34.7%）。
+  対象は 12 銘柄（ADBE / CIEN / CRDO / CRM / IBM / INTC / MRVL / NOW /
+  ORCL / PATH / PLTR / SMCI）。
+- **closed trade 照合（偽陽性チェック）**:
+  - Plan Bで would_block=true だった **NBIS / SMCI** は、観測期間中
+    （`entry_time >= 2026-08-07`）の closed trade が
+    `data/tracking/pnl_state.json` に **0件**。したがって現時点で
+    「勝ちトレードをブロックしていた」実例は未観測。
+  - Plan Cで bounce_candidate=true だった銘柄のうち、観測期間中に
+    実際に closed trade まで到達したのは **ADBE / PATH の2件のみ**。
+    いずれも **負けトレード**（ADBE `-47.49`, `-2.58%` /
+    PATH `-41.58`, `-2.13%`）で、少なくともこの1週間では
+    偽陽性で勝ちを潰した形跡は確認されなかった。
+- **暫定判断**:
+  - **Plan B**: 初週の would_block 件数は 21件で、最低観測件数の目安
+    （5件以上）は充足。だが closed trade との対応サンプルがまだないため、
+    予定通り shadow 継続でよい。
+  - **Plan C**: 132/380件とヒット率が高く、現状の閾値
+    （52週高値から -20% / momentum +10%）は診断としては広め。
+    初週の実約定2件はいずれも負けだった一方、即昇格にはまだノイズが多い。
+    observability-only 継続、必要なら中間レビュー時に閾値再調整を検討。
+
 ### Plan D: ニュースセンチメント診断（shadow mode で稼働開始、2026-08-08）
 
 - **背景**: R10（2026-08-07）で「既に契約・実装済みだが戦略に一切接続されて
@@ -1104,6 +1132,34 @@ Massive barsだ60/60成功、broker quotes/barsと44/44成功）。代わりに�
   実際の信号生成・ブロッカーとの干渉を数日間観測し、目立った問題がないか確認
 - min_signal_strength（現行0.60）でevent_swing_v1が実際にどの頻度で信号を通過するかの実測リフレクションを
   1週間後に一回実施（target: 2026-08-14）
+
+### 初週間観測（2026-08-14）
+
+- `data/decisions/decision_*.json` 実測: `event_swing_v1` の決定は **3件**、すべて `buy`
+  （2026-08-07 1件、2026-08-10 2件、全件 `SMCI`）。`deny` / `sell` / `hold` は 0件。
+- `data/audits/paper_demo_20260807.log` / `paper_demo_20260811.log` 実測:
+  3件とも既存の `entry_filter_blocked_buys` で停止し、実注文には進まなかった。
+  08-07 13:35 UTC run は `['SMCI', 'SMCI', 'RBRK']`、08-10 16:00 UTC run は
+  `['SMCI', 'SMCI', 'RBRK']`、08-10 19:55 UTC run は
+  `['SMCI', 'SMCI', 'RBRK', 'HPE', 'DELL']` が entry filter でブロックされた。
+- これはガードレール誤動作ではなく、既存の rolling PF gate と整合的。`SMCI` の closed trade
+  実績は **PF=0.310 / n=5** で、`ENTRY_FILTER_ROLLING_PF_GATE` 既定値 0.70 を下回るため、
+  `event_swing_v1` の BUY も breakout の BUY も同様に block される状態だった。
+  cluster cap / allocation / sizing はその後段で正常に動いているが、`event_swing_v1` の 3件は
+  すべて entry filter で止まったため、後段 guardrail の対象にはならなかった。
+- `data/audits/earnings_calendar_status.json` 最新値:
+  `time=2026-08-13T23:05:08.912899+00:00`, `status=ok`, `symbols_requested=44`,
+  `symbols_with_upcoming_earnings=1`, `total_calendar_rows_fetched=536`,
+  `from=2026-08-13`, `to=2026-08-23`。ファイル更新時刻は 2026-08-14 08:05 JST。
+- `data/raw/finnhub/finnhub_earnings_calendar_*.json` では 2026-08-07 07:05 UTC から
+  2026-08-13 23:05 UTC まで概ね 4時間おきの取得が継続している一方、
+  **2026-08-08 03:05 UTC → 2026-08-10 05:14 UTC に週末ギャップ**がある。
+  週末停止が意図仕様なら問題ないが、`4時間おき` の厳密運用としては確認余地あり。
+- 監査上の小さな不整合: status ファイルの主タイムスタンプキーは `updated_at` ではなく `time`。
+  データ取得自体は成功しているが、確認 runbook / cron review 側が `updated_at` 前提だと取り違えやすい。
+- 08-07〜08-14 の `paper_demo` 監査ログ上、`event_swing_v1` まわりに `ERROR` / `CRITICAL` /
+  traceback は見当たらなかった。初週間の実挙動としては
+  「信号は出たが、既存の entry filter が fail-closed で止めた」が実態。
 
 ### 未対応（2026-08-07時点。優先度1/2は2026-08-08にPlan D/Eとして着手・完了 — 上記参照）
 

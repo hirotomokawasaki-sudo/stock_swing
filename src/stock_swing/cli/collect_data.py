@@ -19,7 +19,7 @@ sys.path.insert(0, str(project_root))
 from stock_swing.core.path_manager import PathManager
 from stock_swing.core.types import RawEnvelope
 from stock_swing.cli.cron_summary import emit_cron_summary
-from stock_swing.utils.market_guard import should_skip_non_market_day
+from stock_swing.utils.market_guard import should_skip_non_market_day, should_skip_outside_market_hours
 from stock_swing.storage.stage_store import StageStore
 from stock_swing.sources.finnhub_client import FinnhubClient
 from stock_swing.sources.massive_client import MassiveClient
@@ -146,6 +146,19 @@ def main():
         help="Reserved for non-production fixtures; production path rejects this flag.",
     )
     parser.add_argument("--cron-summary-json", action="store_true", help="Emit one compact CRON_SUMMARY_JSON line at the end")
+    parser.add_argument(
+        "--require-market-session",
+        action="store_true",
+        help=(
+            "R7-v2 (2026-08-14): in addition to the weekday/holiday check, also "
+            "skip when no US trading session (pre-market/regular/after-hours) is "
+            "currently active -- i.e. during the ET dead zone (~20:00-04:00 ET) "
+            "on an otherwise valid trading day. Intended for jobs that run "
+            "around the clock (e.g. every-4h news collection) and gain nothing "
+            "from a full API cycle outside any trading session. Historical/"
+            "bulk sources (e.g. massive) do not need this and should omit it."
+        ),
+    )
     args = parser.parse_args()
 
     sources = [s.strip() for s in args.sources.split(",") if s.strip()]
@@ -178,7 +191,10 @@ def main():
 
     # R7-v2 / H8: skip on non-market days (weekends / US holidays)
     # Override: export STOCK_SWING_FORCE_MARKET_DAY=true
-    _skip, _skip_reason = should_skip_non_market_day()
+    if args.require_market_session:
+        _skip, _skip_reason = should_skip_outside_market_hours()
+    else:
+        _skip, _skip_reason = should_skip_non_market_day()
     if _skip:
         print(f"⏭  {_skip_reason} – skipping collect_data run")
         if args.cron_summary_json:

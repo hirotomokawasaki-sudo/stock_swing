@@ -1,7 +1,19 @@
-"""Market trading day guard for cron job early exit.
+"""Market trading day / trading session guards for cron job early exit.
 
 R7-v2 / H8 (2026-07-23): skip non-maintenance cron jobs on non-market days
 (weekends and US holidays) to reduce wasted API calls and log noise.
+
+R7-v2 (2026-08-14): extend the same idea *within* a trading day. Some
+non-maintenance jobs (e.g. stock_swing_news_collection, which runs every 4h
+around the clock) still execute their full API cycle during the ET
+"dead zone" (after after-hours ends at 20:00 ET, before pre-market starts at
+04:00 ET) even on a genuine US trading weekday, burning API calls and
+producing snapshots with no trading-session relevance. should_skip_outside_
+market_hours() closes that gap by additionally checking the current trading
+session (pre-market / regular / after-hours) via MarketCalendar.is_market_
+open(), while should_skip_non_market_day() keeps checking only the calendar
+date (weekday/holiday) for callers (e.g. paper_demo.py) that already have
+their own session-specific gating.
 
 Usage in CLI main():
     from stock_swing.utils.market_guard import should_skip_non_market_day
@@ -12,10 +24,10 @@ Usage in CLI main():
             emit_cron_summary({"job": "...", "status": "skipped", "reason": reason})
         return 0
 
-Override (for manual testing on weekends):
+Override (for manual testing on weekends / outside trading hours):
     export STOCK_SWING_FORCE_MARKET_DAY=true
 
-Maintenance jobs (reconcile_orders, audit) should NOT call this guard –
+Maintenance jobs (reconcile_orders, audit) should NOT call either guard –
 they should always run to cancel stale orders and check integrity.
 """
 from __future__ import annotations
@@ -89,3 +101,36 @@ def should_skip_non_market_day(dt: datetime | None = None) -> tuple[bool, str]:
     if not is_trading:
         return True, reason
     return False, reason
+
+
+def should_skip_outside_market_hours(dt: datetime | None = None) -> tuple[bool, str]:
+    """Return (should_skip, reason) for non-maintenance jobs that should also
+    early-exit *within* a trading weekday when no trading session is active.
+
+    This is a superset of should_skip_non_market_day(): it first applies the
+    same weekend/holiday check, then additionally skips during the ET dead
+    zone (after after-hours ends, before pre-market starts -- roughly
+    20:00-04:00 ET) on an otherwise valid trading day.
+
+    Respects the same STOCK_SWING_FORCE_MARKET_DAY=true override as
+    should_skip_non_market_day().
+
+    Args:
+        dt: Datetime to check (defaults to now).
+
+    Returns:
+        (True, reason) when the job should be skipped.
+        (False, reason) when the job should proceed normally.
+    """
+    force = os.environ.get("STOCK_SWING_FORCE_MARKET_DAY", "").lower() in ("1", "true", "yes")
+    if force:
+        return False, "STOCK_SWING_FORCE_MARKET_DAY override active – proceeding outside market hours"
+
+    skip_day, reason = should_skip_non_market_day(dt)
+    if skip_day:
+        return True, reason
+
+    is_open, session_reason = MarketCalendar.is_market_open(dt)
+    if not is_open:
+        return True, session_reason
+    return False, session_reason

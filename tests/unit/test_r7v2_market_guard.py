@@ -19,7 +19,11 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from stock_swing.utils.market_guard import is_us_trading_day, should_skip_non_market_day
+from stock_swing.utils.market_guard import (
+    is_us_trading_day,
+    should_skip_non_market_day,
+    should_skip_outside_market_hours,
+)
 
 
 JST = ZoneInfo("Asia/Tokyo")
@@ -251,3 +255,107 @@ class TestUsFridayAfternoonNotSkipped:
         dt_mon_morning = datetime(2026, 7, 27, 13, 0, tzinfo=ZoneInfo("UTC"))
         skip, reason = should_skip_non_market_day(dt_mon_morning)
         assert not skip, f"Monday morning ET must not be skipped; got: {reason!r}"
+
+
+# ---------------------------------------------------------------------------
+# should_skip_outside_market_hours (R7-v2, 2026-08-14)
+# ---------------------------------------------------------------------------
+
+ET = ZoneInfo("America/New_York")
+
+
+def _et(year: int, month: int, day: int, hour: int, minute: int = 0) -> datetime:
+    """Build an ET-tz datetime for a fixed 2026 Tuesday-based test week."""
+    return datetime(year, month, day, hour, minute, tzinfo=ET)
+
+
+class TestShouldSkipOutsideMarketHours:
+    """A known regular US trading Tuesday: 2026-07-21."""
+
+    TUESDAY = (2026, 7, 21)
+
+    def test_dead_zone_is_skipped(self) -> None:
+        """22:00 ET (after after-hours 20:00, before next pre-market 04:00)
+        on an otherwise valid trading weekday must be skipped."""
+        dt = _et(*self.TUESDAY, 22, 0)
+        skip, reason = should_skip_outside_market_hours(dt)
+        assert skip is True
+        assert "closed" in reason.lower()
+
+    def test_early_morning_dead_zone_is_skipped(self) -> None:
+        """02:00 ET (still before 04:00 pre-market start) must be skipped."""
+        dt = _et(*self.TUESDAY, 2, 0)
+        skip, reason = should_skip_outside_market_hours(dt)
+        assert skip is True
+
+    def test_pre_market_not_skipped(self) -> None:
+        """06:00 ET (pre-market session, 04:00-09:30) must NOT be skipped."""
+        dt = _et(*self.TUESDAY, 6, 0)
+        skip, reason = should_skip_outside_market_hours(dt)
+        assert skip is False
+        assert "open" in reason.lower()
+
+    def test_regular_hours_not_skipped(self) -> None:
+        """11:00 ET (regular session) must NOT be skipped."""
+        dt = _et(*self.TUESDAY, 11, 0)
+        skip, reason = should_skip_outside_market_hours(dt)
+        assert skip is False
+
+    def test_after_hours_not_skipped(self) -> None:
+        """17:00 ET (after-hours session, 16:00-20:00) must NOT be skipped."""
+        dt = _et(*self.TUESDAY, 17, 0)
+        skip, reason = should_skip_outside_market_hours(dt)
+        assert skip is False
+
+    def test_weekend_is_skipped_even_during_session_hours(self) -> None:
+        """Saturday 11:00 ET must be skipped by the weekday check first,
+        regardless of what the clock-time session window would say."""
+        saturday = _et(2026, 7, 18, 11, 0)
+        skip, reason = should_skip_outside_market_hours(saturday)
+        assert skip is True
+        assert "saturday" in reason.lower()
+
+    def test_holiday_is_skipped(self) -> None:
+        """US holiday (non-weekend) must be skipped."""
+        dt = _et(2025, 7, 4, 11, 0)  # Independence Day, Friday
+        skip, reason = should_skip_outside_market_hours(dt)
+        assert skip is True
+        assert "independence day" in reason.lower()
+
+    def test_force_override_bypasses_dead_zone_skip(self) -> None:
+        """STOCK_SWING_FORCE_MARKET_DAY=true must also override the
+        within-day session gate, not just the weekday/holiday gate."""
+        dt = _et(*self.TUESDAY, 22, 0)
+        with patch.dict(os.environ, {"STOCK_SWING_FORCE_MARKET_DAY": "true"}):
+            skip, reason = should_skip_outside_market_hours(dt)
+        assert skip is False, "force override must disable dead-zone skip"
+        assert "override" in reason.lower()
+
+    def test_force_override_bypasses_weekend_skip(self) -> None:
+        saturday = _et(2026, 7, 18, 11, 0)
+        with patch.dict(os.environ, {"STOCK_SWING_FORCE_MARKET_DAY": "true"}):
+            skip, reason = should_skip_outside_market_hours(saturday)
+        assert skip is False
+
+    def test_defaults_to_now_does_not_crash(self) -> None:
+        skip, reason = should_skip_outside_market_hours()
+        assert isinstance(skip, bool)
+        assert isinstance(reason, str)
+
+    def test_dead_zone_boundary_just_before_premarket(self) -> None:
+        """03:59 ET must still be skipped (dead zone)."""
+        dt = _et(*self.TUESDAY, 3, 59)
+        skip, _ = should_skip_outside_market_hours(dt)
+        assert skip is True
+
+    def test_pre_market_boundary_exact_start(self) -> None:
+        """04:00 ET is exactly pre-market start -- must NOT be skipped."""
+        dt = _et(*self.TUESDAY, 4, 0)
+        skip, _ = should_skip_outside_market_hours(dt)
+        assert skip is False
+
+    def test_after_hours_boundary_exact_end(self) -> None:
+        """20:00 ET is exactly after-hours end -- must be skipped (dead zone starts)."""
+        dt = _et(*self.TUESDAY, 20, 0)
+        skip, _ = should_skip_outside_market_hours(dt)
+        assert skip is True
