@@ -100,3 +100,13 @@ config/accounts.json
 
 # Backup snapshots (quarantine/recovery)
 data/tracking/pnl_state.backup_*.json
+
+# Generated console/report snapshots (rewritten on every cron run;
+# 2026-08-14 gap-analysis follow-up: these were being committed as noise
+# alongside unrelated code changes because `git add -A` picked them up on
+# every commit. One-off analysis outputs in reports/ (e.g. reports/
+# counterfactual_hold_analysis.json, reports/analysis/*.txt) are NOT
+# included here -- they're generated once and kept as historical record,
+# not continuously rewritten.
+reports/console/latest_console_summary.json
+reports/signal_strength_decile.json
