@@ -150,6 +150,11 @@ def check_promotion_readiness() -> dict[str, dict] | None:
     """
     try:
         from stock_swing.risk.promotion_gate import evaluate_promotion_readiness
+        from stock_swing.risk.pairwise_correlation import (
+            build_daily_closes_from_raw_bars,
+            compute_pairwise_correlation,
+            summarize_high_correlation_pairs,
+        )
         from console.services.dashboard_service import DashboardService
         from console.services.benchmark_service import BenchmarkService
     except Exception:
@@ -160,9 +165,12 @@ def check_promotion_readiness() -> dict[str, dict] | None:
         cluster_exposures = dash._get_cluster_exposure()
         positions = dash.get_positions()
         top5 = None
+        held_symbols: list[str] = []
         if positions.get("available"):
-            summary = dash._summarize_positions(positions.get("positions") or [])
+            position_rows = positions.get("positions") or []
+            summary = dash._summarize_positions(position_rows)
             top5 = summary.get("top5_concentration")
+            held_symbols = sorted({str(p.get("symbol") or "").upper() for p in position_rows if p.get("symbol")})
 
         pnl_state_path = PROJECT_ROOT / "data" / "tracking" / "pnl_state.json"
         pnl_state = _load(pnl_state_path)
@@ -172,11 +180,27 @@ def check_promotion_readiness() -> dict[str, dict] | None:
         daily_snapshots = pnl_state.get("daily_snapshots", [])
         beta_data = bench.calculate_beta(daily_snapshots)
 
+        # R5-v2 (2026-08-14): pairwise correlation among currently-held
+        # symbols, reconstructed from accumulated collect_broker_bars()
+        # raw snapshots (data/raw/broker/). Best-effort: symbols with too
+        # little accumulated history simply drop out (compute_pairwise_
+        # correlation / summarize_high_correlation_pairs already fail
+        # closed on insufficient data rather than raising).
+        raw_broker_dir = PROJECT_ROOT / "data" / "raw" / "broker"
+        closes_by_symbol = {
+            sym: build_daily_closes_from_raw_bars(sym, raw_broker_dir)
+            for sym in held_symbols
+        }
+        closes_by_symbol = {sym: c for sym, c in closes_by_symbol.items() if c}
+        pairwise = compute_pairwise_correlation(closes_by_symbol)
+        correlation_summary = summarize_high_correlation_pairs(pairwise)
+
         readiness = evaluate_promotion_readiness(
             cluster_exposures=cluster_exposures,
             top5_concentration=top5,
             beta_data=beta_data,
             closed_trades=closed_trades,
+            correlation_summary=correlation_summary,
         )
         return {
             c.name: {

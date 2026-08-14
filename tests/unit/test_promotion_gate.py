@@ -12,6 +12,7 @@ from stock_swing.risk.promotion_gate import (
     _evaluate_top5_concentration,
     _evaluate_beta,
     _evaluate_clean_cohort_pf,
+    _evaluate_pairwise_correlation,
     DEFAULT_MIN_CLEAN_TRADES,
 )
 
@@ -155,6 +156,38 @@ class TestCleanCohortPf:
 
 
 # ---------------------------------------------------------------------------
+# _evaluate_pairwise_correlation
+# ---------------------------------------------------------------------------
+
+class TestPairwiseCorrelation:
+    def test_none_fails_closed(self):
+        result = _evaluate_pairwise_correlation(None)
+        assert result.passed is False
+        assert result.actual == "unavailable"
+
+    def test_unavailable_summary_fails_closed(self):
+        result = _evaluate_pairwise_correlation({"available": False, "reason": "no_computable_pairs"})
+        assert result.passed is False
+        assert result.detail == "no_computable_pairs"
+
+    def test_no_high_correlation_pairs_passes(self):
+        result = _evaluate_pairwise_correlation({
+            "available": True, "high_correlation_pairs": [], "checked_pairs": 5,
+        })
+        assert result.passed is True
+        assert result.actual == "none"
+
+    def test_high_correlation_pair_fails(self):
+        result = _evaluate_pairwise_correlation({
+            "available": True,
+            "high_correlation_pairs": [{"symbol_a": "AMZN", "symbol_b": "MSFT", "correlation": 0.94}],
+            "checked_pairs": 10,
+        })
+        assert result.passed is False
+        assert "AMZN/MSFT=0.94" in result.actual
+
+
+# ---------------------------------------------------------------------------
 # evaluate_promotion_readiness (combined)
 # ---------------------------------------------------------------------------
 
@@ -162,7 +195,7 @@ class TestEvaluatePromotionReadiness:
     def test_all_criteria_missing_fails_closed_overall(self):
         readiness = evaluate_promotion_readiness()
         assert readiness.all_pass is False
-        assert len(readiness.failing) == 4  # all 4 criteria fail-closed with no data
+        assert len(readiness.failing) == 5  # all 5 criteria fail-closed with no data
 
     def test_all_criteria_pass_overall_pass(self):
         trades = [_closed(100.0) for _ in range(15)] + [_closed(-50.0) for _ in range(10)]
@@ -171,6 +204,7 @@ class TestEvaluatePromotionReadiness:
             top5_concentration=0.30,
             beta_data={"available": True, "beta": 1.0},
             closed_trades=trades,
+            correlation_summary={"available": True, "high_correlation_pairs": [], "checked_pairs": 3},
             clean_pf_min_trades=20,
         )
         assert readiness.all_pass is True
@@ -183,16 +217,34 @@ class TestEvaluatePromotionReadiness:
             top5_concentration=0.30,
             beta_data={"available": True, "beta": 1.0},
             closed_trades=trades,
+            correlation_summary={"available": True, "high_correlation_pairs": [], "checked_pairs": 3},
             clean_pf_min_trades=20,
         )
         assert readiness.all_pass is False
         assert "cluster_cap" in readiness.failing
 
+    def test_high_pairwise_correlation_alone_fails_overall(self):
+        trades = [_closed(100.0) for _ in range(15)] + [_closed(-50.0) for _ in range(10)]
+        readiness = evaluate_promotion_readiness(
+            cluster_exposures=[{"cluster_name": "hyperscale", "over_cap": False}],
+            top5_concentration=0.30,
+            beta_data={"available": True, "beta": 1.0},
+            closed_trades=trades,
+            correlation_summary={
+                "available": True,
+                "high_correlation_pairs": [{"symbol_a": "AMZN", "symbol_b": "MSFT", "correlation": 0.94}],
+                "checked_pairs": 3,
+            },
+            clean_pf_min_trades=20,
+        )
+        assert readiness.all_pass is False
+        assert "pairwise_correlation" in readiness.failing
+
     def test_to_dict_shape(self):
         readiness = evaluate_promotion_readiness()
         d = readiness.to_dict()
         assert set(d.keys()) == {"all_pass", "failing", "criteria"}
-        assert len(d["criteria"]) == 4
+        assert len(d["criteria"]) == 5
         for c in d["criteria"]:
             assert set(c.keys()) == {"name", "passed", "actual", "required", "detail"}
 

@@ -54,6 +54,12 @@ DEFAULT_TOP5_CONCENTRATION_MAX_PCT = 40.0
 DEFAULT_BETA_MAX = 1.5
 DEFAULT_CLEAN_PF_MIN = 1.0
 DEFAULT_MIN_CLEAN_TRADES = 20
+# R5-v2 (2026-08-14): pairwise correlation threshold. Mirrors the
+# "high_correlation_threshold" default in pairwise_correlation.
+# summarize_high_correlation_pairs() -- kept as a separate constant here
+# (rather than importing that module's default) so promotion_gate.py's
+# thresholds stay self-contained and independently overridable.
+DEFAULT_HIGH_CORRELATION_MAX_PCT = 0.80
 
 
 @dataclass(frozen=True)
@@ -226,33 +232,79 @@ def _evaluate_clean_cohort_pf(
     )
 
 
+def _evaluate_pairwise_correlation(
+    correlation_summary: dict[str, Any] | None,
+    max_pct: float = DEFAULT_HIGH_CORRELATION_MAX_PCT,
+) -> PromotionCriterion:
+    """No held-symbol pair currently has |correlation| >= max_pct.
+
+    Args:
+        correlation_summary: dict as returned by
+            pairwise_correlation.summarize_high_correlation_pairs(), i.e.
+            {"available": bool, "high_correlation_pairs": [...], ...}.
+            None when unavailable.
+        max_pct: threshold passed to summarize_high_correlation_pairs()
+            when the caller built correlation_summary (informational only
+            here -- this function just reports what's in the dict).
+    """
+    if correlation_summary is None or not correlation_summary.get("available"):
+        return PromotionCriterion(
+            name="pairwise_correlation",
+            passed=False,
+            actual="unavailable",
+            required=f"no pair with |correlation|>={max_pct}",
+            detail=(correlation_summary or {}).get("reason", "correlation_summary not provided"),
+        )
+    high_pairs = correlation_summary.get("high_correlation_pairs") or []
+    return PromotionCriterion(
+        name="pairwise_correlation",
+        passed=not high_pairs,
+        actual=(
+            [f"{p['symbol_a']}/{p['symbol_b']}={p['correlation']}" for p in high_pairs]
+            if high_pairs else "none"
+        ),
+        required=f"no pair with |correlation|>={max_pct}",
+        detail=f"checked {correlation_summary.get('checked_pairs', 0)} pair(s)",
+    )
+
+
 def evaluate_promotion_readiness(
     *,
     cluster_exposures: list[dict] | None = None,
     top5_concentration: float | None = None,
     beta_data: dict[str, Any] | None = None,
     closed_trades: list[dict] | None = None,
+    correlation_summary: dict[str, Any] | None = None,
     top5_concentration_max_pct: float = DEFAULT_TOP5_CONCENTRATION_MAX_PCT,
     beta_max: float = DEFAULT_BETA_MAX,
     clean_pf_min: float = DEFAULT_CLEAN_PF_MIN,
     clean_pf_min_trades: int = DEFAULT_MIN_CLEAN_TRADES,
+    high_correlation_max_pct: float = DEFAULT_HIGH_CORRELATION_MAX_PCT,
 ) -> PromotionReadiness:
     """Evaluate the R5-v2 promotion-gate criteria this module adds.
 
     This does NOT replace scripts/check_go_no_go.py's broader Required
     condition checklist (ledger validity, circuit breaker, attribution
     coverage, etc.) -- it specifically fills the previously-missing "market
-    beta / cluster cap / top-5 concentration / clean cohort PF" gap called
-    out in docs/console_improvement_tasks.md R5-v2.
+    beta / cluster cap / pairwise correlation / top-5 concentration / clean
+    cohort PF" gap called out in docs/console_improvement_tasks.md R5-v2.
 
     Any criterion with unavailable input data is reported as failing
     (fail-closed), not silently skipped, so a caller cannot mistake "we
     didn't check" for "it passed".
+
+    Args:
+        correlation_summary: optional output of
+            pairwise_correlation.summarize_high_correlation_pairs(). When
+            omitted (None), the pairwise_correlation criterion fails
+            closed (same "unavailable" treatment as the other criteria),
+            it is NOT silently skipped from the readiness verdict.
     """
     criteria = [
         _evaluate_cluster_cap(cluster_exposures),
         _evaluate_top5_concentration(top5_concentration, max_pct=top5_concentration_max_pct),
         _evaluate_beta(beta_data, max_beta=beta_max),
         _evaluate_clean_cohort_pf(closed_trades, min_pf=clean_pf_min, min_trades=clean_pf_min_trades),
+        _evaluate_pairwise_correlation(correlation_summary, max_pct=high_correlation_max_pct),
     ]
     return PromotionReadiness(criteria=criteria)

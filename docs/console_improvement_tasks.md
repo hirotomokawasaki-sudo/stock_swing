@@ -618,7 +618,21 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
   戻り値には一切影響しない、参考情報のみ）。実データ確認: top5_concentration=52.0%（閾値40%超過）、
   clean_cohort_pf=0.914（閾値1.0未達、n=228）、cluster_cap/beta（0.704）は両方pass。
   テスト33件追加（`test_promotion_gate.py` 27件 + `test_check_go_no_go_promotion.py` 6件）。
-  pairwise correlationのみ引き続き未実装（cluster単位のグルーピングはあるが銘柄間の実相関係数計算はなし）。
+  → **2026-08-14 追加対応（第2弾）**: `src/stock_swing/risk/pairwise_correlation.py`を新規実装し、
+  残っていたpairwise correlation（銘柄間の実相関係数計算）にも対応完了。専用の日次価格履歴ストアが
+  存在しないため、`collect_data.collect_broker_bars()`が継続的に書き込んでいる
+  `data/raw/broker/broker_{symbol}_*.json`（marketdata/bars エンドポイント）スナップショットを
+  日付重複排除しながら蓄積・再構成する方式を採用（新規APIコール・新規データ収集なし）。
+  Pearson相関係数を日次リターン系列から計算、閾値0.80以上のペアを検出。`promotion_gate.py`に
+  5つ目の条件`pairwise_correlation`として統合、`check_go_no_go.py`が保有中銘柄について自動計算。
+  テスト61件追加（`test_pairwise_correlation.py` 29件 + `test_promotion_gate.py`更新5件 +
+  `test_check_go_no_go_promotion.py`更新2件）。実装中に相関係数計算の実バグを発見・修正
+  （共分散を母集団分散`/n`で計算する一方`statistics.variance()`は標本分散`/(n-1)`を使っており、
+  完全相関のはずが0.9286と出る不整合があった → `statistics.pvariance()`に統一して修正）。
+  実データ確認: 保有27銘柄中、105ペア中6ペアが|相関|≥0.80で検出（ANET/CRDO=0.82、AVGO/CRDO=0.88、
+  CRDO/MRVL=0.84、CRWD/PANW=0.84、INTC/MRVL=0.92、PANW/PATH=0.83）。
+  **これでR5-v2の再open理由に挙げられた4項目（beta/cluster cap/pairwise correlation/
+  top-5 concentration）は全て対応完了**（promotion gate自体の運用開始判断は別途ユーザー承認が必要）。
 
 **実装内容**:
 1. Stock 85% / ETF 15% 前後を allocation band (target + threshold) で実装
@@ -675,7 +689,14 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 - ~~Massive client の connection pool 共有（`Connection pool is full` 解消）~~ → **VERIFIED_COMPLETE**（2026-07-23, commit `399fe2f`。本節が長期間 未実装 のまま記載され続けていたのを 2026-08-07 訂正）
 - ~~market closed 時は maintenance job 以外早期終了~~ → **VERIFIED_COMPLETE**（2026-08-14）: `market_guard.should_skip_outside_market_hours()` を新規実装し、weekday/holiday判定に加えてET dead zone（after-hours終了20:00〜pre-market開始04:00）中も早期終了するよう拡張。`collect_data.py` に `--require-market-session` フラグを追加し、`stock_swing_news_collection` cron（0 */4 * * *、終日実行）に適用。maintenance job（reconcile_orders等）やhistorical/bulk source（massive）は対象外のまま。テスト13件追加（全39件 pass, 回帰なし）
 - ~~macro (FRED) の regime lineup（現在 unknown のまま）~~ → **VERIFIED_COMPLETE**（2026-08-14）: `collect_data.collect_fred()` を not_implemented スタブから実装に変更（CPIAUCSL/UNRATE/T10Y2Y/ICSA を FredClient 経由で取得、`config/sources/fred.yaml` の `not_implemented: false` に変更）。`MacroRegimeFeature` を単一指標（CPI水準 vs 固定閾値320、recession検知不可能だった旧実装）から CPI YoY / UNRATE trend / T10Y2Y yield curve inversion / ICSA claims trend の4指標合成判定に書き換え。`paper_demo.py` に FRED raw snapshot ロード配線を追加（best-effort、失敗時は従来通り price-based regime にフォールバック）。テスト35件追加（macro_regime_feature 16件 + collect_fred 6件 + fred/regime整合性1件、既存 test_collect_data_fix001.py の stub 前提テスト1件を実装後の挙動に更新）
-- R7-B/C: WebSocket / ニュース感情評価
+- ~~R7-B/C: WebSocket / ニュース感情評価~~ → **2026-08-14 記載訂正**: この行は
+  2026-07時点の記載が2026-08-08のPlan D実装後も更新されずに残っていた（ドキュメント上の
+  記載漏れ、実装漏れではない）。ニュース感情評価は Plan D として既に **shadow mode 実装・
+  稼働済み**（`src/stock_swing/risk/news_sentiment.py`、2026-08-08、テスト26件、
+  shadow log 331件蓄積中、次の中間レビューは2026-08-21予定、上記「Plan D」セクション参照）。
+  **WebSocket のみが真に未実装のまま残存**（R6-v2の同項目と重複、H9 state correctness
+  確認後に着手予定。ポーリングベースの現行アーキテクチャから配信方式を変更する規模の大きい
+  作業のため、専用セッションでの着手が妥当と判断し本日は見送り）
 
 ---
 
