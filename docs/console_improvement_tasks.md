@@ -998,12 +998,35 @@ overall（ブレンド） PF=0.914, net -$18,563, n=228
 既存の`asset_class_breakdown`と並列表示するのみで挙動変更なし）。
 
 ### 🔴 穴2: R5-v2 promotion gateの「観測後の分岐条件」が未定義
-**Status**: 未着手（次に対応）
+**対応状況**: ✅ **VERIFIED_COMPLETE（2026-08-14）**
 
 top5_concentration=52.0%（閾値40%超過）、clean_cohort_pf=0.914（閾値1.0未達）は
-**現時点で既に不合格**。08-24〜09-04の2週間paper観測を予定しているが、「観測して
-何がどうなったら昇格/見送りか」の判断ルールが未定義のまま。新規BUYの集中抑制は
-現状observability-onlyのため、自然に改善する保証がない。
+**08-14計画時点で既に不合格**。08-24〜09-04の2週間paper観測を予定していたが、
+「観測して何がどうなったら昇格/見送りか」の判断ルールが未定義だった問題を解消。
+
+**実装内容**:
+- `scripts/capture_promotion_gate_snapshot.py`新規作成
+  - `check_go_no_go.py`の`check_promotion_readiness()`を再利用し、日次で
+    promotion_gate 5条件のスナップショットを`data/audits/promotion_gate_snapshots/`
+    に保存
+  - `--evaluate`モード: 蓄積したスナップショットから3つの連続指標
+    （top5_concentration/clean_cohort_pf/portfolio_beta）のトレンドを分類
+    （cluster_cap/pairwise_correlationはbool/リスト型のためトレンド分析対象外）
+- **明示的な分岐条件**（`classify_trend()`）:
+  - **(a) IMPROVING & ON TRACK**: 閾値方向に改善しており、最終値が閾値の
+    10%以内 → 観測継続、gate変更不要
+  - **(b) STUCK**: 観測期間中に値がほぼ動いていない（相対変化3%未満）→
+    新規BUY集中抑制など能動的対応を検討すべきと明示的に推奨
+  - **(c) WORSENING**: 閾値から遠ざかる方向に悪化 → 09-15移行判断前の
+    即時介入を推奨
+  - 既に閾値内なら**passing**として最初から報告
+- 日次スナップショット取得cron新規登録: `stock_swing_promotion_gate_snapshot_daily`
+  （08-24〜09-04観測期間、JST 09:30毎日）
+- トレンド評価cron新規登録: `stock_swing_promotion_gate_trend_evaluation_20260905`
+  （09-05、`--evaluate --since 2026-08-24`実行、評価後に日次取得cronを自動削除）
+- テスト22件追加（`test_capture_promotion_gate_snapshot.py`）、実データでの
+  スナップショット取得動作確認済み（cluster_cap ✅ / top5_concentration ❌51.9%
+  / portfolio_beta ✅0.704 / clean_cohort_pf ❌0.914 / pairwise_correlation ❌6ペア）
 
 ### 🟡 穴3: R4-v2「confidence較正」が、confidence自体の利用実態を棚卸しせず着手予定
 **Status**: 未着手
