@@ -1297,6 +1297,10 @@ def main() -> int:  # noqa: C901
             # Staged breakeven floor (2026-08-05)
             staged_breakeven_enabled=exit_config.get('staged_breakeven_enabled', False),
             staged_breakeven_levels=exit_config.get('staged_breakeven_levels', []),
+            # Volatility-adjusted stop loss (2026-08-14)
+            volatility_adjusted_stop_enabled=exit_config.get('volatility_adjusted_stop_enabled', False),
+            volatility_multiplier_min=exit_config.get('volatility_multiplier_min', 0.5),
+            volatility_multiplier_max=exit_config.get('volatility_multiplier_max', 1.75),
         )
     else:
         # Fallback to default values
@@ -1367,6 +1371,34 @@ def main() -> int:  # noqa: C901
                         _bm_sym, _bm_r, _bm_dt,
                     )
 
+        # 2026-08-14 (Stop Loss role-purification redesign): rolling N-day
+        # cumulative sector return, needed for SectorShockAnalyzer's rolling
+        # shock check (see sector_shock_hold.py Rule 5b docstring). No
+        # feature currently computes a rolling multi-day return for
+        # benchmark ETFs (PriceMomentumFeature only has 1-day return_1d), so
+        # this is read directly from benchmark_returns.csv's precomputed
+        # return_3d column (already populated by stock_swing_update_benchmark_all
+        # cron; see data/benchmarks/benchmark_returns.csv header). Best-effort:
+        # missing/malformed rows are skipped, never raise.
+        _all_benchmark_rolling: dict[str, float] = {}
+        _rolling_days = getattr(_ssh_config, "sector_shock_rolling_days", 3)
+        _rolling_col = f"return_{_rolling_days}d"
+        _bm_csv = project_root / "data" / "benchmarks" / "benchmark_returns.csv"
+        if _bm_csv.exists():
+            _bm_rolling_latest: dict[str, tuple[str, float]] = {}
+            with open(_bm_csv, newline="") as _f:
+                for _row in csv.DictReader(_f):
+                    _sym_bm = _row.get("symbol", "")
+                    _ret_str = _row.get(_rolling_col, "")
+                    _dt_str = _row.get("date", "")
+                    if _sym_bm in _all_bm_symbols and _ret_str:
+                        try:
+                            _bm_rolling_latest[_sym_bm] = (_dt_str, float(_ret_str))
+                        except (TypeError, ValueError):
+                            pass
+            for _bm_sym, (_bm_dt, _bm_r) in _bm_rolling_latest.items():
+                _all_benchmark_rolling[_bm_sym] = _bm_r
+
         for _sig in exit_signals:
             _sym = getattr(_sig, "symbol", None) or ""
             if not _sym:
@@ -1385,11 +1417,20 @@ def main() -> int:  # noqa: C901
                 symbol_registry=_SYMBOL_REGISTRY,
                 fallback_benchmarks=_ssh_config.benchmark_symbols,
             )
+            # 2026-08-14: rolling N-day counterpart, same per-symbol benchmark
+            # selection logic reused against the rolling-returns map.
+            _sym_sector_rolling = get_symbol_sector_returns(
+                symbol=_sym,
+                all_benchmark_returns=_all_benchmark_rolling,
+                symbol_registry=_SYMBOL_REGISTRY,
+                fallback_benchmarks=_ssh_config.benchmark_symbols,
+            )
             _ssh_result = _ssh_analyzer.classify(
                 symbol=_sym,
                 current_return_pct=_unrealized_pct,
                 symbol_1d_return_pct=_1d_sym,
                 sector_1d_return_pcts=_sym_sector_1d,
+                sector_rolling_return_pcts=_sym_sector_rolling,
             )
             # R3-v2 / F7: write to persistent JSONL shadow log for A/B activation tracking
             _ssh_log_path = project_root / "data" / "sector_shock_shadow_log.jsonl"

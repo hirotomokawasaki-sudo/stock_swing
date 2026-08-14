@@ -103,6 +103,21 @@ class SectorShockHoldConfig:
     mode: str = "shadow"                     # shadow | paper_ab | disabled
     benchmark_symbols: list[str] = field(default_factory=lambda: list(SEMICONDUCTOR_BENCHMARKS))
     sector_shock_threshold_pct: float = -3.0  # sector 1d return below this = shock
+    # 2026-08-14 (Stop Loss role-purification redesign): rolling 3-day
+    # cumulative sector return threshold, checked as an OR-condition alongside
+    # the single-day threshold above. Root cause this fixes: a genuine
+    # sector-wide shock (e.g. 2026-06-05 SMH -9.2%/SOXX -10.4%) can partially
+    # bounce back the very next day (2026-06-08 SMH +5.0%/SOXX +5.9%) while
+    # remaining deeply negative on a rolling 3-day basis (2026-06-08 SMH
+    # return_3d=-6.2%/SOXX=-7.2%). Stop-loss decisions for individual
+    # positions typically fire a few days after the initial shock (median
+    # hold-to-stop is 4-6 days in this system), so a same-day-only check
+    # systematically misses shocks whose worst single day has already
+    # passed. This was the actual cause of sector_shock_shadow_count staying
+    # at 0 for months despite real, identifiable sector shocks occurring in
+    # the trade history (see docs/daily_logs/2026-08-14.md "Stop Loss 再設計").
+    sector_shock_rolling_days: int = 3
+    sector_shock_rolling_threshold_pct: float = -5.0  # rolling 3d return below this = shock
     relative_weakness_max: float = 2.0        # symbol can be at most 2x the sector decline
     max_hold_days_3: int = 3
     max_hold_days_5: int = 5
@@ -122,6 +137,12 @@ class SectorShockHoldConfig:
             benchmark_symbols=benchmarks,
             sector_shock_threshold_pct=float(
                 os.environ.get("SECTOR_SHOCK_THRESHOLD_PCT", -3.0)
+            ),
+            sector_shock_rolling_days=int(
+                os.environ.get("SECTOR_SHOCK_ROLLING_DAYS", 3)
+            ),
+            sector_shock_rolling_threshold_pct=float(
+                os.environ.get("SECTOR_SHOCK_ROLLING_THRESHOLD_PCT", -5.0)
             ),
             relative_weakness_max=float(
                 os.environ.get("SECTOR_SHOCK_REL_WEAKNESS_MAX", 2.0)
@@ -192,6 +213,7 @@ class SectorShockAnalyzer:
         current_return_pct: float,
         symbol_1d_return_pct: float,
         sector_1d_return_pcts: dict[str, float],
+        sector_rolling_return_pcts: dict[str, float] | None = None,
         days_held: int = 0,
         is_thesis_broken: bool = False,
         exceeds_portfolio_risk_limit: bool = False,
@@ -203,6 +225,13 @@ class SectorShockAnalyzer:
             current_return_pct:       Current cumulative return from entry (e.g. -0.085).
             symbol_1d_return_pct:     Symbol 1-day return today (e.g. -0.05).
             sector_1d_return_pcts:    Dict of benchmark → 1-day return for sector ETFs.
+            sector_rolling_return_pcts: Dict of benchmark → rolling N-day cumulative
+                                      return for sector ETFs (N = config.sector_shock_
+                                      rolling_days, default 3d). Optional; when omitted
+                                      or empty, only the single-day check (Rule 5) applies,
+                                      preserving prior behavior. See sector_shock_rolling_
+                                      threshold_pct docstring on SectorShockHoldConfig for
+                                      why this was added (2026-08-14).
             days_held:                Trading days position has been open (for timeout check).
             is_thesis_broken:         True if a company-specific event invalidates the thesis.
             exceeds_portfolio_risk_limit: True if portfolio risk limit is exceeded.
@@ -297,7 +326,43 @@ class SectorShockAnalyzer:
             avg_sector_return = sum(relevant_benchmarks.values()) / len(relevant_benchmarks)
             sector_shock_detected = avg_sector_return * 100 <= cfg.sector_shock_threshold_pct
             shadow_log["avg_sector_return_pct"] = round(avg_sector_return * 100, 2)
-            shadow_log["sector_shock_detected"] = sector_shock_detected
+            shadow_log["sector_shock_detected_1d"] = sector_shock_detected
+
+        # ── Rule 5b (2026-08-14): rolling N-day sector shock check ──────────
+        # OR-combined with the single-day check above. A shock whose worst
+        # single day has already passed (e.g. a sharp drop followed by a
+        # partial next-day bounce) can still show a deeply negative rolling
+        # cumulative return; relying on the single-day check alone
+        # systematically misses this pattern, which is common because
+        # stop_loss decisions for individual positions typically fire a few
+        # days after the initial shock day, not on the shock day itself.
+        avg_sector_rolling_return = 0.0
+        rolling_shock_detected = False
+        if sector_rolling_return_pcts:
+            relevant_rolling = dict(sector_rolling_return_pcts)
+            if relevant_rolling:
+                avg_sector_rolling_return = sum(relevant_rolling.values()) / len(relevant_rolling)
+                rolling_shock_detected = (
+                    avg_sector_rolling_return * 100 <= cfg.sector_shock_rolling_threshold_pct
+                )
+                shadow_log["avg_sector_rolling_return_pct"] = round(avg_sector_rolling_return * 100, 2)
+                shadow_log["sector_shock_rolling_days"] = cfg.sector_shock_rolling_days
+                shadow_log["sector_shock_detected_rolling"] = rolling_shock_detected
+
+        if rolling_shock_detected and not sector_shock_detected:
+            # Rolling check caught a shock the single-day check missed.
+            # Use the rolling average as the effective sector return for the
+            # relative-weakness comparison below (Rule 6), since it is the
+            # measure that actually detected the shock in this case.
+            sector_shock_detected = True
+            avg_sector_return = avg_sector_rolling_return
+            reasoning.append(
+                f"sector_shock_detected via rolling {cfg.sector_shock_rolling_days}d "
+                f"return={avg_sector_rolling_return*100:.1f}% "
+                f"<= threshold={cfg.sector_shock_rolling_threshold_pct:.1f}% "
+                f"(single-day check did not trigger)"
+            )
+        shadow_log["sector_shock_detected"] = sector_shock_detected
 
         # ── Rule 6: Relative weakness check ──────────────────────────────────
         if sector_shock_detected and avg_sector_return < 0:

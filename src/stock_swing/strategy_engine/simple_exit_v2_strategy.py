@@ -73,6 +73,25 @@ class SimpleExitV2Strategy(BaseStrategy):
         # Disabled by default; enable via config to run as a live improvement.
         staged_breakeven_enabled: bool = False,
         staged_breakeven_levels: list[dict[str, float]] | None = None,
+        # Volatility-adjusted stop loss (2026-08-14, Stop Loss role-purification
+        # redesign). The conviction-tier thresholds above (-5/-7/-9%) are fixed
+        # percentages applied identically to every symbol regardless of its
+        # actual volatility. Post-exit analysis (docs/daily_logs/2026-08-14.md
+        # "Stop Loss 再設計") found the held universe spans ~30%-75% annualized
+        # volatility, meaning a fixed -5%~-9% threshold is 1-2 standard
+        # deviations for a high-vol symbol (routine noise) but a much larger
+        # multiple for a low-vol symbol. This widens/tightens the effective
+        # stop threshold per-symbol based on its ATR% relative to the
+        # cross-sectional universe average ATR% for the current run, clamped
+        # to [volatility_multiplier_min, volatility_multiplier_max] to avoid
+        # extreme swings from a single noisy/short-history ATR reading.
+        # Disabled by default; does not affect trailing_stop or breakeven_stop
+        # (those are performing well; only the initial stop_loss branch is
+        # volatility-adjusted, consistent with limiting scope to the "tactical
+        # short-term loss cap" role).
+        volatility_adjusted_stop_enabled: bool = False,
+        volatility_multiplier_min: float = 0.5,
+        volatility_multiplier_max: float = 1.75,
     ):
         """Initialize simple exit V2 strategy.
 
@@ -148,6 +167,10 @@ class SimpleExitV2Strategy(BaseStrategy):
             staged_breakeven_levels or [],
             key=lambda row: float(row.get("activation_pct", 0.0)),
         )
+        # Volatility-adjusted stop loss (2026-08-14)
+        self.volatility_adjusted_stop_enabled = volatility_adjusted_stop_enabled
+        self.volatility_multiplier_min = volatility_multiplier_min
+        self.volatility_multiplier_max = volatility_multiplier_max
 
     def _effective_min_hold_days(
         self, return_pct: float, eff_stop_loss_pct: float | None = None
@@ -218,12 +241,49 @@ class SimpleExitV2Strategy(BaseStrategy):
         """Clear run-level suppression counters (call at start of each paper_demo run)."""
         self._suppression_counts.clear()
 
+    @staticmethod
+    def compute_volatility_multiplier(
+        symbol_atr_pct: float | None,
+        universe_avg_atr_pct: float | None,
+        min_multiplier: float = 0.5,
+        max_multiplier: float = 1.75,
+    ) -> float:
+        """Return a multiplier to widen/tighten a stop-loss threshold based on
+        a symbol's ATR% relative to the cross-sectional universe average
+        ATR% for the current run.
+
+        multiplier = symbol_atr_pct / universe_avg_atr_pct, clamped to
+        [min_multiplier, max_multiplier].
+
+        A multiplier > 1.0 means the symbol is more volatile than the
+        universe average, so its stop threshold should be widened
+        (multiplied, since thresholds are negative -- e.g. -7% * 1.3 = -9.1%).
+        A multiplier < 1.0 tightens the threshold for a below-average-vol
+        symbol (e.g. -7% * 0.7 = -4.9%).
+
+        Returns 1.0 (no adjustment) when either input is missing, zero, or
+        negative -- this is a fail-safe default, not an error: unknown or
+        degenerate volatility data must never widen a stop threshold
+        (that would only be safe to do with real justification).
+        """
+        if (
+            symbol_atr_pct is None
+            or universe_avg_atr_pct is None
+            or symbol_atr_pct <= 0
+            or universe_avg_atr_pct <= 0
+        ):
+            return 1.0
+        multiplier = symbol_atr_pct / universe_avg_atr_pct
+        return max(min_multiplier, min(max_multiplier, multiplier))
+
     def _resolve_thresholds(
         self,
         entry_signal_strength: float | None,
         hold_days: float | None = None,
+        volatility_multiplier: float = 1.0,
     ) -> tuple[float, float]:
-        """Return (stop_loss_pct, trailing_activation_pct) adjusted for signal strength.
+        """Return (stop_loss_pct, trailing_activation_pct) adjusted for signal
+        strength, and optionally for per-symbol volatility.
 
         Missing or invalid strength is treated as LOW conviction (-5% stop, +10% trailing)
         because broker-reconstructed positions have no signal provenance.
@@ -231,6 +291,15 @@ class SimpleExitV2Strategy(BaseStrategy):
         Graduation rule (2026-07-16): if entry_signal_strength is None (broker_reconstructed)
         but hold_days >= broker_recon_graduation_days, the position has demonstrated
         stability and graduates to standard thresholds (-7% stop, +8% trailing).
+
+        Volatility adjustment (2026-08-14, only applied when
+        volatility_adjusted_stop_enabled=True): the conviction-tier stop_loss_pct
+        computed above is multiplied by volatility_multiplier (see
+        compute_volatility_multiplier()) before being returned. trailing_activation_pct
+        is intentionally NOT volatility-adjusted -- trailing_stop is already
+        performing well (see docs/daily_logs/2026-08-14.md "Stop Loss 再設計";
+        role-purification scope limits this change to the initial stop_loss
+        branch only).
         """
         if entry_signal_strength is None:
             # Check graduation: long-held broker_reconstructed positions → standard thresholds
@@ -244,21 +313,39 @@ class SimpleExitV2Strategy(BaseStrategy):
                     hold_days,
                     self.broker_recon_graduation_days,
                 )
-                return self.stop_loss_pct, self.trailing_activation_pct
-            # Unknown conviction within graduation window: conservative/low thresholds
-            return -0.05, 0.10
+                base_stop, base_trailing = self.stop_loss_pct, self.trailing_activation_pct
+            else:
+                # Unknown conviction within graduation window: conservative/low thresholds
+                base_stop, base_trailing = -0.05, 0.10
+            return self._apply_volatility_multiplier(base_stop, volatility_multiplier), base_trailing
+
         try:
             s = float(entry_signal_strength)
         except (TypeError, ValueError):
-            return -0.05, 0.10
+            return self._apply_volatility_multiplier(-0.05, volatility_multiplier), 0.10
+
         if s >= self.HIGH_STRENGTH_THRESHOLD:
             # High conviction: wider stop, earlier trailing activation
-            return -0.09, 0.06
-        if s < self.LOW_STRENGTH_THRESHOLD:
+            base_stop, base_trailing = -0.09, 0.06
+        elif s < self.LOW_STRENGTH_THRESHOLD:
             # Low conviction: tighter stop, later trailing activation
-            return -0.05, 0.10
-        # Standard
-        return self.stop_loss_pct, self.trailing_activation_pct
+            base_stop, base_trailing = -0.05, 0.10
+        else:
+            # Standard
+            base_stop, base_trailing = self.stop_loss_pct, self.trailing_activation_pct
+
+        return self._apply_volatility_multiplier(base_stop, volatility_multiplier), base_trailing
+
+    def _apply_volatility_multiplier(self, base_stop_pct: float, volatility_multiplier: float) -> float:
+        """Multiply a (negative) stop threshold by volatility_multiplier when
+        volatility_adjusted_stop_enabled is True; otherwise return base_stop_pct
+        unchanged. Kept as a single choke point so every _resolve_thresholds()
+        return path applies the same fail-closed gating (multiplier defaults to
+        1.0 upstream via compute_volatility_multiplier() when data is missing).
+        """
+        if not self.volatility_adjusted_stop_enabled:
+            return base_stop_pct
+        return base_stop_pct * volatility_multiplier
 
     def _resolve_trailing_rule(
         self,
@@ -392,6 +479,14 @@ class SimpleExitV2Strategy(BaseStrategy):
         # Get current prices from features (excluding stale data)
         price_map = {}
         stale_symbols = set()
+        # Volatility-adjusted stop loss (2026-08-14): collect ATR% (atr / latest_close)
+        # per symbol from the same price_momentum features, for the
+        # cross-sectional universe average used by compute_volatility_multiplier().
+        # Only computed when the feature has both atr and latest_close (ATR is a
+        # best-effort simple approximation from available OHLC bars -- see
+        # PriceMomentumFeature -- and may be None for symbols with too little
+        # bar history).
+        atr_pct_map: dict[str, float] = {}
         for feature in features:
             if feature.feature_name == "price_momentum" and feature.symbol:
                 # Skip stale data (>7 days old)
@@ -407,8 +502,25 @@ class SimpleExitV2Strategy(BaseStrategy):
                 latest_close = feature.values.get("latest_close")
                 if latest_close:
                     price_map[feature.symbol] = float(latest_close)
+                    atr = feature.values.get("atr")
+                    if atr is not None and float(latest_close) > 0:
+                        try:
+                            atr_pct_map[feature.symbol] = float(atr) / float(latest_close)
+                        except (TypeError, ValueError, ZeroDivisionError):
+                            pass
         
         logger.info(f"SimpleExitV2: price_map has {len(price_map)} symbols")
+
+        # Cross-sectional universe average ATR% for this run (volatility-adjusted
+        # stop loss). Computed once per generate() call, not per-position, so
+        # every position in this run is compared against the same baseline.
+        universe_avg_atr_pct: float | None = None
+        if self.volatility_adjusted_stop_enabled and atr_pct_map:
+            universe_avg_atr_pct = sum(atr_pct_map.values()) / len(atr_pct_map)
+            logger.debug(
+                "SimpleExitV2: volatility-adjusted stop enabled, universe_avg_atr_pct=%.4f (n=%d symbols)",
+                universe_avg_atr_pct, len(atr_pct_map),
+            )
         
         # Check each position for exit criteria
         for symbol, position_data in current_positions.items():
@@ -499,8 +611,17 @@ class SimpleExitV2Strategy(BaseStrategy):
             
             # Resolve dynamic thresholds from entry signal strength
             entry_signal_strength = position_data.get("entry_signal_strength")
+            volatility_multiplier = 1.0
+            if self.volatility_adjusted_stop_enabled:
+                volatility_multiplier = self.compute_volatility_multiplier(
+                    symbol_atr_pct=atr_pct_map.get(symbol),
+                    universe_avg_atr_pct=universe_avg_atr_pct,
+                    min_multiplier=self.volatility_multiplier_min,
+                    max_multiplier=self.volatility_multiplier_max,
+                )
             eff_stop_loss_pct, eff_trailing_activation_pct = self._resolve_thresholds(
-                entry_signal_strength, hold_days=hold_days
+                entry_signal_strength, hold_days=hold_days,
+                volatility_multiplier=volatility_multiplier,
             )
 
             logger.debug(
@@ -684,6 +805,8 @@ class SimpleExitV2Strategy(BaseStrategy):
                         "staged_breakeven_enabled": self.staged_breakeven_enabled,
                         "entry_signal_strength": entry_signal_strength,
                         "eff_stop_loss_pct": eff_stop_loss_pct,
+                        "volatility_adjusted_stop_enabled": self.volatility_adjusted_stop_enabled,
+                        "volatility_multiplier": volatility_multiplier,
                         "eff_trailing_activation_pct": eff_trailing_activation_pct,
                         "price_source": price_source,
                         "stale_data_skipped": symbol in stale_symbols,

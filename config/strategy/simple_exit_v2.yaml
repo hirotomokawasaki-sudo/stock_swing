@@ -114,3 +114,27 @@ staged_breakeven_levels:
     floor_pct: 0.03
   - activation_pct: 0.12   # peak +12% 到達 → floor +6%（さらに確保）
     floor_pct: 0.06
+
+# ── Volatility-adjusted stop loss（2026-08-14、Stop Loss 役割純化リデザイン）──
+# 背景: post-exit分析（docs/daily_logs/2026-08-14.md「Stop Loss 再設計」）で、
+# 運用銘柄の年率ボラティリティが30%〜75%と大きく分散していることが判明。
+# 固定%閾値（-5/-7/-9%）は高ボラ銘柄には1-2σ相当（ノイズ域）だが、
+# 低ボラ銘柄には相対的に大きすぎる可能性がある。
+#
+# 有効化すると、conviction tier（-5/-7/-9%）で決まった基準閾値に対し、
+# 当該銘柄のATR%（simple ATR近似 / latest_close）と、当該run内の
+# 全銘柄平均ATR%との比を掛け合わせて調整する
+# （volatility_multiplier = symbol_atr_pct / universe_avg_atr_pct、
+#   [volatility_multiplier_min, volatility_multiplier_max]でクランプ）。
+# 例: 基準-7%、multiplier=1.3（平均より高ボラ）→ 実効閾値 -9.1%
+#     基準-7%、multiplier=0.7（平均より低ボラ）→ 実効閾値 -4.9%
+#
+# trailing_stop / breakeven_stop には適用しない（両者は既に良好に機能しており、
+# スコープを「役割純化」した stop_loss（初期損切り分岐）のみに限定）。
+#
+# デフォルトは無効（既存動作を一切変更しない）。paper で有効化して
+# 効果測定してから本番判断する想定。
+# ロールバック: volatility_adjusted_stop_enabled: false に戻すだけ。
+volatility_adjusted_stop_enabled: false
+volatility_multiplier_min: 0.5   # 低ボラ銘柄でも閾値を半分以下には縮めない
+volatility_multiplier_max: 1.75  # 高ボラ銘柄でも閾値を1.75倍超には広げない

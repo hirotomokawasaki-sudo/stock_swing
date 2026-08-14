@@ -524,6 +524,73 @@ floorを段階的に引き上げ（ratchet）:
 
 **ロールバック**: `staged_breakeven_enabled: false` に戻すだけ
 
+#### R3-v2-Stop-Redesign: Stop Loss 役割純化リデザイン（2026-08-14）
+
+**Status**: IMPLEMENTED_UNVERIFIED（2026-08-14、3項目とも実装完了・paper検証待ち）
+**Priority**: P2（既存stop_loss機構の改修、独立して実施可）
+**背景**: ユーザーとの議論で、stop_lossの目的を「単体で勝つ戦略」ではなく
+「数ヶ月以上の長期にわたって回復の見込みがない急落から資産を守ること」と再定義。
+この定義に照らして実データ検証（post-exit 60営業日追跡、n=60真の止損）した結果:
+- **「回復不能」だった実例は0件**（60日間ずっとexit価格を下回り続けたケースなし）
+- **entry価格まで回復したケース: 68.3%**（中央値6営業日で回復）
+- **反実仮想比較で正味-$152,188のコスト**（stop_lossしなかった場合との差、実損失
+  -$159,787 vs 60日保有した場合-$7,599）
+- 運用銘柄の年率ボラティリティが30-75%と大きく分散しており、固定-5/-7/-9%閾値は
+  高ボラ銘柄には1-2σ（通常のノイズ）にすぎない
+- max_hold_days（20日/2日/3日）という短期スイング設計と「数ヶ月」という脅威の
+  時間軸が構造的に矛盾（ポジションがそもそも数ヶ月保有されない）
+
+**方針決定（ユーザー承認: 選択肢A「役割純化」）**: stop_lossは「短期の損失限定戦術」
+として役割を純化し、長期資産防衛は既存のポートフォリオガードレール（daily/weekly
+loss halt、circuit breaker、promotion_gate）に委ねる。**max_hold_daysは変更しない**
+（数ヶ月保有前提の戦略変更は不採用）。
+
+**実装内容（3点、全てデフォルト無効・既存動作を破壊しない設計）**:
+
+1. **評価軸の是正**（`scripts/analyze_stop_loss_post_exit.py`）:
+   従来の主指標「正しい止損率」（事後に下落したか）は高ボラ銘柄では統計的にほぼ
+   常に真になり意味をなさないため、**反実仮想cost/benefit比較を主指標に変更**。
+   `--counterfactual`フラグでtrade recordの`qty`から反実仮想PnL（stop_lossせず
+   lookforward_days保有した場合）を計算し表示。テスト10件追加。
+
+2. **sector_shock_hold のローリング判定修正**（`sector_shock_hold.py`）:
+   従来は単日リターンのみで判定していたため、2026-06-05の実際のセクターショック
+   （SMH -9.2%）が翌営業日の一時反発（06-08 SMH +5.0%）で見逃され、shadow_count
+   が3ヶ月間0件のままだった。ローリング3日累積リターン（`sector_shock_rolling_
+   threshold_pct`、デフォルト-5.0%）をOR条件で追加し、単日チェックが見逃した
+   ショックも検知できるように変更。既存の単日チェックはそのまま維持（後方互換）。
+   実データ（LRCX 2026-06-08ケース）で正しく`sector_shock_hold`に再分類されることを
+   確認。`paper_demo.py`にbenchmark_returns.csvの`return_3d`列を読み込む配線を追加。
+   テスト13件追加、既存38件は無変更でパス。
+
+3. **ATRベースの動的閾値**（`simple_exit_v2_strategy.py`）:
+   `volatility_adjusted_stop_enabled`（デフォルトfalse）で有効化すると、conviction
+   tier（-5/-7/-9%）の基準閾値に、当該銘柄のATR%と当該run内の全銘柄平均ATR%の比
+   （`volatility_multiplier`、[0.5, 1.75]でクランプ）を掛けて調整。trailing_stop /
+   breakeven_stopには適用しない（既に良好に機能しているため、役割純化のスコープを
+   stop_loss分岐のみに限定）。`config/strategy/simple_exit_v2.yaml`に設定追加。
+   テスト23件追加（純粋関数9件+統合14件、high-ATR銘柄で閾値が広がり誤発動を回避、
+   low-ATR銘柄で閾値が狭まり早期発動することをend-to-endで確認）。
+
+**テスト合計**: 46件新規追加。フルスイート1701 passed / 2 skipped
+（既存の無関係な2件の失敗のみ、変更前から存在確認済み）。
+
+**未実施（今後の検証課題）**:
+- 3項目とも実装のみでpaper実測による効果検証は未実施
+- ATR閾値のmultiplier範囲（0.5〜1.75）・sector_shockのrolling閾値（-5.0%）は
+  初期値であり、paper運用データでの再検討が必要
+- 09-15リアルトレード移行までの延期期間（08-24〜09-04 promotion gate観測期間と
+  重複可）でpaper検証を実施する想定
+
+**やらないこと（今回のスコープ外、明示的に見送り）**:
+```
+❌ news_sentiment / macro_regime を exit判定に接続する
+   （構造的崩壊シグナルレイヤーは新設しない。役割純化方針により長期資産防衛は
+   ポートフォリオガードレール側の課題として残す）
+❌ max_hold_daysの変更（数ヶ月保有前提への戦略変更は不採用）
+❌ promotion_gateの自動ブロック化（既存のobservability-onlyのまま）
+```
+
 ---
 
 ### 🟡 R4-v2: Signal and Confidence Calibration
