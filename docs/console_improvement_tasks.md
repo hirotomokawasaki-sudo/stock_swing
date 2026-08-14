@@ -165,17 +165,21 @@
                       Bug1: FIX-002 STOCK_MULTIPLIER=0.5 allocationバグ / Bug2: broker.get_account() BUY HALT
                    👤 今夜 22:25 JST: 初の修正済み BUY run
 
-2026-08-20以降 🚀 リアルトレード開始（延期: 2026-07-28ユーザー指示）
+2026-09-15 🚀 リアルトレード開始（延期: 2026-08-14ユーザー指示、旧: 08-20）
 
-── Post-Launch（2026-08-20以降）─────────────────────────
+── Post-Launch（2026-09-15以降）─────────────────────────
 
-2026-08-04〜08-18  🔲 R4-C 完了（signal strength デサイル別 PF 計測スクリプト + コンソール表示）
-                   🔲 RF-7b  sector_shock_hold paper A/B 正式実施（shadow log >= 10件確認後）
+2026-08-04〜08-18  ✅ R4-C 完了（signal strength デサイル別 PF 計測スクリプト。2026-08-14、
+                         既存実装済みだったことを発見・検証・週次cron化）
+                   🔲 RF-7b  sector_shock_hold paper A/B 正式実施（shadow log >= 10件確認後、
+                         現状 valid trigger事例が不足しており市場のショック発生待ち）
 
-2026-08-18〜09-01  🔲 R5 着手（昇格・降格ゲート定義 ← R2/R4 完了が前提）
+2026-08-18〜09-15  ✅ R5 着手・大部分完了（cluster exposure可視化 + promotion gate 5条件。2026-08-14）
+                         残: 閾値妥当性のpaper観測検証（延期で確保できた期間で実施）
                    🔲 R6 C5 着手（Risk Dashboard ← R5 と並行）
 
-2026-09            🔲 R7-B/C（WebSocket / ニュース感情評価）
+2026-09以降        🔲 R7-B（WebSocket、延期で確保できた期間を活用し着手検討）
+                   ✅ R7-C（ニュース感情評価）→ 2026-08-08 Plan D として shadow mode 実装済みと判明・記載訂正
 
 2026-10+           🔲 R8（ML：クリーンラベル 1,000 件到達後）
 ```
@@ -527,7 +531,7 @@ floorを段階的に引き上げ（ratchet）:
 **Status**: IMPLEMENTED_UNVERIFIED  
 **Priority**: P2（R0-v2 完了後推奨）  
 **統合元**: H7 + 旧R4  
-**Target date**: 2026-08-17〜08-28
+**Target date**: 2026-08-17〜09-04（延期反映: リアルトレード開始が09-15に延期のため残項目着手期間を拡大）
 
 **実装済み（未検証）**:
 - R4-A: signal_strength 飽和原因調査 ✅
@@ -592,10 +596,10 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 
 ### 🔴 R5-v2: Portfolio Risk and Promotion Gates
 
-**Status**: REOPENED  
+**Status**: REOPENED（実装は2026-08-14に大部分完了、閾値妥当性のpaper検証が残課題）  
 **Priority**: P2（R0-v2 完了後）  
 **統合元**: H5 + H7 + 旧R5  
-**Target date**: 2026-08-17〜08-28
+**Target date**: 2026-08-17〜09-12（延期反映: 実装完了済みのため残期間は閾値検証専用）
 
 **再 open 理由**:
 - promotion gate が汚染台帳コホートを入力に使っている
@@ -671,10 +675,10 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 
 ### 🟡 R7-v2: Data Reliability and Operational Edge Cases
 
-**Status**: IN_PROGRESS  
+**Status**: IN_PROGRESS（source SLA/FRED/ニュース感情は2026-08-14完了。残るのはWebSocketのみ）  
 **Priority**: P2（R0-v2 完了後 R3/R4/R6 と並行可）  
 **統合元**: H8 + 旧R7  
-**Target date**: 2026-08-03〜08-14
+**Target date**: 2026-08-03〜08-14（完了項目）、WebSocketは2026-09以降（延期で確保できた期間で着手検討）
 
 **完了 (VERIFIED_COMPLETE)**:
 - R7-A: Corporate Action 台帳 + 自動検知 ✅
@@ -755,7 +759,12 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
                    ・ YES: 50%サイズで 08-20以降 開始
                    ・ NO: sector_shock_hold 完成（推定 08-20）まで延期
 
-2026-08-20以降 🚀（予定）  リアルトレード開始（50%サイズ）
+2026-08-14（金）    👤 リアルトレード開始を 08-20 → **09-15** に再延期（ユーザー指示）
+                   理由: R5-v2 promotion gate（beta/cluster/相関/集中度）実装完了直後で
+                   閾値の妥当性検証が未実施、Plan B/C/D/E の中間レビュー（08-21予定）後に
+                   もう1サイクル観測期間を確保するため。以降のスケジュールは全て 09-15 起点で再編。
+
+2026-09-15以降 🚀（予定）  リアルトレード開始（50%サイズ）
 
 2026-08-05          ✅ R3-v2-Stop  tiered min_hold v2（offset_pct再設計・再有効化、commit 27a8742）
 
@@ -769,11 +778,45 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 
 2026-08-03〜08-14  R3-v2    exit replay / sector shock shadow（R0-v2 完了後のみ）
                    R7-v2    data SLA / source lineage
+                   ✅ R7-v2  source SLA 完全実装（quote/daily bar/sector benchmark、08-14）
+                   ✅ R7-v2  macro (FRED) regime lineup 実装（08-14）
+                   ✅ R4-v2  signal strength decile分析 検証・週次cron化（既存実装の発見、08-14）
+                   ✅ R5-v2  cluster exposure可視化 + promotion gate（beta/top5/相関/clean PF）実装（08-14）
 
-2026-08-17〜08-28  R4-v2    signal calibration + decile
-                   R5-v2    portfolio risk + promotion gates A/B
+2026-08-17〜08-28  R4-v2    残: raw/normalized score保存、confidence calibration、feature snapshot保存
+                   R5-v2    残: promotion gate 5条件の閾値妥当性検証（paper観測ベース）
 
-2026-08-31以降     Gate review → micro-live 可否判定
+2026-08-19（水）    🔲 R3-v2-Stop 中間レビュー: offset_pctベースtiered min_hold v2の
+                         post-exit drift再分析（cron登録済み: stock_swing_r3v2_stop_tiered_minhold_review_20260819）
+
+2026-08-21（金）    🔲 R9 Plan B/C/D/E 中間レビュー・昇格判断（cron登録済み: stock_swing_r9_planbc_mid_review_20260821）
+                         ・ volatility_gate / distance_from_high / news_sentiment / rsi_diagnostic
+                           各shadow logをレビューし、shadow継続 / paper_ab昇格 / 見送りを判断
+
+2026-08-24〜09-04  R5-v2    promotion gate 5条件（cluster_cap/top5_concentration/portfolio_beta/
+                         clean_cohort_pf/pairwise_correlation）を約2週間 paper 観測し、
+                         各閾値が偽陽性/偽陰性を出していないか実トレード結果と突き合わせ
+                   R7-v2    残: event_time/available_at等canonical schema拡張（R7-Aの残項目）
+
+2026-09-05（土）    🔲 R3-v2-Breakeven 中間レビュー: staged floorのpaper実測での改善確認
+                         （08-05導入から1ヶ月後、cron登録済み: stock_swing_breakeven_staged_floor_review）
+
+2026-09-08〜09-12  🔲 Pre-Launch Gate Review（第2弾）
+                         ・ R3-v2-Stop/Breakeven/R9 Plan B-E/R5-v2 promotion gate、全レビュー結果を統合
+                         ・ scripts/check_go_no_go.py --save で Required 7条件 + 補足 promotion gate を再確認
+                         ・ 09-15 リアルトレード移行の最終可否判断材料をまとめる
+
+2026-09-12（土）    🔲 Go/No-Go 最終再確認（09-15直前）
+                         ・ Required 7条件が引き続き✅か再確認
+                         ・ promotion gate（top5_concentration/clean_cohort_pf等）の
+                           09-15時点の状態を記録し、リアルトレード開始判断の参考情報とする
+
+2026-09-15以降 🚀（予定）  リアルトレード開始（50%サイズ）
+
+2026-09以降        R7-v2    WebSocket化（延期で確保できた期間を活用し着手検討。
+                         現行ポーリングアーキテクチャからの移行は規模大、専用セッション推奨）
+
+2026-10+           R8-v2    ML（clean labels ≥300/≥1,000到達後、R0-v2〜R4-v2完了が前提）
 ```
 
 ---
@@ -806,10 +849,15 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 | ✅ P1 | R2-v2 | VERIFIED_COMPLETE | 2026-07-28 完了 |
 | 🟡 P1 | R6-v2 | IMPLEMENTED_UNVERIFIED | R0-v2 と並行 |
 | 🟡 P2 | R3-v2 | BLOCKED_BY_DATA | R0-v2 完了後のみ（sector_shock A/B）。R3-v2-Stop（tiered min_hold v2）は独立して2026-08-05実装済み・IMPLEMENTED_UNVERIFIED |
-| 🟡 P2 | R4-v2 | IMPLEMENTED_UNVERIFIED | R0-v2 完了推奨後 |
-| 🔴 P2 | R5-v2 | REOPENED | R0-v2 完了後 |
-| 🟢 P2 | R7-v2 | IN_PROGRESS | R0-v2 完了後 parallel |
+| 🟡 P2 | R4-v2 | IMPLEMENTED_UNVERIFIED | R0-v2 完了推奨後。decile分析は2026-08-14検証・週次cron化済み |
+| 🔴 P2 | R5-v2 | REOPENED | 実装は2026-08-14大部分完了（cluster/beta/相関/集中度）。残: 閾値のpaper検証（09-15延期で確保した期間で実施） |
+| 🟢 P2 | R7-v2 | IN_PROGRESS | source SLA/FRED/ニュース感情は2026-08-14完了。残: WebSocketのみ（09月以降） |
 | 🔵 P3 | R8-v2 | BLOCKED_BY_DATA | 10月以降 |
+
+**2026-08-14 追記**: リアルトレード開始が 08-20 → **09-15** に延期（ユーザー指示）。
+延期で確保できた約4週間を R4-v2/R5-v2 残項目の実装検証と R9 Plan B/C/D/E の
+中間レビュー・追加観測に充当する。詳細スケジュールは上部「次のアクション（直近）」の
+2026-08-14以降の行を参照。
 
 ---
 
@@ -1003,6 +1051,9 @@ offset_pct ベースに全面更新（+2件: low/high conviction 到達性の回
     を潰していないか確認
   - **2026-08-21頃 中間レビュー**: shadowログ集計結果をレビューし、
     (a) 閾値を現状維持/調整、(b) `paper_ab` へ昇格、(c) 見送り、を判断
+  - **2026-08-14 追記**: リアルトレード開始が09-15に延期されたため、08-21レビューで
+    `paper_ab`昇格判断が出た場合、09-15までに約3.5週間のA/B観測期間を確保できる
+    （従来の08-20開始スケジュールでは目標20件のA/B比較を待つ余裕がほぼなかった）
   - **paper_ab 移行後 最低20件のA/B比較後**: `active` への昇格判断（要ユーザー承認）
 
 ### Plan C: 52週高値乖離診断（observability-only、戦略には未接続）
