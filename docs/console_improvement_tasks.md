@@ -809,7 +809,12 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 **開始条件**:
 - R0-v2〜R4-v2 の acceptance criteria をすべて満たすこと
 - clean joinable outcomes ≥300（単純 calibration 開始）
-- ML training は clean labels ≥1,000 が原則
+  - **2026-08-14 定義明確化**: 「clean」とは`PnlTracker.get_attribution_
+    quality_breakdown()`の`attributable`バケット（起源追跡可能なトレード）
+    を指し、生の`total_closed`件数ではない。判定は
+    `scripts/check_r8v2_ml_readiness.py`を正式な基準とする（穴4対応、
+    2026-08-14時点: attributable=25/300）
+- ML training は clean labels ≥1,000 が原則（同様にattributableベース）
 - champion/challenger / model registry / drift detection / rollback を用意してから開始
 
 **学習制約**: recommendation-only。自動本番反映禁止。
@@ -1068,11 +1073,34 @@ confidence <  0.60 → multiplier = 0.7（sizing縮小）
 既存の過去ログ（本変更前）にはこのフィールドがないため、遡及分析は不可。
 
 ### 🟡 穴4: R8-v2「clean labels」定義が起源追跡可能性を問うていない
-**Status**: 未着手
+**対応状況**: ✅ **VERIFIED_COMPLETE（2026-08-14）**
 
-「clean joinable outcomes ≥300」は件数条件のみ。穴1のattribution_quality_breakdown
-実装により、今後は「300件のうちattributableは何件か」を機械的に確認できるように
-なったため、R8-v2着手条件に「attributable比率」の閾値を追加すべき。
+「clean joinable outcomes ≥300」「clean labels ≥1,000」は従来、生の`total_closed`
+件数で判定していたが、これは「起源追跡可能か」を問うていなかった。穴1で判明した
+通り、closed trade 228件中203件が`untracked_origin`（起源不明）であり、単純に
+`total_closed`が増えるのを待つだけでは、300件到達時点でも大半がattributable
+でない可能性がある。
+
+**実装内容**:
+- `scripts/check_r8v2_ml_readiness.py`新規作成
+  - `PnlTracker.get_attribution_quality_breakdown()`の`attributable`バケット
+    件数で calibration（≥300）/ ML training（≥1,000）の準備状況を判定
+  - `--save`で`reports/r8v2_ml_readiness.json`に結果保存、未達時は非0終了
+- **実データ確認（2026-08-14時点）**:
+  ```
+  attributable（起源追跡可能）: 25件
+  untracked_origin（起源不明）: 203件
+  total_closed:               228件
+  attributable比率:            11.0%
+  → calibration開始条件（≥300）: ❌ 25/300（total_closed基準の228/300とは
+    大きく乖離、実際にはまだ遠い）
+  ```
+- テスト8件追加（`test_r8v2_ml_readiness.py`）、実データ整合性確認込み
+
+**今後の運用**: R8-v2着手判断は今後この`check_r8v2_ml_readiness.py`の結果を
+基準とする（`total_closed`ベースの旧判断基準は廃止）。09-15以降のリアルトレード
+移行で新規attributableトレードが蓄積されるスピードを見て、R8-v2着手時期
+（現状目安10月以降）を再評価する。
 
 ### 🟢 穴5: sector_shock_hold ローリング判定導入後の活性化条件（shadow≥10件）が未再検討
 **Status**: 未着手（優先度低）
