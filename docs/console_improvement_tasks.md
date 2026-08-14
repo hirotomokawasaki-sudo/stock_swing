@@ -967,6 +967,15 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 するようユーザーから依頼を受け、既存ロードマップ・実データを再検証した結果、
 以下6件の構造的な穴を発見。優先度順に対応する。
 
+**総括（全6件対応完了、2026-08-14）**: 発見した6件全てに実装・実データ検証・
+テストで対応完了。新規スクリプト5本（`check_r8v2_ml_readiness.py`、
+`capture_promotion_gate_snapshot.py`、`check_quarantine_trend.py`、
+既存2本への機能追加）、`PnlTracker`/`PositionSizingResult`/`DecisionRecord`への
+新規フィールド追加、テスト63件追加。特に穴1（起源不明トレードがPFを歪めている）
+と穴3（confidence_multiplierが未記録だった）は、ロードマップ上の複数の判断
+基準（R4-v2/R5-v2/R8-v2）が気づかぬうちに誤った前提で運用されていたことを
+明らかにした点で重要度が高い。新規cron4件登録（うち2件は評価完了後に自動削除）。
+
 ### 🔴 穴1: 戦略ポートフォリオが実質1本しかなく、起源不明トレードが全体PFを歪めている
 **対応状況**: ✅ **VERIFIED_COMPLETE（2026-08-14）**
 
@@ -1136,9 +1145,26 @@ B/C/D/E中間レビュー時に、2026-08-14以降の`data/sector_shock_shadow_l
 - テスト4件追加（`test_sector_shock_historical_replay_rolling.py`）
 
 ### 🟢 穴6: quarantine 102件の増減トレンドが未追跡
-**Status**: 未着手（優先度低）
+**対応状況**: ✅ **VERIFIED_COMPLETE（2026-08-14）**
 
-quarantine件数は都度health表示されるが、新規発生 vs 過去分累積の区別ができない。
+**実データ確認**: quarantine 101件全ての`entry_time`が2026-07-22以前
+（R0-v2-B台帳修復作業の頃）。つまり**08-01以降、新規quarantineは0件**——
+現状は完全に過去の一括修復バッチの残存であり、日々のトレードで新規発生し
+続けている兆候はない。ただしこれまでは「都度手動確認」でしかこの事実を
+確認できておらず、継続的な監視の仕組みがなかった。
+
+**実装内容**:
+- `scripts/check_quarantine_trend.py`新規作成
+  - quarantine件数 + 最新quarantine対象の`entry_time`をスナップショットとして
+    `data/audits/quarantine_trend_history.jsonl`に蓄積
+  - 前回スナップショットとの比較で`baseline`/`stable`/`growing`/`decreased`
+    を判定。**件数が変わらなくても、新しい`entry_time`のquarantineが1件でも
+    追加されれば`growing`として検知**（件数のみの比較では、同時に1件解消・
+    1件新規発生してもすり抜けてしまう問題を回避）
+  - `growing`判定時は非0終了（cron監視で異常検知可能）
+- 週次cron新規登録: `stock_swing_quarantine_trend_weekly`（月曜09:00 JST）
+- テスト11件追加（`test_check_quarantine_trend.py`）、実データでベースライン
+  スナップショット取得済み（101件、最新entry_time=2026-07-22）
 
 ---
 
