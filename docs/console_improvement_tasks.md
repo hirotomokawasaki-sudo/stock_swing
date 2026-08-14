@@ -575,8 +575,33 @@ loss halt、circuit breaker、promotion_gate）に委ねる。**max_hold_daysは
 **テスト合計**: 46件新規追加。フルスイート1701 passed / 2 skipped
 （既存の無関係な2件の失敗のみ、変更前から存在確認済み）。
 
+**ヒストリカル検証（2026-08-14、paper有効化前）**:
+改修3（ATR動的閾値）について、paper環境を有効化せずに2段階の検証を実施:
+
+1. **簡易検証**（`scripts/simulate_volatility_adjusted_stop.py`）: 過去のstop_loss
+   発動60件を対象に、閾値調整版で発動していたか/していなかったかを再計算。
+   広がった側13件で反実仮想比較（60日保有仮定）: 正味-$43,716（広い閾値の方が得）。
+   狭まった側30件は一方向的な近似（既に発動済みトレードのみ、新規誤発動は未検証）。
+
+2. **日次パス検証**（`scripts/simulate_daily_path_volatility_stop.py`、より厳密）:
+   全closed trade 228件中208件（同日決済20件を除く）を対象に、
+   `SimpleExitV2Strategy`の実メソッド（`_resolve_trailing_rule` / `_resolve_
+   breakeven_floor` / `_effective_min_hold_days`）をそのまま流用し、
+   trailing_stop→breakeven_stop→stop_loss→time_basedの優先順位を日次で忠実に
+   再現。簡易検証の2つの構造的欠落（① exit優先順位を無視、② 新規誤発動リスク
+   未検証）を解消。
+   - **サニティチェック**: baseline再現のexit_reasonが実本番結果と59%一致
+     （日中値・ATR再計算タイミングの違いにより完全一致は期待していない）
+   - **最重要リスクチェック**: 狭めた閾値による新規誤発動 = **0件**
+     （元々non-stop_loss exitだったトレードが新たにstop_loss化したケースなし）
+   - **全体集計**（195件）: ベースライン合計PnL -$189,862 → 調整版 -$166,962、
+     **正味+$22,900の改善**（改善17件+$28,597、悪化10件-$5,697）
+   - 象徴例: NBIS(06-04) stop_loss -$3,415 → trailing_stopまで生存 +$4,594
+   - テスト13件追加（`test_simulate_daily_path_volatility_stop.py`）
+
 **未実施（今後の検証課題）**:
-- 3項目とも実装のみでpaper実測による効果検証は未実施
+- 上記はエントリー時点ATR固定・±3日窓universe近似・日次終値のみという制約あり
+  （詳細はスクリプト内docstring参照）。paper実測による最終確認は引き続き必要
 - ATR閾値のmultiplier範囲（0.5〜1.75）・sector_shockのrolling閾値（-5.0%）は
   初期値であり、paper運用データでの再検討が必要
 - 09-15リアルトレード移行までの延期期間（08-24〜09-04 promotion gate観測期間と
