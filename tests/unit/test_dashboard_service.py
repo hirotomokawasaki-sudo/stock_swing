@@ -452,3 +452,56 @@ class TestGetSmallSampleWatchlist:
         result = svc._get_small_sample_watchlist()
         symbols = [r["symbol"] for r in result]
         assert "WINCO" not in symbols, "Positive net PnL should not appear on loss watchlist"
+
+
+class TestGetMarketRegimeIndicator:
+    """R11 follow-up (2026-08-15): _get_market_regime_indicator() dashboard
+    wiring. Core scoring logic is tested independently in
+    tests/unit/test_market_regime_indicator.py; these tests only cover the
+    dashboard_service.py wiring (correct dict shape, error/missing-data
+    handling, benchmark_dir resolution).
+    """
+
+    def _write_benchmark(self, tmp_path: Path, symbol: str, closes: list[float]) -> None:
+        bench_dir = tmp_path / "data" / "benchmarks"
+        bench_dir.mkdir(parents=True, exist_ok=True)
+        start = datetime(2026, 1, 1)
+        bars = [
+            {"date": (start + timedelta(days=i)).strftime("%Y-%m-%d"), "close": c}
+            for i, c in enumerate(closes)
+        ]
+        (bench_dir / f"{symbol}_daily.json").write_text(json.dumps(bars))
+
+    def test_returns_expected_dict_shape(self, tmp_path):
+        self._write_benchmark(tmp_path, "SPY", [100.0 + i * 0.5 for i in range(80)])
+        svc = _StubService(tmp_path)
+        result = svc._get_market_regime_indicator()
+        for field in ("regime_symbol", "latest_close", "sma_short", "above_sma",
+                      "sma_rising", "range_width_pct", "chop_score", "regime_label",
+                      "insufficient_data"):
+            assert field in result, f"Missing field: {field}"
+        assert result["insufficient_data"] is False
+        assert result["regime_symbol"] == "SPY"
+
+    def test_missing_benchmark_data_returns_insufficient_data_not_exception(self, tmp_path):
+        """No data/benchmarks/SPY_daily.json at all -> must not raise, must
+        report insufficient_data so the dashboard payload never fails
+        because of this panel (mirrors _get_cluster_exposure's try/except
+        pattern)."""
+        svc = _StubService(tmp_path)
+        result = svc._get_market_regime_indicator()
+        assert result["insufficient_data"] is True
+
+    def test_never_blocks_or_resizes(self, tmp_path):
+        """Observability-only contract: the returned dict must not contain
+        any block/deny/resize-style keys, distinguishing this from an
+        active gate (Plan A) rather than a shadow diagnostic (Plan B-E)."""
+        self._write_benchmark(tmp_path, "SPY", [100.0 + i * 0.5 for i in range(80)])
+        svc = _StubService(tmp_path)
+        result = svc._get_market_regime_indicator()
+        for forbidden_key in ("blocked", "denied", "action", "multiplier"):
+            assert forbidden_key not in result, (
+                f"market_regime indicator must stay observability-only; "
+                f"unexpected key '{forbidden_key}' suggests it may be wired "
+                f"into a blocking/resizing decision"
+            )

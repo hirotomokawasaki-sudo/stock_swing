@@ -196,6 +196,7 @@ class DashboardService:
             "archives": archives,
             "performance": performance_attribution,
             "logs": self.get_logs(),
+            "market_regime": self._get_market_regime_indicator(),
         }
     
     def _get_performance_attribution(self, trading: Dict[str, Any], period: str = 'month') -> Dict[str, Any]:
@@ -2301,6 +2302,45 @@ class DashboardService:
             ]
         except Exception:
             return []
+
+    def _get_market_regime_indicator(self) -> Dict[str, Any]:
+        """R11 follow-up (2026-08-15): read-only market chop/regime panel.
+
+        Surfaces src/stock_swing/risk/market_regime_indicator.py's SPY-based
+        chop score in the web dashboard, motivated by the 2026-08-15 R11-B/
+        R11-C finding that BreakoutMomentumStrategy's edge degrades sharply
+        (PF=0.56 in the historical validation window) during a choppy/
+        whipsaw market regime, and that no single lever tested that day
+        (parameter tuning, entry-side SMA filters, or the existing
+        guardrail's halt/reduce_size) fully protects against it (each
+        mitigated at most ~10%). See docs/console_improvement_tasks.md
+        "R11-B付随" / "R11-C付随" / "R0-v2/R9付随" / "R0-v2/R9付随(2)"
+        sections. This is purely informational -- it never blocks or
+        resizes anything, mirroring _get_cluster_exposure() above and the
+        Plan B-E shadow-diagnostic pattern (observe and report, do not act).
+
+        Returns a dict with insufficient_data=True (not an exception) if
+        the benchmark file is missing or too short, so the dashboard payload
+        never fails because of this panel.
+        """
+        try:
+            from stock_swing.risk.market_regime_indicator import compute_market_regime_indicator
+
+            benchmark_dir = self.project_root / "data" / "benchmarks"
+            result = compute_market_regime_indicator(benchmark_dir, regime_symbol="SPY")
+            return {
+                "regime_symbol": result.regime_symbol,
+                "latest_close": result.latest_close,
+                "sma_short": result.sma_short,
+                "above_sma": result.above_sma,
+                "sma_rising": result.sma_rising,
+                "range_width_pct": result.range_width_pct,
+                "chop_score": result.chop_score,
+                "regime_label": result.regime_label,
+                "insufficient_data": result.insufficient_data,
+            }
+        except Exception:
+            return {"insufficient_data": True, "regime_label": "error"}
 
     def _get_peak_price_for_symbol(self, symbol: str, fallback: float) -> float | None:
         """Return peak_price from pnl_state for the open trade matching symbol."""

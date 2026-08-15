@@ -2102,6 +2102,63 @@ correlation cluster cap等他のサイジング制約と組み合わされるた
 エントリー品質向上）と矛盾しない。引き続き既存のR9レビュー体制（08-19〜09-14）に任せ、
 新規の候補探しは一旦区切りとする。
 
+### R11 follow-up (1): 体制整備① — 09-10 Pre-Launch Gate Reviewにレジーム依存性確認項目を追加
+
+**Status**: ✅ **完了（2026-08-15）**
+
+**背景**: ユーザーから「今日発見したモメンタム戦略の本質的な弱さに対して、今後十分な体制・見込みを
+立てられているか」と問われたことを受け、現状を直視した結果、今日の一連の検証（R11-B付鍘〜
+上記まで）はすべて「診断」であり、「今後の見張り番」は何も作られていなかったことが判明。
+09-15のレビュースケジュール（08-19,08-21,08-25,08-28,09-05,09-10,09-14）のどれも、
+このレジーム依存性を直接問う項目になっていなかった。
+
+**対応内容**: `stock_swing_prelaunch_gate_review_20260910`cron（09-10実施予定）の本文に
+新規「6. 新規重点確認項目」を追加。内容:
+- 今日の検証結果（パラメータ最適化・レジームフィルタ・ガードレール・reduce_size実効果、全て部分緩和
+  （最大約10%）に留まる）を担保者に明示的に提示（対策不要、情報提供のみ）
+- 以下の「②チョップ相場検知ダッシュボード」が実装済みであれば、現在のチョップ度合いを合わせて報告
+
+### R11 follow-up (2): 体制整備② — 市場チョップ/レジーム検知ダッシュボードパネル（observability-only）
+
+**Status**: ✅ **実装・本番確認完了（2026-08-15）**
+
+**背景**: 今日の一連の検証はすべてヒストリカルバックテストであり、本番稼働後に同様のチョップ相場が
+発生しても気付く仕組みが何もなかった。バックテストを再実行しなくても、コンソールで現在の市場が
+どの程度チョップ相場に近づいているかを常時把握できる「見張り番」を新規に実装。
+R11-C付鍘で検証したSMAフィルタがエントリーブロックには不向き（validation期間PF 0.56→0.58〜0.63の
+軽微な改善のみ）だったことを踏まえ、**ブロックはせず、値を可視化するだけ**に方針を変更
+（Plan B-E shadow diagnosticsと同じ「観察して報告するだけ、ブロックやサイズ変更はしない」パターン）。
+
+**実装内容**:
+1. `src/stock_swing/risk/market_regime_indicator.py`新規作成: 既存の`data/benchmarks/
+   SPY_daily.json`（`stock_swing_update_benchmark_all`cronが日次更新）から、（a）トレンド状態
+   （価格 vs SMA(50)、SMA自体の5日間の上下）と（b）レンジ幅（20日間の高安幅）の2つを組み合わせた
+   `chop_score`（0〜100）と`regime_label`（trending_bullish/trending_bearish/neutral/
+   transitional/choppy）を計算する純関数。閾値は意図的な目安値でありバックテスト最適化されていない
+   ことを明記（今日一日見てきたp-hackingリスクを避けるため）。
+2. `console/services/dashboard_service.py`に`_get_market_regime_indicator()`新規追加
+   （`_get_cluster_exposure()`と同じパターン、例外時は`insufficient_data=True`を返し
+   dashboard全体を失敗させない）。`get_dashboard()`のトップレベルキー`market_regime`として
+   配線。
+3. `console/ui/app.js`の`renderOverviewDiagnostics()`に「🌐 市場レジーム（SPY）」カードを新規
+   追加（regime_label/chop_score/終値vsSMA/レンジ幅を表示、「参考情報のみ、自動ブロックなし」と
+   明記）。
+
+**テスト**: 純関数のテスト（`tests/unit/test_market_regime_indicator.py`、7件、上昇/下降/
+ホイップソーパターンを合成データで検証）+ dashboard配線のテスト（`tests/unit/
+test_dashboard_service.py`のTestGetMarketRegimeIndicator、3件、「never_blocks_or_resizes」
+テストでobservability-only契約を明示的に担保）。フルスイート: 1844 → **1854 passed** / 2 skipped。
+
+**実運用確認**: コンソールを再起動し、`curl http://127.0.0.1:3335/api/dashboard`で実際に
+`market_regime`キーが返ることを確認（2026-08-15時点: `regime_label="trending_bullish"`,
+`chop_score=17.7`、現在の強気相場を正しく反映）。
+
+**今後の方向性（提案、優先度低）**:
+- このパネルが実際に今後のチョップ相場を事前に検知できたかは、実運用での検証が必要
+  （R9の既存レビュー体制で自然に確認可能）
+- chop_scoreの閾値を検知した場合に自動通知（cron/heartbeat経由）する仕組みも検討価値あり
+  （現状はコンソールを自分から確認しないと気付けない）
+
 ### R11-D: 有望候補のpaper A/B（既存R9型と合流、目安 R11-C完了後）
 
 **Status**: PLANNED

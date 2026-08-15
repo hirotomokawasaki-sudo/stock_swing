@@ -496,6 +496,40 @@ class Console {
                 ${this.renderDataCountsCompact(ov.data_counts)}
             </div>
             ${this.renderDataIntegrityCard(dataStatus.integrity)}
+            ${this.renderMarketRegimeCard()}
+        </div>`;
+    }
+
+    // R11 follow-up (2026-08-15): read-only market chop/regime panel.
+    // See src/stock_swing/risk/market_regime_indicator.py module docstring
+    // and docs/console_improvement_tasks.md "R11-B付随"/"R11-C付随" sections
+    // for the full rationale. Observability only -- never blocks or
+    // resizes anything, mirrors the Plan B-E shadow-diagnostic panels.
+    renderMarketRegimeCard() {
+        const mr = this.data?.market_regime;
+        if (!mr || mr.insufficient_data) {
+            return `<div class="card">
+                <h3>🌐 市場レジーム（SPY）</h3>
+                <p class="muted small">データ不足（ベンチマークキャッシュ未取得または履歴不足）</p>
+            </div>`;
+        }
+        const labelMap = {
+            trending_bullish: ['📈 上昇トレンド', 'success'],
+            trending_bearish: ['📉 下降トレンド', 'warn'],
+            neutral: ['➡️ 中立', 'muted'],
+            transitional: ['⚠️ 推移中', 'warn'],
+            'choppy (mixed trend + wide range)': ['🌀 チョップ相場', 'danger'],
+        };
+        const [label, cls] = labelMap[mr.regime_label] || [mr.regime_label, 'muted'];
+        const chopScore = mr.chop_score ?? 0;
+        const chopCls = chopScore >= 60 ? 'danger' : chopScore >= 35 ? 'warn' : 'success';
+        return `<div class="card">
+            <h3>🌐 市場レジーム（${this.escapeHtml(mr.regime_symbol || 'SPY')}） <span class="muted small" style="font-weight:normal">（参考情報のみ、自動ブロックなし）</span></h3>
+            <div class="metric"><span class="label">状態</span><span class="${cls}">${label}</span></div>
+            <div class="metric"><span class="label">Chop Score</span><span class="${chopCls}">${chopScore.toFixed(0)}/100</span></div>
+            <div class="metric"><span class="label">終値 vs SMA</span><span class="small">${(mr.latest_close ?? 0).toFixed(2)} ${mr.above_sma ? '≥' : '<'} ${(mr.sma_short ?? 0).toFixed(2)}</span></div>
+            <div class="metric"><span class="label">20日レンジ幅</span><span class="small">${(mr.range_width_pct ?? 0).toFixed(1)}%</span></div>
+            <p class="muted small" style="margin-top:6px">2026-08-15のR11検証で、モメンタム戦略はチョップ相場で一時的に機能低下することが判明（対策は部分緩和のみ）。自動制御はしない。</p>
         </div>`;
     }
 
