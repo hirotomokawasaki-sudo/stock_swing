@@ -756,15 +756,19 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 - 完全 7-stage funnel（generated→reconciled） ✅（2026-07-22）
 - status 分離（run.last_run / run.data_quality） ✅（2026-07-22）
 - data_quality=INVALID 時に PF/WR = NOT_VALID 表示 ✅（R0-v2-A SAFETY GATE）
+- manual clear 後 → `RECOVERY_PENDING` 表示 ✅（R0-v2-A、2026-07-22。`console/adapters/system_adapter.py` /
+  `console/services/dashboard_service.py` に実装済み。下記「残未実装」に重複記載されていたのを
+  2026-08-15のロードマップ棚卸しで訂正）
+- mtime キャッシュ（毎回 CSV/JSON 全読込み防止）✅（H9、2026-07-27。`src/stock_swing/utils/
+  mtime_cache.py` の `MtimeFileCache` / `_load_json_cached()` を `dashboard_service.py` の
+  7箇所 + `remote_readonly_app.py` に配線済み。キャッシュヒット時 0.0ms 達成、MEMORY.md参照。
+  「残未実装」に長期間記載され続けていたのを2026-08-15のロードマップ棚卸しで訂正）
 
 **残未実装**:
-- mtime/config hash キャッシュ（毎回 CSV 全読込み防止）← H9
-- WebSocket ← H9（state correctness 確認後）
-- 完全 funnel: generated → risk_denied → entry_blocked → allocation_blocked → guardrail_blocked → qty_zero → submitted → accepted → filled → reconciled
-- manual clear 後 → `RECOVERY_PENDING` 表示
-- mtime/config hash cache（毎 rerun での CSV 全読み込み防止）
+- config hash キャッシュ（config変更時の自動invalidation。mtimeキャッシュとは別軸で未着手）← H9
+- WebSocket ← H9（state correctness 確認後。R7-v2と重複項目、2026-09以降着手検討）
 
-**Performance SLO**: initial render p95 ≤2秒、cached rerun p95 ≤500ms
+**Performance SLO**: initial render p95 ≤2秒、cached rerun p95 ≤500ms（mtimeキャッシュ導入によりcachedrerunは既に0.0ms〜達成、H9進捗確認済み）
 
 ---
 
@@ -958,6 +962,17 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 延期で確保できた約4週間を R4-v2/R5-v2 残項目の実装検証と R9 Plan B/C/D/E の
 中間レビュー・追加観測に充当する。詳細スケジュールは上部「次のアクション（直近）」の
 2026-08-14以降の行を参照。
+
+**2026-08-15 追記（ロードマップレビューで発見したリスク、明記のみ・対応は不要）**:
+R3-v2のsector_shock A/Bは、活性化条件（forward valid stop-trigger shadow ≥10件）が
+**09-15のリアルトレード移行までに達成できない見込み**（2026-08-15時点でshadow log 41件中
+有効なショック分類は1件のみ。原因は実際のセクター全体ショック自体が監査期間中ほとんど発生していないことで、
+運用側でコントロールできない）。つまり**sector_shock_holdによるstop_loss改善効果は、
+09-15時点で未検証のままリアルトレードに持ち込まれる**。Required 7条件には含まれないため
+ブロッカーにはならないが、「未完了のまま移行するリスクを許容するか」はこれまで明示的に
+文書化されていなかった。09-10のPre-Launch Gate Reviewの判断材料に、この点（sector_shock
+保護なしでstop_lossが本番投入されることを認識した上でのご/no-go判断）を明示的に含めること。
+対策は存在しない（人工的にショックを促進するべきではないと既に2026-08-05に判断済み）。
 
 ---
 
