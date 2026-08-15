@@ -110,3 +110,9 @@ data/tracking/pnl_state.backup_*.json
 # not continuously rewritten.
 reports/console/latest_console_summary.json
 reports/signal_strength_decile.json
+
+# R11 historical backtest cache/output (regeneratable via
+# scripts/r11_fetch_historical_data.py + scripts/r11_backtest_engine.py;
+# same rationale as data/backtest_price_cache/ above)
+data/r11_price_cache/
+reports/r11_backtest_results.json
