@@ -26,6 +26,12 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from stock_swing.sources.broker_client import BrokerClient
 
+# Relative price-delta threshold for tracker/broker avg-cost mismatch detection.
+# Matches scripts/build_broker_tracker_reconciliation.py's WARN threshold so the
+# two scripts agree on what counts as a real discrepancy vs. weighted-avg
+# cost-basis rounding noise (see 2026-08-15 fix note below at point of use).
+PRICE_DIFF_THRESHOLD_PCT = 0.05
+
 
 def fetch_yahoo_finance_bars(symbol: str, start_date: str, end_date: str) -> dict:
     """Fetch historical bars from Yahoo Finance."""
@@ -173,7 +179,23 @@ def analyze_tracker_integrity(trades: list[dict], broker_positions: list[dict]) 
         broker_pos = broker_map[symbol]
         qty_match = tracker_pos["qty"] == broker_pos["qty"]
         price_diff = abs(tracker_pos["avg_entry_price"] - broker_pos["avg_entry_price"])
-        if not qty_match or price_diff > 0.01:
+        # 2026-08-15 fix: was an absolute $0.01 threshold, which flags essentially
+        # every multi-lot position as a "mismatch" once share price is above ~$10
+        # (weighted-avg cost-basis rounding routinely produces sub-$1 deltas on
+        # $100-$1800 stocks). This caused stock_swing_daily_audit to report ~10-20
+        # false-positive "tracker integrity" issues every single day for weeks
+        # (see docs/daily_logs/2026-08-*.md), even though the dedicated
+        # build_broker_tracker_reconciliation.py script (which already uses a
+        # relative % threshold) consistently confirmed 0 real mismatches on the
+        # same data. Switched to a relative threshold to match that script and
+        # eliminate the noise; real anomalies (e.g. missed corporate-action
+        # splits, which move price by 100s of %) are still caught easily.
+        price_diff_pct = (
+            price_diff / broker_pos["avg_entry_price"]
+            if broker_pos["avg_entry_price"] > 0
+            else (0.0 if price_diff == 0 else float("inf"))
+        )
+        if not qty_match or price_diff_pct > PRICE_DIFF_THRESHOLD_PCT:
             mismatches.append({
                 "symbol": symbol,
                 "tracker_qty": tracker_pos["qty"],
