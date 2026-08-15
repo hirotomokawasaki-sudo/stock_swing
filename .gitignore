@@ -115,4 +115,6 @@ reports/signal_strength_decile.json
 # scripts/r11_fetch_historical_data.py + scripts/r11_backtest_engine.py;
 # same rationale as data/backtest_price_cache/ above)
 data/r11_price_cache/
+data/r11_earnings_cache/
 reports/r11_backtest_results.json
+reports/r11c_*_results.json
