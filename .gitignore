@@ -120,3 +120,4 @@ reports/r11_backtest_results.json
 reports/r11c_*_results.json
 reports/r11b_param_search_results.json
 reports/r11c2_regime_filter_results.json
+reports/r0v2_guardrail_stress_test_results.json

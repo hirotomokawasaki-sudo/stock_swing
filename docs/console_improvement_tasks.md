@@ -1993,6 +1993,66 @@ sma_declining       1.775 (n=691)   0.630 (n=175)     2.555 (n=406)
 - パラメータ付鍘で提案した通り、**フィルタで防ぐのではなくガードレールで吸収する方向性**の方が
   現実的（R0-v2のdaily/weekly loss haltの耐性検証、別途タスクとして実施予定）
 
+### R0-v2/R9付鍘: ガードレール耐性ストレステスト（目安 半日、R11-B/C付鍘で提案された方向性を実施）
+
+**Status**: ✅ **完了（2026-08-15）**。結論: **現行ガードレールはreduce_sizeを頻繁に発動させているが、
+今回のcorrection局面自体ではhaltには届かない**。ポジションサイジングの仮定次第で結論が変わる点に
+注意が必要。
+
+**背景**: R11-B付鍘・R11-C付鍘で、BreakoutMomentumStrategyのエッジが市場調整局面（validation期間）で
+一時的に機能しなくなり、フィルタでは防げないことが判明した。両レビューで提案された通り、
+「エントリー側で防ぐのではなくR0-v2ガードレールで吸収できているか」を別角で検証。
+
+**手法（`scripts/r0v2_guardrail_stress_test.py`）**: R11-B baselineの1,415トレードを日次でリプレイし、
+実運用と完全同一の`compute_daily_realized_loss_pct` / `compute_weekly_total_loss_pct` /
+`compute_consecutive_losing_trades`（`src/stock_swing/guardrails/risk_snapshot.py`）と実際の
+`GuardrailEngine`（`config/guardrails/autonomous_stop.yaml`をそのままロード）で日次評価。
+
+**重要な補正**: R11-Bバックテストはシンボル間比較のため$10,000固定ノーショナルだが、実際のライブ平均
+ノーショナルは約$29,100（`data/tracking/pnl_state.json`実測、約2.91倍）。$10,000基準のまま
+評価すると損失率を過小評価するため、タレードpnlを、2.91倍スケールしたバージョンも併せて実行
+（勝ち/負けのパターン自体は変えず、金額のみスケール）。
+
+**結果（全438日、baseline equity $1M）**:
+```
+                    トリガー日数   reduce_size  block_buys  halt   train内halt  val内halt  holdout内halt
+$10,000基準（ノースケール）  43         42           1          0      0            0          0
+$29,100基準（2.91倍）      45         40           0          5      5            0          0
+```
+
+**スケール後のhalt 5件の詳細**: 全て**train期間内の2025-01-27〜01-31の1つの連続イベント**のみ
+（daily_realized=-8.72%が引き金となり`daily_realized_loss_pct`+`weekly_total_loss_pct`の両方が
+発火）。**validation期間（今回問題視した実際の市場調整局面）ではhaltは0件のまま**（最大
+週次損失-2.74%、閾値-6.0%までは余裕あり）。
+
+**解釈**: validation期間の損失は「1日で大きく掃う」ではなく、複数日・複数ポジションに分散して
+累積していたため、既存のhaltルール（単日・5日の集中損失検知）にはひっかからない構造だった。
+reduce_size（consecutive_losing_trades≥5でポジションサイズ50%縮小）はvalidation期間で11日発動して
+おり、この還が実際の損失を一定程度抱えていた可能性はある（本スクリプトではreduce_size発動後の
+サイズ縮小効果はシミュレートしていないため、反事実のPnLは不明）。
+
+**不確実性・限界（重要）**:
+- `daily_total_loss_pct`（intradayの含み損益変化も含む指標）はリプレイ不可能（日次終値のみでintraday
+  mark-to-marketがないため）。halt発火のもう一つの経路（閾値-3.5%）が未検証のまま
+- stale_price/broker_tracker_mismatch/api_error_rate/order_rejection/token_spendの5指標は
+  バックテストに相当物がなく、0（完全クリーン）と仮定。実運用ではこれらも同時発火し得る
+- $29,100スケールは平均値であり、実際のポジションサイズは銘柄・タイミングごとに幅がある（PortfolioAllocator/
+  correlation cluster capは未シミュレート）
+- 最大同時ポジション数が本バックテストは66件まで到達するが、実運用はアロケーションルールでより
+  制限されている可能性があり、損失の分散/集中度が実際と異なる可能性がある
+
+**実務的な含意**: 現行のR0-v2ガードレールは、今回のような「長期間のチョップ相場で損失が
+少しずつ積み重なる」タイプのリスクには、haltではなくreduce_sizeで部分的に対応する設計に
+なっている（意図的かは不明，偵然の可能性もある）。完全な停止（halt）は短期集中型の大損失（例:
+2025-01の連続イベント）には反応するが、今回のような「広く蔴2った中程度の損失」には反応しない。
+
+**今後の方向性（提案、未着手）**:
+- reduce_size発動後の実際のサイズ縮小効果（50%）をシミュレートに組み込み、validation期間の
+  実際の損失がどの程度抱えられていたかを定量化
+- `weekly_total_loss_pct`の閾値（-6.0%）が今回のような「長期緩慢な損失」に対して適切か
+  （現状最大-2.74%で余裕があるが、長期間継続した場合には到達しうる可能性あり）を
+  別途検証価値あり
+
 ### R11-D: 有望候補のpaper A/B（既存R9型と合流、目安 R11-C完了後）
 
 **Status**: PLANNED
