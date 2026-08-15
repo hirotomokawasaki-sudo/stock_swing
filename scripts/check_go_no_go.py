@@ -258,7 +258,16 @@ def _update_ledger_gate_last_checked(ledger_pass: bool, now_jst: datetime) -> No
 def format_report(results: dict[str, dict], save: bool = False, promotion: dict[str, dict] | None = None) -> str:
     now_jst = datetime.now(JST)
     all_pass = all(r["pass"] for r in results.values())
-    decision = "🟢 **GO**（準備完了 / 08-20以降にリアルトレード開始）" if all_pass else "🔴 **NO-GO**"
+    # NOTE (2026-08-15): launch date was hardcoded as "08-20" here even after
+    # the 2026-08-14 user decision moved the real-trade launch to 09-15 (see
+    # docs/console_improvement_tasks.md "2026-08-14（金）... 09-15に再延期").
+    # This script's output is read verbatim by the 08-19/08-21/08-28/09-05/
+    # 09-10/09-14 review cron jobs, so a stale hardcoded date would have kept
+    # misreporting the wrong launch date across all of them until 09-15
+    # itself. Sourced from the roadmap doc; update there first if the date
+    # changes again.
+    LAUNCH_DATE_LABEL = "09-15"
+    decision = f"🟢 **GO**（準備完了 / {LAUNCH_DATE_LABEL}以降にリアルトレード開始）" if all_pass else "🔴 **NO-GO**"
 
     lines = [
         f"# Go/No-Go 判定結果 — {now_jst.strftime('%Y-%m-%d %H:%M JST')}",
@@ -296,8 +305,8 @@ def format_report(results: dict[str, dict], save: bool = False, promotion: dict[
     if all_pass:
         lines += [
             "## 次のアクション",
-            "- 本判定を `docs/go_no_go_report_20260731.md` に記録",
-            "- リアルトレード開始: 08-20以降（50%サイズ）",
+            "- 本判定は `--save` 付き実行時に `docs/go_no_go_result_YYYYMMDD.md` として自動記録されます（固定ファイル名ではなく実行日ベース）",
+            f"- リアルトレード開始: {LAUNCH_DATE_LABEL}以降（50%サイズ）",
             "- 引き続き sector_shock_hold A/B + 20 clean runs soak を継続",
         ]
     else:
