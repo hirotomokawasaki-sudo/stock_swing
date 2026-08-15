@@ -1697,6 +1697,32 @@ def main() -> int:  # noqa: C901
             )
             _rsi_massive_client = None
 
+    # R11-E (2026-08-15): wire up FeatureSnapshotStore, which has been
+    # implemented (src/stock_swing/experiments/feature_snapshot_store.py)
+    # since the P6 experiment-tracking work but never called anywhere. This
+    # persists the actual feature values (momentum, atr, quality_flags, etc.)
+    # behind each decision as an immutable as-of snapshot, keyed by
+    # (experiment_id, run_id, decision_id, symbol). Without this, historical
+    # feature values behind old decisions are unrecoverable once overwritten
+    # by the next run -- R4-v2's planned "feature snapshot as-of" work and
+    # any future ML calibration (R8-v2) depend on this existing *before*
+    # clean-label accumulation reaches the required threshold, not after.
+    # Best-effort: a snapshot-store failure must never fail the run, exactly
+    # like the Plan B-E shadow diagnostics below.
+    #
+    # NOTE: construction (and therefore the store's root.mkdir()) is
+    # deferred to inside the `if not args.dry_run` block below, not done
+    # eagerly here. FeatureSnapshotStore.__init__ creates its root directory
+    # unconditionally, so constructing it here would leave an empty
+    # data/feature_snapshots/ directory behind after every --dry-run smoke
+    # test even though no snapshot files are written -- the same class of
+    # dry-run-pollution bug the 2026-08-07 fix addressed for the shadow logs
+    # (caught by test_dry_run_does_not_write_feature_snapshots below).
+    _feature_snapshot_store = None
+    _feature_snapshot_experiment_id = (
+        experiment_context.experiment_id if experiment_context is not None else "no_experiment"
+    )
+
     for signal in all_signals:
         decision = decision_engine.process(signal, current_positions=current_positions)
         if isinstance(decision.evidence, dict):
@@ -1704,6 +1730,43 @@ def main() -> int:  # noqa: C901
             decision.evidence["macro_regime_raw"] = detected_regime
             decision.evidence["price_regime_raw"] = price_based_regime
         decisions.append(decision)
+
+        # 2026-08-07 pattern (see Plan B-E shadow diagnostics below):
+        # --dry-run must never write to persistent stores that real cron
+        # runs also write to, so smoke-test runs don't pollute the
+        # feature-snapshot archive with non-production data.
+        if not args.dry_run:
+            try:
+                if _feature_snapshot_store is None:
+                    from stock_swing.experiments.feature_snapshot_store import FeatureSnapshotStore
+                    _feature_snapshot_store = FeatureSnapshotStore(project_root / "data" / "feature_snapshots")
+                _snapshot_features = {
+                    "strategy_id": signal.strategy_id,
+                    "action": signal.action,
+                    "signal_strength": signal.signal_strength,
+                    "confidence": signal.confidence,
+                    "time_horizon": signal.time_horizon,
+                    "feature_refs": list(signal.feature_refs or []),
+                    "metadata": dict(signal.metadata or {}),
+                }
+                if isinstance(decision.evidence, dict):
+                    _snapshot_features["evidence"] = {
+                        k: v for k, v in decision.evidence.items()
+                        if k not in ("notes",)  # notes are free-text reasoning, not feature values
+                    }
+                _feature_snapshot_store.save(
+                    experiment_id=_feature_snapshot_experiment_id,
+                    run_id=run_context.run_id,
+                    decision_id=decision.decision_id,
+                    symbol=decision.symbol,
+                    features=_snapshot_features,
+                    schema_version="r11e-v1",
+                )
+            except Exception as _snapshot_exc:
+                logger.warning(
+                    "R11-E feature_snapshot_store.save failed for %s (non-fatal): %s",
+                    decision.symbol, _snapshot_exc,
+                )
 
         # 2026-08-07 fix: dry-run smoke tests were silently polluting the
         # production shadow-log files (data/volatility_gate_shadow_log.jsonl,

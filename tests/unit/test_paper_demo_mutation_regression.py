@@ -678,6 +678,36 @@ def test_real_run_still_writes_volatility_gate_shadow_log(monkeypatch, tmp_path,
     )
 
 
+def test_dry_run_does_not_write_feature_snapshots(monkeypatch, tmp_path, capsys):
+    """R11-E (2026-08-15): FeatureSnapshotStore wiring follows the same
+    dry-run-must-not-pollute-persistent-stores pattern as the Plan B-E
+    shadow diagnostics above. --dry-run smoke tests must not write to
+    data/feature_snapshots/, which future ML calibration (R8-v2) will treat
+    as an accumulating historical record.
+    """
+    _run_paper_demo_buy_only(monkeypatch, tmp_path, dry_run=True)
+
+    snapshot_dir = tmp_path / "data" / "feature_snapshots"
+    assert not snapshot_dir.exists(), (
+        f"feature_snapshots/ was written during --dry-run: "
+        f"{list(snapshot_dir.rglob('*')) if snapshot_dir.exists() else ''}"
+    )
+
+
+def test_real_run_still_writes_feature_snapshots(monkeypatch, tmp_path, capsys):
+    """Sanity check: the dry-run guard must not silently disable feature
+    snapshot persistence for real (non-dry-run) runs too."""
+    _run_paper_demo_buy_only(monkeypatch, tmp_path, dry_run=False)
+
+    snapshot_dir = tmp_path / "data" / "feature_snapshots"
+    assert snapshot_dir.exists(), (
+        "feature_snapshots/ was not written during a real (non-dry-run) run -- "
+        "feature snapshot persistence must still work for actual cron runs."
+    )
+    snapshot_files = list(snapshot_dir.rglob("*.json*"))
+    assert snapshot_files, "feature_snapshots/ exists but contains no snapshot files"
+
+
 def test_p6_join_coverage_does_not_error_missing_json_import(monkeypatch, tmp_path, capsys, caplog):
     """Regression: paper_demo.py used `json.dumps(...)` in the P6 join_coverage
     block (build the report + write data/audits/p6_join_coverage.json) without

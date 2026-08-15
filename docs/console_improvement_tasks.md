@@ -1971,19 +1971,31 @@ A-Eと同一パターン）に乗せる。ヒストリカルで優れていた�
 
 ### R11-E: ML基盤の並行整備（データ収集のみ先行、R11-Aと並行可）
 
-**Status**: PLANNED
+**Status**: ✅ **作業内1完了（2026-08-15）**。作業2（ML学習用feature/labelペア保存）は未着手。
 
 **背景**: R8-v2（ML）はclean labels≥30件（calibration）/ ≥1,000件（training）到達を
 待つ設計だが、attributable tradesは2026-08-15時点でわずか25件。待ち時間中にもできることを
 しておくべき。
 
-**作業内容**:
-1. `FeatureSnapshotStore`（`src/stock_swing/experiments/feature_snapshot_store.py`、
-   実装済みだがどこからも呼ばれていない）を `decision_engine.py` のDecisionRecord生成箇所に
-   配線し、全decisionのfeature snapshotをdecision時点のas-ofデータでimmutable保存開始
-   （R4-v2残項目と重複するが、こちらは「今日から配線するだけ」で完了する軽量作業）
-2. R11-A/B/Cで使うヒストリカルデータを、将来のML学習用に同一形式（feature/labelペア）で
-   保存しておく（300件/1,000件到達時の即時学習開始に備える）
+**実施内容（作業1、commit済み）**:
+- `FeatureSnapshotStore`（`src/stock_swing/experiments/feature_snapshot_store.py`、
+  P6実装時から存在したがどこからも呼ばれていなかった）を `paper_demo.py` の decision 生成ループ内
+  （`decision_engine.process()`直後）に配線。各decisionごとに`signal.metadata`（momentum/trend/
+  bars_used/atr等）+ `decision.evidence`（risk_per_share/stop_price/latest_close等）を
+  組み合わせて `data/feature_snapshots/{experiment_id}/{run_id}/{symbol}_{decision_id}.json.gz`
+  にimmutable保存。Plan B-Eと同じbest-effortパターン（保存失敗はrunを失敗させない）
+- **実装中に発見したバグ（修正済み）**: `FeatureSnapshotStore.__init__`が無条件で`root.mkdir()`を
+  実行するため、ストアをループ外で即時構築すると`--dry-run`実行でも空の
+  `data/feature_snapshots/`ディレクトリが作成されてしまう（2026-08-07のshadow log汚染バグと
+  同種）。ストアの構築を`if not args.dry_run`ブロック内の遅延初期化（lazy construction）に
+  変更して修正
+- テスト新規2件追加（`test_dry_run_does_not_write_feature_snapshots` /
+  `test_real_run_still_writes_feature_snapshots`、既存のPlan B/C shadow logテストと同型）。
+  フルスイート: 1842 passed → **1844 passed** / 2 skipped（既知の無関係スキップのみ）
+
+**未着手（作業2）**:
+- R11-A/B/Cで使うヒストリカルデータを、将来のML学習用に同一形式（feature/labelペア）で
+  保存しておく（300件/1,000件到達時の即時学習開始に備える）
 
 **Learning制約**: recommendation-only。自動本番反映禁止（既存R8-v2と同一）。
 
@@ -2004,4 +2016,4 @@ A-Eと同一パターン）に乗せる。ヒストリカルで優れていた�
 | ✅ P1 | **R11-B** | **一次検証完了**（2026-08-15） | 結論:（a）エッジあり。n=1,415でPF=1.71、walk-forward両期間PF>1.6 |
 | ✅ P1 | **R11-C** | **一次検証完了**（2026-08-15） | 結論: 4候補全てacceptance criteria未達成。R11-Dへの候補なし |
 | ⚪ P2 | **R11-D** | **見送り** | R11-Cで昇格対象候補が0件だったため、現時点で進める候補なし |
-| 🔵 P2 | **R11-E** | PLANNED | R11-Aと並行ですぐに着手可（配線のみ） |
+| ✅ P2 | **R11-E** | **作業1完了（2026-08-15）** | FeatureSnapshotStore配線済み。作業2（ML用feature/labelペア）は未着手 |
