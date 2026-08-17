@@ -653,8 +653,15 @@ paper環境で有効化。中間レビューは**2026-08-28頃**（cron登録済
   素点、1.0超もそのまま保持）を新規追加し、`signal.metadata`に`raw_signal_score` /
   `normalized_signal_score`として両方保存（既存の`signal_strength`計算・フィルタ挙動は無変更）。
   既存の`FeatureSnapshotStore`配線（R11-E、08-15）経由で`data/feature_snapshots/`にも自動的に
-  含まれる。テスト4件追加（1858 passed）。cross-sectional percentile（同時点の全銘柄内での
-  相対順位）は未着手のまま残る。
+  含まれる。テスト4件追加（1858 passed）。
+  → **cross-sectional percentile部分も2026-08-17完了**。`signal_prioritization.py`に
+  `annotate_cross_sectional_percentile()`を新規追加し、`paper_demo.py`のentry signal生成直後
+  （`prioritize_buy_signals_v2()`呼び出し**前**）に配線。同一run内の全buy候補の中で
+  signal_strengthが何パーセンタイル位置か（最弱=0.0、最強=1.0）を`signal.metadata`の
+  `cross_sectional_percentile` / `cross_sectional_n`として保存。既存の`prioritize_buy_signals_v2`は
+  signal_strength/confidenceを直接参照するため優先順位付け・セクターcap挙動は無変更
+  （回帰テストで確認済み）。テスト6件追加（合計1863 passed）。`--dry-run`実run（43候補）でも
+  エラーなく動作確認済み。
 - confidence を calibration 可能な probability として定義（固定 0.85 多発の解消）— 未着手
 - feature snapshot を decision 時点の as-of データで immutable 保存 → **R11-E（08-15）で対応済み**
   （`FeatureSnapshotStore`経由、`paper_demo.py`の`decision_engine.process()`直後に配線）

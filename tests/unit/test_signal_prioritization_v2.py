@@ -5,7 +5,10 @@ from datetime import datetime, timezone
 import pytest
 
 from stock_swing.strategy_engine.base_strategy import CandidateSignal
-from stock_swing.utils.signal_prioritization import prioritize_buy_signals_v2
+from stock_swing.utils.signal_prioritization import (
+    annotate_cross_sectional_percentile,
+    prioritize_buy_signals_v2,
+)
 
 
 @pytest.fixture
@@ -168,3 +171,96 @@ def test_empty_signals():
     """Test that empty signal list returns empty."""
     result = prioritize_buy_signals_v2([], current_positions={})
     assert len(result) == 0
+
+
+def _make_buy_signal(symbol: str, signal_strength: float) -> CandidateSignal:
+    return CandidateSignal(
+        strategy_id="test",
+        symbol=symbol,
+        action="buy",
+        signal_strength=signal_strength,
+        generated_at=datetime.now(timezone.utc),
+        time_horizon="short",
+        confidence=0.80,
+        reasoning="test",
+        feature_refs=[],
+        metadata={},
+    )
+
+
+def test_annotate_cross_sectional_percentile_ranks_correctly():
+    """R4-v2 residual (2026-08-17): weakest signal gets 0.0, strongest gets
+    1.0, middle gets 0.5, all relative to the OTHER buy signals in this run.
+    """
+    weak = _make_buy_signal("AMD", 0.20)
+    mid = _make_buy_signal("CRM", 0.50)
+    strong = _make_buy_signal("NVDA", 0.90)
+
+    result = annotate_cross_sectional_percentile([weak, mid, strong])
+
+    assert result is not None
+    assert weak.metadata["cross_sectional_percentile"] == 0.0
+    assert mid.metadata["cross_sectional_percentile"] == 0.5
+    assert strong.metadata["cross_sectional_percentile"] == 1.0
+    assert weak.metadata["cross_sectional_n"] == 3
+    assert mid.metadata["cross_sectional_n"] == 3
+    assert strong.metadata["cross_sectional_n"] == 3
+
+
+def test_annotate_cross_sectional_percentile_ignores_non_buy_signals():
+    """Non-buy (e.g. sell/exit) signals must not be ranked or mutated."""
+    buy_a = _make_buy_signal("AMD", 0.30)
+    buy_b = _make_buy_signal("NVDA", 0.90)
+    sell_signal = CandidateSignal(
+        strategy_id="test",
+        symbol="AAPL",
+        action="sell",
+        signal_strength=0.90,
+        generated_at=datetime.now(timezone.utc),
+        time_horizon="immediate",
+        confidence=0.85,
+        reasoning="Exit",
+        feature_refs=[],
+        metadata={},
+    )
+
+    annotate_cross_sectional_percentile([buy_a, sell_signal, buy_b])
+
+    assert "cross_sectional_percentile" not in sell_signal.metadata
+    assert buy_a.metadata["cross_sectional_n"] == 2
+    assert buy_b.metadata["cross_sectional_n"] == 2
+
+
+def test_annotate_cross_sectional_percentile_single_candidate_gets_one():
+    """A run with a single buy candidate has no peers -> percentile 1.0."""
+    solo = _make_buy_signal("NVDA", 0.42)
+
+    annotate_cross_sectional_percentile([solo])
+
+    assert solo.metadata["cross_sectional_percentile"] == 1.0
+    assert solo.metadata["cross_sectional_n"] == 1
+
+
+def test_annotate_cross_sectional_percentile_empty_list_no_error():
+    """Empty input must not raise (division by n-1 guarded for n<=1)."""
+    result = annotate_cross_sectional_percentile([])
+    assert result == []
+
+
+def test_annotate_cross_sectional_percentile_does_not_affect_prioritization():
+    """Annotating percentile must not change prioritize_buy_signals_v2's
+    ordering/sector-cap output, since that function reads signal_strength/
+    confidence directly, not the new metadata field.
+    """
+    weak = _make_buy_signal("AMD", 0.20)  # semis
+    strong = _make_buy_signal("NVDA", 0.90)  # semis
+
+    baseline = prioritize_buy_signals_v2(
+        [_make_buy_signal("AMD", 0.20), _make_buy_signal("NVDA", 0.90)],
+        current_positions={},
+    )
+
+    annotate_cross_sectional_percentile([weak, strong])
+    annotated = prioritize_buy_signals_v2([weak, strong], current_positions={})
+
+    assert [s.symbol for s in baseline] == [s.symbol for s in annotated]

@@ -95,6 +95,61 @@ def prioritize_buy_signals(
     return prioritized_buys + non_buy_signals
 
 
+def annotate_cross_sectional_percentile(
+    signals: list[CandidateSignal],
+) -> list[CandidateSignal]:
+    """Annotate each buy CandidateSignal's metadata with its cross-sectional
+    percentile rank (2026-08-17, R4-v2 residual).
+
+    "Cross-sectional" here means: among all *buy* candidates generated in
+    THIS run (i.e. the same universe scan / point in time), what fraction of
+    other candidates does this signal's normalized signal_strength exceed?
+    This is distinct from a decile computed across historical closed trades
+    (see ``scripts/analyze_signal_strength_decile.py``, R4-C) -- that decile
+    is a backward-looking outcome analysis, whereas this percentile is a
+    same-run relative-ranking snapshot, captured at decision time.
+
+    Percentile is defined as (count of other signals with strictly lower
+    signal_strength) / (n - 1), so the weakest signal in a run gets 0.0 and
+    the strongest gets 1.0. A single-candidate run gets 1.0 (no peers to
+    compare against).
+
+    This is purely additive observability (flows into
+    ``signal.metadata["cross_sectional_percentile"]`` and, via the existing
+    ``FeatureSnapshotStore`` wiring in paper_demo.py, into
+    ``data/feature_snapshots/``). It does NOT change sector
+    prioritization, sizing, or filtering -- ``prioritize_buy_signals_v2``'s
+    ordering and sector-cap logic are unaffected because they read
+    ``signal_strength``/``confidence`` directly, not this metadata field.
+
+    Args:
+        signals: List of candidate signals (mixed buy/non-buy is fine; only
+            buy signals are ranked against each other).
+
+    Returns:
+        The same list (signals mutated in place via their ``metadata`` dict);
+        returned for convenience/chaining.
+    """
+    buy_signals = [s for s in signals if s.action == "buy"]
+    n = len(buy_signals)
+
+    for signal in buy_signals:
+        if not isinstance(signal.metadata, dict):
+            continue
+        if n <= 1:
+            percentile = 1.0
+        else:
+            lower_count = sum(
+                1 for other in buy_signals
+                if other is not signal and other.signal_strength < signal.signal_strength
+            )
+            percentile = lower_count / (n - 1)
+        signal.metadata["cross_sectional_percentile"] = percentile
+        signal.metadata["cross_sectional_n"] = n
+
+    return signals
+
+
 def prioritize_buy_signals_v2(
     signals: list[CandidateSignal],
     current_positions: dict[str, dict] | None = None,

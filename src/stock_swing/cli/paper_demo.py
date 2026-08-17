@@ -102,7 +102,11 @@ from stock_swing.utils.context_budget import (
 from stock_swing.utils.latency_tracker import LatencyTracker
 from stock_swing.utils.market_calendar import MarketCalendar
 from stock_swing.utils.market_guard import should_skip_non_market_day
-from stock_swing.utils.signal_prioritization import prioritize_buy_signals, prioritize_buy_signals_v2
+from stock_swing.utils.signal_prioritization import (
+    annotate_cross_sectional_percentile,
+    prioritize_buy_signals,
+    prioritize_buy_signals_v2,
+)
 from stock_swing.utils.stale_price import apply_price_overrides, compute_stale_price_overrides
 
 
@@ -1456,6 +1460,11 @@ def main() -> int:  # noqa: C901
     
     # Prioritize buy signals for sector diversification (V2 with dynamic allocation)
     entry_signals = breakout_signals + event_signals
+    # R4-v2 residual (2026-08-17): annotate cross-sectional percentile
+    # (same-run relative rank by signal_strength) before prioritization.
+    # Read-only metadata addition; prioritize_buy_signals_v2 below reads
+    # signal_strength/confidence directly and is unaffected.
+    annotate_cross_sectional_percentile(entry_signals)
     prioritized_entry = prioritize_buy_signals_v2(
         entry_signals,
         current_positions_full,
