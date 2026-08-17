@@ -813,13 +813,21 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 **完了 (VERIFIED_COMPLETE)**:
 - R7-A: Corporate Action 台帳 + 自動検知 ✅
 
-**未実装**:
-- source ごとの SLA + quality report
-  - broker position/order: ≤30秒
-  - intraday quote: market open 中 ≤2分
-  - daily bar: 前営業日 close 確定後
-  - sector benchmark: exit 判断時点と同じ as-of
-- `event_time` / `available_at` / `ingested_at` / `source` / `revision_id` / `quality_status` を canonical schema へ追加
+**未実装** → **2026-08-17 ロードマップ棚卸しで判明: 両項目とも実際は実装済みだった（記載漏れ）**:
+- ~~source ごとの SLA + quality report~~ → **VERIFIED_COMPLETE（実装済み、記載漏れを本日訂正）**。
+  `console/adapters/system_adapter.py` の `_check_source_sla()`（2026-08-14, R7-v2-A）で
+  4項目全て実装済み: broker position/order ≤30秒（`_check_broker_tracker_freshness`）/
+  intraday quote market open中 ≤2分（`_evaluate_intraday_quote_sla`）/ daily bar 前営業日
+  close確定後（`_evaluate_daily_bar_sla`）/ sector benchmark exit判断時点と同じas-of
+  （`_evaluate_sector_benchmark_sla`）。テスト（`test_system_adapter_session_sla.py`他）で
+  カバー済み。コード実装は08-14に完了していたが、本セクションの「未実装」記載が
+  更新されずに残っていた（R7-B/C WebSocketの記載漏れと同種のドキュメント遅延）
+- ~~`event_time` / `available_at` / `ingested_at` / `source` / `revision_id` / `quality_status`
+  を canonical schema へ追加~~ → **VERIFIED_COMPLETE（実装済み、記載漏れを本日訂正）**。
+  `src/stock_swing/core/types.py` の `RawEnvelope` dataclassに該当フィールド全て定義済みで、
+  `collect_data.py` の `_write_raw_snapshot()`（全7ソース: finnhub/broker/broker_bars/
+  massive/fred/sec/earnings_calendarが共通利用）経由で書き込む全raw snapshotに反映されている
+  ことを実データ（`data/raw/{broker,finnhub}/*.json`）で確認
 - ~~Massive client の connection pool 共有（`Connection pool is full` 解消）~~ → **VERIFIED_COMPLETE**（2026-07-23, commit `399fe2f`。本節が長期間 未実装 のまま記載され続けていたのを 2026-08-07 訂正）
 - ~~market closed 時は maintenance job 以外早期終了~~ → **VERIFIED_COMPLETE**（2026-08-14）: `market_guard.should_skip_outside_market_hours()` を新規実装し、weekday/holiday判定に加えてET dead zone（after-hours終了20:00〜pre-market開始04:00）中も早期終了するよう拡張。`collect_data.py` に `--require-market-session` フラグを追加し、`stock_swing_news_collection` cron（0 */4 * * *、終日実行）に適用。maintenance job（reconcile_orders等）やhistorical/bulk source（massive）は対象外のまま。テスト13件追加（全39件 pass, 回帰なし）
 - ~~macro (FRED) の regime lineup（現在 unknown のまま）~~ → **VERIFIED_COMPLETE**（2026-08-14）: `collect_data.collect_fred()` を not_implemented スタブから実装に変更（CPIAUCSL/UNRATE/T10Y2Y/ICSA を FredClient 経由で取得、`config/sources/fred.yaml` の `not_implemented: false` に変更）。`MacroRegimeFeature` を単一指標（CPI水準 vs 固定閾値320、recession検知不可能だった旧実装）から CPI YoY / UNRATE trend / T10Y2Y yield curve inversion / ICSA claims trend の4指標合成判定に書き換え。`paper_demo.py` に FRED raw snapshot ロード配線を追加（best-effort、失敗時は従来通り price-based regime にフォールバック）。テスト35件追加（macro_regime_feature 16件 + collect_fred 6件 + fred/regime整合性1件、既存 test_collect_data_fix001.py の stub 前提テスト1件を実装後の挙動に更新）
