@@ -662,7 +662,16 @@ paper環境で有効化。中間レビューは**2026-08-28頃**（cron登録済
   signal_strength/confidenceを直接参照するため優先順位付け・セクターcap挙動は無変更
   （回帰テストで確認済み）。テスト6件追加（合計1863 passed）。`--dry-run`実run（43候補）でも
   エラーなく動作確認済み。
-- confidence を calibration 可能な probability として定義（固定 0.85 多発の解消）— 未着手
+- confidence を calibration 可能な probability として定義（固定 0.85 多発の解消）—
+  **未着手（意図的に）**。2026-08-17に`scripts/check_confidence_calibration_readiness.py`を
+  新規作成し（`check_r8v2_ml_readiness.py`と同型パターン）、`data/decisions/*.json`の
+  `evidence.sizing.confidence_multiplier`が記録されているdecision件数を集計するreadiness
+  ゲートを実装。**実行結果（2026-08-17時点）: 08-14のconfidence_multiplier記録開始以降
+  でも記録件数はわずか21件（目安100件の約1/5）でNOT_READY**。confidenceはsizingに
+  直接影響するため、データ不足のまま定義を変えるのは未検証な行動変更となるため、
+  本作業は意図的に実施しない。代わりに蓄積状況を可視化するscriptを実装し、
+  08-25の`stock_swing_r4v2_progress_check_20260825`cronが自動的にこの進捗を検知できる
+  ようにした。テスト10件追加（1873 passed）。
 - feature snapshot を decision 時点の as-of データで immutable 保存 → **R11-E（08-15）で対応済み**
   （`FeatureSnapshotStore`経由、`paper_demo.py`の`decision_engine.process()`直後に配線）
 - decile 別 expectancy / calibration curve 生成（PF/WRは実装済み、expectancy/calibration curveは未着手）
