@@ -95,6 +95,11 @@ class EventSwingStrategy(BaseStrategy):
             # Strategy logic: buy if upcoming event + bullish momentum + favorable macro
             if momentum >= self.min_momentum and trend == "bullish":
                 # Calculate signal strength
+                # 2026-08-17 (R4-v2 residual, same pattern as
+                # breakout_momentum_strategy): capture the raw pre-clamp/
+                # pre-adjustment score alongside the final normalized value
+                # for future calibration analysis only. No behavior change.
+                raw_score = self._calculate_raw_signal_score(momentum=momentum)
                 signal_strength = self._calculate_signal_strength(
                     momentum=momentum,
                     days_until_event=days_until,
@@ -121,12 +126,33 @@ class EventSwingStrategy(BaseStrategy):
                             "momentum": momentum,
                             "trend": trend,
                             "macro_regime": macro_regime,
+                            # R4-v2 residual (2026-08-17): raw pre-clamp
+                            # score vs. final normalized [0,1] strength.
+                            "raw_signal_score": raw_score,
+                            "normalized_signal_score": signal_strength,
                         },
                     )
                     signals.append(signal)
         
         return signals
     
+    def _calculate_raw_signal_score(self, momentum: float) -> float:
+        """Calculate the raw, pre-clamp/pre-adjustment momentum score.
+
+        Same base scaling as ``_calculate_signal_strength`` (momentum * 5.0)
+        but without the ``min(..., 1.0)`` clamp or the event-timing/macro
+        regime multipliers. Exists purely for raw-vs-normalized comparison
+        (R4-v2 residual, 2026-08-17); has no effect on filtering, sizing, or
+        execution.
+
+        Args:
+            momentum: Price momentum value.
+
+        Returns:
+            Raw score, unclamped (may exceed 1.0 for momentum > 20%).
+        """
+        return momentum * 5.0
+
     def _calculate_signal_strength(
         self,
         momentum: float,

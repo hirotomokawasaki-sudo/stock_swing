@@ -95,6 +95,18 @@ class BreakoutMomentumStrategy(BaseStrategy):
             # Strategy logic: strong bullish momentum = breakout
             if momentum >= self.min_momentum and trend == "bullish":
                 # Calculate signal strength
+                # 2026-08-17 (R4-v2 residual): also capture the raw,
+                # pre-clamp/pre-regime-adjustment score alongside the final
+                # normalized [0,1] strength. Historically only the final
+                # (already-clamped, regime-adjusted) value was persisted,
+                # which makes it impossible to later re-derive what fraction
+                # of saturation (strength==1.0) was caused by clamping vs.
+                # by the macro regime multiplier. Both are stored in
+                # metadata below (and therefore flow into FeatureSnapshotStore
+                # via paper_demo.py's per-decision snapshot) purely for
+                # future calibration analysis -- neither value changes any
+                # filtering/sizing/exit behavior in this change.
+                raw_score = self._calculate_raw_signal_score(momentum=momentum)
                 signal_strength = self._calculate_signal_strength(
                     momentum=momentum,
                     macro_regime=macro_regime,
@@ -126,12 +138,35 @@ class BreakoutMomentumStrategy(BaseStrategy):
                             "latest_close": momentum_feature.values.get("latest_close"),
                             "atr": momentum_feature.values.get("atr"),
                             "quality_flags": list(quality_flags),
+                            # R4-v2 residual (2026-08-17): raw pre-clamp score
+                            # vs. final normalized [0,1] strength, for future
+                            # calibration-curve / saturation analysis only.
+                            "raw_signal_score": raw_score,
+                            "normalized_signal_score": signal_strength,
                         },
                     )
                     signals.append(signal)
         
         return signals
     
+    def _calculate_raw_signal_score(self, momentum: float) -> float:
+        """Calculate the raw, pre-clamp/pre-regime-adjustment momentum score.
+
+        This is the same linear scaling used as the base of
+        ``_calculate_signal_strength`` (10% momentum = 0.5, 20% momentum =
+        1.0) but WITHOUT the final ``min(..., 1.0)`` clamp or the macro
+        regime multiplier. It exists purely so raw/normalized scores can be
+        compared later (R4-v2 residual, 2026-08-17) -- it has no effect on
+        filtering, sizing, or execution.
+
+        Args:
+            momentum: Price momentum value.
+
+        Returns:
+            Raw score, unclamped (may exceed 1.0 for momentum > 20%).
+        """
+        return momentum / 0.20
+
     def _calculate_signal_strength(
         self,
         momentum: float,

@@ -647,9 +647,17 @@ paper環境で有効化。中間レビューは**2026-08-28頃**（cron登録済
   decile 1（0.476–0.533）が PF=0.020 で最悪。テスト13件を新規追加（未検証のまま放置されていた）。
   週次cron（`stock_swing_r4c_signal_strength_decile`、月曜09:00 JST）を新規登録し read-only で
   `reports/signal_strength_decile.json` を継続更新（learning制約: recommendation-only、自動閾値変更なし）
-- raw score / normalized score / cross-sectional percentile 保存
-- confidence を calibration 可能な probability として定義（固定 0.85 多発の解消）
-- feature snapshot を decision 時点の as-of データで immutable 保存
+- ~~raw score / normalized score / cross-sectional percentile 保存~~ →
+  **raw score / normalized score 部分は2026-08-17完了**。`breakout_momentum_strategy.py` /
+  `event_swing_strategy.py` それぞれに `_calculate_raw_signal_score()`（clamp・regime補正前の
+  素点、1.0超もそのまま保持）を新規追加し、`signal.metadata`に`raw_signal_score` /
+  `normalized_signal_score`として両方保存（既存の`signal_strength`計算・フィルタ挙動は無変更）。
+  既存の`FeatureSnapshotStore`配線（R11-E、08-15）経由で`data/feature_snapshots/`にも自動的に
+  含まれる。テスト4件追加（1858 passed）。cross-sectional percentile（同時点の全銘柄内での
+  相対順位）は未着手のまま残る。
+- confidence を calibration 可能な probability として定義（固定 0.85 多発の解消）— 未着手
+- feature snapshot を decision 時点の as-of データで immutable 保存 → **R11-E（08-15）で対応済み**
+  （`FeatureSnapshotStore`経由、`paper_demo.py`の`decision_engine.process()`直後に配線）
 - decile 別 expectancy / calibration curve 生成（PF/WRは実装済み、expectancy/calibration curveは未着手）
 
 **Learning 制約**: recommendation-only。自動本番反映禁止。
