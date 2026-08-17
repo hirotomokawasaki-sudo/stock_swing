@@ -674,7 +674,15 @@ paper環境で有効化。中間レビューは**2026-08-28頃**（cron登録済
   ようにした。テスト10件追加（1873 passed）。
 - feature snapshot を decision 時点の as-of データで immutable 保存 → **R11-E（08-15）で対応済み**
   （`FeatureSnapshotStore`経由、`paper_demo.py`の`decision_engine.process()`直後に配線）
-- decile 別 expectancy / calibration curve 生成（PF/WRは実装済み、expectancy/calibration curveは未着手）
+- decile 別 expectancy / calibration curve 生成 → **expectancy部分は2026-08-17完了**。
+  `scripts/analyze_signal_strength_decile.py`の`compute_decile_stats()`に`expectancy`
+  （decile内の1トレード平均PnL、net_pnlをtrade件数で正規化した値）を追加。
+  実行結果（08-17時点）: decile 5が最良（expectancy=+$832/trade）、decile 8が最悪
+  （-$1,670/trade）。テスト3件追加（`test_analyze_signal_strength_decile.py`、
+  全16件pass）。週次cron（`stock_swing_r4c_signal_strength_decile`）が既存の
+  `reports/signal_strength_decile.json`にこのフィールドを自動的に含めるようになった
+  （現状どのconsole/rendererからも未参照のスタンドアロンレポートのため、既存表示への
+  影響なし）。calibration curve生成は未着手のまま残る
 
 **Learning 制約**: recommendation-only。自動本番反映禁止。
 

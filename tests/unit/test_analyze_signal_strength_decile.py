@@ -101,6 +101,28 @@ class TestPfWrComputation:
         assert rows[0]["losses"] == 0
 
 
+class TestExpectancy:
+    """R4-v2 residual (2026-08-17): expectancy = net_pnl / count for the
+    decile, distinct from the bucket-total net_pnl already computed."""
+
+    def test_expectancy_is_net_pnl_divided_by_count(self):
+        trades = [_trade(0.5, 100.0), _trade(0.6, -50.0), _trade(0.7, 30.0)]
+        rows = compute_decile_stats(trades, n_buckets=1)
+        assert rows[0]["count"] == 3
+        assert rows[0]["net_pnl"] == 80.0
+        assert rows[0]["expectancy"] == round(80.0 / 3, 2)
+
+    def test_expectancy_present_on_every_bucket(self):
+        trades = [_trade(0.1, 10.0), _trade(0.9, -10.0)]
+        rows = compute_decile_stats(trades, n_buckets=2)
+        assert all("expectancy" in r for r in rows)
+
+    def test_expectancy_matches_single_trade_pnl(self):
+        trades = [_trade(0.5, -123.45)]
+        rows = compute_decile_stats(trades, n_buckets=1)
+        assert rows[0]["expectancy"] == -123.45
+
+
 class TestSsRangeFormatting:
     def test_ss_range_reflects_min_max_of_bucket(self):
         trades = [_trade(0.3, 10.0), _trade(0.4, 10.0), _trade(0.5, 10.0)]

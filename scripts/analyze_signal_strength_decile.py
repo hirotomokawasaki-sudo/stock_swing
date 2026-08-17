@@ -78,6 +78,12 @@ def compute_decile_stats(
         net_pnl = sum(float(t.get("pnl", 0)) for t in chunk)
         pf = (gross_win / gross_loss) if gross_loss > 0 else float("inf")
         wr = len(wins) / len(chunk) if chunk else 0.0
+        # R4-v2 residual (2026-08-17): expectancy = average PnL per trade in
+        # this decile. Distinct from net_pnl (the bucket total) -- expectancy
+        # normalizes for bucket size so deciles with different trade counts
+        # can be compared on a per-trade basis (e.g. "decile 5 nets +$832/trade
+        # vs. decile 8's -$1,670/trade", rather than only comparing totals).
+        expectancy = net_pnl / len(chunk) if chunk else 0.0
 
         results.append({
             "decile": bucket + 1,
@@ -90,6 +96,7 @@ def compute_decile_stats(
             "win_rate": round(wr, 4),
             "profit_factor": round(pf, 3) if pf != float("inf") else None,
             "net_pnl": round(net_pnl, 2),
+            "expectancy": round(expectancy, 2),
             "gross_win": round(gross_win, 2),
             "gross_loss": round(gross_loss, 2),
         })
@@ -103,13 +110,14 @@ def print_table(rows: list[dict], total_trades: int, filtered_trades: int) -> No
     print(f"{'='*72}")
     print(f" Trades with signal_strength: {filtered_trades} / {total_trades} total closed")
     print()
-    print(f"{'Decile':>7} {'SS range':>14} {'N':>5} {'WR':>7} {'PF':>8} {'Net PnL':>12}")
-    print(f"{'-'*7} {'-'*14} {'-'*5} {'-'*7} {'-'*8} {'-'*12}")
+    print(f"{'Decile':>7} {'SS range':>14} {'N':>5} {'WR':>7} {'PF':>8} {'Net PnL':>12} {'Expectancy':>12}")
+    print(f"{'-'*7} {'-'*14} {'-'*5} {'-'*7} {'-'*8} {'-'*12} {'-'*12}")
     for r in rows:
         pf_str = f"{r['profit_factor']:.3f}" if r["profit_factor"] is not None else "∞"
+        expectancy = r.get("expectancy", 0.0)
         print(
             f"{r['decile']:>7} {r['ss_range']:>14} {r['count']:>5} "
-            f"{r['win_rate']:>7.1%} {pf_str:>8} ${r['net_pnl']:>11,.0f}"
+            f"{r['win_rate']:>7.1%} {pf_str:>8} ${r['net_pnl']:>11,.0f} ${expectancy:>11,.0f}"
         )
     print(f"{'='*72}")
 
