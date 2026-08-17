@@ -789,7 +789,14 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
   「残未実装」に長期間記載され続けていたのを2026-08-15のロードマップ棚卸しで訂正）
 
 **残未実装**:
-- config hash キャッシュ（config変更時の自動invalidation。mtimeキャッシュとは別軸で未着手）← H9
+- ~~config hash キャッシュ（config変更時の自動invalidation）~~ → **2026-08-17完了**。
+  `DashboardService._load_yaml_cached()` を新規追加（既存の `_load_json_cached()` と同型の
+  `MtimeFileCache` パターン）。`_get_asset_class_for_symbol()` / `_get_buy_stop_list()` /
+  `_get_small_sample_watchlist()` の3箇所で毎回 `yaml.safe_load(reg_path.read_text())` を
+  直接呼んでいたのをこのキャッシュ経由に変更（特に `_get_asset_class_for_symbol` はopen
+  position件数分だけ毎リクエスト繰り返されていた）。mtime/size変更時のみ再パースする
+  同一invalidation契約。テスト5件追加（キャッシュ変更検知含む、test_dashboard_service.py
+  38 passed）。実データでの動作も確認済み
 - WebSocket ← H9（state correctness 確認後。R7-v2と重複項目、2026-09以降着手検討）
 
 **Performance SLO**: initial render p95 ≤2秒、cached rerun p95 ≤500ms（mtimeキャッシュ導入によりcachedrerunは既に0.0ms〜達成、H9進捗確認済み）

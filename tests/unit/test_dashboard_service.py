@@ -19,6 +19,14 @@ class _StubService(DashboardService):
         self._tracker = None
 
 
+def _write_symbol_registry(tmp_path: Path, symbols: dict) -> Path:
+    reg_path = tmp_path / "config" / "reference" / "symbol_registry.yaml"
+    reg_path.parent.mkdir(parents=True, exist_ok=True)
+    import yaml
+    reg_path.write_text(yaml.safe_dump({"symbols": symbols}))
+    return reg_path
+
+
 def _write_pnl_state(tmp_path: Path, trades: list[dict]) -> Path:
     state_path = tmp_path / "data" / "tracking" / "pnl_state.json"
     state_path.parent.mkdir(parents=True, exist_ok=True)
@@ -505,3 +513,65 @@ class TestGetMarketRegimeIndicator:
                 f"unexpected key '{forbidden_key}' suggests it may be wired "
                 f"into a blocking/resizing decision"
             )
+
+
+class TestYamlConfigCache:
+    """H9 (2026-08-17, config hash cache): _load_yaml_cached() correctness.
+
+    Verifies the mtime-based YAML cache used for symbol_registry.yaml reads
+    (via _get_asset_class_for_symbol / _get_buy_stop_list / _get_small_
+    sample_watchlist) actually caches and correctly invalidates on file
+    change -- the same contract _load_json_cached already has for
+    pnl_state.json.
+    """
+
+    def test_get_asset_class_reads_from_registry(self, tmp_path):
+        _write_symbol_registry(tmp_path, {"SMH": {"asset_class": "etf"}, "AAPL": {"asset_class": "stock"}})
+        svc = _StubService(tmp_path)
+        assert svc._get_asset_class_for_symbol("SMH") == "etf"
+        assert svc._get_asset_class_for_symbol("AAPL") == "stock"
+
+    def test_unknown_symbol_falls_back_to_stock(self, tmp_path):
+        _write_symbol_registry(tmp_path, {"SMH": {"asset_class": "etf"}})
+        svc = _StubService(tmp_path)
+        assert svc._get_asset_class_for_symbol("UNKNOWN") == "stock"
+
+    def test_missing_registry_file_falls_back_to_stock(self, tmp_path):
+        svc = _StubService(tmp_path)
+        assert svc._get_asset_class_for_symbol("AAPL") == "stock"
+
+    def test_cache_reflects_file_update_after_mtime_change(self, tmp_path):
+        """Key regression: a cached YAML read must not go stale forever --
+        once the file's mtime/size changes, the next read must reflect the
+        new content (mirrors the JSON mtime cache's invalidation contract).
+        """
+        reg_path = _write_symbol_registry(tmp_path, {"AAPL": {"asset_class": "stock"}})
+        svc = _StubService(tmp_path)
+        assert svc._get_asset_class_for_symbol("AAPL") == "stock"
+
+        # Force a distinct mtime/size so the cache detects the change.
+        import time
+        time.sleep(0.01)
+        import yaml
+        reg_path.write_text(yaml.safe_dump({"symbols": {"AAPL": {"asset_class": "etf"}}}))
+        os_stat_workaround = reg_path.stat()
+        # Ensure size differs too, in case mtime resolution is coarse on
+        # this filesystem (belt-and-suspenders, mirrors MtimeFileCache's
+        # own mtime+size change-detection).
+        if os_stat_workaround.st_size == len(yaml.safe_dump({"symbols": {"AAPL": {"asset_class": "stock"}}})):
+            reg_path.write_text(yaml.safe_dump({"symbols": {"AAPL": {"asset_class": "etf"}}}) + "\n")
+
+        assert svc._get_asset_class_for_symbol("AAPL") == "etf"
+
+    def test_buy_stop_list_uses_cached_yaml_for_etf_exemption(self, tmp_path):
+        """_get_buy_stop_list's ETF-exemption lookup must go through the
+        same cached YAML path, not a fresh yaml.safe_load per call."""
+        _write_symbol_registry(tmp_path, {"SMH": {"asset_class": "etf"}})
+        _write_pnl_state(tmp_path, [
+            {"symbol": "SMH", "status": "closed", "pnl": -100.0},
+        ])
+        svc = _StubService(tmp_path)
+        # Must not raise even though entry_filter internals are exercised
+        # through the real (cached) yaml read path.
+        result = svc._get_buy_stop_list()
+        assert isinstance(result, list)

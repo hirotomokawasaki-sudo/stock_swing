@@ -55,6 +55,42 @@ class DashboardService:
         if _pnl_state_cache is not None:
             return _pnl_state_cache.get(path)
         return json.loads(path.read_text(encoding="utf-8"))
+
+    @staticmethod
+    def _load_yaml_cached(path: Path) -> dict:
+        """H9 (2026-08-17, config hash cache): mtime-based cache for small
+        YAML config files (e.g. symbol_registry.yaml).
+
+        This is the "config hash cache" item that was tracked as remaining
+        work in R6-v2/H9 alongside the pnl_state.json mtime cache above
+        (which only covered JSON). Prior to this, every call site
+        (_get_asset_class_for_symbol / _get_buy_stop_list / _get_small_
+        sample_watchlist) called `yaml.safe_load(reg_path.read_text())`
+        directly on every dashboard request -- for _get_asset_class_for_
+        symbol specifically, that means re-reading and re-parsing the same
+        YAML file once per open position on every single /api/dashboard
+        request. Using MtimeFileCache here means the file is only re-parsed
+        when its mtime/size actually changes (e.g. an operator edits
+        symbol_registry.yaml), same invalidation semantics as the JSON
+        cache. Falls back to a direct read if MtimeFileCache/yaml aren't
+        importable, matching the JSON cache's fallback pattern.
+        """
+        global _yaml_cache
+        try:
+            import yaml
+        except Exception:
+            return {}
+        if MtimeFileCache is None:
+            try:
+                return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            except Exception:
+                return {}
+        if _yaml_cache is None:
+            _yaml_cache = MtimeFileCache(
+                loader_fn=lambda p: yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+            )
+        return _yaml_cache.get(path)
+
     NEWS_COLLECTION_JOB_NAME = "stock_swing_news_collection"
     RECENT_TRADES_WINDOW_HOURS = 48
     RECENT_TRADES_MIN_COUNT = 50
@@ -2148,11 +2184,10 @@ class DashboardService:
     def _get_asset_class_for_symbol(self, symbol: str) -> str:
         """Return asset_class (etf|stock) from symbol_registry.yaml, fallback 'stock'."""
         try:
-            import yaml
             reg_path = self.project_root / "config" / "reference" / "symbol_registry.yaml"
             if not reg_path.exists():
                 return "stock"
-            reg = yaml.safe_load(reg_path.read_text())
+            reg = DashboardService._load_yaml_cached(reg_path)
             return reg.get("symbols", {}).get(symbol, {}).get("asset_class", "stock")
         except Exception:
             return "stock"
@@ -2192,7 +2227,6 @@ class DashboardService:
         """
         try:
             import json
-            import yaml
             from stock_swing.risk.entry_filter import get_permanent_block_summary, EntryFilterConfig
 
             state_path = self.project_root / "data" / "tracking" / "pnl_state.json"
@@ -2205,7 +2239,7 @@ class DashboardService:
             etf_syms: set[str] = set()
             reg_path = self.project_root / "config" / "reference" / "symbol_registry.yaml"
             if reg_path.exists():
-                reg = yaml.safe_load(reg_path.read_text())
+                reg = DashboardService._load_yaml_cached(reg_path)
                 etf_syms = {
                     sym for sym, info in (reg.get("symbols") or {}).items()
                     if (info or {}).get("asset_class") == "etf"
@@ -2234,7 +2268,6 @@ class DashboardService:
         above. Returns [] on any error.
         """
         try:
-            import yaml
             from stock_swing.risk.entry_filter import get_small_sample_watchlist, EntryFilterConfig
 
             state_path = self.project_root / "data" / "tracking" / "pnl_state.json"
@@ -2246,7 +2279,7 @@ class DashboardService:
             etf_syms: set[str] = set()
             reg_path = self.project_root / "config" / "reference" / "symbol_registry.yaml"
             if reg_path.exists():
-                reg = yaml.safe_load(reg_path.read_text())
+                reg = DashboardService._load_yaml_cached(reg_path)
                 etf_syms = {
                     sym for sym, info in (reg.get("symbols") or {}).items()
                     if (info or {}).get("asset_class") == "etf"
