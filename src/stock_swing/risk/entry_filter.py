@@ -48,12 +48,23 @@ class EntryFilterConfig:
     # Per-symbol PF gate override: symbols in this list skip the rolling_pf_gate check.
     # Set via ENTRY_FILTER_PF_GATE_SKIP_SYMBOLS (comma-separated, e.g. "AMD,MDB").
     pf_gate_skip_symbols: list = field(default_factory=list)
+    # 2026-08-19 (JP semiconductor expansion Phase 2): compliance/insider deny-list.
+    # Symbols here are blocked from BUY submission ONLY (Gate 0, evaluated before
+    # all other gates). Does NOT affect data collection, feature computation,
+    # backtesting, or correlation research (see docs/jp_semiconductor_ai_expansion_plan.md
+    # section 1 — "purchase is prohibited, but verification/analysis is OK").
+    # Set via ENTRY_FILTER_PURCHASE_RESTRICTED_SYMBOLS (comma-separated).
+    purchase_restricted_symbols: list = field(default_factory=list)
 
     @classmethod
     def from_env(cls) -> "EntryFilterConfig":
         raw_skip = os.environ.get("ENTRY_FILTER_PF_GATE_SKIP_SYMBOLS", "")
         skip_symbols = [
             s.strip().upper() for s in raw_skip.split(",") if s.strip()
+        ]
+        raw_restricted = os.environ.get("ENTRY_FILTER_PURCHASE_RESTRICTED_SYMBOLS", "")
+        restricted_symbols = [
+            s.strip().upper() for s in raw_restricted.split(",") if s.strip()
         ]
         return cls(
             min_volume=float(os.environ.get("ENTRY_FILTER_MIN_VOLUME", 500_000)),
@@ -65,6 +76,7 @@ class EntryFilterConfig:
             stock_reduced_pf_gate=float(os.environ.get("ENTRY_FILTER_STOCK_REDUCED_PF_GATE", 1.0)),
             stock_reduced_min_trades=int(os.environ.get("ENTRY_FILTER_STOCK_REDUCED_MIN_TRADES", 5)),
             pf_gate_skip_symbols=skip_symbols,
+            purchase_restricted_symbols=restricted_symbols,
         )
 
 
@@ -236,6 +248,7 @@ class EntryFilterEngine:
         passed: list[Any] = []
         blocked: list[tuple[str, str]] = []
         diag: dict[str, Any] = {
+            "purchase_restricted_blocked": [],
             "volume_blocked": [],
             "adr_blocked": [],
             "rolling_pf_blocked": [],
@@ -252,6 +265,19 @@ class EntryFilterEngine:
 
             is_etf = symbol in etf_symbols
             deny_reason: str | None = None
+
+            # --- Gate 0: Purchase restriction (highest priority, e.g. insider) ---
+            # 2026-08-19 (JP semiconductor expansion Phase 2): symbols on the
+            # compliance deny-list are blocked from BUY regardless of any other
+            # gate outcome. This is evaluated first and short-circuits Gates 1-4.
+            # See docs/jp_semiconductor_ai_expansion_plan.md section 1.
+            if symbol in cfg.purchase_restricted_symbols:
+                deny_reason = f"purchase_restricted: {symbol} is on the compliance/insider deny-list"
+                diag["purchase_restricted_blocked"].append(symbol)
+                logger.info(
+                    "entry_filter_purchase_restricted_block symbol=%s",
+                    symbol,
+                )
 
             # --- Gate 1: Volume (stocks only) ---
             if not is_etf and deny_reason is None:
@@ -331,9 +357,10 @@ class EntryFilterEngine:
         if blocked:
             logger.info(
                 "entry_filter_summary passed=%d blocked=%d "
-                "(volume=%d adr=%d pf=%d)",
+                "(purchase_restricted=%d volume=%d adr=%d pf=%d)",
                 len(passed),
                 len(blocked),
+                len(diag["purchase_restricted_blocked"]),
                 len(diag["volume_blocked"]),
                 len(diag["adr_blocked"]),
                 len(diag["rolling_pf_blocked"]),

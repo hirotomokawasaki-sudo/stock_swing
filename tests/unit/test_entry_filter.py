@@ -498,3 +498,102 @@ def test_watchlist_does_not_mutate_input_or_block_anything():
     result = get_small_sample_watchlist(trades)
     entry = next(r for r in result if r["symbol"] == "PLTR")
     assert "not auto-blocked" in entry["note"]
+
+
+# ===========================================================================
+# Gate 0: purchase_restricted_symbols (2026-08-19, JP semiconductor expansion
+# Phase 2 — compliance/insider deny-list). See
+# docs/jp_semiconductor_ai_expansion_plan.md section 1 and
+# docs/jp_semiconductor_ai_expansion_phase2_design.md section 4.
+# ===========================================================================
+
+def test_purchase_restricted_symbol_is_blocked():
+    """Acceptance: a symbol on purchase_restricted_symbols must be blocked
+    from BUY, with a deny_reason mentioning 'purchase_restricted'."""
+    cfg = EntryFilterConfig(purchase_restricted_symbols=["9984.T"])
+    engine = EntryFilterEngine(config=cfg)
+    decisions = [_decision("9984.T")]
+
+    result = engine.filter(decisions, records_by_symbol={}, closed_trades=[])
+
+    assert result.passed == []
+    assert len(result.blocked) == 1
+    blocked_symbol, reason = result.blocked[0]
+    assert blocked_symbol == "9984.T"
+    assert "purchase_restricted" in reason
+
+
+def test_purchase_restricted_gate_short_circuits_other_gates():
+    """Acceptance: purchase_restricted symbols are blocked even when they
+    would otherwise pass every other gate (high volume, high ADR, no PF
+    history) — Gate 0 must run first and short-circuit Gates 1-4."""
+    cfg = EntryFilterConfig(
+        purchase_restricted_symbols=["9984.T"],
+        min_volume=500_000,
+        min_adr_pct=1.0,
+    )
+    engine = EntryFilterEngine(config=cfg)
+    decisions = [_decision("9984.T")]
+    # Deliberately healthy market stats — would pass Gate 1/2 on their own.
+    records = {"9984.T": _bars("9984.T", volume=5_000_000, high=110, low=100, close=105)}
+
+    result = engine.filter(decisions, records_by_symbol=records, closed_trades=[])
+
+    assert result.passed == []
+    blocked_symbol, reason = result.blocked[0]
+    assert blocked_symbol == "9984.T"
+    assert "purchase_restricted" in reason
+    assert "9984.T" in result.stats["purchase_restricted_blocked"]
+
+
+def test_purchase_restricted_symbols_default_empty_does_not_block_anything():
+    """Boundary: default config (empty deny-list) must not block any symbol
+    via Gate 0 — existing behavior for all currently-traded symbols must be
+    unchanged by this addition."""
+    cfg = EntryFilterConfig()
+    assert cfg.purchase_restricted_symbols == []
+
+    engine = EntryFilterEngine(config=cfg)
+    decisions = [_decision("NVDA")]
+    records = {"NVDA": _bars("NVDA", volume=5_000_000, high=110, low=100, close=105)}
+
+    result = engine.filter(decisions, records_by_symbol=records, closed_trades=[])
+
+    assert "NVDA" not in [s for s, _ in result.blocked]
+    assert result.stats["purchase_restricted_blocked"] == []
+
+
+def test_from_env_reads_purchase_restricted_symbols(monkeypatch):
+    """Config loading: ENTRY_FILTER_PURCHASE_RESTRICTED_SYMBOLS is parsed as
+    a comma-separated, upper-cased list, consistent with
+    ENTRY_FILTER_PF_GATE_SKIP_SYMBOLS's existing parsing behavior."""
+    monkeypatch.setenv("ENTRY_FILTER_PURCHASE_RESTRICTED_SYMBOLS", "9984.t, 1234.T")
+
+    cfg = EntryFilterConfig.from_env()
+
+    assert cfg.purchase_restricted_symbols == ["9984.T", "1234.T"]
+
+
+def test_from_env_purchase_restricted_symbols_defaults_to_empty(monkeypatch):
+    """Fallback: when the env var is unset, purchase_restricted_symbols must
+    default to an empty list (fail-open for this specific list is safe since
+    the absence of a restriction is the status quo, not a security gap)."""
+    monkeypatch.delenv("ENTRY_FILTER_PURCHASE_RESTRICTED_SYMBOLS", raising=False)
+
+    cfg = EntryFilterConfig.from_env()
+
+    assert cfg.purchase_restricted_symbols == []
+
+
+def test_non_buy_decision_for_restricted_symbol_passes_through():
+    """Boundary: non-buy actions (e.g. sell) for a restricted symbol are not
+    affected by Gate 0 — the deny-list only blocks new BUY submission, not
+    exiting an existing (legacy) position."""
+    cfg = EntryFilterConfig(purchase_restricted_symbols=["9984.T"])
+    engine = EntryFilterEngine(config=cfg)
+    decisions = [_decision("9984.T", action="sell")]
+
+    result = engine.filter(decisions, records_by_symbol={}, closed_trades=[])
+
+    assert len(result.passed) == 1
+    assert result.blocked == []
