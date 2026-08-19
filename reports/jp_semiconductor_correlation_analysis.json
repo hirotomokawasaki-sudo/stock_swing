@@ -1,0 +1,681 @@
+{
+  "generated_at": "2026-08-19T09:16:17.709998+00:00",
+  "period": "2y",
+  "primary_us_benchmark": "SOXX",
+  "large_move_threshold_pct": 2.0,
+  "us_symbols_fetched": [
+    "SOXX",
+    "SMH",
+    "NVDA",
+    "QQQ"
+  ],
+  "jp_symbols_fetched": [
+    "6857.T",
+    "8035.T",
+    "6146.T",
+    "6920.T",
+    "7735.T",
+    "3436.T",
+    "4063.T",
+    "4062.T",
+    "5803.T",
+    "5801.T",
+    "6506.T",
+    "9984.T"
+  ],
+  "jp_candidate_metadata": {
+    "6857.T": {
+      "name": "Advantest",
+      "tier": 1
+    },
+    "8035.T": {
+      "name": "Tokyo Electron",
+      "tier": 1
+    },
+    "6146.T": {
+      "name": "Disco",
+      "tier": 1
+    },
+    "6920.T": {
+      "name": "Lasertec",
+      "tier": 2
+    },
+    "7735.T": {
+      "name": "Screen Holdings",
+      "tier": 2
+    },
+    "3436.T": {
+      "name": "Sumco",
+      "tier": 2
+    },
+    "4063.T": {
+      "name": "Shin-Etsu Chemical",
+      "tier": 2
+    },
+    "4062.T": {
+      "name": "Ibiden",
+      "tier": 2
+    },
+    "5803.T": {
+      "name": "Fujikura",
+      "tier": 3
+    },
+    "5801.T": {
+      "name": "Furukawa Electric",
+      "tier": 3
+    },
+    "6506.T": {
+      "name": "Yaskawa Electric",
+      "tier": 3
+    },
+    "9984.T": {
+      "name": "SoftBank Group",
+      "tier": "restricted",
+      "purchase_restricted": true
+    }
+  },
+  "correlations": [
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "6857.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1773,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4699
+    },
+    {
+      "us_symbol": "SMH",
+      "jp_symbol": "6857.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.175,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4824
+    },
+    {
+      "us_symbol": "NVDA",
+      "jp_symbol": "6857.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1107,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.406
+    },
+    {
+      "us_symbol": "QQQ",
+      "jp_symbol": "6857.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1333,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4219
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "8035.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1642,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.5238
+    },
+    {
+      "us_symbol": "SMH",
+      "jp_symbol": "8035.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.155,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.5215
+    },
+    {
+      "us_symbol": "NVDA",
+      "jp_symbol": "8035.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.0571,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.3309
+    },
+    {
+      "us_symbol": "QQQ",
+      "jp_symbol": "8035.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1197,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4449
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "6146.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.0825,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4761
+    },
+    {
+      "us_symbol": "SMH",
+      "jp_symbol": "6146.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.0832,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4816
+    },
+    {
+      "us_symbol": "NVDA",
+      "jp_symbol": "6146.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.067,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.3592
+    },
+    {
+      "us_symbol": "QQQ",
+      "jp_symbol": "6146.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.0634,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4168
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "6920.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.061,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4476
+    },
+    {
+      "us_symbol": "SMH",
+      "jp_symbol": "6920.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.049,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4417
+    },
+    {
+      "us_symbol": "NVDA",
+      "jp_symbol": "6920.T",
+      "n_same_day": 467,
+      "same_day_correlation": -0.0103,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.3025
+    },
+    {
+      "us_symbol": "QQQ",
+      "jp_symbol": "6920.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.0009,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.3743
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "7735.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1757,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4402
+    },
+    {
+      "us_symbol": "SMH",
+      "jp_symbol": "7735.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.169,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4429
+    },
+    {
+      "us_symbol": "NVDA",
+      "jp_symbol": "7735.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.0825,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.2991
+    },
+    {
+      "us_symbol": "QQQ",
+      "jp_symbol": "7735.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1156,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.3463
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "3436.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1056,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.3731
+    },
+    {
+      "us_symbol": "SMH",
+      "jp_symbol": "3436.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1069,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.3575
+    },
+    {
+      "us_symbol": "NVDA",
+      "jp_symbol": "3436.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.0818,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.2162
+    },
+    {
+      "us_symbol": "QQQ",
+      "jp_symbol": "3436.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1105,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.3348
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "4063.T",
+      "n_same_day": 467,
+      "same_day_correlation": -0.0059,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4218
+    },
+    {
+      "us_symbol": "SMH",
+      "jp_symbol": "4063.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.0006,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4095
+    },
+    {
+      "us_symbol": "NVDA",
+      "jp_symbol": "4063.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.0162,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.2761
+    },
+    {
+      "us_symbol": "QQQ",
+      "jp_symbol": "4063.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.0136,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4098
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "4062.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1396,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4411
+    },
+    {
+      "us_symbol": "SMH",
+      "jp_symbol": "4062.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1341,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4355
+    },
+    {
+      "us_symbol": "NVDA",
+      "jp_symbol": "4062.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.0858,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.3117
+    },
+    {
+      "us_symbol": "QQQ",
+      "jp_symbol": "4062.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1015,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.3906
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "5803.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1005,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4495
+    },
+    {
+      "us_symbol": "SMH",
+      "jp_symbol": "5803.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1103,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4518
+    },
+    {
+      "us_symbol": "NVDA",
+      "jp_symbol": "5803.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.11,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.3399
+    },
+    {
+      "us_symbol": "QQQ",
+      "jp_symbol": "5803.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.0877,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4198
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "5801.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1397,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.3921
+    },
+    {
+      "us_symbol": "SMH",
+      "jp_symbol": "5801.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1447,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.3981
+    },
+    {
+      "us_symbol": "NVDA",
+      "jp_symbol": "5801.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1086,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.3248
+    },
+    {
+      "us_symbol": "QQQ",
+      "jp_symbol": "5801.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1013,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.3854
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "6506.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.0905,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.3979
+    },
+    {
+      "us_symbol": "SMH",
+      "jp_symbol": "6506.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.0773,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.3846
+    },
+    {
+      "us_symbol": "NVDA",
+      "jp_symbol": "6506.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.0047,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.2445
+    },
+    {
+      "us_symbol": "QQQ",
+      "jp_symbol": "6506.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.0548,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.3856
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "9984.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1057,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4347
+    },
+    {
+      "us_symbol": "SMH",
+      "jp_symbol": "9984.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1079,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.434
+    },
+    {
+      "us_symbol": "NVDA",
+      "jp_symbol": "9984.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1166,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.3291
+    },
+    {
+      "us_symbol": "QQQ",
+      "jp_symbol": "9984.T",
+      "n_same_day": 467,
+      "same_day_correlation": 0.1012,
+      "n_spillover": 467,
+      "spillover_correlation_us_t_vs_jp_t_plus_1": 0.4367
+    }
+  ],
+  "conditional_gap_analysis": [
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "6857.T",
+      "threshold_pct": 2.0,
+      "total_days": 467,
+      "us_large_up_days": {
+        "n": 90,
+        "mean_jp_gap_pct": 2.926,
+        "median_jp_gap_pct": 2.296,
+        "direction_match_rate": 0.9
+      },
+      "us_large_down_days": {
+        "n": 78,
+        "mean_jp_gap_pct": -3.155,
+        "median_jp_gap_pct": -3.061,
+        "direction_match_rate": 0.846
+      }
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "8035.T",
+      "threshold_pct": 2.0,
+      "total_days": 467,
+      "us_large_up_days": {
+        "n": 90,
+        "mean_jp_gap_pct": 2.432,
+        "median_jp_gap_pct": 1.967,
+        "direction_match_rate": 0.9
+      },
+      "us_large_down_days": {
+        "n": 78,
+        "mean_jp_gap_pct": -3.061,
+        "median_jp_gap_pct": -2.41,
+        "direction_match_rate": 0.885
+      }
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "6146.T",
+      "threshold_pct": 2.0,
+      "total_days": 467,
+      "us_large_up_days": {
+        "n": 90,
+        "mean_jp_gap_pct": 2.523,
+        "median_jp_gap_pct": 2.064,
+        "direction_match_rate": 0.889
+      },
+      "us_large_down_days": {
+        "n": 78,
+        "mean_jp_gap_pct": -3.2,
+        "median_jp_gap_pct": -3.049,
+        "direction_match_rate": 0.897
+      }
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "6920.T",
+      "threshold_pct": 2.0,
+      "total_days": 467,
+      "us_large_up_days": {
+        "n": 90,
+        "mean_jp_gap_pct": 2.371,
+        "median_jp_gap_pct": 2.002,
+        "direction_match_rate": 0.889
+      },
+      "us_large_down_days": {
+        "n": 78,
+        "mean_jp_gap_pct": -2.963,
+        "median_jp_gap_pct": -2.213,
+        "direction_match_rate": 0.885
+      }
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "7735.T",
+      "threshold_pct": 2.0,
+      "total_days": 467,
+      "us_large_up_days": {
+        "n": 90,
+        "mean_jp_gap_pct": 2.537,
+        "median_jp_gap_pct": 2.026,
+        "direction_match_rate": 0.933
+      },
+      "us_large_down_days": {
+        "n": 78,
+        "mean_jp_gap_pct": -2.67,
+        "median_jp_gap_pct": -2.296,
+        "direction_match_rate": 0.808
+      }
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "3436.T",
+      "threshold_pct": 2.0,
+      "total_days": 467,
+      "us_large_up_days": {
+        "n": 90,
+        "mean_jp_gap_pct": 1.968,
+        "median_jp_gap_pct": 1.265,
+        "direction_match_rate": 0.833
+      },
+      "us_large_down_days": {
+        "n": 78,
+        "mean_jp_gap_pct": -2.92,
+        "median_jp_gap_pct": -2.513,
+        "direction_match_rate": 0.846
+      }
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "4063.T",
+      "threshold_pct": 2.0,
+      "total_days": 467,
+      "us_large_up_days": {
+        "n": 90,
+        "mean_jp_gap_pct": 1.119,
+        "median_jp_gap_pct": 0.962,
+        "direction_match_rate": 0.856
+      },
+      "us_large_down_days": {
+        "n": 78,
+        "mean_jp_gap_pct": -1.268,
+        "median_jp_gap_pct": -0.809,
+        "direction_match_rate": 0.756
+      }
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "4062.T",
+      "threshold_pct": 2.0,
+      "total_days": 467,
+      "us_large_up_days": {
+        "n": 90,
+        "mean_jp_gap_pct": 3.294,
+        "median_jp_gap_pct": 2.094,
+        "direction_match_rate": 0.811
+      },
+      "us_large_down_days": {
+        "n": 78,
+        "mean_jp_gap_pct": -2.979,
+        "median_jp_gap_pct": -2.423,
+        "direction_match_rate": 0.808
+      }
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "5803.T",
+      "threshold_pct": 2.0,
+      "total_days": 467,
+      "us_large_up_days": {
+        "n": 90,
+        "mean_jp_gap_pct": 3.018,
+        "median_jp_gap_pct": 2.331,
+        "direction_match_rate": 0.867
+      },
+      "us_large_down_days": {
+        "n": 78,
+        "mean_jp_gap_pct": -3.21,
+        "median_jp_gap_pct": -3.1,
+        "direction_match_rate": 0.949
+      }
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "5801.T",
+      "threshold_pct": 2.0,
+      "total_days": 467,
+      "us_large_up_days": {
+        "n": 90,
+        "mean_jp_gap_pct": 2.795,
+        "median_jp_gap_pct": 1.776,
+        "direction_match_rate": 0.856
+      },
+      "us_large_down_days": {
+        "n": 78,
+        "mean_jp_gap_pct": -2.987,
+        "median_jp_gap_pct": -2.865,
+        "direction_match_rate": 0.872
+      }
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "6506.T",
+      "threshold_pct": 2.0,
+      "total_days": 467,
+      "us_large_up_days": {
+        "n": 90,
+        "mean_jp_gap_pct": 2.041,
+        "median_jp_gap_pct": 1.53,
+        "direction_match_rate": 0.878
+      },
+      "us_large_down_days": {
+        "n": 78,
+        "mean_jp_gap_pct": -1.691,
+        "median_jp_gap_pct": -1.394,
+        "direction_match_rate": 0.756
+      }
+    },
+    {
+      "us_symbol": "SOXX",
+      "jp_symbol": "9984.T",
+      "threshold_pct": 2.0,
+      "total_days": 467,
+      "us_large_up_days": {
+        "n": 90,
+        "mean_jp_gap_pct": 2.422,
+        "median_jp_gap_pct": 1.883,
+        "direction_match_rate": 0.844
+      },
+      "us_large_down_days": {
+        "n": 78,
+        "mean_jp_gap_pct": -3.334,
+        "median_jp_gap_pct": -3.399,
+        "direction_match_rate": 0.872
+      }
+    }
+  ]
+}
