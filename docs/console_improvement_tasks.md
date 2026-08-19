@@ -3,6 +3,12 @@
 **改訂日**: 2026-07-13（Codex Review G1-G10 対応 + min_hold 実装）  
 **旧 P0-P17 体系は廃止。本ファイルのみが正式な改善計画。**
 
+> ⚠️ **別トラック注記（2026-08-19追加）**: ブローカー移行（Alpaca → IBKR）は
+> 本ファイルのR0-R9ロードマップ（戦略パフォーマンス評価）とは完全に独立した
+> 別トラックとして進行中。9/15 Go/No-Go判定には一切影響しない。
+> 計画・進捗は `docs/broker_migration_ibkr_plan.md` を参照（Track A完了済み、
+> Track BはD0＝移行開始日確定待ち）。
+
 ---
 
 ## 運用ステータス（2026-07-28 更新）
@@ -490,6 +496,31 @@ return_pct基準の7日tierがstandard/high-conviction銘柄で到達不可能�
   確認
 - 目安確認日: 2026-08-19頃（08-05導入から約2週間の段階で一度中間レビュー）
 
+**2026-08-19 中間レビュー**:
+- `python3 scripts/analyze_stop_loss_post_exit.py --since 2026-08-05`:
+  stop_loss 8件、全件 negative PnL。post-exit driftベースの「正しい止損率」は
+  **87.5%（7/8）** で、目標の70%を上回った。
+- `python3 scripts/analyze_stop_loss_post_exit.py --since 2026-08-05 --counterfactual`:
+  主指標では **-$10,811.85**（stop_loss実損失 - 保有継続の反実仮想PnL）で、
+  8件中4件は保有継続の方が良かった。主な悪化要因は 2026-08-06 の NBIS 3件で、
+  stop後10営業日以内に大きく反発した。
+- `reports/console/latest_console_summary.json`（2026-08-19 01:00 UTC）:
+  `stop_loss_health.recent_30d = {count: 18, net_pnl: -37470.64, avg_ret_pct: -8.72}`。
+  導入前ベースライン（`27a8742^:reports/console/latest_console_summary.json`）の
+  `{count: 26, net_pnl: -72496.95, avg_ret_pct: -8.74}` と比べ、rolling 30d net_pnl は
+  悪化していない。
+- tiered_min_hold suppression（`get_suppression_stats()` 経由、最新console summary）:
+  `total=0`。保存済み最新runでは tier別発火は
+  `noise_7d=0 / mid_3d=0 / severe_1d=0` で、抑制発火の観測はまだない。
+
+**判断**:
+- **継続**。Acceptance criteria の 2項目
+  （正しい止損率≥70%、recent_30d net_pnl非悪化）は満たしたため、
+  `tiered_min_hold_enabled: true` を維持する。
+- ただし counterfactual 主指標はまだマイナスで、特に severe 側の急反発
+  （NBIS型）では stop_loss がコスト化しうる。次回レビューでは
+  severe帯の事例追加を重点監視する。
+
 **ロールバック**: `tiered_min_hold_enabled: false` に戻すだけ
 
 #### R3-v2-Breakeven: Staged Floor（段階的floor、Breakeven Stop）
@@ -923,7 +954,7 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 
 2026-08-05          ✅ R3-v2  sector_shock historical replay 111件蓄積開始（目標100件達成）
 
-2026-08-19頃          🔲 R3-v2-Stop 中間レビュー: post-exit drift再分析で「正しい止損率」改善確認
+2026-08-19頃          ✅ R3-v2-Stop 中間レビュー: post-exit drift再分析で「正しい止損率」改善確認
 
 2026-09-05          🔲 R3-v2-Breakeven 中間レビュー: staged floorのpaper実測での改善確認（08-05導入から1ヶ月後）
 
@@ -937,7 +968,7 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 2026-08-17〜08-28  R4-v2    残: raw/normalized score保存、confidence calibration、feature snapshot保存
                    R5-v2    残: promotion gate 5条件の閾値妥当性検証（paper観測ベース）
 
-2026-08-19（水）    🔲 R3-v2-Stop 中間レビュー: offset_pctベースtiered min_hold v2の
+2026-08-19（水）    ✅ R3-v2-Stop 中間レビュー: offset_pctベースtiered min_hold v2の
                          post-exit drift再分析（cron登録済み: stock_swing_r3v2_stop_tiered_minhold_review_20260819）
 
 2026-08-21（金）    🔲 R9 Plan B/C/D/E 中間レビュー・昇格判断（cron登録済み: stock_swing_r9_planbc_mid_review_20260821）
@@ -2274,3 +2305,59 @@ A-Eと同一パターン）に乗せる。ヒストリカルで優れていた�
 | ✅ P1 | **R11-C** | **一次検証完了**（2026-08-15） | 結論: 4候補 + レジームフィルタ2バリアントも含め全てacceptance criteria未達成。R11-Dへの候補なし |
 | ⚪ P2 | **R11-D** | **見送り** | R11-Cで昇格対象候補が0件だったため、現時点で進める候補なし |
 | ✅ P2 | **R11-E** | **作業1完了（2026-08-15）** | FeatureSnapshotStore配線済み。作業2（ML用feature/labelペア）は未着手 |
+
+---
+
+## 将来検討（バックログ、未着手）— 2026-08-19 追記
+
+### R12（案）: exit判定へのマーケット全体トレンド（market_regime）反映
+
+**発端**: 2026-08-19朝、プレマーケット帯でcurrent_price基準の含み損益が前日終値基準と
+約$21,000乖離する場面があり、「マーケット全体が上昇トレンドの時に、ノイズによる一時的な
+下げだけで個別ポジションを売ってしまわないか」という懸念から検討。
+
+**現状の保護レイヤー（整理）**:
+
+| 対象 | 状態 |
+|---|---|
+| プレマーケット/アフターアワーズのノイズ | ✅ `_filter_sells_outside_regular_hours()`で対策済み（-12%以下の壊滅的ケース以外は繰延） |
+| 銘柄固有の一時的ノイズ（正規時間中） | ✅ tiered min_hold（2026-08-05）で部分対策済み |
+| セクター全体の急落（正規時間中） | 🟡 sector_shock_hold（shadow中、本番未適用） |
+| **マーケット全体トレンド方向** | ❌ **未対策**（`market_regime`は新規エントリーのポジションサイジングにのみ使用、exit判定には未接続） |
+
+**改修案**: `decision.evidence["market_regime"]`（bullish/neutral/cautious）をexit判定にも
+接続し、bullish regime中はstop_loss閾値を緩める／min_hold期間を延長する。
+
+**メリット**:
+- 既存データ（`docs/stop_loss_evaluation_guidelines.md`）で、下落幅-5%未満の止損は
+  78%が7日以内、89%が10日以内に回復することが定量的に確認済み。regime連動で
+  さらに改善余地がある可能性。
+- stop_loss全体の損失は-$146,340（PF=0.113、WR=17.1%）と大きく、tiered min_hold
+  実績（-$167K→-$126K、+$41K改善）に続く改善余地の候補になり得る。
+- `market_regime`は既に`decision.evidence`に格納済みで、exit側で参照するだけなら
+  実装コスト自体は小さい。
+
+**デメリット**:
+- `market_regime`はFRED マクロ指標＋価格モメンタムの日次更新合成で、リアルタイム
+  反転検知には不向き。bullish判定が甘いと本物の下降トレンドを見逃し、損失拡大
+  リスクがある。
+- stop_lossの設計思想（「利益を生むためでなく負けトレードを早期に終わらせるための
+  機械的リスク管理」）と、regime連動という予測的判断の混入は理念的に矛盾する。
+- 2026-08-15のR11-C付鍘検証で、SPY/QQQベースの単純なレジームフィルタ
+  （price_below_sma / sma_declining）は**エントリー抑制用途でも効果不十分**と結論済み
+  （validation PFが0.56→0.58〜0.63と小幅改善のみ、依然1未満）。同種のレジーム判定を
+  exit側に転用しても同様に効果が限定的である可能性が高い。
+- regime別のstop_loss挙動を検証するにはサンプル不足（全体でstop_loss 76件、
+  bullish限定だとさらに少数）。閾値の妥当性検証に数週間〜数ヶ月を要する見込みで、
+  09-15のリアルトレード移行スケジュールには間に合わない。
+- 機能的にsector_shock_hold（個別銘柄のセクター逆行判定）と近く、そちらのpaper A/B
+  検証が先に完了すべき優先タスク。
+
+**結論（2026-08-19時点）**: 今すぐの実装は見送り。09-15のリアルトレード移行後、
+安定稼働を確認してからバックログ候補として再検討する。着手する場合は
+先にsector_shock_hold A/Bの結果（近い軸の指標のため参考になる）を確認してから
+とする。R11-C付鍘の単純レジームフィルタが効果不十分だった前例があるため、
+着手する場合はSPY/QQQの単純な上回り/下回り判定ではなく、別のレジーム定義
+（ボラティリティ軸等）を検討する必要がある。
+
+**Status**: 🔵 未着手・将来検討（優先度低）
