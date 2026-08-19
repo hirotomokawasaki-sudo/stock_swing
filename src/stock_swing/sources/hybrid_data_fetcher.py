@@ -15,7 +15,7 @@ from typing import Optional
 import logging
 
 from stock_swing.core.types import CanonicalRecord
-from stock_swing.sources.broker_client import BrokerClient
+from stock_swing.sources.broker_client_protocol import BrokerClientProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ class HybridDataFetcher:
     
     def __init__(
         self,
-        broker_client: BrokerClient,
+        broker_client: BrokerClientProtocol,
         etf_symbols: set[str],
         massive_api_key: Optional[str] = None
     ):
@@ -44,7 +44,8 @@ class HybridDataFetcher:
         Initialize hybrid fetcher.
         
         Args:
-            broker_client: Alpaca broker client
+            broker_client: Broker client (any BrokerClientProtocol implementation;
+                Alpaca today, future IBKR possible — see docs/broker_migration_ibkr_plan.md)
             etf_symbols: Set of ETF ticker symbols
             massive_api_key: Massive API key (optional, defaults to env var)
         """

@@ -2,6 +2,7 @@
 
 from .base import SourceClient
 from .broker_client import BrokerClient
+from .broker_client_protocol import BrokerClientProtocol
 from .errors import (
     SourceAuthenticationError,
     SourceConnectionError,
@@ -24,6 +25,7 @@ __all__ = [
     "FredClient",
     "SecClient",
     "BrokerClient",
+    "BrokerClientProtocol",
     "SourceError",
     "SourceConnectionError",
     "SourceTimeoutError",

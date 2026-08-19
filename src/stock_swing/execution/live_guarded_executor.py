@@ -19,7 +19,7 @@ from stock_swing.core.runtime import RuntimeMode
 from stock_swing.decision_engine.decision_engine import DecisionRecord
 from stock_swing.execution.paper_executor import OrderSubmission, PaperExecutor
 from stock_swing.risk.position_sizing import PositionSizingPolicy
-from stock_swing.sources.broker_client import BrokerClient
+from stock_swing.sources.broker_client_protocol import BrokerClientProtocol
 
 
 class ApprovalStatus(Enum):
@@ -76,13 +76,14 @@ class LiveGuardedExecutor(PaperExecutor):
     def __init__(
         self,
         runtime_mode: RuntimeMode,
-        broker_client: BrokerClient,
+        broker_client: BrokerClientProtocol,
     ):
         """Initialize live-guarded executor.
         
         Args:
             runtime_mode: Current runtime mode.
-            broker_client: Broker client for order submission.
+            broker_client: Broker client for order submission. Any object
+                satisfying BrokerClientProtocol (Alpaca or future IBKR) works here.
             
         Raises:
             ValueError: If runtime_mode is not LIVE_GUARDED or PAPER.

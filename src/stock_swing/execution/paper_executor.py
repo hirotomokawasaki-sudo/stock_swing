@@ -18,7 +18,7 @@ from stock_swing.decision_engine.decision_engine import DecisionRecord
 from stock_swing.pricing import PriceResolver
 from stock_swing.risk.position_sizing import PositionSizingInputs, PositionSizingPolicy
 from stock_swing.risk.allocation_config import AllocationConfig
-from stock_swing.sources.broker_client import BrokerClient
+from stock_swing.sources.broker_client_protocol import BrokerClientProtocol
 
 
 @dataclass
@@ -98,14 +98,16 @@ class PaperExecutor:
     def __init__(
         self,
         runtime_mode: RuntimeMode,
-        broker_client: BrokerClient,
+        broker_client: BrokerClientProtocol,
         alloc_config: AllocationConfig | None = None,
     ):
         """Initialize paper executor.
         
         Args:
             runtime_mode: Current runtime mode.
-            broker_client: Broker client for order submission.
+            broker_client: Broker client for order submission. Any object satisfying
+                BrokerClientProtocol (Alpaca BrokerClient today, IBKR client in future)
+                may be passed here — see docs/broker_migration_ibkr_plan.md.
             alloc_config: Optional AllocationConfig; when supplied, PositionSizingPolicy
                 reads stock/ETF multipliers from YAML (same source as PortfolioAllocator).
             

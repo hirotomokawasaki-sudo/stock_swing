@@ -12,7 +12,7 @@ from enum import Enum
 from typing import Any
 
 from stock_swing.execution.paper_executor import FillRecord, OrderSubmission
-from stock_swing.sources.broker_client import BrokerClient
+from stock_swing.sources.broker_client_protocol import BrokerClientProtocol
 
 
 class DiscrepancyType(str, Enum):
@@ -79,11 +79,12 @@ class Reconciler:
     Broker is source of truth for execution state.
     """
     
-    def __init__(self, broker_client: BrokerClient):
+    def __init__(self, broker_client: BrokerClientProtocol):
         """Initialize reconciler.
         
         Args:
-            broker_client: Broker client for querying order state.
+            broker_client: Broker client for querying order state. Any object
+                satisfying BrokerClientProtocol (Alpaca or future IBKR) works here.
         """
         self.broker_client = broker_client
     

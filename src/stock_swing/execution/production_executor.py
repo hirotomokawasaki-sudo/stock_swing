@@ -20,7 +20,7 @@ from stock_swing.execution.live_guarded_executor import (
 )
 from stock_swing.execution.paper_executor import OrderSubmission
 from stock_swing.safety import AuditLevel, AuditLogger, KillSwitch
-from stock_swing.sources.broker_client import BrokerClient
+from stock_swing.sources.broker_client_protocol import BrokerClientProtocol
 
 
 class ProductionExecutor(LiveGuardedExecutor):
@@ -38,7 +38,7 @@ class ProductionExecutor(LiveGuardedExecutor):
     def __init__(
         self,
         runtime_mode: RuntimeMode,
-        broker_client: BrokerClient,
+        broker_client: BrokerClientProtocol,
         kill_switch: KillSwitch | None = None,
         audit_logger: AuditLogger | None = None,
     ):
@@ -46,7 +46,8 @@ class ProductionExecutor(LiveGuardedExecutor):
         
         Args:
             runtime_mode: Current runtime mode.
-            broker_client: Broker client for order submission.
+            broker_client: Broker client for order submission. Any object
+                satisfying BrokerClientProtocol (Alpaca or future IBKR) works here.
             kill_switch: Kill switch instance (creates default if None).
             audit_logger: Audit logger instance (creates default if None).
             
