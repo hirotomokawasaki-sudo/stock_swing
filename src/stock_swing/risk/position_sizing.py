@@ -48,7 +48,34 @@ ETF_SYMBOLS = {
 SYMBOL_SECTORS = {
     'NVDA':'semis', 'AVGO':'semis', 'AMD':'semis', 'TSM':'semis', 'ASML':'semis', 'INTC':'semis', 'MU':'semis', 'ARM':'semis', 'AMAT':'semis', 'LRCX':'semis', 'KLAC':'semis', 'QCOM':'semis', 'MRVL':'semis', 'SMCI':'semis', 'SNPS':'semis', 'CDNS':'semis', 'SOXX':'semis', 'SOXQ':'semis', 'SMH':'semis', 'FTXL':'semis', 'SMHX':'semis', 'SHOC':'semis', 'CHPX':'semis', 'CHPS':'semis',
     'MSFT':'software', 'CRM':'software', 'NOW':'software', 'SNOW':'software', 'MDB':'software', 'DDOG':'software', 'PLTR':'software', 'ADBE':'software', 'ORCL':'software', 'PATH':'software', 'FICO':'software', 'SKYY':'software', 'TTEQ':'software', 'GTOP':'software', 'PTF':'software', 'QTEC':'software', 'PSCT':'software', 'TDIV':'software', 'FRWD':'software', 'IBM':'software', 'CSCO':'software', 'HPE':'software', 'DELL':'software', 'HPQ':'software', 'CIEN':'software', 'RBRK':'software', 'CRWD':'software', 'PANW':'software', 'FTNT':'software', 'ANET':'software', 'NBIS':'software', 'CRDO':'software', 'INTU':'software',
-    'GOOGL':'internet', 'AMZN':'internet', 'META':'internet', 'TSLA':'internet', 'V':'fintech', 'MA':'fintech', 'QTUM':'thematic'
+    'GOOGL':'internet', 'AMZN':'internet', 'META':'internet', 'TSLA':'internet', 'V':'fintech', 'MA':'fintech', 'QTUM':'thematic',
+    # 2026-08-19 (JP semiconductor/AI expansion Phase 2, section 5 — see
+    # docs/jp_semiconductor_ai_expansion_phase2_design.md and
+    # docs/jp_semiconductor_ai_expansion_plan.md). JP semiconductor-equipment
+    # and -material makers are deliberately folded into the SAME 'semis'
+    # sector key as their US counterparts (NOT a new 'jp_semis' key), so
+    # that the existing max_sector_exposure_pct cap in PositionSizingPolicy
+    # correctly limits COMBINED US+JP semiconductor exposure once JP orders
+    # are wired in (Phase 3, post-IBKR). This mapping has NO effect today:
+    # no JP symbol can be sized/ordered until Phase 3 wires in an IBKR
+    # broker client, and current_sector_exposure for a JP symbol is always 0
+    # until then (paper_executor.py only ever queries the currently-connected
+    # Alpaca broker's positions).
+    '6857.T':'semis',  # Advantest
+    '8035.T':'semis',  # Tokyo Electron
+    '6146.T':'semis',  # Disco
+    '6920.T':'semis',  # Lasertec
+    '7735.T':'semis',  # Screen Holdings
+    '3436.T':'semis',  # Sumco
+    '4063.T':'semis',  # Shin-Etsu Chemical (semiconductor-material business)
+    '4062.T':'semis',  # Ibiden (IC package substrates)
+    # Adjacent-but-not-core-semiconductor JP candidates get their own sector
+    # keys (per Phase 2 design section 5's "暫定、Phase3で要再検討" note) so
+    # they are not diluted into 'semis' capacity, nor left completely
+    # unclassified.
+    '5803.T':'jp_networking',  # Fujikura (AI datacenter optical/copper cable)
+    '5801.T':'jp_networking',  # Furukawa Electric (same)
+    '6506.T':'jp_robotics',    # Yaskawa Electric (robotics, aligns with existing robotics_ai theme)
 }
 
 
@@ -105,6 +132,51 @@ class PositionSizingResult:
 def classify_asset_class(symbol: str | None, asset_class: str | None = None) -> str:
     symbol = (symbol or '').upper()
     return asset_class or ('etf' if symbol in ETF_SYMBOLS else 'stock')
+
+
+# 2026-08-19 (JP semiconductor/AI expansion Phase 2 design — see
+# docs/jp_semiconductor_ai_expansion_phase2_design.md section 3-C).
+# JPX trades in round lots (単元株), almost universally 100 shares per unit
+# for the candidate symbols in this expansion (post-2018 unification; TSE
+# unified nearly all listings to a 100-share unit by 2018). This helper
+# rounds a computed share count DOWN to the nearest tradable unit so JP
+# order quantities are never rejected for violating lot-size rules.
+#
+# NOT wired into PositionSizingPolicy.size() yet for non-JP symbols: this is
+# a standalone utility, applied automatically only when the symbol looks
+# like a JP ticker (".T" suffix, Yahoo/most JP broker convention), so it is
+# a no-op for every currently-traded US symbol (verified in
+# tests/unit/test_position_sizing_policy.py's JP rounding tests).
+JP_SYMBOL_SUFFIX = ".T"
+JP_TRADING_UNIT = 100
+
+
+def is_jp_symbol(symbol: str | None) -> bool:
+    """Return True if `symbol` looks like a JPX-listed ticker (e.g. "8035.T")."""
+    return bool(symbol) and symbol.upper().endswith(JP_SYMBOL_SUFFIX)
+
+
+def round_to_jp_trading_unit(shares: int, unit: int = JP_TRADING_UNIT) -> int:
+    """Round `shares` down to the nearest JPX trading unit (default 100).
+
+    Floors (rounds toward zero / down) rather than rounding to nearest, so
+    the resulting order never exceeds the risk/notional/exposure budget that
+    produced `shares` in the first place.
+
+    Args:
+        shares: Raw computed share count (may be negative for a sell-side
+            calculation elsewhere in the codebase, though this function is
+            only used for BUY sizing today).
+        unit: Trading unit size (default 100, the near-universal JPX round
+            lot since the 2018 unit-size unification).
+
+    Returns:
+        `shares` rounded down to the nearest multiple of `unit`. Returns 0
+        if `shares` is smaller than one full unit.
+    """
+    if shares <= 0 or unit <= 0:
+        return 0
+    return (shares // unit) * unit
 
 
 def _resolve_asset_class(symbol: str | None, asset_class: str | None = None) -> str:
@@ -222,6 +294,14 @@ class PositionSizingPolicy:
         if asset_multiplier != 1.0 and final_shares > 0:
             final_shares = max(floor(final_shares * asset_multiplier), 0)
         after_multiplier_qty = final_shares
+
+        # 2026-08-19 (JP semiconductor/AI expansion Phase 2, section 3-C):
+        # JPX trades in round lots (default 100 shares/unit). This guard is
+        # a final post-processing step applied ONLY to JP-ticker symbols
+        # (".T" suffix) and is a strict no-op for every US symbol traded
+        # today — it does not change any existing US sizing behavior.
+        if is_jp_symbol(symbol):
+            final_shares = round_to_jp_trading_unit(final_shares)
 
         skip_reason = None
         if remaining_capacity <= 0:

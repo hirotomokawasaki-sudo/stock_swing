@@ -235,9 +235,11 @@ Phase 2の設計完了時点で、以下が揃えばPhase 3（IBKR接続後の�
 | Phase 2アーキテクチャ設計完了（本ドキュメント） | ✅ 完了（2026-08-19） |
 | purchase_restricted_symbols実装（先行着手分） | ✅ 完了（2026-08-19） |
 | JPXMarketCalendar実装（先行着手分） | ✅ 完了（2026-08-19） |
+| 単元株丸め処理実装（先行着手分） | ✅ 完了（2026-08-19） |
+| US-JP横断セクター集中管理の実装（先行着手分） | ✅ 完了（2026-08-19） |
+| us_overnight_benchmark_return特徴量実装（先行着手分） | ✅ 完了（2026-08-19） |
 | IBKR接続確立（`docs/broker_migration_ibkr_plan.md` Track B） | ⚪ 未達（D0待ち） |
 | ユーザーからの詳細購入禁止リスト受領 | ⚪ 未達 |
-| US-JP横断セクター集中管理の実装・テスト | ⚪ Phase 3で実装 |
 
 **Phase 3は IBKR接続確立（Track B完了）が事実上の前提条件**。それまでは、
 本ドキュメントの設計に基づいた**コード実装（`JPXMarketCalendar`, 新規Feature,
@@ -279,16 +281,58 @@ Phase 2の設計完了時点で、以下が揃えばPhase 3（IBKR接続後の�
 - テスト: `tests/unit/test_jpx_market_calendar.py`新規68件全PASS
 - **未配線**: `paper_demo.py`等の既存フローには一切接続していない（Phase 3で日本株実配線時に接続）
 
-### 7-C. 回帰確認
+### 7-D. 単元株（100株）丸め処理 ✅ 実装完了
 
-フルテストスイート実行: **1983 passed, 2 skipped**（既存の無関係スキップのみ、regressionなし。
-Phase 2着手前の1904+70件追加相当の増分）
+- `src/stock_swing/risk/position_sizing.py`: `is_jp_symbol()` / `round_to_jp_trading_unit()`
+  ヘルパー関数を新規追加。`PositionSizingPolicy.size()`の最終段（asset-class multiplier適用後）
+  に「symbolが`.T`サフィックスならJP単元株（100株）に切り下げる」ガードを追加
+- **US銘柄には完全no-op**（`is_jp_symbol()`がFalseを返すため既存ロジックに一切触れない）。
+  回帰テストで非100倍数のUS final_sharesが変化しないことを確認
+- テスト: `tests/unit/test_position_sizing_policy.py`に12件追加（丸め計算・境界値・
+  JP/US no-op確認・小額配分が0株にfallbackしskip_reasonが正しく設定されること）
+
+### 7-E. US-JP横断セクター統合 ✅ 実装完了
+
+- `src/stock_swing/risk/position_sizing.py`: `SYMBOL_SECTORS`辞書に、Tier1-2の
+  JP半導体銘柄（Advantest/Tokyo Electron/Disco/Lasertec/Screen Holdings/Sumco/
+  Shin-Etsu Chemical/Ibiden）を既存の`'semis'`キーに編入（新規セクターキー
+  ではなく、US半導体銘柄と同じキャパシティ上限を共有する設計、Phase 2設計
+  セクション5どおり）。Fujikura/Furukawa Electricは`'jp_networking'`、
+  Yaskawa Electricは`'jp_robotics'`という別セクターキーに分類
+- `config/reference/symbol_registry.yaml`にも同じ11銘柄（+ソフトバンクは
+  意図的に除外）を`asset_class`/`sector`/`benchmark_symbols`付きで登録。
+  既存の`DEFAULT_SYMBOLS`（実際の取引ユニバース）には含まれないため
+  **既存の発注フロー・ポジションサイジングには一切影響しない**ことを実データで確認
+  （`DEFAULT_SYMBOLS`との重複ゼロを検証済み）
+- YAML内のドット記法キー（`6857.T`等）が`yaml.safe_load()`・
+  `read_symbol_registry()`双方で正しくパースされることを確認
+
+### 7-F. `us_overnight_benchmark_return`特徴量 ✅ 実装完了
+
+- `src/stock_swing/feature_engine/us_overnight_benchmark_feature.py`（新規）:
+  既存`MacroRegimeFeature`と同型のglobal feature（`symbol=None`）として実装。
+  SOXX/SMH/NVDAの直近日次リターンを計算し、`primary_return_pct`
+  （SOXX、Phase 1でスピルオーバー相関最強と確認済み）を主指標として提供
+- 既存の`BaseFeature`/`FeatureResult`パターンに準拠。`paper_demo.py`や
+  戦略には**未配線**（Phase 3で`overnight_spillover_v1`戦略に接続する設計）
+- テスト: `tests/unit/test_us_overnight_benchmark_feature.py` 10件全PASS
+  （複数ベンチマーク計算・欠損データフォールバック・ゼロ除算防止・
+  非ベンチマーク銘柄の除外確認等）
+
+### 7-G. 回帰確認（全追加完了後）
+
+フルテストスイート実行: **2017 passed, 2 skipped**（既存の無関係スキップのみ、
+regressionなし。Phase 2着手前の1904件から113件増加）
 
 ## 8. 次のアクション
 
 - [x] `purchase_restricted_symbols`のEntryFilterEngine実装（2026-08-19完了）
 - [x] `JPXMarketCalendar`の実装（2026-08-19完了）
+- [x] 単元株丸め処理の実装（2026-08-19完了）
+- [x] US-JP横断セクター統合の実装（2026-08-19完了）
+- [x] `us_overnight_benchmark_return`特徴量の実装（2026-08-19完了）
 - [ ] ユーザーからの詳細購入禁止リスト受領後、`purchase_restricted_symbols`設定に反映
-- [ ] IBKR接続確立後、Phase 3（実配線・shadow運用開始）に着手
+- [ ] IBKR接続確立後、Phase 3（実配線）に着手。Phase 2.5のshadowログは既に稼働中
+      （`docs/jp_semiconductor_ai_expansion_plan.md`参照）
 
 *作成: 2026-08-19*

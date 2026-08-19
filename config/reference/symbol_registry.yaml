@@ -425,3 +425,92 @@ symbols:
     benchmark_symbols: [SPY]
     is_semiconductor_related: false
     description: "Visa Inc."
+
+  # ---------------------------------------------------------------------
+  # JP semiconductor/AI expansion (2026-08-19, Phase 2) — see
+  # docs/jp_semiconductor_ai_expansion_plan.md and
+  # docs/jp_semiconductor_ai_expansion_phase2_design.md.
+  #
+  # These symbols are NOT in DEFAULT_SYMBOLS (paper_demo.py's trading
+  # universe) and are NOT tradable today — IBKR connectivity (Track B,
+  # docs/broker_migration_ibkr_plan.md) is required before Phase 3 can wire
+  # them into any strategy or order-submission path. They are registered
+  # here now, ahead of that, purely so that shared registry-driven logic
+  # (sector classification, benchmark selection, asset_class lookup) will
+  # already have correct data the moment Phase 3 wiring begins, following
+  # the same registry-first pattern used for every US symbol above.
+  #
+  # sector: 'semis' for the core semiconductor-equipment/material makers
+  # (folds into the SAME sector cap as US semis, per Phase 2 design section
+  # 5), 'jp_networking' / 'jp_robotics' for the adjacent-but-not-core names.
+  6857.T:
+    asset_class: stock
+    sector: semis
+    benchmark_symbols: [SOXX, SMH, NVDA]
+    is_semiconductor_related: true
+    description: "Advantest Corporation (JP, test equipment)"
+  8035.T:
+    asset_class: stock
+    sector: semis
+    benchmark_symbols: [SOXX, SMH, NVDA]
+    is_semiconductor_related: true
+    description: "Tokyo Electron Limited (JP, semiconductor production equipment)"
+  6146.T:
+    asset_class: stock
+    sector: semis
+    benchmark_symbols: [SOXX, SMH, NVDA]
+    is_semiconductor_related: true
+    description: "Disco Corporation (JP, dicing/grinding equipment)"
+  6920.T:
+    asset_class: stock
+    sector: semis
+    benchmark_symbols: [SOXX, SMH, NVDA]
+    is_semiconductor_related: true
+    description: "Lasertec Corporation (JP, EUV mask inspection)"
+  7735.T:
+    asset_class: stock
+    sector: semis
+    benchmark_symbols: [SOXX, SMH, NVDA]
+    is_semiconductor_related: true
+    description: "SCREEN Holdings Co. (JP, wafer cleaning equipment)"
+  3436.T:
+    asset_class: stock
+    sector: semis
+    benchmark_symbols: [SOXX, SMH, NVDA]
+    is_semiconductor_related: true
+    description: "SUMCO Corporation (JP, silicon wafer material)"
+  4063.T:
+    asset_class: stock
+    sector: semis
+    benchmark_symbols: [SOXX, SMH, NVDA]
+    is_semiconductor_related: true
+    description: "Shin-Etsu Chemical Co. (JP, silicon wafer material)"
+  4062.T:
+    asset_class: stock
+    sector: semis
+    benchmark_symbols: [SOXX, SMH, NVDA]
+    is_semiconductor_related: true
+    description: "Ibiden Co. (JP, IC package substrates)"
+  5803.T:
+    asset_class: stock
+    sector: jp_networking
+    benchmark_symbols: [SOXX, SMH, NVDA]
+    is_semiconductor_related: false
+    description: "Fujikura Ltd. (JP, AI datacenter optical/copper cable)"
+  5801.T:
+    asset_class: stock
+    sector: jp_networking
+    benchmark_symbols: [SOXX, SMH, NVDA]
+    is_semiconductor_related: false
+    description: "Furukawa Electric Co. (JP, optical/copper cable)"
+  6506.T:
+    asset_class: stock
+    sector: jp_robotics
+    benchmark_symbols: [SOXX, SMH, NVDA]
+    is_semiconductor_related: false
+    description: "Yaskawa Electric Corporation (JP, robotics)"
+  # 9984.T (SoftBank Group): deliberately NOT registered here for the trading
+  # universe. It is on the purchase-restricted deny-list (insider,
+  # docs/jp_semiconductor_ai_expansion_plan.md section 1/6) and is only used
+  # for correlation research (scripts/analyze_jp_semiconductor_correlation.py),
+  # which fetches directly via yfinance and does not depend on this registry.
