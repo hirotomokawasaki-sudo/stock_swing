@@ -103,14 +103,55 @@ docs/broker_migration_ibkr_plan.md (Track B: IBKR接続確立)
 | Go/No-Go | Phase 1相関が実用に足る強さ（目安: 相関係数0.4以上、または
   スピルオーバー方向一致率60%以上）であればPhase 3へ進む |
 
+### Phase 2.5: Shadow検証（IBKR接続不要 — 2026-08-19訂正・着手）
+
+**重要な訂正（2026-08-19）**: 当初「shadow運用開始」をPhase 3（IBKR接続後）に
+含めていたが、これは誤り。既存の `sector_shock_hold` / `volatility_gate` と同型の
+shadowロギングパターンは**価格データのみで完結し、ブローカー接続を必要としない**
+（`would_block`/`classification`等をログに記録するだけで、発注は一切行わない）。
+日本株のオーバーナイト・スピルオーバーシグナルも同じ設計で、IBKR接続を待たずに
+今すぐshadow検証を開始できる。
+
+| 項目 | 内容 |
+|---|---|
+| 前提条件 | なし（Yahoo Financeでデータ取得可能なため、IBKR接続不要） |
+| 実装 | Phase 1の `analyze_jp_semiconductor_correlation.py` を発展させ、
+  日次で「前夜の米国ベンチマークが閾値を超えたら、翌朝どのJP銘柄が
+  買いシグナル対象になったか」を判定し `data/jp_overnight_spillover_shadow_log.jsonl`
+  に記録するシグナルロガーを実装（既存 `sector_shock_shadow_log.jsonl` と同型） |
+| 運用 | cronで日次実行（東証寄り付き後、9:00-9:30 JST目安）。発注は一切行わない |
+| 目的 | Phase 1の過去2年データ検証に加え、**forward-looking（今後の実際の値動き）
+  でシグナル精度を継続検証**する。実運用（Phase 3）着手前の追加エビデンス蓄積 |
+| Go/No-Go | shadow蓄積が一定数（目安30-50件）に達し、Phase 1の相関係数・
+  方向一致率が forward データでも維持されていることを確認してから
+  Phase 3（実配線）の判断材料とする |
+
+**実装状況（2026-08-19着手・完了）**:
+- `src/stock_swing/strategy_engine/overnight_spillover_shadow.py`（新規）:
+  `evaluate_overnight_spillover_signal()`（純粋関数、US大幅変動→JP銘柄別
+  signal_strength計算、Tier別重み付け）+ `log_shadow()`（既存
+  `sector_shock_hold`/`volatility_gate`と同型のJSONL追記パターン）
+- `scripts/log_jp_overnight_spillover_shadow.py`（新規）: 日次実行スクリプト。
+  Yahoo Finance経由でSOXX最新リターン＋各JP候補の実際の寄り付きギャップを
+  取得し、`data/jp_overnight_spillover_shadow_log.jsonl`に記録
+- テスト: `tests/unit/test_overnight_spillover_shadow.py` 12件全PASS
+- **cron登録済み**: `stock_swing_jp_overnight_spillover_shadow`
+  （毎日9:20 JST、JPX寄り付き後、平日のみ、発注なし・delivery=none）
+- **初回実行結果（2026-08-19）**: SOXX -4.96%（大幅下落）を検知、
+  Tier1-3全11銘柄がdown方向シグナル発火。実際のJP寄り付きギャップも
+  全銘柄マイナス（-1.75%〜-7.92%）で方向一致 — Phase 1の過去データ検証結果を
+  さっそく実運用データでも裏付ける形になった
+- 回帰確認: フルスイート **1995 passed, 2 skipped**（regressionなし）
+
 ### Phase 3: 実運用配線（IBKR接続確立後）
 
 | 項目 | 内容 |
 |---|---|
 | 前提条件 | `docs/broker_migration_ibkr_plan.md` Track B の IBKR Paper 昇格判定完了後 |
 | 実装 | 日本株用の `IBKRBrokerClient` アダプタ拡張（TSE取引時間・通貨・単元株対応） |
-| 運用開始 | 既存の「shadow → paper_ab → active」段階昇格パターンを踏襲。
-  日本株もまず shadow mode（発注せず記録のみ）から開始 |
+| 運用開始 | Phase 2.5のshadowログが十分蓄積・検証済みであることを前提に、
+  既存の「shadow → paper_ab → active」段階昇格パターンの**paper_ab以降**から開始
+  （shadow自体はPhase 2.5で既に実施済みのため、Phase 3は発注を伴う段階から） |
 | リスク管理 | US半導体銘柄（AMAT等）とJP半導体銘柄（Tokyo Electron等）の
   **クラスター集中管理を統合**する必要あり（下記セクション5参照） |
 
