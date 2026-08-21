@@ -1528,6 +1528,22 @@ finnhub_metric_lookup 11件 / volatility_gate 19件 / distance_from_high
 
 ### Plan D: ニュースセンチメント診断（shadow mode で稼働開始、2026-08-08）
 
+**2026-08-21 追記（データ品質修正）**: R9 08-21中間レビューでPlan Dのtrue判定
+件数が少ない問題を調べたところ、根本原因の一端として**Finnhubのcompany-news
+エンドポイント自体が銘柄名を含まない一般市場ニュースを大量に含んでいる**ことが
+判明（実データ検証: MSFT記事の91.8%が「Microsoft」を一切含まず、NVDA記事も
+45%が無関係）。例えば「Mark Cuban Fires Back At Jensen Huang's AI Warning」
+（NVIDIA CEOへの言及、MSFT無関係）が`warning`キーワードにヒットしMSFTの
+センチメントを歪めていた。`is_relevant_article()`を新規実装し、銘柄ティッカー
+または会社名（symbol_registry.yamlのdescription、企業サフィックス除去済み）が
+記事本文に含まれるかで関連度判定、キーワードスコアリング前に適用（デフォルト
+有効、`NEWS_SENTIMENT_RELEVANCE_FILTER_DISABLED`で無効化可能、後方互換）。
+実データでの効果: MSFT article_count 33件→3件（91%削減）、NVDA 98件→45件
+（54%削減）、TSLA 34件→4件（88%削減）。テスト+10件、フルスイート2027 passed
+/ 2 skipped（regressionなし）。shadow-onlyの位置づけ自体は変更なし。次回
+09-04レビューではこの修正後のデータで再評価する。
+
+
 - **背景**: R10（2026-08-07）で「既に契約・実装済みだが戦略に一切接続されて
   いないデータ」の筆頭として企業ニュースが挙がった。`stock_swing_news_
   collection` cron（4時間おき）が既に全銘柄の Finnhub company-news を
