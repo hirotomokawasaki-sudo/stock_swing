@@ -575,3 +575,88 @@ class TestYamlConfigCache:
         # through the real (cached) yaml read path.
         result = svc._get_buy_stop_list()
         assert isinstance(result, list)
+
+
+# ---------------------------------------------------------------------------
+# _news_ticker_aliases (2026-08-22): registry-driven alias derivation for
+# news relevance/other-ticker-mention checks in _link_news_to_decisions,
+# replacing the previous hardcoded 10-symbol dict.
+# ---------------------------------------------------------------------------
+
+class TestNewsTickerAliases:
+    def test_derives_alias_from_description(self, tmp_path):
+        _write_symbol_registry(tmp_path, {
+            "MSFT": {"asset_class": "stock", "description": "Microsoft Corporation"},
+        })
+        svc = _StubService(tmp_path)
+        aliases = svc._news_ticker_aliases()
+        assert aliases["MSFT"] == ["microsoft"]
+
+    def test_strips_parenthetical_annotation(self, tmp_path):
+        # Real registry entries for JP expansion symbols carry a
+        # parenthetical annotation, e.g. "Advantest Corporation (JP, test
+        # equipment)" -- this must not leak into the alias.
+        _write_symbol_registry(tmp_path, {
+            "6857.T": {
+                "asset_class": "stock",
+                "description": "Advantest Corporation (JP, test equipment)",
+            },
+        })
+        svc = _StubService(tmp_path)
+        aliases = svc._news_ticker_aliases()
+        assert aliases["6857.T"] == ["advantest"]
+
+    def test_covers_symbols_beyond_old_hardcoded_ten(self, tmp_path):
+        # Regression guard for the 2026-08-22 fix: LRCX was never in the
+        # old hardcoded ticker_aliases dict (only 10 symbols were), so an
+        # LRCX-mentioning article used to get zero other-ticker-mention
+        # penalty when scored against a different symbol's news feed.
+        _write_symbol_registry(tmp_path, {
+            "LRCX": {"asset_class": "stock", "description": "Lam Research Corporation"},
+        })
+        svc = _StubService(tmp_path)
+        aliases = svc._news_ticker_aliases()
+        assert aliases["LRCX"] == ["lam research"]
+
+    def test_missing_description_returns_empty_alias_list(self, tmp_path):
+        _write_symbol_registry(tmp_path, {"XYZ": {"asset_class": "stock"}})
+        svc = _StubService(tmp_path)
+        aliases = svc._news_ticker_aliases()
+        assert aliases["XYZ"] == []
+
+    def test_missing_registry_file_returns_empty_dict(self, tmp_path):
+        svc = _StubService(tmp_path)  # no registry file written
+        assert svc._news_ticker_aliases() == {}
+
+    def test_link_news_to_decisions_penalizes_other_ticker_mention_beyond_old_ten(self, tmp_path):
+        """End-to-end: an LRCX-focused article scored against MSFT should be
+        penalized via the other-ticker-mention path, which previously only
+        worked for the 10 hardcoded symbols."""
+        _write_symbol_registry(tmp_path, {
+            "MSFT": {"asset_class": "stock", "description": "Microsoft Corporation"},
+            "LRCX": {"asset_class": "stock", "description": "Lam Research Corporation"},
+        })
+        svc = _StubService(tmp_path)
+        news_items = [{
+            "symbol": "MSFT",
+            "headline": "Lam Research posts strong quarter",
+            "snippet": "",
+            "published_at": "2026-08-22T00:00:00+00:00",
+            "related": "MSFT",
+            "source_reliability": 0.6,
+            "influence_score": 0.0,
+        }]
+        decisions = [{
+            "symbol": "MSFT",
+            "published_at": "2026-08-22T00:00:00+00:00",
+            "rationale": [],
+            "decision_refs": ["dec_1"],
+            "strategy_refs": ["breakout_momentum_v1"],
+        }]
+        linked = svc._link_news_to_decisions(news_items, decisions)
+        assert len(linked) == 1
+        # The other-ticker penalty (0.35, headline mentions Lam Research in
+        # the first 120 chars) should keep this well below the 0.6 match
+        # threshold used in _link_news_to_decisions, so it should not be
+        # linked to the MSFT decision.
+        assert linked[0]["used_in_decision"] is False

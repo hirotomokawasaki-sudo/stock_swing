@@ -2805,13 +2805,55 @@ class DashboardService:
         capped.sort(key=lambda x: str(x.get('published_at') or ''), reverse=True)
         return capped[: max(limit * 2, 100)]
 
+    def _news_ticker_aliases(self) -> Dict[str, List[str]]:
+        """Return {SYMBOL: [company_name_lowercase]} for every symbol in
+        symbol_registry.yaml, for news-relevance/other-ticker-mention checks.
+
+        2026-08-22: previously a hardcoded 10-symbol dict (MRVL/CIEN/DELL/
+        RBRK/PLTR/AVGO/GOOGL/META/MSFT/AAPL only) covering roughly a quarter
+        of the actual ~44-symbol trading universe (see DEFAULT_SYMBOLS in
+        paper_demo.py) and none of the 80 registry entries (JP semiconductor
+        expansion symbols included). The other-ticker-mention penalty below
+        could only ever fire for those 10 hardcoded names, so an article
+        primarily about e.g. NVDA appearing in the ADBE feed would not be
+        penalized at all. Reuses the same registry `description` field (with
+        the same corporate-suffix stripping) as
+        stock_swing.risk.news_sentiment._company_name_aliases, kept as a
+        separate lightweight re-implementation here rather than importing
+        that private helper across the src/console boundary.
+        """
+        try:
+            reg_path = self.project_root / "config" / "reference" / "symbol_registry.yaml"
+            if not reg_path.exists():
+                return {}
+            reg = DashboardService._load_yaml_cached(reg_path)
+        except Exception:
+            return {}
+        suffixes = (
+            " Corporation", " Incorporated", " Holdings plc", " Holding N.V.",
+            " Holding Ltd", " Group N.V.", " Group", " plc", " N.V.", " Inc.",
+            " Inc", " Corp.", " Corp", " Ltd.", " Ltd", " Limited", " Co.",
+            " Company",
+        )
+        aliases: Dict[str, List[str]] = {}
+        for sym, info in (reg.get("symbols") or {}).items():
+            name = str(info.get("description") or "").strip()
+            # Strip parenthetical annotations first, e.g. "Advantest
+            # Corporation (JP, test equipment)" -> "Advantest Corporation"
+            # -- the annotation is registry-internal metadata, not part of
+            # the company name articles would actually mention.
+            name = re.sub(r"\s*\([^)]*\)\s*$", "", name).strip()
+            for suffix in suffixes:
+                if name.endswith(suffix):
+                    name = name[: -len(suffix)].strip()
+                    break
+            aliases[str(sym).upper()] = [name.lower()] if name else []
+        return aliases
+
     def _link_news_to_decisions(self, news_items: List[Dict[str, Any]], decision_items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         linked: List[Dict[str, Any]] = []
         general_market_terms = ['stock market today', 'market rebound', 'oil disruption', 'market stumbles', 'dow futures', 's&p 500', 'nasdaq']
-        ticker_aliases = {
-            'MRVL': ['marvell'], 'CIEN': ['ciena'], 'DELL': ['dell'], 'RBRK': ['rubrik'], 'PLTR': ['palantir'],
-            'AVGO': ['broadcom'], 'GOOGL': ['alphabet', 'google'], 'META': ['meta'], 'MSFT': ['microsoft'], 'AAPL': ['apple']
-        }
+        ticker_aliases = self._news_ticker_aliases()
         for item in news_items:
             symbol = str(item.get("symbol") or "UNKNOWN").upper()
             published = self._parse_iso_datetime(item.get("published_at"))
@@ -2819,7 +2861,7 @@ class DashboardService:
             is_general_market = any(term in article_text for term in general_market_terms)
             related_field = str(item.get('related') or '').upper()
             aliases = ticker_aliases.get(symbol, [])
-            contains_own_name = any(alias in article_text for alias in aliases)
+            contains_own_name = any(alias in article_text for alias in aliases if alias)
             related_matches = related_field == symbol if related_field else False
             own_mention_bonus = 0.2 if related_matches else 0.12 if contains_own_name else 0.0
             other_ticker_penalty = 0.0
@@ -2827,6 +2869,7 @@ class DashboardService:
             for ticker, names in ticker_aliases.items():
                 if ticker == symbol:
                     continue
+                names = [n for n in names if n]
                 if ticker.lower() in first_words or any(name in first_words for name in names):
                     other_ticker_penalty = max(other_ticker_penalty, 0.35)
                 elif ticker.lower() in article_text or any(name in article_text for name in names):
