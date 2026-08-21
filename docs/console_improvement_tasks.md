@@ -971,7 +971,9 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 2026-08-19（水）    ✅ R3-v2-Stop 中間レビュー: offset_pctベースtiered min_hold v2の
                          post-exit drift再分析（cron登録済み: stock_swing_r3v2_stop_tiered_minhold_review_20260819）
 
-2026-08-21（金）    🔲 R9 Plan B/C/D/E 中間レビュー・昇格判断（cron登録済み: stock_swing_r9_planbc_mid_review_20260821）
+2026-08-21（金）    ✅ R9 Plan B/C/D/E 中間レビュー・昇格判断（手動実施。当初「cron登録済み」
+                         と記載していたが実際にはジョブ未登録だったことが判明したため手動で
+                         実施し、次回分のcronを新規登録: stock_swing_r9_planbcde_mid_review_20260904）
                          ・ volatility_gate / distance_from_high / news_sentiment / rsi_diagnostic
                            各shadow logをレビューし、shadow継続 / paper_ab昇格 / 見送りを判断
 
@@ -1708,6 +1710,60 @@ Massive barsだ60/60成功、broker quotes/barsと44/44成功）。代わりに�
 クライアント例外耐性/欠損値/型エラー耐性、log_shadow JSONL書き込み）。
 フルテストスイート: 1520 passed → **1539 passed** / 2 skipped
 （既存の無関係な2件の失敗のみ、変更前から再現確認済み）。
+
+### 2026-08-21 中間レビュー（Plan B/C/D/E）
+
+`data/tracking/pnl_state.json` の **closed trade** を対象に、各shadow/diagnostic
+ログで **true 判定が出た同一銘柄について、直後15分以内に entry した実トレード**
+のみを紐づけて集計した。単なる「同銘柄が後日売買された」ケースは除外し、
+当該判定が実際のBUY判断に同伴していたケースだけを見る方針。
+
+- **Plan B（volatility_gate）**: 2026-08-07〜08-21 の
+  `data/volatility_gate_shadow_log.jsonl` は **971件中 would_block=true 41件
+  （4.2%）**。対象は **NBIS 25件 / SMCI 16件** のみ。だが、この2銘柄は
+  観測期間中に true 判定直後15分以内の closed trade が **0件** で、勝敗率の
+  判定に必要なサンプルがまだない。**推奨アクション: shadow継続**。
+  false positive（勝ちトレードを潰した）実例も、true positive（負けを防げた）
+  実例も未観測のため、**paper_ab昇格はまだ提案しない**。
+- **Plan C（distance_from_high）**: 2026-08-07〜08-21 の
+  `data/distance_from_high_log.jsonl` は **971件中 is_bounce_candidate=true
+  316件（32.5%）**、対象21銘柄。true 判定と紐づいた closed trade は
+  **8件**で、**3勝 / 5敗（負け比率62.5%）**、合計PnL **-355.90**。
+  負け比率は昇格目安（60%以上）を上回った一方、**サンプル8件で10件未満**の
+  ため統計的にはまだ弱い。**推奨アクション: observability継続
+  （paper_ab候補寄りだが保留）**。次回レビューで10件以上に達してなお
+  60%超の負け比率が続くなら、paper_ab昇格提案の妥当性が高い。
+- **Plan D（news_sentiment）**: 2026-08-08〜08-21 の
+  `data/news_sentiment_shadow_log.jsonl` は **904件中
+  negative_sentiment_buy=true 26件（2.9%）**、対象9銘柄。2026-08-15時点の
+  **448件中0件** からは改善し、**閾値 `NEWS_SENTIMENT_NEGATIVE_THRESHOLD=-0.34`
+  が厳しすぎて全く発火しない状態は脱した**。ただし、true 判定と紐づいた
+  closed trade は **CRDO 1件のみ（1敗、PnL -1682.56）**。**推奨アクション:
+  shadow継続**。現時点では trade outcome のサンプルが少なすぎるため、
+  **即時の閾値変更も paper_ab昇格も行わない**。
+- **Plan E（rsi_diagnostic）**: 2026-08-08〜08-21 の
+  `data/rsi_diagnostic_shadow_log.jsonl` は **904件中 is_overbought=true
+  77件（8.5%）**、対象7銘柄。true 判定と紐づいた closed trade は **4件**で、
+  **1勝 / 3敗（負け比率75.0%）**、合計PnL **+329.40**。負け比率だけ見れば
+  フィルタ候補だが、**サンプル4件でまだ少なすぎる**うえ、勝ちトレード
+  （SKYY +458.71）も含む。**推奨アクション: shadow継続**。閾値75.0を
+  いじる段階ではなく、まず件数蓄積を優先する。
+
+**08-21時点の総合判断**:
+
+- **Plan B**: closed trade 紐づけが 0件のため、昇格判断は保留。shadow継続。
+- **Plan C**: 最も有望。負け比率 62.5% だがサンプル不足のため、今回は昇格提案
+  ではなく **次回レビュー最優先候補**。
+- **Plan D**: 0件問題は解消。ただし trade outcome サンプル不足。shadow継続。
+- **Plan E**: 負け比率は高いがサンプル不足。shadow継続。
+
+**ユーザー向け推奨アクション（承認待ち前提）**:
+
+- 今回は **Plan B/C/D/E いずれも active / paper_ab へ自動昇格しない**。
+- 次回レビュー時に、**Plan C が first candidate**、**Plan E が second
+  candidate** として再評価する。
+- 昇格（`paper_ab` / `active`）を行う場合は、従来方針どおり **必ずユーザー承認を
+  取得してから** 実施する。
 
 **新規契約が必要な候補（ユーザー判断待ち）**:
 - オプションフロー / Put-Call比率
