@@ -212,6 +212,7 @@
 
       <section class="full">
         <h2>Open Positions</h2>
+        <div id="marketStatus"></div>
         <div id="positions"></div>
       </section>
 
@@ -450,8 +451,29 @@
       ].join("") + (badJobs.length ? badJobs.slice(0, 5).map(j => `<div class="alert-row"><span>${j.name}</span><span class="neg">${j.status}</span></div>`).join("") : "");
     }
 
+    function renderMarketStatus(marketStatus) {
+      const el = $("marketStatus");
+      if (!marketStatus || !el) { if (el) el.innerHTML = ""; return; }
+      const badges = {
+        regular: { icon: "\u{1F7E2}", label: "MARKET OPEN" },
+        pre_market: { icon: "\u{1F305}", label: "PRE-MARKET" },
+        after_hours: { icon: "\u{1F319}", label: "AFTER-HOURS" },
+        closed: { icon: "\u23F8", label: "MARKET CLOSED" },
+      };
+      const badge = badges[marketStatus.status] || { icon: "\u2753", label: marketStatus.status || "UNKNOWN" };
+      let html = `<div class="reason-meta">${badge.icon} ${badge.label}</div>`;
+      if (marketStatus.status !== "regular" && marketStatus.has_lastday_basis) {
+        const lastday = marketStatus.unrealized_pnl_lastday_total;
+        const live = marketStatus.unrealized_pnl_live_total;
+        html += `<div class="list-row"><div class="stack"><span class="reason-meta">Regular-session basis (last close)</span></div><div class="${clsNum(lastday)}">${fmtMoney(lastday)}</div></div>`;
+        html += `<div class="list-row"><div class="stack"><span class="reason-meta">Live / after-hours basis (current)</span></div><div class="${clsNum(live)}">${fmtMoney(live)}</div></div>`;
+      }
+      el.innerHTML = html;
+    }
+
     function renderPositions(payload) {
       const rows = payload.positions || [];
+      renderMarketStatus(payload.market_status);
       $("positions").innerHTML = rows.length ? rows.slice(0, 30).map(p => `
         <div class="list-row">
           <div class="stack">

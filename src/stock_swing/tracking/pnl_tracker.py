@@ -985,6 +985,10 @@ class PnLTracker:
                 "market_value": None,
                 "unrealized_plpc": None,
                 "unrealized_pnl": None,
+                # regular-session (last close) basis, for after-hours/pre-market
+                # noise comparison in the console (see console_renderer)
+                "lastday_price": None,
+                "unrealized_pnl_lastday": None,
             }
 
             # join broker data when available
@@ -996,6 +1000,16 @@ class PnLTracker:
                 row["unrealized_plpc"] = float(raw_plpc) if raw_plpc is not None else None
                 raw_pl = bp.get("unrealized_pl") or bp.get("unrealized_pnl")
                 row["unrealized_pnl"] = float(raw_pl) if raw_pl is not None else None
+
+                raw_lastday = bp.get("lastday_price")
+                if raw_lastday is not None:
+                    try:
+                        lastday_price = float(raw_lastday)
+                    except (TypeError, ValueError):
+                        lastday_price = None
+                    if lastday_price:
+                        row["lastday_price"] = lastday_price
+                        row["unrealized_pnl_lastday"] = (lastday_price - avg_entry) * total_qty
 
             rows.append(row)
 

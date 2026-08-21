@@ -14,6 +14,7 @@ from console.adapters.cron_adapter import CronAdapter
 from console.adapters.data_adapter import DataAdapter
 from console.adapters.system_adapter import SystemAdapter
 from console.utils.time_utils import now_iso
+from stock_swing.utils.market_calendar import MarketCalendar
 
 # P&L tracker
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
@@ -497,6 +498,7 @@ class DashboardService:
             # stale broker raw files which may be months old.
             broker_pos_list = self._get_broker_positions()
             current_prices: Dict[str, float] = {}
+            lastday_prices: Dict[str, float] = {}
             for bp in broker_pos_list:
                 sym = str(bp.get("symbol") or "").upper()
                 cp = bp.get("current_price")
@@ -505,12 +507,20 @@ class DashboardService:
                         current_prices[sym] = float(cp)
                     except (TypeError, ValueError):
                         pass
+                lp = bp.get("lastday_price")
+                if sym and lp is not None:
+                    try:
+                        lastday_prices[sym] = float(lp)
+                    except (TypeError, ValueError):
+                        pass
             # Fallback to raw files for any symbols not in broker positions
             missing = [p.get("symbol") for p in open_positions if str(p.get("symbol") or "").upper() not in current_prices]
             if missing:
                 fallback = self._fetch_current_prices(missing)
                 current_prices.update(fallback)
-            # Enrich open_positions with current_price, return_pct
+            # Enrich open_positions with current_price, return_pct, and the
+            # regular-session (last close) basis for after-hours/pre-market
+            # noise comparison (see console_renderer._portfolio / mobile UI).
             for p in open_positions:
                 sym = str(p.get("symbol") or "").upper()
                 cp = current_prices.get(sym)
@@ -521,6 +531,11 @@ class DashboardService:
                     if entry > 0:
                         p["return_pct"] = round((cp - entry) / entry, 4)
                         p["unrealized_pnl"] = round((cp - entry) * qty, 2)
+                    lp = lastday_prices.get(sym)
+                    if lp is not None:
+                        p["lastday_price"] = lp
+                        if entry > 0:
+                            p["unrealized_pnl_lastday"] = round((lp - entry) * qty, 2)
             summary = self._tracker.get_summary()
             position_snapshot = self.get_positions()
             if position_snapshot.get("available"):
@@ -568,9 +583,37 @@ class DashboardService:
                 "open_positions": open_positions,
                 "current_prices": current_prices,
                 "daily_pnl_stats": daily_pnl_stats,
+                "market_status": self._get_market_status_detail(open_positions),
             }
         except Exception as e:
             return {"available": False, "error": str(e)}
+
+    def _get_market_status_detail(self, positions: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Market-hours status + dual-basis (live vs. last regular close)
+        unrealized PnL total, so after-hours/pre-market noise in
+        current_price doesn't get mistaken for a real move.
+        """
+        is_open, status_msg = MarketCalendar.is_market_open()
+        if "Regular hours" in status_msg:
+            market_status = "regular"
+        elif "Pre-market" in status_msg:
+            market_status = "pre_market"
+        elif is_open:
+            market_status = "after_hours"
+        else:
+            market_status = "closed"
+
+        lastday_values = [p.get("unrealized_pnl_lastday") for p in positions if p.get("unrealized_pnl_lastday") is not None]
+        detail: Dict[str, Any] = {
+            "status": market_status,
+            "status_message": status_msg,
+            "has_lastday_basis": bool(lastday_values),
+        }
+        if market_status != "regular" and lastday_values:
+            live_values = [p.get("unrealized_pnl") for p in positions if p.get("unrealized_pnl") is not None]
+            detail["unrealized_pnl_lastday_total"] = round(sum(lastday_values), 2)
+            detail["unrealized_pnl_live_total"] = round(sum(live_values), 2)
+        return detail
 
     def get_positions(self, trading: Dict[str, Any] | None = None) -> Dict[str, Any]:
         """Get open positions from broker (fallback to PnL tracker if unavailable)."""
@@ -595,6 +638,12 @@ class DashboardService:
                         "total_pnl": round(total_pnl, 2),
                         "total_pnl_pct": round((total_pnl / total_cost_basis), 4) if total_cost_basis > 0 else None,
                     })
+
+                    # Market-hours status + dual-basis (live vs. last regular
+                    # close) unrealized PnL, so after-hours/pre-market noise
+                    # in current_price doesn't get mistaken for a real move.
+                    market_status_detail = self._get_market_status_detail(enriched_positions)
+
                     return {
                         "available": True,
                         "time": now_iso(),
@@ -602,6 +651,7 @@ class DashboardService:
                         "count": len(enriched_positions),
                         "summary": summary,
                         "source": "broker",
+                        "market_status": market_status_detail,
                     }
             except Exception as e:
                 # Fall through to tracker
@@ -2091,6 +2141,20 @@ class DashboardService:
 
         entry_signal_strength = self._get_entry_signal_strength_for_symbol(symbol)
 
+        # Regular-session (last close) basis, for after-hours/pre-market noise
+        # comparison in the console. broker_pos['lastday_price'] is Alpaca's
+        # prior regular-session close (unaffected by after-hours quotes).
+        lastday_price = None
+        unrealized_pnl_lastday = None
+        raw_lastday = broker_pos.get('lastday_price')
+        if raw_lastday is not None:
+            try:
+                lastday_price = float(raw_lastday)
+            except (TypeError, ValueError):
+                lastday_price = None
+            if lastday_price and avg_entry > 0:
+                unrealized_pnl_lastday = (lastday_price - avg_entry) * qty
+
         return {
             'symbol': symbol,
             'qty': qty,
@@ -2100,6 +2164,8 @@ class DashboardService:
             'market_value': market_value,
             'unrealized_pnl': unrealized_pl,
             'unrealized_pnl_pct': unrealized_plpc,
+            'lastday_price': lastday_price,
+            'unrealized_pnl_lastday': unrealized_pnl_lastday,
             'holding_days': holding_days,
             'entry_time': entry_time,
             'strategy_id': strategy_id,

@@ -1123,6 +1123,41 @@ class Console {
         </tbody></table></div>`;
     }
 
+    renderMarketStatusCard(marketStatus) {
+        if (!marketStatus) return '';
+        const badges = {
+            regular: { icon: '\u{1F7E2}', label: 'MARKET OPEN' },
+            pre_market: { icon: '\u{1F305}', label: 'PRE-MARKET' },
+            after_hours: { icon: '\u{1F319}', label: 'AFTER-HOURS' },
+            closed: { icon: '\u23F8', label: 'MARKET CLOSED' },
+        };
+        const badge = badges[marketStatus.status] || { icon: '\u2753', label: marketStatus.status || 'UNKNOWN' };
+
+        if (marketStatus.status === 'regular' || !marketStatus.has_lastday_basis) {
+            return `
+            <div class="card" style="margin-bottom:16px">
+                <h3>${badge.icon} ${badge.label}</h3>
+            </div>`;
+        }
+
+        const lastday = marketStatus.unrealized_pnl_lastday_total || 0;
+        const live = marketStatus.unrealized_pnl_live_total || 0;
+        return `
+        <div class="card" style="margin-bottom:16px">
+            <h3>${badge.icon} ${badge.label} — 取引時間外の気配値は前日終値と乖離することがあります</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="metric">
+                    <span class="label">前日終値ベース評価損益</span>
+                    <span class="value ${lastday >= 0 ? 'success' : 'danger'}" style="font-weight:700">${fmt.usdSigned(lastday)}</span>
+                </div>
+                <div class="metric">
+                    <span class="label">現在値（時間外含む）ベース評価損益</span>
+                    <span class="value ${live >= 0 ? 'success' : 'danger'}" style="font-weight:700">${fmt.usdSigned(live)}</span>
+                </div>
+            </div>
+        </div>`;
+    }
+
     renderPositions() {
         const positions = this.data.positions || {};
         const posArr = positions.positions || positions.by_symbol || [];
@@ -1140,6 +1175,8 @@ class Console {
 
         // ポジションを評価額でソート
         const sortedPositions = [...posArr].sort((a, b) => (b.market_value || 0) - (a.market_value || 0));
+
+        const marketStatusHtml = this.renderMarketStatusCard(positions.market_status);
 
         const breakdownHtml = (etfPos.length > 0 || stkPos.length > 0) ? `
         <div class="card" style="margin-bottom:16px">
@@ -1164,6 +1201,7 @@ class Console {
         </div>` : '';
 
         return `
+        ${marketStatusHtml}
         ${breakdownHtml}
         <div class="grid">
             <div class="card performance-card ${summary.unrealized_pnl >= 0 ? 'success-border' : 'danger-border'}">

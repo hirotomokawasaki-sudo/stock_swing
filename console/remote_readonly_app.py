@@ -196,6 +196,10 @@ def _slim_position(row: dict) -> dict:
         "current_price": current_price,
         "peak_price": row.get("peak_price"),
         "unrealized_pnl": unrealized_pnl,
+        # Regular-session (last close) basis, for spotting after-hours/
+        # pre-market noise in current_price/unrealized_pnl above.
+        "lastday_price": row.get("lastday_price"),
+        "unrealized_pnl_lastday": row.get("unrealized_pnl_lastday"),
         "return_pct": return_pct,
         "hold_days": row.get("hold_days") if row.get("hold_days") is not None else _hold_days(row.get("entry_time") or row.get("created_at")),
         "entry_signal_strength": row.get("entry_signal_strength"),
@@ -221,6 +225,7 @@ def load_positions(limit: int = 100) -> dict:
                 "source": "DashboardService.get_trading",
                 "count": len(positions),
                 "positions": positions,
+                "market_status": trading.get("market_status"),
                 "warnings": warnings,
                 "_remote_meta": meta,
             }

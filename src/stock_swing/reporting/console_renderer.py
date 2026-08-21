@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from stock_swing.utils.market_calendar import MarketCalendar
+
 if TYPE_CHECKING:
     from stock_swing.reporting.console_summary import ConsoleSummary
 
@@ -289,8 +291,37 @@ class ConsoleRenderer:
         # --- open position signal table ---
         position_details = p.get("open_position_details", [])
         if position_details:
+            is_open, status_msg = MarketCalendar.is_market_open()
+            is_regular = "Regular hours" in status_msg
+
             lines.append("")
-            lines.append("  OPEN POSITIONS")
+            if is_regular:
+                lines.append("  OPEN POSITIONS  [\U0001F7E2 MARKET OPEN]")
+            elif is_open:
+                badge = "\U0001F305 PRE-MARKET" if "Pre-market" in status_msg else "\U0001F319 AFTER-HOURS"
+                lines.append(f"  OPEN POSITIONS  [{badge} \u2014 quotes may not reflect next regular-session open]")
+            else:
+                lines.append("  OPEN POSITIONS  [\u23F8 MARKET CLOSED \u2014 quotes are stale/after-hours]")
+
+            # Dual-basis unrealized PnL summary: live/after-hours current_price
+            # vs. regular-session last close (lastday_price). Large divergence
+            # between the two suggests the live quote is after-hours noise.
+            if not is_regular:
+                live_total = sum(
+                    pos.get("unrealized_pnl") or 0.0
+                    for pos in position_details
+                    if pos.get("unrealized_pnl") is not None
+                )
+                lastday_total = sum(
+                    pos.get("unrealized_pnl_lastday") or 0.0
+                    for pos in position_details
+                    if pos.get("unrealized_pnl_lastday") is not None
+                )
+                have_lastday = any(pos.get("unrealized_pnl_lastday") is not None for pos in position_details)
+                if have_lastday:
+                    lines.append(f"  Regular-session basis (lastday_price): total unrealized PnL \u2248 ${lastday_total:+,.0f}")
+                    lines.append(f"  Live/after-hours basis (current_price): total unrealized PnL \u2248 ${live_total:+,.0f}")
+
             lines.append(f"  {'sym':<6} {'qty':>4}  {'entry':>8}  {'curr':>8}  {'ret%':>6}  {'ess':>5}  ac")
             lines.append(f"  {'-'*6} {'-'*4}  {'-'*8}  {'-'*8}  {'-'*6}  {'-'*5}  --")
             for pos in position_details:
