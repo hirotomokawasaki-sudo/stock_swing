@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 from stock_swing.risk.news_sentiment import (
     NewsSentimentConfig,
     classify_news_sentiment,
+    is_relevant_article,
     load_latest_finnhub_news,
     log_observation,
 )
@@ -27,13 +28,21 @@ def _article(headline: str, summary: str = "", days_ago: float = 0.5) -> dict:
 
 # ── classify_news_sentiment: negative incident profile ───────────────────── #
 
+# NOTE: these fixtures use generic "Company ..." headlines (no ticker/company
+# name literally present), predating the 2026-08-21 relevance filter (see
+# below). They test the keyword-scoring logic in isolation, so they pass
+# relevance_filter_enabled=False explicitly rather than relying on synthetic
+# headlines that happen to mention the symbol.
+_NO_RELEVANCE_FILTER = NewsSentimentConfig(relevance_filter_enabled=False)
+
+
 def test_negative_news_flagged_as_negative_sentiment_buy():
     items = [
         _article("Company faces SEC fraud investigation"),
         _article("Analysts downgrade stock after profit warning"),
         _article("Company announces layoffs amid weak demand"),
     ]
-    result = classify_news_sentiment("NBIS", items, now=NOW)
+    result = classify_news_sentiment("NBIS", items, config=_NO_RELEVANCE_FILTER, now=NOW)
     assert result.is_negative_sentiment_buy is True
     assert result.net_score is not None
     assert result.net_score < 0
@@ -45,7 +54,7 @@ def test_positive_news_not_flagged():
         _article("Company beats estimates and raises guidance"),
         _article("Stock upgraded after strong demand reported"),
     ]
-    result = classify_news_sentiment("AAA", items, now=NOW)
+    result = classify_news_sentiment("AAA", items, config=_NO_RELEVANCE_FILTER, now=NOW)
     assert result.is_negative_sentiment_buy is False
     assert result.net_score is not None
     assert result.net_score > 0
@@ -56,7 +65,7 @@ def test_mixed_neutral_news_not_flagged():
         _article("Company beats estimates"),
         _article("Company faces lawsuit over patent dispute"),
     ]
-    result = classify_news_sentiment("BBB", items, now=NOW)
+    result = classify_news_sentiment("BBB", items, config=_NO_RELEVANCE_FILTER, now=NOW)
     assert result.is_negative_sentiment_buy is False
 
 
@@ -65,7 +74,7 @@ def test_no_keyword_hits_returns_insufficient_signal():
         _article("Company announces quarterly product update"),
         _article("CEO speaks at industry conference"),
     ]
-    result = classify_news_sentiment("CCC", items, now=NOW)
+    result = classify_news_sentiment("CCC", items, config=_NO_RELEVANCE_FILTER, now=NOW)
     assert result.is_negative_sentiment_buy is False
     assert "insufficient_signal" in result.reason
 
@@ -89,7 +98,7 @@ def test_recent_articles_within_window_counted():
         _article("Company faces fraud investigation", days_ago=1),
         _article("Analyst downgrade on weak demand", days_ago=2),
     ]
-    cfg = NewsSentimentConfig(max_article_age_days=3)
+    cfg = NewsSentimentConfig(max_article_age_days=3, relevance_filter_enabled=False)
     result = classify_news_sentiment("EEE", items, config=cfg, now=NOW)
     assert result.article_count == 2
     assert result.is_negative_sentiment_buy is True
@@ -110,7 +119,7 @@ def test_at_min_articles_threshold_can_flag():
         _article("Company under fraud investigation"),
         _article("Company issues profit warning"),
     ]
-    cfg = NewsSentimentConfig(min_articles_for_signal=2)
+    cfg = NewsSentimentConfig(min_articles_for_signal=2, relevance_filter_enabled=False)
     result = classify_news_sentiment("GGG", items, config=cfg, now=NOW)
     assert result.article_count == 2
     assert result.is_negative_sentiment_buy is True
@@ -125,7 +134,9 @@ def test_boundary_exactly_at_threshold_flags():
         _article("Company beats estimates"),
         _article("Company faces fraud investigation and lawsuit and probe"),
     ]
-    cfg = NewsSentimentConfig(negative_score_threshold=-0.6, min_articles_for_signal=1)
+    cfg = NewsSentimentConfig(
+        negative_score_threshold=-0.6, min_articles_for_signal=1, relevance_filter_enabled=False
+    )
     result = classify_news_sentiment("HHH", items, config=cfg, now=NOW)
     assert result.net_score == -0.6
     assert result.is_negative_sentiment_buy is True  # inclusive boundary (<=)
@@ -163,7 +174,7 @@ def test_malformed_article_items_skipped_gracefully():
         _article("Company faces fraud investigation"),
         _article("Company issues profit warning"),
     ]
-    result = classify_news_sentiment("JJJ", items, now=NOW)
+    result = classify_news_sentiment("JJJ", items, config=_NO_RELEVANCE_FILTER, now=NOW)
     assert result.article_count == 3  # malformed str skipped, 2 dicts counted (age None treated as recent)
     assert result.is_negative_sentiment_buy is True
 
@@ -184,11 +195,13 @@ def test_config_from_env_defaults(monkeypatch):
     monkeypatch.delenv("NEWS_SENTIMENT_NEGATIVE_THRESHOLD", raising=False)
     monkeypatch.delenv("NEWS_SENTIMENT_MIN_ARTICLES", raising=False)
     monkeypatch.delenv("NEWS_SENTIMENT_DISABLED", raising=False)
+    monkeypatch.delenv("NEWS_SENTIMENT_RELEVANCE_FILTER_DISABLED", raising=False)
     cfg = NewsSentimentConfig.from_env()
     assert cfg.max_article_age_days == 3
     assert cfg.negative_score_threshold == -0.34
     assert cfg.min_articles_for_signal == 2
     assert cfg.disabled is False
+    assert cfg.relevance_filter_enabled is True
 
 
 def test_config_from_env_overrides(monkeypatch):
@@ -196,11 +209,106 @@ def test_config_from_env_overrides(monkeypatch):
     monkeypatch.setenv("NEWS_SENTIMENT_NEGATIVE_THRESHOLD", "-0.5")
     monkeypatch.setenv("NEWS_SENTIMENT_MIN_ARTICLES", "3")
     monkeypatch.setenv("NEWS_SENTIMENT_DISABLED", "true")
+    monkeypatch.setenv("NEWS_SENTIMENT_RELEVANCE_FILTER_DISABLED", "true")
     cfg = NewsSentimentConfig.from_env()
     assert cfg.max_article_age_days == 5
     assert cfg.negative_score_threshold == -0.5
     assert cfg.min_articles_for_signal == 3
     assert cfg.disabled is True
+    assert cfg.relevance_filter_enabled is False
+
+
+# ── Relevance filter (2026-08-21, R9 mid-review follow-up) ───────────────── #
+
+
+def test_is_relevant_article_matches_ticker():
+    assert is_relevant_article("msft stock rallies on earnings", "MSFT") is True
+
+
+def test_is_relevant_article_matches_company_name():
+    assert is_relevant_article(
+        "microsoft corporation announces new product", "MSFT", "Microsoft Corporation"
+    ) is True
+
+
+def test_is_relevant_article_rejects_unrelated_market_chatter():
+    text = "which dow jones stocks are moving on thursday?"
+    assert is_relevant_article(text, "MSFT", "Microsoft Corporation") is False
+
+
+def test_is_relevant_article_rejects_other_company_mentioned_alongside():
+    # Real-world case found in the MSFT feed: an article about NVIDIA's CEO
+    # commenting on AI, with no mention of Microsoft at all.
+    text = "mark cuban fires back at jensen huang's ai warning"
+    assert is_relevant_article(text, "MSFT", "Microsoft Corporation") is False
+
+
+def test_is_relevant_article_empty_text_not_relevant():
+    assert is_relevant_article("", "MSFT", "Microsoft Corporation") is False
+
+
+def test_is_relevant_article_strips_corporate_suffix():
+    # "NVIDIA Corporation" -> alias "nvidia" should match plain "Nvidia"
+    assert is_relevant_article("nvidia unveils new chip", "NVDA", "NVIDIA Corporation") is True
+
+
+def test_classify_news_sentiment_filters_irrelevant_articles_by_default():
+    # 2 relevant negative articles + 3 irrelevant articles that would
+    # otherwise flip the net_score positive if scored.
+    items = [
+        _article("Microsoft faces fraud investigation"),
+        _article("Microsoft issues profit warning"),
+        _article("Which dow jones stocks are moving on Thursday?"),
+        _article("Company beats estimates and raises guidance"),  # unrelated ticker chatter
+        _article("Stock upgraded after strong demand reported"),  # unrelated ticker chatter
+    ]
+    result = classify_news_sentiment(
+        "MSFT", items, now=NOW, company_name="Microsoft Corporation"
+    )
+    assert result.article_count == 2
+    assert result.filtered_irrelevant_count == 3
+    assert result.is_negative_sentiment_buy is True
+
+
+def test_classify_news_sentiment_relevance_filter_can_be_disabled():
+    items = [
+        _article("Microsoft faces fraud investigation"),
+        _article("Microsoft issues profit warning"),
+        _article("Company beats estimates and raises guidance"),
+        _article("Stock upgraded after strong demand reported"),
+    ]
+    cfg = NewsSentimentConfig(relevance_filter_enabled=False)
+    result = classify_news_sentiment(
+        "MSFT", items, config=cfg, now=NOW, company_name="Microsoft Corporation"
+    )
+    assert result.article_count == 4
+    assert result.filtered_irrelevant_count == 0
+    # unrelated positive keyword hits now count too, flipping the net score
+    assert result.is_negative_sentiment_buy is False
+
+
+def test_classify_news_sentiment_without_company_name_falls_back_to_ticker():
+    items = [
+        _article("MSFT faces fraud investigation"),
+        _article("MSFT issues profit warning"),
+    ]
+    result = classify_news_sentiment("MSFT", items, now=NOW)
+    assert result.article_count == 2
+    assert result.is_negative_sentiment_buy is True
+
+
+def test_classify_news_sentiment_insufficient_signal_reports_filtered_count():
+    items = [
+        _article("Which dow jones stocks are moving on Thursday?"),
+        _article("Best ETFs to watch this week"),
+    ]
+    result = classify_news_sentiment(
+        "MSFT", items, now=NOW, company_name="Microsoft Corporation"
+    )
+    assert result.article_count == 0
+    assert result.filtered_irrelevant_count == 2
+    assert "insufficient_signal" in result.reason
+    assert "filtered as irrelevant" in result.reason
 
 
 # ── log_observation: never raises, writes JSONL always ────────────────────── #
@@ -211,7 +319,7 @@ def test_log_observation_writes_jsonl_for_candidate(tmp_path):
         _article("Company faces fraud investigation"),
         _article("Company issues profit warning"),
     ]
-    result = classify_news_sentiment("NBIS", items, now=NOW)
+    result = classify_news_sentiment("NBIS", items, config=_NO_RELEVANCE_FILTER, now=NOW)
     log_observation(result, log_path=log_path)
 
     assert log_path.exists()
@@ -227,7 +335,7 @@ def test_log_observation_without_path_does_not_raise():
         _article("Company faces fraud investigation"),
         _article("Company issues profit warning"),
     ]
-    result = classify_news_sentiment("NBIS", items, now=NOW)
+    result = classify_news_sentiment("NBIS", items, config=_NO_RELEVANCE_FILTER, now=NOW)
     log_observation(result, log_path=None)  # must not raise
 
 
@@ -239,7 +347,7 @@ def test_log_observation_still_writes_non_candidates_to_file(tmp_path):
         _article("Company beats estimates and raises guidance"),
         _article("Company upgraded on strong demand"),
     ]
-    result = classify_news_sentiment("AAA", items, now=NOW)
+    result = classify_news_sentiment("AAA", items, config=_NO_RELEVANCE_FILTER, now=NOW)
     assert result.is_negative_sentiment_buy is False
     log_observation(result, log_path=log_path)
     assert log_path.exists()

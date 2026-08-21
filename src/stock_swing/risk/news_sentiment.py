@@ -122,6 +122,23 @@ DEFAULT_MAX_ARTICLE_AGE_DAYS = 3
 DEFAULT_NEGATIVE_SCORE_THRESHOLD = -0.34  # net_negative / total <= this
 DEFAULT_MIN_ARTICLES_FOR_SIGNAL = 2
 
+# 2026-08-21: relevance filter (R9 08-21 mid-review follow-up).
+#
+# Finnhub's `company-news` endpoint, despite the name, returns a broad feed
+# that mixes genuinely symbol-specific articles with generic market-wide
+# roundups ("Which Dow Jones stocks are moving Thursday?") and articles
+# about *other* companies that happen to be trending alongside the queried
+# symbol (e.g. an NVDA CEO quote showing up in the MSFT feed). Auditing
+# data/raw/finnhub/finnhub_msft_news_*.json found only ~8% of "MSFT" articles
+# actually mentioned Microsoft or "MSFT" by name -- the rest were unrelated
+# market chatter being scored as if they were MSFT-specific sentiment. This
+# was silently inflating/deflating net_score with keyword hits from articles
+# that have nothing to do with the symbol being evaluated. Requiring the
+# symbol ticker or company name (from symbol_registry.yaml's `description`
+# field) to appear in the headline/summary filters out most of that noise
+# before keyword scoring runs.
+DEFAULT_RELEVANCE_FILTER_ENABLED = True
+
 
 @dataclass
 class NewsSentimentConfig:
@@ -136,12 +153,21 @@ class NewsSentimentConfig:
         NEWS_SENTIMENT_MIN_ARTICLES          minimum matched articles
                                               before flagging (default 2)
         NEWS_SENTIMENT_DISABLED              set "true" to skip evaluation
+        NEWS_SENTIMENT_RELEVANCE_FILTER_DISABLED
+                                              set "true" to score every
+                                              fetched article regardless of
+                                              whether it mentions the symbol
+                                              or company name (default: filter
+                                              is ON -- see
+                                              DEFAULT_RELEVANCE_FILTER_ENABLED
+                                              docstring above)
     """
 
     max_article_age_days: int = DEFAULT_MAX_ARTICLE_AGE_DAYS
     negative_score_threshold: float = DEFAULT_NEGATIVE_SCORE_THRESHOLD
     min_articles_for_signal: int = DEFAULT_MIN_ARTICLES_FOR_SIGNAL
     disabled: bool = False
+    relevance_filter_enabled: bool = DEFAULT_RELEVANCE_FILTER_ENABLED
 
     @classmethod
     def from_env(cls) -> "NewsSentimentConfig":
@@ -165,6 +191,12 @@ class NewsSentimentConfig:
             ),
             disabled=os.environ.get("NEWS_SENTIMENT_DISABLED", "").lower()
             in ("1", "true", "yes"),
+            relevance_filter_enabled=not (
+                os.environ.get(
+                    "NEWS_SENTIMENT_RELEVANCE_FILTER_DISABLED", ""
+                ).lower()
+                in ("1", "true", "yes")
+            ),
         )
 
 
@@ -175,8 +207,9 @@ class NewsSentimentResult:
     net_score: float | None  # (pos_hits - neg_hits) / (pos_hits + neg_hits), None if no data
     positive_hits: int
     negative_hits: int
-    article_count: int
+    article_count: int  # relevant articles counted after the relevance filter
     reason: str
+    filtered_irrelevant_count: int = 0  # articles dropped by the relevance filter
     evaluated_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
@@ -187,6 +220,66 @@ def _score_article_text(text: str) -> tuple[int, int]:
     pos = sum(1 for term in POSITIVE_TERMS if term in text)
     neg = sum(1 for term in NEGATIVE_TERMS if term in text)
     return pos, neg
+
+
+def _company_name_aliases(symbol: str, company_name: str | None) -> list[str]:
+    """Derive lowercase substring aliases to match against article text.
+
+    Args:
+        symbol: Ticker symbol, e.g. "MSFT".
+        company_name: Registry `description` field, e.g.
+            "Microsoft Corporation". Common corporate suffixes (Inc./Corp./
+            Corporation/Holdings/Group/plc/N.V./Ltd/Co./Company) are stripped
+            so "Microsoft Corporation" -> alias "microsoft" (a plain
+            substring match against "Microsoft" in article text still hits).
+            Multi-word names are kept whole (not split into separate words)
+            to avoid over-matching on common words (e.g. splitting "Palo
+            Alto Networks" into "palo"/"alto"/"networks" would match
+            unrelated "Networks" articles).
+
+    Returns:
+        Lowercase alias strings (ticker always included; deduplicated).
+        Never empty (falls back to just the ticker if company_name is
+        missing/blank).
+    """
+    aliases = {symbol.strip().lower()} if symbol and symbol.strip() else set()
+    if company_name:
+        name = company_name.strip()
+        for suffix in (
+            " Corporation", " Incorporated", " Holdings plc", " Holding N.V.",
+            " Holding Ltd", " Group N.V.", " Group", " plc", " N.V.", " Inc.",
+            " Inc", " Corp.", " Corp", " Ltd.", " Ltd", " Co.", " Company",
+        ):
+            if name.endswith(suffix):
+                name = name[: -len(suffix)].strip()
+                break
+        if name:
+            aliases.add(name.lower())
+    return sorted(aliases) or ([symbol.strip().lower()] if symbol else [])
+
+
+def is_relevant_article(
+    text: str, symbol: str, company_name: str | None = None
+) -> bool:
+    """True if *text* (already lowercased headline+summary) plausibly refers
+    to *symbol* / *company_name*, rather than being unrelated market-wide
+    chatter that happened to appear in the company-news feed.
+
+    Substring match against the ticker (case-insensitive, as written -- e.g.
+    "MSFT") or a stripped company name (e.g. "microsoft" from "Microsoft
+    Corporation"). Deliberately simple/conservative: a false negative (a
+    genuinely relevant article that phrases things unusually and gets
+    filtered out) just reduces the sample size, which the existing
+    min_articles_for_signal gate already guards against. A false positive
+    (scoring an unrelated article) is the bug this filter exists to fix, so
+    the match itself is left strict.
+    """
+    if not text:
+        return False
+    for alias in _company_name_aliases(symbol, company_name):
+        if alias and alias in text:
+            return True
+    return False
 
 
 def load_latest_finnhub_news(
@@ -237,6 +330,7 @@ def classify_news_sentiment(
     news_items: list[dict[str, Any]] | None,
     config: NewsSentimentConfig | None = None,
     now: datetime | None = None,
+    company_name: str | None = None,
 ) -> NewsSentimentResult:
     """Classify recent company-news sentiment for a BUY candidate
     (observability only -- never blocks or modifies a decision).
@@ -249,6 +343,12 @@ def classify_news_sentiment(
             `datetime` field.
         config: NewsSentimentConfig (defaults to from_env()).
         now: Override "current time" for testing.
+        company_name: Registry `description` field (e.g. "Microsoft
+            Corporation"), used by the relevance filter (see
+            `is_relevant_article`) to drop articles that don't actually
+            mention the symbol or company. When config.relevance_filter_enabled
+            is True (default) and this is omitted, only the ticker itself is
+            used as the relevance alias.
 
     Returns:
         NewsSentimentResult. `is_negative_sentiment_buy` flags the case this
@@ -284,6 +384,7 @@ def classify_news_sentiment(
     total_pos = 0
     total_neg = 0
     counted = 0
+    filtered_irrelevant = 0
     for item in news_items:
         if not isinstance(item, dict):
             continue
@@ -296,13 +397,24 @@ def classify_news_sentiment(
             continue
         headline = str(item.get("headline") or "").lower()
         summary = str(item.get("summary") or "").lower()
-        pos, neg = _score_article_text(f"{headline} {summary}")
+        text = f"{headline} {summary}"
+        if cfg.relevance_filter_enabled and not is_relevant_article(
+            text, symbol, company_name
+        ):
+            filtered_irrelevant += 1
+            continue
+        pos, neg = _score_article_text(text)
         total_pos += pos
         total_neg += neg
         counted += 1
 
     total_hits = total_pos + total_neg
     if total_hits == 0 or counted < cfg.min_articles_for_signal:
+        relevance_note = (
+            f", {filtered_irrelevant} filtered as irrelevant"
+            if filtered_irrelevant
+            else ""
+        )
         return NewsSentimentResult(
             symbol=symbol,
             is_negative_sentiment_buy=False,
@@ -310,9 +422,10 @@ def classify_news_sentiment(
             positive_hits=total_pos,
             negative_hits=total_neg,
             article_count=counted,
+            filtered_irrelevant_count=filtered_irrelevant,
             reason=(
-                f"insufficient_signal: {counted} recent article(s), "
-                f"{total_hits} keyword hit(s) (need >= "
+                f"insufficient_signal: {counted} recent relevant article(s)"
+                f"{relevance_note}, {total_hits} keyword hit(s) (need >= "
                 f"{cfg.min_articles_for_signal} articles)"
             ),
         )
@@ -338,6 +451,7 @@ def classify_news_sentiment(
         positive_hits=total_pos,
         negative_hits=total_neg,
         article_count=counted,
+        filtered_irrelevant_count=filtered_irrelevant,
         reason=reason,
     )
 
@@ -377,6 +491,7 @@ def log_observation(
             "positive_hits": result.positive_hits,
             "negative_hits": result.negative_hits,
             "article_count": result.article_count,
+            "filtered_irrelevant_count": result.filtered_irrelevant_count,
             "reason": result.reason,
         }
         line = json.dumps(record, ensure_ascii=False) + "\n"

@@ -1806,8 +1806,18 @@ def main() -> int:  # noqa: C901
                     log_distance_observation(_dfh_result, log_path=_dfh_log_path)
                 if not _news_sentiment_config.disabled:
                     _news_items = load_latest_finnhub_news(decision.symbol, _finnhub_raw_dir)
+                    # 2026-08-21: relevance filter needs the company name (from
+                    # symbol_registry.yaml's `description`) to distinguish
+                    # genuinely symbol-specific articles from generic market
+                    # chatter that Finnhub's company-news feed also returns.
+                    # Best-effort: missing registry entry just falls back to
+                    # ticker-only matching inside classify_news_sentiment().
+                    _news_company_name = (
+                        _SYMBOL_REGISTRY.get(decision.symbol.upper(), {}).get("description")
+                    )
                     _news_result = classify_news_sentiment(
                         decision.symbol, _news_items, _news_sentiment_config,
+                        company_name=_news_company_name,
                     )
                     log_news_sentiment_observation(_news_result, log_path=_news_sentiment_log_path)
                 if not _rsi_diag_config.disabled and _rsi_massive_client is not None:
