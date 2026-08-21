@@ -1526,6 +1526,48 @@ finnhub_metric_lookup 11件 / volatility_gate 19件 / distance_from_high
     初週の実約定2件はいずれも負けだった一方、即昇格にはまだノイズが多い。
     observability-only 継続、必要なら中間レビュー時に閾値再調整を検討。
 
+### Plan D follow-up: 軸①データ品質改善（否定語ガード + ソース信頼性重み付け）+ 軸②news_shock_hold新規実装（2026-08-21）
+
+ユーザーから「ニュースセンチメント分析やそれに基づくシグナル/サイジング調整という
+構造自体は問題ないか」との問いを受け、以下2軸で改善を実施（commit `4f1ca25`）。
+
+**軸①: news_sentiment.py のデータ品質改善**
+1. 否定語ガード（`_is_negated`）: "fails to beat estimates"のような否定文で
+   ポジティブ語にヒットしても正しくネガティブ側にカウントされるよう修正
+   （直前3語の固定ウィンドウで否定語を検出、極性反転。常時有効）
+2. ソース信頼性重み付け（`SOURCE_RELIABILITY_WEIGHTS`）: Web console側
+   （`dashboard_service.py`）に既にあった`_source_reliability()`の重み付け
+   （Reuters/Bloomberg=0.95、SeekingAlpha=0.75、不明ソース=0.6等）をこの
+   shadow診断にも移植。デフォルト有効
+   （`NEWS_SENTIMENT_SOURCE_WEIGHTING_DISABLED`で無効化可能）
+
+**軸②: news_shock_hold.py 新規実装（保有ポジション向け早期警戒shadow）**
+
+背景: 「エントリー時点のネガティブニュースは既に価格に織り込まれている
+可能性が高い（Plan Cの08-14条件付きギャップ分析と同じ効率的市場の壁）」
+という構造的懸念に対応。既存Plan D（news_sentiment.py）は新規BUY候補にのみ
+適用されており、保有中ポジションに新しく発生したニュースは一切見ていなかった。
+`sector_shock_hold.py`（既存のセクター規模ショック検知shadow）と同じ設計
+思想で、個別銘柄版の「保有中ポジションのニュースショック検知」を新規実装。
+news_sentiment.pyの関連度フィルタ・否定語ガード・ソース信頼性重み付けを
+すべて再利用しつつ、保有ポジション向けに調整（lookback 3日→1日、
+閾値-0.34→-0.25）。`unrealized_plpc`を結果に含め、含み損状態との相関を
+後で確認できるようにした。paper_demo.pyに配線: run毎に1回、現在のopen
+positions全件に対して評価。ログ: `data/news_shock_hold_shadow_log.jsonl`
+（`NEWS_SHOCK_HOLD_DISABLED`で無効化可能）。
+
+**位置づけ**: いずれもshadow-only（observability-only）。既存のexit判定
+ロジック（trailing_stop/breakeven/stop_loss）には一切未接続。将来paper_ab
+昇格を検討する場合は、既存Plan B/C/D/Eと同じ承認・検証プロセスを経る。
+
+**テスト**: news_sentiment.py +19件、news_shock_hold.py 新規13件。
+フルスイート: 2053 passed / 2 skipped（regressionなし）。
+
+**次のマイルストーン**: **2026-09-04**（cron登録済み:
+`stock_swing_news_shock_hold_review_20260904`）に、news_shock_holdの
+初回中間レビューを実施し、shadow log蓄積状況とtrue判定後の実際の値動きを
+確認する。
+
 ### Plan D: ニュースセンチメント診断（shadow mode で稼働開始、2026-08-08）
 
 **2026-08-21 追記（データ品質修正）**: R9 08-21中間レビューでPlan Dのtrue判定
