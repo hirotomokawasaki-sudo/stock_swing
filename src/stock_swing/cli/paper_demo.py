@@ -1833,6 +1833,56 @@ def main() -> int:  # noqa: C901
                     "volatility_gate/distance_from_high/news_sentiment/rsi_diagnostic shadow check failed for %s (non-fatal): %s",
                     decision.symbol, _shadow_exc,
                 )
+
+    # 2026-08-21 (Plan D follow-up): news-shock-hold shadow diagnostic on
+    # *currently held* positions, rather than new BUY candidates. Rationale
+    # (discussed with user 2026-08-21): by the time a symbol is a fresh BUY
+    # candidate, negative news driving that setup is often already priced
+    # in (same stale-information issue found in Plan C's 08-14 conditional-
+    # gap analysis). News breaking *while a position is already held* has
+    # not necessarily been priced in yet. Shadow-only: never tightens an
+    # exit or blocks anything. See src/stock_swing/risk/news_shock_hold.py.
+    if not args.dry_run:
+        try:
+            from stock_swing.risk.news_shock_hold import (
+                NewsShockHoldConfig,
+                classify_news_shock,
+                log_shadow as log_news_shock_hold,
+            )
+            _news_shock_config = NewsShockHoldConfig.from_env()
+            if _news_shock_config.is_enabled() and current_positions_full:
+                _news_shock_log_path = project_root / "data" / "news_shock_hold_shadow_log.jsonl"
+                for _held_symbol, _held_pos in current_positions_full.items():
+                    try:
+                        _held_news_items = load_latest_finnhub_news(_held_symbol, _finnhub_raw_dir)
+                        _held_company_name = (
+                            _SYMBOL_REGISTRY.get(_held_symbol.upper(), {}).get("description")
+                        )
+                        _held_unrealized_plpc = _held_pos.get("unrealized_plpc")
+                        try:
+                            _held_unrealized_plpc = (
+                                float(_held_unrealized_plpc)
+                                if _held_unrealized_plpc is not None else None
+                            )
+                        except (TypeError, ValueError):
+                            _held_unrealized_plpc = None
+                        _shock_result = classify_news_shock(
+                            _held_symbol, _held_news_items, _news_shock_config,
+                            company_name=_held_company_name,
+                            unrealized_plpc=_held_unrealized_plpc,
+                        )
+                        log_news_shock_hold(_shock_result, shadow_log_path=_news_shock_log_path)
+                    except Exception as _shock_exc:
+                        logger.warning(
+                            "news_shock_hold: shadow check failed for held position %s (non-fatal): %s",
+                            _held_symbol, _shock_exc,
+                        )
+        except Exception as _shock_module_exc:
+            logger.warning(
+                "news_shock_hold: shadow diagnostic unavailable for this run (non-fatal): %s",
+                _shock_module_exc,
+            )
+
     attach_run_context(decisions, run_context)
     if experiment_context is not None:
         for _d in decisions:

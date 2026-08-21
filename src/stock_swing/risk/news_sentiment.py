@@ -122,6 +122,34 @@ DEFAULT_MAX_ARTICLE_AGE_DAYS = 3
 DEFAULT_NEGATIVE_SCORE_THRESHOLD = -0.34  # net_negative / total <= this
 DEFAULT_MIN_ARTICLES_FOR_SIGNAL = 2
 
+# 2026-08-21: source-reliability weighting (R9 08-21 mid-review follow-up #2).
+#
+# Every keyword hit was previously counted with equal weight regardless of
+# source: a single-author SeekingAlpha opinion piece counted the same as a
+# Reuters/Bloomberg wire report. console/services/dashboard_service.py
+# already has a `_source_reliability()` mapping used for the Web console's
+# separate (also lexicon-based) sentiment display, but this shadow
+# diagnostic never used it. Mirrored here (same tiers/weights) rather than
+# imported, since dashboard_service lives under console/ (a separate,
+# lighter-weight package tree with no src/ dependency direction) and this
+# module must stay import-light for paper_demo.py's hot path.
+SOURCE_RELIABILITY_WEIGHTS: dict[str, float] = {
+    "reuters": 0.95,
+    "bloomberg": 0.95,
+    "associated press": 0.95,
+    "ap": 0.95,
+    "wsj": 0.95,
+    "wall street journal": 0.95,
+    "cnbc": 0.85,
+    "yahoo": 0.75,
+    "seekingalpha": 0.75,
+    "marketwatch": 0.75,
+    "finnhub": 0.4,
+    "synthetic": 0.4,
+}
+DEFAULT_SOURCE_RELIABILITY = 0.6  # unknown/unrecognized source
+DEFAULT_SOURCE_WEIGHTING_ENABLED = True
+
 # 2026-08-21: relevance filter (R9 08-21 mid-review follow-up).
 #
 # Finnhub's `company-news` endpoint, despite the name, returns a broad feed
@@ -161,6 +189,12 @@ class NewsSentimentConfig:
                                               is ON -- see
                                               DEFAULT_RELEVANCE_FILTER_ENABLED
                                               docstring above)
+        NEWS_SENTIMENT_SOURCE_WEIGHTING_DISABLED
+                                              set "true" to count every
+                                              keyword hit with equal weight
+                                              regardless of source (default:
+                                              weighting is ON -- see
+                                              SOURCE_RELIABILITY_WEIGHTS above)
     """
 
     max_article_age_days: int = DEFAULT_MAX_ARTICLE_AGE_DAYS
@@ -168,6 +202,7 @@ class NewsSentimentConfig:
     min_articles_for_signal: int = DEFAULT_MIN_ARTICLES_FOR_SIGNAL
     disabled: bool = False
     relevance_filter_enabled: bool = DEFAULT_RELEVANCE_FILTER_ENABLED
+    source_weighting_enabled: bool = DEFAULT_SOURCE_WEIGHTING_ENABLED
 
     @classmethod
     def from_env(cls) -> "NewsSentimentConfig":
@@ -197,6 +232,12 @@ class NewsSentimentConfig:
                 ).lower()
                 in ("1", "true", "yes")
             ),
+            source_weighting_enabled=not (
+                os.environ.get(
+                    "NEWS_SENTIMENT_SOURCE_WEIGHTING_DISABLED", ""
+                ).lower()
+                in ("1", "true", "yes")
+            ),
         )
 
 
@@ -205,8 +246,12 @@ class NewsSentimentResult:
     symbol: str
     is_negative_sentiment_buy: bool
     net_score: float | None  # (pos_hits - neg_hits) / (pos_hits + neg_hits), None if no data
-    positive_hits: int
-    negative_hits: int
+    # 2026-08-21: source-reliability weighting means these are no longer raw
+    # integer counts -- a hit from a low-reliability source contributes < 1.0
+    # (e.g. 0.4 for an unrecognized source). Kept as float to preserve the
+    # weighting; round to 2dp for readability in logs/console.
+    positive_hits: float
+    negative_hits: float
     article_count: int  # relevant articles counted after the relevance filter
     reason: str
     filtered_irrelevant_count: int = 0  # articles dropped by the relevance filter
@@ -215,11 +260,70 @@ class NewsSentimentResult:
     )
 
 
+# 2026-08-21: lightweight negation guard (R9 08-21 mid-review follow-up #1).
+#
+# A short window of negation words immediately preceding a term flips its
+# polarity contribution instead of counting it at face value, e.g. "fails to
+# beat estimates" or "no longer sees strong demand" should not register as
+# positive. Deliberately simple (fixed word-count lookback, no NLP
+# dependency) -- same transparency-over-sophistication tradeoff as the rest
+# of this lexicon-based module. False negatives (missed negations) just
+# leave a hit at face value, which is the pre-existing behavior; this is a
+# strict improvement, not a regression risk.
+_NEGATION_WORDS: frozenset[str] = frozenset(
+    {"not", "no", "never", "fails", "failed", "fail", "denies", "denied",
+     "without", "unable", "cannot", "can't", "won't", "doesn't", "didn't"}
+)
+_NEGATION_LOOKBACK_WORDS = 3
+
+
+def _is_negated(text: str, term: str) -> bool:
+    """True if a negation word appears within `_NEGATION_LOOKBACK_WORDS`
+    words immediately before `term`'s first occurrence in `text`.
+    """
+    idx = text.find(term)
+    if idx == -1:
+        return False
+    preceding = text[:idx].split()
+    window = preceding[-_NEGATION_LOOKBACK_WORDS:]
+    return any(w.strip(".,;:!?'\"") in _NEGATION_WORDS for w in window)
+
+
 def _score_article_text(text: str) -> tuple[int, int]:
-    """Return (positive_hits, negative_hits) for one lowercased text blob."""
-    pos = sum(1 for term in POSITIVE_TERMS if term in text)
-    neg = sum(1 for term in NEGATIVE_TERMS if term in text)
+    """Return (positive_hits, negative_hits) for one lowercased text blob.
+
+    A term preceded by a negation word within a short lookback window (see
+    `_is_negated`) has its polarity flipped rather than dropped: "fails to
+    beat estimates" contributes to negative_hits, not positive_hits.
+    """
+    pos = 0
+    neg = 0
+    for term in POSITIVE_TERMS:
+        if term in text:
+            if _is_negated(text, term):
+                neg += 1
+            else:
+                pos += 1
+    for term in NEGATIVE_TERMS:
+        if term in text:
+            if _is_negated(text, term):
+                pos += 1
+            else:
+                neg += 1
     return pos, neg
+
+
+def _source_reliability_weight(source: str | None, enabled: bool) -> float:
+    """Return the reliability weight for a Finnhub article `source` field.
+
+    Returns 1.0 (no weighting) when `enabled` is False, so callers can
+    always multiply by this value unconditionally.
+    """
+    if not enabled:
+        return 1.0
+    return SOURCE_RELIABILITY_WEIGHTS.get(
+        str(source or "").strip().lower(), DEFAULT_SOURCE_RELIABILITY
+    )
 
 
 def _company_name_aliases(symbol: str, company_name: str | None) -> list[str]:
@@ -404,8 +508,11 @@ def classify_news_sentiment(
             filtered_irrelevant += 1
             continue
         pos, neg = _score_article_text(text)
-        total_pos += pos
-        total_neg += neg
+        weight = _source_reliability_weight(
+            item.get("source"), cfg.source_weighting_enabled
+        )
+        total_pos += pos * weight
+        total_neg += neg * weight
         counted += 1
 
     total_hits = total_pos + total_neg
@@ -419,28 +526,30 @@ def classify_news_sentiment(
             symbol=symbol,
             is_negative_sentiment_buy=False,
             net_score=0.0 if total_hits else None,
-            positive_hits=total_pos,
-            negative_hits=total_neg,
+            positive_hits=round(total_pos, 2),
+            negative_hits=round(total_neg, 2),
             article_count=counted,
             filtered_irrelevant_count=filtered_irrelevant,
             reason=(
                 f"insufficient_signal: {counted} recent relevant article(s)"
-                f"{relevance_note}, {total_hits} keyword hit(s) (need >= "
-                f"{cfg.min_articles_for_signal} articles)"
+                f"{relevance_note}, {round(total_hits, 2)} keyword hit(s) "
+                f"(need >= {cfg.min_articles_for_signal} articles)"
             ),
         )
 
     net_score = round((total_pos - total_neg) / total_hits, 3)
     is_negative = net_score <= cfg.negative_score_threshold
+    pos_rounded = round(total_pos, 2)
+    neg_rounded = round(total_neg, 2)
 
     reason = (
         f"negative_sentiment_buy: net_score={net_score:.2f} "
         f"(<= {cfg.negative_score_threshold:.2f}) from {counted} recent "
-        f"article(s), pos={total_pos} neg={total_neg}"
+        f"article(s), pos={pos_rounded} neg={neg_rounded}"
         if is_negative
         else (
             f"not_flagged: net_score={net_score:.2f} from {counted} recent "
-            f"article(s), pos={total_pos} neg={total_neg}"
+            f"article(s), pos={pos_rounded} neg={neg_rounded}"
         )
     )
 
@@ -448,8 +557,8 @@ def classify_news_sentiment(
         symbol=symbol,
         is_negative_sentiment_buy=is_negative,
         net_score=net_score,
-        positive_hits=total_pos,
-        negative_hits=total_neg,
+        positive_hits=pos_rounded,
+        negative_hits=neg_rounded,
         article_count=counted,
         filtered_irrelevant_count=filtered_irrelevant,
         reason=reason,

@@ -9,6 +9,8 @@ from __future__ import annotations
 import json
 from datetime import datetime, timedelta, timezone
 
+import pytest
+
 from stock_swing.risk.news_sentiment import (
     NewsSentimentConfig,
     classify_news_sentiment,
@@ -16,14 +18,20 @@ from stock_swing.risk.news_sentiment import (
     load_latest_finnhub_news,
     log_observation,
 )
+from stock_swing.risk.news_sentiment import _is_negated, _source_reliability_weight
 
 
 NOW = datetime(2026, 8, 8, 12, 0, 0, tzinfo=timezone.utc)
 
 
-def _article(headline: str, summary: str = "", days_ago: float = 0.5) -> dict:
+def _article(
+    headline: str, summary: str = "", days_ago: float = 0.5, source: str | None = None
+) -> dict:
     ts = (NOW - timedelta(days=days_ago)).timestamp()
-    return {"headline": headline, "summary": summary, "datetime": ts}
+    item = {"headline": headline, "summary": summary, "datetime": ts}
+    if source is not None:
+        item["source"] = source
+    return item
 
 
 # ── classify_news_sentiment: negative incident profile ───────────────────── #
@@ -309,6 +317,123 @@ def test_classify_news_sentiment_insufficient_signal_reports_filtered_count():
     assert result.filtered_irrelevant_count == 2
     assert "insufficient_signal" in result.reason
     assert "filtered as irrelevant" in result.reason
+
+
+# ── Negation guard (2026-08-21, R9 08-21 mid-review follow-up #1) ─────────── #
+
+
+def test_is_negated_true_within_lookback_window():
+    text = "the company fails to beat estimates this quarter"
+    assert _is_negated(text, "beat estimates") is True
+
+
+def test_is_negated_false_outside_lookback_window():
+    text = (
+        "analysts had not expected much from the sector overall but the "
+        "company still managed to beat estimates"
+    )
+    assert _is_negated(text, "beat estimates") is False
+
+
+def test_is_negated_false_when_no_negation_word_present():
+    text = "the company continued to beat estimates"
+    assert _is_negated(text, "beat estimates") is False
+
+
+def test_is_negated_term_not_found_returns_false():
+    assert _is_negated("totally unrelated text", "beat estimates") is False
+
+
+def test_negated_positive_term_counts_as_negative():
+    # "fails to beat estimates" should flip beat-estimates to a negative hit,
+    # not a positive one.
+    items = [
+        _article("microsoft fails to beat estimates", source="CNBC"),
+        _article("microsoft issues profit warning", source="CNBC"),
+    ]
+    result = classify_news_sentiment(
+        "MSFT", items, now=NOW, company_name="Microsoft Corporation"
+    )
+    assert result.positive_hits == 0
+    assert result.negative_hits > 0
+    assert result.is_negative_sentiment_buy is True
+
+
+def test_negated_negative_term_counts_as_positive():
+    items = [
+        _article("microsoft denies fraud allegations", source="CNBC"),
+        _article("microsoft beats estimates and raises guidance", source="CNBC"),
+    ]
+    result = classify_news_sentiment(
+        "MSFT", items, now=NOW, company_name="Microsoft Corporation"
+    )
+    assert result.negative_hits == 0
+    assert result.positive_hits > 0
+    assert result.is_negative_sentiment_buy is False
+
+
+# ── Source-reliability weighting (2026-08-21, R9 08-21 mid-review follow-up #2) #
+
+
+def test_source_reliability_weight_known_high_tier():
+    assert _source_reliability_weight("Reuters", enabled=True) == 0.95
+    assert _source_reliability_weight("bloomberg", enabled=True) == 0.95
+
+
+def test_source_reliability_weight_known_mid_tier():
+    assert _source_reliability_weight("SeekingAlpha", enabled=True) == 0.75
+
+
+def test_source_reliability_weight_unknown_source_default():
+    assert _source_reliability_weight("SomeRandomBlog", enabled=True) == 0.6
+
+
+def test_source_reliability_weight_missing_source_default():
+    assert _source_reliability_weight(None, enabled=True) == 0.6
+
+
+def test_source_reliability_weight_disabled_always_returns_one():
+    assert _source_reliability_weight("Finnhub", enabled=False) == 1.0
+    assert _source_reliability_weight(None, enabled=False) == 1.0
+
+
+def test_classify_news_sentiment_low_reliability_source_dampens_score():
+    # Two negative hits from a low-reliability source ('Finnhub', weight 0.4)
+    # vs the same two hits at full weight (source disabled) should produce a
+    # milder net_score magnitude in the weighted case.
+    items = [
+        _article("microsoft faces fraud investigation", source="Finnhub"),
+        _article("microsoft issues profit warning", source="Finnhub"),
+    ]
+    weighted = classify_news_sentiment(
+        "MSFT", items, now=NOW, company_name="Microsoft Corporation"
+    )
+    cfg_unweighted = NewsSentimentConfig(source_weighting_enabled=False)
+    unweighted = classify_news_sentiment(
+        "MSFT", items, config=cfg_unweighted, now=NOW, company_name="Microsoft Corporation"
+    )
+    # Both all-negative -> net_score should be -1.0 in both cases (weighting
+    # scales magnitude of hits uniformly here, not their sign/ratio), but the
+    # underlying weighted hit counts must differ.
+    assert weighted.negative_hits < unweighted.negative_hits
+    assert weighted.negative_hits == pytest.approx(1.6, abs=0.01)
+    assert unweighted.negative_hits == 4
+
+
+def test_classify_news_sentiment_source_weighting_can_change_outcome():
+    # A single high-reliability negative article should outweigh two
+    # low-reliability positive articles when the low-reliability source
+    # weight (0.4) is small enough.
+    items = [
+        _article("microsoft faces fraud investigation and lawsuit and probe", source="Reuters"),
+        _article("microsoft beats estimates", source="UnknownBlog"),
+    ]
+    cfg = NewsSentimentConfig(min_articles_for_signal=1)
+    result = classify_news_sentiment(
+        "MSFT", items, config=cfg, now=NOW, company_name="Microsoft Corporation"
+    )
+    assert result.is_negative_sentiment_buy is True
+    assert result.negative_hits > result.positive_hits
 
 
 # ── log_observation: never raises, writes JSONL always ────────────────────── #
