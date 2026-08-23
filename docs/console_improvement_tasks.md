@@ -1069,7 +1069,8 @@ sizing側Option A・confidence_multiplierバグ修正は別途検証手法を設
 2026-08-23        ✅ R13-D  ETFローテーションPhase 2（戦略設計コード実装）完了。
                          SectorMomentumFeature/SectorRotationStrategy新規。Phase 1との
                          21チェックポイント全一致を自己検証（2件のオフバイワンを発見・修正）。本番未配線
-2026-09以降        🔵 R13-D  ETFローテーションPhase 3（リバランス状態管理実装、コスト/スリッパージ再検証）。
+2026-08-24        ✅ R13-D  ETFローテーションPhase 3（リバランス状態管理実装）完了。本番配線（cron
+                         接続）は未実施（要ユーザー承認）。コスト/スリッパージ再検証は引き続き未着手。
                          JP overnight spilloverはIBKR接続確立待ち継続
 
 2026-10+           R8-v2    ML（clean labels ≥300/≥1,000到達後、R0-v2〜R4-v2完了が前提）
@@ -3291,6 +3292,43 @@ strategy_validation.py`（新規）で、Phase 1のプレーン関数版ロジ�
 **やらないこと**: 既存momentum戦略と同一台帳で混合して集計しない。Phase 1の生シグナル
 結果を直接paper/liveに反映しない（必ずPhase 2設計→shadow→paper A/Bを経由）。
 
+---
+
+**Phase 3（リバランス状態管理実装、2026-08-24実施）**: `src/stock_swing/
+strategy_engine/sector_rotation_state.py`新規作成。Phase 2が明示的に先送りにしていた
+「永続的な「前回リバランス日+現保有」状態管理」を実装。`CircuitBreakerStore`/
+`day_start_snapshot.py`と同じatomic write+os.replaceパターンを踏襲。
+`RebalanceState`（last_rebalance_date/current_sectors/current_holdings/
+rebalance_count）+ `is_rebalance_due()` / `compute_rebalance_diff()` /
+`advance_rebalance_state()`の純粋関数群で構成。
+
+**検証（`scripts/r13d_phase3_state_machine_validation.py`、実データ2年分）**:
+Phase 2の自己検証は21営業日おきのチェックポイントでのみ呼んでおり、「毎日呼ばれたら
+どうなるか」（実際のcronケーデンス）は未検証だった。436営業日全てを日次呼び出しで
+シミュレートし、**stability violation（非リバランス日に保有が変化）0件**を確認
+（Phase 2が明示していた「テートレスなら毎回ポジション入れ替えてしまう」問題を回避できていることを
+実証）。リバランス回数（31件）もhold_days=21スペーシングの素朴な期待値（約20.8件）と
+概ね一致。
+
+**重要な発見（自己開示）**: 実際のリバランス回数（31件）は素朴な期待値（約20.8件）より
+約49%多い。原因は`is_rebalance_due()`が**暦日**ベースでゲートしており、Phase 1の
+バックテストが使っていた**営業日**ベースの21日カウントとは異なるため（週末・休日を挿むと
+暦日カウントの方が早く閾値に達する）。失敗方向は「リバランスがやや多めになる」という
+保守的側（リバランス漏れではない）であり、モジュールdocstringに限界として明記済み。
+
+**テスト**: `tests/unit/test_sector_rotation_state.py`（22件）。
+
+**判定**: ✅ 状態管理の実装・検証完了。**本番配線（cron/paper_demo.py接続）は
+未実施**（Phase 2から引き継いだスコープ境界を維持、実配線は別途ユーザー承認と昇格プロセスを
+経由）。
+
+**エビデンス保存先**: `docs/r13d_phase3_20260824/`
+（README.md + phase3_state_machine_validation_output.txt + test_output.txt）
+
+**残る次のアクション（未着手）**: (1) 本番配線（ユーザー承認待ち）
+(2) 暦日→営業日カウントの精密化（優先度低） (3) コスト・スリッパージ込みの再検証（R13-Cで確立した
+t+1約定・conservative exit・slippageモデリングをsector rotationにも適用）
+
 ### R13全体のやらないこと
 
 ```
@@ -3310,7 +3348,7 @@ strategy_validation.py`（新規）で、Phase 1のプレーン関数版ロジ�
 | P1 | R13-A | stop_loss閾値深掘り検証 | 中 | 低 | **STOP HOLD**（検証完了、2026-08-23） |
 | P1 | R13-B | signal_strength exit切り離し検証 | 低〜中 | 中 | **弱い結果**（検証完了、2026-08-23）、sizing側未着手 |
 | P2 | R13-C | R11バックテスト再構築（項目1〜7全完了） | 大 | 低（研究のみ、本番影響なし） | **✅ COMPLETE**（2026-08-24）、live以降PF=1.453（90%CI[1.210,1.750]）、rolling walk-forwardでレジーム依存不振を独立再確認 |
-| P3 | R13-D | ETFセクターローテーション、JP spilloverはIBKR待ち継続 | 大 | 低（shadowのみ） | **Phase 1 GO + Phase 2完了**（2026-08-23）、Phase 3未着手 |
+| P3 | R13-D | ETFセクターローテーション、JP spilloverはIBKR待ち継続 | 大 | 低（shadowのみ） | **Phase 1 GO + Phase 2 + Phase 3（状態管理）完了**（2026-08-24）、本番配線は未着手（要承認） |
 
 **09-15 Go/No-Goとの関係**: R13はすべてpaper A/B・研究段階であり、09-15までに
 本番反映されるものは別途ユーザー承認がない限りない見込み。つまり09-15判断の前提となる

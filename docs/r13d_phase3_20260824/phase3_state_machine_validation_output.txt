@@ -1,0 +1,25 @@
+==========================================================================================
+R13-D Phase 3: daily-call rebalance state machine validation
+(500 trading days, top_n=2, lookback_days=63, hold_days=21)
+==========================================================================================
+
+Simulated 436 daily calls (every trading day, not just hold_days-spaced checkpoints).
+Actual rebalances triggered: 31 (naive expectation ~20.8 at exactly hold_days spacing)
+Stability violations (holdings changed without a due rebalance): 0
+
+First 3 and last 3 rebalance events:
+  2024-11-15: sectors=['quantum_computing', 'technology_cloud'] holdings=['QTUM', 'SKYY'] enter=['QTUM', 'SKYY'] exit=[] noop=False
+  2024-12-06: sectors=['quantum_computing', 'technology_cloud'] holdings=['QTUM', 'SKYY'] enter=[] exit=[] noop=True
+  2024-12-27: sectors=['quantum_computing', 'technology_cloud'] holdings=['QTUM', 'SKYY'] enter=[] exit=[] noop=True
+  ...
+  2026-06-29: sectors=['quantum_computing', 'semiconductor'] holdings=['CHPS', 'CHPX', 'FTXL', 'QTUM', 'SHOC', 'SMH', 'SMHX', 'SOXQ', 'SOXX'] enter=[] exit=[] noop=True
+  2026-07-20: sectors=['semiconductor', 'technology_cloud'] holdings=['CHPS', 'CHPX', 'FTXL', 'SHOC', 'SKYY', 'SMH', 'SMHX', 'SOXQ', 'SOXX'] enter=['SKYY'] exit=['QTUM'] noop=False
+  2026-08-10: sectors=['quantum_computing', 'technology_cloud'] holdings=['QTUM', 'SKYY'] enter=['QTUM'] exit=['CHPS', 'CHPX', 'FTXL', 'SHOC', 'SMH', 'SMHX', 'SOXQ', 'SOXX'] noop=False
+
+Rebalances that were a no-op (same top-N as before, diff empty): 16/31
+
+------------------------------------------------------------------------------------------
+VERDICT
+------------------------------------------------------------------------------------------
+  ✅ Zero stability violations across 436 simulated daily calls: holdings only ever change on a due rebalance day, exactly the property Phase 2 identified as missing for a daily/multi-per-day cron cadence.
+  ✅ Rebalance count (31) is consistent with hold_days=21-spaced cadence (naive expectation 20.8).

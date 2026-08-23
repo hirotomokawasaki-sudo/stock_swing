@@ -1,0 +1,32 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.10, pytest-9.0.2, pluggy-1.6.0 -- /Users/hirotomookawasaki/stock_swing/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/hirotomookawasaki/stock_swing
+configfile: pyproject.toml
+plugins: cov-7.1.0, anyio-4.13.0
+collecting ... collected 22 items
+
+tests/unit/test_sector_rotation_state.py::TestIsRebalanceDueFirstRunAndThresholds::test_none_state_is_always_due PASSED [  4%]
+tests/unit/test_sector_rotation_state.py::TestIsRebalanceDueFirstRunAndThresholds::test_state_with_empty_last_rebalance_date_is_due PASSED [  9%]
+tests/unit/test_sector_rotation_state.py::TestIsRebalanceDueFirstRunAndThresholds::test_not_due_before_hold_days_elapsed PASSED [ 13%]
+tests/unit/test_sector_rotation_state.py::TestIsRebalanceDueFirstRunAndThresholds::test_due_exactly_at_hold_days_boundary PASSED [ 18%]
+tests/unit/test_sector_rotation_state.py::TestIsRebalanceDueFirstRunAndThresholds::test_due_well_past_hold_days PASSED [ 22%]
+tests/unit/test_sector_rotation_state.py::TestIsRebalanceDueFirstRunAndThresholds::test_one_day_short_of_boundary_not_due PASSED [ 27%]
+tests/unit/test_sector_rotation_state.py::TestIsRebalanceDueCorruptDateFailsSafe::test_unparseable_date_string_fails_toward_rebalancing PASSED [ 31%]
+tests/unit/test_sector_rotation_state.py::TestComputeRebalanceDiff::test_all_new_symbols_are_enter PASSED [ 36%]
+tests/unit/test_sector_rotation_state.py::TestComputeRebalanceDiff::test_all_dropped_symbols_are_exit PASSED [ 40%]
+tests/unit/test_sector_rotation_state.py::TestComputeRebalanceDiff::test_unchanged_symbols_are_hold PASSED [ 45%]
+tests/unit/test_sector_rotation_state.py::TestComputeRebalanceDiff::test_mixed_enter_exit_hold PASSED [ 50%]
+tests/unit/test_sector_rotation_state.py::TestComputeRebalanceDiff::test_result_lists_are_sorted_for_stable_ordering PASSED [ 54%]
+tests/unit/test_sector_rotation_state.py::TestAdvanceRebalanceState::test_first_rebalance_starts_count_at_one PASSED [ 59%]
+tests/unit/test_sector_rotation_state.py::TestAdvanceRebalanceState::test_subsequent_rebalance_increments_count PASSED [ 63%]
+tests/unit/test_sector_rotation_state.py::TestAdvanceRebalanceState::test_new_state_fully_replaces_sectors_and_holdings PASSED [ 68%]
+tests/unit/test_sector_rotation_state.py::TestSectorRotationStateStorePersistence::test_load_on_missing_file_returns_none PASSED [ 72%]
+tests/unit/test_sector_rotation_state.py::TestSectorRotationStateStorePersistence::test_save_then_load_round_trips PASSED [ 77%]
+tests/unit/test_sector_rotation_state.py::TestSectorRotationStateStorePersistence::test_save_overwrites_prior_state_not_appends PASSED [ 81%]
+tests/unit/test_sector_rotation_state.py::TestSectorRotationStateStorePersistence::test_load_on_corrupt_json_returns_none_not_raise PASSED [ 86%]
+tests/unit/test_sector_rotation_state.py::TestSectorRotationStateStorePersistence::test_constructor_creates_no_file_until_first_save PASSED [ 90%]
+tests/unit/test_sector_rotation_state.py::TestSectorRotationStateStorePersistence::test_reinstantiated_store_on_same_path_sees_saved_state PASSED [ 95%]
+tests/unit/test_sector_rotation_state.py::TestEndToEndRebalanceCycle::test_full_cycle_not_due_then_due_then_state_updated PASSED [100%]
+
+============================== 22 passed in 0.04s ==============================
