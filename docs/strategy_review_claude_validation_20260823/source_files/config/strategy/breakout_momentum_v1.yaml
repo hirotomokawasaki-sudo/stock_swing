@@ -1,0 +1,13 @@
+enabled: true
+name: breakout_momentum_v1
+
+# NOTE (2026-08-15, MaxHold audit): max_hold_days below is NOT read by any code
+# path (verified via grep across src/ and scripts/; BreakoutMomentumStrategy
+# takes no max_hold_days constructor arg and no loader reads this key).
+# The live exit-side max-hold cap is config/strategy/simple_exit_v2.yaml's
+# max_hold_days (currently 20), applied uniformly by SimpleExitV2Strategy to
+# all positions regardless of originating entry strategy. This field is kept
+# only for historical/documentation purposes — do not treat it as active.
+max_hold_days: 2  # UNUSED — see note above
+require_volume_confirmation: true
+require_market_regime_confirmation: true

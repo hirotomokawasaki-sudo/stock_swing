@@ -1,0 +1,453 @@
+#!/usr/bin/env python3
+"""07-31 Go/No-Go 自動判定スクリプト.
+
+Required 条件7件をシステム状態から自動確認し、
+判定結果をコンソール出力 + docs/go_no_go_result_YYYYMMDD.md に保存する。
+
+使い方:
+    python scripts/check_go_no_go.py [--save]
+"""
+from __future__ import annotations
+
+import json
+import re
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+import zoneinfo
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+sys.path.insert(0, str(PROJECT_ROOT))  # for `console.*` imports (promotion readiness)
+
+JST = zoneinfo.ZoneInfo("Asia/Tokyo")
+CURRENT_MODE_PATH = PROJECT_ROOT / "config" / "runtime" / "current_mode.yaml"
+
+
+def _load(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+# AUDIT FIX (2026-08-23): latest_console_summary.json is ONLY written by
+# paper_demo.py's console_summary.emit() call, which (before the companion
+# paper_demo.py fix landed) was skipped entirely on any run with zero
+# actionable decisions -- leaving this file, and therefore every Required
+# condition below that reads from `summary`/`health`, silently frozen at
+# whatever an old run last wrote. Even with that upstream fix, a future
+# regression or an unrelated paper_demo crash before console_summary.emit()
+# could reproduce the same failure mode. Rather than trust health.status=OK
+# unconditionally, independently verify the summary itself is fresh enough
+# to be trustworthy before treating anything inside it as current.
+# Paper_demo cron jobs run at minimum every ~4 hours on trading days (see
+# docs/console_improvement_tasks.md schedule); a summary older than this
+# is either a real staleness bug or a market-closed/weekend gap. Use a
+# generous 30h threshold (covers one full weekday of a delayed cron plus
+# overnight) rather than trying to model exact market-hours schedules here.
+_CONSOLE_SUMMARY_MAX_AGE_HOURS = 30.0
+
+
+def _console_summary_age_hours(summary: dict) -> float | None:
+    ts = ((summary.get("run") or {}).get("timestamp"))
+    if not ts:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        age = (datetime.now(timezone.utc) - parsed).total_seconds() / 3600.0
+        return round(age, 2)
+    except Exception:
+        return None
+
+
+def check() -> dict[str, dict]:
+    summary_path = PROJECT_ROOT / "reports" / "console" / "latest_console_summary.json"
+    summary = _load(summary_path)
+    health = summary.get("health", {})
+    cb = health.get("circuit_breaker_detail", {})
+    broker_tracker_diff = summary.get("broker_tracker_diff", {})
+
+    # cron jobs最新run確認
+    cron_path = PROJECT_ROOT / "data" / "audits" / "reconcile_status.json"
+    reconcile = _load(cron_path)
+
+    results: dict[str, dict] = {}
+
+    # 0. console summary freshness (gates trust in every health.* field below)
+    _age_hours = _console_summary_age_hours(summary)
+    results["console_summary_freshness"] = {
+        "label": "console_summary_freshness",
+        "pass": _age_hours is not None and _age_hours <= _CONSOLE_SUMMARY_MAX_AGE_HOURS,
+        "actual": f"{_age_hours}h old" if _age_hours is not None else "missing_timestamp",
+        "required": f"<={_CONSOLE_SUMMARY_MAX_AGE_HOURS:.0f}h old",
+    }
+
+    # 1. ledger_quality VALID
+    lg = health.get("ledger_gate_status", "UNKNOWN")
+    results["ledger_quality"] = {
+        "label": "ledger_quality_gate",
+        "pass": lg == "VALID",
+        "actual": lg,
+        "required": "VALID",
+    }
+
+    # 2. circuit_breaker ok
+    cb_status = cb.get("status", "UNKNOWN")
+    results["circuit_breaker"] = {
+        "label": "circuit_breaker",
+        "pass": cb_status == "ok",
+        "actual": cb_status,
+        "required": "ok",
+    }
+
+    # 3. broker/tracker mismatch == 0
+    #
+    # 2026-08-05 fix: previously read health.broker_tracker_mismatch_count,
+    # which is the RAW mismatch count before G1-v2/v2-b/v2-c/v2-d lag
+    # exclusion is applied (e.g. new-BUY qty lag, SELL qty lag, fast-fill
+    # phantom, add-to-existing-position qty lag -- see
+    # src/stock_swing/guardrails/postrun_mismatch.py). That raw count can be
+    # nonzero for perfectly normal, already-excused timing lag (as seen
+    # 2026-08-05: raw=2 for NBIS qty lag, while the lag-exclusion logic
+    # itself reports real_mismatch_count=0), causing a false NO-GO here even
+    # though circuit_breaker correctly stayed "ok". Use
+    # broker_tracker_diff.real_mismatch_count (the same field the live
+    # circuit breaker guardrail acts on) so this check matches actual
+    # operational risk instead of raw noise.
+    if "real_mismatch_count" in broker_tracker_diff:
+        mismatch = broker_tracker_diff.get("real_mismatch_count", -1)
+        mismatch_label = "broker_tracker_mismatch (real, lag-excused)"
+    else:
+        # Fallback for older console_summary snapshots that predate the
+        # real_mismatch_count field.
+        mismatch = health.get("broker_tracker_mismatch_count", -1)
+        mismatch_label = "broker_tracker_mismatch (raw, real_mismatch_count unavailable)"
+    results["mismatch"] = {
+        "label": mismatch_label,
+        "pass": mismatch == 0,
+        "actual": mismatch,
+        "required": 0,
+    }
+
+    # 4. attribution coverage >= 98%
+    attr = health.get("attribution_coverage_pct", 0.0)
+    results["attribution"] = {
+        "label": "attribution_coverage_pct",
+        "pass": attr >= 95.0,
+        "actual": f"{attr}%",
+        "required": ">=95%",
+    }
+
+    # 5. guardrail hard-halt enabled
+    gs = health.get("guardrail_status", "UNKNOWN")
+    results["guardrail"] = {
+        "label": "guardrail_hard_halt",
+        "pass": gs in ("ok", "recovery_pending"),
+        "actual": gs,
+        "required": "ok or recovery_pending",
+    }
+
+    # 6. all crons healthy.
+    # AUDIT FIX (2026-08-23): previously only re-read health.status, which is
+    # itself one field *inside* the same latest_console_summary.json this
+    # whole check() function already loads -- i.e. this condition was 100%
+    # redundant with reading `summary` directly and told you nothing extra
+    # about actual cron job health (paper_demo/reconcile_orders/collect_data/
+    # etc. each have their OWN success/failure independent of paper_demo's
+    # self-reported health.status, which only reflects the ledger/guardrail/
+    # freshness evidence checked inside that one paper_demo run). Query the
+    # real per-job cron run history via console's SystemAdapter
+    # (_check_cron_run_history(), the same evidence source the console's own
+    # /health endpoint uses) so a genuinely stuck or erroring cron job is
+    # caught even when the last paper_demo run itself reported OK. Falls
+    # back to the old reconcile_status.json check (fail-open on unavailable,
+    # not silently pass) only if SystemAdapter can't be imported/queried.
+    _cron_detail = "unavailable"
+    _cron_ok = None
+    try:
+        from console.adapters.system_adapter import SystemAdapter
+        _adapter = SystemAdapter(PROJECT_ROOT)
+        _cron_evidence = _adapter._check_cron_run_history()
+        _cron_ok = bool(_cron_evidence.get("ok"))
+        _cron_detail = (
+            f"{_cron_evidence.get('parsed_jobs')}/{_cron_evidence.get('enabled_jobs')} jobs parsed "
+            f"({len(_cron_evidence.get('parse_errors') or [])} error(s))"
+        )
+    except Exception as _cron_exc:
+        _cron_detail = f"check_failed: {_cron_exc}"
+
+    if _cron_ok is None:
+        # Fall back to the reconcile-only heuristic rather than fail the
+        # whole Required checklist on a SystemAdapter import/env issue that
+        # is orthogonal to actual cron health.
+        rec_status = reconcile.get("status", "UNKNOWN")
+        results["cron_health"] = {
+            "label": "cron_jobs_healthy",
+            "pass": rec_status == "ok" and health.get("status", "") == "OK",
+            "actual": f"reconcile={rec_status}, paper_demo_health={health.get('status', 'UNKNOWN')} (SystemAdapter check unavailable: {_cron_detail})",
+            "required": "OK",
+        }
+    else:
+        results["cron_health"] = {
+            "label": "cron_jobs_healthy",
+            "pass": _cron_ok,
+            "actual": _cron_detail,
+            "required": "all enabled cron jobs parse cleanly (openclaw cron list/runs)",
+        }
+
+    # 7. paper N日確認.
+    # AUDIT FIX (2026-08-23): previously grepped a single hardcoded file
+    # (docs/go_no_go_report_20260731.md) for the literal substring "07-30
+    # ok"/"07-30 ✅"/"07-30完了" -- a snapshot of the ORIGINAL 07-31 decision
+    # frozen in time. Once that file's content stopped changing (07-31 has
+    # long since passed), this condition would return "pass=True" FOREVER
+    # regardless of whether paper trading actually ran cleanly in the last 3
+    # days, because it never looked at any date-relative or live data at
+    # all. Replace with a live check: at least 3 distinct calendar dates
+    # with a recorded daily_snapshot in pnl_state.json within the last 7
+    # days (a rolling window, not a fixed历史 date), which reflects actual
+    # recent operational continuity instead of a permanently-true historical
+    # fact.
+    _pnl_state_path = PROJECT_ROOT / "data" / "tracking" / "pnl_state.json"
+    _pnl_state = _load(_pnl_state_path)
+    _snapshots = _pnl_state.get("daily_snapshots", []) or []
+    _now_jst_date = datetime.now(JST).date()
+    _recent_dates: set[str] = set()
+    for _snap in _snapshots:
+        _d = _snap.get("date")
+        if not _d:
+            continue
+        try:
+            _snap_date = datetime.fromisoformat(str(_d)).date()
+        except Exception:
+            continue
+        if (_now_jst_date - _snap_date).days <= 7:
+            _recent_dates.add(str(_d))
+    _paper_ok = len(_recent_dates) >= 3
+    results["paper_3day"] = {
+        "label": "paper_3day_confirmation",
+        "pass": _paper_ok,
+        "actual": f"{len(_recent_dates)} distinct day(s) with a snapshot in the last 7 days: {sorted(_recent_dates)}",
+        "required": ">=3 distinct days with a daily_snapshot in the last 7 days",
+    }
+
+    return results
+
+
+def check_promotion_readiness() -> dict[str, dict] | None:
+    """R5-v2 (2026-08-14): supplementary, non-required promotion-gate check.
+
+    Separate from the Required conditions in check() above -- this covers
+    the previously-missing "market beta / cluster cap / top-5 concentration
+    / clean cohort PF" combination called out as the R5-v2 REOPENED reason.
+    Recommendation-only: does not affect the overall Go/No-Go decision or
+    return code, since these were never part of the original 07-31 Required
+    checklist. Returns None (not evaluated) if promotion_gate.py or its
+    inputs are unavailable, rather than raising.
+    """
+    try:
+        from stock_swing.risk.promotion_gate import evaluate_promotion_readiness
+        from stock_swing.risk.pairwise_correlation import (
+            build_daily_closes_from_raw_bars,
+            check_data_freshness,
+            compute_pairwise_correlation,
+            summarize_high_correlation_pairs,
+        )
+        from console.services.dashboard_service import DashboardService
+        from console.services.benchmark_service import BenchmarkService
+    except Exception:
+        return None
+
+    try:
+        dash = DashboardService(PROJECT_ROOT)
+        cluster_exposures = dash._get_cluster_exposure()
+        positions = dash.get_positions()
+        top5 = None
+        held_symbols: list[str] = []
+        if positions.get("available"):
+            position_rows = positions.get("positions") or []
+            summary = dash._summarize_positions(position_rows)
+            top5 = summary.get("top5_concentration")
+            held_symbols = sorted({str(p.get("symbol") or "").upper() for p in position_rows if p.get("symbol")})
+
+        pnl_state_path = PROJECT_ROOT / "data" / "tracking" / "pnl_state.json"
+        pnl_state = _load(pnl_state_path)
+        closed_trades = [t for t in pnl_state.get("trades", []) if t.get("status") == "closed"]
+
+        bench = BenchmarkService(PROJECT_ROOT)
+        daily_snapshots = pnl_state.get("daily_snapshots", [])
+        beta_data = bench.calculate_beta(daily_snapshots)
+
+        # R5-v2 (2026-08-14): pairwise correlation among currently-held
+        # symbols, reconstructed from accumulated collect_broker_bars()
+        # raw snapshots (data/raw/broker/). Best-effort: symbols with too
+        # little accumulated history simply drop out (compute_pairwise_
+        # correlation / summarize_high_correlation_pairs already fail
+        # closed on insufficient data rather than raising).
+        raw_broker_dir = PROJECT_ROOT / "data" / "raw" / "broker"
+        closes_by_symbol = {
+            sym: build_daily_closes_from_raw_bars(sym, raw_broker_dir)
+            for sym in held_symbols
+        }
+        closes_by_symbol = {sym: c for sym, c in closes_by_symbol.items() if c}
+        # AUDIT FIX (2026-08-23): a collect_broker_bars() pagination bug (now
+        # fixed in collect_data.py) previously left every accumulated
+        # snapshot frozen at the same stale date range for weeks. Check
+        # freshness explicitly rather than trusting "a correlation was
+        # computable" as proof the data is current -- see
+        # pairwise_correlation.check_data_freshness() docstring.
+        _correlation_freshness = check_data_freshness(closes_by_symbol)
+        pairwise = compute_pairwise_correlation(closes_by_symbol)
+        correlation_summary = summarize_high_correlation_pairs(pairwise, freshness=_correlation_freshness)
+
+        readiness = evaluate_promotion_readiness(
+            cluster_exposures=cluster_exposures,
+            top5_concentration=top5,
+            beta_data=beta_data,
+            closed_trades=closed_trades,
+            correlation_summary=correlation_summary,
+        )
+        return {
+            c.name: {
+                "label": c.name,
+                "pass": c.passed,
+                "actual": c.actual,
+                "required": c.required,
+                "detail": c.detail,
+            }
+            for c in readiness.criteria
+        }
+    except Exception as exc:
+        return {"error": {"label": "promotion_readiness_check_error", "pass": False, "actual": str(exc), "required": "no error", "detail": ""}}
+
+
+def _update_ledger_gate_last_checked(ledger_pass: bool, now_jst: datetime) -> None:
+    """Stamp ledger_quality_gate.last_checked in current_mode.yaml.
+
+    console self-check (console/adapters/system_adapter.py::_check_ledger_validity)
+    treats ledger_quality_gate as stale (and therefore reports it as a
+    'critical_missing' evidence failure) if last_checked is more than 24h
+    old, even when the gate is genuinely VALID and re-confirmed daily by
+    this script. Previously last_checked was only ever bumped by manual
+    edits during ledger repair work, so it silently went stale between
+    repairs (observed 2026-08-01 -> 2026-08-07, 6 days unedited) and caused
+    a false-positive 'blocked' /health status even though everything was
+    actually fine. Bump it here on every --save run so daily re-verification
+    is reflected without a manual edit each time.
+
+    Only touches the `current_status:` and `last_checked:` lines via
+    targeted regex substitution (not a full YAML round-trip) to avoid
+    stripping the extensive human-authored comments in this file.
+    """
+    if not ledger_pass or not CURRENT_MODE_PATH.exists():
+        return
+    text = CURRENT_MODE_PATH.read_text(encoding="utf-8")
+    today = now_jst.strftime("%Y-%m-%d")
+    new_text, n1 = re.subn(
+        r'(?m)^(  current_status:\s*)\S+(.*)$',
+        lambda m: f"{m.group(1)}VALID{m.group(2)}",
+        text,
+        count=1,
+    )
+    new_text, n2 = re.subn(
+        r'(?m)^(  last_checked:\s*)"?[0-9-]+"?(.*)$',
+        lambda m: f'{m.group(1)}"{today}"{m.group(2)}',
+        new_text,
+        count=1,
+    )
+    if n1 and n2 and new_text != text:
+        CURRENT_MODE_PATH.write_text(new_text, encoding="utf-8")
+        print(f"[updated] {CURRENT_MODE_PATH} ledger_quality_gate.last_checked -> {today}", file=sys.stderr)
+
+
+def format_report(results: dict[str, dict], save: bool = False, promotion: dict[str, dict] | None = None) -> str:
+    now_jst = datetime.now(JST)
+    all_pass = all(r["pass"] for r in results.values())
+    # NOTE (2026-08-15): launch date was hardcoded as "08-20" here even after
+    # the 2026-08-14 user decision moved the real-trade launch to 09-15 (see
+    # docs/console_improvement_tasks.md "2026-08-14（金）... 09-15に再延期").
+    # This script's output is read verbatim by the 08-19/08-21/08-28/09-05/
+    # 09-10/09-14 review cron jobs, so a stale hardcoded date would have kept
+    # misreporting the wrong launch date across all of them until 09-15
+    # itself. Sourced from the roadmap doc; update there first if the date
+    # changes again.
+    LAUNCH_DATE_LABEL = "09-15"
+    decision = f"🟢 **GO**（準備完了 / {LAUNCH_DATE_LABEL}以降にリアルトレード開始）" if all_pass else "🔴 **NO-GO**"
+
+    lines = [
+        f"# Go/No-Go 判定結果 — {now_jst.strftime('%Y-%m-%d %H:%M JST')}",
+        "",
+        f"## 最終判定: {decision}",
+        "",
+        "## Required 条件チェック",
+        "",
+        "| 条件 | 判定 | 実測値 | 必要値 |",
+        "|------|------|--------|--------|",
+    ]
+    for r in results.values():
+        mark = "✅" if r["pass"] else "❌"
+        lines.append(f"| {r['label']} | {mark} | {r['actual']} | {r['required']} |")
+
+    lines += [
+        "",
+        f"**判定時刻**: {now_jst.strftime('%Y-%m-%d %H:%M:%S JST')}",
+        f"**全件 Pass**: {all_pass}",
+        "",
+    ]
+
+    if promotion is not None:
+        lines += [
+            "## 補足: R5-v2 Promotion Gate（参考情報、Required判定には含まれない）",
+            "",
+            "| 条件 | 判定 | 実測値 | 必要値 | 詳細 |",
+            "|------|------|--------|--------|------|",
+        ]
+        for r in promotion.values():
+            mark = "✅" if r["pass"] else "❌"
+            lines.append(f"| {r['label']} | {mark} | {r['actual']} | {r['required']} | {r.get('detail', '')} |")
+        lines.append("")
+
+    if all_pass:
+        lines += [
+            "## 次のアクション",
+            "- 本判定は `--save` 付き実行時に `docs/go_no_go_result_YYYYMMDD.md` として自動記録されます（固定ファイル名ではなく実行日ベース）",
+            f"- リアルトレード開始: {LAUNCH_DATE_LABEL}以降（50%サイズ）",
+            "- 引き続き sector_shock_hold A/B + 20 clean runs soak を継続",
+        ]
+    else:
+        failed = [r["label"] for r in results.values() if not r["pass"]]
+        lines += [
+            "## ブロック項目",
+            *[f"- ❌ {f}" for f in failed],
+        ]
+
+    report = "\n".join(lines)
+
+    if save:
+        out = PROJECT_ROOT / "docs" / f"go_no_go_result_{now_jst.strftime('%Y%m%d')}.md"
+        out.write_text(report, encoding="utf-8")
+        print(f"[saved] {out}", file=sys.stderr)
+        ledger_pass = results.get("ledger_quality", {}).get("pass", False)
+        _update_ledger_gate_last_checked(ledger_pass, now_jst)
+
+    return report
+
+
+def main() -> int:
+    save = "--save" in sys.argv
+    results = check()
+    promotion = check_promotion_readiness()
+    report = format_report(results, save=save, promotion=promotion)
+    print(report)
+    all_pass = all(r["pass"] for r in results.values())
+    return 0 if all_pass else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

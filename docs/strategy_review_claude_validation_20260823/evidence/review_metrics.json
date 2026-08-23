@@ -1,0 +1,464 @@
+{
+  "attributable_bootstrap": {
+    "expectancy_median": 62.0,
+    "expectancy_p05": -432.75,
+    "expectancy_p95": 538.46,
+    "fraction_pf_gt_1_and_expectancy_gt_0": 0.5829,
+    "limitations": [
+      "does not preserve serial dependence",
+      "does not preserve overlapping-position dependence",
+      "symbol concentration is assessed separately with leave-one-symbol-out"
+    ],
+    "method": "IID resampling of closed attributable trades with replacement",
+    "pf_median": 1.086,
+    "pf_p05": 0.564,
+    "pf_p95": 2.125,
+    "samples": 20000,
+    "seed": 20260823
+  },
+  "attributable_leave_one_symbol_out": {
+    "ADBE": {
+      "expectancy": 80.93,
+      "gross_loss": 35233.8,
+      "gross_profit": 38956.41,
+      "losses": 21,
+      "n": 46,
+      "net_pnl": 3722.61,
+      "profit_factor": 1.1057,
+      "win_rate": 0.5435,
+      "wins": 25
+    },
+    "AMZN": {
+      "expectancy": 168.44,
+      "gross_loss": 30890.08,
+      "gross_profit": 38975.17,
+      "losses": 22,
+      "n": 48,
+      "net_pnl": 8085.09,
+      "profit_factor": 1.2617,
+      "win_rate": 0.5417,
+      "wins": 26
+    },
+    "ANET": {
+      "expectancy": 26.21,
+      "gross_loss": 36035.17,
+      "gross_profit": 37266.82,
+      "losses": 23,
+      "n": 47,
+      "net_pnl": 1231.65,
+      "profit_factor": 1.0342,
+      "win_rate": 0.5106,
+      "wins": 24
+    },
+    "AVGO": {
+      "expectancy": 176.58,
+      "gross_loss": 30852.45,
+      "gross_profit": 38975.17,
+      "losses": 20,
+      "n": 46,
+      "net_pnl": 8122.72,
+      "profit_factor": 1.2633,
+      "win_rate": 0.5652,
+      "wins": 26
+    },
+    "CRDO": {
+      "expectancy": 96.3,
+      "gross_loss": 34352.61,
+      "gross_profit": 38975.17,
+      "losses": 22,
+      "n": 48,
+      "net_pnl": 4622.56,
+      "profit_factor": 1.1346,
+      "win_rate": 0.5417,
+      "wins": 26
+    },
+    "CRM": {
+      "expectancy": 22.2,
+      "gross_loss": 36025.38,
+      "gross_profit": 37046.45,
+      "losses": 22,
+      "n": 46,
+      "net_pnl": 1021.07,
+      "profit_factor": 1.0283,
+      "win_rate": 0.5217,
+      "wins": 24
+    },
+    "CRWD": {
+      "expectancy": 104.09,
+      "gross_loss": 33978.67,
+      "gross_profit": 38975.17,
+      "losses": 22,
+      "n": 48,
+      "net_pnl": 4996.5,
+      "profit_factor": 1.147,
+      "win_rate": 0.5417,
+      "wins": 26
+    },
+    "DELL": {
+      "expectancy": 85.84,
+      "gross_loss": 34854.73,
+      "gross_profit": 38975.17,
+      "losses": 22,
+      "n": 48,
+      "net_pnl": 4120.44,
+      "profit_factor": 1.1182,
+      "win_rate": 0.5417,
+      "wins": 26
+    },
+    "HPE": {
+      "expectancy": 58.08,
+      "gross_loss": 36035.17,
+      "gross_profit": 38822.85,
+      "losses": 23,
+      "n": 48,
+      "net_pnl": 2787.68,
+      "profit_factor": 1.0774,
+      "win_rate": 0.5208,
+      "wins": 25
+    },
+    "HPQ": {
+      "expectancy": -224.37,
+      "gross_loss": 36035.17,
+      "gross_profit": 25938.74,
+      "losses": 23,
+      "n": 45,
+      "net_pnl": -10096.43,
+      "profit_factor": 0.7198,
+      "win_rate": 0.4889,
+      "wins": 22
+    },
+    "INTC": {
+      "expectancy": 235.07,
+      "gross_loss": 27926.72,
+      "gross_profit": 38975.17,
+      "losses": 21,
+      "n": 47,
+      "net_pnl": 11048.45,
+      "profit_factor": 1.3956,
+      "win_rate": 0.5532,
+      "wins": 26
+    },
+    "MRVL": {
+      "expectancy": -40.69,
+      "gross_loss": 35369.68,
+      "gross_profit": 33619.85,
+      "losses": 20,
+      "n": 43,
+      "net_pnl": -1749.83,
+      "profit_factor": 0.9505,
+      "win_rate": 0.5349,
+      "wins": 23
+    },
+    "MSFT": {
+      "expectancy": 36.59,
+      "gross_loss": 36019.69,
+      "gross_profit": 37739.37,
+      "losses": 22,
+      "n": 47,
+      "net_pnl": 1719.68,
+      "profit_factor": 1.0477,
+      "win_rate": 0.5319,
+      "wins": 25
+    },
+    "NBIS": {
+      "expectancy": 232.91,
+      "gross_loss": 28261.38,
+      "gross_profit": 38975.17,
+      "losses": 20,
+      "n": 46,
+      "net_pnl": 10713.79,
+      "profit_factor": 1.3791,
+      "win_rate": 0.5652,
+      "wins": 26
+    },
+    "ORCL": {
+      "expectancy": 60.0,
+      "gross_loss": 36035.17,
+      "gross_profit": 38915.32,
+      "losses": 23,
+      "n": 48,
+      "net_pnl": 2880.15,
+      "profit_factor": 1.0799,
+      "win_rate": 0.5208,
+      "wins": 25
+    },
+    "PANW": {
+      "expectancy": 56.94,
+      "gross_loss": 36035.17,
+      "gross_profit": 38768.45,
+      "losses": 23,
+      "n": 48,
+      "net_pnl": 2733.28,
+      "profit_factor": 1.0759,
+      "win_rate": 0.5208,
+      "wins": 25
+    },
+    "PATH": {
+      "expectancy": -104.26,
+      "gross_loss": 35993.59,
+      "gross_profit": 31406.11,
+      "losses": 22,
+      "n": 44,
+      "net_pnl": -4587.48,
+      "profit_factor": 0.8725,
+      "win_rate": 0.5,
+      "wins": 22
+    },
+    "PLTR": {
+      "expectancy": 40.46,
+      "gross_loss": 36035.17,
+      "gross_profit": 37977.31,
+      "losses": 23,
+      "n": 48,
+      "net_pnl": 1942.14,
+      "profit_factor": 1.0539,
+      "win_rate": 0.5208,
+      "wins": 25
+    },
+    "QTUM": {
+      "expectancy": 132.76,
+      "gross_loss": 32735.51,
+      "gross_profit": 38975.17,
+      "losses": 21,
+      "n": 47,
+      "net_pnl": 6239.66,
+      "profit_factor": 1.1906,
+      "win_rate": 0.5532,
+      "wins": 26
+    },
+    "SKYY": {
+      "expectancy": -22.18,
+      "gross_loss": 36035.17,
+      "gross_profit": 35014.91,
+      "losses": 23,
+      "n": 46,
+      "net_pnl": -1020.26,
+      "profit_factor": 0.9717,
+      "win_rate": 0.5,
+      "wins": 23
+    },
+    "SNOW": {
+      "expectancy": 5.79,
+      "gross_loss": 35962.92,
+      "gross_profit": 36229.45,
+      "losses": 22,
+      "n": 46,
+      "net_pnl": 266.53,
+      "profit_factor": 1.0074,
+      "win_rate": 0.5217,
+      "wins": 24
+    }
+  },
+  "attributable_score_buckets": {
+    "high_ge_0_85": {
+      "expectancy": -5.17,
+      "gross_loss": 11006.46,
+      "gross_profit": 10923.76,
+      "losses": 9,
+      "n": 16,
+      "net_pnl": -82.7,
+      "profit_factor": 0.9925,
+      "win_rate": 0.4375,
+      "wins": 7
+    },
+    "low_lt_0_65": {
+      "expectancy": 1139.63,
+      "gross_loss": 3485.07,
+      "gross_profit": 16020.98,
+      "losses": 2,
+      "n": 11,
+      "net_pnl": 12535.91,
+      "profit_factor": 4.597,
+      "win_rate": 0.8182,
+      "wins": 9
+    },
+    "standard_0_65_to_lt_0_85": {
+      "expectancy": -432.42,
+      "gross_loss": 21543.64,
+      "gross_profit": 12030.43,
+      "losses": 12,
+      "n": 22,
+      "net_pnl": -9513.21,
+      "profit_factor": 0.5584,
+      "win_rate": 0.4545,
+      "wins": 10
+    }
+  },
+  "cohorts": {
+    "all_closed": {
+      "expectancy": -81.64,
+      "gross_loss": 235548.31,
+      "gross_profit": 214974.8,
+      "losses": 132,
+      "n": 252,
+      "net_pnl": -20573.51,
+      "profit_factor": 0.9127,
+      "win_rate": 0.4762,
+      "wins": 120
+    },
+    "attributable": {
+      "expectancy": 60.0,
+      "gross_loss": 36035.17,
+      "gross_profit": 38975.17,
+      "losses": 23,
+      "n": 49,
+      "net_pnl": 2940.0,
+      "profit_factor": 1.0816,
+      "win_rate": 0.5306,
+      "wins": 26
+    },
+    "etf": {
+      "expectancy": 385.95,
+      "gross_loss": 50805.99,
+      "gross_profit": 66243.99,
+      "losses": 16,
+      "n": 40,
+      "net_pnl": 15438.0,
+      "profit_factor": 1.3039,
+      "win_rate": 0.6,
+      "wins": 24
+    },
+    "latest_attributable": {
+      "expectancy": -83.78,
+      "gross_loss": 20411.93,
+      "gross_profit": 18401.18,
+      "losses": 11,
+      "n": 24,
+      "net_pnl": -2010.75,
+      "profit_factor": 0.9015,
+      "win_rate": 0.5417,
+      "wins": 13
+    },
+    "stock": {
+      "expectancy": -169.87,
+      "gross_loss": 184742.32,
+      "gross_profit": 148730.81,
+      "losses": 116,
+      "n": 212,
+      "net_pnl": -36011.51,
+      "profit_factor": 0.8051,
+      "win_rate": 0.4528,
+      "wins": 96
+    }
+  },
+  "definitions": {
+    "attributable": "decision_id, run_id, and experiment_id are all present",
+    "closed": "status == closed in the tracker before sanitization",
+    "latest_attributable": "attributable and exit date >= 2026-08-14",
+    "profit_factor": "gross positive PnL / absolute gross negative PnL"
+  },
+  "exit_reason_all": {
+    "breakeven_stop": {
+      "expectancy": -185.58,
+      "gross_loss": 22659.1,
+      "gross_profit": 14679.32,
+      "losses": 34,
+      "n": 43,
+      "net_pnl": -7979.78,
+      "profit_factor": 0.6478,
+      "win_rate": 0.2093,
+      "wins": 9
+    },
+    "broker_fill": {
+      "expectancy": -33.24,
+      "gross_loss": 238.56,
+      "gross_profit": 138.83,
+      "losses": 2,
+      "n": 3,
+      "net_pnl": -99.73,
+      "profit_factor": 0.582,
+      "win_rate": 0.3333,
+      "wins": 1
+    },
+    "corporate_action": {
+      "expectancy": -1513.29,
+      "gross_loss": 3643.72,
+      "gross_profit": 617.13,
+      "losses": 1,
+      "n": 2,
+      "net_pnl": -3026.59,
+      "profit_factor": 0.1694,
+      "win_rate": 0.5,
+      "wins": 1
+    },
+    "stop_loss": {
+      "expectancy": -1920.2,
+      "gross_loss": 170325.43,
+      "gross_profit": 18629.58,
+      "losses": 66,
+      "n": 79,
+      "net_pnl": -151695.85,
+      "profit_factor": 0.1094,
+      "win_rate": 0.1646,
+      "wins": 13
+    },
+    "strategy_exit": {
+      "expectancy": -4054.22,
+      "gross_loss": 8108.45,
+      "gross_profit": 0.0,
+      "losses": 2,
+      "n": 2,
+      "net_pnl": -8108.45,
+      "profit_factor": 0.0,
+      "win_rate": 0.0,
+      "wins": 0
+    },
+    "time_based": {
+      "expectancy": 1458.12,
+      "gross_loss": 10126.87,
+      "gross_profit": 24708.1,
+      "losses": 3,
+      "n": 10,
+      "net_pnl": 14581.23,
+      "profit_factor": 2.4399,
+      "win_rate": 0.7,
+      "wins": 7
+    },
+    "trailing_stop": {
+      "expectancy": 1201.38,
+      "gross_loss": 20446.18,
+      "gross_profit": 156201.84,
+      "losses": 24,
+      "n": 113,
+      "net_pnl": 135755.66,
+      "profit_factor": 7.6397,
+      "win_rate": 0.7876,
+      "wins": 89
+    }
+  },
+  "exit_reason_attributable": {
+    "stop_loss": {
+      "expectancy": -2239.84,
+      "gross_loss": 24638.2,
+      "gross_profit": 0.0,
+      "losses": 11,
+      "n": 11,
+      "net_pnl": -24638.2,
+      "profit_factor": 0.0,
+      "win_rate": 0.0,
+      "wins": 0
+    },
+    "strategy_exit": {
+      "expectancy": -4054.22,
+      "gross_loss": 8108.45,
+      "gross_profit": 0.0,
+      "losses": 2,
+      "n": 2,
+      "net_pnl": -8108.45,
+      "profit_factor": 0.0,
+      "win_rate": 0.0,
+      "wins": 0
+    },
+    "trailing_stop": {
+      "expectancy": 991.3,
+      "gross_loss": 3288.52,
+      "gross_profit": 38975.17,
+      "losses": 10,
+      "n": 36,
+      "net_pnl": 35686.65,
+      "profit_factor": 11.8519,
+      "win_rate": 0.7222,
+      "wins": 26
+    }
+  }
+}

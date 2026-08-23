@@ -1,0 +1,150 @@
+enabled: true
+name: simple_exit_v2
+
+# Hard stop loss threshold (negative value, e.g., -0.07 = -7%)
+stop_loss_pct: -0.07
+
+# Breakeven protection: once return reaches this level, effective floor = 0%
+# (never let a position that was +3% become a loser)
+# Added 2026-05-27
+breakeven_activation_pct: 0.05  # raised from 0.03 (2026-07-29): +3% was triggering on noise; +5% requires stronger move before activation
+
+# Trailing stop activation threshold (e.g., 0.08 = +8%)
+# Increased from 5% to 8% to reduce early profit-taking (2026-05-18)
+trailing_activation_pct: 0.08
+
+# Pullback from peak to trigger trailing exit (e.g., 0.04 = 4%)
+# Increased from 3% to 4% to allow more room for volatility (2026-05-18)
+trailing_stop_pct: 0.04
+
+# R3-B staged trailing rollout (2026-07-02)
+# Backtest/replay result: staged trailing improved first-pass replay by +$5,089 vs baseline.
+# Disable quickly by setting staged_trailing_enabled: false.
+staged_trailing_enabled: true
+staged_trailing_levels:
+  - activation_pct: 0.05
+    trailing_stop_pct: 0.035
+  - activation_pct: 0.08
+    trailing_stop_pct: 0.03
+  - activation_pct: 0.12
+    trailing_stop_pct: 0.025
+
+# Maximum holding period in calendar days
+max_hold_days: 20
+
+# ── Broker-reconstructed threshold graduation (改善点1 2026-07-16) ───────────
+# broker_reconstructed positions (entry_signal_strength=None) use a conservative
+# -5% stop by default. After holding >= broker_recon_graduation_days calendar days,
+# the position is considered established and graduates to the standard stop_loss_pct.
+# Set to null to disable graduation (always use -5% for unknown-strength positions).
+broker_recon_graduation_days: 5
+
+# ── G9: min_hold guard ───────────────────────────────────────────────────────
+# stop_loss が発火するまでの最低保有日数。
+# 削画: 59%の早期カットがノイズであり、trailing_stopに移行する前に切られていた。
+# true にすると、保有 min_hold_days 日未満は stop_loss を抑制し、
+# emergency_stop_bypass_pct を超える場合のみ即時退場する。
+min_hold_days_enabled: true
+min_hold_days: 1              # tiered 無効時の基本値 / severe loss (< -8%) のフォールバック
+emergency_stop_bypass_pct: -0.12  # -12%以下の大幅損失は min_hold を迂回して即時退場
+# ロールバック: min_hold_days_enabled: false に変更するだけで即座に旧動作に戻る
+
+# ── Plan A v2: Tiered min_hold — offset-based redesign (2026-08-05) ─────────
+# 履歴: 2026-07-27 に導入（commit 52736ca）→ 2026-07-29 に FIX-007 で無効化。
+#
+# FIX-007 で判明した問題: v1 は「絶対 return_pct」で tier を判定していた
+# （例: 「return > -5% ならノイズ域」）。しかし standard/high-conviction 銘柄は
+# stop_loss 自体が -7%/-9% でしか発火しないため、この判定に入った時点で
+# return はすでに -7%/-9% 以下 → 「-5%より大きい」を満たすことが構造的に
+# 不可能で、7日 tier が事実上デッドコードだった（-5%閾値のlow-conviction
+# 銘柄以外では絶対に届かない）。
+#
+# v2 修正: 絶対 return ではなく「発火した有効ストップ閾値からの相対オフセット
+# （offset_pct、単位: percentage point）」で tier 判定する。
+#   offset_pct = (return_pct - eff_stop_loss_pct) * 100
+#   例: eff_stop=-7%, return=-7.5% → offset=-0.5pp（僅かに超過 → ノイズの可能性）
+#       eff_stop=-7%, return=-15%  → offset=-8.0pp（大きく超過 → 真の止損）
+# これにより conviction tier（-5%/-7%/-9%）に関わらず、tier 判定が意味を持つ。
+#
+# 元の post-exit drift 分析（48件）の知見は維持:
+#   閾値をわずかに超えた程度 → 78%が15日以内に回復（ノイズ域）→ 1週間様子見
+#   閾値を大きく超えた       → 30日超/未回復（真の止損）→ 素早く exit
+#
+# シミュレーション根拠（v1、48件、絶対値ベースだが同じ知見）: +$41,054 改善見込み
+# (-$167K → -$126K)。v2 は同じ知見を conviction tier 非依存の形で再実装。
+#
+# tiered_min_hold_levels の各エントリ:
+#   offset_pct: 有効ストップ閾値からのオフセット（pp）。この値より大きい
+#               （＝閾値超過が浅い）場合に min_hold_days を適用。
+#   min_hold_days: 当該 tier での最低保有営業日数
+# エントリは offset_pct 降順で評価され、最初にマッチした tier が採用される。
+# どの tier にもマッチしない（大幅超過）場合は base min_hold_days (1日) を使用。
+# ロールバック: tiered_min_hold_enabled: false に変更するだけで即座に旧動作（一律 min_hold_days）に戻る。
+tiered_min_hold_enabled: true
+tiered_min_hold_levels:
+  - offset_pct: -2.0   # 閾値超過が2pp以内: ノイズ域    → 7日様子見
+    min_hold_days: 7
+  - offset_pct: -5.0   # 閾値超過が2〜5pp:  中間域      → 3日様子見
+    min_hold_days: 3
+  # 閾値超過が5pp超: 真の止損域 → base min_hold_days (1日) で素早く exit
+
+# ── Staged Breakeven Floor（段階的 floor、2026-08-05）──────────────────────
+# 背景: Post-exit driftシミュレーション（breakeven_stop発火43件、
+# scripts/analyze_breakeven_staged_floor.py）で、現行の固定 floor（0%）は
+# peak_returnが活性化ラインを超えても上昇し続けた場合に早すぎる利確となる
+# ケースが確認された（シミュレーション上の見込み改善額: +$4,979、
+# 6件改善／0件悪化、n=43）。
+#
+# Trailing Stopのstaged_trailingと同じ設計思想で、peak_returnが上がるほど
+# floorも段階的に引き上げる（ratchet）。第1段階は現行の
+# breakeven_activation_pct（5%）と同じでfloor 0%のまま（現行ルールの
+# 完全上位互換）。
+#
+# 注意: シミュレーションはyfinance日次OHLCによる近似であり、実システムの
+# 価格ソース・実行タイミングとは異なる。n=43と少なく、改善の内訳は一部の
+# 大きな値に依存。paper実測でのフォローアップは 2026-09-05 頃を予定。
+#
+# ロールバック: staged_breakeven_enabled: false に戻すだけで即座に旧動作
+# （一律 floor=0%）に戻る。
+staged_breakeven_enabled: true
+staged_breakeven_levels:
+  - activation_pct: 0.05   # peak +5% 到達 → floor 0%（現行ルールと同一）
+    floor_pct: 0.0
+  - activation_pct: 0.08   # peak +8% 到達 → floor +3%（利益の一部を確保）
+    floor_pct: 0.03
+  - activation_pct: 0.12   # peak +12% 到達 → floor +6%（さらに確保）
+    floor_pct: 0.06
+
+# ── Volatility-adjusted stop loss（2026-08-14、Stop Loss 役割純化リデザイン）──
+# 背景: post-exit分析（docs/daily_logs/2026-08-14.md「Stop Loss 再設計」）で、
+# 運用銘柄の年率ボラティリティが30%〜75%と大きく分散していることが判明。
+# 固定%閾値（-5/-7/-9%）は高ボラ銘柄には1-2σ相当（ノイズ域）だが、
+# 低ボラ銘柄には相対的に大きすぎる可能性がある。
+#
+# 有効化すると、conviction tier（-5/-7/-9%）で決まった基準閾値に対し、
+# 当該銘柄のATR%（simple ATR近似 / latest_close）と、当該run内の
+# 全銘柄平均ATR%との比を掛け合わせて調整する
+# （volatility_multiplier = symbol_atr_pct / universe_avg_atr_pct、
+#   [volatility_multiplier_min, volatility_multiplier_max]でクランプ）。
+# 例: 基準-7%、multiplier=1.3（平均より高ボラ）→ 実効閾値 -9.1%
+#     基準-7%、multiplier=0.7（平均より低ボラ）→ 実効閾値 -4.9%
+#
+# trailing_stop / breakeven_stop には適用しない（両者は既に良好に機能しており、
+# スコープを「役割純化」した stop_loss（初期損切り分岐）のみに限定）。
+#
+# 2026-08-14 paper有効化: ヒストリカル検証2段階（simulate_volatility_adjusted_
+# stop.py簡易版 + simulate_daily_path_volatility_stop.py日次パス版、実コードの
+# exit優先順位を忠実に再現）で以下を確認済み:
+#   - 全228 closed tradeを対象にした日次パス検証で、狭めた閾値による新規誤発動
+#     （元々non-stop_loss exitだったトレードの誤爆）= 0件
+#   - 全体集計（195件、同日決済除く）: 正味+$22,900の改善方向
+#     （改善17件+$28,597 / 悪化10件-$5,697 / 変化なし168件）
+# ただしATR%はエントリー時点固定・universe平均は近似・日次終値のみという
+# 制約があるため、paper実測での最終確認を継続する。中間レビュー: 2026-08-28頃
+# （約2週間後、cron登録済み: stock_swing_volatility_adjusted_stop_review_20260828）。
+# 詳細: docs/daily_logs/2026-08-14.md「ATR動的閾値のヒストリカル検証」節。
+#
+# ロールバック: volatility_adjusted_stop_enabled: false に戻すだけ。
+volatility_adjusted_stop_enabled: true
+volatility_multiplier_min: 0.5   # 低ボラ銘柄でも閾値を半分以下には縮めない
+volatility_multiplier_max: 1.75  # 高ボラ銘柄でも閾値を1.75倍超には広げない

@@ -1,0 +1,93 @@
+{
+  "generated_at": "2026-08-15T07:37:59.130806+00:00",
+  "results": {
+    "price_below_sma": {
+      "variant": "price_below_sma",
+      "label": "SPY price >= SMA(50) required for new BUYs",
+      "train": {
+        "label": "train",
+        "n": 698,
+        "win_rate": 0.6304,
+        "profit_factor": 1.9145,
+        "net_pnl": 169013.06,
+        "avg_return_pct": 0.0242
+      },
+      "validation": {
+        "label": "validation",
+        "n": 189,
+        "win_rate": 0.4392,
+        "profit_factor": 0.5825,
+        "net_pnl": -34548.02,
+        "avg_return_pct": -0.0183
+      },
+      "holdout": {
+        "label": "holdout",
+        "n": 426,
+        "win_rate": 0.6221,
+        "profit_factor": 2.5046,
+        "net_pnl": 173321.7,
+        "avg_return_pct": 0.0407
+      },
+      "baseline_train": {
+        "label": "train",
+        "n": 732,
+        "win_rate": 0.6243,
+        "profit_factor": 1.7755,
+        "net_pnl": 160953.07,
+        "avg_return_pct": 0.022
+      },
+      "baseline_validation": {
+        "label": "validation",
+        "n": 226,
+        "win_rate": 0.4336,
+        "profit_factor": 0.56,
+        "net_pnl": -44519.5,
+        "avg_return_pct": -0.0197
+      }
+    },
+    "sma_declining": {
+      "variant": "sma_declining",
+      "label": "SPY SMA(20) non-declining over 5d required for new BUYs",
+      "train": {
+        "label": "train",
+        "n": 691,
+        "win_rate": 0.6281,
+        "profit_factor": 1.7747,
+        "net_pnl": 149382.55,
+        "avg_return_pct": 0.0216
+      },
+      "validation": {
+        "label": "validation",
+        "n": 175,
+        "win_rate": 0.4457,
+        "profit_factor": 0.6302,
+        "net_pnl": -28191.72,
+        "avg_return_pct": -0.0161
+      },
+      "holdout": {
+        "label": "holdout",
+        "n": 406,
+        "win_rate": 0.633,
+        "profit_factor": 2.5546,
+        "net_pnl": 169821.87,
+        "avg_return_pct": 0.0418
+      },
+      "baseline_train": {
+        "label": "train",
+        "n": 732,
+        "win_rate": 0.6243,
+        "profit_factor": 1.7755,
+        "net_pnl": 160953.07,
+        "avg_return_pct": 0.022
+      },
+      "baseline_validation": {
+        "label": "validation",
+        "n": 226,
+        "win_rate": 0.4336,
+        "profit_factor": 0.56,
+        "net_pnl": -44519.5,
+        "avg_return_pct": -0.0197
+      }
+    }
+  }
+}

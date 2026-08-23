@@ -1,0 +1,240 @@
+{
+  "generated_at": "2026-08-23T01:39:37.521733+00:00",
+  "since": null,
+  "total_closed": 252,
+  "filtered_count": 110,
+  "decile_stats": [
+    {
+      "decile": 1,
+      "ss_range": "0.476–0.606",
+      "ss_min": 0.4765,
+      "ss_max": 0.6063,
+      "count": 11,
+      "wins": 3,
+      "losses": 8,
+      "win_rate": 0.2727,
+      "profit_factor": 0.263,
+      "net_pnl": -8334.92,
+      "expectancy": -757.72,
+      "gross_win": 2973.16,
+      "gross_loss": 11308.08
+    },
+    {
+      "decile": 2,
+      "ss_range": "0.607–0.638",
+      "ss_min": 0.6067,
+      "ss_max": 0.6379,
+      "count": 11,
+      "wins": 5,
+      "losses": 6,
+      "win_rate": 0.4545,
+      "profit_factor": 0.664,
+      "net_pnl": -2946.42,
+      "expectancy": -267.86,
+      "gross_win": 5834.04,
+      "gross_loss": 8780.46
+    },
+    {
+      "decile": 3,
+      "ss_range": "0.639–0.679",
+      "ss_min": 0.6393,
+      "ss_max": 0.6789,
+      "count": 11,
+      "wins": 5,
+      "losses": 6,
+      "win_rate": 0.4545,
+      "profit_factor": 1.078,
+      "net_pnl": 855.32,
+      "expectancy": 77.76,
+      "gross_win": 11838.24,
+      "gross_loss": 10982.92
+    },
+    {
+      "decile": 4,
+      "ss_range": "0.685–0.701",
+      "ss_min": 0.6846,
+      "ss_max": 0.701,
+      "count": 11,
+      "wins": 4,
+      "losses": 7,
+      "win_rate": 0.3636,
+      "profit_factor": 0.473,
+      "net_pnl": -2637.03,
+      "expectancy": -239.73,
+      "gross_win": 2366.27,
+      "gross_loss": 5003.3
+    },
+    {
+      "decile": 5,
+      "ss_range": "0.704–0.805",
+      "ss_min": 0.7035,
+      "ss_max": 0.8052,
+      "count": 11,
+      "wins": 5,
+      "losses": 6,
+      "win_rate": 0.4545,
+      "profit_factor": 0.866,
+      "net_pnl": -2292.93,
+      "expectancy": -208.45,
+      "gross_win": 14837.3,
+      "gross_loss": 17130.23
+    },
+    {
+      "decile": 6,
+      "ss_range": "0.808–0.884",
+      "ss_min": 0.8082,
+      "ss_max": 0.8837,
+      "count": 11,
+      "wins": 6,
+      "losses": 5,
+      "win_rate": 0.5455,
+      "profit_factor": 0.418,
+      "net_pnl": -4469.06,
+      "expectancy": -406.28,
+      "gross_win": 3214.41,
+      "gross_loss": 7683.47
+    },
+    {
+      "decile": 7,
+      "ss_range": "0.884–1.000",
+      "ss_min": 0.8837,
+      "ss_max": 1.0,
+      "count": 11,
+      "wins": 5,
+      "losses": 6,
+      "win_rate": 0.4545,
+      "profit_factor": 0.407,
+      "net_pnl": -11024.45,
+      "expectancy": -1002.22,
+      "gross_win": 7574.24,
+      "gross_loss": 18598.69
+    },
+    {
+      "decile": 8,
+      "ss_range": "1.000–1.000",
+      "ss_min": 1.0,
+      "ss_max": 1.0,
+      "count": 11,
+      "wins": 5,
+      "losses": 6,
+      "win_rate": 0.4545,
+      "profit_factor": 0.271,
+      "net_pnl": -11523.92,
+      "expectancy": -1047.63,
+      "gross_win": 4294.46,
+      "gross_loss": 15818.38
+    },
+    {
+      "decile": 9,
+      "ss_range": "1.000–1.000",
+      "ss_min": 1.0,
+      "ss_max": 1.0,
+      "count": 11,
+      "wins": 4,
+      "losses": 7,
+      "win_rate": 0.3636,
+      "profit_factor": 0.125,
+      "net_pnl": -16531.46,
+      "expectancy": -1502.86,
+      "gross_win": 2361.52,
+      "gross_loss": 18892.98
+    },
+    {
+      "decile": 10,
+      "ss_range": "1.000–1.000",
+      "ss_min": 1.0,
+      "ss_max": 1.0,
+      "count": 11,
+      "wins": 4,
+      "losses": 7,
+      "win_rate": 0.3636,
+      "profit_factor": 0.757,
+      "net_pnl": -1991.45,
+      "expectancy": -181.04,
+      "gross_win": 6204.63,
+      "gross_loss": 8196.08
+    }
+  ],
+  "calibration_curve": [
+    {
+      "decile": 1,
+      "ss_range": "0.476–0.606",
+      "count": 11,
+      "predicted": 0.5414,
+      "actual": 0.2727,
+      "calibration_error": 0.2687
+    },
+    {
+      "decile": 2,
+      "ss_range": "0.607–0.638",
+      "count": 11,
+      "predicted": 0.6223,
+      "actual": 0.4545,
+      "calibration_error": 0.1678
+    },
+    {
+      "decile": 3,
+      "ss_range": "0.639–0.679",
+      "count": 11,
+      "predicted": 0.6591,
+      "actual": 0.4545,
+      "calibration_error": 0.2046
+    },
+    {
+      "decile": 4,
+      "ss_range": "0.685–0.701",
+      "count": 11,
+      "predicted": 0.6928,
+      "actual": 0.3636,
+      "calibration_error": 0.3292
+    },
+    {
+      "decile": 5,
+      "ss_range": "0.704–0.805",
+      "count": 11,
+      "predicted": 0.7544,
+      "actual": 0.4545,
+      "calibration_error": 0.2999
+    },
+    {
+      "decile": 6,
+      "ss_range": "0.808–0.884",
+      "count": 11,
+      "predicted": 0.8459,
+      "actual": 0.5455,
+      "calibration_error": 0.3004
+    },
+    {
+      "decile": 7,
+      "ss_range": "0.884–1.000",
+      "count": 11,
+      "predicted": 0.9419,
+      "actual": 0.4545,
+      "calibration_error": 0.4874
+    },
+    {
+      "decile": 8,
+      "ss_range": "1.000–1.000",
+      "count": 11,
+      "predicted": 1.0,
+      "actual": 0.4545,
+      "calibration_error": 0.5455
+    },
+    {
+      "decile": 9,
+      "ss_range": "1.000–1.000",
+      "count": 11,
+      "predicted": 1.0,
+      "actual": 0.3636,
+      "calibration_error": 0.6364
+    },
+    {
+      "decile": 10,
+      "ss_range": "1.000–1.000",
+      "count": 11,
+      "predicted": 1.0,
+      "actual": 0.3636,
+      "calibration_error": 0.6364
+    }
+  ]
+}

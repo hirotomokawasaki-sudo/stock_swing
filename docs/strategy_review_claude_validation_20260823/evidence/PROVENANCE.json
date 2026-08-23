@@ -1,0 +1,39 @@
+{
+  "copied_input_sha256": {
+    "evidence/r11_backtest_results.json": "25c6ee738dc80b5ffc9ccac8f0445be4f15adc8e405e508a0b5b6485be4992a6",
+    "evidence/r11b_param_search_results.json": "b189895c2a26a5e54537f66260d613864ab456ecd620667830575af3856ac91f",
+    "evidence/r11c2_regime_filter_results.json": "0b5e47fa0b2ee9d8a3eb3e69003ed91244146d7b914f4d9c5b651ae1481e799c",
+    "evidence/signal_strength_decile.json": "30eecd60d84a076ba4cc5ffbaa948bf8f1e7f6515063a6eb89c5f25e043f23a9",
+    "source_files/config/strategy/breakout_momentum_v1.yaml": "f302898efc1ccdd01b4da6c7ce99720f1fd4ebd8183fce1b5d27bf108d450817",
+    "source_files/config/strategy/event_swing_v1.yaml": "2c1b5883dc55ed4f0bfa72684c5c70eb56e50849e95151d96e51edbcde371112",
+    "source_files/config/strategy/simple_exit_v2.yaml": "f51b1d995b0ea02b0b3a6b6295d9cda7fef2282df4f7ce151facc957e75df1d9",
+    "source_files/console/adapters/system_adapter.py": "0c721db73c99f6c85c0e68fb33c230645b488d7d65cf01b1745a143214c6db1d",
+    "source_files/console/services/dashboard_service.py": "e3ddd10d414b7462dc8d3c5198ef00eadb34da3784018e2b185a275187cf39b2",
+    "source_files/docs/console_improvement_tasks.md": "07d03b39a153414fada326bee5a131eb8f30f3300d2d73a93093f0d3c2a355bb",
+    "source_files/scripts/check_go_no_go.py": "89bf1f750c95bd5ce537909708664f7da4a935b56c770409d9c3f2733268d4a6",
+    "source_files/scripts/r11_backtest_engine.py": "da3f934b2e13401a325b3d0d6d3255d9826aad4020f5404c4f90dbc6d6b353f2",
+    "source_files/scripts/r11_fetch_historical_data.py": "20557d01c334d1f971a35e489dcc5e54c9e11110ffe5c39e4d0bbe7b03ef12a0",
+    "source_files/scripts/r11b_param_search.py": "fd0d8a5fb3215323cc7714badba19a1678fba19a4f05ddb6504afae680652354",
+    "source_files/scripts/r11c2_regime_filter_backtest.py": "1cd2bc176cbf9f0fcb52f5cfa2133e663090e6324de1041c6ad9a34c1021a868",
+    "source_files/src/stock_swing/cli/paper_demo.py": "33d6ad1a5e679190ed3ae4ce25e64b694576d105498d701f0d4c186e04c74200",
+    "source_files/src/stock_swing/feature_engine/price_momentum_feature.py": "05b513327d2e52908565c86266001be56d645fe553ffcc86c44653ba919de569",
+    "source_files/src/stock_swing/reporting/console_summary.py": "82aa79520611df75ab2fa26ce95f64f1e7e81386f0a54bc5d97afa9231daa63b",
+    "source_files/src/stock_swing/risk/position_sizing.py": "9e6ae401d47a6c3e6b92b6b37f8462ee7abca99b33fae0f1bc1fe008319a5675",
+    "source_files/src/stock_swing/risk/promotion_gate.py": "25a916542fa92d5a7fc933746643d86725ffcefe32899da8fb114de77cb13309",
+    "source_files/src/stock_swing/strategy_engine/breakout_momentum_strategy.py": "9dd95fe153f219309c2f34d382acd5167919b8abe905b063bd328d0b7f67f3f7",
+    "source_files/src/stock_swing/strategy_engine/event_swing_strategy.py": "193c3656c7c448f277dfc5097c51356db5270395a626a90ef8957a9ec3614d1d",
+    "source_files/src/stock_swing/strategy_engine/simple_exit_v2_strategy.py": "29d47b52243a6dc99d8cdbc532108d8ce609733788ab5b067ddcda379ebed846"
+  },
+  "created_at": "2026-08-23T04:28:02.149639+00:00",
+  "git_head": "cf6bc75a1d3cb5e8eff5e3168cf89de74f8fd774",
+  "git_head_subject": "監査対応: Go/No-Go判定基盤・データ鮮度の6バグ修正を適用",
+  "git_head_time": "2026-08-23T12:53:32+09:00",
+  "live_tracker_sha256": "300ed6eff59ff41c3733cef8adc703d5c507e445efced1ce84b30953e901ed9d",
+  "privacy": [
+    "sanitized trade evidence excludes account IDs",
+    "sanitized trade evidence excludes broker order/fill/trade IDs",
+    "source code/config snapshots contain no credential files"
+  ],
+  "relevant_source_worktree_status": "clean",
+  "schema": "strategy-review-validation-provenance-v1"
+}

@@ -1,0 +1,345 @@
+{
+  "generated_at": "2026-08-15T06:55:40.695319+00:00",
+  "segments": {
+    "train": [
+      "2024-08-15",
+      "2025-10-24"
+    ],
+    "validation": [
+      "2025-10-27",
+      "2026-03-20"
+    ],
+    "holdout": [
+      "2026-03-23",
+      "2026-08-14"
+    ]
+  },
+  "grid_results": [
+    {
+      "min_momentum": 0.03,
+      "min_signal_strength": 0.3,
+      "train": {
+        "label": "train",
+        "n": 883,
+        "win_rate": 0.6217,
+        "profit_factor": 1.6871,
+        "net_pnl": 175811.55,
+        "avg_return_pct": 0.0199
+      },
+      "validation": {
+        "label": "validation",
+        "n": 274,
+        "win_rate": 0.3832,
+        "profit_factor": 0.5267,
+        "net_pnl": -59467.7,
+        "avg_return_pct": -0.0217
+      }
+    },
+    {
+      "min_momentum": 0.03,
+      "min_signal_strength": 0.4,
+      "train": {
+        "label": "train",
+        "n": 732,
+        "win_rate": 0.6243,
+        "profit_factor": 1.7755,
+        "net_pnl": 160953.07,
+        "avg_return_pct": 0.022
+      },
+      "validation": {
+        "label": "validation",
+        "n": 226,
+        "win_rate": 0.4336,
+        "profit_factor": 0.56,
+        "net_pnl": -44519.5,
+        "avg_return_pct": -0.0197
+      }
+    },
+    {
+      "min_momentum": 0.03,
+      "min_signal_strength": 0.5,
+      "train": {
+        "label": "train",
+        "n": 614,
+        "win_rate": 0.6466,
+        "profit_factor": 1.9278,
+        "net_pnl": 154806.11,
+        "avg_return_pct": 0.0252
+      },
+      "validation": {
+        "label": "validation",
+        "n": 167,
+        "win_rate": 0.485,
+        "profit_factor": 0.6317,
+        "net_pnl": -27140.01,
+        "avg_return_pct": -0.0163
+      }
+    },
+    {
+      "min_momentum": 0.03,
+      "min_signal_strength": 0.6,
+      "train": {
+        "label": "train",
+        "n": 494,
+        "win_rate": 0.67,
+        "profit_factor": 2.1758,
+        "net_pnl": 150343.4,
+        "avg_return_pct": 0.0304
+      },
+      "validation": {
+        "label": "validation",
+        "n": 140,
+        "win_rate": 0.5143,
+        "profit_factor": 0.5913,
+        "net_pnl": -25892.46,
+        "avg_return_pct": -0.0185
+      }
+    },
+    {
+      "min_momentum": 0.05,
+      "min_signal_strength": 0.3,
+      "train": {
+        "label": "train",
+        "n": 883,
+        "win_rate": 0.6217,
+        "profit_factor": 1.6871,
+        "net_pnl": 175811.55,
+        "avg_return_pct": 0.0199
+      },
+      "validation": {
+        "label": "validation",
+        "n": 274,
+        "win_rate": 0.3832,
+        "profit_factor": 0.5267,
+        "net_pnl": -59467.7,
+        "avg_return_pct": -0.0217
+      }
+    },
+    {
+      "min_momentum": 0.05,
+      "min_signal_strength": 0.4,
+      "train": {
+        "label": "train",
+        "n": 732,
+        "win_rate": 0.6243,
+        "profit_factor": 1.7755,
+        "net_pnl": 160953.07,
+        "avg_return_pct": 0.022
+      },
+      "validation": {
+        "label": "validation",
+        "n": 226,
+        "win_rate": 0.4336,
+        "profit_factor": 0.56,
+        "net_pnl": -44519.5,
+        "avg_return_pct": -0.0197
+      }
+    },
+    {
+      "min_momentum": 0.05,
+      "min_signal_strength": 0.5,
+      "train": {
+        "label": "train",
+        "n": 614,
+        "win_rate": 0.6466,
+        "profit_factor": 1.9278,
+        "net_pnl": 154806.11,
+        "avg_return_pct": 0.0252
+      },
+      "validation": {
+        "label": "validation",
+        "n": 167,
+        "win_rate": 0.485,
+        "profit_factor": 0.6317,
+        "net_pnl": -27140.01,
+        "avg_return_pct": -0.0163
+      }
+    },
+    {
+      "min_momentum": 0.05,
+      "min_signal_strength": 0.6,
+      "train": {
+        "label": "train",
+        "n": 494,
+        "win_rate": 0.67,
+        "profit_factor": 2.1758,
+        "net_pnl": 150343.4,
+        "avg_return_pct": 0.0304
+      },
+      "validation": {
+        "label": "validation",
+        "n": 140,
+        "win_rate": 0.5143,
+        "profit_factor": 0.5913,
+        "net_pnl": -25892.46,
+        "avg_return_pct": -0.0185
+      }
+    },
+    {
+      "min_momentum": 0.08,
+      "min_signal_strength": 0.3,
+      "train": {
+        "label": "train",
+        "n": 732,
+        "win_rate": 0.6243,
+        "profit_factor": 1.7755,
+        "net_pnl": 160953.07,
+        "avg_return_pct": 0.022
+      },
+      "validation": {
+        "label": "validation",
+        "n": 226,
+        "win_rate": 0.4336,
+        "profit_factor": 0.56,
+        "net_pnl": -44519.5,
+        "avg_return_pct": -0.0197
+      }
+    },
+    {
+      "min_momentum": 0.08,
+      "min_signal_strength": 0.4,
+      "train": {
+        "label": "train",
+        "n": 732,
+        "win_rate": 0.6243,
+        "profit_factor": 1.7755,
+        "net_pnl": 160953.07,
+        "avg_return_pct": 0.022
+      },
+      "validation": {
+        "label": "validation",
+        "n": 226,
+        "win_rate": 0.4336,
+        "profit_factor": 0.56,
+        "net_pnl": -44519.5,
+        "avg_return_pct": -0.0197
+      }
+    },
+    {
+      "min_momentum": 0.08,
+      "min_signal_strength": 0.5,
+      "train": {
+        "label": "train",
+        "n": 614,
+        "win_rate": 0.6466,
+        "profit_factor": 1.9278,
+        "net_pnl": 154806.11,
+        "avg_return_pct": 0.0252
+      },
+      "validation": {
+        "label": "validation",
+        "n": 167,
+        "win_rate": 0.485,
+        "profit_factor": 0.6317,
+        "net_pnl": -27140.01,
+        "avg_return_pct": -0.0163
+      }
+    },
+    {
+      "min_momentum": 0.08,
+      "min_signal_strength": 0.6,
+      "train": {
+        "label": "train",
+        "n": 494,
+        "win_rate": 0.67,
+        "profit_factor": 2.1758,
+        "net_pnl": 150343.4,
+        "avg_return_pct": 0.0304
+      },
+      "validation": {
+        "label": "validation",
+        "n": 140,
+        "win_rate": 0.5143,
+        "profit_factor": 0.5913,
+        "net_pnl": -25892.46,
+        "avg_return_pct": -0.0185
+      }
+    },
+    {
+      "min_momentum": 0.12,
+      "min_signal_strength": 0.3,
+      "train": {
+        "label": "train",
+        "n": 494,
+        "win_rate": 0.67,
+        "profit_factor": 2.1758,
+        "net_pnl": 150343.4,
+        "avg_return_pct": 0.0304
+      },
+      "validation": {
+        "label": "validation",
+        "n": 140,
+        "win_rate": 0.5143,
+        "profit_factor": 0.5913,
+        "net_pnl": -25892.46,
+        "avg_return_pct": -0.0185
+      }
+    },
+    {
+      "min_momentum": 0.12,
+      "min_signal_strength": 0.4,
+      "train": {
+        "label": "train",
+        "n": 494,
+        "win_rate": 0.67,
+        "profit_factor": 2.1758,
+        "net_pnl": 150343.4,
+        "avg_return_pct": 0.0304
+      },
+      "validation": {
+        "label": "validation",
+        "n": 140,
+        "win_rate": 0.5143,
+        "profit_factor": 0.5913,
+        "net_pnl": -25892.46,
+        "avg_return_pct": -0.0185
+      }
+    },
+    {
+      "min_momentum": 0.12,
+      "min_signal_strength": 0.5,
+      "train": {
+        "label": "train",
+        "n": 494,
+        "win_rate": 0.67,
+        "profit_factor": 2.1758,
+        "net_pnl": 150343.4,
+        "avg_return_pct": 0.0304
+      },
+      "validation": {
+        "label": "validation",
+        "n": 140,
+        "win_rate": 0.5143,
+        "profit_factor": 0.5913,
+        "net_pnl": -25892.46,
+        "avg_return_pct": -0.0185
+      }
+    },
+    {
+      "min_momentum": 0.12,
+      "min_signal_strength": 0.6,
+      "train": {
+        "label": "train",
+        "n": 494,
+        "win_rate": 0.67,
+        "profit_factor": 2.1758,
+        "net_pnl": 150343.4,
+        "avg_return_pct": 0.0304
+      },
+      "validation": {
+        "label": "validation",
+        "n": 140,
+        "win_rate": 0.5143,
+        "profit_factor": 0.5913,
+        "net_pnl": -25892.46,
+        "avg_return_pct": -0.0185
+      }
+    }
+  ],
+  "survivors": [],
+  "winner": null,
+  "production_default": {
+    "min_momentum": 0.05,
+    "min_signal_strength": 0.4
+  }
+}
