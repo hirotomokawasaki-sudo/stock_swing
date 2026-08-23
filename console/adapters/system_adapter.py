@@ -603,14 +603,43 @@ class SystemAdapter:
 
         parsed_jobs = total_jobs - len(parse_errors)
         coverage = (parsed_jobs / total_jobs) if total_jobs else 0.0
+
+        # AUDIT FIX (2026-08-23): this check previously only verified that
+        # `openclaw cron runs --id ...` returned parseable JSON
+        # (_fetch_one_job_runs returns None on "parsed OK", regardless of
+        # what the parsed payload's own run-status fields say). A job whose
+        # most recent scheduled run actually failed -- but whose run-history
+        # JSON itself still parsed fine, which it always does -- was
+        # reported as fully healthy. Evaluate each enabled job's own
+        # `state.lastRunStatus` / `state.consecutiveErrors` (already present
+        # in the `cron list --json` payload we already fetched above, no
+        # extra subprocess calls needed) so a genuinely failing job is
+        # flagged even when its run-history JSON is syntactically valid.
+        # Jobs that have never run yet (lastRunStatus is None -- e.g. a
+        # scheduled `at` job whose fire time hasn't arrived) are not treated
+        # as unhealthy.
+        unhealthy_jobs: list[dict[str, Any]] = []
+        for job in enabled_jobs:
+            state = job.get("state") or {}
+            last_status = state.get("lastRunStatus")
+            consecutive_errors = state.get("consecutiveErrors") or 0
+            if last_status == "error" or consecutive_errors > 0:
+                unhealthy_jobs.append({
+                    "job": job.get("name") or job.get("id"),
+                    "job_id": job.get("id"),
+                    "lastRunStatus": last_status,
+                    "consecutiveErrors": consecutive_errors,
+                })
+
         return {
             "critical": True,
-            "ok": total_jobs > 0 and not parse_errors and coverage == 1.0,
+            "ok": total_jobs > 0 and not parse_errors and coverage == 1.0 and not unhealthy_jobs,
             "enabled_jobs": total_jobs,
             "parsed_jobs": parsed_jobs,
             "parse_coverage": round(coverage, 6),
             "parse_errors": parse_errors,
-            "detail": "openclaw cron list --json + openclaw cron runs --limit",
+            "unhealthy_jobs": unhealthy_jobs,
+            "detail": "openclaw cron list --json + openclaw cron runs --limit + last-run status evaluation",
         }
 
     def _run_openclaw_json(self, args: list[str]) -> dict[str, Any]:

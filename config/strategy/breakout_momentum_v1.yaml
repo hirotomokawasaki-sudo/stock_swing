@@ -9,5 +9,21 @@ name: breakout_momentum_v1
 # all positions regardless of originating entry strategy. This field is kept
 # only for historical/documentation purposes — do not treat it as active.
 max_hold_days: 2  # UNUSED — see note above
-require_volume_confirmation: true
-require_market_regime_confirmation: true
+
+# NOTE (2026-08-23, strategy-contract audit): this ENTIRE FILE is not loaded
+# by any code path (verified via grep -- no `breakout_momentum_v1.yaml` /
+# `breakout_momentum_v1\.yaml` reference exists in src/, scripts/, or
+# console/). paper_demo.py constructs BreakoutMomentumStrategy directly from
+# CLI args (--min-momentum, --min-signal-strength), not from this YAML.
+# require_volume_confirmation / require_market_regime_confirmation below are
+# additionally UNUSED even independent of the file-loading gap:
+# PriceMomentumFeature.compute() (src/stock_swing/feature_engine/
+# price_momentum_feature.py) computes momentum as a simple
+# (latest_close-earliest_close)/earliest_close window return -- it does not
+# check prior-high breakout levels or require volume confirmation, and
+# BreakoutMomentumStrategy.generate() does not read either flag. The
+# strategy's actual behavior is a plain N-day momentum-threshold filter, not
+# a breakout-with-volume-confirmation rule as the flag names would suggest.
+# Do not assume setting these flags changes runtime behavior.
+require_volume_confirmation: true  # UNUSED — see note above
+require_market_regime_confirmation: true  # UNUSED — see note above

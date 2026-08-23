@@ -72,6 +72,18 @@ class ConsoleSummary:
     alerts: list[ConsoleAlert] = field(default_factory=list)
     missing_metrics: list[str] = field(default_factory=list)
 
+    # AUDIT FIX (2026-08-23): paper_demo.py's --dry-run branch previously
+    # called ConsoleSummary.build()/.emit() with no way to distinguish the
+    # resulting summary from a real scheduled paper run -- both write to the
+    # exact same reports/console/latest_console_summary.json path. This let
+    # a manual diagnostic dry-run silently "refresh" the evidence that
+    # scripts/check_go_no_go.py's console_summary_freshness check reads,
+    # making a stale/broken scheduled-run history look current. Persist
+    # provenance explicitly so downstream consumers can require
+    # dry_run=False evidence for real Go/No-Go decisions.
+    dry_run: bool = False
+    invocation_source: str = "unknown"  # e.g. "paper_demo_cli", "paper_demo_dry_run"
+
     # --- C2 additions ---
     price_integrity: dict[str, Any] = field(default_factory=dict)
     api_metrics: dict[str, Any] = field(default_factory=dict)
@@ -127,6 +139,11 @@ class ConsoleSummary:
                 "timestamp": self.timestamp,
                 "duration_seconds": self.duration_seconds,
                 "guardrail_status": self.guardrail_status,
+                # AUDIT FIX (2026-08-23): provenance so Go/No-Go evidence
+                # checks can require dry_run=False (a real scheduled/manual
+                # non-dry-run) instead of trusting any write to this file.
+                "dry_run": self.dry_run,
+                "invocation_source": self.invocation_source,
                 # R6-v2: separated status fields
                 "last_run": {
                     "status": self.run_status,
@@ -310,6 +327,9 @@ class ConsoleSummary:
         stop_loss_health: dict[str, Any] | None = None,
         # R7-v2-A: Source SLA (2026-07-30)
         source_sla: dict[str, Any] | None = None,
+        # AUDIT FIX (2026-08-23): dry-run provenance (see field docstring above)
+        dry_run: bool = False,
+        invocation_source: str = "unknown",
     ) -> "ConsoleSummary":
         decisions = decisions or []
         submissions = submissions or []
@@ -468,4 +488,6 @@ class ConsoleSummary:
             circuit_breaker_detail=circuit_breaker_detail or {},
             stop_loss_health=stop_loss_health or {},
             source_sla=source_sla or {},
+            dry_run=dry_run,
+            invocation_source=invocation_source,
         )

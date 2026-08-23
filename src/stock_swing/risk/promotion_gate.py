@@ -132,31 +132,70 @@ def _evaluate_cluster_cap(cluster_exposures: list[dict] | None) -> PromotionCrit
 
 
 def _evaluate_top5_concentration(
-    top5_concentration: float | None,
+    top5_concentration_equity_pct: float | None,
     max_pct: float = DEFAULT_TOP5_CONCENTRATION_MAX_PCT,
+    *,
+    top5_concentration_gross_pct: float | None = None,
+    gross_exposure_pct_of_equity: float | None = None,
+    hhi: float | None = None,
 ) -> PromotionCriterion:
-    """Top-5 position concentration (as a fraction, e.g. 0.35 = 35%) must be
-    below max_pct.
+    """Top-5 position concentration, as a fraction of ACCOUNT EQUITY (e.g.
+    0.35 = 35% of equity), must be below max_pct.
+
+    AUDIT FIX (2026-08-23): this criterion previously received
+    dashboard_service._summarize_positions()'s "top5_concentration" key,
+    which is top5 weight / GROSS EXPOSURE (portfolio_weight is computed as
+    market_value/gross_exposure, so weights always sum to 100% across all
+    positions regardless of how much of equity is actually invested). That
+    was compared against max_pct=40%, a threshold whose own historical
+    comment ties it to AllocationConfig.correlated_cluster_cap_pct -- an
+    EQUITY-based cap. A portfolio can look "fine" on a gross basis (top5/
+    gross shrinks toward 0 as position count grows, independent of equity
+    utilization) while still being concentrated relative to actual account
+    equity, or vice versa. This function now takes the EQUITY-based
+    percentage as its primary evaluated metric, matching the threshold's
+    apparent intent.
 
     Args:
-        top5_concentration: fraction (0.0-1.0), as produced by
-            dashboard_service._summarize_positions()'s "top5_concentration"
-            key. None when positions are unavailable.
+        top5_concentration_equity_pct: fraction (0.0-1.0) of ACCOUNT EQUITY,
+            as produced by dashboard_service._summarize_positions()'s
+            "top5_concentration_equity_pct" key. None when positions or
+            equity are unavailable.
+        top5_concentration_gross_pct: fraction (0.0-1.0) of GROSS EXPOSURE
+            (the old/legacy basis), included in `detail` for visibility only
+            -- not itself evaluated against max_pct.
+        gross_exposure_pct_of_equity: gross exposure as a fraction of
+            equity, included in `detail` for visibility (e.g. a portfolio
+            near or above 100% here is using most/all of its capital
+            regardless of top5 concentration).
+        hhi: Herfindahl-Hirschman Index (sum of squared gross-exposure
+            weights) as an alternate, cutoff-independent concentration
+            measure, included in `detail` for visibility only.
     """
-    if top5_concentration is None:
+    _detail_parts = []
+    if top5_concentration_gross_pct is not None:
+        _detail_parts.append(f"gross_basis={top5_concentration_gross_pct * 100:.1f}%")
+    if gross_exposure_pct_of_equity is not None:
+        _detail_parts.append(f"gross_exposure/equity={gross_exposure_pct_of_equity * 100:.1f}%")
+    if hhi is not None:
+        _detail_parts.append(f"hhi={hhi:.4f}")
+    _detail = ", ".join(_detail_parts)
+
+    if top5_concentration_equity_pct is None:
         return PromotionCriterion(
             name="top5_concentration",
             passed=False,
             actual="unavailable",
-            required=f"<={max_pct:.0f}%",
-            detail="position data not provided",
+            required=f"<={max_pct:.0f}% of equity",
+            detail=_detail or "position data not provided",
         )
-    pct = top5_concentration * 100.0
+    pct = top5_concentration_equity_pct * 100.0
     return PromotionCriterion(
         name="top5_concentration",
         passed=pct <= max_pct,
-        actual=f"{pct:.1f}%",
-        required=f"<={max_pct:.0f}%",
+        actual=f"{pct:.1f}% of equity",
+        required=f"<={max_pct:.0f}% of equity",
+        detail=_detail,
     )
 
 
@@ -272,6 +311,9 @@ def evaluate_promotion_readiness(
     *,
     cluster_exposures: list[dict] | None = None,
     top5_concentration: float | None = None,
+    top5_concentration_gross_pct: float | None = None,
+    gross_exposure_pct_of_equity: float | None = None,
+    top5_hhi: float | None = None,
     beta_data: dict[str, Any] | None = None,
     closed_trades: list[dict] | None = None,
     correlation_summary: dict[str, Any] | None = None,
@@ -302,7 +344,18 @@ def evaluate_promotion_readiness(
     """
     criteria = [
         _evaluate_cluster_cap(cluster_exposures),
-        _evaluate_top5_concentration(top5_concentration, max_pct=top5_concentration_max_pct),
+        # AUDIT FIX (2026-08-23): `top5_concentration` (the legacy
+        # gross-exposure-based fraction) is accepted for backward
+        # compatibility with older callers, but the equity-based fraction is
+        # now the metric actually evaluated against max_pct when both are
+        # provided. See _evaluate_top5_concentration()'s docstring.
+        _evaluate_top5_concentration(
+            top5_concentration,
+            max_pct=top5_concentration_max_pct,
+            top5_concentration_gross_pct=top5_concentration_gross_pct,
+            gross_exposure_pct_of_equity=gross_exposure_pct_of_equity,
+            hhi=top5_hhi,
+        ),
         _evaluate_beta(beta_data, max_beta=beta_max),
         _evaluate_clean_cohort_pf(closed_trades, min_pf=clean_pf_min, min_trades=clean_pf_min_trades),
         _evaluate_pairwise_correlation(correlation_summary, max_pct=high_correlation_max_pct),

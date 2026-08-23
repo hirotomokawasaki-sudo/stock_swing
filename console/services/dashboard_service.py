@@ -2235,14 +2235,44 @@ class DashboardService:
         # Broker positions: qty > 0 = long, qty < 0 = short
         long_count = len([p for p in positions if float(p.get("qty", 0)) > 0])
         short_count = len([p for p in positions if float(p.get("qty", 0)) < 0])
-        
+
+        # AUDIT FIX (2026-08-23): "top5_concentration" (top5 weight / gross
+        # exposure -- weights above sum to 100% across ALL positions, so this
+        # is inherently a fraction of gross exposure) was being compared
+        # against promotion_gate.py's DEFAULT_TOP5_CONCENTRATION_MAX_PCT=40%
+        # threshold, whose own code comment ties it to
+        # AllocationConfig.correlated_cluster_cap_pct -- an EQUITY-based cap.
+        # A portfolio can be 100% invested with perfectly even weights
+        # (top5/gross alone always shrinks toward 0 as position count grows,
+        # regardless of leverage or equity utilization) while still being
+        # dangerously concentrated relative to account equity if gross
+        # exposure itself is a large multiple of equity, or vice versa.
+        # Expose all three bases explicitly so a consumer picks the metric
+        # that actually matches its threshold's intended denominator, rather
+        # than silently mixing bases. HHI (sum of squared gross-exposure
+        # weights) is included as a concentration measure that does not
+        # depend on an arbitrary "top N" cutoff.
+        top5_gross_pct = top5
+        top5_equity_pct = (top5 * gross_exposure / latest_equity) if latest_equity else None
+        gross_exposure_pct_of_equity = (gross_exposure / latest_equity) if latest_equity else None
+        hhi = sum((w or 0.0) ** 2 for w in weights) if weights else 0.0
+
         return {
             "gross_exposure": gross_exposure,
             "net_exposure": gross_exposure,
             "long_count": long_count,
             "short_count": short_count,
             "largest_position_weight": largest_weight,
+            # DEPRECATED (kept for backward compat): identical to
+            # top5_concentration_gross_pct below. Existing consumers
+            # (promotion_gate.py) currently compare this against an
+            # equity-based threshold -- see top5_concentration_equity_pct
+            # for the metric that actually matches that threshold's intent.
             "top5_concentration": top5,
+            "top5_concentration_gross_pct": top5_gross_pct,
+            "top5_concentration_equity_pct": top5_equity_pct,
+            "gross_exposure_pct_of_equity": gross_exposure_pct_of_equity,
+            "hhi": round(hhi, 4),
             "unrealized_pnl": unrealized_pnl,
             "avg_holding_days": avg_holding_days,
         }

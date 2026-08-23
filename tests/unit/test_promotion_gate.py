@@ -62,7 +62,11 @@ class TestTop5Concentration:
     def test_under_threshold_passes(self):
         result = _evaluate_top5_concentration(0.30)  # 30%
         assert result.passed is True
-        assert result.actual == "30.0%"
+        # AUDIT FIX (2026-08-23): actual is now labeled "% of equity" since
+        # this criterion evaluates the equity-based top5 fraction, not the
+        # legacy gross-exposure-based fraction. See
+        # _evaluate_top5_concentration()'s docstring for the distinction.
+        assert result.actual == "30.0% of equity"
 
     def test_over_threshold_fails(self):
         result = _evaluate_top5_concentration(0.55)  # 55%

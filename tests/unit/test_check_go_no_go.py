@@ -144,7 +144,10 @@ def test_all_pass_when_real_mismatch_zero_despite_raw_nonzero(monkeypatch, tmp_p
     summary = {
         "health": _base_health(broker_tracker_mismatch_count=2),
         "broker_tracker_diff": {"real_mismatch_count": 0},
-        "run": {"timestamp": datetime.now(timezone.utc).isoformat()},
+        # AUDIT FIX (2026-08-23, second pass): dry_run=False is now required
+        # by the console_summary_not_dry_run condition (see
+        # ConsoleSummary.dry_run / invocation_source provenance fields).
+        "run": {"timestamp": datetime.now(timezone.utc).isoformat(), "dry_run": False},
     }
     (console_dir / "latest_console_summary.json").write_text(_json.dumps(summary), encoding="utf-8")
 
@@ -155,8 +158,12 @@ def test_all_pass_when_real_mismatch_zero_despite_raw_nonzero(monkeypatch, tmp_p
     tracking_dir = tmp_path / "data" / "tracking"
     tracking_dir.mkdir(parents=True, exist_ok=True)
     today = datetime.now(module.JST).date()
+    # AUDIT FIX (2026-08-23, second pass): paper_3day_confirmation now
+    # requires decisions_generated>0 per snapshot (a generic
+    # daily_report_morning bookkeeping snapshot has decisions_generated=0
+    # and must not count as evidence of a real scheduled paper_demo run).
     snapshots = [
-        {"date": (today - timedelta(days=offset)).isoformat(), "equity": 1_000_000.0}
+        {"date": (today - timedelta(days=offset)).isoformat(), "equity": 1_000_000.0, "decisions_generated": 5}
         for offset in range(3)
     ]
     (tracking_dir / "pnl_state.json").write_text(

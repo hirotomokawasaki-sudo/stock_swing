@@ -2237,6 +2237,12 @@ def main() -> int:  # noqa: C901
             ),
             # R7-v2-A: Source SLA
             source_sla=_get_source_sla(project_root),
+            # AUDIT FIX (2026-08-23): mark this summary as dry-run provenance
+            # so scripts/check_go_no_go.py's freshness check can require
+            # dry_run=False evidence instead of accepting any write to
+            # latest_console_summary.json as proof of a real scheduled run.
+            dry_run=True,
+            invocation_source="paper_demo_dry_run",
         )
         console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
         return finish(
@@ -2939,6 +2945,12 @@ def main() -> int:  # noqa: C901
         ),
         # R7-v2-A: Source SLA
         source_sla=_get_source_sla(project_root),
+        # AUDIT FIX (2026-08-23): this is the real (non-dry-run) execution
+        # path -- orders may have actually been submitted above. Mark
+        # dry_run=False explicitly so scripts/check_go_no_go.py can
+        # distinguish this evidence from a diagnostic --dry-run summary.
+        dry_run=False,
+        invocation_source="paper_demo_scheduled",
     )
     console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
 
