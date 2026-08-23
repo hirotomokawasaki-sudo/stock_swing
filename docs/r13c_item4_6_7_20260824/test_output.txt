@@ -1,0 +1,52 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.10, pytest-9.0.2, pluggy-1.6.0 -- /Users/hirotomookawasaki/stock_swing/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/hirotomookawasaki/stock_swing
+configfile: pyproject.toml
+plugins: cov-7.1.0, anyio-4.13.0
+collecting ... collected 42 items
+
+tests/unit/test_trial_registry.py::TestRecordAndListRoundTrip::test_record_then_list_returns_the_trial PASSED [  2%]
+tests/unit/test_trial_registry.py::TestRecordAndListRoundTrip::test_multiple_trials_persist_in_append_order PASSED [  4%]
+tests/unit/test_trial_registry.py::TestRecordAndListRoundTrip::test_registry_reinstantiated_on_same_path_sees_prior_trials PASSED [  7%]
+tests/unit/test_trial_registry.py::TestMissingLedgerFileFallback::test_list_trials_on_nonexistent_ledger_returns_empty_list PASSED [  9%]
+tests/unit/test_trial_registry.py::TestMissingLedgerFileFallback::test_count_trials_on_nonexistent_ledger_returns_zero PASSED [ 11%]
+tests/unit/test_trial_registry.py::TestMissingLedgerFileFallback::test_constructor_creates_parent_directory PASSED [ 14%]
+tests/unit/test_trial_registry.py::TestFilteringByRoadmapItemScriptSegment::test_list_trials_filters_by_roadmap_item PASSED [ 16%]
+tests/unit/test_trial_registry.py::TestFilteringByRoadmapItemScriptSegment::test_list_trials_filters_by_script PASSED [ 19%]
+tests/unit/test_trial_registry.py::TestFilteringByRoadmapItemScriptSegment::test_list_trials_filters_by_segment PASSED [ 21%]
+tests/unit/test_trial_registry.py::TestFilteringByRoadmapItemScriptSegment::test_filters_compose_with_logical_and PASSED [ 23%]
+tests/unit/test_trial_registry.py::TestCountTrialsMultipleComparisonsDisclosure::test_count_trials_reflects_full_grid_search_size PASSED [ 26%]
+tests/unit/test_trial_registry.py::TestCountTrialsMultipleComparisonsDisclosure::test_count_trials_zero_for_unknown_roadmap_item PASSED [ 28%]
+tests/unit/test_trial_registry.py::TestWinnersQuery::test_winners_returns_only_selected_as_winner_true PASSED [ 30%]
+tests/unit/test_trial_registry.py::TestWinnersQuery::test_winners_empty_when_no_trial_marked PASSED [ 33%]
+tests/unit/test_trial_registry.py::TestOptionalFieldsAndSerialization::test_extra_field_included_when_provided PASSED [ 35%]
+tests/unit/test_trial_registry.py::TestOptionalFieldsAndSerialization::test_extra_field_omitted_when_empty PASSED [ 38%]
+tests/unit/test_trial_registry.py::TestOptionalFieldsAndSerialization::test_profit_factor_can_be_the_string_inf PASSED [ 40%]
+tests/unit/test_trial_registry.py::TestOptionalFieldsAndSerialization::test_default_segment_is_full PASSED [ 42%]
+tests/unit/test_rolling_walk_forward.py::TestGenerateRollingSplitsBasicShape::test_returns_n_rolls_splits_for_sufficient_history PASSED [ 45%]
+tests/unit/test_rolling_walk_forward.py::TestGenerateRollingSplitsBasicShape::test_roll_indices_are_sequential_starting_at_zero PASSED [ 47%]
+tests/unit/test_rolling_walk_forward.py::TestGenerateRollingSplitsBasicShape::test_train_window_precedes_test_window_within_each_roll PASSED [ 50%]
+tests/unit/test_rolling_walk_forward.py::TestGenerateRollingSplitsBasicShape::test_test_windows_advance_across_rolls PASSED [ 52%]
+tests/unit/test_rolling_walk_forward.py::TestEmbargoGapExcludesLeakage::test_embargo_range_sits_strictly_between_train_and_test PASSED [ 54%]
+tests/unit/test_rolling_walk_forward.py::TestEmbargoGapExcludesLeakage::test_embargo_is_none_when_embargo_days_is_zero PASSED [ 57%]
+tests/unit/test_rolling_walk_forward.py::TestEmbargoGapExcludesLeakage::test_zero_embargo_leaves_no_gap_between_train_and_test PASSED [ 59%]
+tests/unit/test_rolling_walk_forward.py::TestPartitionTradesByRollExcludesEmbargoFromBothSides::test_trade_entered_during_embargo_excluded_from_train_and_test PASSED [ 61%]
+tests/unit/test_rolling_walk_forward.py::TestPartitionTradesByRollExcludesEmbargoFromBothSides::test_partition_uses_custom_date_key PASSED [ 64%]
+tests/unit/test_rolling_walk_forward.py::TestPartitionTradesByRollExcludesEmbargoFromBothSides::test_trade_missing_date_key_is_silently_skipped PASSED [ 66%]
+tests/unit/test_rolling_walk_forward.py::TestPartitionTradesByRollExcludesEmbargoFromBothSides::test_trade_outside_all_windows_not_counted_anywhere PASSED [ 69%]
+tests/unit/test_rolling_walk_forward.py::TestInvalidInputsFailFast::test_n_rolls_less_than_one_raises PASSED [ 71%]
+tests/unit/test_rolling_walk_forward.py::TestInvalidInputsFailFast::test_train_frac_out_of_range_raises PASSED [ 73%]
+tests/unit/test_rolling_walk_forward.py::TestInvalidInputsFailFast::test_train_frac_zero_raises PASSED [ 76%]
+tests/unit/test_rolling_walk_forward.py::TestInvalidInputsFailFast::test_test_frac_out_of_range_raises PASSED [ 78%]
+tests/unit/test_rolling_walk_forward.py::TestInsufficientHistoryReturnsEmptyNotCrash::test_too_short_date_range_returns_empty_list PASSED [ 80%]
+tests/unit/test_rolling_walk_forward.py::TestInsufficientHistoryReturnsEmptyNotCrash::test_exactly_one_full_block_fits_returns_single_roll PASSED [ 83%]
+tests/unit/test_r11_backtest_engine_v4.py::TestGrossExposureCapDropsExcessEntries::test_second_entry_dropped_when_gross_cap_too_tight_for_both PASSED [ 85%]
+tests/unit/test_r11_backtest_engine_v4.py::TestGrossExposureCapDropsExcessEntries::test_caps_disabled_is_a_true_noop_matching_v3_behavior PASSED [ 88%]
+tests/unit/test_r11_backtest_engine_v4.py::TestSectorCapDropsExcessEntries::test_sector_cap_blocks_second_semis_entry_when_gross_cap_is_loose PASSED [ 90%]
+tests/unit/test_r11_backtest_engine_v4.py::TestClusterCapDropsExcessEntries::test_cluster_cap_blocks_second_entry_in_same_cluster PASSED [ 92%]
+tests/unit/test_r11_backtest_engine_v4.py::TestSignalStrengthPriorityOrdering::test_stronger_signal_fills_first_when_capacity_is_scarce PASSED [ 95%]
+tests/unit/test_r11_backtest_engine_v4.py::TestCapacityDropAccounting::test_capacity_dropped_count_matches_reason_breakdown_sum PASSED [ 97%]
+tests/unit/test_r11_backtest_engine_v4.py::TestCapacityDropAccounting::test_zero_capacity_drops_when_nothing_binds PASSED [100%]
+
+============================== 42 passed in 0.12s ==============================

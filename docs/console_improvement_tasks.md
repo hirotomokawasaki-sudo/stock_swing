@@ -1060,7 +1060,8 @@ sizing側Option A・confidence_multiplierバグ修正は別途検証手法を設
                          （r11_backtest_engine_v3.py新規）。live以降PF=1.453（修正前1.448と
                          ほぼ不変）、90%CI[1.210,1.750]で幅が狭まり下限上昇。往復30bpスリッパージ
                          でもPF=1.426維持。本番との方向性一致も維持
-2026-09中旬頃〜    🔲 R13-C  項目4（exposure/sector cap）はentry filter統合が必要で後回し
+2026-08-24        ✅ R13-C  項目4（exposure/sector/cluster cap）・6（rolling walk-forward+
+                         embargo）・7（trial registry）実装・検証完了、R13-C全項目COMPLETE
 2026-08-23        ✅ R13-D  ETFセクターローテーション Phase 1（フィージビリティ検証）完了・GO判定
                          （r13d_etf_sector_rotation_phase1.py新規）。top2/63d/21dローテーションが
                          SPY/均等加重両ベースラインをSharpeで上回る（1.370 vs 1.255/0.967）。
@@ -2945,7 +2946,7 @@ trade履歴での単純バックテストができないため、別途検証手
 
 ### R13-C: R11バックテスト基盤の根本再構築（look-ahead/survivorship bias解消）
 
-**Status**: ✅ **項目1・2・3・5実装・検証完了（2026-08-23）。強い肯定的知見が保守的補正後も維持。残る4・6・7項目は仮説のまま**
+**Status**: ✅ **全項目（1・2・3・4・5・6・7）実装・検証完了（2026-08-24）。強い肯定的知見が保守的補正後も維持**
 **優先度**: P2（工数大、本番影響なしの研究基盤作業）
 
 **根拠（戦略レビュー、C02/C03で実コード確認済み）**: 旧`scripts/r11_backtest_engine.py`は
@@ -2957,10 +2958,10 @@ trade履歴での単純バックテストができないため、別途検証手
 1. ✅ signal at t close → fill at t+1 open（最優先、look-ahead解消の本質）— 実装完了
 2. ✅ point-in-time universe対応（survivorship bias解消）— 実装完了（下記限界あり）
 3. ✅ 保守的OHLC pathでstop/trailingを再生成 — 実装完了（2026-08-23、下記参照）
-4. 🟡 cash、gross exposure、sector/cluster capの再現（未着手）
+4. ✅ cash、gross exposure、sector/cluster capの再現 — 実装完了（2026-08-24、下記参照）
 5. ✅ spread/slippage/impactの反映 — 実装完了（2026-08-23、下記参照）
-6. 🟡 rolling walk-forward + embargo（未着手）
-7. 🟡 全trial registry（パラメータ探索の過適合リスクを評価可能にする）（未着手）
+6. ✅ rolling walk-forward + embargo — 実装完了（2026-08-24、下記参照）
+7. ✅ 全trial registry（パラメータ探索の過適合リスクを評価可能にする）— 実装完了（2026-08-24、下記参照）
 
 **実装（2026-08-23）**: `scripts/r11_backtest_engine_v2.py`新規作成。旧`r11_backtest_
 engine.py`のコアロジック（実本番クラスへの委譲、フローズンクロック手法）は継承し、
@@ -3113,10 +3114,65 @@ test_r11_backtest_engine_v3.py`（保守的OHLC exitのLOWトリガーとclose-o
 挙動分け、slippageのentry/exit両方への不利方向適用、trailing_stop優先順保持を合成データで
 検証、5件）。フルスイート2083 passed/2 skipped（regressionなし）。
 
-**次のアクション**: 項目4（exposure/sector cap）はentry filter層との統合が必要で工数が大きいため
-後回し。R13-Bの冒頭で記録した通り、attributable銘柄数が増えたらR13-A/Bの再検証も検討。
+**次のアクション（当初記載）**: 項目4（exposure/sector cap）はentry filter層との統合が必要で
+工数が大きいため後回し → **2026-08-24実装完了、下記参照**。R13-Bの冒頭で記録した通り、
+attributable銘柄数が増えたらR13-A/Bの再検証も検討。
 
 **やらないこと**: 本研究の結果を直接本番に反映しない（必ずR11-D型のpaper A/Bを経由）。
+
+---
+
+**実装 項目4・6・7（2026-08-24、R13-C残項目を完了）**: `scripts/r11_backtest_engine_v4.py`
+（項目4）、`src/stock_swing/research/rolling_walk_forward.py`（項目6）、
+`src/stock_swing/research/trial_registry.py`（項目7）を新規実装。item 6・7は
+`src/stock_swing/research/`配下の汎用モジュールとして実装し、今後の他バックテスト
+スクリプトからも再利用可能。統合実証として`scripts/r13c_rolling_walk_forward_
+validation.py`（新規）でv3エンジンの実トレードに対しrolling walk-forwardを適用し、
+結果をtrial registryに記録する一連の流れを実証。
+
+**項目4（exposure/sector/cluster cap）検証結果**: v3をそのまま再利用し、
+position_sizing.pyの実`SYMBOL_SECTORS`とcorrelation_cluster.pyの実`CLUSTERS`/
+`DEFAULT_CLUSTER_CAPS`をそのままimportしてentry側にgross/sector/cluster capを追加。
+本番デフォルト値（gross=75%, sector=55%）ではこの69銘柄・$10,000/trade固定サイズの
+設定では全期間通じて一度もbindしない（capacity_dropped=0、n/PF/net全てv3と完全一致）。
+意図的にタイトな設定（gross=30%, sector=20%）で動作実証: n=621→468（25%減）、
+PF=1.854→1.665、net=$101,272→$63,271と機会損失を定量的に確認。
+
+**項目6（rolling walk-forward + embargo）検証結果**: 4 rollsで実行（embargo_days=20、
+SimpleExitV2Strategyのmax_hold_daysと一致）。point-in-time universe無効時（全2年
+ヒストリー参考ビュー）: **Roll 1のtest期間（2025-11-26〜2026-03-17）でPF=0.815と
+唯一1を割り込み**、これは2026-08-15のR11-B付鍘レビューで単一60/20/20分割から
+発見された「validation期間の不振」（2025-10-27〜2026-03-20）と ほぼ重なる。
+**全く異なる手法（複数rolling window、embargo付き）で再実行しても同じレジーム依存の
+弱点が再現**され、単一分割点のノイズではなく頑健な弱点であることの独立した裏付けとなった。
+それ以外の3/4 rollsはtest PF>1（1.142/2.857/1.679）。
+
+**項目7（trial registry）実証**: 上記rolling walk-forward実行を`--record-trials`付きで
+実施し、`data/research/trial_registry.jsonl`に8件（4 roll × train/test）を記録。
+`count_trials(roadmap_item=...)`で多重比較の開示（何通りのパラメータ/rollを試したか）が
+可能になった。
+
+**テスト**: 新規42件（trial_registry 18件、rolling_walk_forward 17件、
+r11_backtest_engine_v4 7件）。フルスイート**2168 passed/2 skipped**（regressionなし、
+baseline 2126 + 42 = 2168で一致確認）。
+
+**エビデンス保存先**: `docs/r13c_item4_6_7_20260824/`（README.md +
+v4_default_caps_vs_v3.txt / v4_tight_caps_vs_v3.txt /
+rolling_walk_forward_full_universe.txt / rolling_walk_forward_point_in_time.txt /
+test_output.txt）。
+
+**限界（自己開示）**: 項目4は固定notional/trade設計のため部分サイズ約定は未実装
+（drop=完全見送りは実際より保守的）。ETF/Stock 85/15配分バンド（PortfolioAllocator）は
+対象外。項目6のpoint-in-time universe有効時は全銘柄のintro_dateが2026年（システムの
+銘柄追跡開始日プロキシ）のため、trainウィンドウが2026年より前のrollはn=0になる制約が
+ある（`--no-point-in-time-universe`で全2年ヒストリーの補完ビューを提供）。
+
+**R13-C総括**: 項目1〜7すべて完了。R13-C全体をCOMPLETEとする。
+
+**次のアクション**: rolling walk-forwardで再確認された「2025-11〜2026-03のレジーム
+依存不振」を09-10 Pre-Launch Gate Reviewの「レジーム依存性確認項目」（2026-08-15
+追加済み）にこの独立検証結果として追記する価値がある。paper A/Bへの反映は引き続き
+見送り（R13全体の「やらないこと」方針を継承）。
 
 ### R13-D: 独立収益源の開発（ETFセクターローテーション・JP overnight spillover等）
 
@@ -3253,7 +3309,7 @@ strategy_validation.py`（新規）で、Phase 1のプレーン関数版ロジ�
 |---|---|---|---|---|---|
 | P1 | R13-A | stop_loss閾値深掘り検証 | 中 | 低 | **STOP HOLD**（検証完了、2026-08-23） |
 | P1 | R13-B | signal_strength exit切り離し検証 | 低〜中 | 中 | **弱い結果**（検証完了、2026-08-23）、sizing側未着手 |
-| P2 | R13-C | R11バックテスト再構築（項目1/2/3/5） | 大 | 低（研究のみ、本番影響なし） | **強い肯定的知見**（2026-08-23）、live以降PF=1.453（90%CI[1.210,1.750]）、残4/6/7項目未着手 |
+| P2 | R13-C | R11バックテスト再構築（項目1〜7全完了） | 大 | 低（研究のみ、本番影響なし） | **✅ COMPLETE**（2026-08-24）、live以降PF=1.453（90%CI[1.210,1.750]）、rolling walk-forwardでレジーム依存不振を独立再確認 |
 | P3 | R13-D | ETFセクターローテーション、JP spilloverはIBKR待ち継続 | 大 | 低（shadowのみ） | **Phase 1 GO + Phase 2完了**（2026-08-23）、Phase 3未着手 |
 
 **09-15 Go/No-Goとの関係**: R13はすべてpaper A/B・研究段階であり、09-15までに

@@ -1,0 +1,41 @@
+Simulating 69 symbols over 501 trading days (2024-08-15 -> 2026-08-14); point_in_time_universe=True; conservative_ohlc=True; slippage_bps=10.0; enforce_caps=True (gross=75%, sector=55%, equity_base=$1,000,000)
+  100/501 days simulated, 0 closed, 0 open, 0 pending fill, 0 capacity-dropped
+  200/501 days simulated, 0 closed, 0 open, 0 pending fill, 0 capacity-dropped
+  300/501 days simulated, 0 closed, 0 open, 0 pending fill, 0 capacity-dropped
+  400/501 days simulated, 0 closed, 0 open, 0 pending fill, 0 capacity-dropped
+  500/501 days simulated, 580 closed, 16 open, 25 pending fill, 0 capacity-dropped
+
+Total v4 trades: 621 (dropped_pending_at_end=4, capacity_dropped=0)
+Capacity drop breakdown: {}
+Overall (v4, caps=ON): n=621 WR=0.7021 PF=1.8537 net=$101272.26
+  v4_full live-window-only (entry_date >= 2026-05-12): n=471 WR=0.6603 PF=1.4532 net=$45724.61
+
+Decile breakdown (by entry_signal_strength):
+  {'label': 'decile_1', 'n': 62, 'win_rate': 0.6452, 'profit_factor': 2.512, 'net_pnl': 14214.33, 'avg_return_pct': 0.0229, 'ss_min': 0.4, 'ss_max': 0.4506}
+  {'label': 'decile_2', 'n': 62, 'win_rate': 0.6613, 'profit_factor': 2.3437, 'net_pnl': 10577.04, 'avg_return_pct': 0.0171, 'ss_min': 0.4517, 'ss_max': 0.5265}
+  {'label': 'decile_3', 'n': 62, 'win_rate': 0.5806, 'profit_factor': 1.3728, 'net_pnl': 4422.94, 'avg_return_pct': 0.0071, 'ss_min': 0.5281, 'ss_max': 0.6502}
+  {'label': 'decile_4', 'n': 62, 'win_rate': 0.6774, 'profit_factor': 1.3703, 'net_pnl': 5117.6, 'avg_return_pct': 0.0083, 'ss_min': 0.6517, 'ss_max': 0.8481}
+  {'label': 'decile_5', 'n': 62, 'win_rate': 0.8065, 'profit_factor': 3.0707, 'net_pnl': 17534.37, 'avg_return_pct': 0.0283, 'ss_min': 0.8494, 'ss_max': 1.0}
+  {'label': 'decile_6', 'n': 62, 'win_rate': 0.9355, 'profit_factor': 12.1286, 'net_pnl': 32045.77, 'avg_return_pct': 0.0517, 'ss_min': 1.0, 'ss_max': 1.0}
+  {'label': 'decile_7', 'n': 62, 'win_rate': 0.7903, 'profit_factor': 1.8751, 'net_pnl': 10342.3, 'avg_return_pct': 0.0167, 'ss_min': 1.0, 'ss_max': 1.0}
+  {'label': 'decile_8', 'n': 62, 'win_rate': 0.7742, 'profit_factor': 2.3667, 'net_pnl': 17394.33, 'avg_return_pct': 0.0281, 'ss_min': 1.0, 'ss_max': 1.0}
+  {'label': 'decile_9', 'n': 62, 'win_rate': 0.5645, 'profit_factor': 0.6473, 'net_pnl': -8484.12, 'avg_return_pct': -0.0137, 'ss_min': 1.0, 'ss_max': 1.0}
+  {'label': 'decile_10', 'n': 63, 'win_rate': 0.5873, 'profit_factor': 0.8796, 'net_pnl': -1892.3, 'avg_return_pct': -0.003, 'ss_min': 1.0, 'ss_max': 1.0}
+Simulating 69 symbols over 501 trading days (2024-08-15 -> 2026-08-14); point_in_time_universe=True; conservative_ohlc=True; slippage_bps=10.0; enforce_caps=False (gross=75%, sector=55%, equity_base=$1,000,000)
+  100/501 days simulated, 0 closed, 0 open, 0 pending fill, 0 capacity-dropped
+  200/501 days simulated, 0 closed, 0 open, 0 pending fill, 0 capacity-dropped
+  300/501 days simulated, 0 closed, 0 open, 0 pending fill, 0 capacity-dropped
+  400/501 days simulated, 0 closed, 0 open, 0 pending fill, 0 capacity-dropped
+  500/501 days simulated, 580 closed, 16 open, 25 pending fill, 0 capacity-dropped
+
+==========================================================================================
+VARIANT COMPARISON
+==========================================================================================
+
+  v4 (caps ON):
+    all:         n= 621 WR=0.7021 PF=1.8537 net=$101272.26
+      live-window (entry_date >= 2026-05-12): n=471 WR=0.6603 PF=1.4532 net=$45724.61
+
+  v3-equivalent (caps OFF):
+    all:         n= 621 WR=0.7021 PF=1.8537 net=$101272.26
+      live-window (entry_date >= 2026-05-12): n=471 WR=0.6603 PF=1.4532 net=$45724.61

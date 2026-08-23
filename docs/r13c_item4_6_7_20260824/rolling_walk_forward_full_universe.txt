@@ -1,0 +1,34 @@
+Running v3 backtest engine once over 69 symbols (t+1 fill + point-in-time universe + conservative OHLC exits + 10.0bp one-way slippage)...
+Simulating 69 symbols over 501 trading days (2024-08-15 -> 2026-08-14); point_in_time_universe=False; conservative_ohlc=True; slippage_bps=10.0 (one-way)
+  100/501 days simulated, 277 closed, 8 open, 4 pending fill
+  200/501 days simulated, 570 closed, 42 open, 14 pending fill
+  300/501 days simulated, 972 closed, 22 open, 6 pending fill
+  400/501 days simulated, 1275 closed, 10 open, 5 pending fill
+  500/501 days simulated, 1956 closed, 16 open, 25 pending fill
+
+Total trades: 1997  Overall: n=1997 WR=0.664 PF=1.5748 net=$233298.43
+
+==========================================================================================
+ROLLING WALK-FORWARD (4 rolls, train_frac=0.5, test_frac=0.15, embargo_days=20)
+==========================================================================================
+
+Roll 0: train=('2024-08-15', '2025-08-14') embargo=('2025-08-15', '2025-09-12') test=('2025-09-15', '2025-12-30')
+  train: n= 794 PF=1.5469 WR=0.6537 net=$86965.85
+  test:  n= 285 PF=1.1421 WR=0.6175 net=$9464.57  (embargo_dropped=59)
+
+Roll 1: train=('2024-10-29', '2025-10-28') embargo=('2025-10-29', '2025-11-25') test=('2025-11-26', '2026-03-17')
+  train: n= 903 PF=1.7576 WR=0.6855 net=$129338.85
+  test:  n= 209 PF=0.8148 WR=0.555 net=$-10341.53  (embargo_dropped=57)
+
+Roll 2: train=('2025-01-15', '2026-01-13') embargo=('2026-01-14', '2026-02-11') test=('2026-02-12', '2026-06-01')
+  train: n= 870 PF=1.5811 WR=0.6701 net=$100757.68
+  test:  n= 451 PF=2.8569 WR=0.7716 net=$129973.35  (embargo_dropped=61)
+
+Roll 3: train=('2025-04-01', '2026-03-30') embargo=('2026-03-31', '2026-04-28') test=('2026-04-29', '2026-08-14')
+  train: n= 882 PF=1.6066 WR=0.6723 net=$104581.87
+  test:  n= 565 PF=1.679 WR=0.6867 net=$76522.14  (embargo_dropped=128)
+
+==========================================================================================
+SUMMARY: 3/4 rolls had test-window PF > 1.0
+==========================================================================================
+Test-window PFs across rolls: [1.142, 0.815, 2.857, 1.679]

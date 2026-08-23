@@ -1,0 +1,34 @@
+Running v3 backtest engine once over 69 symbols (t+1 fill + point-in-time universe + conservative OHLC exits + 10.0bp one-way slippage)...
+Simulating 69 symbols over 501 trading days (2024-08-15 -> 2026-08-14); point_in_time_universe=True; conservative_ohlc=True; slippage_bps=10.0 (one-way)
+  100/501 days simulated, 0 closed, 0 open, 0 pending fill
+  200/501 days simulated, 0 closed, 0 open, 0 pending fill
+  300/501 days simulated, 0 closed, 0 open, 0 pending fill
+  400/501 days simulated, 0 closed, 0 open, 0 pending fill
+  500/501 days simulated, 580 closed, 16 open, 25 pending fill
+
+Total trades: 621  Overall: n=621 WR=0.7021 PF=1.8537 net=$101272.26
+
+==========================================================================================
+ROLLING WALK-FORWARD (4 rolls, train_frac=0.5, test_frac=0.15, embargo_days=20)
+==========================================================================================
+
+Roll 0: train=('2024-08-15', '2025-08-14') embargo=('2025-08-15', '2025-09-12') test=('2025-09-15', '2025-12-30')
+  train: n=   0 PF=None WR=None net=$None
+  test:  n=   0 PF=None WR=None net=$None  (embargo_dropped=0)
+
+Roll 1: train=('2024-10-29', '2025-10-28') embargo=('2025-10-29', '2025-11-25') test=('2025-11-26', '2026-03-17')
+  train: n=   0 PF=None WR=None net=$None
+  test:  n=   0 PF=None WR=None net=$None  (embargo_dropped=0)
+
+Roll 2: train=('2025-01-15', '2026-01-13') embargo=('2026-01-14', '2026-02-11') test=('2026-02-12', '2026-06-01')
+  train: n=   0 PF=None WR=None net=$None
+  test:  n= 296 PF=3.6649 WR=0.8243 net=$103600.12  (embargo_dropped=0)
+
+Roll 3: train=('2025-04-01', '2026-03-30') embargo=('2026-03-31', '2026-04-28') test=('2026-04-29', '2026-08-14')
+  train: n=   0 PF=None WR=None net=$None
+  test:  n= 553 PF=1.6325 WR=0.6835 net=$70764.64  (embargo_dropped=68)
+
+==========================================================================================
+SUMMARY: 2/2 rolls had test-window PF > 1.0
+==========================================================================================
+Test-window PFs across rolls: [3.665, 1.633]
