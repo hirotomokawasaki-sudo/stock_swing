@@ -113,22 +113,55 @@ def test_mismatch_check_missing_broker_tracker_diff_key_entirely(monkeypatch, tm
 def test_all_pass_when_real_mismatch_zero_despite_raw_nonzero(monkeypatch, tmp_path):
     """End-to-end: with all other Required conditions green and only the
     (excused) raw mismatch nonzero, overall verdict should be GO.
+
+    AUDIT FIX (2026-08-23): updated for two check() behavior changes that
+    closed real staleness gaps found in a 2026-08-23 audit:
+      1. console_summary_freshness (new condition) requires summary["run"]
+         ["timestamp"] to be recent -- previously nothing checked whether
+         latest_console_summary.json itself was fresh at all, so a run that
+         silently stopped updating it (e.g. every zero-actionable-decisions
+         paper_demo run, before the companion paper_demo.py fix) could keep
+         reporting a frozen-in-time GO forever.
+      2. paper_3day_confirmation now reads live daily_snapshot dates from
+         data/tracking/pnl_state.json within a rolling 7-day window, instead
+         of grep'ing a single hardcoded historical file
+         (docs/go_no_go_report_20260731.md) for the literal substring
+         "07-30 ok" -- which, once written, would have made this condition
+         pass=True forever regardless of any real recent activity.
+      3. cron_jobs_healthy now queries live cron job run history via
+         console.adapters.system_adapter.SystemAdapter (the same evidence
+         source console's own /health endpoint uses) instead of just
+         re-reading health.status, which was already present verbatim in
+         the same summary dict this test writes -- i.e. previously 100%
+         redundant with a field this test already controls directly.
     """
+    import json as _json
+    from datetime import datetime, timedelta, timezone
+
     module = _load_module(monkeypatch, tmp_path)
-    _write_summary(
-        tmp_path,
-        health=_base_health(broker_tracker_mismatch_count=2),
-        broker_tracker_diff={"real_mismatch_count": 0},
-    )
-    # paper_3day_confirmation reads a separate file; write it so this test
-    # can assert a full GO independent of that file's presence elsewhere.
-    gng_path = tmp_path / "docs" / "go_no_go_report_20260731.md"
-    gng_path.parent.mkdir(parents=True, exist_ok=True)
-    gng_path.write_text("07-28 ok / 07-29 ok / 07-30 ok", encoding="utf-8")
+    console_dir = tmp_path / "reports" / "console"
+    console_dir.mkdir(parents=True, exist_ok=True)
+    summary = {
+        "health": _base_health(broker_tracker_mismatch_count=2),
+        "broker_tracker_diff": {"real_mismatch_count": 0},
+        "run": {"timestamp": datetime.now(timezone.utc).isoformat()},
+    }
+    (console_dir / "latest_console_summary.json").write_text(_json.dumps(summary), encoding="utf-8")
 
     reconcile_dir = tmp_path / "data" / "audits"
     reconcile_dir.mkdir(parents=True, exist_ok=True)
     (reconcile_dir / "reconcile_status.json").write_text("{}", encoding="utf-8")
+
+    tracking_dir = tmp_path / "data" / "tracking"
+    tracking_dir.mkdir(parents=True, exist_ok=True)
+    today = datetime.now(module.JST).date()
+    snapshots = [
+        {"date": (today - timedelta(days=offset)).isoformat(), "equity": 1_000_000.0}
+        for offset in range(3)
+    ]
+    (tracking_dir / "pnl_state.json").write_text(
+        _json.dumps({"daily_snapshots": snapshots}), encoding="utf-8"
+    )
 
     results = module.check()
     assert all(r["pass"] for r in results.values()), results

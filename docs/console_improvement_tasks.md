@@ -985,15 +985,33 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 2026-09-05（土）    🔲 R3-v2-Breakeven 中間レビュー: staged floorのpaper実測での改善確認
                          （08-05導入から1ヶ月後、cron登録済み: stock_swing_breakeven_staged_floor_review）
 
+2026-08-23         ✅ 監査対応完了: docs/audit_fixes_20260823/ の6パッチ（console_summary鮮度、
+                         equity_bridge quarantined_pnl、broker_bars pagination、
+                         pairwise_correlation staleness、check_go_no_go 3条件形骸化、
+                         f8 expectancy/max_drawdown）をユーザー承認の上12:45 JSTに本番
+                         適用。適用後フルテストスイート2065 passed / 2 skippedと
+                         --dry-run/check_go_no_go.py実データ動作を確認済み
+                         （詳細: docs/audit_fixes_20260823/README.md）。
+                         🔲 残課題: equity_bridgeの$168,869.89未説明差分の運用判断
+                         （quarantine再分類 vs tolerance引き上げ）はPre-Launch Gate Review
+                         までに実施
+
 2026-09-08〜09-12  🔲 Pre-Launch Gate Review（第2弾）
                          ・ R3-v2-Stop/Breakeven/R9 Plan B-E/R5-v2 promotion gate、全レビュー結果を統合
+                         ・ 2026-08-23監査の6パッチは適用済み。equity_bridge $168,869.89差分の
+                           運用判断（quarantine再分類 or tolerance明示引上げ）をここで行う
                          ・ scripts/check_go_no_go.py --save で Required 7条件 + 補足 promotion gate を再確認
+                           （パッチ適用済みなのでconsole_summary_freshness/paper_3day_confirmation/
+                           cron_jobs_healthyは実データを反映済み。pairwise_correlationが
+                           新規データ蓄積後にavailable=Trueになっているかも確認）
                          ・ 09-15 リアルトレード移行の最終可否判断材料をまとめる
 
 2026-09-12（土）    🔲 Go/No-Go 最終再確認（09-15直前）
                          ・ Required 7条件が引き続き✅か再確認
                          ・ promotion gate（top5_concentration/clean_cohort_pf等）の
                            09-15時点の状態を記録し、リアルトレード開始判断の参考情報とする
+                         ・ equity_bridge の unexplained_diff（2026-08-23監査時点$168,874相当の
+                           quarantine起因ギャップ）が説明・解消されているか確認
 
 2026-09-15以降 🚀（予定）  リアルトレード開始（50%サイズ）
 
@@ -1053,6 +1071,19 @@ R3-v2のsector_shock A/Bは、活性化条件（forward valid stop-trigger shado
 文書化されていなかった。09-10のPre-Launch Gate Reviewの判断材料に、この点（sector_shock
 保護なしでstop_lossが本番投入されることを認識した上でのご/no-go判断）を明示的に含めること。
 対策は存在しない（人工的にショックを促進するべきではないと既に2026-08-05に判断済み）。
+
+---
+
+**2026-08-23 追記（Go/No-Go判定基盤監査、ユーザー依頼）**:
+`scripts/check_go_no_go.py`のRequired 7条件中3条件（cron_jobs_healthy /
+paper_3day_confirmation / 鮮度チェックの不在）が実質恒久PASS化していたこと、
+及び`paper_demo.py`の無アクションrunがconsole_summaryを更新しないバグにより
+実際に08-22/08-23の2日間consoleが凍結していたことが判明。加えてequity_bridgeの
+`quarantined_pnl`固定値0.0バグにより$168,874の未説明差分が隠されていたことも
+判明。詳細と修正パッチ（6件）は上記「2026-08-23 監査」節及び
+`docs/audit_fixes_20260823/README.md`を参照。**同日 12:45 JST、ユーザー承認により
+全6件を本番適用済み**（フルテストスイート2065 passed / 2 skipped確認済み）。
+残るequity_bridge $168,869.89差分の運用判断はPre-Launch Gate Reviewまでに実施。
 
 ---
 
@@ -2475,3 +2506,150 @@ A-Eと同一パターン）に乗せる。ヒストリカルで優れていた�
 （ボラティリティ軸等）を検討する必要がある。
 
 **Status**: 🔵 未着手・将来検討（優先度低）
+
+---
+
+## 2026-08-23 監査: Go/No-Go判定基盤・データ鮮度の実データ精査（ユーザー依頼）
+
+**背景**: ユーザーから「現在の投資システムの現状のパフォーマンスと改善計画の監査」を
+依頼され、実運用データ（`reports/console/latest_console_summary.json` /
+`data/tracking/pnl_state.json` / `data/raw/broker/*.json` / cron実行履歴等）を
+直接精査。**09-15 Go/No-Go判定の根拠データそのものに複数の実バグ**を発見。
+いずれも「システムが実際に危険な状態」ではなく「システムの状態を判定する仕組み
+自体が正しく機能していない」という、より根本的な問題。修正コード6件を作成し
+`docs/audit_fixes_20260823/`にパッチ形式で保存した上で、**2026-08-23 12:45 JST
+ユーザー承認により全6件を本番コードに適用済み**。
+
+**総括**: 全6件を適用した状態でフルテストスイートを再実行し
+**2065 passed / 2 skipped を確認**。加えて`--dry-run`実行（発注なし、ブローカーの
+参照系APIのみ使用）と`check_go_no_go.py`単体実行で実データ上の動作も確認済み。
+下表のStatusは全件**APPLIED（適用済み）**に更新。
+
+### 🔴 監査1: paper_demoの無アクションrunがconsole_summaryを更新しない（最重要）
+
+**発見**: `paper_demo.py`の「no_signals」「no actionable decisions」の2箇所が
+早期`return`しており、その場合`console_summary.emit()`（`scripts/check_go_no_go.py`
+が読む唯一のデータソース）が一切実行されない。実際に2026-08-21 04:50 JSTの run を
+最後に**08-22, 08-23の2日間、decisionファイルが1件も生成されておらず、
+console summaryが凍結**していたことを確認。
+
+**修正**: 両early-returnを「フォールスルー」に変更し、無アクションrunでも
+console_summary / 日次スナップショット / reconciliation / guardrail評価が必ず
+実行されるようにした。パッチ: `docs/audit_fixes_20260823/patches/01_*.patch`
+
+**Status**: ✅ APPLIED（2026-08-23 12:45 JST 適用済み）
+
+### 🔴 監査2: equity_bridgeのquarantined_pnl固定値0.0バグ
+
+**発見**: `_build_equity_bridge()`が`quarantined_pnl=0.0`を固定し、コメントで
+「quarantined tradesはdata reconstruction errorsで実際のbroker fillではない」と
+説明していたが、実データ確認の結果**quarantined_trades 101件全件が実際の
+broker約定**（broker_order_id + exit_broker_order_id を保有）だった。その
+PnL（約-$156,476）はbroker_equityには反映済みだがtrackerには一切反映されず、
+本来$168,874あるはずの`unexplained_diff`が、$100,000という「常にpassするよう
+選ばれた」toleranceでマスクされていた。
+
+**修正**: `quarantined_pnl`を`pnl_tracker.get_quarantined_trades()`の実合計に、
+`tolerance_usd`を`config/runtime/current_mode.yaml`の
+`ledger_quality_gate.acceptance_criteria.broker_equity_bridge_tolerance_usd`
+（本来の唯一の正であるべき値）から読み込むよう変更。パッチ: 01番に同梱。
+
+**次のアクション（実装とは別、運用判断）**: 修正適用後に露出する$168,874の
+差分について、(a) quarantine 101件の再分類・再統合、または (b) 正当な
+許容差として`broker_equity_bridge_tolerance_usd`を実態に合わせて明示的に
+引き上げる、のいずれかをユーザー/運用者が判断する必要がある。
+
+**Status**: ✅ APPLIED（2026-08-23 12:45 JST 適用済み）。$168,869.89の
+未説明差分が実データで露出することを確認済み。運用判断（quarantine再分類 or
+許容差の明示的引き上げ）はまだ未実施
+
+### 🟡 監査3: collect_broker_bars()のページネーション未処理バグ（pairwise_correlationの入力汚染）
+
+**発見**: `fetch_bars(symbol, timeframe, limit=5)`が`start`を明示しないため
+デフォルトの30暦日ウィンドウにフォールバックし、Alpaca APIが返す昇順（古い順）
+の最初5本＝**そのウィンドウの最古の約5営業日**を常に取得していた。
+`data/raw/broker/broker_*.json`の`marketdata/bars`スナップショットを全件確認した
+結果、**収集日に関わらず全て2026-07-23〜2026-07-29の同じ1週間が返り続けており、
+`next_page_token`は一度も使われていなかった**。このため、R5-v2 promotion gateの
+pairwise correlation条件（2026-08-14実装）は何ヶ月も同じ凍結された19営業日の
+窓で計算され続けていた。
+
+**修正**: `start`を明示的に「`limit`営業日相当をカバーする暦日数だけ遡った日時」
+として渡すよう変更。加えて`pairwise_correlation.py`に`check_data_freshness()`を
+新規追加し、`check_go_no_go.py`のpromotion readiness評価に配線（最新bar日付が
+5日以上古い場合`available=False`として明示的にstale扱いにする）。
+synthetic/不正タイムスタンプ（2026-04-21スナップショットの一部にUnix epoch秒の
+生整数が`"t"`フィールドに混入していたバグ）のフィルタも同時に修正。
+パッチ: `02_*.patch` + `03_*.patch`（適用済み）
+
+**Status**: ✅ APPLIED（2026-08-23 12:45 JST 適用済み）。既存の
+data/raw/broker/スナップショットは古いままのため、次回`stock_swing_news_collection`
+cron実行以降、新しい日付のbarが蓄積され次第pairwise correlationが再度
+計算可能になる想定（現時点では鮮度チェックにより`available=False`と
+正しく表示されることを確認済み）
+
+### 🟡 監査4: check_go_no_go.pyの3条件が実質恒久PASS化していた
+
+Required条件7件のうち3件を実データで精査した結果、**実質的に一度trueになったら
+未来永劫trueであり続ける**設計だったことが判明:
+
+1. `cron_jobs_healthy`: 同じ`summary`内の`health.status`をそのまま再読するだけで、
+   個々のcronジョブの実行履歴は一切見ていなかった（実質的に無検証）。
+2. `paper_3day_confirmation`: `docs/go_no_go_report_20260731.md`という**単一の
+   固定ファイル**を`"07-30 ok"`のような固定文字列でgrepしていた。このファイルは
+   07-31判定後更新されておらず、一度trueになれば恒久的にtrueであり続ける設計。
+3. `console_summary_freshness`という条件自体が**存在しなかった**
+   （監査1のバグにより凍結したconsole summaryを検知する手段がなかった）。
+
+**修正**: (1) `console.adapters.system_adapter.SystemAdapter._check_cron_run_history()`
+（console自身の`/health`が使う同じロジック）を呼び出す実際のcron実行履歴検証に変更、
+(2) `data/tracking/pnl_state.json`の`daily_snapshots`から直近7日間のローリング
+ウィンドウで3日以上の実データ確認に変更、(3) `console_summary_freshness`条件を
+新規追加（`run.timestamp`が30時間以内であることを要求）。パッチ: `04_*.patch`
+
+**Status**: ✅ APPLIED（2026-08-23 12:45 JST 適用済み）。適用直後の
+`check_go_no_go.py`実行で`console_summary_freshness`が実際に❌（46.9時間経過）を
+検知し、監査1のバグによる凍結を正しく可視化することを確認済み
+
+### 🟢 監査5: f8_clean_records_analysis.pyの計算式バグ2件
+
+1. **expectancy計算式バグ**: `expected_value`が標準的な期待値定義のどれにも
+   一致しない式で計算されており、実データ（252トレード、実際の平均PnL/トレード
+   = -$81.64）に対し**-$10,772.71**という2桁以上乖離した値を返していた。
+   標準的な`win_rate*avg_win - loss_rate*avg_loss`（`net_pnl/count`と代数的に
+   一致するべき値）に修正し、実際に一致することを確認（修正後: -$81.64）。
+2. **max_drawdown分母誤り**: `peak`の初期値が0.0（累積PnLの高値）になっており、
+   累積PnLがプラスに転じるまでドローダウンが一切記録されず、かつ小さいピーク
+   （実データで+$1,443.75）を分母にすると通常規模の損失が無意味に大きい%に
+   見えていた。`baseline_equity`（$1,000,000）を初期値・分母にする実装に修正
+   （修正後: 11.58% → 9.28%、より正確な値）。
+
+パッチ: `05_*.patch`（適用済み）
+
+**Status**: ✅ APPLIED（2026-08-23 12:45 JST 適用済み）。実データ再実行で
+expected_value=-81.64=avg_pnl一致、max_drawdown=9.28%を確認済み
+
+### 監査結果を踏まえた09-15 Go/No-Go判断への影響
+
+上記の修正は**いずれもトレーディングロジック（発注判定・ポジションサイジング・
+ガードレール判定）自体は変更しない**。影響は全て「状態の可視化・判定ロジックの
+正確性」に限定される。**2026-08-23 12:45 JST、ユーザー承認により全6件を本番
+適用済み**。適用直後の`check_go_no_go.py`実行で、意図通り
+`console_summary_freshness`が❌（46.9時間経過）を検知し、equity_bridgeの
+`unexplained_diff`が$168,869.89・`within_tolerance=false`に変化することを確認。
+フルテストスイート2065 passed / 2 skippedも再確認済み。
+
+**残っている運用判断**: 監査2（equity bridge）の$168,869.89の未説明差分に
+ついて、(a) quarantine 101件の再分類・再統合、または (b) 正当な許容差として
+`broker_equity_bridge_tolerance_usd`を実態に合わせて明示的に引き上げる、の
+いずれかは**このロードマップ更新時点では未実施**。09-15移行判断の前提となる
+「台帳が正しく資産を反映しているか」に直結するため、Pre-Launch Gate Review
+（09-08〜09-12）までにこの判断を行うことを引き続き推奨する。
+
+**やらないこと（本監査の対応方針、引き続き有効）**:
+```
+❌ 監査2で露出した$168,869.89差分について、勝手にtolerance値を引き上げてpassさせない
+   （選択肢(a)/(b)のどちらかの明示的なユーザー判断を待つ）
+❌ 発注ロジック・ポジションサイジング・ガードレール閾値には一切手を加えない
+   （本監査は「状態の可視化・判定ロジックの正確性」のみが対象）
+```

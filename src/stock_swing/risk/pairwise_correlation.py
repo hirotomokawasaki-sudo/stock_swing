@@ -72,12 +72,36 @@ def build_daily_closes_from_raw_bars(
             continue
         if data.get("endpoint") != "marketdata/bars":
             continue
+        # AUDIT FIX (2026-08-23): a handful of early (2026-04-21) snapshot
+        # files contain bars whose "t" field is a raw Unix-epoch-seconds
+        # integer (e.g. "1776406508") rather than an ISO-8601 timestamp like
+        # every other snapshot uses. str(bar["t"])[:10] silently truncated
+        # these to their first 10 digits (e.g. "1776406508"[:10] ==
+        # "1776406508", a 10-digit string that looks superficially date-like
+        # but is NOT a real calendar date) and inserted them into the
+        # {date: close} series as bogus keys. compute_pair_correlation()
+        # aligns two series purely by matching date-string keys, so a
+        # symbol with one of these entries could never actually match
+        # another symbol's real dates on that key (harmless there) but the
+        # bogus entries still inflated per-symbol bar counts in diagnostics
+        # and, more importantly, is evidence these were  is_synthetic-flagged
+        # placeholder/malformed records that should not silently coexist
+        # with genuine market data. Skip is_synthetic snapshots entirely and
+        # require "t" to parse as an ISO-8601 date string.
+        if data.get("is_synthetic"):
+            continue
         bars = (data.get("payload") or {}).get("bars") or []
         for bar in bars:
-            date = str(bar.get("t") or "")[:10]
+            raw_t = str(bar.get("t") or "")
             close = bar.get("c")
-            if date and close is not None:
-                closes[date] = float(close)
+            if not raw_t or close is None:
+                continue
+            date = raw_t[:10]
+            # Reject non-ISO-date-shaped values (e.g. raw epoch seconds like
+            # "1776406508") instead of accepting any 10-character prefix.
+            if len(date) != 10 or date[4] != "-" or date[7] != "-" or not date.replace("-", "").isdigit():
+                continue
+            closes[date] = float(close)
 
     return closes
 
@@ -204,9 +228,84 @@ def compute_pairwise_correlation(
     return results
 
 
+def check_data_freshness(
+    closes_by_symbol: dict[str, dict[str, float]],
+    max_staleness_days: int = 5,
+    as_of: str | None = None,
+) -> dict[str, Any]:
+    """Report whether the most recent bar date across all symbols is fresh.
+
+    AUDIT FIX (2026-08-23): collect_broker_bars() had a pagination bug (see
+    collect_data.py fix) that caused every accumulated data/raw/broker/
+    broker_{symbol}_*.json marketdata/bars snapshot to silently contain the
+    SAME stale ~2026-07-23..2026-07-29 date range for weeks, regardless of
+    when the collection cron actually ran. Nothing previously checked
+    whether the reconstructed daily-close history was still advancing, so
+    the pairwise-correlation promotion-gate criterion kept reporting a
+    confident-looking correlation coefficient computed from month-old,
+    frozen data without any staleness signal. This is a fail-closed
+    freshness check callers should combine with
+    summarize_high_correlation_pairs()'s own availability check: data can be
+    "available" (enough overlapping days existed to compute a correlation)
+    while still being globally stale (no symbol has a bar newer than
+    max_staleness_days ago).
+
+    Args:
+        closes_by_symbol: {symbol: {date: close}}, as built by
+            build_daily_closes_from_raw_bars() per symbol.
+        max_staleness_days: maximum allowed age (in days) of the most recent
+            bar date across ALL symbols before this is flagged stale.
+        as_of: ISO date string (YYYY-MM-DD) to compare against; defaults to
+            today (UTC) when omitted. Exposed for deterministic testing.
+
+    Returns:
+        {"fresh": bool, "most_recent_date": str|None, "staleness_days": int|None,
+         "symbols_checked": int}
+    """
+    import datetime as _dt
+
+    all_dates: set[str] = set()
+    for series in closes_by_symbol.values():
+        all_dates.update(series.keys())
+
+    if not all_dates:
+        return {
+            "fresh": False,
+            "most_recent_date": None,
+            "staleness_days": None,
+            "symbols_checked": len(closes_by_symbol),
+            "reason": "no_data",
+        }
+
+    most_recent = max(all_dates)
+    today = (
+        _dt.date.fromisoformat(as_of) if as_of else _dt.datetime.now(_dt.timezone.utc).date()
+    )
+    try:
+        most_recent_date = _dt.date.fromisoformat(most_recent)
+        staleness_days = (today - most_recent_date).days
+    except ValueError:
+        return {
+            "fresh": False,
+            "most_recent_date": most_recent,
+            "staleness_days": None,
+            "symbols_checked": len(closes_by_symbol),
+            "reason": "unparseable_most_recent_date",
+        }
+
+    return {
+        "fresh": staleness_days <= max_staleness_days,
+        "most_recent_date": most_recent,
+        "staleness_days": staleness_days,
+        "symbols_checked": len(closes_by_symbol),
+        "reason": None if staleness_days <= max_staleness_days else "stale_data",
+    }
+
+
 def summarize_high_correlation_pairs(
     pairwise_results: list[dict[str, Any]],
     high_correlation_threshold: float = 0.80,
+    freshness: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Summarize pairwise correlation results into a promotion-gate-ready
     verdict: are any *currently evaluated* symbol pairs highly correlated
@@ -216,8 +315,22 @@ def summarize_high_correlation_pairs(
     Fail-closed semantics: if there is no data at all (empty input) OR
     every pair was "insufficient_data", this is reported as
     available=False (unproven, not "assumed fine") rather than silently
-    passing an unverified portfolio.
+    passing an unverified portfolio. Likewise, if `freshness` is provided
+    (see check_data_freshness()) and reports fresh=False, this also reports
+    available=False -- a correlation computed entirely from stale data is
+    not meaningfully different from having no data, for promotion-gate
+    purposes (see AUDIT FIX note on check_data_freshness above).
     """
+    if freshness is not None and not freshness.get("fresh", True):
+        return {
+            "available": False,
+            "high_correlation_pairs": [],
+            "checked_pairs": len(pairwise_results),
+            "available_pairs": 0,
+            "reason": f"stale_data (most_recent_date={freshness.get('most_recent_date')}, "
+                      f"staleness_days={freshness.get('staleness_days')})",
+        }
+
     available_pairs = [r for r in pairwise_results if r.get("available")]
     if not pairwise_results or not available_pairs:
         return {

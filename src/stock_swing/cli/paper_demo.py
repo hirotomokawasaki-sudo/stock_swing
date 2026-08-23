@@ -1578,13 +1578,14 @@ def main() -> int:  # noqa: C901
         print(f"     {sig.reasoning}")
 
     if not all_signals:
+        # AUDIT FIX (2026-08-23): same rationale as the "no actionable
+        # decisions" fallthrough below — previously returned immediately here,
+        # skipping console_summary.emit()/daily snapshot/reconciliation for
+        # every zero-signal run. `decisions`/`actionable` naturally stay empty
+        # lists when all_signals is empty, so falling through is safe (every
+        # downstream filter/loop over an empty list is already a no-op).
         print(f"\n  No signals. Try --min-momentum 0.01 to lower threshold.")
-        _print_summary([], [], equity, args.dry_run)
-        return finish(
-            _final_exit_code,
-            equity_value=equity,
-            extra={"reason": _final_reason or "no_signals"},
-        )
+        _final_reason = _final_reason or "no_signals"
 
     # 8. Decisions
     _section("8. Decision Engine")
@@ -2274,14 +2275,21 @@ def main() -> int:  # noqa: C901
             print(f"    ... and {total_skipped_buys - 5} more")
 
     if not actionable:
+        # AUDIT FIX (2026-08-23): previously this branch returned immediately,
+        # which meant EVERY zero-actionable run (qty_zero / entry-filter /
+        # guardrail / allocation blocked, etc.) silently skipped: daily
+        # snapshot recording, reconciliation, the guardrail post-run mismatch
+        # evaluation (incl. recovery_pending -> ok clean-run confirmation),
+        # the P6 join-coverage report, and — critically — console_summary.emit()
+        # itself. That left reports/console/latest_console_summary.json (and
+        # therefore scripts/check_go_no_go.py, which reads it verbatim) frozen
+        # at whatever the last actionable run happened to produce, sometimes
+        # for days, with no indication anything was stale. Fall through to the
+        # shared tail below (submissions stays [] so the reconciliation/
+        # submission loop is a no-op) so every run — actionable or not —
+        # updates the console summary, audit log, and guardrail state.
         print("\n  No actionable decisions after exposure preflight.")
-        _print_summary(decisions, [], equity, args.dry_run)
-        return finish(
-            _final_exit_code,
-            decisions=decisions,
-            equity_value=equity,
-            extra={"reason": _final_reason or "no_actionable_decisions"},
-        )
+        _final_reason = _final_reason or "no_actionable_decisions"
 
     submissions: list[OrderSubmission] = []
     _projected_positions_for_band = {
@@ -2980,23 +2988,64 @@ def _build_equity_bridge(
     pnl_tracker,
     unrealized_pnl: float,
 ) -> dict:
-    """R0-v2-B: Build equity bridge dict for ConsoleSummary."""
+    """R0-v2-B: Build equity bridge dict for ConsoleSummary.
+
+    AUDIT FIX (2026-08-23): quarantined_pnl was hardcoded to 0.0 with a
+    comment claiming quarantined trades are "data reconstruction errors, not
+    real broker fills". That is no longer true (and may never have been for
+    most of them): every one of the 101 current quarantined_trades entries
+    carries a real broker_order_id + exit_broker_order_id -- they ARE real
+    broker fills, just ones our tracker excluded from the closed-trade
+    ledger because of a chronology/holding-days data defect (see
+    quarantine_reason). Their PnL (~-$156K as of 2026-08-21) already landed
+    in broker_equity but never in tracker_realized, so it was silently
+    folded into "unexplained" -- except unexplained_diff was masked by a
+    $100K tolerance picked specifically to keep this panel green, not
+    because $100K of daily unexplained drift is actually acceptable. Both
+    the quarantined_pnl computation and the tolerance are fixed here so the
+    bridge either genuinely reconciles or visibly reports that it doesn't;
+    it does not paper over a wrong sum with a wide tolerance:
+      - quarantined_pnl is now pnl_tracker.get_quarantined_trades() summed,
+        matching the panel's own "quarantined_pnl (台帳外・brokerは記録済み)"
+        label semantics.
+      - tolerance_usd is now read from config/runtime/current_mode.yaml's
+        ledger_quality_gate.acceptance_criteria.broker_equity_bridge_tolerance_usd
+        (the single documented source of truth for this threshold) instead
+        of a second, disconnected, much looser hardcoded value living only
+        in this function. Falls back to $5,000 (not $100,000) if the config
+        value is missing/unparseable, since $1 (the current YAML value) is
+        unrealistically tight for a bridge that still has an unexplained
+        pre-tracker-epoch gap; $5,000 is a deliberately conservative
+        placeholder pending an explicit operator decision on the real
+        number, not a silent restoration of the old $100K mask.
+    """
     try:
         import json as _json
+        import yaml as _yaml
         state = pnl_tracker.state
         baseline = float(getattr(state, "baseline_equity", None) or
                          _json.loads((pnl_tracker.project_root / "data" / "tracking" / "pnl_state.json").read_text()).get("baseline_equity", 1_000_000))
         realized = float(state.cumulative_realized_pnl or 0)
-        # Note: quarantined_pnl=0 because our quarantined trades are data reconstruction
-        # errors, not real broker fills. The ~$64K bridge gap is historical untracked
-        # activity pre-tracker-epoch. Tolerance set to $100K to flag new unexplained gaps.
+        quarantined_pnl = sum(float(t.get("pnl") or 0) for t in pnl_tracker.get_quarantined_trades())
+
+        tolerance_usd = 5_000.0
+        try:
+            _mode_path = pnl_tracker.project_root / "config" / "runtime" / "current_mode.yaml"
+            _mode_cfg = _yaml.safe_load(_mode_path.read_text(encoding="utf-8")) or {}
+            _acceptance = (_mode_cfg.get("ledger_quality_gate") or {}).get("acceptance_criteria") or {}
+            _configured_tol = _acceptance.get("broker_equity_bridge_tolerance_usd")
+            if _configured_tol is not None:
+                tolerance_usd = max(float(_configured_tol), 5_000.0)
+        except Exception:
+            pass
+
         result = compute_equity_bridge(
             broker_equity=broker_equity,
             baseline_equity=baseline,
             tracker_realized=realized,
             tracker_unrealized=unrealized_pnl,
-            quarantined_pnl=0.0,
-            tolerance_usd=100_000.0,
+            quarantined_pnl=quarantined_pnl,
+            tolerance_usd=tolerance_usd,
         )
         return result.to_dict()
     except Exception as exc:

@@ -1,0 +1,190 @@
+diff --git a/scripts/check_go_no_go.py b/scripts/check_go_no_go.py
+index c89dbb4..e2e18fa 100755
+--- a/scripts/check_go_no_go.py
++++ b/scripts/check_go_no_go.py
+@@ -34,6 +34,38 @@ def _load(path: Path) -> dict:
+         return {}
+ 
+ 
++# AUDIT FIX (2026-08-23): latest_console_summary.json is ONLY written by
++# paper_demo.py's console_summary.emit() call, which (before the companion
++# paper_demo.py fix landed) was skipped entirely on any run with zero
++# actionable decisions -- leaving this file, and therefore every Required
++# condition below that reads from `summary`/`health`, silently frozen at
++# whatever an old run last wrote. Even with that upstream fix, a future
++# regression or an unrelated paper_demo crash before console_summary.emit()
++# could reproduce the same failure mode. Rather than trust health.status=OK
++# unconditionally, independently verify the summary itself is fresh enough
++# to be trustworthy before treating anything inside it as current.
++# Paper_demo cron jobs run at minimum every ~4 hours on trading days (see
++# docs/console_improvement_tasks.md schedule); a summary older than this
++# is either a real staleness bug or a market-closed/weekend gap. Use a
++# generous 30h threshold (covers one full weekday of a delayed cron plus
++# overnight) rather than trying to model exact market-hours schedules here.
++_CONSOLE_SUMMARY_MAX_AGE_HOURS = 30.0
++
++
++def _console_summary_age_hours(summary: dict) -> float | None:
++    ts = ((summary.get("run") or {}).get("timestamp"))
++    if not ts:
++        return None
++    try:
++        parsed = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
++        if parsed.tzinfo is None:
++            parsed = parsed.replace(tzinfo=timezone.utc)
++        age = (datetime.now(timezone.utc) - parsed).total_seconds() / 3600.0
++        return round(age, 2)
++    except Exception:
++        return None
++
++
+ def check() -> dict[str, dict]:
+     summary_path = PROJECT_ROOT / "reports" / "console" / "latest_console_summary.json"
+     summary = _load(summary_path)
+@@ -47,6 +79,15 @@ def check() -> dict[str, dict]:
+ 
+     results: dict[str, dict] = {}
+ 
++    # 0. console summary freshness (gates trust in every health.* field below)
++    _age_hours = _console_summary_age_hours(summary)
++    results["console_summary_freshness"] = {
++        "label": "console_summary_freshness",
++        "pass": _age_hours is not None and _age_hours <= _CONSOLE_SUMMARY_MAX_AGE_HOURS,
++        "actual": f"{_age_hours}h old" if _age_hours is not None else "missing_timestamp",
++        "required": f"<={_CONSOLE_SUMMARY_MAX_AGE_HOURS:.0f}h old",
++    }
++
+     # 1. ledger_quality VALID
+     lg = health.get("ledger_gate_status", "UNKNOWN")
+     results["ledger_quality"] = {
+@@ -112,26 +153,88 @@ def check() -> dict[str, dict]:
+         "required": "ok or recovery_pending",
+     }
+ 
+-    # 6. all crons healthy (reconcile last status ok)
+-    rec_status = reconcile.get("status", "UNKNOWN")
+-    results["cron_health"] = {
+-        "label": "cron_jobs_healthy",
+-        "pass": health.get("status", "") == "OK",
+-        "actual": health.get("status", "UNKNOWN"),
+-        "required": "OK",
+-    }
++    # 6. all crons healthy.
++    # AUDIT FIX (2026-08-23): previously only re-read health.status, which is
++    # itself one field *inside* the same latest_console_summary.json this
++    # whole check() function already loads -- i.e. this condition was 100%
++    # redundant with reading `summary` directly and told you nothing extra
++    # about actual cron job health (paper_demo/reconcile_orders/collect_data/
++    # etc. each have their OWN success/failure independent of paper_demo's
++    # self-reported health.status, which only reflects the ledger/guardrail/
++    # freshness evidence checked inside that one paper_demo run). Query the
++    # real per-job cron run history via console's SystemAdapter
++    # (_check_cron_run_history(), the same evidence source the console's own
++    # /health endpoint uses) so a genuinely stuck or erroring cron job is
++    # caught even when the last paper_demo run itself reported OK. Falls
++    # back to the old reconcile_status.json check (fail-open on unavailable,
++    # not silently pass) only if SystemAdapter can't be imported/queried.
++    _cron_detail = "unavailable"
++    _cron_ok = None
++    try:
++        from console.adapters.system_adapter import SystemAdapter
++        _adapter = SystemAdapter(PROJECT_ROOT)
++        _cron_evidence = _adapter._check_cron_run_history()
++        _cron_ok = bool(_cron_evidence.get("ok"))
++        _cron_detail = (
++            f"{_cron_evidence.get('parsed_jobs')}/{_cron_evidence.get('enabled_jobs')} jobs parsed "
++            f"({len(_cron_evidence.get('parse_errors') or [])} error(s))"
++        )
++    except Exception as _cron_exc:
++        _cron_detail = f"check_failed: {_cron_exc}"
++
++    if _cron_ok is None:
++        # Fall back to the reconcile-only heuristic rather than fail the
++        # whole Required checklist on a SystemAdapter import/env issue that
++        # is orthogonal to actual cron health.
++        rec_status = reconcile.get("status", "UNKNOWN")
++        results["cron_health"] = {
++            "label": "cron_jobs_healthy",
++            "pass": rec_status == "ok" and health.get("status", "") == "OK",
++            "actual": f"reconcile={rec_status}, paper_demo_health={health.get('status', 'UNKNOWN')} (SystemAdapter check unavailable: {_cron_detail})",
++            "required": "OK",
++        }
++    else:
++        results["cron_health"] = {
++            "label": "cron_jobs_healthy",
++            "pass": _cron_ok,
++            "actual": _cron_detail,
++            "required": "all enabled cron jobs parse cleanly (openclaw cron list/runs)",
++        }
+ 
+-    # 7. paper 3日確認 (Go/No-Go reportから確認)
+-    gng_path = PROJECT_ROOT / "docs" / "go_no_go_report_20260731.md"
+-    paper_ok = False
+-    if gng_path.exists():
+-        content = gng_path.read_text()
+-        paper_ok = "07-30 ok" in content or "07-30 ✅" in content or "07-30完了" in content
++    # 7. paper N日確認.
++    # AUDIT FIX (2026-08-23): previously grepped a single hardcoded file
++    # (docs/go_no_go_report_20260731.md) for the literal substring "07-30
++    # ok"/"07-30 ✅"/"07-30完了" -- a snapshot of the ORIGINAL 07-31 decision
++    # frozen in time. Once that file's content stopped changing (07-31 has
++    # long since passed), this condition would return "pass=True" FOREVER
++    # regardless of whether paper trading actually ran cleanly in the last 3
++    # days, because it never looked at any date-relative or live data at
++    # all. Replace with a live check: at least 3 distinct calendar dates
++    # with a recorded daily_snapshot in pnl_state.json within the last 7
++    # days (a rolling window, not a fixed历史 date), which reflects actual
++    # recent operational continuity instead of a permanently-true historical
++    # fact.
++    _pnl_state_path = PROJECT_ROOT / "data" / "tracking" / "pnl_state.json"
++    _pnl_state = _load(_pnl_state_path)
++    _snapshots = _pnl_state.get("daily_snapshots", []) or []
++    _now_jst_date = datetime.now(JST).date()
++    _recent_dates: set[str] = set()
++    for _snap in _snapshots:
++        _d = _snap.get("date")
++        if not _d:
++            continue
++        try:
++            _snap_date = datetime.fromisoformat(str(_d)).date()
++        except Exception:
++            continue
++        if (_now_jst_date - _snap_date).days <= 7:
++            _recent_dates.add(str(_d))
++    _paper_ok = len(_recent_dates) >= 3
+     results["paper_3day"] = {
+         "label": "paper_3day_confirmation",
+-        "pass": paper_ok,
+-        "actual": "07-28 ok / 07-29 ok / 07-30 ok" if paper_ok else "未確認",
+-        "required": "3日間正常稼働",
++        "pass": _paper_ok,
++        "actual": f"{len(_recent_dates)} distinct day(s) with a snapshot in the last 7 days: {sorted(_recent_dates)}",
++        "required": ">=3 distinct days with a daily_snapshot in the last 7 days",
+     }
+ 
+     return results
+@@ -152,6 +255,7 @@ def check_promotion_readiness() -> dict[str, dict] | None:
+         from stock_swing.risk.promotion_gate import evaluate_promotion_readiness
+         from stock_swing.risk.pairwise_correlation import (
+             build_daily_closes_from_raw_bars,
++            check_data_freshness,
+             compute_pairwise_correlation,
+             summarize_high_correlation_pairs,
+         )
+@@ -192,8 +296,15 @@ def check_promotion_readiness() -> dict[str, dict] | None:
+             for sym in held_symbols
+         }
+         closes_by_symbol = {sym: c for sym, c in closes_by_symbol.items() if c}
++        # AUDIT FIX (2026-08-23): a collect_broker_bars() pagination bug (now
++        # fixed in collect_data.py) previously left every accumulated
++        # snapshot frozen at the same stale date range for weeks. Check
++        # freshness explicitly rather than trusting "a correlation was
++        # computable" as proof the data is current -- see
++        # pairwise_correlation.check_data_freshness() docstring.
++        _correlation_freshness = check_data_freshness(closes_by_symbol)
+         pairwise = compute_pairwise_correlation(closes_by_symbol)
+-        correlation_summary = summarize_high_correlation_pairs(pairwise)
++        correlation_summary = summarize_high_correlation_pairs(pairwise, freshness=_correlation_freshness)
+ 
+         readiness = evaluate_promotion_readiness(
+             cluster_exposures=cluster_exposures,

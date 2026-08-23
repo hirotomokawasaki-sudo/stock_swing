@@ -1,0 +1,94 @@
+diff --git a/scripts/f8_clean_records_analysis.py b/scripts/f8_clean_records_analysis.py
+index 9ca30db..e1c9196 100644
+--- a/scripts/f8_clean_records_analysis.py
++++ b/scripts/f8_clean_records_analysis.py
+@@ -36,6 +36,23 @@ def _metrics(trades: list[dict]) -> dict:
+     avg_pnl = net_pnl / len(trades)
+     valid_ret = [t for t in trades if t.get("return_pct") is not None]
+     avg_ret = (sum(t["return_pct"] for t in valid_ret) / len(valid_ret)) if valid_ret else None
++    # AUDIT FIX (2026-08-23): expected_value previously computed
++    # "win_rate * avg_pnl + (1-win_rate) * (net_pnl - win_rate*avg_pnl/win_rate)",
++    # a formula that does not correspond to any standard per-trade
++    # expectancy definition and produced wildly wrong values (e.g. -$10,773
++    # against an actual per-trade average PnL of -$81.64 on the same 252-
++    # trade cohort -- off by two orders of magnitude, not just a rounding
++    # difference). Standard per-trade expectancy is simply
++    # win_rate*avg_win - loss_rate*avg_loss, which is mathematically
++    # identical to net_pnl/count (avg_pnl) -- expressed via win/loss
++    # averages instead of raw sums to be independently checkable against
++    # avg_pnl (the two must always agree for a correct formula; the old one
++    # never did except when gross_loss==0 masked the bug via short-circuit).
++    avg_win = (gross_profit / len(wins)) if wins else 0.0
++    avg_loss = (gross_loss / len(losses)) if losses else 0.0
++    loss_rate = len(losses) / len(trades) if trades else 0.0
++    expectancy = (win_rate * avg_win) - (loss_rate * avg_loss) if trades else None
++
+     return {
+         "count":           len(trades),
+         "wins":            len(wins),
+@@ -47,15 +64,42 @@ def _metrics(trades: list[dict]) -> dict:
+         "gross_loss":      round(gross_loss, 2),
+         "avg_pnl":         round(avg_pnl, 2),
+         "avg_return_pct":  round(avg_ret * 100, 4) if avg_ret is not None else None,
+-        "expected_value":  round(win_rate * avg_pnl + (1 - win_rate) * (net_pnl - win_rate * avg_pnl / win_rate if win_rate > 0 else 0), 2) if trades else None,
++        # expected_value (per-trade expectancy, USD) == avg_pnl by
++        # construction; kept as a separate, explicitly-labeled key (rather
++        # than removed) so any existing consumer relying on the key's
++        # presence doesn't break, but it is no longer computed via the
++        # broken formula above.
++        "expected_value":  round(expectancy, 2) if expectancy is not None else None,
+     }
+ 
+ 
+-def _max_drawdown(trades: list[dict]) -> float:
+-    """Compute max drawdown over sorted closed trades."""
++def _max_drawdown(trades: list[dict], baseline_equity: float = 1_000_000.0) -> float:
++    """Compute max drawdown of the realized-PnL equity curve, as a fraction
++    of a real account-equity baseline.
++
++    AUDIT FIX (2026-08-23): previously tracked "peak" as the running
++    cumulative-PnL peak itself (starting at 0.0, not at any real equity
++    value), so drawdown = (peak - running) / peak used the *cumulative
++    profit high-water mark* as the denominator rather than actual account
++    equity. Two failure modes resulted:
++      1. Before cumulative PnL ever turned positive (peak stays 0.0), the
++         `if peak > 0` guard meant drawdown was silently never recorded at
++         all for that entire stretch, even while realized losses were
++         accumulating -- exactly the period a drawdown metric matters most.
++      2. Once peak did turn positive, a small peak (e.g. +$1,443.75, as
++         actually occurred on this ledger before the account swung to a
++         cumulative loss) makes even a modest subsequent loss look like a
++         drawdown approaching 100% of "peak", which is a meaningless
++         percentage for judging real portfolio risk -- a $1,444 profit peak
++         is not a meaningful capital base to measure drawdown against.
++    Fix: denominate drawdown against `baseline_equity` + running cumulative
++    PnL (i.e. actual implied account equity over time), with the peak
++    initialized to baseline_equity so a drawdown is recorded from trade 1
++    even if cumulative PnL has not yet turned positive.
++    """
+     sorted_t = sorted(trades, key=lambda t: t.get("exit_time") or "")
+-    peak = 0.0
+-    running = 0.0
++    peak = baseline_equity
++    running = baseline_equity
+     max_dd = 0.0
+     for t in sorted_t:
+         running += t.get("pnl") or 0
+@@ -78,6 +122,7 @@ def main() -> None:
+     clean   = tracker.get_clean_closed_trades()
+     quarant = tracker.get_quarantined_trades()
+     quality = tracker.get_ledger_quality_report()
++    _baseline_equity = float(getattr(tracker.state, "baseline_equity", None) or 1_000_000.0)
+ 
+     UNKNOWN_REASONS = {"broker_fill", "broker_fill_unknown", None, ""}
+ 
+@@ -113,7 +158,8 @@ def main() -> None:
+         "ledger_quality": quality,
+         "quarantined_count": len(quarant),
+         "overall": _metrics(clean),
+-        "max_drawdown": _max_drawdown(clean),
++        "max_drawdown": _max_drawdown(clean, baseline_equity=_baseline_equity),
++        "max_drawdown_baseline_equity": _baseline_equity,
+         "by_asset_class": {
+             "etf":   _metrics(etf_trades),
+             "stock": _metrics(stock_trades),

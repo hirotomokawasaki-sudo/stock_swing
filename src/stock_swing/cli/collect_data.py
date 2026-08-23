@@ -825,6 +825,26 @@ def collect_broker_bars(symbols, store, timeframe="1Day", limit=5):
     2026-08-01: replaced the 'not_implemented' placeholder. See collect_broker()
     docstring for context on why this was blocked until the fetch_latest_quote
     host-routing bug was fixed.
+
+    AUDIT FIX (2026-08-23): fetch_bars(limit=5) with no explicit `start` falls
+    back to BrokerClient.fetch_bars()'s own default lookback window of
+    max(limit*3, 30) = 30 CALENDAR days. The Alpaca v2 bars endpoint returns
+    bars in ascending (oldest-first) order and honors `limit` as a hard page
+    size, so "first 5 bars of a 30-day window" is always the OLDEST ~5
+    trading days in that window, not the most recent -- confirmed by every
+    accumulated data/raw/broker/broker_{symbol}_*.json marketdata/bars
+    snapshot on disk consistently containing the same 2026-07-23..2026-07-29
+    date range regardless of collection date, each with an unused
+    `next_page_token` in the response that was never followed. This module's
+    own docstring assumed these were "a short rolling window" reconstructing
+    a longer daily-close history for src/stock_swing/risk/pairwise_
+    correlation.py -- in reality every snapshot for months has been the same
+    stale week, so the pairwise-correlation promotion-gate criterion has
+    been running on a frozen ~19-trading-day history the whole time.
+    Fix: request an explicit `start` anchored to `limit` trading days back
+    (using a calendar-day multiplier generous enough to cover weekends/
+    holidays) so the single unpaginated page returned always ends at
+    `end` (now, the fetch_bars default) instead of `start`.
     """
     written = []
     client, client_err = _make_broker_client()
@@ -842,10 +862,23 @@ def collect_broker_bars(symbols, store, timeframe="1Day", limit=5):
         _write_broker_status("broker_bars_status.json", status)
         return written
 
+    # Narrow the request window to roughly `limit` trading days back (~1.6
+    # calendar days per trading day to cover weekends, plus a few days of
+    # holiday buffer) so the single unpaginated response naturally ends at
+    # `end` (now, fetch_bars' own default) instead of being truncated to the
+    # OLDEST `limit` bars of a much wider implicit default window. Pad the
+    # requested `limit` itself too (not just the date window) so a
+    # mis-estimate of trading-day density (e.g. an extra holiday) still
+    # returns every bar in the narrow window rather than silently dropping
+    # the most recent ones to stay under `limit`.
+    _lookback_days = max(int(limit * 1.6) + 4, 10)
+    _bars_start = (datetime.now(timezone.utc) - timedelta(days=_lookback_days)).isoformat().replace("+00:00", "Z")
+    _bars_limit = limit + 5
+
     failed_symbols = []
     for symbol in symbols:
         try:
-            bars_env = client.fetch_bars(symbol, timeframe=timeframe, limit=limit)
+            bars_env = client.fetch_bars(symbol, timeframe=timeframe, start=_bars_start, limit=_bars_limit)
             path = _write_raw_snapshot(
                 store, "broker", symbol, "marketdata/bars", bars_env.payload,
                 {"symbol": symbol, "timeframe": timeframe},
