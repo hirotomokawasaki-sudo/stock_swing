@@ -1033,10 +1033,13 @@ sizing側Option A・confidence_multiplierバグ修正は別途検証手法を設
                          （r11_backtest_engine_v2.py新規）。v1は全体n=1415中1029件（73%）が
                          実際の銘柄導入日以前に発生していたことを確認。修正後PF=2.069（v1
                          1.733）。修正版の月次PF推移が本番実績と方向性一致（強い外部検証）。
-                         go-live以降PF=1.448（90%CI[1.099,1.891]、ゆ1.0を上回る）だが
+                         go-live以降PF=1.448（90%CI[1.099,1.891]、1.0を上回る）だが
                          exit側look-ahead/slippage未対応（項目3・5）のため楽観側に偏る可能性高し
-2026-09中旬頃〜    🔲 R13-C  項目3（保守的OHLC exit）・項目5（slippage）を実装し再検証。
-                         項目4（exposure/sector cap）はentry filter統合が必要で後回し
+2026-08-23        ✅ R13-C  項目3（保守的OHLC exit）・項目5（slippage）実装・検証完了
+                         （r11_backtest_engine_v3.py新規）。live以降PF=1.453（修正前1.448と
+                         ほぼ不変）、90%CI[1.210,1.750]で幅が狭まり下限上昇。往復30bpスリッパージ
+                         でもPF=1.426維持。本番との方向性一致も維持
+2026-09中旬頃〜    🔲 R13-C  項目4（exposure/sector cap）はentry filter統合が必要で後回し
 2026-09以降        🔵 R13-D  ETFセクターローテーションバックテスト設計開始（R13-Cの手法確立後）。
                          JP overnight spilloverはIBKR接続確立待ち継続
 
@@ -1081,9 +1084,10 @@ sizing側Option A・confidence_multiplierバグ修正は別途検証手法を設
 attributable限定では単一トレード依存の不安定な改善のみ。paper A/Bには進まない |
 | 🟡 P1 | **R13-B** | **弱い結果（検証済み）**（2026-08-23） | exit側Option Bヒストリカル
 検証完了。変化トレード数少なく結論保留。sizing側は未着手 |
-| 🟢 P2 | **R13-C** | **強い肯定的知見（最小構成完了）**（2026-08-23） | t+1 fill+
-point-in-time universe実装。修正後PF=2.069、go-live以降PF=1.448（90%CI>1.0）、
-本番と方向性一致。残3ヿ7項目（保守的exit/slippage等）未実装のため楽観側に偏る |
+| 🟢 P2 | **R13-C** | **強い肯定的知見（項目1/2/3/5完了）**（2026-08-23） | t+1 fill+
+point-in-time universe+保守的OHLC exit+slippage全て実装。live以降PF=1.453
+（90%CI[1.210,1.750]、保守的補正後もほぼ不変）。本番と方向性一致も維持。残も4/6/7
+項目（exposure/sector cap等）は未実装 |
 | 🔵 P3 | **R13-D** | **PLANNED**（2026-08-23新規） | 独立収益源開発（ETFローテーション、JP
 spillover）。研究段階、本番影響なし |
 
@@ -2911,7 +2915,7 @@ trade履歴での単純バックテストができないため、別途検証手
 
 ### R13-C: R11バックテスト基盤の根本再構築（look-ahead/survivorship bias解消）
 
-**Status**: ✅ **最小構成（1・2）実装・検証完了（2026-08-23）。強い肯定的知見。残る3〜7項目は仮説のまま**
+**Status**: ✅ **項目1・2・3・5実装・検証完了（2026-08-23）。強い肯定的知見が保守的補正後も維持。残る4・6・7項目は仮説のまま**
 **優先度**: P2（工数大、本番影響なしの研究基盤作業）
 
 **根拠（戦略レビュー、C02/C03で実コード確認済み）**: 旧`scripts/r11_backtest_engine.py`は
@@ -2922,9 +2926,9 @@ trade履歴での単純バックテストができないため、別途検証手
 **実施内容（IMPLEMENTATION_VALUE.mdの「R11-v2の最低要件候補」を優先度順に選択）**:
 1. ✅ signal at t close → fill at t+1 open（最優先、look-ahead解消の本質）— 実装完了
 2. ✅ point-in-time universe対応（survivorship bias解消）— 実装完了（下記限界あり）
-3. 🟡 保守的OHLC pathでstop/trailingを再生成（未着手）
+3. ✅ 保守的OHLC pathでstop/trailingを再生成 — 実装完了（2026-08-23、下記参照）
 4. 🟡 cash、gross exposure、sector/cluster capの再現（未着手）
-5. 🟡 spread/slippage/impactの反映（未着手）
+5. ✅ spread/slippage/impactの反映 — 実装完了（2026-08-23、下記参照）
 6. 🟡 rolling walk-forward + embargo（未着手）
 7. 🟡 全trial registry（パラメータ探索の過適合リスクを評価可能にする）（未着手）
 
@@ -2990,17 +2994,97 @@ breakout_momentumエントリーシグナル自体にはバイアス除去後も
 というデータだが、項目3〜7（特に保守的exit pathとslippage）を実装して再検証するまでは本番パラメータ
 変更の根拠にしない。
 
-**エビデンス保存先**: `docs/r13c_backtest_v2_validation_20260823/`
+**エビデンス保存先（v2）**: `docs/r13c_backtest_v2_validation_20260823/`
 （v1_vs_v2_full_comparison.txt / t1fill_only_no_universe_gate.txt /
 production_vs_backtest_monthly_comparison.md / v2_both_fixes_trades.json /
 v2_t1fill_only_no_universe_gate_results.json）。テスト: `tests/unit/
 test_r11_backtest_engine_v2.py`（t+1 fillとuniverse gateのメカニズムを合成データで
 弄しテスト、5件）。
 
-**次のアクション**: 項目3（保守的OHLC exit）と項目5（slippage）を次に実装し、
-PF=1.448がどの程度削られるかを確認。項目4（exposure/sector cap）はentry filter層との
-統合が必要で工数が大きいため後回し。R13-Bの冒頭で記録した通り、attributable銘柄数が
-増えたらR13-A/Bの再検証も検討。
+---
+
+**実装v3（2026-08-23、同日内に継続実施）**: `scripts/r11_backtest_engine_v3.py`新規作成。
+v2のt+1 fill + point-in-time universeに加え、項目3・5を実装:
+
+- **項目3（保守的OHLC exit）**: peak_priceを日次closeではなく日次HIGHで更新し、
+stop_loss/trailing_stop/breakevenの下限判定を日次LOWでチェック。ブレークした場合は閾値価格で
+約定（LOWそのものではなく、ストップ注文がトリガー価格で約定されると仮定）。日次OHLCしか
+キャッシュしていない制約上、完全な場内執行タイミング再現ではないが、意図的に保守的（より多く、
+より早く退場する方向に偏った）に設計
+- **項目5（slippage）**: 本番の実際の発注は全てmarket order（`ProposedOrder.order_type
+== "market"`）であることを確認した上で、entry/exit両方にone-way slippage_bpsを不利な方向に
+適用（買いは高く、売りは安く）。既存の2026-08-15 R11分析の往復手数料bp規約と一致させ、
+往復20bp = 片道のみ10bpとしてデフォルト設定
+
+CLIに`--isolate`（両修正を個別に分解）、`--compare-v2`（v2との側面比較）オプションあり。
+
+**検証結果（全69銘柄、2年分、片道slippage=10bp）**:
+
+| バージョン | n(全体) | PF(全体) | n(live以降) | PF(live以降) | net(live以降) |
+|---|---|---|---|---|---|
+| v2（t+1 fill+universe gateのみ） | 374 | 2.069 | 284 | 1.448 | +$49,271 |
+| v3（+ 保守的OHLC exit + slippage 10bp） | 621 | 1.854 | 471 | 1.453 | +$45,725 |
+
+**分解分析（項目ごとの単独効果）**:
+
+| variant | n(全体) | PF(全体) | n(live) | PF(live) | net(live) |
+|---|---|---|---|---|---|
+| v2（基準） | 374 | 2.069 | 284 | 1.448 | +$49,271 |
+| slippageのみ（保守的exitなし） | 353 | 2.183 | 264 | 1.448 | +$41,328 |
+| 保守的exitのみ（slippageなし） | 633 | 1.966 | 481 | 1.550 | +$53,969 |
+| v3（両方） | 621 | 1.854 | 471 | 1.453 | +$45,725 |
+
+保守的exit単独では取引数が増える（日次LOWで早期退場するケースが増えるため）が、PFはほとんど
+悪化しない（早期退場が損失拡大を防ぐ方向に作用するケースが多いということ）。slippage単独は
+予想通りPFを下げるが、live以降PFは1.448でv2とほぼ一致。
+
+**Slippage感度分析（保守的exitは常にTrue）**:
+
+| 往復bp | 片道bp | n(全体) | PF(全体) | n(live) | PF(live) | net(live) |
+|---|---|---|---|---|---|---|
+| 0 | 0.0 | 633 | 1.966 | 481 | 1.550 | +$53,969 |
+| 10 | 5.0 | 633 | 1.925 | 481 | 1.516 | +$50,827 |
+| 20 | 10.0 | 621 | 1.854 | 471 | 1.453 | +$45,725 |
+| 30 | 15.0 | 619 | 1.822 | 469 | 1.426 | +$43,111 |
+
+往復30bp（既存分析で使っていた最も保守的なシナリオ）でもlive以降PF=1.426で大きく崩れない。
+
+**ブートストラップ（live以降、2000リサンプル）**: n=471、PF=1.453、90%CI=**[1.210,
+1.750]**、**リサンプルの100%がPF>1**（v2の90%CI[1.099, 1.891]よりも下限が上がり、幅が狭まった）。
+
+| エンジン | n | PF | 90%CI |
+|---|---|---|---|
+| 本番（attributable） | 49 | 1.082 | [0.564, 2.125] |
+| v2（t+1 fill+universe gateのみ） | 284 | 1.448 | [1.099, 1.891] |
+| v3（+保守的exit+slippage） | 471 | 1.453 | **[1.210, 1.750]** |
+
+**本番との外部検証（v3でも継続）**:
+
+| 月 | 本番実績 PF | v3（保守的+slippage）PF |
+|---|---|---|
+| 2026-05 | 4.53 | 3.39 |
+| 2026-06 | 0.55 | 0.93 |
+| 2026-07 | 0.28 | 0.88 |
+| 2026-08 | 1.08 | 1.87 |
+
+方向性一致はv3でも維持。
+
+**重要な評価**: 当初の想定（項目3・5を入れればPF=1.448はかなり削られるはず）に反し、
+**実際にはPF=1.453でほぼ不変だった**。これは（a）breakout_momentumシグナル自体のエッジが
+モデリングアーティファクト（楽観的なクローズ仲値やフリクションレス約定）に依存していなかったことを
+示す強いシグナルだが、（b）残る項目4（exposure/sector cap）・6（walk-forward+embargo）・
+7（trial registry）は依然未実装であり、特に項目4はentry filter層との統合が必要で
+本番の実際のBUY拒否パターンと一致しない可能性がある。
+
+**エビデンス保存先（v3）**: `docs/r13c_backtest_v3_validation_20260823/`
+（v3_full_isolation_comparison.txt / slippage_sensitivity.md / bootstrap_ci.md /
+production_vs_v3_monthly_comparison.md / v3_full_trades.json）。テスト: `tests/unit/
+test_r11_backtest_engine_v3.py`（保守的OHLC exitのLOWトリガーとclose-onlyモードとの
+挙動分け、slippageのentry/exit両方への不利方向適用、trailing_stop優先順保持を合成データで
+検証、5件）。フルスイート2083 passed/2 skipped（regressionなし）。
+
+**次のアクション**: 項目4（exposure/sector cap）はentry filter層との統合が必要で工数が大きいため
+後回し。R13-Bの冒頭で記録した通り、attributable銘柄数が増えたらR13-A/Bの再検証も検討。
 
 **やらないこと**: 本研究の結果を直接本番に反映しない（必ずR11-D型のpaper A/Bを経由）。
 
@@ -3039,7 +3123,7 @@ PF=1.448がどの程度削られるかを確認。項目4（exposure/sector cap�
 |---|---|---|---|---|---|
 | P1 | R13-A | stop_loss閾値深掘り検証 | 中 | 低 | **STOP HOLD**（検証完了、2026-08-23） |
 | P1 | R13-B | signal_strength exit切り離し検証 | 低〜中 | 中 | **弱い結果**（検証完了、2026-08-23）、sizing側未着手 |
-| P2 | R13-C | R11バックテスト再構築（最小構成まず1・2） | 大 | 低（研究のみ、本番影響なし） | **強い肯定的知見**（最小構成完了、2026-08-23）、残3〜7項目未着手 |
+| P2 | R13-C | R11バックテスト再構築（項目1/2/3/5） | 大 | 低（研究のみ、本番影響なし） | **強い肯定的知見**（2026-08-23）、live以降PF=1.453（90%CI[1.210,1.750]）、残4/6/7項目未着手 |
 | P3 | R13-D | ETFセクターローテーション設計開始、JP spilloverはIBKR待ち継続 | 大 | 低（shadowのみ） | 未着手 |
 
 **09-15 Go/No-Goとの関係**: R13はすべてpaper A/B・研究段階であり、09-15までに
