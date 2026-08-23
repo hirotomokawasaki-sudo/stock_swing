@@ -2653,3 +2653,50 @@ expected_value=-81.64=avg_pnl一致、max_drawdown=9.28%を確認済み
 ❌ 発注ロジック・ポジションサイジング・ガードレール閾値には一切手を加えない
    （本監査は「状態の可視化・判定ロジックの正確性」のみが対象）
 ```
+
+---
+
+## 2026-08-23（第2弾）: 投資戦略レビュー + Claude独立検証パケット + 即日修正6件
+
+**背景**: 上記のシステム監査に続き、ユーザーから「投資戦略の改善計画・改善内容自体を
+レビューして改善点を提案」を依頼され、その後「Claudeで検証するための材料準備」
+「問題なければすぐに実装すべきものに対応」と依頼が連鎖した。
+
+**戦略レビュー主張（14件、詳細は`docs/strategy_review_claude_validation_20260823/
+CLAIMS_MATRIX.md`）**: attributable 49件のedgeはbootstrap 90%区間
+0.564】2.125で統計的に未確定、R11バックテストは同日close look-aheadバイアスと
+survivorship biasあり、"breakout"の実装は単純な20日リターンしか見ていない、
+high-confidence sizing 1.2倍はcapでclipされ実質的にno-op、promotion PFの母集団が
+attributableではなく全closed 252件、top5集中度の分母がgross exposure基準なのに
+40%閾値はequity基準、dry-runが本番と同じconsole summaryを上書きできる、など。
+
+**Claude独立検証パケット**: `docs/strategy_review_claude_validation_20260823/`新規作成。
+匿名化252件tradeスナップショット、bootstrap再計算スクリプト、claims matrix、
+実装価値評価案、外部一次資料（賣否両論含む）、SHA-256マニフェストを同梱。
+自己検証（source_filesをライブリポジトリとdiff、主張8件を実コードで再検証）中に
+**第7のバグを発見**: `SystemAdapter._fetch_one_job_runs()`がJSON解析成功のみを
+見て実際の`lastRunStatus`を一切評価していなかった（上記監査の`cf6bc75`修正自体に
+残っていたギャップ）。
+
+**即日実装・適用済み（6件、commit `f204336`、全て発注ロジック未変更・状態可視化のみ）**:
+1. dry-run証跡の分離（`ConsoleSummary.dry_run`/`invocation_source` +
+   `check_go_no_go.py`の`console_summary_not_dry_run`新規条件）
+2. cron健全性の実status評価（`system_adapter.py`に`lastRunStatus`/
+   `consecutiveErrors`チェック追加）
+3. paper 3日gate強化（`decisions_generated>0`のsnapshotのみカウント）
+4. promotion PFをattributable 49件限定に変更（PF=1.082を確認）
+5. top5集中度をequity/gross/HHIに分離（gross 50.7% vs equity 31.7%）
+6. `breakout_momentum_v1.yaml`/`event_swing_v1.yaml`のUNUSEDフラグ注記
+
+**検証**: フルテストスイート2065 passed / 2 skipped。実`--dry-run`で新規4条件が
+意図通り動作することを確認済み。
+
+**未実施（Paper A/B先行推奨、IMPLEMENTATION_VALUE.md参照）**: signal_strengthと
+exit/sizingの切り離し、high-confidence sizing no-op修正、R11再構築（t+1約定、
+point-in-time universe、資金制約再現）、ETFローテーション等の独立戦略はいずれも
+未着手のまま。
+
+**スキル化**: 今回のワークフロー（監査→claims matrix→パッチ→テスト→承認後適用→
+検証パケット）を`skill_workshop`で`evidence-based-system-audit`としてスキル化。
+ユーザー承認済み、プロポーザルID`evidence-based-system-audit-20260823-d6294d652d`
+（pending状態）。
