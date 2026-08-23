@@ -476,11 +476,36 @@ def resolve_tracking_metadata(args: argparse.Namespace, existing: dict[str, Any]
 
 
 def fetch_all_filled_orders(broker: BrokerClient) -> list:
-    """Fetch all filled orders from broker."""
-    print("Fetching filled orders from broker...")
-    orders_env = broker.fetch_orders(status='all', limit=500)
-    orders = orders_env.payload if hasattr(orders_env, 'payload') else orders_env
-    
+    """Fetch all filled orders from broker.
+
+    AUDIT FIX (2026-08-23): previously called broker.fetch_orders(status=
+    'all', limit=500), a SINGLE un-paginated call. Alpaca's v2/orders
+    endpoint returns at most `limit` orders with no pagination applied by a
+    single call -- once the account has more than 500 total orders, this
+    silently returned only the most recent 500 (confirmed live: missing
+    ~9 days / ~200 orders of history predating 2026-05-21, despite genuine
+    order history back to 2026-05-12). Because match_buy_sell_orders()'s
+    FIFO matcher below has no way to detect a missing buy leg, this silent
+    truncation was the dominant root cause traced for ~$150K+ of PnL ending
+    up in quarantined_trades with impossible entry>exit chronology and/or
+    multiple buy legs matched to the same sell fill (see broker_client.py's
+    fetch_orders()/fetch_all_orders() docstrings for the full trace).
+    Fixed to use fetch_all_orders(), which paginates ascending until the
+    complete history is retrieved.
+    """
+    print("Fetching filled orders from broker (paginated, full history)...")
+    orders_env = broker.fetch_all_orders(status='all')
+    payload = orders_env.payload if hasattr(orders_env, 'payload') else orders_env
+    orders = payload.get('orders', []) if isinstance(payload, dict) else payload
+    if isinstance(payload, dict) and payload.get('truncated'):
+        print(
+            "  WARNING: fetch_all_orders() hit its max_pages safety cap before "
+            "completing -- order history may still be incomplete. Re-run with a "
+            "higher max_pages if this occurs."
+        )
+    if isinstance(payload, dict):
+        print(f"  Fetched {len(orders)} total orders across {payload.get('page_count')} page(s)")
+
     filled_orders = [o for o in orders if o.get('status') == 'filled']
     print(f"  Found {len(filled_orders)} filled orders")
     

@@ -338,8 +338,123 @@ class BrokerClient(SourceClient):
             
         Note:
             In paper mode, returns paper orders.
+
+        AUDIT FIX (2026-08-23): Alpaca's v2/orders endpoint returns at most
+        `limit` orders (hard cap 500) with NO pagination applied by this
+        single call -- by default it returns the MOST RECENT `limit` orders
+        (descending order, no `after`/`direction` params sent). Once an
+        account has more than `limit` total orders, calling this with
+        limit=500 SILENTLY DROPS the oldest orders rather than raising or
+        warning. This was confirmed live: a single fetch_orders(limit=500)
+        call against this account's paper history returned orders starting
+        2026-05-21, while genuinely older filled orders exist back to
+        2026-05-12 -- a ~9-day, ~200-order gap. rebuild_pnl_state_from_
+        broker.py's FIFO buy/sell matcher (match_buy_sell_orders()) has no
+        way to detect a missing buy leg; when an old buy fill is silently
+        missing, it FIFO-matches a sell against whatever buy fill happens to
+        still be in the truncated window instead -- producing closed trades
+        with entry_time AFTER exit_time (impossible chronology) and/or
+        multiple buy legs incorrectly matched against the same sell fill.
+        This was traced as the dominant root cause of the ~$150K+ PnL sitting
+        in quarantined_trades (2026-08-23 equity-bridge audit): ~70 of 101
+        quarantined trades share an exit_broker_order_id with at least one
+        other quarantined trade, and the earliest entry_time across all
+        trades (2026-05-13) predates this truncated window's earliest order
+        (2026-05-21). Use fetch_all_orders() (below) for anything that needs
+        the COMPLETE order history (e.g. ledger rebuild) instead of this
+        method directly. This method's single-page behavior is left
+        unchanged for existing callers that intentionally only want the most
+        recent N orders (e.g. a quick status check).
         """
         return self.fetch(endpoint="v2/orders", status=status, limit=limit)
+
+    def fetch_all_orders(
+        self,
+        status: str = "all",
+        page_size: int = 500,
+        max_pages: int = 50,
+        after: str | None = None,
+    ) -> RawEnvelope:
+        """Fetch the COMPLETE order history via ascending-time pagination.
+
+        AUDIT FIX (2026-08-23): see fetch_orders()'s docstring above for why
+        a single fetch_orders(limit=500) call silently truncates to only the
+        most recent `limit` orders once an account exceeds that many total
+        orders. This method walks forward through the account's full order
+        history using Alpaca's `direction=asc` + `after=<cursor>` pagination
+        (confirmed working against the live paper account: a two-page walk
+        starting at after="2000-01-01T00:00:00Z" recovered 691 total orders
+        -- 613 filled -- spanning 2026-05-12 through 2026-08-20, vs. only
+        500/422 from a single un-paginated call).
+
+        Args:
+            status: Order status filter ("open", "closed", "all").
+            page_size: Orders per page (Alpaca's hard max is 500).
+            max_pages: Safety cap on the number of pages walked, so a
+                pagination bug (e.g. the cursor failing to advance) cannot
+                spin forever. 50 pages * 500 = 25,000 orders, far beyond any
+                plausible order count for this account; hitting this cap is
+                itself worth surfacing as a warning via the returned
+                envelope's payload (see "truncated" key below), not a
+                silent drop.
+            after: Optional ISO-8601 cursor to start from (exclusive). When
+                omitted, starts from the epoch so the very first page covers
+                the account's entire history.
+
+        Returns:
+            RawEnvelope whose payload is
+            {"orders": [...], "page_count": int, "truncated": bool}.
+            `orders` is deduplicated by order id and sorted ascending by
+            created_at. `truncated=True` means max_pages was hit before a
+            short/empty page was seen -- callers MUST treat this as
+            "history may still be incomplete", not silently proceed as if
+            it were complete.
+        """
+        cursor = after or "2000-01-01T00:00:00Z"
+        all_orders: list[dict[str, Any]] = []
+        seen_ids: set[str] = set()
+        page_count = 0
+        truncated = False
+
+        for page_count in range(1, max_pages + 1):
+            page_env = self.fetch(
+                endpoint="v2/orders",
+                status=status,
+                limit=page_size,
+                direction="asc",
+                after=cursor,
+            )
+            batch = page_env.payload if isinstance(page_env.payload, list) else []
+            new_in_batch = 0
+            for order in batch:
+                order_id = order.get("id")
+                if order_id and order_id not in seen_ids:
+                    seen_ids.add(order_id)
+                    all_orders.append(order)
+                    new_in_batch += 1
+
+            if not batch or new_in_batch == 0:
+                # Empty page, or a page that returned nothing new (cursor
+                # stopped advancing) -- either way, the walk is complete.
+                break
+
+            cursor = batch[-1].get("created_at") or cursor
+
+            if len(batch) < page_size:
+                # Short page: this was the last page.
+                break
+        else:
+            # Loop completed all max_pages iterations without an early
+            # break -- history may still be incomplete.
+            truncated = True
+
+        all_orders.sort(key=lambda o: o.get("created_at") or "")
+
+        return self._build_envelope(
+            "v2/orders (paginated)",
+            {"status": status, "page_size": page_size, "max_pages": max_pages, "after": after},
+            {"orders": all_orders, "page_count": page_count, "truncated": truncated},
+        )
 
     def fetch_order(self, order_id: str) -> RawEnvelope:
         """Fetch a specific order by ID.
