@@ -1,0 +1,76 @@
+Loaded 252 closed trades. Running daily-path replay (this will take a few minutes)...
+
+==========================================================================================
+R13-A: Daily-Path Historical Validation — Stop Loss Threshold Deepening
+Deepening delta: -3.0pp on all conviction tiers (-5/-7/-9% -> -8/-10/-12%)
+==========================================================================================
+
+Total trades simulated: 252
+  Same-day entry/exit (excluded -- no data point exists to replay from until the day AFTER entry): 20
+With comparable PnL (excl. same-day): 227
+
+[Sanity check] baseline replay exit_reason matches actual production: 149/232 (64% if comparable else n/a)
+  (Daily-close-only replay vs. live intraday/broker fills -- mismatches expected;
+   this check confirms the replay is in the right ballpark, not a perfect match.)
+
+Trades where exit reason changed (baseline vs deepened): 6/227
+
+──────────────────────────────────────────────────────────────────────────────────────────
+AGGREGATE RESULT (primary metric: net PnL over replayed paths)
+──────────────────────────────────────────────────────────────────────────────────────────
+  Baseline (current production stop thresholds) total PnL: $-164,125.40
+  Deepened stop thresholds total PnL:                      $-183,458.88
+  Net diff (deepened - baseline):                          $-19,333.48
+    (positive = deepening would have been NET BETTER)
+
+  Trades improved:    7  (sum $+26,301.53)
+  Trades worsened:   41  (sum $-45,635.01)
+  Trades unchanged: 179
+
+──────────────────────────────────────────────────────────────────────────────────────────
+RISK METRICS (secondary, per R13-A required evaluation: net PnL alone is not sufficient)
+──────────────────────────────────────────────────────────────────────────────────────────
+  Max drawdown on replayed path (baseline equity $1,000,000):
+    Baseline: 22.47%   Deepened: 24.69%   Delta: +2.22pp
+  CVaR (avg of worst 10% of trade outcomes):
+    Baseline: $-9,157.71   Deepened: $-9,975.73   Delta: $-818.02
+
+──────────────────────────────────────────────────────────────────────────────────────────
+[KEY RISK CHECK] Previously-non-stop_loss trades with >$1,000 WORSE outcome under deepening (neither variant classified as stop_loss): 0
+──────────────────────────────────────────────────────────────────────────────────────────
+  None found -- deepening did not create new material losses among trades
+  that avoided stop_loss classification in both variants.
+
+──────────────────────────────────────────────────────────────────────────────────────────
+Top 10 biggest improvements (deepened threshold let a position survive to a better exit)
+──────────────────────────────────────────────────────────────────────────────────────────
+    NBIS     2026-08-05  baseline=$ -3598.08(stop_loss)  deepened=$ +4536.96(trailing_stop)  diff=$ +8135.04
+    SNOW     2026-06-04  baseline=$ -3653.39(stop_loss)  deepened=$ +1920.11(time_based)  diff=$ +5573.50
+    AMD      2026-06-04  baseline=$ -4981.80(stop_loss)  deepened=$  +232.75(trailing_stop)  diff=$ +5214.55
+    MRVL     2026-06-04  baseline=$ -3956.54(stop_loss)  deepened=$  -697.34(trailing_stop)  diff=$ +3259.20
+    CRM      2026-07-08  baseline=$ -1198.26(stop_loss)  deepened=$ +1798.02(trailing_stop)  diff=$ +2996.28
+    CDNS     2026-06-09  baseline=$ -1446.49(stop_loss)  deepened=$  -376.04(time_based)  diff=$ +1070.45
+    TSLA     2026-07-01  baseline=$ -2589.75(stop_loss)  deepened=$ -2537.25(stop_loss)  diff=$   +52.50
+    AMD      2026-05-18  baseline=$  +203.64(trailing_stop)  deepened=$  +203.64(trailing_stop)  diff=$    +0.00
+    AMD      2026-05-18  baseline=$  +423.32(trailing_stop)  deepened=$  +423.32(trailing_stop)  diff=$    +0.00
+    AMD      2026-05-20  baseline=$ +1115.76(trailing_stop)  deepened=$ +1115.76(trailing_stop)  diff=$    +0.00
+
+──────────────────────────────────────────────────────────────────────────────────────────
+Top 10 biggest regressions (deepening made things worse)
+──────────────────────────────────────────────────────────────────────────────────────────
+    SMCI     2026-06-04  baseline=$ -4353.69(stop_loss)  deepened=$-14234.22(stop_loss)  diff=$ -9880.53
+    AMD      2026-07-01  baseline=$ -3184.20(stop_loss)  deepened=$ -5570.32(stop_loss)  diff=$ -2386.12
+    HPQ      2026-06-04  baseline=$ -3197.34(stop_loss)  deepened=$ -5055.48(stop_loss)  diff=$ -1858.14
+    INTC     2026-07-01  baseline=$ -4526.00(stop_loss)  deepened=$ -6328.96(stop_loss)  diff=$ -1802.96
+    GOOGL    2026-07-16  baseline=$ -1300.32(stop_loss)  deepened=$ -2950.08(stop_loss)  diff=$ -1649.76
+    CRDO     2026-06-25  baseline=$ -3752.18(stop_loss)  deepened=$ -5366.40(stop_loss)  diff=$ -1614.22
+    CDNS     2026-06-04  baseline=$ -3240.93(stop_loss)  deepened=$ -4849.50(stop_loss)  diff=$ -1608.57
+    CRDO     2026-06-24  baseline=$ -3647.35(stop_loss)  deepened=$ -5242.80(stop_loss)  diff=$ -1595.45
+    HPE      2026-06-09  baseline=$ -2607.96(stop_loss)  deepened=$ -4140.60(stop_loss)  diff=$ -1532.64
+    ARM      2026-06-04  baseline=$ -4037.95(stop_loss)  deepened=$ -5484.64(stop_loss)  diff=$ -1446.69
+
+──────────────────────────────────────────────────────────────────────────────────────────
+VERDICT
+──────────────────────────────────────────────────────────────────────────────────────────
+  ❌ Net PnL did not improve -> do not proceed to paper A/B with this delta as-is;
+      reconsider the deepening magnitude or abandon this direction.

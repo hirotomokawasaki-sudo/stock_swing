@@ -1,0 +1,75 @@
+Loaded 49 closed trades (attributable-only). Running daily-path replay (this will take a few minutes)...
+
+==========================================================================================
+R13-A: Daily-Path Historical Validation — Stop Loss Threshold Deepening
+Deepening delta: -3.0pp on all conviction tiers (-5/-7/-9% -> -8/-10/-12%)
+==========================================================================================
+
+Total trades simulated: 49
+  Same-day entry/exit (excluded -- no data point exists to replay from until the day AFTER entry): 3
+With comparable PnL (excl. same-day): 41
+
+[Sanity check] baseline replay exit_reason matches actual production: 37/46 (80% if comparable else n/a)
+  (Daily-close-only replay vs. live intraday/broker fills -- mismatches expected;
+   this check confirms the replay is in the right ballpark, not a perfect match.)
+
+Trades where exit reason changed (baseline vs deepened): 1/41
+
+──────────────────────────────────────────────────────────────────────────────────────────
+AGGREGATE RESULT (primary metric: net PnL over replayed paths)
+──────────────────────────────────────────────────────────────────────────────────────────
+  Baseline (current production stop thresholds) total PnL: $2,286.69
+  Deepened stop thresholds total PnL:                      $9,509.52
+  Net diff (deepened - baseline):                          $+7,222.83
+    (positive = deepening would have been NET BETTER)
+
+  Trades improved:    1  (sum $+8,135.04)
+  Trades worsened:    4  (sum $-912.21)
+  Trades unchanged:  36
+
+──────────────────────────────────────────────────────────────────────────────────────────
+RISK METRICS (secondary, per R13-A required evaluation: net PnL alone is not sufficient)
+──────────────────────────────────────────────────────────────────────────────────────────
+  Max drawdown on replayed path (baseline equity $1,000,000):
+    Baseline: 1.36%   Deepened: 1.40%   Delta: +0.04pp
+  CVaR (avg of worst 10% of trade outcomes):
+    Baseline: $-4,116.99   Deepened: $-4,139.48   Delta: $-22.49
+
+──────────────────────────────────────────────────────────────────────────────────────────
+[KEY RISK CHECK] Previously-non-stop_loss trades with >$1,000 WORSE outcome under deepening (neither variant classified as stop_loss): 0
+──────────────────────────────────────────────────────────────────────────────────────────
+  None found -- deepening did not create new material losses among trades
+  that avoided stop_loss classification in both variants.
+
+──────────────────────────────────────────────────────────────────────────────────────────
+Top 10 biggest improvements (deepened threshold let a position survive to a better exit)
+──────────────────────────────────────────────────────────────────────────────────────────
+    NBIS     2026-08-05  baseline=$ -3598.08(stop_loss)  deepened=$ +4536.96(trailing_stop)  diff=$ +8135.04
+    AMZN     2026-08-03  baseline=$ -4509.84(stop_loss)  deepened=$ -4509.84(stop_loss)  diff=$    +0.00
+    ADBE     2026-08-03  baseline=$  -197.40(trailing_stop)  deepened=$  -197.40(trailing_stop)  diff=$    +0.00
+    CRM      2026-08-03  baseline=$   +86.68(trailing_stop)  deepened=$   +86.68(trailing_stop)  diff=$    +0.00
+    HPQ      2026-08-03  baseline=$ +1839.67(trailing_stop)  deepened=$ +1839.67(trailing_stop)  diff=$    +0.00
+    SNOW     2026-08-03  baseline=$ +1334.00(trailing_stop)  deepened=$ +1334.00(trailing_stop)  diff=$    +0.00
+    CRM      2026-08-03  baseline=$  +425.57(trailing_stop)  deepened=$  +425.57(trailing_stop)  diff=$    +0.00
+    SNOW     2026-08-03  baseline=$ +1847.88(trailing_stop)  deepened=$ +1847.88(trailing_stop)  diff=$    +0.00
+    HPQ      2026-08-04  baseline=$ +3261.18(trailing_stop)  deepened=$ +3261.18(trailing_stop)  diff=$    +0.00
+    PLTR     2026-08-04  baseline=$ +5772.00(trailing_stop)  deepened=$ +5772.00(trailing_stop)  diff=$    +0.00
+
+──────────────────────────────────────────────────────────────────────────────────────────
+Top 10 biggest regressions (deepening made things worse)
+──────────────────────────────────────────────────────────────────────────────────────────
+    INTC     2026-08-13  baseline=$ -3189.54(stop_loss)  deepened=$ -3688.06(stop_loss)  diff=$  -498.52
+    NBIS     2026-08-04  baseline=$ -2347.15(stop_loss)  deepened=$ -2722.20(stop_loss)  diff=$  -375.05
+    AVGO     2026-08-06  baseline=$ -1521.00(stop_loss)  deepened=$ -1550.12(stop_loss)  diff=$   -29.12
+    AVGO     2026-08-06  baseline=$  -491.64(stop_loss)  deepened=$  -501.16(stop_loss)  diff=$    -9.52
+    AMZN     2026-08-03  baseline=$ -4509.84(stop_loss)  deepened=$ -4509.84(stop_loss)  diff=$    +0.00
+    ADBE     2026-08-03  baseline=$  -197.40(trailing_stop)  deepened=$  -197.40(trailing_stop)  diff=$    +0.00
+    CRM      2026-08-03  baseline=$   +86.68(trailing_stop)  deepened=$   +86.68(trailing_stop)  diff=$    +0.00
+    HPQ      2026-08-03  baseline=$ +1839.67(trailing_stop)  deepened=$ +1839.67(trailing_stop)  diff=$    +0.00
+    SNOW     2026-08-03  baseline=$ +1334.00(trailing_stop)  deepened=$ +1334.00(trailing_stop)  diff=$    +0.00
+    CRM      2026-08-03  baseline=$  +425.57(trailing_stop)  deepened=$  +425.57(trailing_stop)  diff=$    +0.00
+
+──────────────────────────────────────────────────────────────────────────────────────────
+VERDICT
+──────────────────────────────────────────────────────────────────────────────────────────
+  ✅ Net PnL improved AND no material DD/CVaR regression -> supports proceeding to paper A/B.

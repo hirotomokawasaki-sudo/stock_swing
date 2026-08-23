@@ -1018,9 +1018,11 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 2026-09以降        R7-v2    WebSocket化（延期で確保できた期間を活用し着手検討。
                          現行ポーリングアーキテクチャからの移行は規模大、専用セッション推奨）
 
-2026-08-25頃〜    🔲 R13-A  stop_loss閾値深掘り（-8/-10/-12%バリアント）の反実仮想
-                         ヒストリカル検証開始（analyze_stop_loss_post_exit.py --counterfactual流用）
-2026-08-末〜09初    🔲 R13-A  DD/CVaR非悪化確認後、paper A/B開始（ユーザー承認後）
+2026-08-23        ✅ R13-A  ヒストリカル検証完了（simulate_stop_loss_deepening.py新規作成、
+                         全252件では明確に悪化、attributable 49件限定では単一トレード
+                         （NBIS）依存の不安定な改善のみ）→ **paper A/BはSTOP HOLD**
+2026-09中旬頃〜    🔲 R13-A  R13-Cでattributable銘柄数が増えた後、同検証を再実施して頭本性を
+                         再確認（R13-Cと並行進行可）
 2026-08-25頃〜    🔲 R13-B  signal_strength切り離し/較正案（A/Bどちら）の設計・confidence_
                          multiplier no-opバグ修正を含めpaper A/B開始（ユーザー承認後）
 2026-09中旬頃〜    🔲 R13-C  R11バックテスト基盤再構築着手（t+1約定、point-in-time universeを
@@ -1065,8 +1067,10 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 | 🔴 P2 | R5-v2 | REOPENED | 実装は2026-08-14大部分完了（cluster/beta/相関/集中度）。残: 閾値のpaper検証（09-15延期で確保した期間で実施） |
 | 🟢 P2 | R7-v2 | IN_PROGRESS | source SLA/FRED/ニュース感情は2026-08-14完了。残: WebSocketのみ（09月以降） |
 | 🔵 P3 | R8-v2 | BLOCKED_BY_DATA | 10月以降 |
-| 🟡 P1 | **R13-A/B** | **PLANNED**（2026-08-23新規） | 収益性向上策（trailing_stop比率強化、signal_strength
-接続見直し）。全件paper A/B経由、本番反映は別途承認必要 |
+| 🔴 P1 | **R13-A** | **STOP HOLD**（2026-08-23検証完了） | 全252件では明確に悪化、
+attributable限定では単一トレード依存の不安定な改善のみ。paper A/Bには進まない |
+| 🟡 P1 | **R13-B** | **PLANNED**（2026-08-23新規） | signal_strength接続見直し。
+paper A/B経由、本番反映は別途承認必要 |
 | 🟡 P2 | **R13-C/D** | **PLANNED**（2026-08-23新規） | R11バックテスト再構築（look-ahead/survivorship
 bias解消）、独立収益源開発。研究段階、本番影響なし |
 
@@ -2765,8 +2769,8 @@ Gate Review（09-08〜09-12）までに(a)実施可否を判断することを�
 
 ### R13-A: trailing_stop比率強化（stop_loss閾値深掘り検証）
 
-**Status**: 🟡 PLANNED（未着手）
-**優先度**: P1（最高、既存データで実証済みの非対称性に入っていくことなので他の項目より検証コストが低い）
+**Status**: 🔴 **ヒストリカル検証完了（2026-08-23）→ 検証結果は母集団依存で不確実、paper A/BはSTOP HOLD**
+**優先度**: P1（検証自体は完了。次アクションは下記参照）
 
 **根拠（実データ、2026-08-23確認）**: attributable限定のexit_reason別実績で、
 trailing_stop（n=36）はWR=72.2%、PF=11.85、純利益+$35,687と非常に良好な一方、
@@ -2778,18 +2782,55 @@ stop閾値を本採用変更しない」とあるが、R0-v2はVERIFIED_COMPLETE
 本項目着手の障害にはならない。ただし「実値パフォーマンスでPF>1、expectancy>0」のpromotion
 要件は引き続き有効。
 
-**実施内容**:
-1. 現行`config/strategy/simple_exit_v2.yaml`のstop_loss_pct閾値（低/標準/高確信度
-   -5/-7/-9%）を、例えば-8/-10/-12%に深掘りするバリアントを作成
-2. 既存の`scripts/analyze_stop_loss_post_exit.py --counterfactual`（2026-08-14
-   R3-v2-Stop-Redesignで実装済み）で、閾値深掘り後の反実仮想コスト（深掘りで
-   trailingまで生き延びた場合の利益 vs 早期損切りを逃した場合の損失拡大）をヒストリカル
-   検証
-3. max DD・CVaRが悪化しないことを確認した上でpaper A/B開始（control=現行閾値、
-   variant=深掘り閾値）
-4. 評価指標: net PnLだけでなく、max DD、CVaR、stop後5/10/20日regretを併用
+**実施内容（実施済み）**:
+1. `scripts/simulate_stop_loss_deepening.py`を新規作成。既存の
+   `simulate_daily_path_volatility_stop.py`（2026-08-14、volatility_adjusted_stopの
+   検証で使用）と同じ日次パスリプレイ手法（trailing_stop→breakeven_stop→
+   stop_loss→time_basedの優先順位を`SimpleExitV2Strategy`自身のメソッドで
+   忠実に再現）を流用し、stop_loss閾値を全conviction tier一律-3pp（-5/-7/-9%
+   →-8/-10/-12%）深掘りした場合の反実仮想PnLをヒストリカル検証
+2. max DD・CVaRも同スクリプトで自動計算
 
-**やらないこと**: 検証なしに本番反映しない。DD悪化が確認された場合は即時ロールバック。
+**検証結果（2026-08-23、読み取り専用、本番影響なし）**:
+
+| 対象母集団 | n | 深掘り幅 | Net PnL差 | max DD差 | CVaR差 | 判定 |
+|---|---|---|---|---|---|---|
+| 全closed 252件 | 252 | -3pp | **-$19,333** | +2.22pp悪化 | -$818悪化 | ❌明確に悪化 |
+| 全closed 252件 | 252 | -1pp | -$11,318 | +1.50pp悪化 | -$545悪化 | ❌悪化 |
+| attributable限定 | 49 | -3pp | +$7,223 | +0.04pp（軽微） | -$22（誤差範囲） | ✅一見改善 |
+| attributable限定 | 49 | -2pp | +（同方向） | 軽微 | 軽微 | ✅一見改善 |
+
+**重大な発見1（母集団依存性）**: 当初の非対称性を発見したattributable限定（49件）では
+深掘りがプラスだった一方、全closed 252件（untracked-origin 203件を含む）では
+**明確にマイナス**（-1ppですら悪化）であった。つまりこの施策の効果は対象母集団に
+強く依存し、普遍的な改善ではない可能性が高い。
+
+**重大な発見2（単一トレード依存性）**: attributable限定での+$7,223の改善はNBIS（
+2026-08-05 entry）、1件の+$8,135がほぼ全てであり、**この1件を除くとnet -$912と
+逆転する**（attributableの他の全tradeはdiffゼロまたは少額の悪化のみ）。つまり見かけ上
+の改善は単一トレードに完全依存しており、統計的な頭本性はない。
+
+**判断（自己検証含む）**: 検証スクリプト実行中に、CVaR判定ロジック自体のバグ
+（絶対値$1.0との比較で$22の誤差を「悪化」と誤判定）を自己発見・修正済み（相対%
+基準に変更）。修正後も結論は変わらず、**この施策を現時点でpaper A/Bに進める根拠は
+不十分**と判断。単一トレード依存で対象母集団を変えると符号が完全に逆転する結果は、
+「儀かるシステムにする」という当初の目的に照らして不十分なエビデンス。
+
+**次のアクション（修正）**:
+- 現時点でpaper A/Bには**進まない**（以下のいずれかが成立しない限り）
+- 代わりにR13-C（R11バックテスト基盤の根本再構築）の一環として、attributable銘柄が
+  十分な件数（ロードマップの昇格基準と同じ≥90件目安）に達してから、同じ検証を再実施し、
+  単一トレード依存が解消されるかを確認する
+- もしくはNBISタイプの事例（高ボラ銘柄での早期損切り→trailingまでの生き延び）を
+  パターン別に別途分析し、全銘柄一律の深掘りではなく「高ボラ銘柄のみ深掘り」のような
+  銘柄別セグメント化を検討する
+- 現行施策（-5/-7/-9%、volatility_adjusted_stop有効）は変更せず維持
+
+**エビデンス保存先**: `docs/r13a_stop_deepening_validation_20260823/`
+（full_deepen3pp.txt / full_deepen1pp.txt / attributable_deepen3pp.txt）
+
+**やらないこと**: 検証で確認されたnegative結果を無視してpaper A/Bに進めない。
+単一トレード依存の改善を「エッジあり」と訤解しない。
 
 ### R13-B: signal_strengthとexit/sizingの接続見直し
 
@@ -2865,6 +2906,8 @@ decile別expectancyは完全に非単調（decile 3が+$78で最良、decile 9�
 
 ```
 ❌ R13-A/Bをpaper A/BでのDD/CVaR悪化確認なしに本番反映しない
+❌ R13-Aの2026-08-23検証で確認された「全銘柄では悪化」「単一トレード依存」の制限を
+   解消せずにpaper A/Bに進めない（STOP HOLD中）
 ❌ R13-Cのバックテスト結果をpaper A/Bなしで直接本番に反映しない
 ❌ 低勝率銘柄の恒久ブロックリスト化（先の候補3番）は今回のスコープ外（既存rolling PF gateで
    代替可と判断）
