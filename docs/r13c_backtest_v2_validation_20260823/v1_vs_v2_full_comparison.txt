@@ -1,0 +1,66 @@
+Simulating 69 symbols over 501 trading days (2024-08-15 -> 2026-08-14); point_in_time_universe=True
+  100/501 days simulated, 0 closed, 0 open, 0 pending fill
+  200/501 days simulated, 0 closed, 0 open, 0 pending fill
+  300/501 days simulated, 0 closed, 0 open, 0 pending fill
+  400/501 days simulated, 0 closed, 0 open, 0 pending fill
+  500/501 days simulated, 335 closed, 29 open, 10 pending fill
+
+Total v2 trades: 374 (dropped_pending_at_end=10)
+
+Overall (v2): n=374 WR=0.5829 PF=2.069 net=$130437.69
+
+Walk-forward split at 2026-06-04:
+  {'label': 'period1 (< 2026-06-04)', 'n': 187, 'win_rate': 0.7005, 'profit_factor': 3.4705, 'net_pnl': 136110.18, 'avg_return_pct': 0.0728}
+  {'label': 'period2 (>= 2026-06-04)', 'n': 187, 'win_rate': 0.4652, 'profit_factor': 0.9152, 'net_pnl': -5672.49, 'avg_return_pct': -0.003}
+
+Decile breakdown (by entry_signal_strength):
+  {'label': 'decile_1', 'n': 37, 'win_rate': 0.5135, 'profit_factor': 2.1316, 'net_pnl': 12131.4, 'avg_return_pct': 0.0328, 'ss_min': 0.4, 'ss_max': 0.4432}
+  {'label': 'decile_2', 'n': 37, 'win_rate': 0.4595, 'profit_factor': 1.1175, 'net_pnl': 1508.54, 'avg_return_pct': 0.0041, 'ss_min': 0.4438, 'ss_max': 0.4961}
+  {'label': 'decile_3', 'n': 38, 'win_rate': 0.4211, 'profit_factor': 1.6764, 'net_pnl': 8245.18, 'avg_return_pct': 0.0217, 'ss_min': 0.4971, 'ss_max': 0.5696}
+  {'label': 'decile_4', 'n': 37, 'win_rate': 0.5676, 'profit_factor': 1.7836, 'net_pnl': 7511.35, 'avg_return_pct': 0.0203, 'ss_min': 0.5704, 'ss_max': 0.6539}
+  {'label': 'decile_5', 'n': 38, 'win_rate': 0.6579, 'profit_factor': 2.1697, 'net_pnl': 16427.4, 'avg_return_pct': 0.0432, 'ss_min': 0.6551, 'ss_max': 0.8307}
+  {'label': 'decile_6', 'n': 37, 'win_rate': 0.6216, 'profit_factor': 2.3345, 'net_pnl': 13345.81, 'avg_return_pct': 0.0361, 'ss_min': 0.8359, 'ss_max': 1.0}
+  {'label': 'decile_7', 'n': 37, 'win_rate': 0.9189, 'profit_factor': 10.6949, 'net_pnl': 32176.03, 'avg_return_pct': 0.087, 'ss_min': 1.0, 'ss_max': 1.0}
+  {'label': 'decile_8', 'n': 38, 'win_rate': 0.8421, 'profit_factor': 10.4089, 'net_pnl': 48548.31, 'avg_return_pct': 0.1278, 'ss_min': 1.0, 'ss_max': 1.0}
+  {'label': 'decile_9', 'n': 37, 'win_rate': 0.3243, 'profit_factor': 0.745, 'net_pnl': -7447.94, 'avg_return_pct': -0.0201, 'ss_min': 1.0, 'ss_max': 1.0}
+  {'label': 'decile_10', 'n': 38, 'win_rate': 0.5, 'profit_factor': 0.8657, 'net_pnl': -2008.39, 'avg_return_pct': -0.0053, 'ss_min': 1.0, 'ss_max': 1.0}
+Simulating 69 symbols over 501 trading days (2024-08-15 -> 2026-08-14)
+  100/501 days simulated, 202 closed, 13 open
+  200/501 days simulated, 399 closed, 53 open
+  300/501 days simulated, 699 closed, 29 open
+  400/501 days simulated, 936 closed, 18 open
+  500/501 days simulated, 1364 closed, 40 open
+
+==========================================================================================
+R13-C: v1 (look-ahead + survivorship bias) vs v2 (t+1 fill + point-in-time universe)
+==========================================================================================
+
+  v1: n=1415  WR=0.5943  PF=1.7328  net=$312697.14  avg_return=0.0221
+  v2: n= 374  WR=0.5829  PF=2.069  net=$130437.69  avg_return=0.0349
+
+  v1 walk-forward split at 2025-10-09:
+    period1: n= 707 PF=1.8384 net=$163108.16
+    period2: n= 708 PF=1.6444 net=$149588.98
+
+  v2 walk-forward split at 2026-06-04:
+    period1: n= 187 PF=3.4705 net=$136110.18
+    period2: n= 187 PF=0.9152 net=$-5672.49
+
+------------------------------------------------------------------------------------------
+Symbols traded in v1 but excluded from v2 in their pre-intro-date window
+(this is the survivorship-bias correction in action)
+------------------------------------------------------------------------------------------
+  v1 trades that occurred BEFORE the symbol's actual universe intro date: 1029
+    Their combined PnL in v1: $203,165.60  (n=1029)
+      NBIS     intro=2026-04-23  pnl=$+17,497.63
+      CIEN     intro=2026-04-23  pnl=$+13,775.77
+      CRDO     intro=2026-04-23  pnl=$+11,409.16
+      MU       intro=2026-04-23  pnl=$+10,236.60
+      INTC     intro=2026-04-23  pnl=$+9,527.58
+      AMD      intro=2026-04-03  pnl=$+8,882.39
+      LRCX     intro=2026-04-23  pnl=$+7,609.48
+      CHPS     intro=2026-04-23  pnl=$+7,093.58
+      FTXL     intro=2026-04-23  pnl=$+6,783.50
+      MRVL     intro=2026-04-23  pnl=$+6,480.53
+
+Saved: /Users/hirotomookawasaki/stock_swing/reports/r11_backtest_v2_results.json

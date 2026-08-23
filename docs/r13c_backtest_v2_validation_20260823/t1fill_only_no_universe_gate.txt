@@ -1,0 +1,28 @@
+Simulating 69 symbols over 501 trading days (2024-08-15 -> 2026-08-14); point_in_time_universe=False
+  100/501 days simulated, 190 closed, 10 open, 3 pending fill
+  200/501 days simulated, 375 closed, 53 open, 1 pending fill
+  300/501 days simulated, 661 closed, 27 open, 3 pending fill
+  400/501 days simulated, 891 closed, 15 open, 3 pending fill
+  500/501 days simulated, 1299 closed, 29 open, 10 pending fill
+
+Total v2 trades: 1338 (dropped_pending_at_end=10)
+
+Overall (v2): n=1338 WR=0.5807 PF=1.7031 net=$292373.77
+
+Walk-forward split at 2025-10-10:
+  {'label': 'period1 (< 2025-10-10)', 'n': 663, 'win_rate': 0.6124, 'profit_factor': 1.8782, 'net_pnl': 158732.69, 'avg_return_pct': 0.0239}
+  {'label': 'period2 (>= 2025-10-10)', 'n': 675, 'win_rate': 0.5496, 'profit_factor': 1.5685, 'net_pnl': 133641.08, 'avg_return_pct': 0.0198}
+
+Decile breakdown (by entry_signal_strength):
+  {'label': 'decile_1', 'n': 133, 'win_rate': 0.5113, 'profit_factor': 1.1338, 'net_pnl': 5454.27, 'avg_return_pct': 0.0041, 'ss_min': 0.4, 'ss_max': 0.427}
+  {'label': 'decile_2', 'n': 134, 'win_rate': 0.4478, 'profit_factor': 0.777, 'net_pnl': -10961.8, 'avg_return_pct': -0.0082, 'ss_min': 0.427, 'ss_max': 0.4528}
+  {'label': 'decile_3', 'n': 134, 'win_rate': 0.5821, 'profit_factor': 2.1707, 'net_pnl': 38677.32, 'avg_return_pct': 0.0289, 'ss_min': 0.4531, 'ss_max': 0.4895}
+  {'label': 'decile_4', 'n': 134, 'win_rate': 0.4776, 'profit_factor': 1.4425, 'net_pnl': 18980.23, 'avg_return_pct': 0.0142, 'ss_min': 0.4896, 'ss_max': 0.5288}
+  {'label': 'decile_5', 'n': 134, 'win_rate': 0.5597, 'profit_factor': 1.3918, 'net_pnl': 16111.26, 'avg_return_pct': 0.012, 'ss_min': 0.5288, 'ss_max': 0.5925}
+  {'label': 'decile_6', 'n': 133, 'win_rate': 0.594, 'profit_factor': 1.9042, 'net_pnl': 37411.64, 'avg_return_pct': 0.0281, 'ss_min': 0.593, 'ss_max': 0.6999}
+  {'label': 'decile_7', 'n': 134, 'win_rate': 0.6716, 'profit_factor': 2.2367, 'net_pnl': 38260.74, 'avg_return_pct': 0.0286, 'ss_min': 0.7, 'ss_max': 0.8552}
+  {'label': 'decile_8', 'n': 134, 'win_rate': 0.6045, 'profit_factor': 1.7005, 'net_pnl': 36241.93, 'avg_return_pct': 0.027, 'ss_min': 0.856, 'ss_max': 1.0}
+  {'label': 'decile_9', 'n': 134, 'win_rate': 0.7313, 'profit_factor': 2.4628, 'net_pnl': 54901.3, 'avg_return_pct': 0.041, 'ss_min': 1.0, 'ss_max': 1.0}
+  {'label': 'decile_10', 'n': 134, 'win_rate': 0.6269, 'profit_factor': 2.2116, 'net_pnl': 57296.88, 'avg_return_pct': 0.0428, 'ss_min': 1.0, 'ss_max': 1.0}
+
+Saved: /Users/hirotomookawasaki/stock_swing/reports/r11_backtest_v2_results.json
