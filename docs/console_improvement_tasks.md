@@ -1023,8 +1023,12 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
                          （NBIS）依存の不安定な改善のみ）→ **paper A/BはSTOP HOLD**
 2026-09中旬頃〜    🔲 R13-A  R13-Cでattributable銘柄数が増えた後、同検証を再実施して頭本性を
                          再確認（R13-Cと並行進行可）
-2026-08-25頃〜    🔲 R13-B  signal_strength切り離し/較正案（A/Bどちら）の設計・confidence_
-                         multiplier no-opバグ修正を含めpaper A/B開始（ユーザー承認後）
+2026-08-23        ✅ R13-B  Option B（exit側切り離し）ヒストリカル検証完了（simulate_signal_
+                         strength_exit_decoupling.py新規作成）。全110件-$1,804悪化、
+                         attributable 41件+$1,457改善だが両方とも変化トレード数が2〜9件と
+                         極めて少なく確証不十分 → **paper A/BはR13-C後に先送り**
+2026-09中旬頃〜    🔲 R13-B  R13-Cでattributable銘柄数が増えた後、exit側Option Bを再検証。
+sizing側Option A・confidence_multiplierバグ修正は別途検証手法を設計して着手
 2026-09中旬頃〜    🔲 R13-C  R11バックテスト基盤再構築着手（t+1約定、point-in-time universeを
                          最小構成として先行）。本番影響なしの研究作業のため並行進行可
 2026-09以降        🔵 R13-D  ETFセクターローテーションバックテスト設計開始（R13-Cの手法確立後）。
@@ -1069,8 +1073,8 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 | 🔵 P3 | R8-v2 | BLOCKED_BY_DATA | 10月以降 |
 | 🔴 P1 | **R13-A** | **STOP HOLD**（2026-08-23検証完了） | 全252件では明確に悪化、
 attributable限定では単一トレード依存の不安定な改善のみ。paper A/Bには進まない |
-| 🟡 P1 | **R13-B** | **PLANNED**（2026-08-23新規） | signal_strength接続見直し。
-paper A/B経由、本番反映は別途承認必要 |
+| 🟡 P1 | **R13-B** | **弱い結果（検証済み）**（2026-08-23） | exit側Option Bヒストリカル
+検証完了。変化トレード数少なく結論保留。sizing側は未着手 |
 | 🟡 P2 | **R13-C/D** | **PLANNED**（2026-08-23新規） | R11バックテスト再構築（look-ahead/survivorship
 bias解消）、独立収益源開発。研究段階、本番影響なし |
 
@@ -2834,27 +2838,64 @@ stop閾値を本採用変更しない」とあるが、R0-v2はVERIFIED_COMPLETE
 
 ### R13-B: signal_strengthとexit/sizingの接続見直し
 
-**Status**: 🟡 PLANNED（未着手、IMPLEMENTATION_VALUE.mdでPAPER_AB_FIRST判定済み）
+**Status**: 🟡 **ヒストリカル検証完了（Option Bのみ、exit側）、2026-08-23→ 弱い・不確実な結果、次アクション待ち**
 **優先度**: P1
 
 **根拠（実データ、2026-08-23確認）**: `reports/signal_strength_decile.json`の
 decile別expectancyは完全に非単調（decile 3が+$78で最良、decile 9が-$1,503で最悪、
-高scoreほど良いという単純な相関はない）。それにもかかわらず現行`position_sizing.py`は
-`confidence`（signal_strength経由）が高いほどstop幅を広げ、trailing発動を早める設計。
-根拠のないシグナルでリスクを歪めている可能性が高い。
+高scoreほど良いという単純な相関はない）。attributable限定で90件confidence tierでも
+同様の非単調性を確認（mid tier n=10 expectancy=-$179が最悪、high tier n=11は
++$155だが勝率36.4%のみ、low tier n=23が+$103で最良）。それにもかかわらず現行
+`position_sizing.py`は`confidence`（signal_strength経由）が高いほどstop幅を広げ、
+trailing発動を早める設計。根拠のないシグナルでリスクを歪めている可能性が高い。
 
 なお`position_sizing.py`の`confidence_multiplier`はhigh-confidence側（1.2倍）が
-既存capでclipされno-op化していることが戦略レビュー（上記第2弾）で判明済み。この
-バグ修正も本項目に含めて一括検証する。
+既存capでclipされno-op化していることが戦略レビュー（上記第2弾）で判明済み。
 
 **実施内容（2案、どちらかをpaper A/Bで選択）**:
 - **(A) 較正案**: 既存`annotate_cross_sectional_percentile()`（2026-08-17実装済みだが
   sizing/exitに未接続）を利用し、単一銘柄の絶対スコアではなく同日候補群内の相対順位
-  でsizingを決める設計に変更
+  でsizingを決める設計に変更（sizing変更のため、既存の固定qty履歴に対しては直接
+  バックテスト不可。未検証のまま）
 - **(B) 切り離し案**: signal_strengthをsizing/exitから完全に切り離し、固定ルールに戻す
-  （実装リスク低、即着手可能）
-- confidence_multiplier no-opバグ（high-confidence 1.2倍がcapで打ち消される）の修正も
-  同じA/Bの中で検証
+  （exit側のみ2026-08-23にヒストリカル検証済み、下記参照）
+- confidence_multiplier no-opバグ（high-confidence 1.2倍がcapで打ち消される）の修正は
+  **未実施**（sizing側の別途検証を待つ）
+
+**ヒストリカル検証実施（Option B、exit側のみ、2026-08-23）**: `scripts/simulate_signal_
+strength_exit_decoupling.py`を新規作成。R13-Aと同じ日次パスリプレイ手法で、
+現行のtiered exit閾値（-5/-7/-9%にconviction tier連動） vs 全件uniformの
+標準閾値（-7%）を比較。**注意: この検証はexit閾値側のみ。sizing側（(A)案・
+confidence_multiplierバグ修正）は既存固定qty履歴では直接バックテスト不可なため
+未検証のまま**。
+
+**検証結果（読み取り専用、本番影響なし）**:
+
+| 対象母集団 | n | Net PnL差 | 改善/悪化件数 | max DD差 | 判定 |
+|---|---|---|---|---|---|
+| 全signal_strength記録済み110件 | 100 | **-$1,804** | 9件改善/7件悪化 | +0.26pp悪化 | ❌弱い悪化 |
+| attributable限定 | 41 | +$1,457 | 2件改善/0件悪化 | -0.09pp改善 | ⚠️弱い改善 |
+
+**重要な限界**: 全体・attributableともに**変化したトレード数が極めて少ない**（110件中
+9件改善/7件悪化、attributable 41件中わずか2件のみ変化）。全体での悪化は
+主にPLTR、1件（-$7,990、現行tieringではtrailing_stopまで生き延びたがuniformでは
+stop_lossで早期退場）に依存。R13-AのNBIS 1件依存ほど極端ではないが、
+同様に「少数トレードで結果が左右される」頔弱性を持つ。
+
+**判断（自己検証含む）**: スクリプト自体の機械的判定ロジックはattributable限定で
+✅を返すが、n=41中2件のみ変化した結果を「支持する証拠」として扱うのは統計的に
+不適切。R13-Aほど極端な逆転ではないが、両検証とも「後押しできるほどの十分な検体な
+し」という共通の結論に到達。**現時点でOption B（exit側の切り離し）をpaper A/Bに
+進める根拠は不十分**と判断。
+
+**次のアクション**:
+- exit側Option BはR13-A同様、R13-Cでattributable銘柄数が十分に増えてから再検証
+- sizing側（Option A・confidence_multiplierバグ修正）は未着手のまま。こちらは固定
+trade履歴での単純バックテストができないため、別途検証手法を設計する必要あり
+- 現行施策（tiered exit、confidence_multiplier no-opバグを含む）は変更せず維持
+
+**エビデンス保存先**: `docs/r13b_signal_strength_decoupling_validation_20260823/`
+（full_110trades.txt / attributable_49trades.txt）
 
 **推奨比較方法**: control=現行score-linked exit/sizing、variant=uniform、
 評価指標はnet PnLだけでなくmax DD、CVaR、stop後5/10/20日regret、turnover、gap loss
@@ -2916,12 +2957,12 @@ decile別expectancyは完全に非単調（decile 3が+$78で最良、decile 9�
 
 ### R13優先順位・工数目安
 
-| 優先度 | Phase | 内容 | 工数目安 | リスク |
-|---|---|---|---|---|
-| P1 | R13-A | stop_loss閾値深掘り paper A/B | 中 | 低（既存枠組みの延長） |
-| P1 | R13-B | signal_strength切り離し/較正 paper A/B | 低〜中 | 中（挙動変更） |
-| P2 | R13-C | R11バックテスト再構築（最小構成まず1・2） | 大 | 低（研究のみ、本番影響なし） |
-| P3 | R13-D | ETFセクターローテーション設計開始、JP spilloverはIBKR待ち継続 | 大 | 低（shadowのみ） |
+| 優先度 | Phase | 内容 | 工数目安 | リスク | 進捗 |
+|---|---|---|---|---|---|
+| P1 | R13-A | stop_loss閾値深掘り検証 | 中 | 低 | **STOP HOLD**（検証完了、2026-08-23） |
+| P1 | R13-B | signal_strength exit切り離し検証 | 低〜中 | 中 | **弱い結果**（検証完了、2026-08-23）、sizing側未着手 |
+| P2 | R13-C | R11バックテスト再構築（最小構成まず1・2） | 大 | 低（研究のみ、本番影響なし） | 未着手 |
+| P3 | R13-D | ETFセクターローテーション設計開始、JP spilloverはIBKR待ち継続 | 大 | 低（shadowのみ） | 未着手 |
 
 **09-15 Go/No-Goとの関係**: R13はすべてpaper A/B・研究段階であり、09-15までに
 本番反映されるものは別途ユーザー承認がない限りない見込み。つまり09-15判断の前提となる

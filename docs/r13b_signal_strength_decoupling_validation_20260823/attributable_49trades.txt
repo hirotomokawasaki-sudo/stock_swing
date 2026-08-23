@@ -1,0 +1,72 @@
+Loaded 49 closed trades with entry_signal_strength (attributable-only). Running daily-path replay (this will take a few minutes)...
+
+==========================================================================================
+R13-B: Daily-Path Historical Validation — Decoupling signal_strength from Exit Thresholds
+Comparing: current tiered thresholds (-5/-7/-9% by conviction) vs uniform -7% for all
+==========================================================================================
+
+Total trades simulated: 49
+  Same-day entry/exit (excluded): 3
+With comparable PnL (excl. same-day): 41
+
+──────────────────────────────────────────────────────────────────────────────────────────
+By conviction tier (current production tiering)
+──────────────────────────────────────────────────────────────────────────────────────────
+  low        n= 11  tiered=$+14,720.83  uniform=$+14,720.83  diff=$     +0.00
+  standard   n= 20  tiered=$ -5,049.68  uniform=$ -5,049.68  diff=$     +0.00
+  high       n= 10  tiered=$ -7,384.46  uniform=$ -5,927.34  diff=$ +1,457.12
+
+Trades where exit reason changed (tiered vs uniform): 0/41
+
+──────────────────────────────────────────────────────────────────────────────────────────
+AGGREGATE RESULT (primary metric: net PnL over replayed paths)
+──────────────────────────────────────────────────────────────────────────────────────────
+  Tiered (current production, signal_strength-linked) total PnL: $2,286.69
+  Uniform (decoupled, Option B) total PnL:                       $3,743.81
+  Net diff (uniform - tiered):                                   $+1,457.12
+    (positive = decoupling would have been NET BETTER)
+
+  Trades improved:    2  (sum $+1,457.12)
+  Trades worsened:    0  (sum $+0.00)
+  Trades unchanged:  39
+
+──────────────────────────────────────────────────────────────────────────────────────────
+RISK METRICS
+──────────────────────────────────────────────────────────────────────────────────────────
+  Max drawdown on replayed path (baseline equity $1,000,000):
+    Tiered: 1.27%   Uniform: 1.18%   Delta: -0.09pp
+  CVaR (avg of worst 10% of trade outcomes):
+    Tiered: $-4,116.99   Uniform: $-4,014.85   Delta: $+102.14
+
+──────────────────────────────────────────────────────────────────────────────────────────
+Top 10 biggest improvements (decoupling would have helped)
+──────────────────────────────────────────────────────────────────────────────────────────
+    CRWD     2026-08-11  tier=high     ss=0.861  tiered=$ -2442.40(stop_loss)  uniform=$ -1539.20(stop_loss)  diff=$  +903.20
+    NBIS     2026-08-05  tier=high     ss=1.000  tiered=$ -3598.08(stop_loss)  uniform=$ -3044.16(stop_loss)  diff=$  +553.92
+    AMZN     2026-08-03  tier=standard ss=0.753  tiered=$ -4509.84(stop_loss)  uniform=$ -4509.84(stop_loss)  diff=$    +0.00
+    ADBE     2026-08-03  tier=high     ss=0.884  tiered=$  -197.40(trailing_stop)  uniform=$  -197.40(trailing_stop)  diff=$    +0.00
+    CRM      2026-08-03  tier=standard ss=0.685  tiered=$   +86.68(trailing_stop)  uniform=$   +86.68(trailing_stop)  diff=$    +0.00
+    HPQ      2026-08-03  tier=low      ss=0.639  tiered=$ +1839.67(trailing_stop)  uniform=$ +1839.67(trailing_stop)  diff=$    +0.00
+    SNOW     2026-08-03  tier=standard ss=0.687  tiered=$ +1334.00(trailing_stop)  uniform=$ +1334.00(trailing_stop)  diff=$    +0.00
+    CRM      2026-08-03  tier=low      ss=0.633  tiered=$  +425.57(trailing_stop)  uniform=$  +425.57(trailing_stop)  diff=$    +0.00
+    SNOW     2026-08-03  tier=low      ss=0.606  tiered=$ +1847.88(trailing_stop)  uniform=$ +1847.88(trailing_stop)  diff=$    +0.00
+    HPQ      2026-08-04  tier=low      ss=0.644  tiered=$ +3261.18(trailing_stop)  uniform=$ +3261.18(trailing_stop)  diff=$    +0.00
+
+──────────────────────────────────────────────────────────────────────────────────────────
+Top 10 biggest regressions (decoupling would have hurt)
+──────────────────────────────────────────────────────────────────────────────────────────
+    AMZN     2026-08-03  tier=standard ss=0.753  tiered=$ -4509.84(stop_loss)  uniform=$ -4509.84(stop_loss)  diff=$    +0.00
+    ADBE     2026-08-03  tier=high     ss=0.884  tiered=$  -197.40(trailing_stop)  uniform=$  -197.40(trailing_stop)  diff=$    +0.00
+    CRM      2026-08-03  tier=standard ss=0.685  tiered=$   +86.68(trailing_stop)  uniform=$   +86.68(trailing_stop)  diff=$    +0.00
+    HPQ      2026-08-03  tier=low      ss=0.639  tiered=$ +1839.67(trailing_stop)  uniform=$ +1839.67(trailing_stop)  diff=$    +0.00
+    SNOW     2026-08-03  tier=standard ss=0.687  tiered=$ +1334.00(trailing_stop)  uniform=$ +1334.00(trailing_stop)  diff=$    +0.00
+    CRM      2026-08-03  tier=low      ss=0.633  tiered=$  +425.57(trailing_stop)  uniform=$  +425.57(trailing_stop)  diff=$    +0.00
+    SNOW     2026-08-03  tier=low      ss=0.606  tiered=$ +1847.88(trailing_stop)  uniform=$ +1847.88(trailing_stop)  diff=$    +0.00
+    HPQ      2026-08-04  tier=low      ss=0.644  tiered=$ +3261.18(trailing_stop)  uniform=$ +3261.18(trailing_stop)  diff=$    +0.00
+    PLTR     2026-08-04  tier=low      ss=0.607  tiered=$ +5772.00(trailing_stop)  uniform=$ +5772.00(trailing_stop)  diff=$    +0.00
+    PATH     2026-08-04  tier=standard ss=0.667  tiered=$  +644.84(trailing_stop)  uniform=$  +644.84(trailing_stop)  diff=$    +0.00
+
+──────────────────────────────────────────────────────────────────────────────────────────
+VERDICT
+──────────────────────────────────────────────────────────────────────────────────────────
+  ✅ Net PnL improved AND no material DD/CVaR regression -> supports proceeding to paper A/B.
