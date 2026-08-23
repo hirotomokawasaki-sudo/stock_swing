@@ -1,0 +1,22 @@
+==========================================================================================
+R13-D Phase 2: SectorMomentumFeature + SectorRotationStrategy consistency check
+vs. Phase 1's pure-function research script (scripts/r13d_etf_sector_rotation_phase1.py)
+==========================================================================================
+
+Checked 21 rebalance dates. Sample (first 5, last 5):
+  2024-11-14: production_holdings=['quantum_computing', 'technology_cloud']  ranked_top3=['technology_cloud', 'quantum_computing', 'technology']
+  2024-12-16: production_holdings=['quantum_computing', 'technology_cloud']  ranked_top3=['quantum_computing', 'technology_cloud', 'technology']
+  2025-01-17: production_holdings=['quantum_computing', 'technology_cloud']  ranked_top3=['quantum_computing', 'technology_cloud', 'technology']
+  2025-02-19: production_holdings=['quantum_computing', 'technology_cloud']  ranked_top3=['quantum_computing', 'technology_cloud', 'robotics_ai']
+  2025-03-20: production_holdings=['quantum_computing', 'robotics_ai']  ranked_top3=['quantum_computing', 'robotics_ai', 'broad_market']
+  ...
+  2026-03-23: production_holdings=['semiconductor', 'software']  ranked_top3=['semiconductor', 'software', 'quantum_computing']
+  2026-04-22: production_holdings=['semiconductor', 'software']  ranked_top3=['semiconductor', 'software', 'quantum_computing']
+  2026-05-21: production_holdings=['semiconductor', 'software']  ranked_top3=['semiconductor', 'software', 'quantum_computing']
+  2026-06-23: production_holdings=['quantum_computing', 'semiconductor']  ranked_top3=['semiconductor', 'quantum_computing', 'software']
+  2026-07-23: production_holdings=['quantum_computing', 'semiconductor']  ranked_top3=['semiconductor', 'quantum_computing', 'software']
+
+------------------------------------------------------------------------------------------
+VERDICT
+------------------------------------------------------------------------------------------
+  ✅ All 21 checkpoints agree between Phase 1's pure-function research script and the production-pattern SectorMomentumFeature + SectorRotationStrategy classes. Feature/strategy wiring is consistent with the validated Phase 1 result.

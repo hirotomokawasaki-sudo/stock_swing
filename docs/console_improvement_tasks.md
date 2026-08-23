@@ -1044,7 +1044,10 @@ sizing側Option A・confidence_multiplierバグ修正は別途検証手法を設
                          （r13d_etf_sector_rotation_phase1.py新規）。top2/63d/21dローテーションが
                          SPY/均等加重両ベースラインをSharpeで上回る（1.370 vs 1.255/0.967）。
                          実行ラグ・レジーム分割・単一ETF除外でも頑健。Phase 2（戦略設計）へ
-2026-09以降        🔵 R13-D  ETFローテーションPhase 2（戦略設計、R13-Cのt+1 fill手法流用）。
+2026-08-23        ✅ R13-D  ETFローテーションPhase 2（戦略設計コード実装）完了。
+                         SectorMomentumFeature/SectorRotationStrategy新規。Phase 1との
+                         21チェックポイント全一致を自己検証（2件のオフバイワンを発見・修正）。本番未配線
+2026-09以降        🔵 R13-D  ETFローテーションPhase 3（リバランス状態管理実装、コスト/スリッパージ再検証）。
                          JP overnight spilloverはIBKR接続確立待ち継続
 
 2026-10+           R8-v2    ML（clean labels ≥300/≥1,000到達後、R0-v2〜R4-v2完了が前提）
@@ -1092,9 +1095,10 @@ attributable限定では単一トレード依存の不安定な改善のみ。pa
 point-in-time universe+保守的OHLC exit+slippage全て実装。live以降PF=1.453
 （90%CI[1.210,1.750]、保守的補正後もほぼ不変）。本番と方向性一致も維持。残も4/6/7
 項目（exposure/sector cap等）は未実装 |
-| 🟢 P3 | **R13-D** | **Phase 1 GO判定**（2026-08-23） | ETFセクターローテーション
-Phase 1完了（Sharpe 1.370 vs ベースライン最大1.255）。Phase 2（戦略設計）未着手。JP
-spilloverはshadow継続中、研究段階、本番影響なし |
+| 🟢 P3 | **R13-D** | **Phase 1 GO判定 + Phase 2完了**（2026-08-23） | ETFセクター
+ローテーションPhase 1（Sharpe 1.370）+ Phase 2戦略コード実装・Phase 1との整合性
+検証完了。Phase 3（リバランス状態管理実装）未着手。JPspilloverはshadow継続中、
+研究段階、本番影響なし |
 
 **2026-08-14 追記**: リアルトレード開始が 08-20 → **09-15** に延期（ユーザー指示）。
 延期で確保できた約4週間を R4-v2/R5-v2 残項目の実装検証と R9 Plan B/C/D/E の
@@ -3095,7 +3099,8 @@ test_r11_backtest_engine_v3.py`（保守的OHLC exitのLOWトリガーとclose-o
 
 ### R13-D: 独立収益源の開発（ETFセクターローテーション・JP overnight spillover等）
 
-**Status**: 🟢 ETFセクターローテーション Phase 1（フィージビリティ検証）完了・GO判定（2026-08-23）
+**Status**: 🟢 ETFセクターローテーション Phase 1完了・GO判定 + Phase 2（戦略設計コード実装）
+完了（2026-08-23、本番未配線）
 **優先度**: P3（今すぐ収益には直結しないが、momentum一本足打法からの脱却に必要）
 
 **既存進捗**:
@@ -3160,6 +3165,52 @@ top_n選定・リバランス間隔・累積曲線・Sharpe・max_drawdownの各
 2. JP overnight spilloverはIBKR接続確立後にshadow→paper A/Bの次ステップへ
 3. 各戦略は別ID・別台帳・別リスク予算で管理（既存方針と一致）
 
+**ETFセクターローテーション Phase 2（戦略設計、2026-08-23実施）**: Phase 1で検証した
+ロジックを、本コードベースの既存アーキテクチャパターン（`BaseFeature`/`FeatureResult`,
+`BaseStrategy`/`CandidateSignal`）に沿って実装。JP overnight spilloverの
+`UsOvernightBenchmarkFeature`と同じ「新規独立モジュール、本番未配線」方針を踏襲。
+
+**新規実装**:
+- `src/stock_swing/feature_engine/sector_momentum_feature.py`
+  （`SectorMomentumFeature`）: symbol_registry.yamlの`sector`タグからセクター別
+  トレーリングリターンを計算するグローバルfeature（`MacroRegimeFeature`と同型）
+- `src/stock_swing/strategy_engine/sector_rotation_strategy.py`
+  （`SectorRotationStrategy`、`strategy_id="sector_rotation_v1"`）: 上位N セクターの
+  構成ETFに買いシグナルを生成する新規独立戦略。既存momentum戦略とは別strategy_idで
+  PF/WR属性分析を汚染しない設計（JP spilloverのPhase 2設計セクション1-Aと同じ判断）
+
+**重要な限界（設計時点で未実装、Phase 3の課題として明記）**: このクラス自体は
+**ステートレス**（呼び出すたびに「現在の」上位Nセクターのシグナルを出すだけで、
+前回いつリバランスしたかの記憶を持たない）。Phase 1のバックテストでは
+`hold_days`ごとにのみ保有を再評価していたが、これをpaper_demo.pyの日次/複数回cronに
+配線するには、`PaperExecutor`のポジション管理と同様の永続的な「前回リバランス日＋
+現保有」状態管理が別途必要。この状態機械の構築はPhase 3（本設計・バックテスト検証の後）
+に明示的に先送り。
+
+**Feature/Strategyの整合性検証（2026-08-23）**: `scripts/r13d_sector_rotation_feature_
+strategy_validation.py`（新規）で、Phase 1のプレーン関数版ロジックと、新規実装した
+本番パターンのfeature/strategyクラスが同じ結果を出すかを21回のリバランス日全てで
+突き合わせ検証。**初回実行で3〜5件の不一致を検出**（自己発見・自己修正、詳細下記）。
+修正後、**全21チェックポイントで完全一致**を確認。
+
+**発見・修正した2つのオフバイワン問題（自己検証で発見）**:
+1. `SectorMomentumFeature`はリターンを終値から内部計算するため、`lookback_days`日分の
+   リターンウィンドウには`lookback_days + 1`日分の終値が必要（初日のリターン計算に前日終値が
+   要る）。この呼び出し規約を`SectorMomentumFeature.compute()`のdocstringに明記
+2. Phase 1の`trailing_return()`はリバランス評価日**当日**のリターンを含まない排他的
+   スライスを使用しており、検証スクリプト側の終値ウィンドウ切り出しをこれに合わせる必要が
+   あった（本番`SectorMomentumFeature`自体のバグではなく、検証スクリプトの整合ミス）
+
+**判定**: ✅ Phase 2設計・実装は整合性確認済み。Phase 3（実配線、リバランス状態管理の
+実装、コスト・スリッページ込みの再検証）へ進む前提が整った。
+
+**テスト**: `tests/unit/test_sector_momentum_feature.py`（10件、うちオフバイワンの
+リグレッションガード1件）、`tests/unit/test_sector_rotation_strategy.py`（9件）。
+フルスイート2112 passed/2 skipped（regressionなし）。
+
+**エビデンス保存先**: `docs/r13d_phase2_design_20260823/`
+（consistency_check_output.txt）
+
 **やらないこと**: 既存momentum戦略と同一台帳で混合して集計しない。Phase 1の生シグナル
 結果を直接paper/liveに反映しない（必ずPhase 2設計→shadow→paper A/Bを経由）。
 
@@ -3182,7 +3233,7 @@ top_n選定・リバランス間隔・累積曲線・Sharpe・max_drawdownの各
 | P1 | R13-A | stop_loss閾値深掘り検証 | 中 | 低 | **STOP HOLD**（検証完了、2026-08-23） |
 | P1 | R13-B | signal_strength exit切り離し検証 | 低〜中 | 中 | **弱い結果**（検証完了、2026-08-23）、sizing側未着手 |
 | P2 | R13-C | R11バックテスト再構築（項目1/2/3/5） | 大 | 低（研究のみ、本番影響なし） | **強い肯定的知見**（2026-08-23）、live以降PF=1.453（90%CI[1.210,1.750]）、残4/6/7項目未着手 |
-| P3 | R13-D | ETFセクターローテーション、JP spilloverはIBKR待ち継続 | 大 | 低（shadowのみ） | **Phase 1 GO**（2026-08-23）、Phase 2未着手 |
+| P3 | R13-D | ETFセクターローテーション、JP spilloverはIBKR待ち継続 | 大 | 低（shadowのみ） | **Phase 1 GO + Phase 2完了**（2026-08-23）、Phase 3未着手 |
 
 **09-15 Go/No-Goとの関係**: R13はすべてpaper A/B・研究段階であり、09-15までに
 本番反映されるものは別途ユーザー承認がない限りない見込み。つまり09-15判断の前提となる
