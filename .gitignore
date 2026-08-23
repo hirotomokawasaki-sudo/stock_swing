@@ -119,6 +119,7 @@ data/r11_earnings_cache/
 reports/r11_backtest_results.json
 reports/r11_backtest_v2_results.json
 reports/r11_backtest_v3_results.json
+reports/r13d_etf_sector_rotation_phase1_results.json
 reports/r11c_*_results.json
 reports/r11b_param_search_results.json
 reports/r11c2_regime_filter_results.json

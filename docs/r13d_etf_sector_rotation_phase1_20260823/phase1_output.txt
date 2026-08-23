@@ -1,0 +1,48 @@
+Sectors tracked (7):
+  broad_market         n=1  ['SPY']
+  quantum_computing    n=1  ['QTUM']
+  robotics_ai          n=2  ['BOTZ', 'ROBO']
+  semiconductor        n=8  ['CHPS', 'CHPX', 'FTXL', 'SHOC', 'SMH', 'SMHX', 'SOXQ', 'SOXX']
+  software             n=7  ['FRWD', 'GTOP', 'PSCT', 'PTF', 'QTEC', 'TDIV', 'TTEQ']
+  technology           n=1  ['QQQ']
+  technology_cloud     n=1  ['SKYY']
+
+Date range: 2024-08-16 -> 2026-08-14 (500 days)
+
+==========================================================================================
+R13-D Phase 1: Sector Rotation (top-2, lookback=63d, hold=21d) vs Baselines
+==========================================================================================
+  rotation_top2                n= 437  total_return=+100.32%  CAGR=49.28%  Sharpe=1.37  maxDD=29.43%
+  equal_weight_all_sectors     n= 437  total_return= +67.23%  CAGR=34.52%  Sharpe=1.255  maxDD=26.38%
+  spy_buy_and_hold             n= 437  total_return= +30.00%  CAGR=16.33%  Sharpe=0.967  maxDD=19.0%
+
+------------------------------------------------------------------------------------------
+Rebalance history (first 5 and last 5)
+------------------------------------------------------------------------------------------
+  2024-11-14: holdings=['technology_cloud', 'quantum_computing']  top_scores={'technology_cloud': 0.246, 'quantum_computing': 0.0883, 'broad_market': 0.0798, 'technology': 0.0797}
+  2024-12-16: holdings=['quantum_computing', 'technology_cloud']  top_scores={'quantum_computing': 0.2867, 'technology_cloud': 0.2626, 'technology': 0.1211, 'software': 0.1171}
+  2025-01-17: holdings=['quantum_computing', 'technology_cloud']  top_scores={'quantum_computing': 0.2976, 'technology_cloud': 0.1493, 'technology': 0.0453, 'robotics_ai': 0.0267}
+  2025-02-19: holdings=['quantum_computing', 'technology_cloud']  top_scores={'quantum_computing': 0.2872, 'technology_cloud': 0.09, 'robotics_ai': 0.0533, 'technology': 0.0529}
+  2025-03-20: holdings=['quantum_computing', 'robotics_ai']  top_scores={'quantum_computing': 0.0301, 'robotics_ai': -0.0492, 'broad_market': -0.0614, 'semiconductor': -0.0923}
+  ...
+  2026-03-23: holdings=['semiconductor', 'software']  top_scores={'semiconductor': 0.1427, 'software': 0.0271, 'quantum_computing': 0.0105, 'robotics_ai': -0.0182}
+  2026-04-22: holdings=['semiconductor', 'software']  top_scores={'semiconductor': 0.2385, 'software': 0.1328, 'quantum_computing': 0.1024, 'technology': 0.0596}
+  2026-05-21: holdings=['semiconductor', 'software']  top_scores={'semiconductor': 0.4444, 'software': 0.2583, 'quantum_computing': 0.245, 'technology': 0.1817}
+  2026-06-23: holdings=['semiconductor', 'quantum_computing']  top_scores={'semiconductor': 0.878, 'quantum_computing': 0.5572, 'software': 0.4411, 'technology': 0.2678}
+  2026-07-23: holdings=['semiconductor', 'quantum_computing']  top_scores={'semiconductor': 0.2786, 'quantum_computing': 0.1312, 'software': 0.1259, 'technology_cloud': 0.1068}
+
+------------------------------------------------------------------------------------------
+Parameter sensitivity (not optimized -- spot-check for robustness)
+------------------------------------------------------------------------------------------
+  top_n=1 lookback=63d hold=21d: total_return=+162.32% Sharpe=1.627 maxDD=27.91%
+  top_n=3 lookback=63d hold=21d: total_return= +91.98% Sharpe=1.366 maxDD=26.48%
+  top_n=2 lookback=126d hold=21d: total_return= +88.42% Sharpe=1.39 maxDD=27.62%
+  top_n=2 lookback=63d hold=42d: total_return=+122.80% Sharpe=1.549 maxDD=29.43%
+
+------------------------------------------------------------------------------------------
+VERDICT (Phase 1 feasibility only -- NOT a paper/live trading decision)
+------------------------------------------------------------------------------------------
+  ✅ GO -- rotation beats both baselines on risk-adjusted return (Sharpe).
+     Proceed to Phase 2 (strategy design) using R13-C's t+1-fill + cost-aware methodology.
+
+Saved: /Users/hirotomookawasaki/stock_swing/reports/r13d_etf_sector_rotation_phase1_results.json
