@@ -1018,6 +1018,16 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 2026-09以降        R7-v2    WebSocket化（延期で確保できた期間を活用し着手検討。
                          現行ポーリングアーキテクチャからの移行は規模大、専用セッション推奨）
 
+2026-08-25頃〜    🔲 R13-A  stop_loss閾値深掘り（-8/-10/-12%バリアント）の反実仮想
+                         ヒストリカル検証開始（analyze_stop_loss_post_exit.py --counterfactual流用）
+2026-08-末〜09初    🔲 R13-A  DD/CVaR非悪化確認後、paper A/B開始（ユーザー承認後）
+2026-08-25頃〜    🔲 R13-B  signal_strength切り離し/較正案（A/Bどちら）の設計・confidence_
+                         multiplier no-opバグ修正を含めpaper A/B開始（ユーザー承認後）
+2026-09中旬頃〜    🔲 R13-C  R11バックテスト基盤再構築着手（t+1約定、point-in-time universeを
+                         最小構成として先行）。本番影響なしの研究作業のため並行進行可
+2026-09以降        🔵 R13-D  ETFセクターローテーションバックテスト設計開始（R13-Cの手法確立後）。
+                         JP overnight spilloverはIBKR接続確立待ち継続
+
 2026-10+           R8-v2    ML（clean labels ≥300/≥1,000到達後、R0-v2〜R4-v2完了が前提）
 ```
 
@@ -1055,6 +1065,10 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 | 🔴 P2 | R5-v2 | REOPENED | 実装は2026-08-14大部分完了（cluster/beta/相関/集中度）。残: 閾値のpaper検証（09-15延期で確保した期間で実施） |
 | 🟢 P2 | R7-v2 | IN_PROGRESS | source SLA/FRED/ニュース感情は2026-08-14完了。残: WebSocketのみ（09月以降） |
 | 🔵 P3 | R8-v2 | BLOCKED_BY_DATA | 10月以降 |
+| 🟡 P1 | **R13-A/B** | **PLANNED**（2026-08-23新規） | 収益性向上策（trailing_stop比率強化、signal_strength
+接続見直し）。全件paper A/B経由、本番反映は別途承認必要 |
+| 🟡 P2 | **R13-C/D** | **PLANNED**（2026-08-23新規） | R11バックテスト再構築（look-ahead/survivorship
+bias解消）、独立収益源開発。研究段階、本番影響なし |
 
 **2026-08-14 追記**: リアルトレード開始が 08-20 → **09-15** に延期（ユーザー指示）。
 延期で確保できた約4週間を R4-v2/R5-v2 残項目の実装検証と R9 Plan B/C/D/E の
@@ -2731,3 +2745,141 @@ Alpaca APIはpaginationなしでは直近500件しか返さない。実口座で
 既存quarantine 101件自体の再統合（選択肢(a)）は未実施。本番`pnl_state.json`の
 書き換えを伴うため、rebuild実行にはユーザーの明示的な承認が必要。Pre-Launch
 Gate Review（09-08〜09-12）までに(a)実施可否を判断することを推奨。
+
+---
+
+## R13: 収益性向上ロードマップ（「儲かるシステムにするには」、2026-08-23、ユーザー依頼）
+
+**背景**: 2026-08-23の一連の監査（R0-v2、戦略レビュー、equity_bridge根本原因特定）は
+すべて「システムの状態を正しく見せる」・「自滅的な損失を防ぐ」方向の修正で、
+**収益を増やす方向の改善は含まれていない**ことをユーザーに指摘された。実データ分析の結果、
+以下4件の収益性向上策を提案し、ユーザーが**3番（低勝率銘柄の恒久ブロックリスト化）を除く
+全件を進める方向で承認**。除外理由: 既存のrolling PF gateがすでに同等の機能を
+果たしており（MU/HPQ/MRVL等の高PF銘柄とINTC/AMZN/NBIS等の低PF銘柄を実際に分けて
+いることを実データで確認済み）、恒久ブロック化は優先度が低いと判断。
+
+**重要な区別**: R13の全項目は**発注ロジック・ポジションサイジング・ガードレール判定の
+実際の挙動を変える**ものであるため、R0-v2の安全制約（やらないこと節：「R0-v2未完のまま
+ stop閾値を本採用変更しない」等）を引き続き遵守する。**すべてpaper A/Bを経由し、
+本番反映は別途ユーザー承認を得てから**行う。
+
+### R13-A: trailing_stop比率強化（stop_loss閾値深掘り検証）
+
+**Status**: 🟡 PLANNED（未着手）
+**優先度**: P1（最高、既存データで実証済みの非対称性に入っていくことなので他の項目より検証コストが低い）
+
+**根拠（実データ、2026-08-23確認）**: attributable限定のexit_reason別実績で、
+trailing_stop（n=36）はWR=72.2%、PF=11.85、純利益+$35,687と非常に良好な一方、
+stop_loss（n=11）はWR=0%、PF=0.0、純損失-$24,638と全敗。この非対称性は学術的
+仮説ではなく自社実トレードデータで実証済みのため、実行コストが低い。
+
+**他のやらないこと節との整合性確認**: 「やらないこと」節には「R0-v2未完のまま
+stop閾値を本採用変更しない」とあるが、R0-v2はVERIFIED_COMPLETE（2026-07-30）済みなので
+本項目着手の障害にはならない。ただし「実値パフォーマンスでPF>1、expectancy>0」のpromotion
+要件は引き続き有効。
+
+**実施内容**:
+1. 現行`config/strategy/simple_exit_v2.yaml`のstop_loss_pct閾値（低/標準/高確信度
+   -5/-7/-9%）を、例えば-8/-10/-12%に深掘りするバリアントを作成
+2. 既存の`scripts/analyze_stop_loss_post_exit.py --counterfactual`（2026-08-14
+   R3-v2-Stop-Redesignで実装済み）で、閾値深掘り後の反実仮想コスト（深掘りで
+   trailingまで生き延びた場合の利益 vs 早期損切りを逃した場合の損失拡大）をヒストリカル
+   検証
+3. max DD・CVaRが悪化しないことを確認した上でpaper A/B開始（control=現行閾値、
+   variant=深掘り閾値）
+4. 評価指標: net PnLだけでなく、max DD、CVaR、stop後5/10/20日regretを併用
+
+**やらないこと**: 検証なしに本番反映しない。DD悪化が確認された場合は即時ロールバック。
+
+### R13-B: signal_strengthとexit/sizingの接続見直し
+
+**Status**: 🟡 PLANNED（未着手、IMPLEMENTATION_VALUE.mdでPAPER_AB_FIRST判定済み）
+**優先度**: P1
+
+**根拠（実データ、2026-08-23確認）**: `reports/signal_strength_decile.json`の
+decile別expectancyは完全に非単調（decile 3が+$78で最良、decile 9が-$1,503で最悪、
+高scoreほど良いという単純な相関はない）。それにもかかわらず現行`position_sizing.py`は
+`confidence`（signal_strength経由）が高いほどstop幅を広げ、trailing発動を早める設計。
+根拠のないシグナルでリスクを歪めている可能性が高い。
+
+なお`position_sizing.py`の`confidence_multiplier`はhigh-confidence側（1.2倍）が
+既存capでclipされno-op化していることが戦略レビュー（上記第2弾）で判明済み。この
+バグ修正も本項目に含めて一括検証する。
+
+**実施内容（2案、どちらかをpaper A/Bで選択）**:
+- **(A) 較正案**: 既存`annotate_cross_sectional_percentile()`（2026-08-17実装済みだが
+  sizing/exitに未接続）を利用し、単一銘柄の絶対スコアではなく同日候補群内の相対順位
+  でsizingを決める設計に変更
+- **(B) 切り離し案**: signal_strengthをsizing/exitから完全に切り離し、固定ルールに戻す
+  （実装リスク低、即着手可能）
+- confidence_multiplier no-opバグ（high-confidence 1.2倍がcapで打ち消される）の修正も
+  同じA/Bの中で検証
+
+**推奨比較方法**: control=現行score-linked exit/sizing、variant=uniform、
+評価指標はnet PnLだけでなくmax DD、CVaR、stop後5/10/20日regret、turnover、gap loss
+
+### R13-C: R11バックテスト基盤の根本再構築（look-ahead/survivorship bias解消）
+
+**Status**: 🟡 PLANNED（未着手）
+**優先度**: P2（工数大、本番影響なしの研究基盤作業）
+
+**根拠（戦略レビュー、C02/C03で実コード確認済み）**: 既存`scripts/r11_backtest_engine.py`は
+(1) 当日closeをmomentumシグナルの入力とentry価格の両方に使うsame-bar look-aheadバイアス
+と、(2) 現在の69銘柄symbol_registry.yamlを過去全期間に適用するsurvivorship biasを抜けていない。
+実際に3分割検証でvalidation PF=0.560とtrain（PF=1.78）から大幅に利益が落ちることを確認済み。
+現行コードの中核エントリーシグナル（breakout_momentum）に本当にエッジがあるのかという
+根本問いに現状答えられない。
+
+**実施内容（IMPLEMENTATION_VALUE.mdの「R11-v2の最低要件候補」を優先度順に選択）**:
+1. signal at t close → fill at t+1 open/VWAP（最優先、look-ahead解消の本質）
+2. point-in-time universe対応（survivorship bias解消、銘柄構成履歴の取得方法を別途調査必要）
+3. 保守的OHLC pathでstop/trailingを再生成
+4. cash、gross exposure、sector/cluster capの再現
+5. spread/slippage/impactの反映
+6. rolling walk-forward + embargo
+7. 全trial registry（パラメータ探索の過適合リスクを評価可能にする）
+
+**判断**: この6項目全てが常に必要とは限らない。まず1・2を最小構成として着手し、結果が
+変わるかを見て段階的に3〜7を追加する方式を推奨。
+
+**やらないこと**: 本研究の結果を直接本番に反映しない（必ずR11-D型のpaper A/Bを経由）。
+
+### R13-D: 独立収益源の開発（ETFセクターローテーション・JP overnight spillover等）
+
+**Status**: 🔵 中長期検討（一部既に着手済み）
+**優先度**: P3（今すぐ収益には直結しないが、momentum一本足打法からの脱却に必要）
+
+**既存進捗**:
+- JP半導体overnight spillover: Phase 1（相関検証、GO判定済み）、Phase 2（戦略設計）、
+  Phase 2.5（shadow検証、日次収集中）完了済み。IBKR接続確立後にPhase 3（実配線）へ
+- ETFセクターローテーション: 未着手
+
+**実施内容（新規）**:
+1. ETFセクターローテーションのバックテスト設計・R13-Cで確立する正しいバックテスト手法を流用
+2. JP overnight spilloverはIBKR接続確立後にshadow→paper A/Bの次ステップへ
+3. 各戦略は別ID・別台帳・別リスク予算で管理（既存方針と一致）
+
+**やらないこと**: 既存momentum戦略と同一台帳で混合して集計しない。
+
+### R13全体のやらないこと
+
+```
+❌ R13-A/Bをpaper A/BでのDD/CVaR悪化確認なしに本番反映しない
+❌ R13-Cのバックテスト結果をpaper A/Bなしで直接本番に反映しない
+❌ 低勝率銘柄の恒久ブロックリスト化（先の候補3番）は今回のスコープ外（既存rolling PF gateで
+   代替可と判断）
+❌ R0-v2の安全制約（manual clear後のverification run必須等）をR13の作業で回避しない
+```
+
+### R13優先順位・工数目安
+
+| 優先度 | Phase | 内容 | 工数目安 | リスク |
+|---|---|---|---|---|
+| P1 | R13-A | stop_loss閾値深掘り paper A/B | 中 | 低（既存枠組みの延長） |
+| P1 | R13-B | signal_strength切り離し/較正 paper A/B | 低〜中 | 中（挙動変更） |
+| P2 | R13-C | R11バックテスト再構築（最小構成まず1・2） | 大 | 低（研究のみ、本番影響なし） |
+| P3 | R13-D | ETFセクターローテーション設計開始、JP spilloverはIBKR待ち継続 | 大 | 低（shadowのみ） |
+
+**09-15 Go/No-Goとの関係**: R13はすべてpaper A/B・研究段階であり、09-15までに
+本番反映されるものは別途ユーザー承認がない限りない見込み。つまり09-15判断の前提となる
+現在のPF/expectancy水準はR13着手だけでは即座には向上しないことを明示的に認識する。
