@@ -476,22 +476,48 @@ def resolve_tracking_metadata(args: argparse.Namespace, existing: dict[str, Any]
 
 
 def fetch_all_filled_orders(broker: BrokerClient) -> list:
-    """Fetch all filled orders from broker.
+    """Fetch all filled orders (including partial fills on since-cancelled
+    orders) from broker.
 
-    AUDIT FIX (2026-08-23): previously called broker.fetch_orders(status=
-    'all', limit=500), a SINGLE un-paginated call. Alpaca's v2/orders
-    endpoint returns at most `limit` orders with no pagination applied by a
-    single call -- once the account has more than 500 total orders, this
-    silently returned only the most recent 500 (confirmed live: missing
-    ~9 days / ~200 orders of history predating 2026-05-21, despite genuine
-    order history back to 2026-05-12). Because match_buy_sell_orders()'s
-    FIFO matcher below has no way to detect a missing buy leg, this silent
-    truncation was the dominant root cause traced for ~$150K+ of PnL ending
-    up in quarantined_trades with impossible entry>exit chronology and/or
-    multiple buy legs matched to the same sell fill (see broker_client.py's
-    fetch_orders()/fetch_all_orders() docstrings for the full trace).
-    Fixed to use fetch_all_orders(), which paginates ascending until the
-    complete history is retrieved.
+    AUDIT FIX (2026-08-23, pagination): previously called broker.fetch_
+    orders(status='all', limit=500), a SINGLE un-paginated call. Alpaca's
+    v2/orders endpoint returns at most `limit` orders with no pagination
+    applied by a single call -- once the account has more than 500 total
+    orders, this silently returned only the most recent 500 (confirmed
+    live: missing ~9 days / ~200 orders of history predating 2026-05-21,
+    despite genuine order history back to 2026-05-12). Because match_buy_
+    sell_orders()'s FIFO matcher below has no way to detect a missing buy
+    leg, this silent truncation was ONE of two root causes traced for
+    ~$150K+ of PnL ending up in quarantined_trades with impossible
+    entry>exit chronology and/or multiple buy legs matched to the same
+    sell fill (see broker_client.py's fetch_orders()/fetch_all_orders()
+    docstrings for the full trace). Fixed to use fetch_all_orders(), which
+    paginates ascending until the complete history is retrieved.
+
+    AUDIT FIX (2026-08-23, partial-fill status filter -- found and fixed
+    the SAME evening as the pagination fix above, while investigating why
+    5 impossible-chronology trades still remained even after re-running
+    the matcher with the pagination fix alone): this function used to
+    filter to `status == 'filled'` ONLY, silently dropping any order whose
+    status is 'canceled' (or 'expired') but which nonetheless has a
+    nonzero filled_qty -- i.e. an order that was PARTIALLY filled before
+    being cancelled/expired. Confirmed live: 4 such orders exist in this
+    account's history (ADBE/MSFT/CDNS/AVGO, all dated 2026-06-01,
+    totaling 402 shares of real, PnL-relevant fills), and every single one
+    of them was the MISSING buy leg for a sell that appeared later in the
+    filled-only order list -- e.g. ADBE's 2026-06-03 sell of 101 shares
+    had NO buy leg in the filtered list at all (its true buy, 2026-06-01,
+    was status='canceled' with filled_qty=101), so match_buy_sell_orders()
+    incorrectly matched that sell against a LATER, unrelated buy fill
+    (2026-07-28), producing a trade with entry_time AFTER exit_time.
+    Verified fix: re-running the matcher with orders filtered by
+    `filled_qty > 0` instead of `status == 'filled'` reduced impossible-
+    chronology trades from 17 to 5 (the remaining 5, all CRWD/KLAC, trace
+    to a SEPARATE, already-known limitation -- apply_split_adjustment()
+    below only rescales entry PRICE across a stock-split ex_date, not
+    entry QTY, so a pre-split buy fill's share count is not comparable to
+    a post-split sell fill's share count for FIFO matching purposes; not
+    fixed in this change, tracked separately).
     """
     print("Fetching filled orders from broker (paginated, full history)...")
     orders_env = broker.fetch_all_orders(status='all')
@@ -506,9 +532,19 @@ def fetch_all_filled_orders(broker: BrokerClient) -> list:
     if isinstance(payload, dict):
         print(f"  Fetched {len(orders)} total orders across {payload.get('page_count')} page(s)")
 
-    filled_orders = [o for o in orders if o.get('status') == 'filled']
-    print(f"  Found {len(filled_orders)} filled orders")
-    
+    filled_orders = [o for o in orders if float(o.get('filled_qty') or 0) > 0]
+    partial_non_filled = [o for o in filled_orders if o.get('status') != 'filled']
+    print(f"  Found {len(filled_orders)} orders with a nonzero fill "
+          f"({len(partial_non_filled)} of which are partial fills on a "
+          f"since-cancelled/expired order, not status=='filled')")
+    if partial_non_filled:
+        for o in sorted(partial_non_filled, key=lambda o: o.get('created_at', '')):
+            print(
+                f"    ℹ️  partial-fill-before-cancel: {o.get('symbol')} "
+                f"{o.get('side')} filled_qty={o.get('filled_qty')} of qty={o.get('qty')} "
+                f"at ${o.get('filled_avg_price')} (status={o.get('status')})"
+            )
+
     return filled_orders
 
 

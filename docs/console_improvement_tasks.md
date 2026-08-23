@@ -995,6 +995,14 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
                          🔲 残課題: equity_bridgeの$168,869.89未説明差分の運用判断
                          （quarantine再分類 vs tolerance引き上げ）はPre-Launch Gate Review
                          までに実施
+2026-08-23（夜）    ✅ equity_bridge根本原因の第2のバグを発見・修正。`fetch_all_filled_
+                         orders()`が`status=='filled'`のみでフィルタしており、「部分約定後に
+                         キャンセルされた注文」（status='canceled'がつfilled_qty>0）を完全に
+                         除外していた。実データでADBE/MSFT/CDNS/AVGOの2026-06-01付計402株分の
+                         実約定が欠落していたことを確認。修正後`--dry-run`検証で時系列逆転
+                         トレードが9件→1件（既知のCRWD分割問題のみ残存）へ大幅改善。
+                         テスト新規7件、フルスイート2119 passed/2 skipped。コード修正のみ（
+                         本番`pnl_state.json`の実際の書き換えは未実施、別途承認待ち）
 
 2026-09-08〜09-12  🔲 Pre-Launch Gate Review（第2弾）
                          ・ R3-v2-Stop/Breakeven/R9 Plan B-E/R5-v2 promotion gate、全レビュー結果を統合
