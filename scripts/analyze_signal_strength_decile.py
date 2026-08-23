@@ -104,6 +104,60 @@ def compute_decile_stats(
     return results
 
 
+def compute_calibration_curve(rows: list[dict]) -> list[dict]:
+    """R4-v2 residual (2026-08-23): decile-level calibration curve.
+
+    Treats each decile's ss_min-ss_max midpoint as a proxy for the
+    "predicted confidence" that a trade in that bucket is a winner, and
+    compares it against the bucket's actual win_rate. This is a read-only
+    diagnostic (recommendation-only, no automatic threshold changes)
+    intended to show whether higher signal_strength buckets are actually
+    associated with higher realized win rates (well-calibrated) or not
+    (miscalibrated / flat / inverted).
+
+    Returns one row per input decile with:
+        - decile, ss_range, count
+        - predicted (midpoint of ss_min/ss_max, used as a pseudo-probability)
+        - actual (win_rate)
+        - calibration_error (abs(predicted - actual))
+    """
+    curve: list[dict] = []
+    for r in rows:
+        predicted = (r["ss_min"] + r["ss_max"]) / 2.0
+        actual = r["win_rate"]
+        curve.append({
+            "decile": r["decile"],
+            "ss_range": r["ss_range"],
+            "count": r["count"],
+            "predicted": round(predicted, 4),
+            "actual": round(actual, 4),
+            "calibration_error": round(abs(predicted - actual), 4),
+        })
+    return curve
+
+
+def print_calibration_curve(curve: list[dict]) -> None:
+    if not curve:
+        return
+    print(f"\n{'='*72}")
+    print(" Calibration Curve (signal_strength midpoint vs actual win_rate)")
+    print(f"{'='*72}")
+    print(f"{'Decile':>7} {'SS range':>14} {'N':>5} {'Predicted':>10} {'Actual WR':>10} {'|Error|':>8}")
+    print(f"{'-'*7} {'-'*14} {'-'*5} {'-'*10} {'-'*10} {'-'*8}")
+    for c in curve:
+        print(
+            f"{c['decile']:>7} {c['ss_range']:>14} {c['count']:>5} "
+            f"{c['predicted']:>10.1%} {c['actual']:>10.1%} {c['calibration_error']:>8.1%}"
+        )
+    print(f"{'='*72}")
+    mean_error = sum(c["calibration_error"] for c in curve) / len(curve)
+    print(f"\n Mean calibration error: {mean_error:.1%}")
+    if mean_error > 0.25:
+        print(" \u26a0\ufe0f  Large mean calibration error: signal_strength should NOT be")
+        print("    treated as a literal win probability in its current form.")
+    print()
+
+
 def print_table(rows: list[dict], total_trades: int, filtered_trades: int) -> None:
     print(f"\n{'='*72}")
     print(" Signal Strength Decile Analysis (R4-C)")
@@ -152,6 +206,9 @@ def main() -> int:
     filtered_count = sum(r["count"] for r in rows)
     print_table(rows, total_trades=len(closed), filtered_trades=filtered_count)
 
+    calibration_curve = compute_calibration_curve(rows)
+    print_calibration_curve(calibration_curve)
+
     if filtered_count < 20:
         print(f"⚠️  Only {filtered_count} trades with signal_strength recorded.")
         print("   Results may not be statistically meaningful.")
@@ -167,6 +224,7 @@ def main() -> int:
             "total_closed": len(closed),
             "filtered_count": filtered_count,
             "decile_stats": rows,
+            "calibration_curve": calibration_curve,
         }
         out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False))
         print(f"[saved] {out_path}")

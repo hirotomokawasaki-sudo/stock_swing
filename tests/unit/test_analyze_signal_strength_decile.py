@@ -17,6 +17,7 @@ sys.modules["analyze_signal_strength_decile"] = _module
 _spec.loader.exec_module(_module)
 
 compute_decile_stats = _module.compute_decile_stats
+compute_calibration_curve = _module.compute_calibration_curve
 
 
 def _trade(ss: float, pnl: float, status: str = "closed", entry_time: str = "2026-01-01T00:00:00Z") -> dict:
@@ -121,6 +122,49 @@ class TestExpectancy:
         trades = [_trade(0.5, -123.45)]
         rows = compute_decile_stats(trades, n_buckets=1)
         assert rows[0]["expectancy"] == -123.45
+
+
+class TestCalibrationCurve:
+    """R4-v2 residual (2026-08-23): calibration curve (predicted midpoint vs
+    actual win_rate), read-only diagnostic, no automatic threshold changes."""
+
+    def test_empty_rows_returns_empty_curve(self):
+        assert compute_calibration_curve([]) == []
+
+    def test_curve_has_one_row_per_decile(self):
+        trades = [_trade(0.1, 10.0), _trade(0.9, -10.0)]
+        rows = compute_decile_stats(trades, n_buckets=2)
+        curve = compute_calibration_curve(rows)
+        assert len(curve) == len(rows)
+
+    def test_predicted_is_midpoint_of_ss_range(self):
+        trades = [_trade(0.4, 10.0), _trade(0.6, 10.0)]
+        rows = compute_decile_stats(trades, n_buckets=1)
+        curve = compute_calibration_curve(rows)
+        assert curve[0]["predicted"] == round((0.4 + 0.6) / 2.0, 4)
+
+    def test_actual_matches_win_rate(self):
+        trades = [_trade(0.5, 100.0), _trade(0.6, -50.0)]
+        rows = compute_decile_stats(trades, n_buckets=1)
+        curve = compute_calibration_curve(rows)
+        assert curve[0]["actual"] == rows[0]["win_rate"]
+
+    def test_calibration_error_is_abs_diff(self):
+        trades = [_trade(0.5, 100.0), _trade(0.6, -50.0)]
+        rows = compute_decile_stats(trades, n_buckets=1)
+        curve = compute_calibration_curve(rows)
+        expected = round(abs(curve[0]["predicted"] - curve[0]["actual"]), 4)
+        assert curve[0]["calibration_error"] == expected
+
+    def test_perfect_calibration_zero_error(self):
+        # ss range collapses to a single point (0.5), and win_rate is
+        # exactly 0.5 -> predicted == actual -> zero error.
+        trades = [_trade(0.5, 100.0), _trade(0.5, -100.0)]
+        rows = compute_decile_stats(trades, n_buckets=1)
+        curve = compute_calibration_curve(rows)
+        assert curve[0]["predicted"] == 0.5
+        assert curve[0]["actual"] == 0.5
+        assert curve[0]["calibration_error"] == 0.0
 
 
 class TestSsRangeFormatting:
