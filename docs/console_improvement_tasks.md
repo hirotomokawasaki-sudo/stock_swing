@@ -1001,8 +1001,21 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
                          除外していた。実データでADBE/MSFT/CDNS/AVGOの2026-06-01付計402株分の
                          実約定が欠落していたことを確認。修正後`--dry-run`検証で時系列逆転
                          トレードが9件→1件（既知のCRWD分割問題のみ残存）へ大幅改善。
-                         テスト新規7件、フルスイート2119 passed/2 skipped。コード修正のみ（
-                         本番`pnl_state.json`の実際の書き換えは未実施、別途承認待ち）
+                         テスト新規7件、フルスイート2119 passed/2 skipped。
+2026-08-23（夜）    🚨 実際rebuild実行（本番`pnl_state.json`対象、`--backup`付き）で
+                         **49件のattribution（strategy_id/decision_id/run_id等）が全消失
+                         するインシデント発生**。`test_r8v2_ml_readiness.py`の実データテスト
+                         失敗で検知、rebuild直前の自動バックアップから即座復元（diffでバイト
+                         単位一致を確認）。根本原因: `rebuild_pnl_state_from_broker.py`の
+                         `--preserve-attribution`はexit_reason/entry_signal_strength/
+                         quarantined_tradesのみ復元し、strategy_id等の起源メタデータは
+                         一切保護していなかった。`load_existing_attribution()`/
+                         `apply_attribution()`を拡張しPROVENANCE_FIELDS（strategy_id/
+                         original_strategy_id/decision_id/run_id/experiment_id等）も
+                         保存・復元するよう根本修正。テスト新規7件、フルスイート2126
+                         passed/2 skipped。**本番の実际のrebuild実行は今夜はしていない
+                         （別日態重に実施）**。インシデント詳細: `docs/equity_bridge_root_
+                         cause_20260823/INCIDENT_rebuild_lost_attribution.md`
 
 2026-09-08〜09-12  🔲 Pre-Launch Gate Review（第2弾）
                          ・ R3-v2-Stop/Breakeven/R9 Plan B-E/R5-v2 promotion gate、全レビュー結果を統合

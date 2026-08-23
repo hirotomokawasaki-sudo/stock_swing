@@ -296,3 +296,198 @@ class TestApplyAttribution:
         assert rebuilt["quarantined_trades"] == [{"trade_id": "q-1", "symbol": "INTC"}]
         assert stats["by_exit_order"] == 2   # NVDA + AMD
         assert stats["kept_broker_fill"] == 1  # INTC
+
+
+# ── 2026-08-23: provenance preservation regression tests ────────────────────────────
+# Background: a rebuild run on 2026-08-23 silently overwrote strategy_id/
+# original_strategy_id/decision_id/run_id/experiment_id on ALL closed trades
+# with the rebuild's 'broker_reconstructed' placeholder -- including 49
+# trades that had REAL strategy attribution (submitted live by PaperExecutor
+# with a real decision_id). This turned attributable_count 49 -> 0, caught
+# only by tests/unit/test_r8v2_ml_readiness.py's real-data sanity check.
+# Restored from backup; apply_attribution()/load_existing_attribution() were
+# then extended to also preserve PROVENANCE_FIELDS. These tests guard against
+# that regression recurring.
+
+def _closed_with_provenance(
+    symbol, exit_reason, strategy_id, original_strategy_id,
+    exit_broker_order_id="eid-1", exit_time="2026-06-01T17:00:00", pnl=100.0,
+    decision_id=None, run_id=None, experiment_id=None,
+):
+    trade = _closed(symbol, exit_reason, exit_broker_order_id, exit_time, pnl)
+    trade["strategy_id"] = strategy_id
+    trade["original_strategy_id"] = original_strategy_id
+    if decision_id is not None:
+        trade["decision_id"] = decision_id
+    if run_id is not None:
+        trade["run_id"] = run_id
+    if experiment_id is not None:
+        trade["experiment_id"] = experiment_id
+    return trade
+
+
+class TestProvenancePreservation:
+    def test_load_existing_attribution_indexes_real_provenance_by_exit_order_id(self, tmp_path):
+        state = _make_state([
+            _closed_with_provenance(
+                "AMZN", "stop_loss", "breakout_momentum_v1", "breakout_momentum_v1",
+                exit_broker_order_id="eid-real", decision_id="dec-123", run_id="run-456",
+            ),
+        ])
+        f = _write_state(str(tmp_path), state)
+        attr = load_existing_attribution(f)
+        prov = attr["provenance_by_exit_order_id"]["eid-real"]
+        assert prov["strategy_id"] == "breakout_momentum_v1"
+        assert prov["original_strategy_id"] == "breakout_momentum_v1"
+        assert prov["decision_id"] == "dec-123"
+        assert prov["run_id"] == "run-456"
+
+    def test_load_existing_attribution_does_not_index_rebuild_synthesized_origin(self, tmp_path):
+        """A trade whose origin IS the rebuild placeholder must not be
+        indexed as 'real provenance' -- it has nothing meaningful to
+        restore, and indexing it would just re-apply the placeholder,
+        which is a no-op at best and a footgun if the placeholder logic
+        ever changes."""
+        state = _make_state([
+            _closed_with_provenance(
+                "IBM", "broker_fill", "broker_reconstructed", "broker_reconstructed",
+                exit_broker_order_id="eid-synth",
+            ),
+        ])
+        f = _write_state(str(tmp_path), state)
+        attr = load_existing_attribution(f)
+        assert "eid-synth" not in attr["provenance_by_exit_order_id"]
+
+    def test_load_existing_attribution_indexes_real_provenance_even_with_broker_fill_exit_reason(self, tmp_path):
+        """A real-strategy-origin trade whose EXIT was never specifically
+        attributed (exit_reason=='broker_fill') must still have its
+        provenance indexed -- provenance and exit_reason are independent."""
+        state = _make_state([
+            _closed_with_provenance(
+                "NVDA", "broker_fill", "event_swing_v1", "event_swing_v1",
+                exit_broker_order_id="eid-partial",
+            ),
+        ])
+        f = _write_state(str(tmp_path), state)
+        attr = load_existing_attribution(f)
+        assert "eid-partial" in attr["provenance_by_exit_order_id"]
+
+    def test_apply_attribution_restores_provenance_fields_onto_rebuilt_trade(self):
+        """THE core regression test: a freshly-rebuilt trade (strategy_id=
+        'broker_reconstructed', as match_buy_sell_orders() always produces)
+        must have its REAL provenance restored when the pre-rebuild state
+        had it, exactly reproducing the 2026-08-23 incident scenario."""
+        pnl_state = _make_state([
+            _closed_with_provenance(
+                "AMZN", "stop_loss", "broker_reconstructed", "broker_reconstructed",
+                exit_broker_order_id="eid-real", exit_time="2026-08-03T13:36:00", pnl=-5262.92,
+            ),
+        ])
+        attribution = {
+            "by_exit_order_id": {},
+            "by_key": {},
+            "quarantined_trades": [],
+            "provenance_by_exit_order_id": {
+                "eid-real": {
+                    "strategy_id": "breakout_momentum_v2_threshold_tuned",
+                    "original_strategy_id": "breakout_momentum_v1",
+                    "decision_id": "fced5063-1321-710b-972c-6e431534f337",
+                    "run_id": "paper_demo-20260803T133503Z-0e593286",
+                },
+            },
+            "provenance_by_key": {},
+        }
+        stats = apply_attribution(pnl_state, attribution)
+        trade = pnl_state["trades"][0]
+        assert trade["strategy_id"] == "breakout_momentum_v2_threshold_tuned"
+        assert trade["original_strategy_id"] == "breakout_momentum_v1"
+        assert trade["decision_id"] == "fced5063-1321-710b-972c-6e431534f337"
+        assert trade["run_id"] == "paper_demo-20260803T133503Z-0e593286"
+        assert stats["provenance_restored"] == 1
+
+    def test_apply_attribution_falls_back_to_key_when_exit_order_id_not_indexed(self):
+        pnl_state = _make_state([
+            _closed_with_provenance(
+                "MSFT", "trailing_stop", "broker_reconstructed", "broker_reconstructed",
+                exit_broker_order_id="no-match-id", exit_time="2026-08-12T16:00:00", pnl=1011.71,
+            ),
+        ])
+        attribution = {
+            "by_exit_order_id": {},
+            "by_key": {},
+            "quarantined_trades": [],
+            "provenance_by_exit_order_id": {},
+            "provenance_by_key": {
+                ("MSFT", "2026-08-12T16:00:00", 1012): {"strategy_id": "breakout_momentum_v1"},
+            },
+        }
+        stats = apply_attribution(pnl_state, attribution)
+        assert pnl_state["trades"][0]["strategy_id"] == "breakout_momentum_v1"
+        assert stats["provenance_restored"] == 1
+
+    def test_apply_attribution_does_not_touch_trades_with_no_saved_provenance(self):
+        """A genuinely rebuild-only trade (no matching provenance entry)
+        must be left as 'broker_reconstructed' -- this is correct, not a
+        bug: it really has no known strategy origin."""
+        pnl_state = _make_state([
+            _closed_with_provenance(
+                "IBM", "broker_fill", "broker_reconstructed", "broker_reconstructed",
+                exit_broker_order_id="eid-truly-unknown",
+            ),
+        ])
+        attribution = {
+            "by_exit_order_id": {}, "by_key": {}, "quarantined_trades": [],
+            "provenance_by_exit_order_id": {}, "provenance_by_key": {},
+        }
+        stats = apply_attribution(pnl_state, attribution)
+        assert pnl_state["trades"][0]["strategy_id"] == "broker_reconstructed"
+        assert stats["provenance_restored"] == 0
+
+    def test_full_roundtrip_load_and_apply_preserves_provenance_across_simulated_rebuild(self, tmp_path):
+        """End-to-end reproduction of the 2026-08-23 incident: save a state
+        with real provenance, load its attribution, apply it to a
+        freshly-'rebuilt' state (all fields reset to broker_reconstructed,
+        as a real rebuild would produce), and confirm provenance survives.
+        """
+        original = _make_state([
+            _closed_with_provenance(
+                "AMZN", "stop_loss", "breakout_momentum_v2_threshold_tuned",
+                "breakout_momentum_v1", exit_broker_order_id="eid-1",
+                exit_time="2026-08-03T13:36:00", pnl=-5262.92,
+                decision_id="dec-amzn", run_id="run-amzn", experiment_id="exp-amzn",
+            ),
+            _closed_with_provenance(
+                "IBM", "broker_fill", "broker_reconstructed", "broker_reconstructed",
+                exit_broker_order_id="eid-2", exit_time="2026-06-01T10:00:00", pnl=-500.0,
+            ),
+        ])
+        f = _write_state(str(tmp_path), original)
+        attr = load_existing_attribution(f)
+
+        # Simulate what a real rebuild produces: strategy_id/original_
+        # strategy_id RESET to the placeholder for every trade, regardless
+        # of prior real attribution (this is exactly what match_buy_sell_
+        # orders() does -- it has no way to know a trade was previously
+        # attributed).
+        rebuilt = _make_state([
+            _closed_with_provenance(
+                "AMZN", "broker_fill", "broker_reconstructed", "broker_reconstructed",
+                exit_broker_order_id="eid-1", exit_time="2026-08-03T13:36:00", pnl=-5262.92,
+            ),
+            _closed_with_provenance(
+                "IBM", "broker_fill", "broker_reconstructed", "broker_reconstructed",
+                exit_broker_order_id="eid-2", exit_time="2026-06-01T10:00:00", pnl=-500.0,
+            ),
+        ])
+
+        stats = apply_attribution(rebuilt, attr)
+
+        amzn_trade = rebuilt["trades"][0]
+        ibm_trade = rebuilt["trades"][1]
+        assert amzn_trade["strategy_id"] == "breakout_momentum_v2_threshold_tuned"
+        assert amzn_trade["original_strategy_id"] == "breakout_momentum_v1"
+        assert amzn_trade["decision_id"] == "dec-amzn"
+        assert amzn_trade["exit_reason"] == "stop_loss"  # also restored via existing mechanism
+        # IBM had no real provenance before rebuild -- must remain rebuild-synthesized.
+        assert ibm_trade["strategy_id"] == "broker_reconstructed"
+        assert stats["provenance_restored"] == 1

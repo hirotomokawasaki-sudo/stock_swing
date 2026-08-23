@@ -25,6 +25,13 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from stock_swing.sources.broker_client import BrokerClient
 from stock_swing.risk.allocation_config import read_symbol_registry
+from stock_swing.tracking.pnl_tracker import PnLTracker
+
+# Reuse the single source of truth for "this strategy_id means the trade's
+# real origin is unknown / rebuild-synthesized" -- do not duplicate this
+# set locally (see AUDIT FIX note on PROVENANCE_FIELDS below for why this
+# distinction matters for rebuild attribution preservation).
+UNTRACKED_ORIGIN_STRATEGY_IDS = PnLTracker.UNTRACKED_ORIGIN_STRATEGY_IDS
 
 _REGISTRY_PATH = PROJECT_ROOT / "config" / "reference" / "symbol_registry.yaml"
 
@@ -132,6 +139,33 @@ def load_existing_tracking_metadata(state_file: Path) -> dict[str, Any]:
     }
 
 
+# AUDIT FIX (2026-08-23, provenance-loss incident -- see docs/equity_bridge_
+# root_cause_20260823/INCIDENT_rebuild_lost_attribution.md): fields that
+# identify WHICH strategy decision produced a trade, distinct from
+# exit_reason (why it closed) and entry_signal_strength (a feature value).
+# Before this fix, load_existing_attribution()/apply_attribution() only
+# preserved exit_reason + entry_signal_strength + quarantined_trades across
+# a rebuild; every one of these provenance fields was silently overwritten
+# with rebuild's 'broker_reconstructed' placeholder on every rebuild run,
+# even for trades that were originally submitted by PaperExecutor with a
+# real decision_id. Confirmed live: a rebuild on 2026-08-23 turned this
+# account's 49 attributable (real-strategy-origin) closed trades into 0
+# attributable trades, caught only because tests/unit/
+# test_r8v2_ml_readiness.py's real-data sanity assertion failed -- restored
+# from the pre-rebuild backup before any further changes were made.
+PROVENANCE_FIELDS = (
+    'strategy_id',
+    'original_strategy_id',
+    'exit_strategy_id',
+    'strategy_version_id',
+    'decision_id',
+    'run_id',
+    'experiment_id',
+    'config_hash',
+    'prompt_version',
+)
+
+
 def load_existing_attribution(state_file: Path) -> dict[str, Any]:
     """Extract exit_reason attribution and quarantined_trades from current pnl_state.
 
@@ -139,20 +173,32 @@ def load_existing_attribution(state_file: Path) -> dict[str, Any]:
       'by_exit_order_id'  : exit_broker_order_id -> exit_reason   (highest priority)
       'by_key'            : (symbol, exit_time[:19], pnl_int) -> exit_reason  (fallback)
       'quarantined_trades': list of quarantined trade dicts
+      'provenance_by_exit_order_id' : exit_broker_order_id -> {PROVENANCE_FIELDS} dict
+      'provenance_by_key'           : (symbol, exit_time[:19], pnl_int) -> {PROVENANCE_FIELDS} dict
 
-    Only non-broker_fill reasons are indexed (broker_fill is the rebuild default).
-    Added 2026-07-17 to prevent attribution loss on rebuild.
+    Only non-broker_fill reasons are indexed (broker_fill is the rebuild default)
+    for exit_reason. Provenance fields are indexed for ANY closed trade whose
+    strategy_id is not the rebuild's own 'broker_reconstructed'/
+    'reconciled_from_broker' placeholder -- i.e. any trade with real,
+    non-rebuild-synthesized strategy attribution, regardless of its exit_reason.
+    Added 2026-07-17 (exit_reason/quarantine); extended 2026-08-23 (provenance).
     """
+    empty = {
+        'by_exit_order_id': {}, 'by_key': {}, 'quarantined_trades': [],
+        'provenance_by_exit_order_id': {}, 'provenance_by_key': {},
+    }
     if not state_file.exists():
-        return {'by_exit_order_id': {}, 'by_key': {}, 'quarantined_trades': []}
+        return empty
     try:
         data = json.loads(state_file.read_text(encoding="utf-8"))
     except Exception:
-        return {'by_exit_order_id': {}, 'by_key': {}, 'quarantined_trades': []}
+        return empty
 
     by_exit_order_id: dict[str, str] = {}
     by_key: dict[tuple, str] = {}
     collisions: set = set()
+    provenance_by_exit_order_id: dict[str, dict[str, Any]] = {}
+    provenance_by_key: dict[tuple, dict[str, Any]] = {}
     # entry_signal_strength: keyed by broker_order_id (buy order)
     ess_by_order_id: dict[str, float] = {}
 
@@ -168,6 +214,21 @@ def load_existing_attribution(state_file: Path) -> dict[str, Any]:
 
         if trade.get('status') == 'open':
             continue
+
+        # Provenance: index any closed trade whose origin is real (not a
+        # rebuild-synthesized placeholder), independent of exit_reason.
+        origin = trade.get('original_strategy_id') or trade.get('strategy_id') or ''
+        if origin and origin not in UNTRACKED_ORIGIN_STRATEGY_IDS:
+            provenance = {f: trade.get(f) for f in PROVENANCE_FIELDS if trade.get(f) is not None}
+            if provenance:
+                eid_p = trade.get('exit_broker_order_id', '')
+                if eid_p:
+                    provenance_by_exit_order_id[eid_p] = provenance
+                sym_p = trade.get('symbol', '')
+                et_p = str(trade.get('exit_time', ''))[:19]
+                pnl_i_p = int(round(float(trade.get('pnl', 0) or 0)))
+                provenance_by_key[(sym_p, et_p, pnl_i_p)] = provenance
+
         reason = trade.get('exit_reason', '')
         if not reason or reason == 'broker_fill':
             continue
@@ -200,6 +261,8 @@ def load_existing_attribution(state_file: Path) -> dict[str, Any]:
         'by_key': by_key,
         'quarantined_trades': data.get('quarantined_trades', []),
         'ess_by_order_id': ess_by_order_id,
+        'provenance_by_exit_order_id': provenance_by_exit_order_id,
+        'provenance_by_key': provenance_by_key,
     }
 
 
@@ -248,15 +311,26 @@ def apply_attribution(pnl_state: dict, attribution: dict[str, Any]) -> dict[str,
     """Merge saved attribution back onto freshly rebuilt trades.
 
     Mutates pnl_state['trades'] in-place and sets pnl_state['quarantined_trades'].
-    Returns stats dict: {'by_exit_order': N, 'by_key': N, 'kept_broker_fill': N}.
-    Added 2026-07-17.
+    Returns stats dict: {'by_exit_order': N, 'by_key': N, 'kept_broker_fill': N,
+    'ess_restored': N, 'provenance_restored': N}.
+    Added 2026-07-17 (exit_reason/quarantine); extended 2026-08-23 (provenance --
+    see PROVENANCE_FIELDS / load_existing_attribution()'s docstring for the
+    incident this closes: a rebuild previously overwrote strategy_id/
+    original_strategy_id/decision_id/etc. on every trade unconditionally,
+    silently erasing real strategy-decision provenance for trades that were
+    NOT actually rebuild-synthesized).
     """
     by_exit_order_id = attribution.get('by_exit_order_id', {})
     by_key = attribution.get('by_key', {})
     quarantined = attribution.get('quarantined_trades', [])
+    provenance_by_exit_order_id = attribution.get('provenance_by_exit_order_id', {})
+    provenance_by_key = attribution.get('provenance_by_key', {})
 
     ess_by_order_id = attribution.get('ess_by_order_id', {})
-    stats = {'by_exit_order': 0, 'by_key': 0, 'kept_broker_fill': 0, 'ess_restored': 0}
+    stats = {
+        'by_exit_order': 0, 'by_key': 0, 'kept_broker_fill': 0,
+        'ess_restored': 0, 'provenance_restored': 0,
+    }
 
     for trade in pnl_state.get('trades', []):
         # Restore entry_signal_strength for all trades (open + closed)
@@ -268,6 +342,28 @@ def apply_attribution(pnl_state: dict, attribution: dict[str, Any]) -> dict[str,
 
         if trade.get('status') == 'open':
             continue
+
+        # Restore provenance fields (strategy_id, original_strategy_id,
+        # decision_id, run_id, experiment_id, etc.) for closed trades whose
+        # PREVIOUS state had real (non-rebuild-synthesized) attribution --
+        # independent of exit_reason, since a real-origin trade may still
+        # have exit_reason=='broker_fill' if its exit wasn't attributed.
+        # Matched the same way as exit_reason (exit_broker_order_id first,
+        # then (symbol, exit_time, pnl) fallback) so a single lookup pass
+        # covers both fields consistently.
+        eid_prov = trade.get('exit_broker_order_id', '')
+        sym_prov = trade.get('symbol', '')
+        et_prov = str(trade.get('exit_time', ''))[:19]
+        pnl_i_prov = int(round(float(trade.get('pnl', 0) or 0)))
+        key_prov = (sym_prov, et_prov, pnl_i_prov)
+        provenance = provenance_by_exit_order_id.get(eid_prov) if eid_prov else None
+        if provenance is None:
+            provenance = provenance_by_key.get(key_prov)
+        if provenance:
+            for field, value in provenance.items():
+                trade[field] = value
+            stats['provenance_restored'] += 1
+
         if trade.get('exit_reason') != 'broker_fill':
             continue
 
@@ -1068,6 +1164,7 @@ def main():
         print(f"   by (symbol,exit_time,pnl): {attr_stats['by_key']}")
         print(f"   kept as broker_fill      : {attr_stats['kept_broker_fill']}")
         print(f"   quarantined_trades       : {len(pnl_state.get('quarantined_trades', []))}")
+        print(f"   provenance_restored (strategy_id/decision_id/etc.): {attr_stats['provenance_restored']}")
         if _tombstone_hits:
             print(f"   tombstone_filtered       : {_tombstone_hits}")
 
