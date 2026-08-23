@@ -2697,6 +2697,37 @@ point-in-time universe、資金制約再現）、ETFローテーション等の�
 未着手のまま。
 
 **スキル化**: 今回のワークフロー（監査→claims matrix→パッチ→テスト→承認後適用→
-検証パケット）を`skill_workshop`で`evidence-based-system-audit`としてスキル化。
-ユーザー承認済み、プロポーザルID`evidence-based-system-audit-20260823-d6294d652d`
-（pending状態）。
+検証パケット）を`skill_workshop`で`evidence-based-system-audit`としてスキル化・
+ユーザー承認によりAPPLIED済み（プロポーザルID`evidence-based-system-audit-
+20260823-d6294d652d`）。
+
+---
+
+## 2026-08-23（第3弾）: equity_bridge $168,869.89の根本原因特定 + 修正
+
+**背景**: 監査2（equity_bridge）の未説明差分の処理方釕（(a)quarantine再統合 vs
+(b)tolerance引上げ）をユーザーと検討中、quarantine 101件の内訳を実データで調査。
+
+**発見**: 101件中70件（69%）が同一`exit_broker_order_id`を他のquarantine件と共有し、
+かつ買いが売りより後の日付というFIFO会計として不可能な状態を確認。根本原因を実口座で
+確定: `rebuild_pnl_state_from_broker.py`の`fetch_all_filled_orders()`が
+`broker.fetch_orders(status='all', limit=500)`を**単発呼び出し**しており、
+Alpaca APIはpaginationなしでは直近500件しか返さない。実口座で確認: 単発`limit=500`
+呼び出しは2026-05-21以降の注文しか返さないが、完全ページネーションでは**2026-05-12から
+存在**（約9日間・約200件の注文が黙って欠落）。FIFOマッチャーは欠落した古いbuyを検知できず、
+手元にある次善（売りより後の日付）のbuyを誤ってマッチさせていた。101件中96件がこの1つの
+原因で説明可能（残も1件はklac_split_anomaly、既知・別原因）。
+
+**修正実施済み（commit `adad1db`）**:
+- `broker_client.py`に`fetch_all_orders()`新規追加（`direction=asc`+`after`
+  ページネーション、`max_pages`安全装置、`truncated`フラグ。既存`fetch_orders()`は
+  後方互換のため無変更）
+- `rebuild_pnl_state_from_broker.py`を`fetch_all_orders()`使用に変更
+- 実口座で`fetch_all_orders()`実行（読み取り専用）→691件（2ページ、
+  truncated=False）、2026-05-12〜08-20の完全履歴を取得できることを確認
+- テスト8件新規追加。フルテストスイート**2073 passed / 2 skipped**
+
+**残っている作業（未実施、別途承認必要）**: この修正は今後のrebuild実行を正しくするだけで、
+既存quarantine 101件自体の再統合（選択肢(a)）は未実施。本番`pnl_state.json`の
+書き換えを伴うため、rebuild実行にはユーザーの明示的な承認が必要。Pre-Launch
+Gate Review（09-08〜09-12）までに(a)実施可否を判断することを推奨。
