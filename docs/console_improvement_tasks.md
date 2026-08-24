@@ -995,6 +995,14 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
                          🔲 残課題: equity_bridgeの$168,869.89未説明差分の運用判断
                          （quarantine再分類 vs tolerance引き上げ）はPre-Launch Gate Review
                          までに実施
+2026-08-24         ✅ pnl_state.json rebuild実行（見落とされていたブローカー注文履歴84件
+                         を復元）+ 安全装置の新規バグ3件を発見・修正。closed 252→335件、
+                         equity_bridge unexplained_diff $168,869.89→$160,998.66に
+                         改善（部分改善、quarantine再統合自体は未実施、残る運用判断は引き続き
+                         Pre-Launch Gate Reviewで実施）。attribution coverage（exit_reason
+                         基準）は98.8%→74.6%に低下（新規復元トレードの意思決定ログ自体が
+                         存在しないための相対低下であり儸化ではない、Pre-Launch Gate Review資料に
+                         明記必要）。詳細: `docs/rebuild_20260824/`
 2026-08-23（夜）    ✅ equity_bridge根本原因の第2のバグを発見・修正。`fetch_all_filled_
                          orders()`が`status=='filled'`のみでフィルタしており、「部分約定後に
                          キャンセルされた注文」（status='canceled'がつfilled_qty>0）を完全に
