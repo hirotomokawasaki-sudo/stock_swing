@@ -136,6 +136,31 @@ def main() -> None:
     data["quarantined_trades"] = data["quarantined_trades"] + to_quarantine
     data["last_updated"] = datetime.now(timezone.utc).isoformat()
 
+    # BUG FIX (2026-08-24, found by scripts/verify_rebuild_integrity.py's
+    # pnl-consistency invariant check immediately after running this
+    # script): moving a trade OUT of state.trades (closed) and into
+    # quarantined_trades must also update the running aggregates that were
+    # computed including that trade's pnl -- cumulative_realized_pnl,
+    # winning_trades, and losing_trades -- otherwise sum(closed.pnl) and
+    # cumulative_realized_pnl silently diverge by exactly the quarantined
+    # trade's pnl (confirmed: a single -$900 CRWD quarantine produced a
+    # $900.00 INVARIANT FAIL diff). total_trades intentionally stays as
+    # len(data["trades"]) which still includes quarantined-status entries
+    # (matching this script's pre-existing convention of keeping a status
+    # marker in the main trades list -- see the `to_keep.append(trade)`
+    # calls above), so it is NOT decremented here.
+    newly_quarantined_pnl = sum(float(t.get("pnl") or 0) for t in to_quarantine)
+    if newly_quarantined_pnl:
+        data["cumulative_realized_pnl"] = round(
+            float(data.get("cumulative_realized_pnl") or 0) - newly_quarantined_pnl, 2
+        )
+    for t in to_quarantine:
+        pnl = float(t.get("pnl") or 0)
+        if pnl > 0 and data.get("winning_trades"):
+            data["winning_trades"] = max(0, int(data["winning_trades"]) - 1)
+        elif pnl < 0 and data.get("losing_trades"):
+            data["losing_trades"] = max(0, int(data["losing_trades"]) - 1)
+
     _atomic_write(state_path, data)
     print(f"✅ Written: {state_path}")
     print(f"   quarantined_trades total: {len(data['quarantined_trades'])}")

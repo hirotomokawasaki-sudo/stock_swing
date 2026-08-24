@@ -188,12 +188,43 @@ def check_closed_quarantine_overlap(state: dict) -> list[str]:
 
     Root cause of past violation: migrate_quarantine_invalid_trades added trades
     to quarantined_trades but forgot to remove them from state.trades (closed).
+
+    BUG FIX (2026-08-24, found while investigating a 2026-08-24 rebuild that
+    this function flagged as having 3 overlapping trades -- ADBE/AMAT -- which
+    turned out to be a FALSE POSITIVE): this function used to key overlap
+    detection on `trade_id` (e.g. "broker_match_0007_AMAT"), a sequential
+    index string that rebuild_pnl_state_from_broker.py RE-ASSIGNS on every
+    run based on iteration order over that run's fetched broker fills. After
+    a rebuild whose fetched order set differs even slightly from a prior run
+    (e.g. because a since-fixed bug like the 2026-08-23 pagination/partial-
+    fill bugs changed which orders got matched), the SAME trade_id string can
+    end up pointing to a COMPLETELY DIFFERENT real trade than the one
+    recorded under that trade_id in quarantined_trades from a prior, buggy
+    rebuild -- a coincidental string collision, not a genuine duplicate.
+    scripts/audit_trades_with_market_data.py's check_ledger_invariants()
+    already fixed this exact issue on 2026-07-28 (see its own docstring
+    comment) by keying on the immutable broker-assigned
+    (broker_order_id, exit_broker_order_id) pair instead -- this function was
+    never updated to match at the time, so the fix regressed here. Now uses
+    the same (broker_order_id, exit_broker_order_id) pair identity.
     """
     trades = state.get("trades", [])
-    quar_ids = {t.get("trade_id") for t in state.get("quarantined_trades", [])}
+    quar_pairs = {
+        (
+            t.get("broker_order_id") or t.get("entry_broker_order_id") or "",
+            t.get("exit_broker_order_id") or "",
+        )
+        for t in state.get("quarantined_trades", [])
+    }
+    # Only a pair with both IDs present is a meaningful identity; two trades
+    # that both happen to have empty broker_order_id/exit_broker_order_id
+    # (e.g. malformed/legacy records) must never be treated as "the same
+    # trade" merely because they share the key ("", "").
+    quar_pairs.discard(("", ""))
     closed_overlap = [
         t for t in trades
-        if t.get("status") == "closed" and t.get("trade_id") in quar_ids
+        if t.get("status") == "closed"
+        and (t.get("broker_order_id") or "", t.get("exit_broker_order_id") or "") in quar_pairs
     ]
     if closed_overlap:
         syms = ", ".join(sorted({t.get("symbol", "?") for t in closed_overlap}))
@@ -268,6 +299,28 @@ def check_pnl_consistency(state: dict) -> list[str]:
     return []
 
 
+# Issue-prefix -> whether this script's --fix path can actually resolve it.
+# BUG FIX (2026-08-24): previously main() computed `total_fixed` only from
+# the two auto-fixable categories (daily_snapshots / peak_price) and then
+# unconditionally `return 0`-ed once ANY fix was applied -- so a rebuild
+# with, say, daily_snapshots wiped (auto-fixed) AND a genuine closed/
+# quarantine overlap (NOT auto-fixable) would print "Saved ... N field(s)
+# restored" followed by the CALLER (rebuild_pnl_state_from_broker.py)
+# printing "✅ Post-rebuild integrity check passed", silently hiding the
+# unresolved overlap/reversed-chronology/pnl-consistency invariant
+# failures. Discovered 2026-08-24 investigating a rebuild that printed
+# "passed" while 3 overlap + 1 reversed-chronology issues were still
+# present in the written pnl_state.json (the overlap 3 were themselves a
+# separate false-positive bug, see check_closed_quarantine_overlap()'s
+# docstring -- but the reversed-chronology 1 was real and still got
+# silently reported as "passed").
+_AUTO_FIXABLE_PREFIXES = ("daily_snapshots", "peak_price")
+
+
+def _is_auto_fixable(issue_msg: str) -> bool:
+    return any(prefix in issue_msg for prefix in _AUTO_FIXABLE_PREFIXES)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--fix", action="store_true", help="Auto-restore missing fields from latest backup")
@@ -288,15 +341,18 @@ def main() -> int:
     else:
         print("No backup found — running checks without comparison")
 
-    # --- Run checks ---
-    issues: list[str] = []
-    issues += check_daily_snapshots(state, backup)
-    issues += check_peak_prices(state)
-    # R0-v2-B: ledger invariant checks
-    issues += check_closed_quarantine_overlap(state)
-    issues += check_reversed_chronology(state)
-    issues += check_holding_days_missing(state)
-    issues += check_pnl_consistency(state)
+    def run_all_checks(s: dict) -> list[str]:
+        found: list[str] = []
+        found += check_daily_snapshots(s, backup)
+        found += check_peak_prices(s)
+        # R0-v2-B: ledger invariant checks
+        found += check_closed_quarantine_overlap(s)
+        found += check_reversed_chronology(s)
+        found += check_holding_days_missing(s)
+        found += check_pnl_consistency(s)
+        return found
+
+    issues = run_all_checks(state)
 
     trades_all = state.get("trades", [])
     open_count = len([t for t in trades_all if t.get("status") == "open"])
@@ -333,7 +389,7 @@ def main() -> int:
         print("ERROR: --fix requested but no backup available. Run rebuild with --backup first.")
         return 1
 
-    # --- Apply fixes ---
+    # --- Apply fixes (only for the auto-fixable categories) ---
     print()
     print("Applying fixes...")
     total_fixed = 0
@@ -349,9 +405,36 @@ def main() -> int:
         print()
         print(f"✅ Saved pnl_state.json ({total_fixed} field(s) restored)")
     else:
-        print("Nothing to save — no fields were actually fixable.")
+        print("Nothing to save — no fields were actually fixable by this script.")
 
-    return 0
+    # --- Re-check after fixing: only report success if EVERY issue that was
+    # --- found is now gone (not just the auto-fixable subset) ---
+    remaining = run_all_checks(state)
+    remaining_hard = [msg for msg in remaining if "WARNING" not in msg]
+    remaining_warnings = [msg for msg in remaining if "WARNING" in msg]
+
+    print()
+    if not remaining_hard:
+        if remaining_warnings:
+            print(f"✅ All INVARIANT-level checks passed ({len(remaining_warnings)} non-blocking warning(s) remain):")
+            for msg in remaining_warnings:
+                print(f"  - {msg}")
+        else:
+            print("✅ All checks passed after auto-fix — no issues remain.")
+        return 0
+
+    print(f"❌ {len(remaining_hard)} unresolved issue(s) require MANUAL action "
+          f"(this script cannot auto-fix these):")
+    for msg in remaining_hard:
+        print(f"  - {msg}")
+    print()
+    print("Do NOT treat this rebuild as clean until these are resolved. See:")
+    print("  - closed/quarantine overlap → investigate manually; verify with the")
+    print("    (broker_order_id, exit_broker_order_id) pair, not trade_id, before")
+    print("    assuming a real duplicate (see check_closed_quarantine_overlap docstring)")
+    print("  - reversed chronology → python scripts/migrate_quarantine_invalid_trades.py")
+    print("  - pnl consistency → investigate cumulative_realized_pnl computation")
+    return 1
 
 
 if __name__ == "__main__":

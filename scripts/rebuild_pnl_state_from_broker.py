@@ -499,6 +499,23 @@ def apply_tombstone_filter(
         closed = [t for t in kept if t.get('status') == 'closed']
         pnl_state['total_trades'] = len(kept)
         pnl_state['cumulative_realized_pnl'] = round(sum(t.get('pnl') or 0 for t in closed), 2)
+        # BUG FIX (2026-08-24, found by scripts/verify_rebuild_integrity.py's
+        # pnl-consistency invariant check on a 2026-08-24 rebuild): this
+        # function already recomputed total_trades/cumulative_realized_pnl
+        # after removing tombstoned trades, but NOT winning_trades/
+        # losing_trades -- those were left at whatever calculate_summary()
+        # computed BEFORE the tombstone filter ran (rebuild_pnl_state()
+        # calls calculate_summary() first, then main() calls this function
+        # afterward). Confirmed live: a 5-trade tombstone filter left
+        # winning_trades=164/losing_trades=176 (summing to 341, the PRE-
+        # filter closed count) while the actual post-filter closed list
+        # (336 trades) had only 163 wins / 172 losses / 1 zero-pnl trade.
+        # This did not fail check_pnl_consistency() (which only checks the
+        # pnl SUM, not win/loss counts), so it went undetected until a
+        # separate later step (quarantine migration) additionally shifted
+        # counts and made the drift visible via a different symptom.
+        pnl_state['winning_trades'] = sum(1 for t in closed if (t.get('pnl') or 0) > 0)
+        pnl_state['losing_trades'] = sum(1 for t in closed if (t.get('pnl') or 0) < 0)
 
     return removed
 
@@ -1212,6 +1229,7 @@ def main():
 
     # --- Post-rebuild integrity check (auto-fix if backup was created) ---
     print("Running post-rebuild integrity check...")
+    post_check_failed = False
     try:
         import subprocess
         verify_args = [sys.executable, str(PROJECT_ROOT / "scripts" / "verify_rebuild_integrity.py")]
@@ -1222,7 +1240,19 @@ def main():
         result = subprocess.run(verify_args, capture_output=True, text=True)
         print(result.stdout)
         if result.returncode != 0:
-            print(f"⚠️  Post-check detected issues — auto-fix applied.")
+            # BUG FIX (2026-08-24): previously this branch only printed a
+            # warning and main() still `return 0`-ed unconditionally below,
+            # so a caller/cron checking this script's exit code (or a human
+            # skimming only the final "Next: Restart console" line) could
+            # miss that verify_rebuild_integrity.py reported UNRESOLVED
+            # issues (e.g. reversed chronology) after --fix. Now surfaces
+            # both a clear non-"passed" message here AND propagates a
+            # non-zero exit code from this script's main().
+            post_check_failed = True
+            print("❌ Post-rebuild integrity check FAILED — unresolved issues remain "
+                  "even after --fix (see detail above). pnl_state.json has already been "
+                  "written; back it out (restore from the backup created above) or resolve "
+                  "the listed issues manually before treating this rebuild as clean.")
             if result.stderr:
                 print(result.stderr)
         else:
@@ -1233,7 +1263,7 @@ def main():
     print("Next: Restart console to see accurate data")
     print()
 
-    return 0
+    return 1 if post_check_failed else 0
 
 
 if __name__ == "__main__":
