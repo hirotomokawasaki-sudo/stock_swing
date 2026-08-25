@@ -1,0 +1,320 @@
+{
+  "generated_at": "2026-08-25T01:01:51.432097+00:00",
+  "roadmap_item": "R14-dip-buy-meanreversion-phase1",
+  "overall": {
+    "label": "overall",
+    "n": 1938,
+    "win_rate": 0.6656,
+    "profit_factor": 1.7099,
+    "net_pnl": 250093.15,
+    "avg_return_pct": 0.0129
+  },
+  "live_window": {
+    "label": "live_window(>= 2026-05-12)",
+    "n": 339,
+    "win_rate": 0.6844,
+    "profit_factor": 1.8337,
+    "net_pnl": 49663.77,
+    "avg_return_pct": 0.0147
+  },
+  "by_exit_reason": {
+    "trailing_stop": {
+      "label": "trailing_stop",
+      "n": 1239,
+      "win_rate": 1.0,
+      "profit_factor": "inf",
+      "net_pnl": 588347.29,
+      "avg_return_pct": 0.0475
+    },
+    "stop_loss": {
+      "label": "stop_loss",
+      "n": 603,
+      "win_rate": 0.0,
+      "profit_factor": 0.0,
+      "net_pnl": -343392.3,
+      "avg_return_pct": -0.0569
+    },
+    "time_based": {
+      "label": "time_based",
+      "n": 75,
+      "win_rate": 0.4533,
+      "profit_factor": 0.7452,
+      "net_pnl": -2193.26,
+      "avg_return_pct": -0.0029
+    },
+    "backtest_end_forced_close": {
+      "label": "backtest_end_forced_close",
+      "n": 21,
+      "win_rate": 0.8095,
+      "profit_factor": 27.1046,
+      "net_pnl": 7331.41,
+      "avg_return_pct": 0.0349
+    }
+  },
+  "decile_summary": [
+    {
+      "label": "decile_1",
+      "n": 193,
+      "win_rate": 0.6425,
+      "profit_factor": 1.634,
+      "net_pnl": 21480.75,
+      "avg_return_pct": 0.0111,
+      "ss_min": 0.4,
+      "ss_max": 0.4144
+    },
+    {
+      "label": "decile_2",
+      "n": 194,
+      "win_rate": 0.5722,
+      "profit_factor": 1.2656,
+      "net_pnl": 10607.53,
+      "avg_return_pct": 0.0055,
+      "ss_min": 0.4144,
+      "ss_max": 0.4334
+    },
+    {
+      "label": "decile_3",
+      "n": 194,
+      "win_rate": 0.5773,
+      "profit_factor": 1.1881,
+      "net_pnl": 7561.07,
+      "avg_return_pct": 0.0039,
+      "ss_min": 0.4335,
+      "ss_max": 0.4551
+    },
+    {
+      "label": "decile_4",
+      "n": 194,
+      "win_rate": 0.6753,
+      "profit_factor": 1.9241,
+      "net_pnl": 28210.16,
+      "avg_return_pct": 0.0145,
+      "ss_min": 0.4553,
+      "ss_max": 0.4867
+    },
+    {
+      "label": "decile_5",
+      "n": 194,
+      "win_rate": 0.6392,
+      "profit_factor": 1.6502,
+      "net_pnl": 22387.68,
+      "avg_return_pct": 0.0115,
+      "ss_min": 0.4871,
+      "ss_max": 0.5234
+    },
+    {
+      "label": "decile_6",
+      "n": 193,
+      "win_rate": 0.6321,
+      "profit_factor": 1.8432,
+      "net_pnl": 29304.26,
+      "avg_return_pct": 0.0152,
+      "ss_min": 0.5237,
+      "ss_max": 0.5779
+    },
+    {
+      "label": "decile_7",
+      "n": 194,
+      "win_rate": 0.6495,
+      "profit_factor": 1.6834,
+      "net_pnl": 23123.41,
+      "avg_return_pct": 0.0119,
+      "ss_min": 0.5788,
+      "ss_max": 0.6514
+    },
+    {
+      "label": "decile_8",
+      "n": 194,
+      "win_rate": 0.7474,
+      "profit_factor": 2.3604,
+      "net_pnl": 41801.66,
+      "avg_return_pct": 0.0215,
+      "ss_min": 0.6515,
+      "ss_max": 0.7483
+    },
+    {
+      "label": "decile_9",
+      "n": 194,
+      "win_rate": 0.7423,
+      "profit_factor": 1.866,
+      "net_pnl": 31239.29,
+      "avg_return_pct": 0.0161,
+      "ss_min": 0.7485,
+      "ss_max": 0.9025
+    },
+    {
+      "label": "decile_10",
+      "n": 194,
+      "win_rate": 0.7784,
+      "profit_factor": 1.9067,
+      "net_pnl": 34377.33,
+      "avg_return_pct": 0.0177,
+      "ss_min": 0.9034,
+      "ss_max": 1.0
+    }
+  ],
+  "overlap_event_count": 359,
+  "overlap_events_sample": [
+    {
+      "date": "2024-09-05",
+      "symbol": "CRDO",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-09-06",
+      "symbol": "RBRK",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-09-09",
+      "symbol": "CRDO",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-09-27",
+      "symbol": "MDB",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-10-15",
+      "symbol": "ASML",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-10-16",
+      "symbol": "LRCX",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-10-16",
+      "symbol": "AMAT",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-10-16",
+      "symbol": "KLAC",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-10-23",
+      "symbol": "DELL",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-10-23",
+      "symbol": "CHPS",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-10-23",
+      "symbol": "INTC",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-10-23",
+      "symbol": "HPE",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-10-30",
+      "symbol": "SMCI",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-10-31",
+      "symbol": "HPE",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-11-01",
+      "symbol": "SMCI",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-11-04",
+      "symbol": "AVGO",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-11-04",
+      "symbol": "SMCI",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-11-05",
+      "symbol": "NBIS",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-11-05",
+      "symbol": "ARM",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-11-05",
+      "symbol": "SMCI",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-11-06",
+      "symbol": "SMCI",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-11-07",
+      "symbol": "SMCI",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-11-08",
+      "symbol": "ARM",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-11-12",
+      "symbol": "SMCI",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-11-13",
+      "symbol": "NBIS",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-11-14",
+      "symbol": "SMCI",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-11-15",
+      "symbol": "ARM",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-11-15",
+      "symbol": "SMCI",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-11-18",
+      "symbol": "SMCI",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2024-12-05",
+      "symbol": "SNPS",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    }
+  ],
+  "config": {
+    "min_momentum_drop": 0.05,
+    "min_signal_strength": 0.4,
+    "slippage_bps": 10.0,
+    "notional_per_trade": 10000.0,
+    "date_range": [
+      "2024-08-15",
+      "2026-08-14"
+    ]
+  },
+  "trade_count": 1938
+}
