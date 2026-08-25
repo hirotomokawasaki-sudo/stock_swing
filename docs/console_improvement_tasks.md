@@ -3337,6 +3337,39 @@ Phase 2の自己検証は21営業日おきのチェックポイントでのみ�
 (2) 暦日→営業日カウントの精密化（優先度低） (3) コスト・スリッパージ込みの再検証（R13-Cで確立した
 t+1約定・conservative exit・slippageモデリングをsector rotationにも適用）
 
+**Phase 2.5相当（Shadow検証、2026-08-25/26実施、ユーザー「Shadow相当ないしは適当な現状戦略の
+レビュー後に配線スケジューリングして」指示）**:
+
+**背景**: ユーザーから本番配線の「メリット・デメリット」を問われ、以下を回答:
+- メリット: 検証完了済み・分散効果（今回の半導体集中インシデントの対極的設計）・
+  Sharpe1.370の頑健性チェック複数通過
+- デメリット: コスト/slippage未反映・暦日カウントで想定より約49%多いリバランス・
+  資金プール共有未解決（Circuit Breaker/cluster cap/PortfolioAllocatorが戦略非依存）・
+  **実発注ありのpaper A/Bを意味する**（dip-buyのようなshadow-onlyの中間ステップが
+  Phase 2/3のコードには存在しなかった）
+- ユーザーはこれを受け、dip-buy（R14）と同じ「shadow相当の検証を経てから配線判断」の
+  順番を明示的に指示
+
+**実装**: `scripts/log_sector_rotation_shadow.py`新規（JP overnight spilloverの
+`log_jp_overnight_spillover_shadow.py`と同型のスタンドアロンcronスクリプト、yfinance
+経由でブローカー接続不要）。**Phase 2/3で実装済みの本番クラス（`SectorMomentumFeature`/
+`SectorRotationStrategy`/`SectorRotationStateStore`）をそのまま呼び出し、初めてend-to-end
+動作確認**（実データで動作確認済み: technology_cloud/broad_marketが上位、SKYY/SPYが候補）。
+発注なし・ブローカー接続不要・**本番state file（`data/sector_rotation_state.json`）には
+一切触れない設計**（別ファイル`data/sector_rotation_shadow_state.json`を使用、
+`--state-path`に本番ファイル名を渡すと明示的にエラーで拒否するガード付き）。
+
+テスト5件追加（`tests/unit/test_log_sector_rotation_shadow.py`、本番state file誤指定
+ガードのsubprocessテスト含む）。
+
+**cron登録**:
+- `stock_swing_sector_rotation_shadow`（平日9:30 JST、日次shadow蓄積、delivery=none）
+- `stock_swing_sector_rotation_wiring_decision_review_20260908`（09-08、R14 dip-buyの
+  09-08レビューと同日。2週間分のshadow蓄積を見て本番配線を進めるか判断。**配線の最終判断
+  自体はユーザー承認必須のため、このcronは提言までで自動進行しない**）
+
+**未実施（09-08レビュー待ち）**: 本番配線（発注ありpaper A/B開始）の可否判断そのもの。
+
 ### R13全体のやらないこと
 
 ```
