@@ -3361,3 +3361,66 @@ t+1約定・conservative exit・slippageモデリングをsector rotationにも�
 **09-15 Go/No-Goとの関係**: R13はすべてpaper A/B・研究段階であり、09-15までに
 本番反映されるものは別途ユーザー承認がない限りない見込み。つまり09-15判断の前提となる
 現在のPF/expectancy水準はR13着手だけでは即座には向上しないことを明示的に認識する。
+
+## R14: Dip-buy / Mean-reversion戦略（2026-08-25、ユーザー発案）
+
+**背景**: 08-24の半導体セルオフでcircuit breakerがdegraded/block_buysに突入したことを
+受け、ユーザーから「Circuit BreakerはBuyのみ止めているのか、下げ相場は買い時では」との
+質問。コード確認により`pre_trade_check.py`の実装で「Circuit BreakerはBuyのみブロックし
+Sellには一切影響しない」ことを確認。続けて「下げたら買う」逆張り戦略のfeasibilityと
+既存`breakout_momentum_v1`との同時実行可否について「進めて」との指示を受けた。
+
+**Phase 1（フィージビリティ検証、2026-08-25完了）**:
+R13-Dと同じPhase 1パターン（研究のみ、本番影響ゼロ）で実施。新規
+`scripts/r14_dip_buy_meanreversion_phase1.py`（既存`r11_backtest_engine_v3`の
+conservative-OHLC-exit/t+1-fill/slippage機構と本番`SimpleExitV2Strategy`設定を
+そのまま再利用、エントリールールのみ`BreakoutMomentumStrategy`の鏡像＝トレーリング
+20日モメンタム≤-5%かつtrend=="bearish"で買い、を新規実装）。
+
+結果（2年分、2024-08-15〜2026-08-14、69銘柄、既存momentumと同一コストモデル）:
+- Point-in-time universe: dip-buy PF=1.963(n=359) vs momentum PF=1.854(n=621)
+- Universe制限なし（全期間）: dip-buy PF=1.710(n=1938) vs momentum PF=1.575(n=1997)
+- **チョップ相場（2025-11〜2026-03、R13-Cが独立にmomentumの弱点と特定済みの期間）**:
+  dip-buy PF=1.170（+$14,339） vs momentum PF=0.646（-$23,094）— momentumが
+  独立して弱点と確認した局面でdip-buyは黒字、これが最重要の発見
+- overlap（同一銘柄をmomentumも同時保有し得たケース）: 18.5%（全期間版）。
+  エントリー条件がtrend bullish/bearishで相互排他のため構造的に同時発火は
+  起きにくいが、時間差での交差は一定数あり
+
+判定: ✅ **GO** — Phase 2へ。詳細: `docs/r14_dip_buy_meanreversion_phase1_20260825/README.md`
+
+**Phase 2（SHADOW-ONLY本番配線、2026-08-25実施、ユーザー「進めて」指示）**:
+- `src/stock_swing/strategy_engine/dip_buy_meanreversion_strategy.py`新規
+  （`DipBuyMeanReversionStrategy` + `DipBuySignalConfig` + `log_shadow()`。
+  strategy_id=`dip_buy_meanreversion_v1_shadow`とサフィックスして誤って本番
+  昇格しても即座に判別可能にする命名規約）
+- `paper_demo.py`に配線（`daily_features`生成直後、Plan B/C/D/Eと同じ
+  best-effort try/except パターン）。**signalsは`entry_signals`/
+  `all_signals`に一切追加されず、DecisionEngine/EntryFilterEngine/
+  broker発注経路に到達しない**。`data/dip_buy_meanreversion_shadow_log.jsonl`
+  へのログのみ
+- `--dry-run`時はログ書き込みしない（既存Plan B-Eと同じdry-run汚染防止パターン）
+- テスト32件追加（`tests/unit/test_dip_buy_meanreversion_strategy.py` 18件 +
+  `test_paper_demo_mutation_regression.py`にwiring regression 2件、
+  「shadow-onlyで実際の注文に一切影響しない」ことをcron-summary
+  `decisions_buy=0`/`orders_submitted=0`で直接検証）
+- フルテストスイート: **2230 passed / 2 skipped**（baseline 2210+20で一致、regressionなし）
+
+**未実装のまま残る項目（本番配線＝実発注前の必須設計課題、Phase 1で既に特定済み）**:
+1. rolling PF gate（entry_filter.py Gate 3）は**銘柄単位**でありstrategy単位で
+   はないため、「momentumが直近stop_lossした銘柄」はrolling PFが悪化し、方向性が
+   真逆のdip-buyエントリーも同じゲートで弾かれうる。strategy-scoping要否の判断が必要
+2. Circuit Breaker/correlation cluster cap/PortfolioAllocatorは全て
+   ポートフォリオ横断・strategy非依存の共有プール。実配線には資本配分の分離設計
+   （IBKR移行・JP半導体拡張と同じenvironment_idスタイルの分離）が必要
+3. shadowログ蓄積後のレビュー（初回1〜2週間後の件数チェック、3〜4週間後の
+   promotion判断）— Plan B/Cと同じレビューケイデンスを踏襲予定、レビュースケジュール
+   （cron）は未登録
+
+**やらないこと（現時点で明示的にスコープ外）**:
+```
+❌ dip-buyシグナルをDecisionEngine/EntryFilterEngine/発注経路に接続する
+   （shadow log蓄積のみ、Phase 3として上記1〜2の設計完了後に検討）
+❌ パラメータのグリッドサーチ（drop深さ・lookback窓の最適化）—
+   意図的に鏡像の単一ルールのみ検証、R13-Cのoverfitting回避方針を踏襲
+```

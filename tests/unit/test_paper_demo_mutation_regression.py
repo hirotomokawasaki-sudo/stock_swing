@@ -708,6 +708,107 @@ def test_real_run_still_writes_feature_snapshots(monkeypatch, tmp_path, capsys):
     assert snapshot_files, "feature_snapshots/ exists but contains no snapshot files"
 
 
+# ===========================================================================
+# TEST 5: R14 dip-buy shadow signal (2026-08-25) -- shadow-only, never traded
+# ===========================================================================
+
+def _momentum_result_bearish_for(symbol: str):
+    """Bearish-trend momentum mock, mirroring _momentum_result_for() but with
+    the trend/sign flipped so it satisfies DipBuyMeanReversionStrategy's
+    entry condition (momentum <= -0.05 and trend == "bearish") while still
+    NOT satisfying BreakoutMomentumStrategy's own condition (momentum >= 0.05
+    and trend == "bullish") -- this isolates the dip-buy shadow path from
+    the real BreakoutMomentumStrategy signal path in these regression tests.
+    """
+    def _compute(self, records):
+        return [FeatureResult(
+            feature_name="price_momentum", symbol=symbol,
+            computed_at=datetime.now(timezone.utc),
+            values={"momentum": -0.08, "trend": "bearish", "bars_used": 20, "latest_close": 150.0},
+        )]
+    return _compute
+
+
+def _run_paper_demo_no_momentum_signal(monkeypatch, tmp_path, dry_run: bool):
+    """Same harness as _run_paper_demo_buy_only() but with a bearish-trend
+    momentum mock (so BreakoutMomentumStrategy itself sees no candidates --
+    generate() is NOT mocked here, the real strategy runs against the mocked
+    bearish feature) and no other entry signal, so the only thing that can
+    fire is the R14 dip-buy SHADOW-ONLY diagnostic wired directly against
+    daily_features.
+    """
+    _set_common_patches(monkeypatch, tmp_path, _BrokerBuySignalOnly)
+
+    monkeypatch.setattr(
+        "stock_swing.sources.hybrid_data_fetcher.HybridDataFetcher",
+        _generic_bars_fetcher(),
+    )
+    monkeypatch.setattr(paper_demo.PriceMomentumFeature, "compute", _momentum_result_bearish_for("AAPL"))
+    monkeypatch.setattr(paper_demo.MacroRegimeFeature, "compute", _no_signals)
+    monkeypatch.setattr(paper_demo.EventSwingStrategy, "generate", _no_signals)
+    monkeypatch.setattr(paper_demo.SimpleExitV2Strategy, "generate", _no_signals)
+    monkeypatch.setattr(paper_demo.EntryFilterEngine, "filter", _passthrough_filter)
+    # Real BreakoutMomentumStrategy.generate() runs (not mocked) against the
+    # bearish feature above -- it must produce zero signals since bearish
+    # trend never satisfies its own bullish-only condition. This is asserted
+    # inside the tests below via cron-summary decision count.
+
+    argv = ["paper_demo", "--cron-summary-json", "--symbols", "AAPL"]
+    if dry_run:
+        argv.insert(1, "--dry-run")
+    monkeypatch.setattr(sys, "argv", argv)
+
+    paper_demo.main()
+
+
+def test_dry_run_does_not_write_dip_buy_shadow_log(monkeypatch, tmp_path, capsys):
+    """R14 (2026-08-25): same dry-run-must-not-pollute-persistent-stores
+    pattern as the Plan B/C/E shadow diagnostics above, for the new
+    dip_buy_meanreversion shadow log.
+    """
+    _run_paper_demo_no_momentum_signal(monkeypatch, tmp_path, dry_run=True)
+
+    dip_log = tmp_path / "data" / "dip_buy_meanreversion_shadow_log.jsonl"
+    assert not dip_log.exists(), (
+        f"dip_buy_meanreversion_shadow_log.jsonl was written during --dry-run: "
+        f"{dip_log.read_text() if dip_log.exists() else ''}"
+    )
+
+
+def test_real_run_writes_dip_buy_shadow_log_and_never_trades_it(monkeypatch, tmp_path, capsys):
+    """R14 (2026-08-25): a real (non-dry-run) run with a bearish-momentum
+    symbol must (a) write the dip-buy SHADOW-ONLY log, and (b) NEVER include
+    that symbol/strategy in the actual decisions/orders emitted by the run
+    -- this is the core "shadow-only, never wired to orders" invariant the
+    module docstring promises.
+    """
+    _run_paper_demo_no_momentum_signal(monkeypatch, tmp_path, dry_run=False)
+
+    dip_log = tmp_path / "data" / "dip_buy_meanreversion_shadow_log.jsonl"
+    assert dip_log.exists(), (
+        "dip_buy_meanreversion_shadow_log.jsonl was not written during a real "
+        "(non-dry-run) run with a bearish-momentum candidate present."
+    )
+    lines = dip_log.read_text(encoding="utf-8").strip().splitlines()
+    assert len(lines) == 1
+    record = json.loads(lines[0])
+    assert record["symbol"] == "AAPL"
+    assert record["strategy_id"] == "dip_buy_meanreversion_v1_shadow"
+    assert record["mode"] == "shadow"
+
+    captured = capsys.readouterr()
+    assert CRON_SUMMARY_PREFIX in captured.out
+    summary_line = next(
+        line for line in captured.out.splitlines() if line.startswith(CRON_SUMMARY_PREFIX)
+    )
+    summary = json.loads(summary_line[len(CRON_SUMMARY_PREFIX):])
+    # No entry signal reached DecisionEngine (breakout saw bearish trend =
+    # zero candidates, dip-buy is shadow-only and was never added to
+    # entry_signals/all_signals) -- so this run must submit zero orders.
+    assert summary.get("decisions_buy", 0) == 0
+    assert summary.get("orders_submitted", 0) == 0
+
+
 def test_p6_join_coverage_does_not_error_missing_json_import(monkeypatch, tmp_path, capsys, caplog):
     """Regression: paper_demo.py used `json.dumps(...)` in the P6 join_coverage
     block (build the report + write data/audits/p6_join_coverage.json) without

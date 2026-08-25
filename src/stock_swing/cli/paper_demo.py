@@ -1143,6 +1143,38 @@ def main() -> int:  # noqa: C901
             details=f"{','.join(sorted(stale_symbols))}"
         )
 
+    # R14 (2026-08-25): dip-buy / mean-reversion SHADOW-ONLY signal generation.
+    # Mirror image of breakout_momentum_v1 (see dip_buy_meanreversion_strategy.py
+    # module docstring + docs/r14_dip_buy_meanreversion_phase1_20260825/README.md
+    # for the Phase 1 backtest evidence behind this). This strategy's signals
+    # are DELIBERATELY NEVER added to entry_signals/all_signals below -- they
+    # never reach DecisionEngine, EntryFilterEngine, or the broker, exactly
+    # like Plan B (volatility_gate)/Plan C (distance_from_high)'s shadow-only
+    # pattern. Only logged for forward accumulation ahead of a future
+    # promotion review. Best-effort: a failure here must never fail the run.
+    if not args.dry_run:
+        try:
+            from stock_swing.strategy_engine.dip_buy_meanreversion_strategy import (
+                DipBuyMeanReversionStrategy,
+                DipBuySignalConfig,
+                log_shadow as log_dip_buy_shadow,
+            )
+            _dip_buy_config = DipBuySignalConfig.from_env()
+            if not _dip_buy_config.disabled:
+                _dip_buy_strat = DipBuyMeanReversionStrategy(_dip_buy_config)
+                _dip_buy_signals = _dip_buy_strat.generate(daily_features)
+                if stale_symbols:
+                    _dip_buy_signals = [s for s in _dip_buy_signals if s.symbol not in stale_symbols]
+                _dip_buy_shadow_log_path = project_root / "data" / "dip_buy_meanreversion_shadow_log.jsonl"
+                for _dip_sig in _dip_buy_signals:
+                    log_dip_buy_shadow(_dip_sig, shadow_log_path=_dip_buy_shadow_log_path)
+                if _dip_buy_signals:
+                    print(f"  R14 dip-buy SHADOW-ONLY: {len(_dip_buy_signals)} candidate(s) logged (not traded)")
+        except Exception as _dip_buy_exc:
+            logger.warning(
+                "dip_buy_meanreversion shadow check failed (non-fatal): %s", _dip_buy_exc,
+            )
+
     # 7b. Intraday data collection (5-minute bars for breakout candidates only)
     _section("7b. Data Collection (5-Minute Intraday Bars)")
     intraday_records: list[CanonicalRecord] = []
