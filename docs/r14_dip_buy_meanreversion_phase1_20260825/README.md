@@ -137,6 +137,59 @@ theoretical given the overlap numbers above:
 - 2-year window is a single historical regime overall (bull market with
   corrections), same caveat every R13-C/R13-D Phase 1 doc already carries.
 
+## Gate 3 (rolling PF gate) cross-strategy interference check (2026-08-25, no code change)
+
+**Question**: `entry_filter.py`'s rolling-PF gate (Gate 3) computes PF **per-symbol**
+from ALL closed trades in `pnl_state.json`, with no strategy distinction. If
+`dip_buy_meanreversion_v1` were ever promoted to a live (order-submitting)
+strategy sharing the same `EntryFilterEngine` as `breakout_momentum_v1`, would
+one strategy's recent losses on a symbol block the other's entry into that
+same symbol, even though their entry conditions are logically opposite?
+
+**Method**: `scripts/r14_gate3_cross_strategy_interference_check.py` (new,
+analysis-only, zero production code changed). Reuses `entry_filter.py`'s real
+`compute_rolling_pf()` function (imported, not reimplemented) and replays it
+point-in-time (no lookahead — only trades already closed strictly before a
+candidate's signal date are visible) against both R14 Phase 1 backtests'
+trade histories, using the real default gate config
+(`rolling_pf_gate=0.70`, `min_trades_for_gate=5`).
+
+**Result — the interference is real and strongly asymmetric**:
+
+| Direction | Candidates checked | Blocked by Gate 3 | Of those, would-have-won | Net PnL forgone |
+|---|---|---|---|---|
+| A: momentum's history blocks **dip-buy** entries | 359 | **29 (8.1%)** | **21 / 29 (72.4%)** | **+$5,844** (forgone profit) |
+| B: dip-buy's history blocks **momentum** entries | 621 | 2 (0.3%) | 1 / 2 (50%) | -$15 (negligible) |
+
+**Interpretation**: Gate 3 as currently designed would meaningfully hurt a
+promoted dip-buy strategy — it would block 8% of dip-buy's own candidates
+because `breakout_momentum_v1` had a losing streak on that SAME symbol
+(PTF, TSLA, NOW, FICO account for most blocked cases), and **72% of those
+blocked trades would have been winners for dip-buy**. This is the expected
+failure mode from a symbol-scoped-not-strategy-scoped gate: a symbol
+momentum keeps losing money on (chop/range-bound conditions) is often
+exactly the kind of symbol dip-buy's mean-reversion logic is designed to
+profit from — the gate conflates "this symbol is bad for momentum right
+now" with "this symbol is bad, period," which this data shows is false.
+The reverse direction (dip-buy blocking momentum) is negligible (0.3%,
+$15) — dip-buy's per-symbol PF rarely dips as strongly per symbol as
+momentum's does. So the practical design conclusion is: **Gate 3 must be
+made strategy-scoped (or dip-buy must bypass it) before any live wiring**,
+not "acceptable as-is." Direction B's near-zero result means this is not a
+symmetric problem needing a fully general solution — a targeted fix
+(exempt dip-buy from momentum's rolling-PF computation, or vice versa) may
+be sufficient.
+
+**Limitation**: this assumes a single shared `trades` pool exactly as
+`EntryFilterEngine.filter()` consumes it today; it does not model a
+hypothetical strategy-scoped Gate 3 (that would require an actual code
+change and is the design decision this analysis is meant to inform, not
+pre-empt). It also does not model the OTHER shared risk layers (circuit
+breaker, cluster cap, PortfolioAllocator) — those remain separately flagged,
+unresolved dependencies.
+
+Full detail: `docs/r14_dip_buy_meanreversion_phase1_20260825/gate3_interference_check.json`
+
 ## Verdict
 
 **GO** — proceed to Phase 2 (real strategy design). The mirror-image dip-buy

@@ -3406,16 +3406,33 @@ conservative-OHLC-exit/t+1-fill/slippage機構と本番`SimpleExitV2Strategy`設
   `decisions_buy=0`/`orders_submitted=0`で直接検証）
 - フルテストスイート: **2230 passed / 2 skipped**（baseline 2210+20で一致、regressionなし）
 
-**未実装のまま残る項目（本番配線＝実発注前の必須設計課題、Phase 1で既に特定済み）**:
-1. rolling PF gate（entry_filter.py Gate 3）は**銘柄単位**でありstrategy単位で
-   はないため、「momentumが直近stop_lossした銘柄」はrolling PFが悪化し、方向性が
-   真逆のdip-buyエントリーも同じゲートで弾かれうる。strategy-scoping要否の判断が必要
+**Gate 3（rolling PF gate）干渉分析（2026-08-25、コード変更なし）**: 新規
+`scripts/r14_gate3_cross_strategy_interference_check.py`で、`entry_filter.py`の
+実`compute_rolling_pf()`関数をそのまま再利用し、Phase 1の両バックテスト結果に対して
+point-in-time（lookaheadなし）で「もし共有EntryFilterEngineで両戦略が動いたら」を
+定量検証。結果は**強い非対称性**を確認:
+
+| 方向 | 検証対象 | ブロックされる件数 | うちwinだったもの | 機会損失 |
+|---|---|---|---|---|
+| A: momentumの履歴がdip-buyをブロック | 359件 | **29件(8.1%)** | **21件(72.4%)** | **+$5,844（機会損失）** |
+| B: dip-buyの履歴がmomentumをブロック | 621件 | 2件(0.3%) | 1件(50%) | -$15（無視できる規模） |
+
+方向Aが実質的な問題: PTF/TSLA/NOW/FICOなど、momentumが同一銘柄でチョップ相場中に
+連敗した結果rolling PFが悪化し、方向性が真逆のdip-buyエントリー（72%がwinだったはず）
+まで巻き込んでブロックしてしまう。「この銘柄はmomentumにとって今調子が悪い」を
+「この銘柄自体が悪い」と誤って一般化してしまう、銘柄単位ゲートの典型的な失敗モード。
+方向Bはほぼ無視できる規模のため、**全面的な再設計ではなく的を絞った対応
+（dip-buyをmomentumのrolling PF計算対象から除外する、または逆）で十分な可能性が高い**。
+
+**未実装のまま残る項目（本番配線＝実発注前の必須設計課題）**:
+1. ✅ 分析完了（上記）。**結論: Gate 3は現状のまま昇格させると実害あり**。
+   strategy-scoping（またはdip-buyのみ除外する的を絞った対応）が本番配線の前提条件
 2. Circuit Breaker/correlation cluster cap/PortfolioAllocatorは全て
    ポートフォリオ横断・strategy非依存の共有プール。実配線には資本配分の分離設計
    （IBKR移行・JP半導体拡張と同じenvironment_idスタイルの分離）が必要
 3. shadowログ蓄積後のレビュー（初回1〜2週間後の件数チェック、3〜4週間後の
    promotion判断）— Plan B/Cと同じレビューケイデンスを踏襲予定、レビュースケジュール
-   （cron）は未登録
+   （cron登録済み、09-08 `stock_swing_r14_dip_buy_shadow_review_20260908`）
 
 **やらないこと（現時点で明示的にスコープ外）**:
 ```

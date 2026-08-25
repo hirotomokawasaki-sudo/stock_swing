@@ -1,46 +1,38 @@
 {
-  "generated_at": "2026-08-25T01:01:51.432097+00:00",
+  "generated_at": "2026-08-25T01:22:33.150112+00:00",
   "roadmap_item": "R14-dip-buy-meanreversion-phase1",
   "overall": {
     "label": "overall",
-    "n": 1938,
-    "win_rate": 0.6656,
-    "profit_factor": 1.7099,
-    "net_pnl": 250093.15,
-    "avg_return_pct": 0.0129
+    "n": 359,
+    "win_rate": 0.7047,
+    "profit_factor": 1.9634,
+    "net_pnl": 57458.88,
+    "avg_return_pct": 0.016
   },
   "live_window": {
     "label": "live_window(>= 2026-05-12)",
-    "n": 339,
-    "win_rate": 0.6844,
-    "profit_factor": 1.8337,
-    "net_pnl": 49663.77,
-    "avg_return_pct": 0.0147
+    "n": 335,
+    "win_rate": 0.6896,
+    "profit_factor": 1.8545,
+    "net_pnl": 50095.87,
+    "avg_return_pct": 0.015
   },
   "by_exit_reason": {
     "trailing_stop": {
       "label": "trailing_stop",
-      "n": 1239,
+      "n": 236,
       "win_rate": 1.0,
       "profit_factor": "inf",
-      "net_pnl": 588347.29,
-      "avg_return_pct": 0.0475
+      "net_pnl": 109489.07,
+      "avg_return_pct": 0.0464
     },
     "stop_loss": {
       "label": "stop_loss",
-      "n": 603,
+      "n": 102,
       "win_rate": 0.0,
       "profit_factor": 0.0,
-      "net_pnl": -343392.3,
-      "avg_return_pct": -0.0569
-    },
-    "time_based": {
-      "label": "time_based",
-      "n": 75,
-      "win_rate": 0.4533,
-      "profit_factor": 0.7452,
-      "net_pnl": -2193.26,
-      "avg_return_pct": -0.0029
+      "net_pnl": -59361.6,
+      "avg_return_pct": -0.0582
     },
     "backtest_end_forced_close": {
       "label": "backtest_end_forced_close",
@@ -54,255 +46,255 @@
   "decile_summary": [
     {
       "label": "decile_1",
-      "n": 193,
-      "win_rate": 0.6425,
-      "profit_factor": 1.634,
-      "net_pnl": 21480.75,
-      "avg_return_pct": 0.0111,
+      "n": 35,
+      "win_rate": 0.6286,
+      "profit_factor": 1.8759,
+      "net_pnl": 5801.46,
+      "avg_return_pct": 0.0166,
       "ss_min": 0.4,
-      "ss_max": 0.4144
+      "ss_max": 0.4199
     },
     {
       "label": "decile_2",
-      "n": 194,
-      "win_rate": 0.5722,
-      "profit_factor": 1.2656,
-      "net_pnl": 10607.53,
-      "avg_return_pct": 0.0055,
-      "ss_min": 0.4144,
-      "ss_max": 0.4334
+      "n": 36,
+      "win_rate": 0.6389,
+      "profit_factor": 1.4733,
+      "net_pnl": 3135.2,
+      "avg_return_pct": 0.0087,
+      "ss_min": 0.4203,
+      "ss_max": 0.4442
     },
     {
       "label": "decile_3",
-      "n": 194,
-      "win_rate": 0.5773,
-      "profit_factor": 1.1881,
-      "net_pnl": 7561.07,
+      "n": 36,
+      "win_rate": 0.6667,
+      "profit_factor": 1.2481,
+      "net_pnl": 1398.49,
       "avg_return_pct": 0.0039,
-      "ss_min": 0.4335,
-      "ss_max": 0.4551
+      "ss_min": 0.4444,
+      "ss_max": 0.4717
     },
     {
       "label": "decile_4",
-      "n": 194,
-      "win_rate": 0.6753,
-      "profit_factor": 1.9241,
-      "net_pnl": 28210.16,
-      "avg_return_pct": 0.0145,
-      "ss_min": 0.4553,
-      "ss_max": 0.4867
+      "n": 36,
+      "win_rate": 0.6389,
+      "profit_factor": 1.4901,
+      "net_pnl": 3246.36,
+      "avg_return_pct": 0.009,
+      "ss_min": 0.4719,
+      "ss_max": 0.5082
     },
     {
       "label": "decile_5",
-      "n": 194,
-      "win_rate": 0.6392,
-      "profit_factor": 1.6502,
-      "net_pnl": 22387.68,
-      "avg_return_pct": 0.0115,
-      "ss_min": 0.4871,
-      "ss_max": 0.5234
+      "n": 36,
+      "win_rate": 0.7222,
+      "profit_factor": 2.3406,
+      "net_pnl": 6830.13,
+      "avg_return_pct": 0.019,
+      "ss_min": 0.5088,
+      "ss_max": 0.5409
     },
     {
       "label": "decile_6",
-      "n": 193,
-      "win_rate": 0.6321,
-      "profit_factor": 1.8432,
-      "net_pnl": 29304.26,
-      "avg_return_pct": 0.0152,
-      "ss_min": 0.5237,
-      "ss_max": 0.5779
+      "n": 36,
+      "win_rate": 0.6667,
+      "profit_factor": 2.2087,
+      "net_pnl": 6800.55,
+      "avg_return_pct": 0.0189,
+      "ss_min": 0.5444,
+      "ss_max": 0.5848
     },
     {
       "label": "decile_7",
-      "n": 194,
-      "win_rate": 0.6495,
-      "profit_factor": 1.6834,
-      "net_pnl": 23123.41,
-      "avg_return_pct": 0.0119,
-      "ss_min": 0.5788,
-      "ss_max": 0.6514
+      "n": 36,
+      "win_rate": 0.75,
+      "profit_factor": 3.0208,
+      "net_pnl": 9031.67,
+      "avg_return_pct": 0.0251,
+      "ss_min": 0.5903,
+      "ss_max": 0.6836
     },
     {
       "label": "decile_8",
-      "n": 194,
-      "win_rate": 0.7474,
-      "profit_factor": 2.3604,
-      "net_pnl": 41801.66,
-      "avg_return_pct": 0.0215,
-      "ss_min": 0.6515,
-      "ss_max": 0.7483
+      "n": 36,
+      "win_rate": 0.75,
+      "profit_factor": 2.5125,
+      "net_pnl": 8633.75,
+      "avg_return_pct": 0.024,
+      "ss_min": 0.6846,
+      "ss_max": 0.812
     },
     {
       "label": "decile_9",
-      "n": 194,
-      "win_rate": 0.7423,
-      "profit_factor": 1.866,
-      "net_pnl": 31239.29,
-      "avg_return_pct": 0.0161,
-      "ss_min": 0.7485,
-      "ss_max": 0.9025
+      "n": 36,
+      "win_rate": 0.75,
+      "profit_factor": 1.2357,
+      "net_pnl": 1834.02,
+      "avg_return_pct": 0.0051,
+      "ss_min": 0.8173,
+      "ss_max": 0.9624
     },
     {
       "label": "decile_10",
-      "n": 194,
-      "win_rate": 0.7784,
-      "profit_factor": 1.9067,
-      "net_pnl": 34377.33,
-      "avg_return_pct": 0.0177,
-      "ss_min": 0.9034,
+      "n": 36,
+      "win_rate": 0.8333,
+      "profit_factor": 2.9703,
+      "net_pnl": 10747.25,
+      "avg_return_pct": 0.0299,
+      "ss_min": 0.9663,
       "ss_max": 1.0
     }
   ],
-  "overlap_event_count": 359,
+  "overlap_event_count": 83,
   "overlap_events_sample": [
     {
-      "date": "2024-09-05",
-      "symbol": "CRDO",
+      "date": "2026-05-08",
+      "symbol": "ANET",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
-      "date": "2024-09-06",
-      "symbol": "RBRK",
+      "date": "2026-05-12",
+      "symbol": "PATH",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
-      "date": "2024-09-09",
-      "symbol": "CRDO",
+      "date": "2026-05-13",
+      "symbol": "CRM",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
-      "date": "2024-09-27",
-      "symbol": "MDB",
+      "date": "2026-05-15",
+      "symbol": "CRM",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
-      "date": "2024-10-15",
-      "symbol": "ASML",
+      "date": "2026-05-19",
+      "symbol": "CRM",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
-      "date": "2024-10-16",
-      "symbol": "LRCX",
+      "date": "2026-05-21",
+      "symbol": "INTU",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
-      "date": "2024-10-16",
-      "symbol": "AMAT",
-      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
-    },
-    {
-      "date": "2024-10-16",
-      "symbol": "KLAC",
-      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
-    },
-    {
-      "date": "2024-10-23",
-      "symbol": "DELL",
-      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
-    },
-    {
-      "date": "2024-10-23",
-      "symbol": "CHPS",
-      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
-    },
-    {
-      "date": "2024-10-23",
-      "symbol": "INTC",
-      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
-    },
-    {
-      "date": "2024-10-23",
-      "symbol": "HPE",
-      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
-    },
-    {
-      "date": "2024-10-30",
-      "symbol": "SMCI",
-      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
-    },
-    {
-      "date": "2024-10-31",
-      "symbol": "HPE",
-      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
-    },
-    {
-      "date": "2024-11-01",
-      "symbol": "SMCI",
-      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
-    },
-    {
-      "date": "2024-11-04",
+      "date": "2026-06-05",
       "symbol": "AVGO",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
-      "date": "2024-11-04",
+      "date": "2026-06-05",
+      "symbol": "TSLA",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2026-06-09",
+      "symbol": "NVDA",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2026-06-09",
+      "symbol": "TSLA",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2026-06-10",
       "symbol": "SMCI",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
-      "date": "2024-11-05",
-      "symbol": "NBIS",
+      "date": "2026-06-11",
+      "symbol": "ORCL",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
-      "date": "2024-11-05",
-      "symbol": "ARM",
+      "date": "2026-06-12",
+      "symbol": "MSFT",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
-      "date": "2024-11-05",
+      "date": "2026-06-15",
+      "symbol": "CRM",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2026-06-16",
+      "symbol": "AVGO",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2026-06-17",
+      "symbol": "FICO",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2026-06-17",
+      "symbol": "PATH",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2026-06-17",
+      "symbol": "TSLA",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2026-06-17",
+      "symbol": "NOW",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2026-06-17",
       "symbol": "SMCI",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
-      "date": "2024-11-06",
+      "date": "2026-06-18",
+      "symbol": "PLTR",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2026-06-18",
       "symbol": "SMCI",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
-      "date": "2024-11-07",
+      "date": "2026-06-22",
+      "symbol": "QCOM",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2026-06-22",
+      "symbol": "HPQ",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2026-06-22",
+      "symbol": "ORCL",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2026-06-23",
       "symbol": "SMCI",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
-      "date": "2024-11-08",
-      "symbol": "ARM",
+      "date": "2026-06-25",
+      "symbol": "SNOW",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
-      "date": "2024-11-12",
-      "symbol": "SMCI",
+      "date": "2026-06-25",
+      "symbol": "QCOM",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
-      "date": "2024-11-13",
-      "symbol": "NBIS",
+      "date": "2026-06-25",
+      "symbol": "MDB",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
-      "date": "2024-11-14",
-      "symbol": "SMCI",
-      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
-    },
-    {
-      "date": "2024-11-15",
-      "symbol": "ARM",
-      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
-    },
-    {
-      "date": "2024-11-15",
-      "symbol": "SMCI",
-      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
-    },
-    {
-      "date": "2024-11-18",
-      "symbol": "SMCI",
-      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
-    },
-    {
-      "date": "2024-12-05",
-      "symbol": "SNPS",
+      "date": "2026-06-25",
+      "symbol": "NOW",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     }
   ],
@@ -316,5 +308,5 @@
       "2026-08-14"
     ]
   },
-  "trade_count": 1938
+  "trade_count": 359
 }

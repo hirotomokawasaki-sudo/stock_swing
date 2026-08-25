@@ -1,0 +1,303 @@
+{
+  "config": {
+    "rolling_pf_gate": 0.7,
+    "min_trades_for_gate": 5
+  },
+  "direction_a_momentum_blocks_dipbuy": {
+    "total_candidates": 359,
+    "blocked_count": 29,
+    "blocked_pct": 8.08,
+    "blocked_would_have_won_count": 21,
+    "forgone_pnl": 5844.0,
+    "blocked_detail": [
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.526,
+        "n": 7,
+        "symbol": "CRDO",
+        "signal_date": "2026-05-18",
+        "dipbuy_pnl": 1036.4523722261165
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.526,
+        "n": 7,
+        "symbol": "CRDO",
+        "signal_date": "2026-05-19",
+        "dipbuy_pnl": 545.863006476681
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.575,
+        "n": 6,
+        "symbol": "TSLA",
+        "signal_date": "2026-06-09",
+        "dipbuy_pnl": 232.36229591991835
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.575,
+        "n": 6,
+        "symbol": "TSLA",
+        "signal_date": "2026-06-17",
+        "dipbuy_pnl": -509.5000000000002
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.503,
+        "n": 5,
+        "symbol": "NOW",
+        "signal_date": "2026-06-17",
+        "dipbuy_pnl": -509.50000000000057
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.336,
+        "n": 6,
+        "symbol": "NOW",
+        "signal_date": "2026-06-25",
+        "dipbuy_pnl": 588.3107646479182
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.575,
+        "n": 6,
+        "symbol": "TSLA",
+        "signal_date": "2026-06-25",
+        "dipbuy_pnl": 808.3467001027255
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.336,
+        "n": 6,
+        "symbol": "NOW",
+        "signal_date": "2026-06-26",
+        "dipbuy_pnl": 225.9298292662326
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.461,
+        "n": 5,
+        "symbol": "FICO",
+        "signal_date": "2026-06-26",
+        "dipbuy_pnl": 224.5333019946378
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.386,
+        "n": 6,
+        "symbol": "PTF",
+        "signal_date": "2026-07-01",
+        "dipbuy_pnl": -509.50000000000045
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.575,
+        "n": 6,
+        "symbol": "TSLA",
+        "signal_date": "2026-07-02",
+        "dipbuy_pnl": 175.8543343449009
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.336,
+        "n": 6,
+        "symbol": "NOW",
+        "signal_date": "2026-07-01",
+        "dipbuy_pnl": 317.073462400207
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.386,
+        "n": 6,
+        "symbol": "PTF",
+        "signal_date": "2026-07-07",
+        "dipbuy_pnl": 986.3054913968971
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.386,
+        "n": 6,
+        "symbol": "PTF",
+        "signal_date": "2026-07-10",
+        "dipbuy_pnl": -509.5000000000002
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.386,
+        "n": 6,
+        "symbol": "PTF",
+        "signal_date": "2026-07-16",
+        "dipbuy_pnl": 247.92007508776587
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.386,
+        "n": 6,
+        "symbol": "PTF",
+        "signal_date": "2026-07-17",
+        "dipbuy_pnl": 484.3396636674226
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.197,
+        "n": 6,
+        "symbol": "TSM",
+        "signal_date": "2026-07-16",
+        "dipbuy_pnl": 502.23267548226585
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.575,
+        "n": 6,
+        "symbol": "TSLA",
+        "signal_date": "2026-07-20",
+        "dipbuy_pnl": -509.49999999999966
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.386,
+        "n": 6,
+        "symbol": "PTF",
+        "signal_date": "2026-07-21",
+        "dipbuy_pnl": -709.3000000000009
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.386,
+        "n": 6,
+        "symbol": "PTF",
+        "signal_date": "2026-07-28",
+        "dipbuy_pnl": 246.92504369473158
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.542,
+        "n": 5,
+        "symbol": "ANET",
+        "signal_date": "2026-07-29",
+        "dipbuy_pnl": 795.9852725372094
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.386,
+        "n": 6,
+        "symbol": "PTF",
+        "signal_date": "2026-07-30",
+        "dipbuy_pnl": 136.1840921303145
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.653,
+        "n": 9,
+        "symbol": "FICO",
+        "signal_date": "2026-08-03",
+        "dipbuy_pnl": 256.9938883923971
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.386,
+        "n": 6,
+        "symbol": "PTF",
+        "signal_date": "2026-08-05",
+        "dipbuy_pnl": 229.69140267045532
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.575,
+        "n": 6,
+        "symbol": "TSLA",
+        "signal_date": "2026-07-23",
+        "dipbuy_pnl": 258.91451614129585
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.197,
+        "n": 6,
+        "symbol": "TSM",
+        "signal_date": "2026-07-24",
+        "dipbuy_pnl": 478.18587493356904
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.653,
+        "n": 9,
+        "symbol": "FICO",
+        "signal_date": "2026-08-05",
+        "dipbuy_pnl": -33.748349726416144
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.386,
+        "n": 6,
+        "symbol": "PTF",
+        "signal_date": "2026-08-06",
+        "dipbuy_pnl": 377.8703239120837
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.575,
+        "n": 6,
+        "symbol": "TSLA",
+        "signal_date": "2026-08-13",
+        "dipbuy_pnl": -21.729141754344532
+      }
+    ]
+  },
+  "direction_b_dipbuy_blocks_momentum": {
+    "total_candidates": 621,
+    "blocked_count": 2,
+    "blocked_pct": 0.32,
+    "blocked_would_have_won_count": 1,
+    "forgone_pnl": -15.41,
+    "blocked_detail": [
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.486,
+        "n": 6,
+        "symbol": "ORCL",
+        "signal_date": "2026-08-07",
+        "momentum_pnl": 345.2607350090807
+      },
+      {
+        "would_block": true,
+        "reason": "rolling_pf_gate",
+        "pf": 0.486,
+        "n": 6,
+        "symbol": "ORCL",
+        "signal_date": "2026-08-13",
+        "momentum_pnl": -360.67322040476137
+      }
+    ]
+  }
+}
