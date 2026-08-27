@@ -1,5 +1,6 @@
 import pytest
 
+from stock_swing.risk import position_sizing as position_sizing_module
 from stock_swing.risk.position_sizing import (
     DEFAULT_MAX_POSITION_NOTIONAL_PCT,
     DEFAULT_MAX_SECTOR_EXPOSURE_PCT,
@@ -65,6 +66,118 @@ def test_position_sizing_applies_asset_class_multipliers():
     assert etf_result.shares_by_notional == 560
     assert stock_result.shares_by_notional == 400
     assert stock_result.final_shares <= etf_result.final_shares
+
+
+# ===========================================================================
+# R13-B confidence_multiplier no-op bug + default-off risk-budget fix
+# (2026-08-26 discovery / 2026-08-27 fix, see
+# docs/r13b_sizing_confidence_multiplier_fix_validation_20260826/README.md)
+# ===========================================================================
+
+def _risk_bound_inputs(confidence: float) -> PositionSizingInputs:
+    """A sizing scenario where shares_by_risk is deliberately the tightest
+    of the 4 caps (small max_risk_per_trade_pct, large notional/exposure
+    room: shares_by_risk=100 vs shares_by_notional=400 at default caps),
+    so a confidence-driven change to shares_by_risk is guaranteed to be
+    visible in final_shares if (and only if) the fix is active."""
+    return PositionSizingInputs(
+        account_equity=1_000_000,
+        current_price=100,
+        current_total_exposure=0,
+        symbol='AVGO',  # stock, not ETF -- keeps asset multiplier out of the way conceptually
+        risk_per_share=1,
+        max_risk_per_trade_pct=0.0001,  # max_loss_usd=100 -> shares_by_risk=100, tightest cap
+        confidence=confidence,
+    )
+
+
+def test_confidence_boost_is_noop_by_default(monkeypatch):
+    """Documents the ORIGINAL bug: with the fix flag off (default),
+    confidence>=0.80 (1.2x) must have ZERO effect on final_shares, even
+    when shares_by_risk is deliberately the binding constraint."""
+    monkeypatch.setattr(
+        position_sizing_module, "SIZING_CONFIDENCE_MULTIPLIER_RISK_BUDGET_FIX_ENABLED", False,
+    )
+    policy = PositionSizingPolicy()
+
+    # confidence=0.7 is genuinely neutral (>=0.60 and <0.80 -> multiplier=1.0)
+    neutral = policy.size(_risk_bound_inputs(confidence=0.7))
+    boosted = policy.size(_risk_bound_inputs(confidence=0.90))
+
+    assert boosted.confidence_multiplier == 1.2
+    # Bug preserved: boost has no effect when default-off.
+    assert boosted.final_shares == neutral.final_shares
+
+
+def test_confidence_boost_increases_shares_when_fix_enabled(monkeypatch):
+    """With the fix flag on, a >=0.80 confidence (1.2x) boost DOES increase
+    final_shares when shares_by_risk is the binding constraint."""
+    monkeypatch.setattr(
+        position_sizing_module, "SIZING_CONFIDENCE_MULTIPLIER_RISK_BUDGET_FIX_ENABLED", True,
+    )
+    policy = PositionSizingPolicy()
+
+    neutral = policy.size(_risk_bound_inputs(confidence=0.7))
+    boosted = policy.size(_risk_bound_inputs(confidence=0.90))
+
+    assert boosted.confidence_multiplier == 1.2
+    assert boosted.final_shares > neutral.final_shares
+    # Exact expected relationship: shares_by_risk scaled by 1.2, floored.
+    from math import floor
+    assert boosted.final_shares == min(
+        floor(neutral.shares_by_risk * 1.2), boosted.shares_by_notional,
+        boosted.shares_by_exposure,
+    )
+
+
+def test_confidence_cut_unaffected_by_fix_flag(monkeypatch):
+    """The cut side (confidence<0.60, 0.7x) already worked correctly before
+    the fix and must behave IDENTICALLY regardless of the flag (no
+    regression to the one part of the mechanism that wasn't broken)."""
+    policy = PositionSizingPolicy()
+
+    monkeypatch.setattr(
+        position_sizing_module, "SIZING_CONFIDENCE_MULTIPLIER_RISK_BUDGET_FIX_ENABLED", False,
+    )
+    cut_off = policy.size(_risk_bound_inputs(confidence=0.3))
+
+    monkeypatch.setattr(
+        position_sizing_module, "SIZING_CONFIDENCE_MULTIPLIER_RISK_BUDGET_FIX_ENABLED", True,
+    )
+    cut_on = policy.size(_risk_bound_inputs(confidence=0.3))
+
+    assert cut_off.confidence_multiplier == 0.7
+    assert cut_on.confidence_multiplier == 0.7
+    assert cut_off.final_shares == cut_on.final_shares
+
+
+def test_confidence_boost_still_noop_when_notional_is_binding(monkeypatch):
+    """When the fix is enabled but risk is NOT the binding constraint
+    (notional/exposure/sector already tighter), a boost must still have
+    zero effect -- this is correct behavior (independent hard caps must
+    not be overridden by confidence), not a regression of the fix."""
+    monkeypatch.setattr(
+        position_sizing_module, "SIZING_CONFIDENCE_MULTIPLIER_RISK_BUDGET_FIX_ENABLED", True,
+    )
+    policy = PositionSizingPolicy()
+
+    # Large risk budget (risk is NOT binding) + default notional cap (IS binding).
+    notional_bound = lambda confidence: PositionSizingInputs(  # noqa: E731
+        account_equity=1_000_000,
+        current_price=100,
+        current_total_exposure=0,
+        symbol='AVGO',
+        risk_per_share=1,
+        max_risk_per_trade_pct=0.5,  # huge risk budget -> notional cap binds instead
+        confidence=confidence,
+    )
+
+    neutral = policy.size(notional_bound(0.7))
+    boosted = policy.size(notional_bound(0.90))
+
+    assert boosted.confidence_multiplier == 1.2
+    assert boosted.final_shares == neutral.final_shares
+    assert boosted.final_shares == boosted.shares_by_notional
 
 
 # ===========================================================================

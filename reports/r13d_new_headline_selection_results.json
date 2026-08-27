@@ -1,0 +1,180 @@
+{
+  "candidates": {
+    "candidate_A_top1_63d_21d": {
+      "params": {
+        "top_n": 1,
+        "lookback_days": 63,
+        "hold_days": 21
+      },
+      "full_period": {
+        "rotation": {
+          "label": "rotation_top1",
+          "n_days": 437,
+          "total_return_pct": 128.02,
+          "cagr_pct": 60.85,
+          "sharpe": 1.473,
+          "max_drawdown_pct": 28.51
+        },
+        "equal_weight": {
+          "label": "equal_weight_all",
+          "n_days": 437,
+          "total_return_pct": 67.23,
+          "cagr_pct": 34.52,
+          "sharpe": 1.255,
+          "max_drawdown_pct": 26.38
+        },
+        "spy": {
+          "label": "spy_buy_hold",
+          "n_days": 437,
+          "total_return_pct": 30.0,
+          "cagr_pct": 16.33,
+          "sharpe": 0.967,
+          "max_drawdown_pct": 19.0
+        },
+        "verdict": "GO"
+      },
+      "period1": {
+        "rotation": {
+          "label": "rotation_top1",
+          "n_days": 218,
+          "total_return_pct": 19.36,
+          "cagr_pct": 22.69,
+          "sharpe": 0.889,
+          "max_drawdown_pct": 28.51
+        },
+        "equal_weight": {
+          "label": "equal_weight_all",
+          "n_days": 218,
+          "total_return_pct": 22.19,
+          "cagr_pct": 26.07,
+          "sharpe": 0.991,
+          "max_drawdown_pct": 26.38
+        },
+        "spy": {
+          "label": "spy_buy_hold",
+          "n_days": 218,
+          "total_return_pct": 11.55,
+          "cagr_pct": 13.47,
+          "sharpe": 0.724,
+          "max_drawdown_pct": 19.0
+        },
+        "verdict": "MIXED"
+      },
+      "period2": {
+        "rotation": {
+          "label": "rotation_top1",
+          "n_days": 219,
+          "total_return_pct": 91.05,
+          "cagr_pct": 110.62,
+          "sharpe": 1.9,
+          "max_drawdown_pct": 27.91
+        },
+        "equal_weight": {
+          "label": "equal_weight_all",
+          "n_days": 219,
+          "total_return_pct": 36.86,
+          "cagr_pct": 43.49,
+          "sharpe": 1.532,
+          "max_drawdown_pct": 14.95
+        },
+        "spy": {
+          "label": "spy_buy_hold",
+          "n_days": 219,
+          "total_return_pct": 16.54,
+          "cagr_pct": 19.25,
+          "sharpe": 1.383,
+          "max_drawdown_pct": 9.13
+        },
+        "verdict": "GO"
+      }
+    },
+    "candidate_B_top2_126d_21d": {
+      "params": {
+        "top_n": 2,
+        "lookback_days": 126,
+        "hold_days": 21
+      },
+      "full_period": {
+        "rotation": {
+          "label": "rotation_top2",
+          "n_days": 374,
+          "total_return_pct": 87.57,
+          "cagr_pct": 52.78,
+          "sharpe": 1.415,
+          "max_drawdown_pct": 27.42
+        },
+        "equal_weight": {
+          "label": "equal_weight_all",
+          "n_days": 374,
+          "total_return_pct": 54.2,
+          "cagr_pct": 33.88,
+          "sharpe": 1.205,
+          "max_drawdown_pct": 26.33
+        },
+        "spy": {
+          "label": "spy_buy_hold",
+          "n_days": 374,
+          "total_return_pct": 26.96,
+          "cagr_pct": 17.45,
+          "sharpe": 0.99,
+          "max_drawdown_pct": 19.0
+        },
+        "verdict": "GO"
+      },
+      "period1": {
+        "rotation": {
+          "label": "rotation_top2",
+          "n_days": 155,
+          "total_return_pct": 16.51,
+          "cagr_pct": 28.2,
+          "sharpe": 0.985,
+          "max_drawdown_pct": 27.42
+        },
+        "equal_weight": {
+          "label": "equal_weight_all",
+          "n_days": 155,
+          "total_return_pct": 12.67,
+          "cagr_pct": 21.4,
+          "sharpe": 0.806,
+          "max_drawdown_pct": 26.33
+        },
+        "spy": {
+          "label": "spy_buy_hold",
+          "n_days": 155,
+          "total_return_pct": 8.94,
+          "cagr_pct": 14.94,
+          "sharpe": 0.725,
+          "max_drawdown_pct": 19.0
+        },
+        "verdict": "GO"
+      },
+      "period2": {
+        "rotation": {
+          "label": "rotation_top2",
+          "n_days": 219,
+          "total_return_pct": 60.99,
+          "cagr_pct": 72.97,
+          "sharpe": 1.674,
+          "max_drawdown_pct": 22.73
+        },
+        "equal_weight": {
+          "label": "equal_weight_all",
+          "n_days": 219,
+          "total_return_pct": 36.86,
+          "cagr_pct": 43.49,
+          "sharpe": 1.532,
+          "max_drawdown_pct": 14.95
+        },
+        "spy": {
+          "label": "spy_buy_hold",
+          "n_days": 219,
+          "total_return_pct": 16.54,
+          "cagr_pct": 19.25,
+          "sharpe": 1.383,
+          "max_drawdown_pct": 9.13
+        },
+        "verdict": "GO"
+      }
+    }
+  }
+}

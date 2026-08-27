@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-08-27T01:02:16.681732+00:00",
+  "methodology": "no-symbol-exclusivity engine (r11c_rsi_no_symbol_exclusivity.py structure, multi-lot per symbol, no gross/sector/cluster caps) + production's real intraday-boost mechanism, cross-checking whether R15's original +0.83% PF finding (measured on the WITH-exclusivity v4 engine) survives on the corrected no-exclusivity baseline.",
+  "universe_size": 69,
+  "no_excl_daily_only": {
+    "label": "no_excl_daily_only",
+    "n": 2348,
+    "win_rate": 0.7313,
+    "profit_factor": 2.1246,
+    "net_pnl": 457198.42,
+    "avg_return_pct": 0.0195
+  },
+  "no_excl_intraday_aware": {
+    "label": "no_excl_intraday_aware",
+    "n": 2348,
+    "win_rate": 0.7334,
+    "profit_factor": 2.1177,
+    "net_pnl": 456559.73,
+    "avg_return_pct": 0.0194
+  },
+  "boost_eligible_count": 2305,
+  "boosted_count": 848
+}

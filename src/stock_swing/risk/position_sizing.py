@@ -41,6 +41,46 @@ DEFAULT_MAX_SECTOR_EXPOSURE_PCT = 0.55
 ETF_POSITION_SIZE_MULTIPLIER = 0.70  # Restored to 0.70: actual ETF PF=2.776 (broker data); earlier 0.35 was based on erroneous pre-rebuild data
 STOCK_POSITION_SIZE_MULTIPLIER: float = float(_os.environ.get("STOCK_POSITION_SIZE_MULTIPLIER", "0.5"))
 
+# R13-B sizing-side fix (2026-08-26 discovery, 2026-08-27 implementation,
+# see docs/r13b_sizing_confidence_multiplier_fix_validation_20260826/README.md):
+# the ORIGINAL confidence_multiplier logic applies the multiplier to
+# base_final_shares (already the min of all 4 caps) and then re-clips
+# against an IDENTICAL 4-way min ("cap"), so cap == base_final_shares
+# always holds and any multiplier > 1.0 (the high-confidence 1.2x boost)
+# is mathematically guaranteed to be a no-op -- confirmed against 55/55
+# real cm=1.2 decision records (2026-08-14 onward). Only the cm=0.7 cut
+# side has ever been effective (asymmetric bug).
+#
+# Fix: apply confidence_multiplier to the RISK BUDGET (shares_by_risk)
+# BEFORE the 4-way min, so confidence can genuinely move the final share
+# count in either direction WHEN RISK IS THE BINDING CONSTRAINT, while
+# notional/exposure/sector hard caps remain completely untouched (a
+# confidence boost still correctly has zero effect when one of those
+# caps -- not risk -- is already binding; that is intentional, not a
+# regression, since those are independently-motivated risk limits that
+# confidence must not override).
+#
+# 2026-08-26 mechanism validation (n=58, full population of decisions with
+# confidence_multiplier + sizing evidence recorded): fix increases qty in
+# 25/39 boost cases (the 14 where it doesn't are correctly notional/
+# exposure/sector-bound, not a fix failure) and preserves the existing
+# cut behavior in 4/4 cut cases (no regression). PnL-impact validation
+# (n=2 trades) was explicitly flagged as statistically uninformative --
+# R13-A/B's own established norm requires ~30-90+ attributable trades
+# before treating a PF/PnL estimate as evidence either way.
+#
+# Given that evidentiary gap, this fix is implemented but DEFAULT-OFF via
+# this flag (matching the STOCK_POSITION_SIZE_MULTIPLIER /
+# PAPER_DEMO_USE_INTRADAY / ENTRY_FILTER_STOCK_REDUCED precedent of
+# shipping risk-relevant changes behind an opt-in flag rather than a
+# behavior-changing default). Current production behavior (the no-op
+# bug) is UNCHANGED unless this is explicitly set to "true". Do not flip
+# the default without first collecting a larger attributable-trade sample
+# (tracked as a R13-B follow-up in docs/console_improvement_tasks.md).
+SIZING_CONFIDENCE_MULTIPLIER_RISK_BUDGET_FIX_ENABLED: bool = (
+    _os.environ.get("SIZING_CONFIDENCE_MULTIPLIER_RISK_BUDGET_FIX", "false").lower() == "true"
+)
+
 ETF_SYMBOLS = {
     'SHOC','SOXQ','SOXX','SMH','FTXL','PTF','SMHX','FRWD','TTEQ','GTOP','CHPX','CHPS','PSCT','QTEC','TDIV','SKYY','QTUM'
 }
@@ -283,9 +323,23 @@ class PositionSizingPolicy:
                 confidence_multiplier = 1.2
             elif confidence < 0.60:
                 confidence_multiplier = 0.7
-        boosted = floor(base_final_shares * confidence_multiplier)
-        cap = min(shares_by_risk, shares_by_notional, shares_by_exposure, shares_by_sector)
-        final_shares = min(boosted, cap)
+
+        if SIZING_CONFIDENCE_MULTIPLIER_RISK_BUDGET_FIX_ENABLED:
+            # R13-B fix (default-off, see flag docstring above): apply the
+            # multiplier to the risk-budget-derived share count BEFORE the
+            # 4-way min, so a boost can actually move final_shares when
+            # risk is the binding constraint, while notional/exposure/
+            # sector caps remain fully intact and unaffected.
+            shares_by_risk_adjusted = max(floor(shares_by_risk * confidence_multiplier), 0)
+            final_shares = min(shares_by_risk_adjusted, shares_by_notional, shares_by_exposure, shares_by_sector)
+        else:
+            # Original behavior (bug preserved by default, see flag
+            # docstring above): cap is recomputed from the identical 4
+            # values as base_final_shares, so cap == base_final_shares
+            # always holds and confidence_multiplier > 1.0 is a no-op.
+            boosted = floor(base_final_shares * confidence_multiplier)
+            cap = min(shares_by_risk, shares_by_notional, shares_by_exposure, shares_by_sector)
+            final_shares = min(boosted, cap)
 
         # R2-v2 / H5: apply asset-class multiplier from AllocationConfig (YAML)
         stock_mult, etf_mult = self._get_multipliers()

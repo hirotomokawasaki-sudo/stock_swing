@@ -9,14 +9,18 @@
 > 計画・進捗は `docs/broker_migration_ibkr_plan.md` を参照（Track A完了済み、
 > Track BはD0＝移行開始日確定待ち）。
 
-> 📎 **R15（2026-08-27）**: 既存バックテスト（R11-B〜R14）が全て日足OHLCのみで、
-> 本番（4回/日cron + intraday 5分足二段階判定）との粒度不一致をユーザーが指摘。
-> 本番同一の`broker.fetch_bars(timeframe="5Min")`で既存日足キャッシュと同一期間
-> （2024-08-15〜2026-08-14、2年分）の5分足データを全69銘柄取得完了
-> （`data/r15_intraday_5min_cache/`、211MB、21.9分）。intraday対応バックテスト
-> エンジンを構築・初回検証完了: intraday boost効果はPF+0.83%/net_pnl+1.19%と
-> 小さく、既存の日足のみ検証結果を大きく歪めていなかったことを確認
-> （サニティチェックでv4本家baselineと完全一致を確認済み）。詳細は下部の
+> 📎 **R15（2026-08-27、同日訂正あり）**: 既存バックテスト（R11-B〜R14）が全て
+> 日足OHLCのみで、本番（4回/日cron + intraday 5分足二段階判定）との粒度不一致を
+> ユーザーが指摘。本番同一の`broker.fetch_bars(timeframe="5Min")`で既存日足
+> キャッシュと同一期間（2024-08-15〜2026-08-14、2年分）の5分足データを全69銘柄
+> 取得完了（`data/r15_intraday_5min_cache/`、211MB、21.9分）。intraday対応
+> バックテストエンジンを構築・初回検証: intraday boost効果はPF+0.83%/
+> net_pnl+1.19%と小さく正方向（v4エンジン=排他制御あり条件）。**同日追記で
+> 08-26発見の1銘柄1ポジション排他制御アーティファクトとの交差検証を実施した
+> ところ、排他制御なし条件ではPF-0.32%/net_pnl-0.14%と符号が反転**。両条件とも
+> |ΔPF|<1%のため「intraday boostは実質PF/net_pnlに中立、効果の大きさは測定誤差
+> 相当」に結論を改訂。R11-B〜R14の既存検証が日足のみだったことによる歪みは
+> 方向・大きさいずれも無視できる水準という大枠の結論は変わらず。詳細は下部の
 > 該当日付エントリ参照。
 
 > 📎 **最新ステータス（2026-08-26時点）**: attribution_coverage_pct=96.2%、
@@ -1123,6 +1127,40 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
                          （別日態重に実施）**。インシデント詳細: `docs/equity_bridge_root_
                          cause_20260823/INCIDENT_rebuild_lost_attribution.md`
 
+2026-08-27         ✅ R13-D新headline選定・walk-forward検証完了。08-26発見の
+                         min_membersバグ修正後の代替候補2つ（top_n=1/63d、
+                         top_n=2/126d）をfull-period+walk-forward(period1/
+                         period2)の3段階で検証。top_n=1はperiod1単独で
+                         equal-weightベースラインに負ける（MIXED）ことが判明、
+                         **top_n=2/lookback=126d/hold=21dが3段階すべてでGO**
+                         と確認し新headline候補として採用推奨。09-08レビューで
+                         正式決定待ち。テストスイート`pytest -k r13d`: 10 passed。
+                         詳細: `docs/r13d_new_headline_selection_20260827/README.md`
+2026-08-27         ⚠️ R15 intraday boost効果の訂正（同日追記）。08-26発見の
+                         1銘柄1ポジション排他制御アーティファクトとの交差検証を
+                         実施したところ、排他制御なし条件ではPF変化が
+                         +0.83%→-0.32%と符号反転（net_pnlも+1.19%→-0.14%）。
+                         両条件とも|ΔPF|<1%のため「intraday boostは実質PF/
+                         net_pnlに中立」に結論を改訂（当初の「わずかに正」は
+                         撤回）。R11-B〜R14の日足のみ検証が歪みを生んでいな
+                         かったという大枠の結論は変わらず。テストスイート
+                         `pytest -k "r15 or intraday"`: 18 passed。詳細:
+                         `docs/r15_intraday_backtest_20260827/README.md`
+                         （追記セクション）
+2026-08-27         ✅ R13-B sizing側修正を正式実装（デフォルト無効フラグ）。
+                         08-26検証済みのconfidence_multiplier no-opバグ修正
+                         （リスク予算への事前適用方式）を`SIZING_CONFIDENCE_
+                         MULTIPLIER_RISK_BUDGET_FIX`環境変数フラグ（デフォルト
+                         false）の下で`position_sizing.py`に実装。フラグ無効時は
+                         既存の（バグを含む）本番挙動を完全保持、有効時のみ
+                         リスク予算が支配的な場合にconfidenceブーストが機能する。
+                         新規テスト5件追加（boost有効/無効、cut側の非回帰、他
+                         キャップ支配時のno-op維持を確認）。テストスイート
+                         `pytest tests/unit/test_position_sizing_policy.py`:
+                         19 passed。フラグ有効化はPnL影響エビデンス
+                         （attributable標本≥30〜90件目安）が揃うまで保留。詳細:
+                         `docs/r13b_sizing_fix_implementation_20260827/README.md`
+
 2026-09-08〜09-12  🔲 Pre-Launch Gate Review（第2弾）
                          ・ R3-v2-Stop/Breakeven/R9 Plan B-E/R5-v2 promotion gate、全レビュー結果を統合
                          ・ 2026-08-23監査の6パッチは適用済み。equity_bridge $168,869.89差分の
@@ -1218,17 +1256,24 @@ sizing側Option A・confidence_multiplierバグ修正は別途検証手法を設
 | 🔵 P3 | R8-v2 | BLOCKED_BY_DATA | 10月以降 |
 | 🔴 P1 | **R13-A** | **STOP HOLD**（2026-08-23検証完了） | 全252件では明確に悪化、
 attributable限定では単一トレード依存の不安定な改善のみ。paper A/Bには進まない |
-| 🟡 P1 | **R13-B** | **弱い結果（検証済み）**（2026-08-23） | exit側Option Bヒストリカル
-検証完了。変化トレード数少なく結論保留。sizing側は未着手 |
+| 🟡 P1 | **R13-B** | **sizing側修正実装済み・デフォルト無効**（2026-08-27） | exit側
+Option Bヒストリカル検証完了。変化トレード数少なく結論保留。sizing側:
+confidence_multiplier no-opバグの修正コードを`SIZING_CONFIDENCE_MULTIPLIER_
+RISK_BUDGET_FIX`環境変数フラグ（デフォルトfalse）の下で実装、テスト5件追加、
+本番挙動は現状維持。PnL影響のエビデンス（attributable標本≥30〜90件目安）が
+揃うまでフラグ有効化は保留（`docs/r13b_sizing_fix_implementation_20260827/
+README.md`） |
 | 🟢 P2 | **R13-C** | **強い肯定的知見（項目1/2/3/5完了）**（2026-08-23） | t+1 fill+
 point-in-time universe+保守的OHLC exit+slippage全て実装。live以降PF=1.453
 （90%CI[1.210,1.750]、保守的補正後もほぼ不変）。本番と方向性一致も維持。残も4/6/7
 項目（exposure/sector cap等）は未実装 |
-| ⚠️ P3 | **R13-D** | **Phase 1 headline見直し必要**（2026-08-23 GO→ 08-26
-min_membersバグ修正でheadline=MIXEDに低下、他パラメータ（top_n=1等）はGO継続） |
-ETFセクターローテーション戦略自体は引き続き支持されるが、headlineパラメータ（top_n=2）の
-再選定が09-08レビュー前に必要（`docs/r13d_min_members_check_20260826/README.md`）。
-Phase 2戦略コード実装、Phase 3（リバランス状態管理）実装済み。JPspilloverはshadow
+| ⚠️ P3 | **R13-D** | **新headline選定済み（2026-08-27）**: top_n=2/lookback=126d/
+hold=21dがfull-period+walk-forward前半+後半の3段階すべてでGO判定 |
+ETFセクターローテーション戦略自体は引き続き支持される。08-26発見のmin_members
+バグ修正後、代替候補top_n=1はwalk-forward前半でMIXEDに転落するため不採用、
+top_n=2/lookback=126dを新headlineとして採用推奨（`docs/r13d_new_headline_
+selection_20260827/README.md`）。09-08レビューで正式決定待ち。Phase 2戦略
+コード実装、Phase 3（リバランス状態管理）実装済み。JPspilloverはshadow
 継続中、研究段階、本番影響なし |
 
 **2026-08-14 追記**: リアルトレード開始が 08-20 → **09-15** に延期（ユーザー指示）。
