@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-08-26T16:36:36.567550+00:00",
+  "methodology": "v4 engine (t+1 fill, PIT universe, conservative OHLC exit, slippage, gross/sector/cluster caps) + production's real intraday-boost mechanism (IntradayMomentumFeature + paper_demo.py's 1.2x boost logic), using real 5-min bars fetched from broker API (data/r15_intraday_5min_cache/).",
+  "universe_size": 69,
+  "daily_only": {
+    "label": "daily_only",
+    "n": 633,
+    "win_rate": 0.7125,
+    "profit_factor": 1.9251,
+    "net_pnl": 107375.5,
+    "avg_return_pct": 0.017
+  },
+  "intraday_aware": {
+    "label": "intraday_aware",
+    "n": 633,
+    "win_rate": 0.7172,
+    "profit_factor": 1.941,
+    "net_pnl": 108648.41,
+    "avg_return_pct": 0.0172
+  },
+  "boost_eligible_count": 626,
+  "boosted_count": 267
+}

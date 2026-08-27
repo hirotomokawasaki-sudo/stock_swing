@@ -1,0 +1,10 @@
+{
+  "time": "2026-08-26T23:05:11.011439+00:00",
+  "status": "ok",
+  "symbols_requested": 44,
+  "symbols_with_upcoming_earnings": 16,
+  "reason": null,
+  "total_calendar_rows_fetched": 252,
+  "from": "2026-08-26",
+  "to": "2026-09-05"
+}

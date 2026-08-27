@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-25T01:22:33.150112+00:00",
+  "generated_at": "2026-08-26T13:24:02.701982+00:00",
   "roadmap_item": "R14-dip-buy-meanreversion-phase1",
   "overall": {
     "label": "overall",
@@ -224,6 +224,16 @@
     },
     {
       "date": "2026-06-17",
+      "symbol": "SMCI",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2026-06-17",
+      "symbol": "NOW",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2026-06-17",
       "symbol": "FICO",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
@@ -238,12 +248,7 @@
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
-      "date": "2026-06-17",
-      "symbol": "NOW",
-      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
-    },
-    {
-      "date": "2026-06-17",
+      "date": "2026-06-18",
       "symbol": "SMCI",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
@@ -253,13 +258,8 @@
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
-      "date": "2026-06-18",
-      "symbol": "SMCI",
-      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
-    },
-    {
       "date": "2026-06-22",
-      "symbol": "QCOM",
+      "symbol": "ORCL",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
@@ -269,22 +269,12 @@
     },
     {
       "date": "2026-06-22",
-      "symbol": "ORCL",
+      "symbol": "QCOM",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
       "date": "2026-06-23",
       "symbol": "SMCI",
-      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
-    },
-    {
-      "date": "2026-06-25",
-      "symbol": "SNOW",
-      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
-    },
-    {
-      "date": "2026-06-25",
-      "symbol": "QCOM",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     },
     {
@@ -295,6 +285,16 @@
     {
       "date": "2026-06-25",
       "symbol": "NOW",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2026-06-25",
+      "symbol": "ORCL",
+      "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
+    },
+    {
+      "date": "2026-06-25",
+      "symbol": "QCOM",
       "note": "dip_buy_signal_fired_while_momentum_would_also_hold_same_symbol"
     }
   ],

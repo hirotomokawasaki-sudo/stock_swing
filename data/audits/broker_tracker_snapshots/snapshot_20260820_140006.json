@@ -1,0 +1,26 @@
+{
+  "as_of_utc": "2026-08-20T14:00:07.596197+00:00",
+  "mismatch_count": 0,
+  "only_in_broker": [],
+  "only_in_tracker": [],
+  "broker_position_count": 15,
+  "tracker_open_count": 15,
+  "common_symbols": [
+    "ASML",
+    "CHPX",
+    "FTXL",
+    "IBM",
+    "LRCX",
+    "MRVL",
+    "MSFT",
+    "MU",
+    "NOW",
+    "NVDA",
+    "ORCL",
+    "PATH",
+    "PLTR",
+    "QTUM",
+    "TSLA"
+  ],
+  "rgt_011_pass": true
+}

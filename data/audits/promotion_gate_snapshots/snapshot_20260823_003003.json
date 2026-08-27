@@ -1,0 +1,46 @@
+{
+  "captured_at": "2026-08-23T00:30:03.188983+00:00",
+  "date": "2026-08-23",
+  "promotion": {
+    "cluster_cap": {
+      "label": "cluster_cap",
+      "pass": true,
+      "actual": "none over cap",
+      "required": "no cluster over cap",
+      "detail": ""
+    },
+    "top5_concentration": {
+      "label": "top5_concentration",
+      "pass": false,
+      "actual": "50.7%",
+      "required": "<=40%",
+      "detail": ""
+    },
+    "portfolio_beta": {
+      "label": "portfolio_beta",
+      "pass": true,
+      "actual": 0.772,
+      "required": "<=1.5",
+      "detail": ""
+    },
+    "clean_cohort_pf": {
+      "label": "clean_cohort_pf",
+      "pass": false,
+      "actual": 0.913,
+      "required": ">=1.0 (n>=20)",
+      "detail": "n=252"
+    },
+    "pairwise_correlation": {
+      "label": "pairwise_correlation",
+      "pass": false,
+      "actual": [
+        "ASML/LRCX=0.8135",
+        "LRCX/MU=0.8678",
+        "MSFT/TSLA=0.9962",
+        "NOW/PATH=0.819"
+      ],
+      "required": "no pair with |correlation|>=0.8",
+      "detail": "checked 55 pair(s)"
+    }
+  }
+}

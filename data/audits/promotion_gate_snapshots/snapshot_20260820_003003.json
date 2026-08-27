@@ -1,0 +1,49 @@
+{
+  "captured_at": "2026-08-20T00:30:03.530321+00:00",
+  "date": "2026-08-20",
+  "promotion": {
+    "cluster_cap": {
+      "label": "cluster_cap",
+      "pass": true,
+      "actual": "none over cap",
+      "required": "no cluster over cap",
+      "detail": ""
+    },
+    "top5_concentration": {
+      "label": "top5_concentration",
+      "pass": true,
+      "actual": "39.0%",
+      "required": "<=40%",
+      "detail": ""
+    },
+    "portfolio_beta": {
+      "label": "portfolio_beta",
+      "pass": true,
+      "actual": 0.77,
+      "required": "<=1.5",
+      "detail": ""
+    },
+    "clean_cohort_pf": {
+      "label": "clean_cohort_pf",
+      "pass": false,
+      "actual": 0.944,
+      "required": ">=1.0 (n>=20)",
+      "detail": "n=245"
+    },
+    "pairwise_correlation": {
+      "label": "pairwise_correlation",
+      "pass": false,
+      "actual": [
+        "INTC/LRCX=0.8347",
+        "INTC/MRVL=0.8975",
+        "INTC/MU=0.888",
+        "LRCX/MRVL=0.8336",
+        "LRCX/MU=0.8323",
+        "MRVL/MU=0.8998",
+        "MSFT/TSLA=0.9962"
+      ],
+      "required": "no pair with |correlation|>=0.8",
+      "detail": "checked 91 pair(s)"
+    }
+  }
+}

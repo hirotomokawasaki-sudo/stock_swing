@@ -1,0 +1,150 @@
+{
+  "generated_at": "2026-08-26T12:31:50.175286+00:00",
+  "methodology": "v4 rigorous engine (t+1 open fill, point-in-time universe, conservative OHLC exit, slippage_bps, gross/sector/cluster caps)",
+  "slippage_bps": 5.0,
+  "baseline": {
+    "label": "baseline_v4",
+    "n": 633,
+    "win_rate": 0.7125,
+    "profit_factor": 1.9251,
+    "net_pnl": 107375.5,
+    "avg_return_pct": 0.017,
+    "walk_forward": {
+      "split_date": "2026-06-02",
+      "period1": {
+        "label": "baseline_p1",
+        "n": 306,
+        "win_rate": 0.8301,
+        "profit_factor": 3.7023,
+        "net_pnl": 104375.04,
+        "avg_return_pct": 0.0341
+      },
+      "period2": {
+        "label": "baseline_p2",
+        "n": 327,
+        "win_rate": 0.6024,
+        "profit_factor": 1.0387,
+        "net_pnl": 3000.45,
+        "avg_return_pct": 0.0009
+      }
+    }
+  },
+  "candidates": {
+    "rsi_reversed": {
+      "label": "rsi_reversed",
+      "n": 541,
+      "win_rate": 0.7264,
+      "profit_factor": 2.2371,
+      "net_pnl": 110022.41,
+      "avg_return_pct": 0.0203,
+      "filter_dropped_count": 328,
+      "capacity_dropped_count": 0,
+      "walk_forward": {
+        "split_date": "2026-06-05",
+        "period1": {
+          "label": "rsi_reversed_p1",
+          "n": 268,
+          "win_rate": 0.791,
+          "profit_factor": 3.0768,
+          "net_pnl": 83533.04,
+          "avg_return_pct": 0.0312
+        },
+        "period2": {
+          "label": "rsi_reversed_p2",
+          "n": 273,
+          "win_rate": 0.663,
+          "profit_factor": 1.5438,
+          "net_pnl": 26489.37,
+          "avg_return_pct": 0.0097
+        }
+      }
+    },
+    "sector_relative_strength": {
+      "label": "sector_relative_strength",
+      "n": 496,
+      "win_rate": 0.7198,
+      "profit_factor": 1.9028,
+      "net_pnl": 84650.48,
+      "avg_return_pct": 0.0171,
+      "filter_dropped_count": 444,
+      "capacity_dropped_count": 0,
+      "walk_forward": {
+        "split_date": "2026-06-02",
+        "period1": {
+          "label": "sector_relative_strength_p1",
+          "n": 247,
+          "win_rate": 0.8502,
+          "profit_factor": 4.1426,
+          "net_pnl": 91933.86,
+          "avg_return_pct": 0.0372
+        },
+        "period2": {
+          "label": "sector_relative_strength_p2",
+          "n": 249,
+          "win_rate": 0.5904,
+          "profit_factor": 0.8871,
+          "net_pnl": -7283.38,
+          "avg_return_pct": -0.0029
+        }
+      }
+    },
+    "earnings_proximity": {
+      "label": "earnings_proximity",
+      "n": 103,
+      "win_rate": 0.6893,
+      "profit_factor": 2.3114,
+      "net_pnl": 29372.04,
+      "avg_return_pct": 0.0285,
+      "filter_dropped_count": 2033,
+      "capacity_dropped_count": 0,
+      "walk_forward": {
+        "split_date": "2026-05-29",
+        "period1": {
+          "label": "earnings_proximity_p1",
+          "n": 49,
+          "win_rate": 0.8163,
+          "profit_factor": 5.9255,
+          "net_pnl": 28017.96,
+          "avg_return_pct": 0.0572
+        },
+        "period2": {
+          "label": "earnings_proximity_p2",
+          "n": 54,
+          "win_rate": 0.5741,
+          "profit_factor": 1.081,
+          "net_pnl": 1354.09,
+          "avg_return_pct": 0.0025
+        }
+      }
+    },
+    "news_sentiment_positive": {
+      "label": "news_sentiment_positive",
+      "n": 334,
+      "win_rate": 0.6467,
+      "profit_factor": 1.3423,
+      "net_pnl": 26372.17,
+      "avg_return_pct": 0.0079,
+      "filter_dropped_count": 1395,
+      "capacity_dropped_count": 0,
+      "walk_forward": {
+        "split_date": "2026-06-12",
+        "period1": {
+          "label": "news_sentiment_positive_p1",
+          "n": 160,
+          "win_rate": 0.7,
+          "profit_factor": 1.5333,
+          "net_pnl": 19969.87,
+          "avg_return_pct": 0.0125
+        },
+        "period2": {
+          "label": "news_sentiment_positive_p2",
+          "n": 174,
+          "win_rate": 0.5977,
+          "profit_factor": 1.1617,
+          "net_pnl": 6402.3,
+          "avg_return_pct": 0.0037
+        }
+      }
+    }
+  }
+}

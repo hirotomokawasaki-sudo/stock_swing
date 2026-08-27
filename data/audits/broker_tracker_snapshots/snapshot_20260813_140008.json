@@ -1,0 +1,29 @@
+{
+  "as_of_utc": "2026-08-13T14:00:09.378159+00:00",
+  "mismatch_count": 0,
+  "only_in_broker": [],
+  "only_in_tracker": [],
+  "broker_position_count": 18,
+  "tracker_open_count": 18,
+  "common_symbols": [
+    "AMZN",
+    "ANET",
+    "AVGO",
+    "CRDO",
+    "CRM",
+    "CRWD",
+    "HPE",
+    "IBM",
+    "MRVL",
+    "MSFT",
+    "NOW",
+    "ORCL",
+    "PANW",
+    "PATH",
+    "PLTR",
+    "QTUM",
+    "SKYY",
+    "SNOW"
+  ],
+  "rgt_011_pass": true
+}

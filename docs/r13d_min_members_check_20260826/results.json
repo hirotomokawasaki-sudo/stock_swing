@@ -1,0 +1,309 @@
+{
+  "original_min_members_unenforced": {
+    "label": "original_min_members_unenforced",
+    "n_days": 437,
+    "total_return_pct": 162.32,
+    "cagr_pct": 74.39,
+    "sharpe": 1.627,
+    "max_drawdown_pct": 27.91
+  },
+  "fixed_min_members_enforced": {
+    "label": "fixed_min_members_2",
+    "n_days": 437,
+    "total_return_pct": 128.02,
+    "cagr_pct": 60.85,
+    "sharpe": 1.473,
+    "max_drawdown_pct": 28.51
+  },
+  "equal_weight_all_sectors": {
+    "label": "equal_weight_all_sectors",
+    "n_days": 437,
+    "total_return_pct": 67.23,
+    "cagr_pct": 34.52,
+    "sharpe": 1.255,
+    "max_drawdown_pct": 26.38
+  },
+  "spy_buy_and_hold": {
+    "label": "spy_buy_and_hold",
+    "n_days": 437,
+    "total_return_pct": 30.0,
+    "cagr_pct": 16.33,
+    "sharpe": 0.967,
+    "max_drawdown_pct": 19.0
+  },
+  "excluded_sectors": [
+    "broad_market",
+    "quantum_computing",
+    "technology",
+    "technology_cloud"
+  ],
+  "eligible_sectors": [
+    "robotics_ai",
+    "semiconductor",
+    "software"
+  ],
+  "original_rebalance_log_sample": [
+    {
+      "date": "2024-11-14",
+      "holdings": [
+        "technology_cloud"
+      ],
+      "scores": {
+        "technology_cloud": 0.246,
+        "quantum_computing": 0.0883,
+        "broad_market": 0.0798,
+        "technology": 0.0797,
+        "robotics_ai": 0.0722,
+        "software": 0.0647,
+        "semiconductor": -0.0212
+      }
+    },
+    {
+      "date": "2024-12-16",
+      "holdings": [
+        "quantum_computing"
+      ],
+      "scores": {
+        "quantum_computing": 0.2867,
+        "technology_cloud": 0.2626,
+        "technology": 0.1211,
+        "software": 0.1171,
+        "robotics_ai": 0.0737,
+        "broad_market": 0.0735,
+        "semiconductor": 0.0604
+      }
+    },
+    {
+      "date": "2025-01-17",
+      "holdings": [
+        "quantum_computing"
+      ],
+      "scores": {
+        "quantum_computing": 0.2976,
+        "technology_cloud": 0.1493,
+        "technology": 0.0453,
+        "robotics_ai": 0.0267,
+        "software": 0.0216,
+        "broad_market": 0.0205,
+        "semiconductor": 0.0173
+      }
+    },
+    {
+      "date": "2025-02-19",
+      "holdings": [
+        "quantum_computing"
+      ],
+      "scores": {
+        "quantum_computing": 0.2872,
+        "technology_cloud": 0.09,
+        "robotics_ai": 0.0533,
+        "technology": 0.0529,
+        "semiconductor": 0.0514,
+        "software": 0.0354,
+        "broad_market": 0.0239
+      }
+    },
+    {
+      "date": "2025-03-20",
+      "holdings": [
+        "quantum_computing"
+      ],
+      "scores": {
+        "quantum_computing": 0.0301,
+        "robotics_ai": -0.0492,
+        "broad_market": -0.0614,
+        "semiconductor": -0.0923,
+        "technology": -0.0936,
+        "software": -0.1104,
+        "technology_cloud": -0.1314
+      }
+    },
+    {
+      "date": "2025-04-21",
+      "holdings": [
+        "broad_market"
+      ],
+      "scores": {
+        "broad_market": -0.1103,
+        "technology": -0.1344,
+        "quantum_computing": -0.1387,
+        "robotics_ai": -0.1775,
+        "software": -0.1905,
+        "technology_cloud": -0.2159,
+        "semiconductor": -0.2492
+      }
+    },
+    {
+      "date": "2025-05-20",
+      "holdings": [
+        "quantum_computing"
+      ],
+      "scores": {
+        "quantum_computing": -0.004,
+        "broad_market": -0.0272,
+        "technology": -0.0322,
+        "software": -0.0568,
+        "semiconductor": -0.0584,
+        "robotics_ai": -0.0825,
+        "technology_cloud": -0.1096
+      }
+    },
+    {
+      "date": "2025-06-20",
+      "holdings": [
+        "semiconductor"
+      ],
+      "scores": {
+        "semiconductor": 0.134,
+        "quantum_computing": 0.1084,
+        "technology": 0.1,
+        "software": 0.0898,
+        "technology_cloud": 0.0673,
+        "broad_market": 0.0534,
+        "robotics_ai": 0.0129
+      }
+    },
+    {
+      "date": "2025-07-22",
+      "holdings": [
+        "semiconductor"
+      ],
+      "scores": {
+        "semiconductor": 0.4999,
+        "quantum_computing": 0.3554,
+        "software": 0.3289,
+        "technology_cloud": 0.2941,
+        "technology": 0.2704,
+        "robotics_ai": 0.2645,
+        "broad_market": 0.1944
+      }
+    },
+    {
+      "date": "2025-08-20",
+      "holdings": [
+        "semiconductor"
+      ],
+      "scores": {
+        "semiconductor": 0.1731,
+        "robotics_ai": 0.1002,
+        "quantum_computing": 0.0932,
+        "technology": 0.0906,
+        "software": 0.0767,
+        "broad_market": 0.0756,
+        "technology_cloud": 0.0316
+      }
+    }
+  ],
+  "fixed_rebalance_log_sample": [
+    {
+      "date": "2024-11-14",
+      "holdings": [
+        "robotics_ai"
+      ],
+      "scores": {
+        "robotics_ai": 0.0722,
+        "software": 0.0647,
+        "semiconductor": -0.0212
+      }
+    },
+    {
+      "date": "2024-12-16",
+      "holdings": [
+        "software"
+      ],
+      "scores": {
+        "software": 0.1171,
+        "robotics_ai": 0.0737,
+        "semiconductor": 0.0604
+      }
+    },
+    {
+      "date": "2025-01-17",
+      "holdings": [
+        "robotics_ai"
+      ],
+      "scores": {
+        "robotics_ai": 0.0267,
+        "software": 0.0216,
+        "semiconductor": 0.0173
+      }
+    },
+    {
+      "date": "2025-02-19",
+      "holdings": [
+        "robotics_ai"
+      ],
+      "scores": {
+        "robotics_ai": 0.0533,
+        "semiconductor": 0.0514,
+        "software": 0.0354
+      }
+    },
+    {
+      "date": "2025-03-20",
+      "holdings": [
+        "robotics_ai"
+      ],
+      "scores": {
+        "robotics_ai": -0.0492,
+        "semiconductor": -0.0923,
+        "software": -0.1104
+      }
+    },
+    {
+      "date": "2025-04-21",
+      "holdings": [
+        "robotics_ai"
+      ],
+      "scores": {
+        "robotics_ai": -0.1775,
+        "software": -0.1905,
+        "semiconductor": -0.2492
+      }
+    },
+    {
+      "date": "2025-05-20",
+      "holdings": [
+        "software"
+      ],
+      "scores": {
+        "software": -0.0568,
+        "semiconductor": -0.0584,
+        "robotics_ai": -0.0825
+      }
+    },
+    {
+      "date": "2025-06-20",
+      "holdings": [
+        "semiconductor"
+      ],
+      "scores": {
+        "semiconductor": 0.134,
+        "software": 0.0898,
+        "robotics_ai": 0.0129
+      }
+    },
+    {
+      "date": "2025-07-22",
+      "holdings": [
+        "semiconductor"
+      ],
+      "scores": {
+        "semiconductor": 0.4999,
+        "software": 0.3289,
+        "robotics_ai": 0.2645
+      }
+    },
+    {
+      "date": "2025-08-20",
+      "holdings": [
+        "semiconductor"
+      ],
+      "scores": {
+        "semiconductor": 0.1731,
+        "robotics_ai": 0.1002,
+        "software": 0.0767
+      }
+    }
+  ]
+}

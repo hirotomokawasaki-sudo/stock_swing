@@ -1,0 +1,664 @@
+{
+  "generated_at": "2026-08-26T12:45:02.054200+00:00",
+  "methodology": "v4 rigorous engine (t+1 fill, PIT universe, conservative OHLC exit, slippage, gross/sector/cluster caps) + rolling walk-forward with embargo",
+  "pre_registered_criteria": "A threshold is 'supported' only if (a) test-window PF >= baseline test-window PF in a majority of rolls, AND (b) overall PF does not fall below baseline overall PF. 75.0 is the headline/reference threshold (R11-C's original design choice), not re-selected after seeing results.",
+  "slippage_bps": 5.0,
+  "rolling_wf_config": {
+    "n_rolls": 4,
+    "train_frac": 0.5,
+    "test_frac": 0.15,
+    "embargo_days": 20
+  },
+  "baseline": {
+    "overall": {
+      "label": "baseline_overall",
+      "n": 633,
+      "win_rate": 0.7125,
+      "profit_factor": 1.9251,
+      "net_pnl": 107375.5,
+      "avg_return_pct": 0.017
+    },
+    "test_pf_by_roll": [
+      -1.0,
+      -1.0,
+      3.7023,
+      1.6973
+    ],
+    "rolls": [
+      {
+        "roll": 0,
+        "train": [
+          "2024-08-15",
+          "2025-08-14"
+        ],
+        "test": [
+          "2025-09-15",
+          "2025-12-30"
+        ],
+        "test_summary": {
+          "label": "baseline_roll0_test",
+          "n": 0
+        }
+      },
+      {
+        "roll": 1,
+        "train": [
+          "2024-10-29",
+          "2025-10-28"
+        ],
+        "test": [
+          "2025-11-26",
+          "2026-03-17"
+        ],
+        "test_summary": {
+          "label": "baseline_roll1_test",
+          "n": 0
+        }
+      },
+      {
+        "roll": 2,
+        "train": [
+          "2025-01-15",
+          "2026-01-13"
+        ],
+        "test": [
+          "2026-02-12",
+          "2026-06-01"
+        ],
+        "test_summary": {
+          "label": "baseline_roll2_test",
+          "n": 306,
+          "win_rate": 0.8301,
+          "profit_factor": 3.7023,
+          "net_pnl": 104375.04,
+          "avg_return_pct": 0.0341
+        }
+      },
+      {
+        "roll": 3,
+        "train": [
+          "2025-04-01",
+          "2026-03-30"
+        ],
+        "test": [
+          "2026-04-29",
+          "2026-08-14"
+        ],
+        "test_summary": {
+          "label": "baseline_roll3_test",
+          "n": 565,
+          "win_rate": 0.6956,
+          "profit_factor": 1.6973,
+          "net_pnl": 76273.22,
+          "avg_return_pct": 0.0135
+        }
+      }
+    ]
+  },
+  "thresholds": {
+    "60.0": {
+      "overall": {
+        "label": "rsi_60.0_overall",
+        "n": 239,
+        "win_rate": 0.7113,
+        "profit_factor": 2.1798,
+        "net_pnl": 45618.05,
+        "avg_return_pct": 0.0191
+      },
+      "rolls_beating_baseline": 2,
+      "rolls_comparable": 2,
+      "n_rolls_total": 4,
+      "criterion_a_majority": true,
+      "criterion_b_overall_pf": true,
+      "supported": true,
+      "rolls": [
+        {
+          "roll": 0,
+          "train": [
+            "2024-08-15",
+            "2025-08-14"
+          ],
+          "test": [
+            "2025-09-15",
+            "2025-12-30"
+          ],
+          "test_summary": {
+            "label": "rsi_60.0_roll0_test",
+            "n": 0
+          },
+          "comparable": false,
+          "beats_baseline": false
+        },
+        {
+          "roll": 1,
+          "train": [
+            "2024-10-29",
+            "2025-10-28"
+          ],
+          "test": [
+            "2025-11-26",
+            "2026-03-17"
+          ],
+          "test_summary": {
+            "label": "rsi_60.0_roll1_test",
+            "n": 0
+          },
+          "comparable": false,
+          "beats_baseline": false
+        },
+        {
+          "roll": 2,
+          "train": [
+            "2025-01-15",
+            "2026-01-13"
+          ],
+          "test": [
+            "2026-02-12",
+            "2026-06-01"
+          ],
+          "test_summary": {
+            "label": "rsi_60.0_roll2_test",
+            "n": 72,
+            "win_rate": 0.8611,
+            "profit_factor": 5.9559,
+            "net_pnl": 28367.84,
+            "avg_return_pct": 0.0394
+          },
+          "comparable": true,
+          "beats_baseline": true
+        },
+        {
+          "roll": 3,
+          "train": [
+            "2025-04-01",
+            "2026-03-30"
+          ],
+          "test": [
+            "2026-04-29",
+            "2026-08-14"
+          ],
+          "test_summary": {
+            "label": "rsi_60.0_roll3_test",
+            "n": 221,
+            "win_rate": 0.7014,
+            "profit_factor": 1.991,
+            "net_pnl": 36733.3,
+            "avg_return_pct": 0.0166
+          },
+          "comparable": true,
+          "beats_baseline": true
+        }
+      ]
+    },
+    "65.0": {
+      "overall": {
+        "label": "rsi_65.0_overall",
+        "n": 390,
+        "win_rate": 0.7231,
+        "profit_factor": 2.282,
+        "net_pnl": 76912.07,
+        "avg_return_pct": 0.0197
+      },
+      "rolls_beating_baseline": 2,
+      "rolls_comparable": 2,
+      "n_rolls_total": 4,
+      "criterion_a_majority": true,
+      "criterion_b_overall_pf": true,
+      "supported": true,
+      "rolls": [
+        {
+          "roll": 0,
+          "train": [
+            "2024-08-15",
+            "2025-08-14"
+          ],
+          "test": [
+            "2025-09-15",
+            "2025-12-30"
+          ],
+          "test_summary": {
+            "label": "rsi_65.0_roll0_test",
+            "n": 0
+          },
+          "comparable": false,
+          "beats_baseline": false
+        },
+        {
+          "roll": 1,
+          "train": [
+            "2024-10-29",
+            "2025-10-28"
+          ],
+          "test": [
+            "2025-11-26",
+            "2026-03-17"
+          ],
+          "test_summary": {
+            "label": "rsi_65.0_roll1_test",
+            "n": 0
+          },
+          "comparable": false,
+          "beats_baseline": false
+        },
+        {
+          "roll": 2,
+          "train": [
+            "2025-01-15",
+            "2026-01-13"
+          ],
+          "test": [
+            "2026-02-12",
+            "2026-06-01"
+          ],
+          "test_summary": {
+            "label": "rsi_65.0_roll2_test",
+            "n": 139,
+            "win_rate": 0.8561,
+            "profit_factor": 5.8614,
+            "net_pnl": 55043.89,
+            "avg_return_pct": 0.0396
+          },
+          "comparable": true,
+          "beats_baseline": true
+        },
+        {
+          "roll": 3,
+          "train": [
+            "2025-04-01",
+            "2026-03-30"
+          ],
+          "test": [
+            "2026-04-29",
+            "2026-08-14"
+          ],
+          "test_summary": {
+            "label": "rsi_65.0_roll3_test",
+            "n": 364,
+            "win_rate": 0.7143,
+            "profit_factor": 2.1154,
+            "net_pnl": 65015.16,
+            "avg_return_pct": 0.0179
+          },
+          "comparable": true,
+          "beats_baseline": true
+        }
+      ]
+    },
+    "70.0": {
+      "overall": {
+        "label": "rsi_70.0_overall",
+        "n": 486,
+        "win_rate": 0.7222,
+        "profit_factor": 2.3015,
+        "net_pnl": 102825.74,
+        "avg_return_pct": 0.0212
+      },
+      "rolls_beating_baseline": 2,
+      "rolls_comparable": 2,
+      "n_rolls_total": 4,
+      "criterion_a_majority": true,
+      "criterion_b_overall_pf": true,
+      "supported": true,
+      "rolls": [
+        {
+          "roll": 0,
+          "train": [
+            "2024-08-15",
+            "2025-08-14"
+          ],
+          "test": [
+            "2025-09-15",
+            "2025-12-30"
+          ],
+          "test_summary": {
+            "label": "rsi_70.0_roll0_test",
+            "n": 0
+          },
+          "comparable": false,
+          "beats_baseline": false
+        },
+        {
+          "roll": 1,
+          "train": [
+            "2024-10-29",
+            "2025-10-28"
+          ],
+          "test": [
+            "2025-11-26",
+            "2026-03-17"
+          ],
+          "test_summary": {
+            "label": "rsi_70.0_roll1_test",
+            "n": 0
+          },
+          "comparable": false,
+          "beats_baseline": false
+        },
+        {
+          "roll": 2,
+          "train": [
+            "2025-01-15",
+            "2026-01-13"
+          ],
+          "test": [
+            "2026-02-12",
+            "2026-06-01"
+          ],
+          "test_summary": {
+            "label": "rsi_70.0_roll2_test",
+            "n": 205,
+            "win_rate": 0.8293,
+            "profit_factor": 4.6022,
+            "net_pnl": 81686.09,
+            "avg_return_pct": 0.0398
+          },
+          "comparable": true,
+          "beats_baseline": true
+        },
+        {
+          "roll": 3,
+          "train": [
+            "2025-04-01",
+            "2026-03-30"
+          ],
+          "test": [
+            "2026-04-29",
+            "2026-08-14"
+          ],
+          "test_summary": {
+            "label": "rsi_70.0_roll3_test",
+            "n": 450,
+            "win_rate": 0.7133,
+            "profit_factor": 2.2002,
+            "net_pnl": 90231.38,
+            "avg_return_pct": 0.0201
+          },
+          "comparable": true,
+          "beats_baseline": true
+        }
+      ]
+    },
+    "75.0": {
+      "overall": {
+        "label": "rsi_75.0_overall",
+        "n": 541,
+        "win_rate": 0.7264,
+        "profit_factor": 2.2371,
+        "net_pnl": 110022.41,
+        "avg_return_pct": 0.0203
+      },
+      "rolls_beating_baseline": 2,
+      "rolls_comparable": 2,
+      "n_rolls_total": 4,
+      "criterion_a_majority": true,
+      "criterion_b_overall_pf": true,
+      "supported": true,
+      "rolls": [
+        {
+          "roll": 0,
+          "train": [
+            "2024-08-15",
+            "2025-08-14"
+          ],
+          "test": [
+            "2025-09-15",
+            "2025-12-30"
+          ],
+          "test_summary": {
+            "label": "rsi_75.0_roll0_test",
+            "n": 0
+          },
+          "comparable": false,
+          "beats_baseline": false
+        },
+        {
+          "roll": 1,
+          "train": [
+            "2024-10-29",
+            "2025-10-28"
+          ],
+          "test": [
+            "2025-11-26",
+            "2026-03-17"
+          ],
+          "test_summary": {
+            "label": "rsi_75.0_roll1_test",
+            "n": 0
+          },
+          "comparable": false,
+          "beats_baseline": false
+        },
+        {
+          "roll": 2,
+          "train": [
+            "2025-01-15",
+            "2026-01-13"
+          ],
+          "test": [
+            "2026-02-12",
+            "2026-06-01"
+          ],
+          "test_summary": {
+            "label": "rsi_75.0_roll2_test",
+            "n": 241,
+            "win_rate": 0.8423,
+            "profit_factor": 4.5921,
+            "net_pnl": 93895.58,
+            "avg_return_pct": 0.039
+          },
+          "comparable": true,
+          "beats_baseline": true
+        },
+        {
+          "roll": 3,
+          "train": [
+            "2025-04-01",
+            "2026-03-30"
+          ],
+          "test": [
+            "2026-04-29",
+            "2026-08-14"
+          ],
+          "test_summary": {
+            "label": "rsi_75.0_roll3_test",
+            "n": 488,
+            "win_rate": 0.7111,
+            "profit_factor": 2.0373,
+            "net_pnl": 87340.11,
+            "avg_return_pct": 0.0179
+          },
+          "comparable": true,
+          "beats_baseline": true
+        }
+      ]
+    },
+    "80.0": {
+      "overall": {
+        "label": "rsi_80.0_overall",
+        "n": 591,
+        "win_rate": 0.7191,
+        "profit_factor": 2.0426,
+        "net_pnl": 106997.73,
+        "avg_return_pct": 0.0181
+      },
+      "rolls_beating_baseline": 2,
+      "rolls_comparable": 2,
+      "n_rolls_total": 4,
+      "criterion_a_majority": true,
+      "criterion_b_overall_pf": true,
+      "supported": true,
+      "rolls": [
+        {
+          "roll": 0,
+          "train": [
+            "2024-08-15",
+            "2025-08-14"
+          ],
+          "test": [
+            "2025-09-15",
+            "2025-12-30"
+          ],
+          "test_summary": {
+            "label": "rsi_80.0_roll0_test",
+            "n": 0
+          },
+          "comparable": false,
+          "beats_baseline": false
+        },
+        {
+          "roll": 1,
+          "train": [
+            "2024-10-29",
+            "2025-10-28"
+          ],
+          "test": [
+            "2025-11-26",
+            "2026-03-17"
+          ],
+          "test_summary": {
+            "label": "rsi_80.0_roll1_test",
+            "n": 0
+          },
+          "comparable": false,
+          "beats_baseline": false
+        },
+        {
+          "roll": 2,
+          "train": [
+            "2025-01-15",
+            "2026-01-13"
+          ],
+          "test": [
+            "2026-02-12",
+            "2026-06-01"
+          ],
+          "test_summary": {
+            "label": "rsi_80.0_roll2_test",
+            "n": 278,
+            "win_rate": 0.8345,
+            "profit_factor": 3.9521,
+            "net_pnl": 98002.15,
+            "avg_return_pct": 0.0353
+          },
+          "comparable": true,
+          "beats_baseline": true
+        },
+        {
+          "roll": 3,
+          "train": [
+            "2025-04-01",
+            "2026-03-30"
+          ],
+          "test": [
+            "2026-04-29",
+            "2026-08-14"
+          ],
+          "test_summary": {
+            "label": "rsi_80.0_roll3_test",
+            "n": 530,
+            "win_rate": 0.7038,
+            "profit_factor": 1.8419,
+            "net_pnl": 81530.62,
+            "avg_return_pct": 0.0154
+          },
+          "comparable": true,
+          "beats_baseline": true
+        }
+      ]
+    },
+    "85.0": {
+      "overall": {
+        "label": "rsi_85.0_overall",
+        "n": 630,
+        "win_rate": 0.7175,
+        "profit_factor": 1.9785,
+        "net_pnl": 110423.36,
+        "avg_return_pct": 0.0175
+      },
+      "rolls_beating_baseline": 2,
+      "rolls_comparable": 2,
+      "n_rolls_total": 4,
+      "criterion_a_majority": true,
+      "criterion_b_overall_pf": true,
+      "supported": true,
+      "rolls": [
+        {
+          "roll": 0,
+          "train": [
+            "2024-08-15",
+            "2025-08-14"
+          ],
+          "test": [
+            "2025-09-15",
+            "2025-12-30"
+          ],
+          "test_summary": {
+            "label": "rsi_85.0_roll0_test",
+            "n": 0
+          },
+          "comparable": false,
+          "beats_baseline": false
+        },
+        {
+          "roll": 1,
+          "train": [
+            "2024-10-29",
+            "2025-10-28"
+          ],
+          "test": [
+            "2025-11-26",
+            "2026-03-17"
+          ],
+          "test_summary": {
+            "label": "rsi_85.0_roll1_test",
+            "n": 0
+          },
+          "comparable": false,
+          "beats_baseline": false
+        },
+        {
+          "roll": 2,
+          "train": [
+            "2025-01-15",
+            "2026-01-13"
+          ],
+          "test": [
+            "2026-02-12",
+            "2026-06-01"
+          ],
+          "test_summary": {
+            "label": "rsi_85.0_roll2_test",
+            "n": 304,
+            "win_rate": 0.8322,
+            "profit_factor": 3.7728,
+            "net_pnl": 104590.56,
+            "avg_return_pct": 0.0344
+          },
+          "comparable": true,
+          "beats_baseline": true
+        },
+        {
+          "roll": 3,
+          "train": [
+            "2025-04-01",
+            "2026-03-30"
+          ],
+          "test": [
+            "2026-04-29",
+            "2026-08-14"
+          ],
+          "test_summary": {
+            "label": "rsi_85.0_roll3_test",
+            "n": 562,
+            "win_rate": 0.6993,
+            "profit_factor": 1.7431,
+            "net_pnl": 79567.51,
+            "avg_return_pct": 0.0142
+          },
+          "comparable": true,
+          "beats_baseline": true
+        }
+      ]
+    }
+  }
+}

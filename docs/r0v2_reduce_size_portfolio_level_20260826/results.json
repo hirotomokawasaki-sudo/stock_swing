@@ -1,0 +1,22 @@
+{
+  "baseline": {
+    "label": "baseline",
+    "n": 1141,
+    "win_rate": 0.5635,
+    "profit_factor": 1.4325,
+    "net_pnl": 441345.86,
+    "avg_return_pct": 0.0173
+  },
+  "with_reduce_size": {
+    "label": "with_reduce_size",
+    "n": 1115,
+    "win_rate": 0.5686,
+    "profit_factor": 1.497,
+    "net_pnl": 482405.41,
+    "avg_return_pct": 0.0186
+  },
+  "reduce_size_active_days": 63,
+  "fully_blocked_days": 13,
+  "candidates_seen_while_reduced": 117,
+  "candidates_blocked_while_reduced": 61
+}

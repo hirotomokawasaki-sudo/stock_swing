@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-08-26T12:58:35.285476+00:00",
+  "methodology": "v4-derived engine WITHOUT one-position-per-symbol exclusivity and WITHOUT gross/sector/cluster caps -- isolates RSI filter's direct effect from the entry-timing-shift artifact found in r11c_rsi_threshold_grid_rolling_wf.py. Still a simplification: production's actual dollar-based position_limit_pct cap is NOT modeled here either (documented limitation).",
+  "threshold": 75.0,
+  "slippage_bps": 5.0,
+  "baseline": {
+    "label": "baseline_no_exclusivity",
+    "n": 2348,
+    "win_rate": 0.7313,
+    "profit_factor": 2.1246,
+    "net_pnl": 457198.42,
+    "avg_return_pct": 0.0195
+  },
+  "rsi_filtered": {
+    "label": "rsi_75.0_no_exclusivity",
+    "n": 1868,
+    "win_rate": 0.7323,
+    "profit_factor": 2.137,
+    "net_pnl": 358289.44,
+    "avg_return_pct": 0.0192,
+    "filter_dropped_count": 481
+  }
+}

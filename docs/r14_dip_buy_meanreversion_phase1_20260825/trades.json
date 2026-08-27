@@ -1,5 +1,19 @@
 [
   {
+    "symbol": "AVGO",
+    "signal_date": "2026-04-06",
+    "entry_date": "2026-04-07",
+    "entry_price": 327.0567409973144,
+    "exit_date": "2026-04-08",
+    "exit_price": 343.1722983947754,
+    "qty": 30.575734257934506,
+    "pnl": 492.7450004032574,
+    "return_pct": 0.04927450004032574,
+    "holding_days": 1,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.5218
+  },
+  {
     "symbol": "TSLA",
     "signal_date": "2026-04-06",
     "entry_date": "2026-04-07",
@@ -26,20 +40,6 @@
     "holding_days": 1,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.5946
-  },
-  {
-    "symbol": "AVGO",
-    "signal_date": "2026-04-06",
-    "entry_date": "2026-04-07",
-    "entry_price": 327.0567409973144,
-    "exit_date": "2026-04-08",
-    "exit_price": 343.1722983947754,
-    "qty": 30.575734257934506,
-    "pnl": 492.7450004032574,
-    "return_pct": 0.04927450004032574,
-    "holding_days": 1,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.5218
   },
   {
     "symbol": "CRM",
@@ -630,20 +630,6 @@
     "entry_signal_strength": 0.8684
   },
   {
-    "symbol": "QCOM",
-    "signal_date": "2026-06-10",
-    "entry_date": "2026-06-11",
-    "entry_price": 191.11091816711425,
-    "exit_date": "2026-06-11",
-    "exit_price": 196.50889086959836,
-    "qty": 52.32563422282154,
-    "pnl": 282.4523451749591,
-    "return_pct": 0.028245234517495908,
-    "holding_days": 0,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.5592
-  },
-  {
     "symbol": "SMCI",
     "signal_date": "2026-06-10",
     "entry_date": "2026-06-11",
@@ -656,6 +642,20 @@
     "holding_days": 0,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.5059
+  },
+  {
+    "symbol": "QCOM",
+    "signal_date": "2026-06-10",
+    "entry_date": "2026-06-11",
+    "entry_price": 191.11091816711425,
+    "exit_date": "2026-06-11",
+    "exit_price": 196.50889086959836,
+    "qty": 52.32563422282154,
+    "pnl": 282.4523451749591,
+    "return_pct": 0.028245234517495908,
+    "holding_days": 0,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.5592
   },
   {
     "symbol": "CIEN",
@@ -910,20 +910,6 @@
     "entry_signal_strength": 0.4358
   },
   {
-    "symbol": "TSLA",
-    "signal_date": "2026-06-17",
-    "entry_date": "2026-06-18",
-    "entry_price": 398.4981061096191,
-    "exit_date": "2026-06-25",
-    "exit_price": 378.19462760333397,
-    "qty": 25.094222147317293,
-    "pnl": -509.5000000000002,
-    "return_pct": -0.05095000000000003,
-    "holding_days": 7,
-    "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.4001
-  },
-  {
     "symbol": "NOW",
     "signal_date": "2026-06-17",
     "entry_date": "2026-06-18",
@@ -936,6 +922,20 @@
     "holding_days": 7,
     "exit_reason": "stop_loss",
     "entry_signal_strength": 0.4771
+  },
+  {
+    "symbol": "TSLA",
+    "signal_date": "2026-06-17",
+    "entry_date": "2026-06-18",
+    "entry_price": 398.4981061096191,
+    "exit_date": "2026-06-25",
+    "exit_price": 378.19462760333397,
+    "qty": 25.094222147317293,
+    "pnl": -509.5000000000002,
+    "return_pct": -0.05095000000000003,
+    "holding_days": 7,
+    "exit_reason": "stop_loss",
+    "entry_signal_strength": 0.4001
   },
   {
     "symbol": "PLTR",
@@ -952,20 +952,6 @@
     "entry_signal_strength": 0.4453
   },
   {
-    "symbol": "QCOM",
-    "signal_date": "2026-06-22",
-    "entry_date": "2026-06-23",
-    "entry_price": 207.5473363342285,
-    "exit_date": "2026-06-25",
-    "exit_price": 211.53819298919677,
-    "qty": 48.1817795237626,
-    "pnl": 192.28657546062183,
-    "return_pct": 0.019228657546062185,
-    "holding_days": 2,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.4548
-  },
-  {
     "symbol": "ORCL",
     "signal_date": "2026-06-22",
     "entry_date": "2026-06-23",
@@ -978,6 +964,20 @@
     "holding_days": 2,
     "exit_reason": "stop_loss",
     "entry_signal_strength": 0.5157
+  },
+  {
+    "symbol": "QCOM",
+    "signal_date": "2026-06-22",
+    "entry_date": "2026-06-23",
+    "entry_price": 207.5473363342285,
+    "exit_date": "2026-06-25",
+    "exit_price": 211.53819298919677,
+    "qty": 48.1817795237626,
+    "pnl": 192.28657546062183,
+    "return_pct": 0.019228657546062185,
+    "holding_days": 2,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.4548
   },
   {
     "symbol": "SNPS",
@@ -1008,20 +1008,6 @@
     "entry_signal_strength": 0.5021
   },
   {
-    "symbol": "SNOW",
-    "signal_date": "2026-06-25",
-    "entry_date": "2026-06-26",
-    "entry_price": 225.49527427673337,
-    "exit_date": "2026-06-26",
-    "exit_price": 242.2575,
-    "qty": 44.34682736511699,
-    "pnl": 743.3515304048282,
-    "return_pct": 0.07433515304048283,
-    "holding_days": 0,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.4023
-  },
-  {
     "symbol": "MDB",
     "signal_date": "2026-06-25",
     "entry_date": "2026-06-26",
@@ -1048,6 +1034,20 @@
     "holding_days": 0,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.78
+  },
+  {
+    "symbol": "SNOW",
+    "signal_date": "2026-06-25",
+    "entry_date": "2026-06-26",
+    "entry_price": 225.49527427673337,
+    "exit_date": "2026-06-26",
+    "exit_price": 242.2575,
+    "qty": 44.34682736511699,
+    "pnl": 743.3515304048282,
+    "return_pct": 0.07433515304048283,
+    "holding_days": 0,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.4023
   },
   {
     "symbol": "INTU",
@@ -1092,20 +1092,6 @@
     "entry_signal_strength": 0.5557
   },
   {
-    "symbol": "AMZN",
-    "signal_date": "2026-06-25",
-    "entry_date": "2026-06-26",
-    "entry_price": 227.43721672058103,
-    "exit_date": "2026-06-29",
-    "exit_price": 241.97648780593872,
-    "qty": 43.96817787427263,
-    "pnl": 639.2652572432754,
-    "return_pct": 0.06392652572432755,
-    "holding_days": 3,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.7645
-  },
-  {
     "symbol": "PLTR",
     "signal_date": "2026-06-25",
     "entry_date": "2026-06-26",
@@ -1132,6 +1118,20 @@
     "holding_days": 3,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.7045
+  },
+  {
+    "symbol": "AMZN",
+    "signal_date": "2026-06-25",
+    "entry_date": "2026-06-26",
+    "entry_price": 227.43721672058103,
+    "exit_date": "2026-06-29",
+    "exit_price": 241.97648780593872,
+    "qty": 43.96817787427263,
+    "pnl": 639.2652572432754,
+    "return_pct": 0.06392652572432755,
+    "holding_days": 3,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.7645
   },
   {
     "symbol": "RBRK",
@@ -1162,20 +1162,6 @@
     "entry_signal_strength": 0.4027
   },
   {
-    "symbol": "ADBE",
-    "signal_date": "2026-06-22",
-    "entry_date": "2026-06-23",
-    "entry_price": 198.15796672058104,
-    "exit_date": "2026-06-30",
-    "exit_price": 202.00388742759705,
-    "qty": 50.46478910484996,
-    "pnl": 194.0835773935382,
-    "return_pct": 0.019408357739353822,
-    "holding_days": 7,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.8611
-  },
-  {
     "symbol": "CRM",
     "signal_date": "2026-06-22",
     "entry_date": "2026-06-23",
@@ -1188,6 +1174,20 @@
     "holding_days": 7,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.749
+  },
+  {
+    "symbol": "ADBE",
+    "signal_date": "2026-06-22",
+    "entry_date": "2026-06-23",
+    "entry_price": 198.15796672058104,
+    "exit_date": "2026-06-30",
+    "exit_price": 202.00388742759705,
+    "qty": 50.46478910484996,
+    "pnl": 194.0835773935382,
+    "return_pct": 0.019408357739353822,
+    "holding_days": 7,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.8611
   },
   {
     "symbol": "HPQ",
@@ -1218,20 +1218,6 @@
     "entry_signal_strength": 0.4115
   },
   {
-    "symbol": "RBRK",
-    "signal_date": "2026-06-29",
-    "entry_date": "2026-06-30",
-    "entry_price": 75.43536061096191,
-    "exit_date": "2026-06-30",
-    "exit_price": 79.19882515296935,
-    "qty": 132.56382575768913,
-    "pnl": 498.89925779191566,
-    "return_pct": 0.04988992577919157,
-    "holding_days": 0,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.5515
-  },
-  {
     "symbol": "DDOG",
     "signal_date": "2026-06-29",
     "entry_date": "2026-06-30",
@@ -1244,6 +1230,20 @@
     "holding_days": 0,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.5627
+  },
+  {
+    "symbol": "RBRK",
+    "signal_date": "2026-06-29",
+    "entry_date": "2026-06-30",
+    "entry_price": 75.43536061096191,
+    "exit_date": "2026-06-30",
+    "exit_price": 79.19882515296935,
+    "qty": 132.56382575768913,
+    "pnl": 498.89925779191566,
+    "return_pct": 0.04988992577919157,
+    "holding_days": 0,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.5515
   },
   {
     "symbol": "SMCI",
@@ -1274,20 +1274,6 @@
     "entry_signal_strength": 0.5806
   },
   {
-    "symbol": "QCOM",
-    "signal_date": "2026-06-25",
-    "entry_date": "2026-06-26",
-    "entry_price": 201.9016969451904,
-    "exit_date": "2026-07-01",
-    "exit_price": 187.58080958086802,
-    "qty": 49.52905374893737,
-    "pnl": -709.3000000000009,
-    "return_pct": -0.07093000000000009,
-    "holding_days": 5,
-    "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.7234
-  },
-  {
     "symbol": "META",
     "signal_date": "2026-06-25",
     "entry_date": "2026-06-26",
@@ -1300,6 +1286,20 @@
     "holding_days": 5,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.6864
+  },
+  {
+    "symbol": "QCOM",
+    "signal_date": "2026-06-25",
+    "entry_date": "2026-06-26",
+    "entry_price": 201.9016969451904,
+    "exit_date": "2026-07-01",
+    "exit_price": 187.58080958086802,
+    "qty": 49.52905374893737,
+    "pnl": -709.3000000000009,
+    "return_pct": -0.07093000000000009,
+    "holding_days": 5,
+    "exit_reason": "stop_loss",
+    "entry_signal_strength": 0.7234
   },
   {
     "symbol": "MDB",
@@ -1316,20 +1316,6 @@
     "entry_signal_strength": 0.4426
   },
   {
-    "symbol": "IBM",
-    "signal_date": "2026-06-26",
-    "entry_date": "2026-06-29",
-    "entry_price": 274.57428778076167,
-    "exit_date": "2026-07-01",
-    "exit_price": 283.8986577355957,
-    "qty": 36.420016166934985,
-    "pnl": 339.59370450153807,
-    "return_pct": 0.03395937045015381,
-    "holding_days": 2,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.5136
-  },
-  {
     "symbol": "NOW",
     "signal_date": "2026-06-26",
     "entry_date": "2026-06-29",
@@ -1342,6 +1328,20 @@
     "holding_days": 2,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.8779
+  },
+  {
+    "symbol": "IBM",
+    "signal_date": "2026-06-26",
+    "entry_date": "2026-06-29",
+    "entry_price": 274.57428778076167,
+    "exit_date": "2026-07-01",
+    "exit_price": 283.8986577355957,
+    "qty": 36.420016166934985,
+    "pnl": 339.59370450153807,
+    "return_pct": 0.03395937045015381,
+    "holding_days": 2,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.5136
   },
   {
     "symbol": "PLTR",
@@ -1386,20 +1386,6 @@
     "entry_signal_strength": 0.4094
   },
   {
-    "symbol": "CIEN",
-    "signal_date": "2026-06-24",
-    "entry_date": "2026-06-25",
-    "entry_price": 477.89743344116204,
-    "exit_date": "2026-07-02",
-    "exit_price": 434.451777767026,
-    "qty": 20.92499205947542,
-    "pnl": -909.1000000000001,
-    "return_pct": -0.09091000000000002,
-    "holding_days": 7,
-    "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.8611
-  },
-  {
     "symbol": "AAPL",
     "signal_date": "2026-06-24",
     "entry_date": "2026-06-25",
@@ -1412,6 +1398,20 @@
     "holding_days": 7,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.4215
+  },
+  {
+    "symbol": "CIEN",
+    "signal_date": "2026-06-24",
+    "entry_date": "2026-06-25",
+    "entry_price": 477.89743344116204,
+    "exit_date": "2026-07-02",
+    "exit_price": 434.451777767026,
+    "qty": 20.92499205947542,
+    "pnl": -909.1000000000001,
+    "return_pct": -0.09091000000000002,
+    "holding_days": 7,
+    "exit_reason": "stop_loss",
+    "entry_signal_strength": 0.8611
   },
   {
     "symbol": "FICO",
@@ -1428,20 +1428,6 @@
     "entry_signal_strength": 0.4126
   },
   {
-    "symbol": "SNOW",
-    "signal_date": "2026-06-29",
-    "entry_date": "2026-06-30",
-    "entry_price": 250.04980305480953,
-    "exit_date": "2026-07-02",
-    "exit_price": 255.43070536239622,
-    "qty": 39.99203309833464,
-    "pnl": 215.19322318391232,
-    "return_pct": 0.02151932231839123,
-    "holding_days": 2,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.5553
-  },
-  {
     "symbol": "CRWD",
     "signal_date": "2026-06-29",
     "entry_date": "2026-06-30",
@@ -1454,6 +1440,20 @@
     "holding_days": 2,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.4006
+  },
+  {
+    "symbol": "SNOW",
+    "signal_date": "2026-06-29",
+    "entry_date": "2026-06-30",
+    "entry_price": 250.04980305480953,
+    "exit_date": "2026-07-02",
+    "exit_price": 255.43070536239622,
+    "qty": 39.99203309833464,
+    "pnl": 215.19322318391232,
+    "return_pct": 0.02151932231839123,
+    "holding_days": 2,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.5553
   },
   {
     "symbol": "ADBE",
@@ -1498,18 +1498,18 @@
     "entry_signal_strength": 0.5444
   },
   {
-    "symbol": "NBIS",
+    "symbol": "IBM",
     "signal_date": "2026-07-01",
     "entry_date": "2026-07-02",
-    "entry_price": 233.23299999999998,
+    "entry_price": 283.4231546630859,
     "exit_date": "2026-07-06",
-    "exit_price": 221.34977864999996,
-    "qty": 42.87557935626606,
-    "pnl": -509.5000000000007,
-    "return_pct": -0.050950000000000065,
+    "exit_price": 290.00101576080317,
+    "qty": 35.282932376810635,
+    "pnl": 232.08622829481249,
+    "return_pct": 0.023208622829481246,
     "holding_days": 4,
-    "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.5182
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.4402
   },
   {
     "symbol": "PTF",
@@ -1526,32 +1526,18 @@
     "entry_signal_strength": 0.4501
   },
   {
-    "symbol": "IBM",
+    "symbol": "NBIS",
     "signal_date": "2026-07-01",
     "entry_date": "2026-07-02",
-    "entry_price": 283.4231546630859,
+    "entry_price": 233.23299999999998,
     "exit_date": "2026-07-06",
-    "exit_price": 290.00101576080317,
-    "qty": 35.282932376810635,
-    "pnl": 232.08622829481249,
-    "return_pct": 0.023208622829481246,
+    "exit_price": 221.34977864999996,
+    "qty": 42.87557935626606,
+    "pnl": -509.5000000000007,
+    "return_pct": -0.050950000000000065,
     "holding_days": 4,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.4402
-  },
-  {
-    "symbol": "TSLA",
-    "signal_date": "2026-07-02",
-    "entry_date": "2026-07-06",
-    "entry_price": 397.8975,
-    "exit_date": "2026-07-06",
-    "exit_price": 404.8947,
-    "qty": 25.13210060379872,
-    "pnl": 175.8543343449009,
-    "return_pct": 0.01758543343449009,
-    "holding_days": 0,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.4292
+    "exit_reason": "stop_loss",
+    "entry_signal_strength": 0.5182
   },
   {
     "symbol": "DELL",
@@ -1566,6 +1552,20 @@
     "holding_days": 0,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.4471
+  },
+  {
+    "symbol": "TSLA",
+    "signal_date": "2026-07-02",
+    "entry_date": "2026-07-06",
+    "entry_price": 397.8975,
+    "exit_date": "2026-07-06",
+    "exit_price": 404.8947,
+    "qty": 25.13210060379872,
+    "pnl": 175.8543343449009,
+    "return_pct": 0.01758543343449009,
+    "holding_days": 0,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.4292
   },
   {
     "symbol": "SKYY",
@@ -1596,20 +1596,6 @@
     "entry_signal_strength": 0.6086
   },
   {
-    "symbol": "PLTR",
-    "signal_date": "2026-07-01",
-    "entry_date": "2026-07-02",
-    "entry_price": 129.1189954986572,
-    "exit_date": "2026-07-07",
-    "exit_price": 133.9044556159973,
-    "qty": 77.44793832526366,
-    "pnl": 370.6240200257657,
-    "return_pct": 0.03706240200257657,
-    "holding_days": 5,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.5975
-  },
-  {
     "symbol": "NOW",
     "signal_date": "2026-07-01",
     "entry_date": "2026-07-02",
@@ -1622,6 +1608,20 @@
     "holding_days": 5,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.5579
+  },
+  {
+    "symbol": "PLTR",
+    "signal_date": "2026-07-01",
+    "entry_date": "2026-07-02",
+    "entry_price": 129.1189954986572,
+    "exit_date": "2026-07-07",
+    "exit_price": 133.9044556159973,
+    "qty": 77.44793832526366,
+    "pnl": 370.6240200257657,
+    "return_pct": 0.03706240200257657,
+    "holding_days": 5,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.5975
   },
   {
     "symbol": "ADBE",
@@ -1708,20 +1708,6 @@
     "entry_signal_strength": 0.8381
   },
   {
-    "symbol": "META",
-    "signal_date": "2026-07-02",
-    "entry_date": "2026-07-06",
-    "entry_price": 595.4348668823242,
-    "exit_date": "2026-07-08",
-    "exit_price": 602.8785632427979,
-    "qty": 16.79444815242286,
-    "pnl": 125.01277258835468,
-    "return_pct": 0.012501277258835467,
-    "holding_days": 2,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.4635
-  },
-  {
     "symbol": "AVGO",
     "signal_date": "2026-07-02",
     "entry_date": "2026-07-06",
@@ -1748,6 +1734,20 @@
     "holding_days": 2,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.4496
+  },
+  {
+    "symbol": "META",
+    "signal_date": "2026-07-02",
+    "entry_date": "2026-07-06",
+    "entry_price": 595.4348668823242,
+    "exit_date": "2026-07-08",
+    "exit_price": 602.8785632427979,
+    "qty": 16.79444815242286,
+    "pnl": 125.01277258835468,
+    "return_pct": 0.012501277258835467,
+    "holding_days": 2,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.4635
   },
   {
     "symbol": "NBIS",
@@ -1904,20 +1904,6 @@
     "entry_signal_strength": 0.4871
   },
   {
-    "symbol": "SOXX",
-    "signal_date": "2026-07-02",
-    "entry_date": "2026-07-06",
-    "entry_price": 583.7331744384765,
-    "exit_date": "2026-07-13",
-    "exit_price": 553.991969200836,
-    "qty": 17.131114759101237,
-    "pnl": -509.50000000000097,
-    "return_pct": -0.05095000000000009,
-    "holding_days": 7,
-    "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.4312
-  },
-  {
     "symbol": "QTUM",
     "signal_date": "2026-07-02",
     "entry_date": "2026-07-06",
@@ -1932,18 +1918,18 @@
     "entry_signal_strength": 0.4569
   },
   {
-    "symbol": "SOXQ",
+    "symbol": "SOXX",
     "signal_date": "2026-07-02",
     "entry_date": "2026-07-06",
-    "entry_price": 102.18208183288573,
+    "entry_price": 583.7331744384765,
     "exit_date": "2026-07-13",
-    "exit_price": 96.9759047635002,
-    "qty": 97.8645161717742,
-    "pnl": -509.5000000000004,
-    "return_pct": -0.050950000000000044,
+    "exit_price": 553.991969200836,
+    "qty": 17.131114759101237,
+    "pnl": -509.50000000000097,
+    "return_pct": -0.05095000000000009,
     "holding_days": 7,
     "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.4719
+    "entry_signal_strength": 0.4312
   },
   {
     "symbol": "FTXL",
@@ -1958,6 +1944,20 @@
     "holding_days": 7,
     "exit_reason": "stop_loss",
     "entry_signal_strength": 0.5004
+  },
+  {
+    "symbol": "SOXQ",
+    "signal_date": "2026-07-02",
+    "entry_date": "2026-07-06",
+    "entry_price": 102.18208183288573,
+    "exit_date": "2026-07-13",
+    "exit_price": 96.9759047635002,
+    "qty": 97.8645161717742,
+    "pnl": -509.5000000000004,
+    "return_pct": -0.050950000000000044,
+    "holding_days": 7,
+    "exit_reason": "stop_loss",
+    "entry_signal_strength": 0.4719
   },
   {
     "symbol": "INTU",
@@ -2086,20 +2086,6 @@
     "entry_signal_strength": 1.0
   },
   {
-    "symbol": "SHOC",
-    "signal_date": "2026-07-02",
-    "entry_date": "2026-07-06",
-    "entry_price": 112.16205305480956,
-    "exit_date": "2026-07-16",
-    "exit_price": 106.447396451667,
-    "qty": 89.15671323449615,
-    "pnl": -509.5000000000009,
-    "return_pct": -0.05095000000000009,
-    "holding_days": 10,
-    "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.434
-  },
-  {
     "symbol": "TTEQ",
     "signal_date": "2026-07-02",
     "entry_date": "2026-07-06",
@@ -2112,6 +2098,20 @@
     "holding_days": 10,
     "exit_reason": "stop_loss",
     "entry_signal_strength": 0.4124
+  },
+  {
+    "symbol": "SHOC",
+    "signal_date": "2026-07-02",
+    "entry_date": "2026-07-06",
+    "entry_price": 112.16205305480956,
+    "exit_date": "2026-07-16",
+    "exit_price": 106.447396451667,
+    "qty": 89.15671323449615,
+    "pnl": -509.5000000000009,
+    "return_pct": -0.05095000000000009,
+    "holding_days": 10,
+    "exit_reason": "stop_loss",
+    "entry_signal_strength": 0.434
   },
   {
     "symbol": "ADBE",
@@ -2142,18 +2142,18 @@
     "entry_signal_strength": 0.7299
   },
   {
-    "symbol": "QCOM",
+    "symbol": "PTF",
     "signal_date": "2026-07-10",
     "entry_date": "2026-07-13",
-    "entry_price": 185.24505755615232,
+    "entry_price": 111.76165152740478,
     "exit_date": "2026-07-16",
-    "exit_price": 175.80682187366637,
-    "qty": 53.98254685941489,
-    "pnl": -509.4999999999996,
-    "return_pct": -0.05094999999999996,
+    "exit_price": 106.0673953820835,
+    "qty": 89.47612945347292,
+    "pnl": -509.5000000000002,
+    "return_pct": -0.05095000000000002,
     "holding_days": 3,
     "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.454
+    "entry_signal_strength": 0.5342
   },
   {
     "symbol": "INTC",
@@ -2170,18 +2170,18 @@
     "entry_signal_strength": 0.4326
   },
   {
-    "symbol": "PTF",
+    "symbol": "QCOM",
     "signal_date": "2026-07-10",
     "entry_date": "2026-07-13",
-    "entry_price": 111.76165152740478,
+    "entry_price": 185.24505755615232,
     "exit_date": "2026-07-16",
-    "exit_price": 106.0673953820835,
-    "qty": 89.47612945347292,
-    "pnl": -509.5000000000002,
-    "return_pct": -0.05095000000000002,
+    "exit_price": 175.80682187366637,
+    "qty": 53.98254685941489,
+    "pnl": -509.4999999999996,
+    "return_pct": -0.05094999999999996,
     "holding_days": 3,
     "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.5342
+    "entry_signal_strength": 0.454
   },
   {
     "symbol": "NBIS",
@@ -2226,20 +2226,6 @@
     "entry_signal_strength": 0.5205
   },
   {
-    "symbol": "LRCX",
-    "signal_date": "2026-07-13",
-    "entry_date": "2026-07-14",
-    "entry_price": 355.0146636657714,
-    "exit_date": "2026-07-17",
-    "exit_price": 336.92666655200037,
-    "qty": 28.167850580432646,
-    "pnl": -509.49999999999994,
-    "return_pct": -0.050949999999999995,
-    "holding_days": 3,
-    "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.5517
-  },
-  {
     "symbol": "SOXX",
     "signal_date": "2026-07-13",
     "entry_date": "2026-07-14",
@@ -2252,48 +2238,6 @@
     "holding_days": 3,
     "exit_reason": "stop_loss",
     "entry_signal_strength": 0.4645
-  },
-  {
-    "symbol": "KLAC",
-    "signal_date": "2026-07-13",
-    "entry_date": "2026-07-14",
-    "entry_price": 237.63739389038082,
-    "exit_date": "2026-07-17",
-    "exit_price": 225.5297686716659,
-    "qty": 42.08091932119436,
-    "pnl": -509.50000000000114,
-    "return_pct": -0.05095000000000011,
-    "holding_days": 3,
-    "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.6306
-  },
-  {
-    "symbol": "CHPS",
-    "signal_date": "2026-07-13",
-    "entry_date": "2026-07-14",
-    "entry_price": 91.89180305480956,
-    "exit_date": "2026-07-17",
-    "exit_price": 87.209915689167,
-    "qty": 108.82363461771911,
-    "pnl": -509.50000000000057,
-    "return_pct": -0.05095000000000006,
-    "holding_days": 3,
-    "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.5039
-  },
-  {
-    "symbol": "SOXQ",
-    "signal_date": "2026-07-13",
-    "entry_date": "2026-07-14",
-    "entry_price": 101.7216227493286,
-    "exit_date": "2026-07-17",
-    "exit_price": 96.5389060702503,
-    "qty": 98.30751544971793,
-    "pnl": -509.50000000000045,
-    "return_pct": -0.050950000000000044,
-    "holding_days": 3,
-    "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.4834
   },
   {
     "symbol": "FTXL",
@@ -2324,18 +2268,60 @@
     "entry_signal_strength": 0.4291
   },
   {
-    "symbol": "MU",
-    "signal_date": "2026-07-16",
-    "entry_date": "2026-07-17",
-    "entry_price": 823.3525593261718,
+    "symbol": "CHPS",
+    "signal_date": "2026-07-13",
+    "entry_date": "2026-07-14",
+    "entry_price": 91.89180305480956,
     "exit_date": "2026-07-17",
-    "exit_price": 875.9643800921631,
-    "qty": 12.145465374133236,
-    "pnl": 638.9950473834513,
-    "return_pct": 0.06389950473834512,
-    "holding_days": 0,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.7964
+    "exit_price": 87.209915689167,
+    "qty": 108.82363461771911,
+    "pnl": -509.50000000000057,
+    "return_pct": -0.05095000000000006,
+    "holding_days": 3,
+    "exit_reason": "stop_loss",
+    "entry_signal_strength": 0.5039
+  },
+  {
+    "symbol": "LRCX",
+    "signal_date": "2026-07-13",
+    "entry_date": "2026-07-14",
+    "entry_price": 355.0146636657714,
+    "exit_date": "2026-07-17",
+    "exit_price": 336.92666655200037,
+    "qty": 28.167850580432646,
+    "pnl": -509.49999999999994,
+    "return_pct": -0.050949999999999995,
+    "holding_days": 3,
+    "exit_reason": "stop_loss",
+    "entry_signal_strength": 0.5517
+  },
+  {
+    "symbol": "KLAC",
+    "signal_date": "2026-07-13",
+    "entry_date": "2026-07-14",
+    "entry_price": 237.63739389038082,
+    "exit_date": "2026-07-17",
+    "exit_price": 225.5297686716659,
+    "qty": 42.08091932119436,
+    "pnl": -509.50000000000114,
+    "return_pct": -0.05095000000000011,
+    "holding_days": 3,
+    "exit_reason": "stop_loss",
+    "entry_signal_strength": 0.6306
+  },
+  {
+    "symbol": "SOXQ",
+    "signal_date": "2026-07-13",
+    "entry_date": "2026-07-14",
+    "entry_price": 101.7216227493286,
+    "exit_date": "2026-07-17",
+    "exit_price": 96.5389060702503,
+    "qty": 98.30751544971793,
+    "pnl": -509.50000000000045,
+    "return_pct": -0.050950000000000044,
+    "holding_days": 3,
+    "exit_reason": "stop_loss",
+    "entry_signal_strength": 0.4834
   },
   {
     "symbol": "MRVL",
@@ -2352,32 +2338,32 @@
     "entry_signal_strength": 1.0
   },
   {
-    "symbol": "NBIS",
+    "symbol": "HPE",
     "signal_date": "2026-07-16",
     "entry_date": "2026-07-17",
-    "entry_price": 165.2400719451904,
+    "entry_price": 44.44440152740478,
     "exit_date": "2026-07-17",
-    "exit_price": 181.91865341148377,
-    "qty": 60.518008024814755,
-    "pnl": 1009.3545270196686,
-    "return_pct": 0.10093545270196685,
+    "exit_price": 45.14093961050033,
+    "qty": 225.00021726772312,
+    "pnl": 156.721220031743,
+    "return_pct": 0.015672122003174298,
     "holding_days": 0,
     "exit_reason": "trailing_stop",
-    "entry_signal_strength": 1.0
+    "entry_signal_strength": 0.4411
   },
   {
-    "symbol": "INTC",
+    "symbol": "MU",
     "signal_date": "2026-07-16",
     "entry_date": "2026-07-17",
-    "entry_price": 92.23213938903808,
+    "entry_price": 823.3525593261718,
     "exit_date": "2026-07-17",
-    "exit_price": 94.52363469200135,
-    "qty": 108.4220757128888,
-    "pnl": 248.4486772336127,
-    "return_pct": 0.02484486772336127,
+    "exit_price": 875.9643800921631,
+    "qty": 12.145465374133236,
+    "pnl": 638.9950473834513,
+    "return_pct": 0.06389950473834512,
     "holding_days": 0,
     "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.8475
+    "entry_signal_strength": 0.7964
   },
   {
     "symbol": "PTF",
@@ -2394,18 +2380,18 @@
     "entry_signal_strength": 0.9536
   },
   {
-    "symbol": "HPE",
+    "symbol": "INTC",
     "signal_date": "2026-07-16",
     "entry_date": "2026-07-17",
-    "entry_price": 44.44440152740478,
+    "entry_price": 92.23213938903808,
     "exit_date": "2026-07-17",
-    "exit_price": 45.14093961050033,
-    "qty": 225.00021726772312,
-    "pnl": 156.721220031743,
-    "return_pct": 0.015672122003174298,
+    "exit_price": 94.52363469200135,
+    "qty": 108.4220757128888,
+    "pnl": 248.4486772336127,
+    "return_pct": 0.02484486772336127,
     "holding_days": 0,
     "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.4411
+    "entry_signal_strength": 0.8475
   },
   {
     "symbol": "DELL",
@@ -2420,6 +2406,20 @@
     "holding_days": 0,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.4499
+  },
+  {
+    "symbol": "NBIS",
+    "signal_date": "2026-07-16",
+    "entry_date": "2026-07-17",
+    "entry_price": 165.2400719451904,
+    "exit_date": "2026-07-17",
+    "exit_price": 181.91865341148377,
+    "qty": 60.518008024814755,
+    "pnl": 1009.3545270196686,
+    "return_pct": 0.10093545270196685,
+    "holding_days": 0,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 1.0
   },
   {
     "symbol": "CIEN",
@@ -2506,34 +2506,6 @@
     "entry_signal_strength": 0.4119
   },
   {
-    "symbol": "MU",
-    "signal_date": "2026-07-17",
-    "entry_date": "2026-07-20",
-    "entry_price": 886.4555773315428,
-    "exit_date": "2026-07-21",
-    "exit_price": 952.4402111315918,
-    "qty": 11.280881135750251,
-    "pnl": 744.3648106843609,
-    "return_pct": 0.0744364810684361,
-    "holding_days": 1,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 1.0
-  },
-  {
-    "symbol": "AMD",
-    "signal_date": "2026-07-17",
-    "entry_date": "2026-07-20",
-    "entry_price": 517.5169999999999,
-    "exit_date": "2026-07-21",
-    "exit_price": 528.4261590216064,
-    "qty": 19.323036731160524,
-    "pnl": 210.79808048057276,
-    "return_pct": 0.021079808048057275,
-    "holding_days": 1,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.4823
-  },
-  {
     "symbol": "MRVL",
     "signal_date": "2026-07-17",
     "entry_date": "2026-07-20",
@@ -2548,15 +2520,29 @@
     "entry_signal_strength": 1.0
   },
   {
-    "symbol": "NBIS",
+    "symbol": "MU",
     "signal_date": "2026-07-17",
     "entry_date": "2026-07-20",
-    "entry_price": 187.1519613342285,
+    "entry_price": 886.4555773315428,
     "exit_date": "2026-07-21",
-    "exit_price": 211.96731574401855,
-    "qty": 53.432515100075975,
-    "pnl": 1325.9467992148436,
-    "return_pct": 0.13259467992148435,
+    "exit_price": 952.4402111315918,
+    "qty": 11.280881135750251,
+    "pnl": 744.3648106843609,
+    "return_pct": 0.0744364810684361,
+    "holding_days": 1,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 1.0
+  },
+  {
+    "symbol": "PTF",
+    "signal_date": "2026-07-17",
+    "entry_date": "2026-07-20",
+    "entry_price": 102.36226213836669,
+    "exit_date": "2026-07-21",
+    "exit_price": 107.3200725,
+    "qty": 97.69225289768066,
+    "pnl": 484.3396636674226,
+    "return_pct": 0.048433966366742257,
     "holding_days": 1,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 1.0
@@ -2576,15 +2562,29 @@
     "entry_signal_strength": 1.0
   },
   {
-    "symbol": "PTF",
+    "symbol": "AMD",
     "signal_date": "2026-07-17",
     "entry_date": "2026-07-20",
-    "entry_price": 102.36226213836669,
+    "entry_price": 517.5169999999999,
     "exit_date": "2026-07-21",
-    "exit_price": 107.3200725,
-    "qty": 97.69225289768066,
-    "pnl": 484.3396636674226,
-    "return_pct": 0.048433966366742257,
+    "exit_price": 528.4261590216064,
+    "qty": 19.323036731160524,
+    "pnl": 210.79808048057276,
+    "return_pct": 0.021079808048057275,
+    "holding_days": 1,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.4823
+  },
+  {
+    "symbol": "NBIS",
+    "signal_date": "2026-07-17",
+    "entry_date": "2026-07-20",
+    "entry_price": 187.1519613342285,
+    "exit_date": "2026-07-21",
+    "exit_price": 211.96731574401855,
+    "qty": 53.432515100075975,
+    "pnl": 1325.9467992148436,
+    "return_pct": 0.13259467992148435,
     "holding_days": 1,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 1.0
@@ -2716,20 +2716,6 @@
     "entry_signal_strength": 1.0
   },
   {
-    "symbol": "NBIS",
-    "signal_date": "2026-07-21",
-    "entry_date": "2026-07-22",
-    "entry_price": 211.21099999999998,
-    "exit_date": "2026-07-22",
-    "exit_price": 221.5832384440613,
-    "qty": 47.346018909999955,
-    "pnl": 491.08419751155526,
-    "return_pct": 0.04910841975115553,
-    "holding_days": 0,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.8857
-  },
-  {
     "symbol": "INTC",
     "signal_date": "2026-07-21",
     "entry_date": "2026-07-22",
@@ -2742,6 +2728,20 @@
     "holding_days": 0,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.8585
+  },
+  {
+    "symbol": "NBIS",
+    "signal_date": "2026-07-21",
+    "entry_date": "2026-07-22",
+    "entry_price": 211.21099999999998,
+    "exit_date": "2026-07-22",
+    "exit_price": 221.5832384440613,
+    "qty": 47.346018909999955,
+    "pnl": 491.08419751155526,
+    "return_pct": 0.04910841975115553,
+    "holding_days": 0,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.8857
   },
   {
     "symbol": "ORCL",
@@ -2758,20 +2758,6 @@
     "entry_signal_strength": 1.0
   },
   {
-    "symbol": "QTEC",
-    "signal_date": "2026-07-14",
-    "entry_date": "2026-07-15",
-    "entry_price": 320.06974999999994,
-    "exit_date": "2026-07-23",
-    "exit_price": 303.76219623749995,
-    "qty": 31.243189960938206,
-    "pnl": -509.49999999999983,
-    "return_pct": -0.05094999999999999,
-    "holding_days": 8,
-    "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.4144
-  },
-  {
     "symbol": "BOTZ",
     "signal_date": "2026-07-14",
     "entry_date": "2026-07-15",
@@ -2784,6 +2770,20 @@
     "holding_days": 8,
     "exit_reason": "stop_loss",
     "entry_signal_strength": 0.4359
+  },
+  {
+    "symbol": "QTEC",
+    "signal_date": "2026-07-14",
+    "entry_date": "2026-07-15",
+    "entry_price": 320.06974999999994,
+    "exit_date": "2026-07-23",
+    "exit_price": 303.76219623749995,
+    "qty": 31.243189960938206,
+    "pnl": -509.49999999999983,
+    "return_pct": -0.05094999999999999,
+    "holding_days": 8,
+    "exit_reason": "stop_loss",
+    "entry_signal_strength": 0.4144
   },
   {
     "symbol": "SNPS",
@@ -2856,18 +2856,18 @@
     "entry_signal_strength": 0.4809
   },
   {
-    "symbol": "NBIS",
+    "symbol": "CRDO",
     "signal_date": "2026-07-22",
     "entry_date": "2026-07-23",
-    "entry_price": 214.49928866577147,
+    "entry_price": 224.153922668457,
     "exit_date": "2026-07-23",
-    "exit_price": 222.01726344200134,
-    "qty": 46.62020122398541,
-    "pnl": 350.4894968646829,
-    "return_pct": 0.035048949686468295,
+    "exit_price": 232.46739931159973,
+    "qty": 44.61220165569381,
+    "pnl": 370.88249646378415,
+    "return_pct": 0.03708824964637841,
     "holding_days": 0,
     "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.7295
+    "entry_signal_strength": 0.7041
   },
   {
     "symbol": "SMCI",
@@ -2884,18 +2884,18 @@
     "entry_signal_strength": 0.4247
   },
   {
-    "symbol": "CRDO",
+    "symbol": "NBIS",
     "signal_date": "2026-07-22",
     "entry_date": "2026-07-23",
-    "entry_price": 224.153922668457,
+    "entry_price": 214.49928866577147,
     "exit_date": "2026-07-23",
-    "exit_price": 232.46739931159973,
-    "qty": 44.61220165569381,
-    "pnl": 370.88249646378415,
-    "return_pct": 0.03708824964637841,
+    "exit_price": 222.01726344200134,
+    "qty": 46.62020122398541,
+    "pnl": 350.4894968646829,
+    "return_pct": 0.035048949686468295,
     "holding_days": 0,
     "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.7041
+    "entry_signal_strength": 0.7295
   },
   {
     "symbol": "PSCT",
@@ -2926,20 +2926,6 @@
     "entry_signal_strength": 0.4156
   },
   {
-    "symbol": "SHOC",
-    "signal_date": "2026-07-16",
-    "entry_date": "2026-07-17",
-    "entry_price": 100.68058183288574,
-    "exit_date": "2026-07-24",
-    "exit_price": 106.44794402137757,
-    "qty": 99.32401877254206,
-    "pnl": 572.8375902778118,
-    "return_pct": 0.057283759027781184,
-    "holding_days": 7,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.5376
-  },
-  {
     "symbol": "SMH",
     "signal_date": "2026-07-16",
     "entry_date": "2026-07-17",
@@ -2966,6 +2952,20 @@
     "holding_days": 7,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.4426
+  },
+  {
+    "symbol": "SHOC",
+    "signal_date": "2026-07-16",
+    "entry_date": "2026-07-17",
+    "entry_price": 100.68058183288574,
+    "exit_date": "2026-07-24",
+    "exit_price": 106.44794402137757,
+    "qty": 99.32401877254206,
+    "pnl": 572.8375902778118,
+    "return_pct": 0.057283759027781184,
+    "holding_days": 7,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.5376
   },
   {
     "symbol": "IBM",
@@ -3206,34 +3206,6 @@
     "entry_signal_strength": 0.9624
   },
   {
-    "symbol": "INTC",
-    "signal_date": "2026-07-22",
-    "entry_date": "2026-07-23",
-    "entry_price": 101.24113938903807,
-    "exit_date": "2026-07-28",
-    "exit_price": 92.03730740718062,
-    "qty": 98.77407603615684,
-    "pnl": -909.0999999999997,
-    "return_pct": -0.09090999999999998,
-    "holding_days": 5,
-    "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.9115
-  },
-  {
-    "symbol": "AMAT",
-    "signal_date": "2026-07-22",
-    "entry_date": "2026-07-23",
-    "entry_price": 549.5189406738281,
-    "exit_date": "2026-07-28",
-    "exit_price": 521.5209506464964,
-    "qty": 18.19773489106282,
-    "pnl": -509.5000000000018,
-    "return_pct": -0.05095000000000018,
-    "holding_days": 5,
-    "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.4285
-  },
-  {
     "symbol": "FTXL",
     "signal_date": "2026-07-22",
     "entry_date": "2026-07-23",
@@ -3262,18 +3234,32 @@
     "entry_signal_strength": 0.4651
   },
   {
-    "symbol": "MU",
-    "signal_date": "2026-07-23",
-    "entry_date": "2026-07-24",
-    "entry_price": 959.9890593261717,
+    "symbol": "INTC",
+    "signal_date": "2026-07-22",
+    "entry_date": "2026-07-23",
+    "entry_price": 101.24113938903807,
     "exit_date": "2026-07-28",
-    "exit_price": 891.8970353481662,
-    "qty": 10.416785381928337,
-    "pnl": -709.3000000000015,
-    "return_pct": -0.07093000000000015,
-    "holding_days": 4,
+    "exit_price": 92.03730740718062,
+    "qty": 98.77407603615684,
+    "pnl": -909.0999999999997,
+    "return_pct": -0.09090999999999998,
+    "holding_days": 5,
     "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.8021
+    "entry_signal_strength": 0.9115
+  },
+  {
+    "symbol": "AMAT",
+    "signal_date": "2026-07-22",
+    "entry_date": "2026-07-23",
+    "entry_price": 549.5189406738281,
+    "exit_date": "2026-07-28",
+    "exit_price": 521.5209506464964,
+    "qty": 18.19773489106282,
+    "pnl": -509.5000000000018,
+    "return_pct": -0.05095000000000018,
+    "holding_days": 5,
+    "exit_reason": "stop_loss",
+    "entry_signal_strength": 0.4285
   },
   {
     "symbol": "SNPS",
@@ -3290,18 +3276,18 @@
     "entry_signal_strength": 0.7873
   },
   {
-    "symbol": "NBIS",
-    "signal_date": "2026-07-24",
-    "entry_date": "2026-07-27",
-    "entry_price": 196.92173110961912,
+    "symbol": "MU",
+    "signal_date": "2026-07-23",
+    "entry_date": "2026-07-24",
+    "entry_price": 959.9890593261717,
     "exit_date": "2026-07-28",
-    "exit_price": 179.01957653444367,
-    "qty": 50.78159705204585,
-    "pnl": -909.0999999999985,
-    "return_pct": -0.09090999999999985,
-    "holding_days": 1,
+    "exit_price": 891.8970353481662,
+    "qty": 10.416785381928337,
+    "pnl": -709.3000000000015,
+    "return_pct": -0.07093000000000015,
+    "holding_days": 4,
     "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.9058
+    "entry_signal_strength": 0.8021
   },
   {
     "symbol": "IBM",
@@ -3316,6 +3302,20 @@
     "holding_days": 1,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.8844
+  },
+  {
+    "symbol": "NBIS",
+    "signal_date": "2026-07-24",
+    "entry_date": "2026-07-27",
+    "entry_price": 196.92173110961912,
+    "exit_date": "2026-07-28",
+    "exit_price": 179.01957653444367,
+    "qty": 50.78159705204585,
+    "pnl": -909.0999999999985,
+    "return_pct": -0.09090999999999985,
+    "holding_days": 1,
+    "exit_reason": "stop_loss",
+    "entry_signal_strength": 0.9058
   },
   {
     "symbol": "QQQ",
@@ -3360,20 +3360,6 @@
     "entry_signal_strength": 0.5832
   },
   {
-    "symbol": "SHOC",
-    "signal_date": "2026-07-24",
-    "entry_date": "2026-07-27",
-    "entry_price": 105.39529091644286,
-    "exit_date": "2026-07-29",
-    "exit_price": 100.0254008442501,
-    "qty": 94.88089945050748,
-    "pnl": -509.49999999999966,
-    "return_pct": -0.05094999999999997,
-    "holding_days": 2,
-    "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.4989
-  },
-  {
     "symbol": "MDB",
     "signal_date": "2026-07-24",
     "entry_date": "2026-07-27",
@@ -3400,6 +3386,20 @@
     "holding_days": 2,
     "exit_reason": "stop_loss",
     "entry_signal_strength": 0.4973
+  },
+  {
+    "symbol": "SHOC",
+    "signal_date": "2026-07-24",
+    "entry_date": "2026-07-27",
+    "entry_price": 105.39529091644286,
+    "exit_date": "2026-07-29",
+    "exit_price": 100.0254008442501,
+    "qty": 94.88089945050748,
+    "pnl": -509.49999999999966,
+    "return_pct": -0.05094999999999997,
+    "holding_days": 2,
+    "exit_reason": "stop_loss",
+    "entry_signal_strength": 0.4989
   },
   {
     "symbol": "KLAC",
@@ -3472,20 +3472,6 @@
     "entry_signal_strength": 0.4977
   },
   {
-    "symbol": "MU",
-    "signal_date": "2026-07-28",
-    "entry_date": "2026-07-29",
-    "entry_price": 833.8329999999999,
-    "exit_date": "2026-07-30",
-    "exit_price": 850.7608875,
-    "qty": 11.992809111656653,
-    "pnl": 203.01292345110008,
-    "return_pct": 0.02030129234511001,
-    "holding_days": 1,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 1.0
-  },
-  {
     "symbol": "MRVL",
     "signal_date": "2026-07-28",
     "entry_date": "2026-07-29",
@@ -3514,15 +3500,15 @@
     "entry_signal_strength": 1.0
   },
   {
-    "symbol": "INTC",
+    "symbol": "MU",
     "signal_date": "2026-07-28",
     "entry_date": "2026-07-29",
-    "entry_price": 86.65656969451904,
+    "entry_price": 833.8329999999999,
     "exit_date": "2026-07-30",
-    "exit_price": 91.18572152137756,
-    "qty": 115.39805966531921,
-    "pnl": 522.6553327491094,
-    "return_pct": 0.05226553327491094,
+    "exit_price": 850.7608875,
+    "qty": 11.992809111656653,
+    "pnl": 203.01292345110008,
+    "return_pct": 0.02030129234511001,
     "holding_days": 1,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 1.0
@@ -3542,15 +3528,15 @@
     "entry_signal_strength": 1.0
   },
   {
-    "symbol": "AMAT",
+    "symbol": "INTC",
     "signal_date": "2026-07-28",
     "entry_date": "2026-07-29",
-    "entry_price": 463.8834334411621,
+    "entry_price": 86.65656969451904,
     "exit_date": "2026-07-30",
-    "exit_price": 492.7905244802856,
-    "qty": 21.55713974482423,
-    "pnl": 623.1542011467425,
-    "return_pct": 0.062315420114674246,
+    "exit_price": 91.18572152137756,
+    "qty": 115.39805966531921,
+    "pnl": 522.6553327491094,
+    "return_pct": 0.05226553327491094,
     "holding_days": 1,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 1.0
@@ -3568,6 +3554,20 @@
     "holding_days": 1,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.5237
+  },
+  {
+    "symbol": "AMAT",
+    "signal_date": "2026-07-28",
+    "entry_date": "2026-07-29",
+    "entry_price": 463.8834334411621,
+    "exit_date": "2026-07-30",
+    "exit_price": 492.7905244802856,
+    "qty": 21.55713974482423,
+    "pnl": 623.1542011467425,
+    "return_pct": 0.062315420114674246,
+    "holding_days": 1,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 1.0
   },
   {
     "symbol": "ARM",
@@ -3626,6 +3626,20 @@
     "entry_signal_strength": 0.8879
   },
   {
+    "symbol": "CRDO",
+    "signal_date": "2026-07-27",
+    "entry_date": "2026-07-28",
+    "entry_price": 198.24805305480956,
+    "exit_date": "2026-07-31",
+    "exit_price": 210.26982502304077,
+    "qty": 50.44185728893541,
+    "pnl": 606.4005059816427,
+    "return_pct": 0.06064005059816427,
+    "holding_days": 3,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.7084
+  },
+  {
     "symbol": "ASML",
     "signal_date": "2026-07-27",
     "entry_date": "2026-07-28",
@@ -3654,20 +3668,6 @@
     "entry_signal_strength": 0.5903
   },
   {
-    "symbol": "CRDO",
-    "signal_date": "2026-07-27",
-    "entry_date": "2026-07-28",
-    "entry_price": 198.24805305480956,
-    "exit_date": "2026-07-31",
-    "exit_price": 210.26982502304077,
-    "qty": 50.44185728893541,
-    "pnl": 606.4005059816427,
-    "return_pct": 0.06064005059816427,
-    "holding_days": 3,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.7084
-  },
-  {
     "symbol": "SOXX",
     "signal_date": "2026-07-28",
     "entry_date": "2026-07-29",
@@ -3680,34 +3680,6 @@
     "holding_days": 2,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.949
-  },
-  {
-    "symbol": "CHPS",
-    "signal_date": "2026-07-28",
-    "entry_date": "2026-07-29",
-    "entry_price": 75.32525,
-    "exit_date": "2026-07-31",
-    "exit_price": 80.6717475,
-    "qty": 132.75760784066432,
-    "pnl": 709.7882184260919,
-    "return_pct": 0.0709788218426092,
-    "holding_days": 2,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 1.0
-  },
-  {
-    "symbol": "SOXQ",
-    "signal_date": "2026-07-28",
-    "entry_date": "2026-07-29",
-    "entry_price": 86.31623336029051,
-    "exit_date": "2026-07-31",
-    "exit_price": 90.68182917434692,
-    "qty": 115.85306275193034,
-    "pnl": 505.7676457954411,
-    "return_pct": 0.05057676457954412,
-    "holding_days": 2,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.9265
   },
   {
     "symbol": "FTXL",
@@ -3738,6 +3710,104 @@
     "entry_signal_strength": 0.8383
   },
   {
+    "symbol": "CHPS",
+    "signal_date": "2026-07-28",
+    "entry_date": "2026-07-29",
+    "entry_price": 75.32525,
+    "exit_date": "2026-07-31",
+    "exit_price": 80.6717475,
+    "qty": 132.75760784066432,
+    "pnl": 709.7882184260919,
+    "return_pct": 0.0709788218426092,
+    "holding_days": 2,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 1.0
+  },
+  {
+    "symbol": "SOXQ",
+    "signal_date": "2026-07-28",
+    "entry_date": "2026-07-29",
+    "entry_price": 86.31623336029051,
+    "exit_date": "2026-07-31",
+    "exit_price": 90.68182917434692,
+    "qty": 115.85306275193034,
+    "pnl": 505.7676457954411,
+    "return_pct": 0.05057676457954412,
+    "holding_days": 2,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.9265
+  },
+  {
+    "symbol": "MDB",
+    "signal_date": "2026-07-29",
+    "entry_date": "2026-07-30",
+    "entry_price": 319.4191061096191,
+    "exit_date": "2026-07-31",
+    "exit_price": 326.4608265216064,
+    "qty": 31.306831084074766,
+    "pnl": 220.4539514793673,
+    "return_pct": 0.02204539514793673,
+    "holding_days": 1,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.5696
+  },
+  {
+    "symbol": "SMCI",
+    "signal_date": "2026-07-29",
+    "entry_date": "2026-07-30",
+    "entry_price": 26.866840152740476,
+    "exit_date": "2026-07-31",
+    "exit_price": 28.39257826068878,
+    "qty": 372.2060332792793,
+    "pnl": 567.8889289824708,
+    "return_pct": 0.05678889289824708,
+    "holding_days": 1,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.4616
+  },
+  {
+    "symbol": "SMH",
+    "signal_date": "2026-07-29",
+    "entry_date": "2026-07-30",
+    "entry_price": 530.389845336914,
+    "exit_date": "2026-07-31",
+    "exit_price": 541.247812753601,
+    "qty": 18.854056290704065,
+    "pnl": 204.71672887684656,
+    "return_pct": 0.020471672887684655,
+    "holding_days": 1,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.812
+  },
+  {
+    "symbol": "CRWD",
+    "signal_date": "2026-07-29",
+    "entry_date": "2026-07-30",
+    "entry_price": 180.76058183288572,
+    "exit_date": "2026-07-31",
+    "exit_price": 184.7524916938019,
+    "qty": 55.321795817436914,
+    "pnl": 220.83962224721716,
+    "return_pct": 0.022083962224721716,
+    "holding_days": 1,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.4644
+  },
+  {
+    "symbol": "ANET",
+    "signal_date": "2026-07-29",
+    "entry_date": "2026-07-30",
+    "entry_price": 164.72455755615232,
+    "exit_date": "2026-07-31",
+    "exit_price": 177.83638974014283,
+    "qty": 60.70740239560904,
+    "pnl": 795.9852725372094,
+    "return_pct": 0.07959852725372095,
+    "holding_days": 1,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.4057
+  },
+  {
     "symbol": "SHOC",
     "signal_date": "2026-07-29",
     "entry_date": "2026-07-30",
@@ -3764,76 +3834,6 @@
     "holding_days": 1,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.4368
-  },
-  {
-    "symbol": "MDB",
-    "signal_date": "2026-07-29",
-    "entry_date": "2026-07-30",
-    "entry_price": 319.4191061096191,
-    "exit_date": "2026-07-31",
-    "exit_price": 326.4608265216064,
-    "qty": 31.306831084074766,
-    "pnl": 220.4539514793673,
-    "return_pct": 0.02204539514793673,
-    "holding_days": 1,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.5696
-  },
-  {
-    "symbol": "ANET",
-    "signal_date": "2026-07-29",
-    "entry_date": "2026-07-30",
-    "entry_price": 164.72455755615232,
-    "exit_date": "2026-07-31",
-    "exit_price": 177.83638974014283,
-    "qty": 60.70740239560904,
-    "pnl": 795.9852725372094,
-    "return_pct": 0.07959852725372095,
-    "holding_days": 1,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.4057
-  },
-  {
-    "symbol": "SMH",
-    "signal_date": "2026-07-29",
-    "entry_date": "2026-07-30",
-    "entry_price": 530.389845336914,
-    "exit_date": "2026-07-31",
-    "exit_price": 541.247812753601,
-    "qty": 18.854056290704065,
-    "pnl": 204.71672887684656,
-    "return_pct": 0.020471672887684655,
-    "holding_days": 1,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.812
-  },
-  {
-    "symbol": "SMCI",
-    "signal_date": "2026-07-29",
-    "entry_date": "2026-07-30",
-    "entry_price": 26.866840152740476,
-    "exit_date": "2026-07-31",
-    "exit_price": 28.39257826068878,
-    "qty": 372.2060332792793,
-    "pnl": 567.8889289824708,
-    "return_pct": 0.05678889289824708,
-    "holding_days": 1,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.4616
-  },
-  {
-    "symbol": "CRWD",
-    "signal_date": "2026-07-29",
-    "entry_date": "2026-07-30",
-    "entry_price": 180.76058183288572,
-    "exit_date": "2026-07-31",
-    "exit_price": 184.7524916938019,
-    "qty": 55.321795817436914,
-    "pnl": 220.83962224721716,
-    "return_pct": 0.022083962224721716,
-    "holding_days": 1,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.4644
   },
   {
     "symbol": "GOOGL",
@@ -3878,20 +3878,6 @@
     "entry_signal_strength": 0.7761
   },
   {
-    "symbol": "MU",
-    "signal_date": "2026-07-30",
-    "entry_date": "2026-07-31",
-    "entry_price": 920.5696744384765,
-    "exit_date": "2026-08-03",
-    "exit_price": 873.6666495258361,
-    "qty": 10.862838824339656,
-    "pnl": -509.5,
-    "return_pct": -0.05095,
-    "holding_days": 3,
-    "exit_reason": "stop_loss",
-    "entry_signal_strength": 0.5603
-  },
-  {
     "symbol": "META",
     "signal_date": "2026-07-30",
     "entry_date": "2026-07-31",
@@ -3906,18 +3892,18 @@
     "entry_signal_strength": 0.4758
   },
   {
-    "symbol": "NBIS",
+    "symbol": "MU",
     "signal_date": "2026-07-30",
     "entry_date": "2026-07-31",
-    "entry_price": 201.1359325561523,
+    "entry_price": 920.5696744384765,
     "exit_date": "2026-08-03",
-    "exit_price": 214.80487832565305,
-    "qty": 49.71762068027422,
-    "pnl": 679.5874608672767,
-    "return_pct": 0.06795874608672768,
+    "exit_price": 873.6666495258361,
+    "qty": 10.862838824339656,
+    "pnl": -509.5,
+    "return_pct": -0.05095,
     "holding_days": 3,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.6283
+    "exit_reason": "stop_loss",
+    "entry_signal_strength": 0.5603
   },
   {
     "symbol": "FICO",
@@ -3934,18 +3920,18 @@
     "entry_signal_strength": 0.5599
   },
   {
-    "symbol": "ORCL",
-    "signal_date": "2026-07-31",
-    "entry_date": "2026-08-03",
-    "entry_price": 132.05191816711425,
+    "symbol": "NBIS",
+    "signal_date": "2026-07-30",
+    "entry_date": "2026-07-31",
+    "entry_price": 201.1359325561523,
     "exit_date": "2026-08-03",
-    "exit_price": 138.6391291973877,
-    "qty": 75.72779054481289,
-    "pnl": 498.83493717502796,
-    "return_pct": 0.049883493717502794,
-    "holding_days": 0,
+    "exit_price": 214.80487832565305,
+    "qty": 49.71762068027422,
+    "pnl": 679.5874608672767,
+    "return_pct": 0.06795874608672768,
+    "holding_days": 3,
     "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.5399
+    "entry_signal_strength": 0.6283
   },
   {
     "symbol": "CRDO",
@@ -3960,6 +3946,20 @@
     "holding_days": 0,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.9116
+  },
+  {
+    "symbol": "ORCL",
+    "signal_date": "2026-07-31",
+    "entry_date": "2026-08-03",
+    "entry_price": 132.05191816711425,
+    "exit_date": "2026-08-03",
+    "exit_price": 138.6391291973877,
+    "qty": 75.72779054481289,
+    "pnl": 498.83493717502796,
+    "return_pct": 0.049883493717502794,
+    "holding_days": 0,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.5399
   },
   {
     "symbol": "RBRK",
@@ -4004,34 +4004,6 @@
     "entry_signal_strength": 1.0
   },
   {
-    "symbol": "CIEN",
-    "signal_date": "2026-07-30",
-    "entry_date": "2026-07-31",
-    "entry_price": 394.3739909973144,
-    "exit_date": "2026-08-04",
-    "exit_price": 413.77581,
-    "qty": 25.356641736721674,
-    "pnl": 491.96497349181624,
-    "return_pct": 0.04919649734918163,
-    "holding_days": 4,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.6078
-  },
-  {
-    "symbol": "QCOM",
-    "signal_date": "2026-07-30",
-    "entry_date": "2026-07-31",
-    "entry_price": 153.11296672058103,
-    "exit_date": "2026-08-04",
-    "exit_price": 157.60043768119812,
-    "qty": 65.31125491317273,
-    "pnl": 293.08235982432274,
-    "return_pct": 0.029308235982432273,
-    "holding_days": 4,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.6696
-  },
-  {
     "symbol": "PLTR",
     "signal_date": "2026-07-30",
     "entry_date": "2026-07-31",
@@ -4044,6 +4016,20 @@
     "holding_days": 4,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.4133
+  },
+  {
+    "symbol": "CIEN",
+    "signal_date": "2026-07-30",
+    "entry_date": "2026-07-31",
+    "entry_price": 394.3739909973144,
+    "exit_date": "2026-08-04",
+    "exit_price": 413.77581,
+    "qty": 25.356641736721674,
+    "pnl": 491.96497349181624,
+    "return_pct": 0.04919649734918163,
+    "holding_days": 4,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.6078
   },
   {
     "symbol": "PTF",
@@ -4060,6 +4046,20 @@
     "entry_signal_strength": 0.6828
   },
   {
+    "symbol": "QCOM",
+    "signal_date": "2026-07-30",
+    "entry_date": "2026-07-31",
+    "entry_price": 153.11296672058103,
+    "exit_date": "2026-08-04",
+    "exit_price": 157.60043768119812,
+    "qty": 65.31125491317273,
+    "pnl": 293.08235982432274,
+    "return_pct": 0.029308235982432273,
+    "holding_days": 4,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.6696
+  },
+  {
     "symbol": "ARM",
     "signal_date": "2026-07-30",
     "entry_date": "2026-07-31",
@@ -4072,20 +4072,6 @@
     "holding_days": 4,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.9517
-  },
-  {
-    "symbol": "SOXX",
-    "signal_date": "2026-07-31",
-    "entry_date": "2026-08-03",
-    "entry_price": 492.41193344116203,
-    "exit_date": "2026-08-04",
-    "exit_price": 528.4992858947754,
-    "qty": 20.308199945757192,
-    "pnl": 732.8691691409921,
-    "return_pct": 0.0732869169140992,
-    "holding_days": 1,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.6453
   },
   {
     "symbol": "MDB",
@@ -4102,32 +4088,18 @@
     "entry_signal_strength": 0.4212
   },
   {
-    "symbol": "CHPS",
+    "symbol": "SOXX",
     "signal_date": "2026-07-31",
     "entry_date": "2026-08-03",
-    "entry_price": 78.57849999999999,
+    "entry_price": 492.41193344116203,
     "exit_date": "2026-08-04",
-    "exit_price": 83.80171765296936,
-    "qty": 127.26127375808906,
-    "pnl": 664.7133316326181,
-    "return_pct": 0.06647133316326181,
+    "exit_price": 528.4992858947754,
+    "qty": 20.308199945757192,
+    "pnl": 732.8691691409921,
+    "return_pct": 0.0732869169140992,
     "holding_days": 1,
     "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.7188
-  },
-  {
-    "symbol": "SOXQ",
-    "signal_date": "2026-07-31",
-    "entry_date": "2026-08-03",
-    "entry_price": 87.21212499999999,
-    "exit_date": "2026-08-04",
-    "exit_price": 93.48232528289795,
-    "qty": 114.66295540900995,
-    "pnl": 718.9596954434904,
-    "return_pct": 0.07189596954434904,
-    "holding_days": 1,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.6188
+    "entry_signal_strength": 0.6453
   },
   {
     "symbol": "FTXL",
@@ -4156,6 +4128,34 @@
     "holding_days": 1,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.5976
+  },
+  {
+    "symbol": "CHPS",
+    "signal_date": "2026-07-31",
+    "entry_date": "2026-08-03",
+    "entry_price": 78.57849999999999,
+    "exit_date": "2026-08-04",
+    "exit_price": 83.80171765296936,
+    "qty": 127.26127375808906,
+    "pnl": 664.7133316326181,
+    "return_pct": 0.06647133316326181,
+    "holding_days": 1,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.7188
+  },
+  {
+    "symbol": "SOXQ",
+    "signal_date": "2026-07-31",
+    "entry_date": "2026-08-03",
+    "entry_price": 87.21212499999999,
+    "exit_date": "2026-08-04",
+    "exit_price": 93.48232528289795,
+    "qty": 114.66295540900995,
+    "pnl": 718.9596954434904,
+    "return_pct": 0.07189596954434904,
+    "holding_days": 1,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.6188
   },
   {
     "symbol": "CRDO",
@@ -4256,20 +4256,6 @@
     "entry_signal_strength": 0.4386
   },
   {
-    "symbol": "FRWD",
-    "signal_date": "2026-07-24",
-    "entry_date": "2026-07-27",
-    "entry_price": 30.670639389038083,
-    "exit_date": "2026-08-06",
-    "exit_price": 31.514302826099396,
-    "qty": 326.0447189625292,
-    "pnl": 275.07200823561715,
-    "return_pct": 0.027507200823561714,
-    "holding_days": 10,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.4129
-  },
-  {
     "symbol": "TTEQ",
     "signal_date": "2026-07-24",
     "entry_date": "2026-07-27",
@@ -4282,6 +4268,20 @@
     "holding_days": 10,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.4478
+  },
+  {
+    "symbol": "FRWD",
+    "signal_date": "2026-07-24",
+    "entry_date": "2026-07-27",
+    "entry_price": 30.670639389038083,
+    "exit_date": "2026-08-06",
+    "exit_price": 31.514302826099396,
+    "qty": 326.0447189625292,
+    "pnl": 275.07200823561715,
+    "return_pct": 0.027507200823561714,
+    "holding_days": 10,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.4129
   },
   {
     "symbol": "SNPS",
@@ -4312,18 +4312,18 @@
     "entry_signal_strength": 0.5358
   },
   {
-    "symbol": "SHOC",
+    "symbol": "SMH",
     "signal_date": "2026-07-31",
     "entry_date": "2026-08-03",
-    "entry_price": 97.97787725067137,
+    "entry_price": 530.960422668457,
     "exit_date": "2026-08-06",
-    "exit_price": 105.62427000000001,
-    "qty": 102.06385646032638,
-    "pnl": 780.4203320067587,
-    "return_pct": 0.07804203320067588,
+    "exit_price": 566.8825499999999,
+    "qty": 18.83379546396853,
+    "pnl": 676.5499987929131,
+    "return_pct": 0.06765499987929131,
     "holding_days": 3,
     "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.5326
+    "entry_signal_strength": 0.5666
   },
   {
     "symbol": "ASML",
@@ -4340,20 +4340,6 @@
     "entry_signal_strength": 0.5723
   },
   {
-    "symbol": "SMH",
-    "signal_date": "2026-07-31",
-    "entry_date": "2026-08-03",
-    "entry_price": 530.960422668457,
-    "exit_date": "2026-08-06",
-    "exit_price": 566.8825499999999,
-    "qty": 18.83379546396853,
-    "pnl": 676.5499987929131,
-    "return_pct": 0.06765499987929131,
-    "holding_days": 3,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.5666
-  },
-  {
     "symbol": "SMHX",
     "signal_date": "2026-07-31",
     "entry_date": "2026-08-03",
@@ -4366,6 +4352,20 @@
     "holding_days": 3,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.5203
+  },
+  {
+    "symbol": "SHOC",
+    "signal_date": "2026-07-31",
+    "entry_date": "2026-08-03",
+    "entry_price": 97.97787725067137,
+    "exit_date": "2026-08-06",
+    "exit_price": 105.62427000000001,
+    "qty": 102.06385646032638,
+    "pnl": 780.4203320067587,
+    "return_pct": 0.07804203320067588,
+    "holding_days": 3,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.5326
   },
   {
     "symbol": "ARM",
@@ -4382,6 +4382,20 @@
     "entry_signal_strength": 0.4466
   },
   {
+    "symbol": "CRDO",
+    "signal_date": "2026-08-05",
+    "entry_date": "2026-08-06",
+    "entry_price": 216.21599999999998,
+    "exit_date": "2026-08-06",
+    "exit_price": 231.35010151382446,
+    "qty": 46.25004625004625,
+    "pnl": 699.952894967277,
+    "return_pct": 0.0699952894967277,
+    "holding_days": 0,
+    "exit_reason": "trailing_stop",
+    "entry_signal_strength": 0.7132
+  },
+  {
     "symbol": "MU",
     "signal_date": "2026-08-05",
     "entry_date": "2026-08-06",
@@ -4394,20 +4408,6 @@
     "holding_days": 0,
     "exit_reason": "trailing_stop",
     "entry_signal_strength": 0.5478
-  },
-  {
-    "symbol": "INTC",
-    "signal_date": "2026-08-05",
-    "entry_date": "2026-08-06",
-    "entry_price": 98.31822122192382,
-    "exit_date": "2026-08-06",
-    "exit_price": 99.66193565219879,
-    "qty": 101.71054638415403,
-    "pnl": 136.66992888753958,
-    "return_pct": 0.01366699288875396,
-    "holding_days": 0,
-    "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.556
   },
   {
     "symbol": "PTF",
@@ -4424,18 +4424,18 @@
     "entry_signal_strength": 0.5638
   },
   {
-    "symbol": "CRDO",
+    "symbol": "INTC",
     "signal_date": "2026-08-05",
     "entry_date": "2026-08-06",
-    "entry_price": 216.21599999999998,
+    "entry_price": 98.31822122192382,
     "exit_date": "2026-08-06",
-    "exit_price": 231.35010151382446,
-    "qty": 46.25004625004625,
-    "pnl": 699.952894967277,
-    "return_pct": 0.0699952894967277,
+    "exit_price": 99.66193565219879,
+    "qty": 101.71054638415403,
+    "pnl": 136.66992888753958,
+    "return_pct": 0.01366699288875396,
     "holding_days": 0,
     "exit_reason": "trailing_stop",
-    "entry_signal_strength": 0.7132
+    "entry_signal_strength": 0.556
   },
   {
     "symbol": "AMD",
@@ -4816,20 +4816,6 @@
     "entry_signal_strength": 0.6342
   },
   {
-    "symbol": "SOXX",
-    "signal_date": "2026-08-05",
-    "entry_date": "2026-08-06",
-    "exit_date": "2026-08-14",
-    "entry_price": 523.1826331176758,
-    "exit_price": 549.8695629272461,
-    "qty": 19.113784302069465,
-    "pnl": 510.0882200645945,
-    "return_pct": 0.05100882200645945,
-    "holding_days": 7,
-    "exit_reason": "backtest_end_forced_close",
-    "entry_signal_strength": 0.513
-  },
-  {
     "symbol": "META",
     "signal_date": "2026-08-05",
     "entry_date": "2026-08-06",
@@ -4844,32 +4830,18 @@
     "entry_signal_strength": 0.4529
   },
   {
-    "symbol": "FICO",
+    "symbol": "SOXX",
     "signal_date": "2026-08-05",
     "entry_date": "2026-08-06",
     "exit_date": "2026-08-14",
-    "entry_price": 1088.3673093261718,
-    "exit_price": 1084.694249267578,
-    "qty": 9.18807457216919,
-    "pnl": -33.748349726416144,
-    "return_pct": -0.003374834972641615,
+    "entry_price": 523.1826331176758,
+    "exit_price": 549.8695629272461,
+    "qty": 19.113784302069465,
+    "pnl": 510.0882200645945,
+    "return_pct": 0.05100882200645945,
     "holding_days": 7,
     "exit_reason": "backtest_end_forced_close",
-    "entry_signal_strength": 0.6905
-  },
-  {
-    "symbol": "SOXQ",
-    "signal_date": "2026-08-05",
-    "entry_date": "2026-08-06",
-    "exit_date": "2026-08-14",
-    "entry_price": 93.34324999999998,
-    "exit_price": 97.64225786590576,
-    "qty": 107.13147442369964,
-    "pnl": 460.55905123356854,
-    "return_pct": 0.046055905123356854,
-    "holding_days": 7,
-    "exit_reason": "backtest_end_forced_close",
-    "entry_signal_strength": 0.4689
+    "entry_signal_strength": 0.513
   },
   {
     "symbol": "FTXL",
@@ -4900,32 +4872,46 @@
     "entry_signal_strength": 0.433
   },
   {
-    "symbol": "SHOC",
-    "signal_date": "2026-08-06",
-    "entry_date": "2026-08-07",
+    "symbol": "FICO",
+    "signal_date": "2026-08-05",
+    "entry_date": "2026-08-06",
     "exit_date": "2026-08-14",
-    "entry_price": 108.88877877807616,
-    "exit_price": 109.48440776824951,
-    "qty": 91.83682756127499,
-    "pnl": 54.700676861046546,
-    "return_pct": 0.005470067686104655,
-    "holding_days": 6,
+    "entry_price": 1088.3673093261718,
+    "exit_price": 1084.694249267578,
+    "qty": 9.18807457216919,
+    "pnl": -33.748349726416144,
+    "return_pct": -0.003374834972641615,
+    "holding_days": 7,
     "exit_reason": "backtest_end_forced_close",
-    "entry_signal_strength": 0.4203
+    "entry_signal_strength": 0.6905
   },
   {
-    "symbol": "ASML",
+    "symbol": "SOXQ",
+    "signal_date": "2026-08-05",
+    "entry_date": "2026-08-06",
+    "exit_date": "2026-08-14",
+    "entry_price": 93.34324999999998,
+    "exit_price": 97.64225786590576,
+    "qty": 107.13147442369964,
+    "pnl": 460.55905123356854,
+    "return_pct": 0.046055905123356854,
+    "holding_days": 7,
+    "exit_reason": "backtest_end_forced_close",
+    "entry_signal_strength": 0.4689
+  },
+  {
+    "symbol": "SMH",
     "signal_date": "2026-08-06",
     "entry_date": "2026-08-07",
     "exit_date": "2026-08-14",
-    "entry_price": 1761.4696708984372,
-    "exit_price": 1842.2358760986328,
-    "qty": 5.677077593336876,
-    "pnl": 458.5160138408787,
-    "return_pct": 0.04585160138408788,
+    "entry_price": 584.1635971069335,
+    "exit_price": 587.2321873168945,
+    "qty": 17.118492233211615,
+    "pnl": 52.529637676127095,
+    "return_pct": 0.00525296376761271,
     "holding_days": 6,
     "exit_reason": "backtest_end_forced_close",
-    "entry_signal_strength": 0.4051
+    "entry_signal_strength": 0.4442
   },
   {
     "symbol": "SNPS",
@@ -4956,18 +4942,32 @@
     "entry_signal_strength": 0.5074
   },
   {
-    "symbol": "SMH",
+    "symbol": "ASML",
     "signal_date": "2026-08-06",
     "entry_date": "2026-08-07",
     "exit_date": "2026-08-14",
-    "entry_price": 584.1635971069335,
-    "exit_price": 587.2321873168945,
-    "qty": 17.118492233211615,
-    "pnl": 52.529637676127095,
-    "return_pct": 0.00525296376761271,
+    "entry_price": 1761.4696708984372,
+    "exit_price": 1842.2358760986328,
+    "qty": 5.677077593336876,
+    "pnl": 458.5160138408787,
+    "return_pct": 0.04585160138408788,
     "holding_days": 6,
     "exit_reason": "backtest_end_forced_close",
-    "entry_signal_strength": 0.4442
+    "entry_signal_strength": 0.4051
+  },
+  {
+    "symbol": "SHOC",
+    "signal_date": "2026-08-06",
+    "entry_date": "2026-08-07",
+    "exit_date": "2026-08-14",
+    "entry_price": 108.88877877807616,
+    "exit_price": 109.48440776824951,
+    "qty": 91.83682756127499,
+    "pnl": 54.700676861046546,
+    "return_pct": 0.005470067686104655,
+    "holding_days": 6,
+    "exit_reason": "backtest_end_forced_close",
+    "entry_signal_strength": 0.4203
   },
   {
     "symbol": "CDNS",
@@ -4984,20 +4984,6 @@
     "entry_signal_strength": 0.6074
   },
   {
-    "symbol": "GOOGL",
-    "signal_date": "2026-08-11",
-    "entry_date": "2026-08-12",
-    "exit_date": "2026-08-14",
-    "entry_price": 346.6563075561523,
-    "exit_price": 345.5540939025879,
-    "qty": 28.847015854111277,
-    "pnl": -31.79557473898949,
-    "return_pct": -0.003179557473898949,
-    "holding_days": 1,
-    "exit_reason": "backtest_end_forced_close",
-    "entry_signal_strength": 0.4693
-  },
-  {
     "symbol": "AAPL",
     "signal_date": "2026-08-11",
     "entry_date": "2026-08-12",
@@ -5010,6 +4996,20 @@
     "holding_days": 1,
     "exit_reason": "backtest_end_forced_close",
     "entry_signal_strength": 0.4569
+  },
+  {
+    "symbol": "GOOGL",
+    "signal_date": "2026-08-11",
+    "entry_date": "2026-08-12",
+    "exit_date": "2026-08-14",
+    "entry_price": 346.6563075561523,
+    "exit_price": 345.5540939025879,
+    "qty": 28.847015854111277,
+    "pnl": -31.79557473898949,
+    "return_pct": -0.003179557473898949,
+    "holding_days": 1,
+    "exit_reason": "backtest_end_forced_close",
+    "entry_signal_strength": 0.4693
   },
   {
     "symbol": "TSLA",

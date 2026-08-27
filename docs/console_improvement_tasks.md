@@ -9,6 +9,23 @@
 > 計画・進捗は `docs/broker_migration_ibkr_plan.md` を参照（Track A完了済み、
 > Track BはD0＝移行開始日確定待ち）。
 
+> 📎 **R15（2026-08-27）**: 既存バックテスト（R11-B〜R14）が全て日足OHLCのみで、
+> 本番（4回/日cron + intraday 5分足二段階判定）との粒度不一致をユーザーが指摘。
+> 本番同一の`broker.fetch_bars(timeframe="5Min")`で既存日足キャッシュと同一期間
+> （2024-08-15〜2026-08-14、2年分）の5分足データを全69銘柄取得完了
+> （`data/r15_intraday_5min_cache/`、211MB、21.9分）。intraday対応バックテスト
+> エンジンを構築・初回検証完了: intraday boost効果はPF+0.83%/net_pnl+1.19%と
+> 小さく、既存の日足のみ検証結果を大きく歪めていなかったことを確認
+> （サニティチェックでv4本家baselineと完全一致を確認済み）。詳細は下部の
+> 該当日付エントリ参照。
+
+> 📎 **最新ステータス（2026-08-26時点）**: attribution_coverage_pct=96.2%、
+> quarantine=6件（quarantined_pnl=-$44,670）、equity_bridge unexplained_diff=$49,793、
+> Go/No-Go残ブロッカーはcircuit_breaker/guardrail_hard_haltのみ（degraded、8連敗
+> streak由来）。戦略候補の最新状態: R11-Cは見送り最終確定、R14 dip-buyは
+> レジームスイッチ型へ設計修正提案、R13-D sector rotationはheadline設定見直し必要
+> （いずれも本日。0226-08-26対応、詳細は下部の該当日付エントリ参照）。
+
 ---
 
 ## 運用ステータス（2026-07-28 更新）
@@ -994,7 +1011,69 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
                          （詳細: docs/audit_fixes_20260823/README.md）。
                          🔲 残課題: equity_bridgeの$168,869.89未説明差分の運用判断
                          （quarantine再分類 vs tolerance引き上げ）はPre-Launch Gate Review
-                         までに実施
+                         までに実施 → **2026-08-26に前倒し実施、下記参照**
+2026-08-26         ✅ attribution_coverage_pct回復（ロードマップ監査で発見された
+                         未対応Go/No-Goブロッカー、ユーザー承認、xhigh reasoningで実施）。
+                         08-24 rebuildの副作用で98.8%→74.6%（現在75.2%）に低下していた
+                         attribution_coverage_pctがGo/No-Go Required閘値（95%）をブロック
+                         中だったが、既存の`scripts/rf8b_recover_attribution.py`（2026-07に作成済み、
+                         trade_events.jsonl/pending_exit_reasons.json/decision JSONとの
+                         照合でexit_reasonを復元）を実行したところ72件回復・96.2%まで回復
+                         （target≥95%達成）。バックアップ: `pnl_state.backup_rf8b_
+                         20260826_122809.json`、手動スナップショット: `pnl_state_manual_
+                         snapshot_20260826_2127_before_rf8b.json`。テストスイート**2235
+                         passed / 2 skipped**、`verify_rebuild_integrity.py`もPASS。
+                         check_go_no_go.py再実行で`attribution_coverage_pct`が✅に変化
+                         したことを確認済み（残13件はtrade_events/decision JSONとも照合不可、
+                         ルックバック10日でも未発見の古い05-12前後のtrade中心、対応不要）。
+2026-08-26         ✅ R11-C（4候補全滅判定、2026-08-15）をR13-C確立の厳密手法（t+1約定/
+                         PIT universe/conservative exit/slippage/portfolio cap）で全候補
+                         再検証（ロードマップ監査で発見された旧手法問題への対応）。新規
+                         `scripts/r11c_v2_rigorous_rerun.py`をv4エンジンをそのままimport
+                         して作成（baseline出力がv4本家と完全一致することを確認済み）。
+                         **重要発見: RSI逆張りフィルタの旧結論（baselineと実質差なし）が
+                         覚された**——厳密手法ではPF+16%改善（1.9251→2.2371）、且つ
+                         walk-forward後半期（市場悪化局面）でのPF維持能力がbaselineの約
+                         1.8倍（比率0.502 vs 0.281）と、旧手法では検出できなかった優位性が
+                         確認された。セクター相対強度・ニュースセンチメントは旧結論（見送り）を
+                         支持。決算近接は結論が逆転（改善）したがn=103と最小サンプルのため判断
+                         保留。**次アクション推奨**: RSI逆張り候補の閘値グリッドサーチ+rolling
+                         walk-forwardでの追加検証。詳細: `docs/r11c_v2_rigorous_rerun_
+                         20260826/README.md`
+2026-08-26         ✅ attribution_coverage_pct回復（rf8b_recover_attribution.py，
+                         xhigh reasoningで実施）。72件回復、75.2%→96.2%達成（target≥95%）。
+                         check_go_no_go.pyでattribution_coverage_pct項目が✅に変化した
+                         ことを確認。残るGo/No-Goブロッカーはcircuit_breaker/guardrail_hard_halt
+                         （degraded、8連敗streak由来）のみに整理。テストスイート**2235 passed /
+                         2 skipped**。
+2026-08-26         ✅ R11-C逆張り候補を閘値グリッドサーチ(60-85)+rolling walk-forwardで
+                         追加検証。自己発見バグ（比較不可能rollの誤判定）修正し全閘値が形式上Supportedと
+                         判定されたが、追加検証で効果の真の原因が、1銘柄1ポジション排他制御によるタイミング
+                         シフトと判明。本番のRiskValidator/BreakoutMomentumStrategy/paper_demo.pyを
+                         実読し同目的の排他制御が存在しないことを確認し、排他制御を除去した本番相当検証で
+                         **RSI逆張りの改善効果はほぼ消滅**（PF 2.1246→2.1370、net_pnlはむしゃ23.6%
+                         減）。**最終結論: 2026-08-15の旧判定（4候補全滅、見送り）が確定**。新しい
+                         アンチパターン（バックテストエンジンの実装詳細が戦略効果と見分けがつかない）を発見。
+                         詳細: `docs/r11c_rsi_threshold_grid_rolling_wf_20260826/README.md`,
+                         `docs/r11c_rsi_no_symbol_exclusivity_20260826/README.md`
+2026-08-26         ⚠️ R14 dip-buyに同種の排他制御アーティファクトチェックを横展開（新規
+                         `scripts/r14_no_symbol_exclusivity_check.py`）。結果は混在: (a)
+                         全期間比較は逆転（dip-buy優位\u304smomentum優位に、PIT: 1.963→1.530 vs
+                         1.854→2.063）でGO判定一部未支持。(b) しかし最重要の発見「チョップ相場での
+                         momentum弱点補完」は同条件でも頑健（dip-buy PF=1.1811の黒字 vs
+                         momentum PF=0.6414の赤字、Phase1自体の0.646と一致）。修正された価値
+                         提案: 常時稼働ではなく「レジーム検知連動型（chop検知時のみ有効化）」として
+                         設計し直すべき。09-08本番配線判断レビューでの反映が必要。詳細:
+                         `docs/r14_no_symbol_exclusivity_check_20260826/README.md`
+2026-08-26         ✅ R13-D `run_rotation()`の`min_members`未実装バグを発見・修正実施。
+                         headline設定（top_n=2）でSharpe 1.370→1.230に低下しMIXED判定に
+                         転落する一方、top_n=1（1.473）・lookback=126d（1.415）はGO継続——
+                         **headline設定固有の脆弱性であり戦略自体は引き続き支持**と判明。
+                         `r13d_etf_sector_rotation_phase1.py`に`--enforce-min-members`
+                         フラグを新規実装（デフォルトは旧挙動保持、後方互換性確認済み）。テストスイート
+                         **2235 passed / 2 skipped**。次アクション: headlineをtop_n=1等に
+                         変更し新headlineとして採用するかを09-08レビュー前に決定（未実施）。詳細:
+                         `docs/r13d_min_members_check_20260826/README.md`
 2026-08-24         ✅ pnl_state.json rebuild実行（見落とされていたブローカー注文履歴84件
                          を復元）+ 安全装置の新規バグ3件を発見・修正。closed 252→335件、
                          equity_bridge unexplained_diff $168,869.89→$160,998.66に
@@ -1003,6 +1082,25 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
                          基準）は98.8%→74.6%に低下（新規復元トレードの意思決定ログ自体が
                          存在しないための相対低下であり儸化ではない、Pre-Launch Gate Review資料に
                          明記必要）。詳細: `docs/rebuild_20260824/`
+2026-08-26         ✅ equity_bridge $161,026未説明差分の前倒し対応完了（ユーザー承認、
+                         xhigh reasoningで実施）。quarantine 102件を全件実ブローカー注文
+                         データで一件一件照合した結果、当初の想定（「真の未回収損失の
+                         再統合」）は誤りと判明。96件（58 exit_broker_order_id）は
+                         08-23のfetch_all_orders() pagination修正以前のバグで生成された
+                         **幻の重複**（対応するexit_broker_order_idのブローカー実
+                         filled_qtyを`trades`側の正常closedエントリが既に100%カバー
+                         していることを個別確認）で、実損失ではなかった。
+                         `quarantined_trades`リストから該当96件のみ削除（`trades`
+                         リストや`cumulative_realized_pnl`には一切影響なし）。
+                         バックアプ: `pnl_state_backup_20260826_041753_before_
+                         quarantine_cleanup.json`、削除ログ: `docs/quarantine_
+                         cleanup_20260826_removed_96_phantom_dups.json`。
+                         結果: quarantine 102→6件、quarantined_pnl -$155,904→-$44,670、
+                         **unexplained_diff $161,026→$49,793（69%削減）**。テスト
+                         スイート**2235 passed / 2 skipped**、`verify_rebuild_integrity.py`
+                         も全件PASS。残も6件（KLAC split anomaly -$39,342 / CRWD
+                         reversed chronology -$1,999.9 / CRWD・KLAC部分説明 -$3,657）は
+                         真の未回収分として保留、Pre-Launch Gate Reviewで運用判断継続
 2026-08-23（夜）    ✅ equity_bridge根本原因の第2のバグを発見・修正。`fetch_all_filled_
                          orders()`が`status=='filled'`のみでフィルタしており、「部分約定後に
                          キャンセルされた注文」（status='canceled'がつfilled_qty>0）を完全に
@@ -1126,10 +1224,12 @@ attributable限定では単一トレード依存の不安定な改善のみ。pa
 point-in-time universe+保守的OHLC exit+slippage全て実装。live以降PF=1.453
 （90%CI[1.210,1.750]、保守的補正後もほぼ不変）。本番と方向性一致も維持。残も4/6/7
 項目（exposure/sector cap等）は未実装 |
-| 🟢 P3 | **R13-D** | **Phase 1 GO判定 + Phase 2完了**（2026-08-23） | ETFセクター
-ローテーションPhase 1（Sharpe 1.370）+ Phase 2戦略コード実装・Phase 1との整合性
-検証完了。Phase 3（リバランス状態管理実装）未着手。JPspilloverはshadow継続中、
-研究段階、本番影響なし |
+| ⚠️ P3 | **R13-D** | **Phase 1 headline見直し必要**（2026-08-23 GO→ 08-26
+min_membersバグ修正でheadline=MIXEDに低下、他パラメータ（top_n=1等）はGO継続） |
+ETFセクターローテーション戦略自体は引き続き支持されるが、headlineパラメータ（top_n=2）の
+再選定が09-08レビュー前に必要（`docs/r13d_min_members_check_20260826/README.md`）。
+Phase 2戦略コード実装、Phase 3（リバランス状態管理）実装済み。JPspilloverはshadow
+継続中、研究段階、本番影響なし |
 
 **2026-08-14 追記**: リアルトレード開始が 08-20 → **09-15** に延期（ユーザー指示）。
 延期で確保できた約4週間を R4-v2/R5-v2 残項目の実装検証と R9 Plan B/C/D/E の
@@ -1366,6 +1466,14 @@ B/C/D/E中間レビュー時に、2026-08-14以降の`data/sector_shock_shadow_l
 - 週次cron新規登録: `stock_swing_quarantine_trend_weekly`（月曜09:00 JST）
 - テスト11件追加（`test_check_quarantine_trend.py`）、実データでベースライン
   スナップショット取得済み（101件、最新entry_time=2026-07-22）
+
+**⚠️ 2026-08-26追記（ロジックバグ発見、未対応）**: `evaluate_trend()`の条件分岐順序に
+不具合を発見。件数が大幅に減少しても、残存quarantine中に前回スナップショットより新しい
+`entry_time`が1件でもあれば`if count_delta > 0 or new_quarantine_detected:`が優先され
+誤って"growing"と判定される（`count_delta < 0`のチェックが後回しになっているため）。
+実際08-26のquarantineクリーンアップ（102→6件、実損失ではない重複削除）直後に実際に
+発生した（実害は表示上の誤警告のみ）。修正案: `count_delta < 0`の判定を
+`new_quarantine_detected`より先に評価するよう順序変更。優先度低（影響は表示のみ）、未対応。
 
 ---
 
@@ -2090,6 +2198,11 @@ drawdownは約6.2%（SPY buy-and-holdの同期間リターン+40.4%とは異な�
 - ハーネスは**日次終値ベース**の1日、1回のSignal/Exit判定であり、本番（日中複数回のcron、
   最新quote/barを使用）とは完全一致しない。エントリー/エキジットタイミングの精度は項目例AMZNで
   確認済みだが、完全一致ではない
+  ※ **2026-08-27追記**: この限界は既存R11-B〜R14全バックテストに共通する。本番はintraday
+  5分足二段階判定も行っており、この機能は一度もバックテストされていない。R11-Cで発見した
+  「1銘柄1ポジション排他制御によるタイミングシフト効果」などのアーティファクトは、日足の粒度の
+  粗さが一因だった可能性がある。R15（2026-08-27）で2年分の5分足データを全兩69銘柄取得済み
+  （`data/r15_intraday_5min_cache/`）。intraday対応バックテストエンジンの構築は未実施。
 - ポジションサイジング・allocation上限・cluster cap・entry filter（rolling PF gate等）など
   本番R0-v2/R5-v2の安全制約は一切適用していない（意図的に除外: 現行ロジックの純粋なエッジの
   有無を問うため）。実際の本番リターンはこれらの制約によりさらに低くなる可能性がある
@@ -2173,6 +2286,49 @@ cron開始後の2026-04-21〜2026-08-14（約4ヶ月分のみ）しか存在し�
 これらのフィルタをR11-Dへ進める根拠はない。R4-v2（calibration）はR11-Bの結果に基づき引き続き
 投資価値ありとする一方、R11-Cで探した「別軸のフィルタでさらに上閃せする」アプローチは、少なくとも
 今回検証した4候補の範囲では支持されなかった。
+
+**⚠️ 2026-08-26追記（重要訂正）**: 上記の結論はR13-C確立以前の旧手法（同日終値約定、
+slippage/PIT universeなし）に基づく。R13-Cの厳密手法（t+1約定・PIT universe・
+conservative exit・slippage・portfolio cap）で全候補を再検証した結果、**RSI逆張り
+フィルタのみ結論が覇る**（全体PF+16%改善: 1.9251→2.2371、市場悪化局面での
+PF維持力がbaselineの約1.8倍）。セクター相対強度・ニュースセンチメントは旧結論
+（見送り）を支持。決算近接は結果が逆転（改善）したがn=103と最小サンプルのため
+判断保留。詳細・再現手順: `docs/r11c_v2_rigorous_rerun_20260826/README.md`。
+次のアクション: RSI逆張り候補の閘値グリッドサーチ+rolling walk-forwardでの
+追加検証 → **2026-08-26実施、下記参照**。
+
+**2026-08-26追加検証（閘値グリッドサーチ+rolling walk-forward）**: 新規
+`scripts/r11c_rsi_threshold_grid_rolling_wf.py`で00-90ばで閘値（60/65/70/75/80/85）
+を事前登録基準でグリッドサーチ。全閘値が形式上はsupported判定だが、重要な
+制約・発見2件:
+(1) point-in-time universeのintro_datesが全銘柄2026年設定の既知制約により
+    rolling walk-forwardの4分割中2分割が両方で0件取引で比較不可能だった（自己発見した
+    判定バグを修正済み）。実効サンプルは2分割のみで当初期待より少ない
+(2) 当初「gross/sector/cluster capによる間接的な資金再配分効果」と仮説したが
+    `enforce_caps=False`検証で完全に同一の結果となり自己訂正。真の原因は
+    「1銘柄1ポジションの排他制御による同一銘柄のエントリータイミングシフト」と判明
+    （除外トレード自体の直接PnLは+$1,123.78のみで限定的、全体改善+$3,047.83の
+    大半はタイミングシフト由来）。好材料: 閘値カーブは70付近にピークを持つ滑らかな
+    山型で〈75ちょうどへの不自然なスパイクなし」（overfittingの強い兆候なし）。
+判断: R11-D進出の根拠としてはまだ不十分。PIT universe制約の根本対応と、
+本番の排他制御・他ゲートとの相互作用での再現性確認が先決問題。
+詳細: `docs/r11c_rsi_threshold_grid_rolling_wf_20260826/README.md`
+
+**⚠️️ 2026-08-26後続追加検証（最終訂正、重要）**: 上記の「タイミングシフト効果」が
+本番でも発生するかを確認するため、本番の意思決定パス（`RiskValidator.validate()`,
+`BreakoutMomentumStrategy.generate()`, `EntryFilterEngine.filter()`, `paper_demo.py`の
+金額上限チェック）を実際に読んだ結果、**どの層にも「既存保有銘柄への新規buyを
+ブロックする」ロジックは存在しない**（金額上限までは同一銘柄への追加buyを許可、実際
+`pnl_state.json`でLRCX/IBM等がlots複数保有を確認）ことを確認。新規
+`scripts/r11c_rsi_no_symbol_exclusivity.py`で、1銘柄1ポジション制限を完全に除去した
+本番相当検証を実施したところ、**RSI逆張りの改善効果はほぼ消滅**（PF 2.1246→2.1370、
++0.58%で誤差範囲、net_pnlはむしゃ23.6%減少）。つまり一連の検証（v4厉密化→閘値
+グリッドサーチ→排他制御除去）で発見した「RSI逆張りのPF+16%改善」はすべてv4エンジン
+固有の実装アーティファクトであり、**本番相当の条件下では成立しない**ことが確定的に
+判明した。**2026-08-15の旧結論（見送り）が、より慎重な検証を経てもなお支持される**。
+詳細: `docs/r11c_rsi_no_symbol_exclusivity_20260826/README.md`。教訓:
+バックテストエンジンの実装詳細（同時保有ポジション数制限等）が戦略効果と見分けが
+つかない形で結果に混入しうるという新規アンチパターンを発見。
 
 **不確実性（この否定結果の限界）**:
 - 各候補は単一のパラメータ（RSI閾傄75、決算近接±5日等）でのみ検証。パラメータグリッドサーチは
@@ -2400,6 +2556,22 @@ correlation cluster cap等他のサイジング制約と組み合わされるた
 エントリー品質向上）と矛盾しない。引き続き既存のR9レビュー体制（08-19〜09-14）に任せ、
 新規の候補探しは一旦区切りとする。
 
+**⚠️ 2026-08-26追記（重大訂正）**: 上記の「reduce_sizeは穏当な効果（11%の候補にのみ影響）」
+という結論は、**実際の本番メカニズムを正しく再現していなかったため誤り**だったことが判明。
+2026-08-26夜、実際にBUYが完全にゼロになる事象をユーザーが観測し、本番コード（`paper_demo.py`/
+`position_sizing.py`）を実読したところ、reduce_sizeは「新規注文のノーショナルを半減」では
+なく、**ポートフォリオ全体の露出上限を半減する**ことが判明。既存保有が新上限を超えていれば
+新規buyは「縮小」ではなく「完全ブロック」される二値的挙動。実際08-26夜はexposure=47.3%に対し
+半減後上限が41.5%となり余裕枠ゼロで全候補ブロックされていた。
+
+新規`scripts/r0v2_reduce_size_portfolio_level_check.py`で、本番同一の`PositionSizingPolicy`を
+そのままimportしポートフォリオレベルの建玉追跡を含めて再シミュレートした結果：
+**reduce_size発動中の新規候補117件中61件（52.1%）が完全ブロック**されていた（63日中13日は
+全候補全滅）。PF自体はやや改善方向（1.4325→1.4970）で方向性は08-15検証と一致するが、
+「どの程度・どのようにブロックするか」のメカニズム理解は大きく異なっていた。ユーザーの
+直感（「想定よりブロックが強すぎる」）が正しかった。詳細:
+`docs/r0v2_reduce_size_portfolio_level_20260826/README.md`
+
 ### R11 follow-up (1): 体制整備① — 09-10 Pre-Launch Gate Reviewにレジーム依存性確認項目を追加
 
 **Status**: ✅ **完了（2026-08-15）**
@@ -2522,7 +2694,11 @@ A-Eと同一パターン）に乗せる。ヒストリカルで優れていた�
 |--------|-------|--------|------|
 | ✅ P1 | **R11-A** | **VERIFIED_COMPLETE**（2026-08-15） | バックテスト基盤新規実装完了、実際のclosed tradeとの方向性一致確認済み |
 | ✅ P1 | **R11-B** | **一次検証完了**（2026-08-15） | 結論:（a）エッジあり。n=1,415でPF=1.71、walk-forward両期間PF>1.6 |
-| ✅ P1 | **R11-C** | **一次検証完了**（2026-08-15） | 結論: 4候補 + レジームフィルタ2バリアントも含め全てacceptance criteria未達成。R11-Dへの候補なし |
+| ✅ P1 | **R11-C** | **旧結論（見送り）が最終確定（2026-08-15→ 08-26三段階検証で確認）** | 厳密手法ではRSI
+逆張りのみ一時PF+16%改善を示したが、内訳を分解したところv4エンジン固有の〇1銘柄1ポジション
+制限のアーティファクトと判明（本番には同目的の排他制御なし、金額上限まで同一銘柄追加buy可）。
+排他制御を除去した本番相当検証では改善はほぼ消滅（+0.58%、net_pnlはむしゃ23.6%減）。
+結論: 4候補全滅（見送り）の旧判定が最終確定。R11-Dへの候補なし |
 | ⚪ P2 | **R11-D** | **見送り** | R11-Cで昇格対象候補が0件だったため、現時点で進める候補なし |
 | ✅ P2 | **R11-E** | **作業1完了（2026-08-15）** | FeatureSnapshotStore配線済み。作業2（ML用feature/labelペア）は未着手 |
 
@@ -2943,9 +3119,22 @@ stop_lossで早期退場）に依存。R13-AのNBIS 1件依存ほど極端では
 
 **次のアクション**:
 - exit側Option BはR13-A同様、R13-Cでattributable銘柄数が十分に増えてから再検証
-- sizing側（Option A・confidence_multiplierバグ修正）は未着手のまま。こちらは固定
-trade履歴での単純バックテストができないため、別途検証手法を設計する必要あり
+- sizing側（Option A・confidence_multiplierバグ修正）: **2026-08-26に着手・検証完了**
+  （ユーザー承認、xhigh reasoning）。実データでバグを完全実証（confidence_multiplier
+  記録済み85件のうちcm=1.2ブースト55件は0%発火、cm=0.7カット7件は86%発火 —
+  `cap`が`base_final_shares`と同一4値minで再計算されているため`cap==base`が
+  常に成立し高確信ブーストを無効化する非対称バグ）。修正案（confidence_multiplierを
+  shares_by_riskへ事前適用）をヒストリカルにテスト：メカニズム検証（n=58、qty効果のみ）
+  ではブーストが妥当な39件中25件で正しく発火（残14件はnotional/exposure/sector側が
+  先にボトルネックのため無変化=正常挙動）、カット側4件全件で既存挙動を保持（regression
+  なし）。トレード結果連動検証はn=2のみ（decision_id永続化とconfidence_multiplier
+  記録がいずれも08-14開始のため構造的にサンプル僅少）で統計的に無意味、判断不可。
+  **本番コード未変更**（`scripts/simulate_confidence_multiplier_sizing_fix.py`による
+  読み取り専用分析のみ）。詳細: `docs/r13b_sizing_confidence_multiplier_fix_
+  validation_20260826/README.md`
 - 現行施策（tiered exit、confidence_multiplier no-opバグを含む）は変更せず維持
+  （メカニズムは実証済みだがpaper A/B判断の材料としてはattributable標本が
+  R13-A/B基準の≥90件目安に達するまで不十分、R13-Cの進展待ち）
 
 **エビデンス保存先**: `docs/r13b_signal_strength_decoupling_validation_20260823/`
 （full_110trades.txt / attributable_49trades.txt）
@@ -3185,9 +3374,34 @@ test_output.txt）。
 
 ### R13-D: 独立収益源の開発（ETFセクターローテーション・JP overnight spillover等）
 
-**Status**: 🟢 ETFセクターローテーション Phase 1完了・GO判定 + Phase 2（戦略設計コード実装）
-完了（2026-08-23、本番未配線）
+**Status**: 🟡 ETFセクターローテーション Phase 1はmin_members修正完了（2026-08-26）、
+headline設定はMIXEDに低下したが他パラメータ（top_n=1等）でGO継続、新headline選定が次アクション
++ Phase 2（戦略設計コード実装）完了（2026-08-23、本番未配線）
 **優先度**: P3（今すぐ収益には直結しないが、momentum一本足打法からの脱却に必要）
+
+**⚠️ 2026-08-26追加検証・修正実施済み（min_members未実装の影響）**: 同日のロードマップ
+監査で発見した「`run_rotation()`の`min_members`パラメータ未使用」を実際に測定した
+ところ、**headline設定（top_n=2）でmin_membersを正しく適用するとSharpeが1.370→1.230に
+低下しequal-weight baseline(1.255)を下回り「MIXED」判定に転落**することを発見。
+初回リバランス（2024-11〜2025-03）が`technology_cloud`（SKYY 1銘柄のみ）・
+`quantum_computing`（QTUM 1銘柄のみ）を連続選択していたことが原因（docstring自身が懸念
+していた「単一ETFノイズ依存」が実際に発生）。
+
+**修正実施済み（`scripts/r13d_etf_sector_rotation_phase1.py`に`min_members`を正式実装，
+`--enforce-min-members`フラグで新旧両結果を比較可能にし、デフォルトは旧挙動保持（後方
+互換性確認済み））を実施し公式再判定**したところ、**問題はheadline設定（top_n=2,
+lookback=63d, hold=21d）固有の脆弱性であり、戦略アイデア自体の妥当性は引き続き支持
+される**と判明。min_members適用後のパラメータ感度チェック（top_n=1: Sharpe=1.473でGO継続、
+lookback=126d: 1.415でGO、hold=42d: 1.318でGO）では依然として多くの設定がGOを維持。
+**NO-GO/MIXEDになるのはheadline設定1点のみ**。教訓: 単一のhealine設定のみに依存した
+GO判定は、実装バグ、1つで容易に覇るリスクがある。テストスイート影響なし（関連テスト46件
+全件PASS確認済み、本番未配線のresearch scriptのみ変更）。
+
+**次のアクション**: headline設定を`top_n=1`または`lookback=126d`に変更し、
+min_members修正込みの数値を新headlineとして採用することを推奨。選択根拠の明文化が必要
+（後付けの良い数値選びにならないよう注意）。09-08のR13-D本番配線判断レビューでは
+`--enforce-min-members`付き結果を正式な判断材料とすること。詳細:
+`docs/r13d_min_members_check_20260826/README.md`
 
 **既存進捗**:
 - JP半導体overnight spillover: Phase 1（相関検証、GO判定済み）、Phase 2（戦略設計）、
@@ -3387,9 +3601,9 @@ t+1約定・conservative exit・slippageモデリングをsector rotationにも�
 | 優先度 | Phase | 内容 | 工数目安 | リスク | 進捗 |
 |---|---|---|---|---|---|
 | P1 | R13-A | stop_loss閾値深掘り検証 | 中 | 低 | **STOP HOLD**（検証完了、2026-08-23） |
-| P1 | R13-B | signal_strength exit切り離し検証 | 低〜中 | 中 | **弱い結果**（検証完了、2026-08-23）、sizing側未着手 |
+| P1 | R13-B | signal_strength exit切り離し検証 | 低〜中 | 中 | **弱い結果**（検証完了、2026-08-23）、sizing側（confidence_multiplierバグ）実証済み、2026-08-26）、paper A/Bには未十分 |
 | P2 | R13-C | R11バックテスト再構築（項目1〜7全完了） | 大 | 低（研究のみ、本番影響なし） | **✅ COMPLETE**（2026-08-24）、live以降PF=1.453（90%CI[1.210,1.750]）、rolling walk-forwardでレジーム依存不振を独立再確認 |
-| P3 | R13-D | ETFセクターローテーション、JP spilloverはIBKR待ち継続 | 大 | 低（shadowのみ） | **Phase 1 GO + Phase 2 + Phase 3（状態管理）完了**（2026-08-24）、本番配線は未着手（要承認） |
+| ⚠️ P3 | R13-D | ETFセクターローテーション、JP spilloverはIBKR待ち継続 | 大 | 低（shadowのみ） | Phase 1/2/3実装完了（2026-08-24）だが**headline設定はmin_membersバグ修正でMIXEDに低下**（2026-08-26）、top_n=1等別パラメータはGO継続、新headline選定が09-08レビュー前の次アクション、本番配線は未着手（要承認） |
 
 **09-15 Go/No-Goとの関係**: R13はすべてpaper A/B・研究段階であり、09-15までに
 本番反映されるものは別途ユーザー承認がない限りない見込み。つまり09-15判断の前提となる
@@ -3421,6 +3635,19 @@ conservative-OHLC-exit/t+1-fill/slippage機構と本番`SimpleExitV2Strategy`設
   起きにくいが、時間差での交差は一定数あり
 
 判定: ✅ **GO** — Phase 2へ。詳細: `docs/r14_dip_buy_meanreversion_phase1_20260825/README.md`
+
+**⚠️ 2026-08-26追記（R11-Cと同型の自己検証、重要・混在結果）**: 同日のR11-C検証で
+発見した「1銘柄1ポジション排他制御が戦略効果と混同する」アンチパターンをR14にも適用して
+検証（`scripts/r14_no_symbol_exclusivity_check.py`、本番のRiskValidator/
+BreakoutMomentumStrategy/paper_demo.pyに同目的の排他制御が存在しないことを
+確認済み）。結果は混在: (a) **全期間比較は逆転**（PIT: dip-buy 1.963→1.530 vs
+momentum 1.854→2.063、full-history: 1.710→1.456 vs 1.575→1.787、dip-buy取引件数
+は3〜4倍に急增）でGO判定の一部は未支持。(b) しかし**最重要の発見「チョップ相場での
+momentum弱点補完」は同条件でも頑健に残存**（dip-buy PF=1.1811の黒字 vs momentum
+PF=0.6414の赤字、Phase1自体の0.646とほぼ一致）。修正された価値提案: dip-buyを
+「常時稼働でmomentumを上回る独立戦略」ではなく「レジーム検知連動型（chop検知時のみ
+有効化）」として設計し直すべき。09-08本番配線判断レビューではこの修正前提を反映する
+こと。詳細: `docs/r14_no_symbol_exclusivity_check_20260826/README.md`
 
 **Phase 2（SHADOW-ONLY本番配線、2026-08-25実施、ユーザー「進めて」指示）**:
 - `src/stock_swing/strategy_engine/dip_buy_meanreversion_strategy.py`新規

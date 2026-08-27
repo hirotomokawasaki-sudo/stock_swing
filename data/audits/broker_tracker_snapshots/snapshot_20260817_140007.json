@@ -1,0 +1,26 @@
+{
+  "as_of_utc": "2026-08-17T14:00:08.269887+00:00",
+  "mismatch_count": 0,
+  "only_in_broker": [],
+  "only_in_tracker": [],
+  "broker_position_count": 15,
+  "tracker_open_count": 15,
+  "common_symbols": [
+    "ASML",
+    "CRDO",
+    "CRWD",
+    "IBM",
+    "INTC",
+    "LRCX",
+    "MRVL",
+    "MSFT",
+    "NOW",
+    "NVDA",
+    "ORCL",
+    "PLTR",
+    "QTUM",
+    "SNOW",
+    "TSLA"
+  ],
+  "rgt_011_pass": true
+}

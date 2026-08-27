@@ -148,10 +148,31 @@ def run_rotation(
     lookback_days: int,
     hold_days: int,
     min_members: int = 2,
+    sector_members: dict[str, list[str]] | None = None,
 ) -> dict[str, Any]:
-    eligible_sectors = {
-        s: r for s, r in sector_returns.items()
-    }
+    # BUG FIX (2026-08-26, found via evidence-based-system-audit roadmap
+    # review): min_members was accepted as a parameter (default 2, matching
+    # this module's own docstring claim "rank all sectors (with >=2
+    # members to reduce single-ETF noise)") but was NEVER actually applied
+    # here -- eligible_sectors previously copied ALL sectors unconditionally.
+    # Confirmed live (scripts/r13d_min_members_check.py, 2026-08-26): at the
+    # headline top_n=2 setting, this let the rotation hold single-ETF
+    # "sectors" (technology_cloud=SKYY, quantum_computing=QTUM) for 4
+    # consecutive rebalances (2024-11 to 2025-03), which the docstring's own
+    # "Removing single-ETF sectors" robustness check had assumed was NOT
+    # happening at the headline top_n=2 config (that check only tested
+    # top_n=1, a different config, so it never caught this). With the fix
+    # applied, headline Sharpe drops from 1.370 to 1.230, which no longer
+    # beats the equal-weight-all-sectors baseline (1.255) -- i.e. this bug
+    # fix changes the Phase 1 GO/NO-GO verdict at the headline setting. See
+    # docs/r13d_min_members_check_20260826/README.md for the full analysis.
+    if sector_members is None:
+        eligible_sectors = {s: r for s, r in sector_returns.items()}
+    else:
+        eligible_sectors = {
+            s: r for s, r in sector_returns.items()
+            if len(sector_members.get(s, [])) >= min_members
+        }
     daily_portfolio_returns: list[tuple[str, float]] = []
     rebalance_log: list[dict[str, Any]] = []
 
@@ -253,6 +274,17 @@ def main() -> None:
     parser.add_argument("--top-n", type=int, default=2)
     parser.add_argument("--lookback-days", type=int, default=63)
     parser.add_argument("--hold-days", type=int, default=21)
+    parser.add_argument("--min-members", type=int, default=2)
+    parser.add_argument(
+        "--enforce-min-members", action="store_true",
+        help=(
+            "BUG FIX (2026-08-26): apply the min_members filter that was previously "
+            "accepted as a parameter but never used (see run_rotation()'s docstring "
+            "comment and docs/r13d_min_members_check_20260826/README.md). Default "
+            "OFF to preserve the original 2026-08-23 headline result unchanged for "
+            "historical comparison; pass this flag to get the corrected verdict."
+        ),
+    )
     parser.add_argument("--save", action="store_true")
     args = parser.parse_args()
 
@@ -268,7 +300,12 @@ def main() -> None:
     rotation_result = run_rotation(
         sector_returns, all_dates,
         top_n=args.top_n, lookback_days=args.lookback_days, hold_days=args.hold_days,
+        min_members=args.min_members,
+        sector_members=sector_members if args.enforce_min_members else None,
     )
+    if args.enforce_min_members:
+        print(f"\n⚠️  --enforce-min-members active: sectors with <{args.min_members} "
+              f"tracked ETFs are excluded from ranking (bug fix, see run_rotation() docstring).")
     rotation_daily = rotation_result["daily_returns"]
     start_idx = args.lookback_days
     eq_weight_daily = equal_weight_all(sector_returns, all_dates, start_idx)
@@ -311,7 +348,11 @@ def main() -> None:
     print("Parameter sensitivity (not optimized -- spot-check for robustness)")
     print("-" * 90)
     for tn, lb, hd in [(1, 63, 21), (3, 63, 21), (2, 126, 21), (2, 63, 42)]:
-        alt = run_rotation(sector_returns, all_dates, top_n=tn, lookback_days=lb, hold_days=hd)
+        alt = run_rotation(
+            sector_returns, all_dates, top_n=tn, lookback_days=lb, hold_days=hd,
+            min_members=args.min_members,
+            sector_members=sector_members if args.enforce_min_members else None,
+        )
         s = summarize_curve(f"top{tn}_lb{lb}_hd{hd}", alt["daily_returns"])
         print(f"  top_n={tn} lookback={lb}d hold={hd}d: total_return={s['total_return_pct']:+7.2f}% "
               f"Sharpe={s['sharpe']} maxDD={s['max_drawdown_pct']}%")

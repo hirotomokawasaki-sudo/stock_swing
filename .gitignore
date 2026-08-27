@@ -116,6 +116,11 @@ reports/signal_strength_decile.json
 # same rationale as data/backtest_price_cache/ above)
 data/r11_price_cache/
 data/r11_earnings_cache/
+
+# R15 intraday 5-min bar cache (regeneratable via
+# scripts/r15_fetch_intraday_5min_history.py; 200MB+, same rationale as
+# data/r11_price_cache/ above)
+data/r15_intraday_5min_cache/
 reports/r11_backtest_results.json
 reports/r11_backtest_v2_results.json
 reports/r11_backtest_v3_results.json

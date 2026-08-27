@@ -1,0 +1,34 @@
+{
+  "generated_at": "2026-08-26T13:25:39.294293+00:00",
+  "methodology": "Phase1-derived dip-buy engine WITHOUT one-position-per-symbol exclusivity -- checks whether Phase 1's GO verdict (PF=1.963 PIT / PF=1.710 full-history) is inflated by the same entry-timing-shift/re-entry mechanism found the same day (2026-08-26) in the unrelated R11-C RSI-reversed candidate.",
+  "variants": {
+    "point_in_time_universe": {
+      "label": "dip_buy_no_exclusivity_point_in_time_universe",
+      "n": 1208,
+      "win_rate": 0.6639,
+      "profit_factor": 1.5302,
+      "net_pnl": 123320.05,
+      "avg_return_pct": 0.0102
+    },
+    "point_in_time_universe_chop_window": {
+      "label": "dip_buy_no_exclusivity_point_in_time_universe_chop",
+      "n": 0
+    },
+    "full_history": {
+      "label": "dip_buy_no_exclusivity_full_history",
+      "n": 7696,
+      "win_rate": 0.6202,
+      "profit_factor": 1.4558,
+      "net_pnl": 723588.97,
+      "avg_return_pct": 0.0094
+    },
+    "full_history_chop_window": {
+      "label": "dip_buy_no_exclusivity_full_history_chop",
+      "n": 2108,
+      "win_rate": 0.5911,
+      "profit_factor": 1.1811,
+      "net_pnl": 85758.32,
+      "avg_return_pct": 0.0041
+    }
+  }
+}

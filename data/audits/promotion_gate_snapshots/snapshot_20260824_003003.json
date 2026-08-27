@@ -1,0 +1,41 @@
+{
+  "captured_at": "2026-08-24T00:30:03.460526+00:00",
+  "date": "2026-08-24",
+  "promotion": {
+    "cluster_cap": {
+      "label": "cluster_cap",
+      "pass": true,
+      "actual": "none over cap",
+      "required": "no cluster over cap",
+      "detail": ""
+    },
+    "top5_concentration": {
+      "label": "top5_concentration",
+      "pass": true,
+      "actual": "31.7% of equity",
+      "required": "<=40% of equity",
+      "detail": "gross_basis=50.7%, gross_exposure/equity=62.5%, hhi=0.0799"
+    },
+    "portfolio_beta": {
+      "label": "portfolio_beta",
+      "pass": true,
+      "actual": 0.772,
+      "required": "<=1.5",
+      "detail": ""
+    },
+    "clean_cohort_pf": {
+      "label": "clean_cohort_pf",
+      "pass": true,
+      "actual": 1.082,
+      "required": ">=1.0 (n>=20)",
+      "detail": "n=49"
+    },
+    "pairwise_correlation": {
+      "label": "pairwise_correlation",
+      "pass": false,
+      "actual": "unavailable",
+      "required": "no pair with |correlation|>=0.8",
+      "detail": "stale_data (most_recent_date=2026-07-29, staleness_days=26)"
+    }
+  }
+}

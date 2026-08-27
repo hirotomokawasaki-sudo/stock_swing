@@ -1,0 +1,46 @@
+[
+  {
+    "decision_id": "0149c83a-0dca-6217-0a3b-56e567323e70",
+    "symbol": "INTC",
+    "confidence_multiplier": 1.2,
+    "actual_qty_traded": 389,
+    "actual_final_shares_decision": 389,
+    "fixed_final_shares": 466,
+    "pnl_actual": -4874.17,
+    "return_pct": -0.1197,
+    "exit_reason": "strategy_exit",
+    "detail": {
+      "shares_by_risk": 389,
+      "shares_by_notional": 767,
+      "shares_by_exposure": 2817,
+      "shares_by_sector": 3256,
+      "shares_by_risk_fixed": 466,
+      "confidence_multiplier": 1.2,
+      "asset_multiplier": 1.0
+    },
+    "fixed_pnl_estimate": -5838.98,
+    "pnl_diff": -964.81
+  },
+  {
+    "decision_id": "f1495daf-ec09-9a13-de27-4e2e298a31ad",
+    "symbol": "MRVL",
+    "confidence_multiplier": 1.2,
+    "actual_qty_traded": 156,
+    "actual_final_shares_decision": 156,
+    "fixed_final_shares": 187,
+    "pnl_actual": 1944.37,
+    "return_pct": 0.0523,
+    "exit_reason": "trailing_stop",
+    "detail": {
+      "shares_by_risk": 156,
+      "shares_by_notional": 337,
+      "shares_by_exposure": 1239,
+      "shares_by_sector": 1431,
+      "shares_by_risk_fixed": 187,
+      "confidence_multiplier": 1.2,
+      "asset_multiplier": 1.0
+    },
+    "fixed_pnl_estimate": 2330.75,
+    "pnl_diff": 386.38
+  }
+]
