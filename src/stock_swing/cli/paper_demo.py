@@ -3400,6 +3400,20 @@ def _save_decisions(
                     "max_sector_exposure_usd": d.sizing.max_sector_exposure_usd,
                     "remaining_sector_capacity_usd": d.sizing.remaining_sector_capacity_usd,
                     "confidence": d.sizing.confidence,
+                    # 2026-08-27 (R13-B follow-up discovery): confidence_multiplier
+                    # was added to PositionSizingSnapshot 2026-08-14 and IS set
+                    # correctly on the in-memory DecisionRecord.sizing object
+                    # (paper_executor.py) and in evidence["sizing"] below, but
+                    # was never included in THIS top-level persisted "sizing"
+                    # dict -- confirmed via real data: 0/2871 persisted decision
+                    # JSON files have it at the top level despite evidence.sizing
+                    # having the correct value. R4-v2's planned confidence
+                    # calibration work and R13-B's sizing analysis both already
+                    # read from evidence.sizing (unaffected by this gap), but the
+                    # top-level "sizing" block -- the schema's more discoverable
+                    # location -- was silently incomplete. Purely additive fix;
+                    # does not change any existing field's value.
+                    "confidence_multiplier": d.sizing.confidence_multiplier,
                     "applied_constraint": d.sizing.applied_constraint,
                     "skip_reason": d.sizing.skip_reason,
                 },

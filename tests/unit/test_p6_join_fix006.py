@@ -46,6 +46,7 @@ def _decision_stub():
         max_sector_exposure_usd=200_000.0,
         remaining_sector_capacity_usd=190_000.0,
         confidence=0.9,
+        confidence_multiplier=1.2,
         applied_constraint="risk",
         skip_reason=None,
     )
@@ -117,6 +118,34 @@ def test_join_coverage_all_fields_present(tmp_path):
 
     for field in ["run_id", "experiment_id", "config_hash", "decision_time", "usage_source"]:
         assert payload.get(field), f"Missing top-level field: {field}"
+
+
+def test_top_level_sizing_includes_confidence_multiplier(tmp_path):
+    """Regression (2026-08-27, R13-B follow-up discovery): confidence_multiplier
+    was added to PositionSizingSnapshot 2026-08-14 and correctly reaches
+    evidence["sizing"], but was silently missing from the top-level "sizing"
+    dict written by _save_decisions -- confirmed against real data (0/2871
+    persisted decision JSON files had it at the top level). This is the
+    schema's more discoverable location for downstream calibration/analysis
+    tooling to read from."""
+    from stock_swing.cli.paper_demo import _save_decisions
+
+    decision = _decision_stub()
+    store = _make_store(tmp_path)
+    _save_decisions(
+        [decision],
+        store,
+        "20260827T000000Z",
+        run_id="run-1",
+        experiment_id="exp-1",
+        config_hash="cfg-1",
+    )
+
+    saved = next((tmp_path / "data" / "decisions").glob("decision_*.json"))
+    payload = json.loads(saved.read_text(encoding="utf-8"))
+
+    assert "confidence_multiplier" in payload["sizing"]
+    assert payload["sizing"]["confidence_multiplier"] == 1.2
 
 
 def _decision_stub_variant(*, decision_id: str, action: str, symbol: str = "AAPL"):
