@@ -1228,6 +1228,7 @@ class DashboardService:
             "buy_stop_list": self._get_buy_stop_list(),
             "small_sample_watchlist": self._get_small_sample_watchlist(),
             "cluster_exposure": self._get_cluster_exposure(trading=trading),
+            "promotion_readiness": self._get_promotion_readiness(trading=trading),
         }
 
         by_strategy: Dict[str, Dict[str, Any]] = {}
@@ -2431,6 +2432,140 @@ class DashboardService:
             ]
         except Exception:
             return []
+
+    def _get_promotion_readiness(self, trading: Dict[str, Any] | None = None) -> Dict[str, Any]:
+        """R6-v2 C5 (2026-08-27): read-only Risk Dashboard panel surfacing
+        R5-v2's promotion_gate.py criteria (cluster cap / top5 concentration
+        / portfolio beta / clean-cohort PF / pairwise correlation) in the
+        web dashboard.
+
+        This was the one remaining item in the original 2026-06-25 C-batch
+        plan ("C5: Risk Dashboard -- ETF/株 別昇格状態 ← R5と並行"). R5-v2's
+        promotion_gate.py itself was implemented 2026-08-14, but its
+        combined pass/fail verdict was only ever surfaced via
+        scripts/check_go_no_go.py (manual CLI run) and the daily
+        stock_swing_promotion_gate_snapshot_daily cron's JSON snapshots
+        (data/audits/promotion_gate_snapshots/) -- never in the console
+        itself, which was this method's specific gap.
+
+        Deliberately mirrors scripts/check_go_no_go.py's
+        check_promotion_readiness() function (same inputs, same
+        evaluate_promotion_readiness() call) rather than inventing a
+        parallel computation, so the console and the CLI/cron path can
+        never silently disagree about promotion readiness. Any future
+        change to promotion_gate.py's criteria or thresholds is picked up
+        by both call sites for free.
+
+        Read-only, recommendation-only (same constraint as
+        _get_cluster_exposure() / _get_market_regime_indicator() above):
+        never blocks or resizes anything. Returns {"available": False} on
+        any error rather than failing the whole dashboard payload.
+        """
+        try:
+            from stock_swing.risk.promotion_gate import evaluate_promotion_readiness
+            from stock_swing.risk.pairwise_correlation import (
+                build_daily_closes_from_raw_bars,
+                check_data_freshness,
+                compute_pairwise_correlation,
+                summarize_high_correlation_pairs,
+            )
+
+            cluster_exposures = self._get_cluster_exposure(trading=trading)
+
+            positions_snapshot = self.get_positions(trading=trading)
+            top5 = None
+            top5_gross_pct = None
+            gross_exposure_pct_of_equity = None
+            top5_hhi = None
+            held_symbols: list[str] = []
+            if positions_snapshot.get("available"):
+                position_rows = positions_snapshot.get("positions") or []
+                pnl_state_path = self.project_root / "data" / "tracking" / "pnl_state.json"
+                _pnl_state_for_summary = DashboardService._load_json_cached(pnl_state_path) if pnl_state_path.exists() else {}
+                summary = self._summarize_positions(
+                    position_rows,
+                    trading={"daily_snapshots": _pnl_state_for_summary.get("daily_snapshots", [])},
+                )
+                top5 = summary.get("top5_concentration_equity_pct")
+                top5_gross_pct = summary.get("top5_concentration_gross_pct")
+                gross_exposure_pct_of_equity = summary.get("gross_exposure_pct_of_equity")
+                top5_hhi = summary.get("hhi")
+                held_symbols = sorted({str(p.get("symbol") or "").upper() for p in position_rows if p.get("symbol")})
+
+            pnl_state_path = self.project_root / "data" / "tracking" / "pnl_state.json"
+            pnl_state = DashboardService._load_json_cached(pnl_state_path) if pnl_state_path.exists() else {}
+            _all_closed_trades = [t for t in pnl_state.get("trades", []) if t.get("status") == "closed"]
+            # Mirrors check_go_no_go.py's AUDIT FIX (2026-08-23): exclude
+            # untracked-origin (broker-reconstructed / pre-metadata-join)
+            # trades from the clean-cohort PF population, same
+            # classification PnLTracker.get_attribution_quality_breakdown()
+            # already uses as canonical.
+            _untracked_origin_ids = {"broker_reconstructed", "reconciled_from_broker"}
+            closed_trades = [
+                t for t in _all_closed_trades
+                if (t.get("original_strategy_id") or t.get("strategy_id")) not in _untracked_origin_ids
+            ]
+
+            from console.services.benchmark_service import BenchmarkService
+            bench = BenchmarkService(self.project_root)
+            daily_snapshots = pnl_state.get("daily_snapshots", [])
+            beta_data = bench.calculate_beta(daily_snapshots)
+
+            raw_broker_dir = self.project_root / "data" / "raw" / "broker"
+            closes_by_symbol = {
+                sym: build_daily_closes_from_raw_bars(sym, raw_broker_dir)
+                for sym in held_symbols
+            }
+            closes_by_symbol = {sym: c for sym, c in closes_by_symbol.items() if c}
+            _correlation_freshness = check_data_freshness(closes_by_symbol)
+            pairwise = compute_pairwise_correlation(closes_by_symbol)
+            correlation_summary = summarize_high_correlation_pairs(pairwise, freshness=_correlation_freshness)
+
+            readiness = evaluate_promotion_readiness(
+                cluster_exposures=cluster_exposures,
+                top5_concentration=top5,
+                top5_concentration_gross_pct=top5_gross_pct,
+                gross_exposure_pct_of_equity=gross_exposure_pct_of_equity,
+                top5_hhi=top5_hhi,
+                beta_data=beta_data,
+                closed_trades=closed_trades,
+                correlation_summary=correlation_summary,
+            )
+
+            # C5's original spec called for "ETF/株 別昇格状態" (asset-class
+            # split readiness). promotion_gate.py's criteria are inherently
+            # portfolio-level (cluster cap, beta, correlation are cross-
+            # asset-class by construction), so instead of a second parallel
+            # readiness verdict, split just the one criterion that IS
+            # naturally asset-class-separable (clean_cohort_pf) using the
+            # asset_class_breakdown already computed elsewhere
+            # (PnLTracker.get_asset_class_breakdown()), for visibility
+            # alongside the portfolio-level verdict.
+            asset_class_pf: Dict[str, Any] = {}
+            if self._tracker:
+                try:
+                    self._tracker.state = self._tracker._load_state()
+                    breakdown = self._tracker.get_asset_class_breakdown()
+                    for ac in ("etf", "stock"):
+                        m = breakdown.get(ac, {})
+                        if m and m.get("count", 0) > 0:
+                            asset_class_pf[ac] = {
+                                "count": m.get("count"),
+                                "profit_factor": m.get("profit_factor"),
+                                "win_rate": m.get("win_rate"),
+                            }
+                except Exception:
+                    pass
+
+            return {
+                "available": True,
+                "all_pass": readiness.all_pass,
+                "failing": readiness.failing,
+                "criteria": readiness.to_dict()["criteria"],
+                "asset_class_pf": asset_class_pf,
+            }
+        except Exception as e:
+            return {"available": False, "error": str(e)}
 
     def _get_market_regime_indicator(self) -> Dict[str, Any]:
         """R11 follow-up (2026-08-15): read-only market chop/regime panel.

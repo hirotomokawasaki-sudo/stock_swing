@@ -1,16 +1,14 @@
 # Broker/Tracker Reconciliation (Weighted Average)
-Generated: 2026-08-26T21:00:12.104404+00:00
+Generated: 2026-08-31T21:00:16.702361+00:00
 
-Broker positions: 9
-Tracker open symbols: 9
+Broker positions: 7
+Tracker open symbols: 7
 
 | Symbol | Lots | Tracker Qty | Broker Qty | Qty Match | Tracker W.Avg | Broker Avg | Price Delta | Status |
 |--------|------|-------------|-----------|-----------|--------------|-----------|-------------|--------|
-| IBM | 2 | 309 | 309 | OK | $235.92 | $235.92 | +0.0% | OK |
-| LRCX | 2 | 227 | 227 | OK | $338.64 | $338.64 | -0.0% | OK |
 | MSFT | 1 | 145 | 145 | OK | $493.17 | $493.28 | -0.0% | OK |
 | MU | 1 | 35 | 35 | OK | $1027.92 | $1027.92 | +0.0% | OK |
-| NOW | 1 | 15 | 15 | OK | $125.00 | $125.00 | +0.0% | OK |
+| NOW | 2 | 400 | 400 | OK | $147.95 | $147.57 | +0.3% | OK |
 | ORCL | 2 | 353 | 353 | OK | $149.27 | $149.27 | +0.0% | OK |
 | PATH | 1 | 2849 | 2849 | OK | $15.93 | $15.93 | +0.0% | OK |
 | PLTR | 2 | 292 | 292 | OK | $175.30 | $175.30 | -0.0% | OK |

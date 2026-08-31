@@ -910,7 +910,55 @@ class Console {
         ${this._renderBuyStopList(funnel)}
         ${this._renderSmallSampleWatchlist(funnel)}
         ${this._renderClusterExposure(funnel)}
+        ${this._renderPromotionReadiness(funnel)}
         ${this._renderPaperRuns(p)}`;
+    }
+
+    // R6-v2 C5 (2026-08-27): the last remaining item from the original
+    // 2026-06-25 C-batch plan ("Risk Dashboard -- ETF/株 別昇格状態 ← R5と
+    // 並行"). R5-v2's promotion_gate.py criteria (cluster cap / top5
+    // concentration / portfolio beta / clean-cohort PF / pairwise
+    // correlation) were implemented 2026-08-14 but only ever surfaced via
+    // scripts/check_go_no_go.py or daily cron JSON snapshots -- never here.
+    // Read-only, recommendation-only, mirrors _renderClusterExposure above.
+    _renderPromotionReadiness(funnel) {
+        const pr = funnel.promotion_readiness;
+        if (!pr || !pr.available) return '';
+
+        const criteria = pr.criteria || [];
+        const rows = criteria.map(c => {
+            const icon = c.passed ? '✅' : '❌';
+            const actual = Array.isArray(c.actual) ? c.actual.join(', ') : (c.actual ?? '—');
+            return `<tr>
+                <td>${icon} <strong>${this.escapeHtml(c.name || '—')}</strong></td>
+                <td class="small">${this.escapeHtml(String(actual))}</td>
+                <td class="small muted">${this.escapeHtml(c.required || '—')}</td>
+                <td class="small muted">${this.escapeHtml(c.detail || '')}</td>
+            </tr>`;
+        }).join('');
+
+        const overallCls = pr.all_pass ? 'success' : 'danger';
+        const overallLabel = pr.all_pass ? '✅ ALL PASS' : `❌ FAILING: ${(pr.failing || []).join(', ')}`;
+
+        const acPf = pr.asset_class_pf || {};
+        const acRows = Object.keys(acPf).length > 0
+            ? Object.entries(acPf).map(([ac, m]) => {
+                const pfVal = m.profit_factor;
+                const pfStr = (pfVal === null || pfVal === undefined) ? '—' : (typeof pfVal === 'number' ? pfVal.toFixed(3) : pfVal);
+                const wr = m.win_rate != null ? (m.win_rate * 100).toFixed(1) + '%' : '—';
+                return `<span class="small" style="margin-right:16px">${ac.toUpperCase()}: n=${m.count} PF=${pfStr} WR=${wr}</span>`;
+            }).join('')
+            : '<span class="muted small">データなし</span>';
+
+        return `
+        <div class="card" style="margin-top:8px">
+            <h4 style="margin:0 0 8px">📊 PROMOTION GATE READINESS <span class="muted small" style="font-weight:normal">（R5-v2、recommendation-only、Go/No-Go判断の補助情報）</span></h4>
+            <div class="${overallCls}" style="margin-bottom:8px"><strong>${overallLabel}</strong></div>
+            <div class="table-wrap"><table><thead><tr>
+                <th>条件</th><th>実測値</th><th>基準</th><th>詳細</th>
+            </tr></thead><tbody>${rows}</tbody></table></div>
+            <div style="margin-top:8px">${acRows}</div>
+        </div>`;
     }
 
     _renderPaperRuns(pipeline) {

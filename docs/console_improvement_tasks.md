@@ -653,8 +653,24 @@ loss halt、circuit breaker、promotion_gate）に委ねる。**max_hold_daysは
 
 **paper有効化（2026-08-14）**: ヒストリカル検証2段階の結果（新規誤発動0件・正味
 +$22,900改善方向）を踏まえ、`volatility_adjusted_stop_enabled: true`に変更し
-paper環境で有効化。中間レビューは**2026-08-28頃**（cron登録済み:
-`stock_swing_volatility_adjusted_stop_review_20260828`）。
+paper環境で有効化。
+
+**⚠️ 08-28中間レビュー: cron未登録が発覚（08-21 R9レビューと同型の記載ミス、
+2回目）**。当初「cron登録済み: `stock_swing_volatility_adjusted_stop_review_20260828`」
+と記載していたが実際にはジョブ未登録だったため、08-29にユーザー確認をきっかけに
+発覚・手動でレビュー実施。
+
+**08-29実施レビュー結果（n=6論理トレード、8-14以降のstop_loss exit全件）**:
+- 明確な悪化事例（widen調整が損失拡大）: **0件**（最重要リスクは未観測）
+- 明確な改善事例: QTUM 1件（tighten判定により早期exit、無調整比で約$650〜700の
+  損失回避を反事実分析で確認）
+- 残り4件（AVGO/ASML/CHPX/FTXL/NVDA）はギャップ/日中急落が閾値の微調整幅を
+  圧倒しており、調整の有無による差はほぼ判別不能
+- **判断: n=6は結論を出すには小さすぎるため、閾値レンジ（0.5〜1.75）は現状維持**。
+  次回レビューは09-08 Pre-Launch Gate Review（第2弾）に合わせてcron登録
+  （`stock_swing_volatility_adjusted_stop_review_20260908`、登録後`cron list`で
+  実在確認済み）
+- 詳細: `docs/daily_logs/2026-08-29.md`
 
 **未実施（今後の検証課題）**:
 - ヒストリカル検証はエントリー時点ATR固定・±3日窓universe近似・日次終値のみ

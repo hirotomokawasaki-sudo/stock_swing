@@ -1,10 +1,10 @@
 {
-  "time": "2026-08-26T23:05:11.011439+00:00",
+  "time": "2026-08-31T23:05:12.152342+00:00",
   "status": "ok",
   "symbols_requested": 44,
-  "symbols_with_upcoming_earnings": 16,
+  "symbols_with_upcoming_earnings": 10,
   "reason": null,
-  "total_calendar_rows_fetched": 252,
-  "from": "2026-08-26",
-  "to": "2026-09-05"
+  "total_calendar_rows_fetched": 278,
+  "from": "2026-08-31",
+  "to": "2026-09-10"
 }

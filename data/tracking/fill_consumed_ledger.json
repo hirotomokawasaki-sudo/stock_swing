@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-24T16:15:14.333890+00:00",
+  "generated_at": "2026-08-31T16:15:11.613999+00:00",
   "fills": [
     {
       "fill_id": "12568331-e3ea-4a61-af22-1c30a0bc84f2",
@@ -245,6 +245,29 @@
       "consumed": false,
       "consumed_by": null,
       "consumption_events": [],
+      "quarantine_reason": null
+    },
+    {
+      "fill_id": "692182ab-9d26-49e8-a8dc-f02e69562498",
+      "order_id": "692182ab-9d26-49e8-a8dc-f02e69562498",
+      "symbol": "LRCX",
+      "side": "sell",
+      "qty": 227.0,
+      "consumed_qty": 227.0,
+      "consumed": true,
+      "consumed_by": "d006b4c3-a7f6-fbf8-7e63-9d028edaa2e2:35->227",
+      "consumption_events": [
+        {
+          "trade_id": "inline_reconcile:d006b4c3-a7f6-fbf8-7e63-9d028edaa2e2",
+          "qty": 35.0,
+          "consumed_at": "2026-08-31T16:00:29.970571+00:00"
+        },
+        {
+          "trade_id": "d006b4c3-a7f6-fbf8-7e63-9d028edaa2e2:35->227",
+          "qty": 192.0,
+          "consumed_at": "2026-08-31T16:15:11.613779+00:00"
+        }
+      ],
       "quarantine_reason": null
     },
     {
@@ -590,6 +613,24 @@
           "trade_id": "140b7faa-c4b1-5085-f788-0342615e9c46:0->240",
           "qty": 240.0,
           "consumed_at": "2026-08-06T13:45:17.559134+00:00"
+        }
+      ],
+      "quarantine_reason": null
+    },
+    {
+      "fill_id": "d4349627-18bc-4c42-bd8b-d889701a7cbe",
+      "order_id": "d4349627-18bc-4c42-bd8b-d889701a7cbe",
+      "symbol": "IBM",
+      "side": "sell",
+      "qty": 309.0,
+      "consumed_qty": 309.0,
+      "consumed": true,
+      "consumed_by": "inline_reconcile:4658e485-de30-df2a-cd42-2354e96bb619",
+      "consumption_events": [
+        {
+          "trade_id": "inline_reconcile:4658e485-de30-df2a-cd42-2354e96bb619",
+          "qty": 309.0,
+          "consumed_at": "2026-08-31T16:00:29.425857+00:00"
         }
       ],
       "quarantine_reason": null

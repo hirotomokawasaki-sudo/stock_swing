@@ -3,16 +3,16 @@
   "clear_note": null,
   "cleared_at": null,
   "cleared_by": null,
-  "last_evaluated_at": "2026-08-26T19:55:26.762702+00:00",
+  "last_evaluated_at": "2026-08-31T19:55:31.515844+00:00",
   "reason": "guardrail_degraded",
   "status": "degraded",
-  "triggered_at": "2026-08-26T19:55:26.762702+00:00",
+  "triggered_at": "2026-08-31T19:55:31.515844+00:00",
   "triggered_rules": [
     {
       "action": 1,
       "metric": "consecutive_losing_trades",
       "name": "consecutive_losing_trades",
-      "observed": 8.0,
+      "observed": 13.0,
       "operator": ">=",
       "severity": "medium",
       "threshold": 5.0
