@@ -3762,3 +3762,66 @@ point-in-time（lookaheadなし）で「もし共有EntryFilterEngineで両戦�
 ❌ パラメータのグリッドサーチ（drop深さ・lookback窓の最適化）—
    意図的に鏡像の単一ルールのみ検証、R13-Cのoverfitting回避方針を踏襲
 ```
+
+---
+
+## R16: 複数ロット希釈exitシャドー診断（lot_level_exit_diagnostic、2026-09-01）
+
+**背景**: ユーザーから「長期間含み益が出ているのに売られていないポジションが
+あるが、ロジック通りか」との定常確認を受け実データ検証した結果、NOW銘柄で
+構造的な問題を発見。旧ロット（08-12エントリー、15株@$125.00、単独peak_return
+=+18.75%）が同日08-31にguardrail degraded下で追加された新ロット（385株@
+$148.84）と加重平均され、合成peak_returnが+0.6%まで希釈された。
+`SimpleExitV2Strategy.generate()`はsymbol単位で集約評価するため、旧ロット単体
+なら発火するはずのtrailing stop保護が完全に不可視化される構造的ギャップ。
+
+**実装（ユーザー「今すぐ着手して」指示、同日実装完了）**:
+- 新規 `src/stock_swing/risk/lot_level_exit_diagnostic.py`:
+  `SimpleExitV2Strategy`の`_resolve_thresholds()` / `_resolve_trailing_rule()` /
+  `_resolve_breakeven_floor()` / `_effective_min_hold_days()`を**そのまま再利用**
+  してロット単位で独立にexit判定を再評価し、symbol単位の集約判定（実際に
+  generate()が出したsell signal）と比較。不一致（discrepancy）のみログ。
+  一致するケースはログしない（ノイズ回避）。
+- `SimpleExitV2Strategy`に`build_atr_pct_map()` / `compute_universe_avg_atr_pct()`
+  を純粋リファクタリングとして追加（generate()内部の既存インライン計算を
+  static methodとして切り出し、動作変更なし）。診断側がgenerate()と同じ
+  volatility-adjusted stop基準を再計算ドリフトなしで再利用するため。
+- `paper_demo.py`へ配線: `exit_strat.generate()`呼び出し直後、`news_shock_hold`と
+  同じtry/except非致命化パターン。**shadow-only、observability-only**——
+  一切のexit判定・発注ロジックに影響しない（他の全shadow診断と同じ設計思想）。
+- config: `LOT_LEVEL_EXIT_DIAGNOSTIC_DISABLED`（デフォルト有効）、
+  `LOT_LEVEL_EXIT_DIAGNOSTIC_MIN_LOTS`（デフォルト2）
+- ログ: `data/lot_level_exit_shadow_log.jsonl`
+
+**検証**:
+- 新規テスト25件（`test_lot_level_exit_diagnostic.py` 16件 +
+  `test_simple_exit_v2_volatility_adjusted_stop.py`への追加9件）。
+  NOWインシデントの実データ形状再現テスト含む
+- フルテストスイート: **2264 passed, 2 skipped**（実装前2239件、regressionなし）
+- 実データ検証（現在のopen_position_details使用）: 現在価格（peak同値）では
+  discrepancy 0件（正しい動作）。price=144.0（peakから-3.0%押し目を
+  シミュレート）で**NOWの旧ロットのみtrailing_stop would_exit=True、新ロット
+  はFalse**を正しく検知することを確認
+
+**現状の判断**: shadow-onlyのため本番売買判断には無影響。今夜以降のpaper_demo
+run（cronスケジュール変更なし）から`data/lot_level_exit_shadow_log.jsonl`への
+蓄積が自動開始。ロット単位判定への昇格（symbol単位判定の置き換え）は
+position tracking/FIFO決済ロジック/exit strategyを跨ぐ統合設計に該当し、
+MEMORY.md標準手順上xhigh reasoning必須のため、今回はshadow実装までに留めた。
+
+**次のマイルストーン**: **2026-09-08**（cron登録済み、`cron list`で実在確認済み:
+`stock_swing_lot_level_exit_diagnostic_review_20260908`）に、shadow log蓄積
+件数・discrepancy内訳・実損益への影響を評価する初回レビューを実施。
+
+**やらないこと（現時点で明示的にスコープ外）**:
+```
+❌ ロット単位のexit判定を本番のgenerate()に組み込む（shadow検証のみ、
+   promotion判断は09-08レビュー以降）
+❌ FIFO決済順序の変更（別課題。ロット単位exitが本番化されない限り、
+   「判定基準と実際に売られるロットの不一致」問題も未解決のまま残る——
+   09-08レビューで合わせて評価対象とする）
+❌ MSFT/ORCLの「peak_return +5%未満デッドゾーン」問題への対応（同日発見
+   したが実害限定的と判断し今回は記録のみ、次回roadmapレビューで再検討）
+```
+
+詳細: `docs/daily_logs/2026-09-01.md`

@@ -347,6 +347,48 @@ class SimpleExitV2Strategy(BaseStrategy):
             return base_stop_pct
         return base_stop_pct * volatility_multiplier
 
+    @staticmethod
+    def build_atr_pct_map(features: list[FeatureResult]) -> tuple[dict[str, float], dict[str, float]]:
+        """Extract (price_map, atr_pct_map) from price_momentum features.
+
+        Pure refactor (2026-09-01): this is the exact same per-symbol
+        price/ATR% extraction generate() has always performed inline (see
+        the loop at the top of generate() below) -- pulled out to a static
+        method with no behavior change so external callers (e.g. the
+        lot-level exit diagnostic in
+        src/stock_swing/risk/lot_level_exit_diagnostic.py) can reuse the
+        exact same universe_avg_atr_pct baseline generate() itself computed
+        this run, rather than recomputing a second, potentially-divergent
+        copy. generate() continues to compute its own copy inline (this
+        method is not called from generate() itself) to keep this change a
+        zero-risk pure addition -- see the two blocks' identical logic.
+        """
+        price_map: dict[str, float] = {}
+        atr_pct_map: dict[str, float] = {}
+        for feature in features:
+            if feature.feature_name == "price_momentum" and feature.symbol:
+                if "stale_data" in feature.quality_flags:
+                    continue
+                latest_close = feature.values.get("latest_close")
+                if latest_close:
+                    price_map[feature.symbol] = float(latest_close)
+                    atr = feature.values.get("atr")
+                    if atr is not None and float(latest_close) > 0:
+                        try:
+                            atr_pct_map[feature.symbol] = float(atr) / float(latest_close)
+                        except (TypeError, ValueError, ZeroDivisionError):
+                            pass
+        return price_map, atr_pct_map
+
+    @staticmethod
+    def compute_universe_avg_atr_pct(atr_pct_map: dict[str, float]) -> float | None:
+        """Cross-sectional universe average ATR% from an atr_pct_map, or
+        None if empty. Mirrors the inline computation in generate().
+        """
+        if not atr_pct_map:
+            return None
+        return sum(atr_pct_map.values()) / len(atr_pct_map)
+
     def _resolve_trailing_rule(
         self,
         peak_return_pct: float,

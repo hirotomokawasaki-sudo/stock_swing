@@ -1349,6 +1349,56 @@ def main() -> int:  # noqa: C901
         )
     exit_signals = exit_strat.generate(all_features, current_positions_full)
 
+    # 2026-09-01: lot-level exit diagnostic (shadow-only, observability-only).
+    # Background: generate() above evaluates exits once per SYMBOL using a
+    # qty-weighted blended avg_entry_price/peak_price. When a symbol has
+    # multiple open lots, an older lot with a large individual unrealized
+    # gain can be diluted into a blended average that never crosses the
+    # trailing/breakeven activation thresholds even though that lot alone
+    # would already qualify for an exit. Real incident (identified 2026-09-01):
+    # NOW's 15-share lot (opened 08-12, peak +18.75%) was diluted by a new
+    # 385-share lot (opened 08-31) into a blended peak_return of ~+0.6%,
+    # making the old lot's trailing-stop protection invisible at the symbol
+    # level. See src/stock_swing/risk/lot_level_exit_diagnostic.py for full
+    # rationale. Never fires, blocks, tightens, or splits an exit -- only
+    # logs discrepancies between per-lot and aggregate verdicts for later
+    # review (same shadow -> paper_ab -> active pattern as sector_shock_hold
+    # / news_shock_hold / volatility_gate / distance_from_high).
+    if not args.dry_run:
+        try:
+            from stock_swing.risk.lot_level_exit_diagnostic import (
+                LotLevelExitDiagnosticConfig,
+                evaluate_lot_level_discrepancies,
+                log_shadow as log_lot_level_shadow,
+            )
+            _lot_diag_config = LotLevelExitDiagnosticConfig.from_env()
+            if _lot_diag_config.is_enabled():
+                _lot_diag_log_path = project_root / "data" / "lot_level_exit_shadow_log.jsonl"
+                # Recompute the same atr_pct_map / universe_avg_atr_pct basis
+                # generate() used internally this run (via the shared static
+                # helpers on SimpleExitV2Strategy -- see build_atr_pct_map()
+                # docstring), so the diagnostic's volatility-adjusted stop
+                # comparison never silently drifts from what generate() itself
+                # actually applied.
+                _lot_diag_price_map, _lot_diag_atr_pct_map = exit_strat.build_atr_pct_map(all_features)
+                _lot_diag_universe_avg_atr_pct = exit_strat.compute_universe_avg_atr_pct(_lot_diag_atr_pct_map)
+                _lot_diag_discrepancies = evaluate_lot_level_discrepancies(
+                    open_trades=pnl_tracker.get_open_positions(),
+                    current_positions_full=current_positions_full,
+                    exit_strategy=exit_strat,
+                    aggregate_exit_signals=exit_signals,
+                    atr_pct_map=_lot_diag_atr_pct_map,
+                    universe_avg_atr_pct=_lot_diag_universe_avg_atr_pct,
+                    config=_lot_diag_config,
+                )
+                for _lot_disc in _lot_diag_discrepancies:
+                    log_lot_level_shadow(_lot_disc, shadow_log_path=_lot_diag_log_path)
+        except Exception as _lot_diag_exc:
+            logger.warning(
+                "lot_level_exit_diagnostic: shadow check failed for this run (non-fatal): %s",
+                _lot_diag_exc,
+            )
+
     # F7: sector_shock_hold shadow analysis — annotate exit signals with regime context
     _ssh_config = SectorShockHoldConfig.from_env()
     _ssh_analyzer = SectorShockAnalyzer(_ssh_config)

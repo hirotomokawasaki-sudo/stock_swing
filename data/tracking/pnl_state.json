@@ -1,6 +1,6 @@
 {
   "created_at": "2026-05-12T00:17:00+00:00",
-  "last_updated": "2026-08-31T19:55:27.421739+00:00",
+  "last_updated": "2026-09-01T00:00:04.022074+00:00",
   "trades": [
     {
       "trade_id": "broker_match_0001_ADBE",
@@ -12263,6 +12263,23 @@
       "cumulative_closed_trades": 348,
       "open_position_count": 10,
       "decisions_generated": 6
+    },
+    {
+      "date": "2026-09-01",
+      "equity": 976300.07,
+      "realized_pnl": 0,
+      "unrealized_pnl": 13700.48,
+      "total_pnl": 13700.48,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "signals_generated": 0,
+      "orders_submitted": 0,
+      "cumulative_profit_factor": 0.8729,
+      "cumulative_win_rate": 0.4684,
+      "cumulative_closed_trades": 348,
+      "open_position_count": 10,
+      "decisions_generated": 0
     }
   ],
   "strategy_daily_snapshots": [
@@ -15204,6 +15221,40 @@
       "trade_count": 5,
       "win_count": 0,
       "loss_count": 5,
+      "open_positions": 9,
+      "approximation": "normalized_strategy_sleeve"
+    },
+    {
+      "date": "2026-09-01",
+      "strategy_version_id": "breakout_momentum_v2_threshold_tuned",
+      "equity_index": 80.510304,
+      "day_return_pct": -0.010683,
+      "realized_pnl": 0.0,
+      "cumulative_realized_pnl": 4972.95,
+      "unrealized_pnl": -612.15,
+      "total_pnl": 4360.8,
+      "gross_exposure": 56691.25,
+      "traded_notional": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
+      "open_positions": 1,
+      "approximation": "normalized_strategy_sleeve"
+    },
+    {
+      "date": "2026-09-01",
+      "strategy_version_id": "broker_reconstructed",
+      "equity_index": 126.943011,
+      "day_return_pct": 0.043446,
+      "realized_pnl": 0.0,
+      "cumulative_realized_pnl": -47548.3,
+      "unrealized_pnl": 14312.63,
+      "total_pnl": -33235.67,
+      "gross_exposure": 329432.49,
+      "traded_notional": 0.0,
+      "trade_count": 0,
+      "win_count": 0,
+      "loss_count": 0,
       "open_positions": 9,
       "approximation": "normalized_strategy_sleeve"
     }

@@ -1,0 +1,48 @@
+{
+  "captured_at": "2026-09-01T00:30:02.663138+00:00",
+  "date": "2026-09-01",
+  "promotion": {
+    "cluster_cap": {
+      "label": "cluster_cap",
+      "pass": true,
+      "actual": "none over cap",
+      "required": "no cluster over cap",
+      "detail": ""
+    },
+    "top5_concentration": {
+      "label": "top5_concentration",
+      "pass": true,
+      "actual": "30.3% of equity",
+      "required": "<=40% of equity",
+      "detail": "gross_basis=76.6%, gross_exposure/equity=39.6%, hhi=0.1441"
+    },
+    "portfolio_beta": {
+      "label": "portfolio_beta",
+      "pass": true,
+      "actual": 0.784,
+      "required": "<=1.5",
+      "detail": ""
+    },
+    "clean_cohort_pf": {
+      "label": "clean_cohort_pf",
+      "pass": true,
+      "actual": 1.147,
+      "required": ">=1.0 (n>=20)",
+      "detail": "n=48"
+    },
+    "pairwise_correlation": {
+      "label": "pairwise_correlation",
+      "pass": false,
+      "actual": [
+        "MSFT/ORCL=0.873",
+        "MSFT/PATH=0.8747",
+        "MSFT/PLTR=0.9431",
+        "ORCL/PATH=0.8182",
+        "ORCL/PLTR=0.8729",
+        "PATH/PLTR=0.8854"
+      ],
+      "required": "no pair with |correlation|>=0.8",
+      "detail": "checked 21 pair(s)"
+    }
+  }
+}
