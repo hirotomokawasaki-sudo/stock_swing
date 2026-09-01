@@ -3826,6 +3826,29 @@ MEMORY.md標準手順上xhigh reasoning必須のため、今回はshadow実装�
 
 詳細: `docs/daily_logs/2026-09-01.md`
 
+### ⚠️ 2026-09-02 追記: 警告対象の構造問題が実害化 → per-lot time_based exitをdefault-offで実装
+
+shadow診断稼働初日（2026-09-01T19:55Z market_close run）に、警告対象の構造問題が
+そのまま実損として顕在化した。max_hold判定（最古ロットの時計）による全量売却で:
+
+- **NOW**: 新ロット385株（保有**1日**、degraded下の08-31 BUY）が旧ロット15株（20日）の
+  時計に巻き込まれ **-$2,333** で強制決済
+- **ORCL**: 340株（15日）が13株（20日）に巻き込まれ **-$2,768**
+- PLTR: 同構造だが巻き込まれ側が黒字（+$1,334）で実害なし
+
+shadow logは3件全てを`aggregate_exit_lot_disagreement`として正しく記録（診断自体の
+有効性も同時に実証）。ユーザー指示により同日対応:
+
+- 新規 `src/stock_swing/risk/per_lot_time_based_exit.py`（time_based分岐限定の
+  per-lot部分売却計画。FIFO決済との組み合わせで期限到達ロット群だけが正確に閉じる）
+- `per_lot_time_based_exit_enabled: false`（**default OFF、R13-Bと同じ本番挙動
+  完全保持パターン**。有効化は09-08レビュー承認後）
+- テスト+26件（インシデント実データ形状再現含む）、フラグON時の動作をインシデント
+  当日データで検証（NOW 15/400・ORCL 13/353・PLTR 11/292の部分売却になっていた）
+
+なお同runのPATH +$6,296（trailing_stop）等の勝ちでguardrailは`degraded`→`ok`に
+自動復帰済み。詳細: `docs/daily_logs/2026-09-02.md`
+
 ---
 
 ## R17: reduce_size設計見直し検証（見送り、、2026-09-01）

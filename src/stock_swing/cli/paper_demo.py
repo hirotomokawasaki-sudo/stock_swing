@@ -1338,6 +1338,8 @@ def main() -> int:  # noqa: C901
             volatility_multiplier_min=exit_config.get('volatility_multiplier_min', 0.5),
             volatility_multiplier_max=exit_config.get('volatility_multiplier_max', 1.75),
         )
+        # 2026-09-02 (R16 incident fix, default OFF): per-lot time_based exit.
+        _per_lot_time_based_enabled = bool(exit_config.get('per_lot_time_based_exit_enabled', False))
     else:
         # Fallback to default values
         exit_strat = SimpleExitV2Strategy(
@@ -1347,7 +1349,59 @@ def main() -> int:  # noqa: C901
             trailing_stop_pct=0.04,
             max_hold_days=20,
         )
+        _per_lot_time_based_enabled = False
     exit_signals = exit_strat.generate(all_features, current_positions_full)
+
+    # 2026-09-02 (R16 materialized incident, flag-gated, default OFF): convert
+    # full-position time_based exits into partial exits of only the EXPIRED
+    # lots' shares. Incident on 2026-09-01T19:55Z: NOW's brand-new 385-share
+    # lot (1 day held) was liquidated at -$2,333 because the symbol's oldest
+    # 15-share lot hit max_hold_days=20 (ORCL same shape, -$2,768; PLTR same
+    # shape, harmless). record_exit()'s FIFO close order guarantees selling
+    # exactly the expired share count closes exactly the oldest lots. See
+    # src/stock_swing/risk/per_lot_time_based_exit.py and
+    # docs/daily_logs/2026-09-02.md. Fail-closed: any planning anomaly
+    # (unparseable lot entry_time, no expired lots, tracker lag) keeps
+    # today's full-position behavior.
+    if _per_lot_time_based_enabled and exit_signals:
+        try:
+            from stock_swing.risk.per_lot_time_based_exit import plan_time_based_partial_exit
+            _open_trades_for_plan = pnl_tracker.get_open_positions()
+            for _tb_sig in exit_signals:
+                if getattr(_tb_sig, "action", None) != "sell":
+                    continue
+                _tb_trigger = str((_tb_sig.metadata or {}).get("exit_trigger") or "")
+                if not _tb_trigger.lower().startswith("max hold"):
+                    continue
+                _tb_plan = plan_time_based_partial_exit(
+                    symbol=_tb_sig.symbol,
+                    open_trades=_open_trades_for_plan,
+                    max_hold_days=exit_strat.max_hold_days,
+                )
+                if _tb_plan.is_partial:
+                    _tb_sig.metadata["partial_exit_qty"] = _tb_plan.expired_qty
+                    _tb_sig.metadata["partial_exit_expired_lot_ids"] = _tb_plan.expired_lot_ids
+                    _tb_sig.metadata["partial_exit_kept_lot_ids"] = _tb_plan.kept_lot_ids
+                    # Keep the "Max hold" phrase intact: exit-reason
+                    # classification (_classify_exit_reason_from_notes) and
+                    # exit_reason_store rely on it.
+                    _tb_sig.reasoning = (
+                        f"{_tb_sig.reasoning} [per-lot: selling {_tb_plan.expired_qty} "
+                        f"expired share(s) of {_tb_plan.total_open_qty}; "
+                        f"{len(_tb_plan.kept_lot_ids)} younger lot(s) kept]"
+                    )
+                    logger.info(
+                        "per_lot_time_based_exit: %s partial exit planned qty=%d/%d "
+                        "expired_lots=%s kept_lots=%s",
+                        _tb_sig.symbol, _tb_plan.expired_qty, _tb_plan.total_open_qty,
+                        _tb_plan.expired_lot_ids, _tb_plan.kept_lot_ids,
+                    )
+        except Exception as _tb_exc:
+            # Fail-closed to current behavior: full-position exits proceed.
+            logger.warning(
+                "per_lot_time_based_exit: planning failed (non-fatal, falling back "
+                "to full-position exits): %s", _tb_exc,
+            )
 
     # 2026-09-01: lot-level exit diagnostic (shadow-only, observability-only).
     # Background: generate() above evaluates exits once per SYMBOL using a
@@ -1821,6 +1875,16 @@ def main() -> int:  # noqa: C901
             decision.evidence["market_regime"] = regime_for_sizing
             decision.evidence["macro_regime_raw"] = detected_regime
             decision.evidence["price_regime_raw"] = price_based_regime
+            # 2026-09-02 (R16 fix): thread the per-lot time_based partial exit
+            # qty (set only when per_lot_time_based_exit_enabled=true) through
+            # to the submission loop, which passes it to PaperExecutor.submit()
+            # as precomputed_qty so only the expired lots' shares are sold.
+            if (
+                decision.action == "sell"
+                and isinstance(signal.metadata, dict)
+                and signal.metadata.get("partial_exit_qty")
+            ):
+                decision.evidence["partial_exit_qty"] = int(signal.metadata["partial_exit_qty"])
         decisions.append(decision)
 
         # 2026-08-07 pattern (see Plan B-E shadow diagnostics below):
@@ -2468,6 +2532,24 @@ def main() -> int:  # noqa: C901
                     _allocation_blocked_count += 1
                     continue
             
+            # 2026-09-02 (R16 fix): per-lot time_based partial sell. When the
+            # decision carries partial_exit_qty (flag-gated upstream), submit
+            # exactly that many shares instead of the whole position. The
+            # executor's sell branch keeps this qty as long as it is >=1 and
+            # <= the broker position qty (capped otherwise -- fail-safe).
+            if o.side == "sell" and isinstance(decision.evidence, dict):
+                _partial_exit_qty = decision.evidence.get("partial_exit_qty")
+                if _partial_exit_qty and int(_partial_exit_qty) >= 1:
+                    preview_qty = int(_partial_exit_qty)
+                    preview_sizing = {
+                        "partial_time_based_exit": True,
+                        "final_shares": preview_qty,
+                        "skip_reason": None,
+                    }
+                    print(
+                        f"\n  Per-lot time_based exit: selling {preview_qty} expired "
+                        f"share(s) of {o.symbol} (younger lots kept)"
+                    )
             if preview_qty is None or preview_sizing is None:
                 preview_qty, preview_sizing = executor._calculate_position_size(
                     decision,

@@ -1,18 +1,18 @@
 {
-  "run_id": "paper_demo-20260831T195506Z-ff2a2591",
-  "generated_at": "2026-08-31T19:55:31.518864+00:00",
+  "run_id": "paper_demo-20260901T195513Z-c75b5684",
+  "generated_at": "2026-09-01T19:55:48.481092+00:00",
   "post_fix_epoch": "2026-07-29",
   "all_closed": {
-    "n": 348,
+    "n": 355,
     "run_id_pct": 13.8,
     "exp_id_pct": 13.8,
     "cfg_hash_pct": 13.8
   },
   "post_epoch_closed": {
-    "n": 61,
-    "run_id_pct": 78.7,
-    "exp_id_pct": 78.7,
-    "cfg_hash_pct": 78.7
+    "n": 68,
+    "run_id_pct": 72.1,
+    "exp_id_pct": 72.1,
+    "cfg_hash_pct": 72.1
   },
   "legacy_closed": {
     "n": 287,
@@ -21,7 +21,7 @@
     "cfg_hash_pct": 0.0
   },
   "this_run_decisions": {
-    "n": 6,
+    "n": 8,
     "run_id_pct": 100.0,
     "exp_id_pct": 100.0,
     "cfg_hash_pct": 100.0

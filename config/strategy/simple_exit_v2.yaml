@@ -32,6 +32,26 @@ staged_trailing_levels:
 # Maximum holding period in calendar days
 max_hold_days: 20
 
+# ── Per-lot time_based exit（2026-09-02、R16実害インシデント対応）──────────────
+# 背景: max_hold判定は「最古ロットの保有日数」で発火し、発火時は全ポジションを売却する。
+# 2026-09-01 19:55Zのmarket_close runでこの構造が実害化: NOWの新ロット385株（保有1日）が
+# 旧ロット15株（保有20日）のmax_hold時計に巻き込まれ-$2,333で強制売却された
+#（ORCLも同構造で-$2,768。詳細: docs/daily_logs/2026-09-02.md）。
+#
+# 有効化すると、time_based exit発火時に「期限到達（per-lot hold_days >= max_hold_days）
+# ロットの株数のみ」を部分売却する（record_exitのFIFO決済により、売却株数=期限到達ロット
+# の合計にすることで正確に最古ロット群だけが閉じる）。若いロットは自身の時計・保護のまま
+# 保有継続。フェイルクローズド: ロットのentry_timeが1件でも不明/不正な場合は従来通り
+# 全ポジション売却（リスク削減方向のexitを抑制しない）。
+#
+# 対象はtime_based分岐のみ。trailing/breakeven/stop_lossは従来通りsymbol単位集約のまま
+#（lot_level_exit_diagnosticでshadow監視中、09-08レビューで別途判断）。
+#
+# デフォルトOFF（現行挙動を完全保持）。有効化は09-08のlot_level_exit_diagnostic
+# 初回レビューでの承認後を予定（R13-Bと同じdefault-offフラグパターン）。
+# ロールバック: per_lot_time_based_exit_enabled: false に戻すだけ。
+per_lot_time_based_exit_enabled: false
+
 # ── Broker-reconstructed threshold graduation (改善点1 2026-07-16) ───────────
 # broker_reconstructed positions (entry_signal_strength=None) use a conservative
 # -5% stop by default. After holding >= broker_recon_graduation_days calendar days,

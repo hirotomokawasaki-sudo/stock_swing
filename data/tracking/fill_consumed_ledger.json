@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-31T16:15:11.613999+00:00",
+  "generated_at": "2026-09-01T20:00:07.898972+00:00",
   "fills": [
     {
       "fill_id": "12568331-e3ea-4a61-af22-1c30a0bc84f2",
@@ -33,6 +33,24 @@
           "trade_id": "inline_reconcile:f1248311-76c2-d1a9-92c7-8ade8ff6d429",
           "qty": 195.0,
           "consumed_at": "2026-08-12T16:00:52.354353+00:00"
+        }
+      ],
+      "quarantine_reason": null
+    },
+    {
+      "fill_id": "3b349922-734d-4af3-8491-1038eb5fa19a",
+      "order_id": "3b349922-734d-4af3-8491-1038eb5fa19a",
+      "symbol": "NOW",
+      "side": "sell",
+      "qty": 400.0,
+      "consumed_qty": 400.0,
+      "consumed": true,
+      "consumed_by": "inline_reconcile:29d248f7-0dfa-98b1-3316-fcd3594f77de",
+      "consumption_events": [
+        {
+          "trade_id": "inline_reconcile:29d248f7-0dfa-98b1-3316-fcd3594f77de",
+          "qty": 400.0,
+          "consumed_at": "2026-09-01T19:55:42.252403+00:00"
         }
       ],
       "quarantine_reason": null
@@ -672,6 +690,42 @@
       "quarantine_reason": null
     },
     {
+      "fill_id": "d99c4e2c-b73c-4714-aa09-6917bd50c8d4",
+      "order_id": "d99c4e2c-b73c-4714-aa09-6917bd50c8d4",
+      "symbol": "PATH",
+      "side": "sell",
+      "qty": 2849.0,
+      "consumed_qty": 2849.0,
+      "consumed": true,
+      "consumed_by": "inline_reconcile:642d2bac-1bc2-6f36-056d-cf8d73638e23",
+      "consumption_events": [
+        {
+          "trade_id": "inline_reconcile:642d2bac-1bc2-6f36-056d-cf8d73638e23",
+          "qty": 2849.0,
+          "consumed_at": "2026-09-01T19:55:43.334058+00:00"
+        }
+      ],
+      "quarantine_reason": null
+    },
+    {
+      "fill_id": "db6f900d-1c43-4caf-aa3c-bd4fbd42fb0b",
+      "order_id": "db6f900d-1c43-4caf-aa3c-bd4fbd42fb0b",
+      "symbol": "ORCL",
+      "side": "sell",
+      "qty": 353.0,
+      "consumed_qty": 353.0,
+      "consumed": true,
+      "consumed_by": "inline_reconcile:8004b26e-b8fe-4569-0943-189f80e0021d",
+      "consumption_events": [
+        {
+          "trade_id": "inline_reconcile:8004b26e-b8fe-4569-0943-189f80e0021d",
+          "qty": 353.0,
+          "consumed_at": "2026-09-01T19:55:42.798024+00:00"
+        }
+      ],
+      "quarantine_reason": null
+    },
+    {
       "fill_id": "df716c83-1b7d-409b-be9b-9987726031ae",
       "order_id": "df716c83-1b7d-409b-be9b-9987726031ae",
       "symbol": "HPE",
@@ -738,6 +792,24 @@
           "trade_id": "bfa6a129-d5dd-7842-ca46-f0f4363152e1:0->78",
           "qty": 78.0,
           "consumed_at": "2026-08-19T13:45:17.848272+00:00"
+        }
+      ],
+      "quarantine_reason": null
+    },
+    {
+      "fill_id": "f6d7c19d-565b-4e6a-ad2b-1382aaa6350d",
+      "order_id": "f6d7c19d-565b-4e6a-ad2b-1382aaa6350d",
+      "symbol": "PLTR",
+      "side": "sell",
+      "qty": 292.0,
+      "consumed_qty": 292.0,
+      "consumed": true,
+      "consumed_by": "inline_reconcile:946ea2cf-8bae-333d-4c86-158d88a4db6a",
+      "consumption_events": [
+        {
+          "trade_id": "inline_reconcile:946ea2cf-8bae-333d-4c86-158d88a4db6a",
+          "qty": 292.0,
+          "consumed_at": "2026-09-01T19:55:43.878057+00:00"
         }
       ],
       "quarantine_reason": null

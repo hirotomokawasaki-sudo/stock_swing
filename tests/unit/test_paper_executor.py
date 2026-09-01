@@ -249,3 +249,88 @@ def test_paper_executor_submit_reuses_precomputed_sizing() -> None:
     broker.fetch_account.assert_not_called()
     broker.fetch_positions.assert_not_called()
     broker.fetch_bars.assert_not_called()
+
+
+def test_paper_executor_sell_partial_qty_passthrough() -> None:
+    """2026-09-02 (R16 per-lot time_based exit fix): a sell submitted with an
+    explicit precomputed_qty BELOW the full broker position must be sent
+    as-is (partial exit), not overridden to the full position.
+
+    Regression basis: 2026-09-01T19:55Z, NOW's 1-day-old 385-share lot was
+    liquidated because the sell path always expanded to the full position
+    when the oldest lot hit max_hold_days.
+    """
+    broker = MagicMock()
+    broker.submit_order.return_value = {"id": "broker-order-456", "status": "accepted"}
+
+    executor = PaperExecutor(
+        runtime_mode=RuntimeMode.PAPER,
+        broker_client=broker,
+    )
+
+    sell_order = ProposedOrder(
+        symbol="NOW",
+        side="sell",
+        order_type="market",
+        qty=0,  # non-authoritative placeholder, as production decisions carry
+        time_in_force="day",
+    )
+    decision = create_test_decision(action="sell", proposed_order=sell_order)
+
+    submission = executor.submit(
+        decision,
+        current_qty=400,  # full broker position
+        precomputed_qty=15,  # expired lots only
+        precomputed_sizing={
+            "partial_time_based_exit": True,
+            "final_shares": 15,
+            "skip_reason": None,
+        },
+    )
+
+    assert submission.qty == 15, (
+        "partial sell qty must pass through the sell branch untouched "
+        "(no full-position override, no cap since 15 <= 400)"
+    )
+    broker.submit_order.assert_called_once_with(
+        symbol="NOW",
+        side="sell",
+        order_type="market",
+        qty=15,
+        time_in_force="day",
+        limit_price=None,
+    )
+
+
+def test_paper_executor_sell_partial_qty_capped_at_broker_position() -> None:
+    """Fail-safe: if the requested partial qty somehow exceeds the broker
+    position (tracker lag), it is capped to the broker qty."""
+    broker = MagicMock()
+    broker.submit_order.return_value = {"id": "broker-order-789", "status": "accepted"}
+
+    executor = PaperExecutor(
+        runtime_mode=RuntimeMode.PAPER,
+        broker_client=broker,
+    )
+
+    sell_order = ProposedOrder(
+        symbol="NOW",
+        side="sell",
+        order_type="market",
+        qty=0,
+        time_in_force="day",
+    )
+    decision = create_test_decision(action="sell", proposed_order=sell_order)
+
+    submission = executor.submit(
+        decision,
+        current_qty=10,  # broker only holds 10
+        precomputed_qty=15,
+        precomputed_sizing={
+            "partial_time_based_exit": True,
+            "final_shares": 15,
+            "skip_reason": None,
+        },
+    )
+
+    assert submission.qty == 10, "requested qty above broker position must be capped"

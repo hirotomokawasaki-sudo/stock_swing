@@ -1,8 +1,8 @@
 {
-  "market_date": "2026-08-31",
-  "captured_at": "2026-08-31T13:25:11.122094+00:00",
+  "market_date": "2026-09-01",
+  "captured_at": "2026-09-01T19:55:20.474121+00:00",
   "source": "broker_api",
-  "day_start_equity": 970183.05,
-  "day_start_unrealized": -1186.8855810000002,
+  "day_start_equity": 964970.64,
+  "day_start_unrealized": 2423.969373,
   "missing_fields": []
 }

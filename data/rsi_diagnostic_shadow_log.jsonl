@@ -1117,3 +1117,7 @@
 {"logged_at": "2026-08-31T19:55:15.932416+00:00", "symbol": "PATH", "is_overbought": true, "rsi_value": 78.41438946947466, "window": 14, "reason": "overbought: RSI(14)=78.4 >= threshold=75.0"}
 {"logged_at": "2026-08-31T19:55:16.679376+00:00", "symbol": "NOW", "is_overbought": false, "rsi_value": 74.98151046475145, "window": 14, "reason": "not_flagged: RSI(14)=75.0 < threshold=75.0"}
 {"logged_at": "2026-08-31T19:55:17.332235+00:00", "symbol": "ADBE", "is_overbought": false, "rsi_value": 69.69464699900577, "window": 14, "reason": "not_flagged: RSI(14)=69.7 < threshold=75.0"}
+{"logged_at": "2026-09-01T19:55:21.412152+00:00", "symbol": "CRM", "is_overbought": true, "rsi_value": 81.29587564688981, "window": 14, "reason": "overbought: RSI(14)=81.3 >= threshold=75.0"}
+{"logged_at": "2026-09-01T19:55:21.863247+00:00", "symbol": "PATH", "is_overbought": false, "rsi_value": 72.16699950167151, "window": 14, "reason": "not_flagged: RSI(14)=72.2 < threshold=75.0"}
+{"logged_at": "2026-09-01T19:55:22.190386+00:00", "symbol": "PATH", "is_overbought": false, "rsi_value": 72.16699950167151, "window": 14, "reason": "not_flagged: RSI(14)=72.2 < threshold=75.0"}
+{"logged_at": "2026-09-01T19:55:22.807826+00:00", "symbol": "NOW", "is_overbought": false, "rsi_value": 67.50505959134789, "window": 14, "reason": "not_flagged: RSI(14)=67.5 < threshold=75.0"}

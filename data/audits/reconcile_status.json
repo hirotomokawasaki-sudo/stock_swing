@@ -1,9 +1,9 @@
 {
-  "as_of": "2026-09-01T02:30:10.435442+00:00",
+  "as_of": "2026-09-01T20:30:08.442283+00:00",
   "status": "ok",
   "unexplained_mismatch_count": 0,
   "newly_recorded_buys": 0,
   "filled_exits_recorded": 0,
-  "checked_sell_submissions": 2,
+  "checked_sell_submissions": 6,
   "job": "reconcile_orders"
 }
