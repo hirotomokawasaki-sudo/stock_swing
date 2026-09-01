@@ -1,0 +1,270 @@
+{
+  "segments": {
+    "train": [
+      "2024-08-15",
+      "2025-10-24"
+    ],
+    "validation": [
+      "2025-10-27",
+      "2026-03-20"
+    ],
+    "holdout": [
+      "2026-03-23",
+      "2026-08-14"
+    ]
+  },
+  "results": {
+    "baseline": {
+      "segments": {
+        "train": {
+          "label": "baseline_train",
+          "n": 628,
+          "win_rate": 0.5892,
+          "profit_factor": 1.4524,
+          "net_pnl": 226929.43,
+          "avg_return_pct": 0.0187
+        },
+        "validation": {
+          "label": "baseline_validation",
+          "n": 211,
+          "win_rate": 0.4455,
+          "profit_factor": 0.5981,
+          "net_pnl": -106913.02,
+          "avg_return_pct": -0.0195
+        },
+        "holdout": {
+          "label": "baseline_holdout",
+          "n": 302,
+          "win_rate": 0.5927,
+          "profit_factor": 2.2713,
+          "net_pnl": 321329.45,
+          "avg_return_pct": 0.0401
+        }
+      },
+      "overall": {
+        "label": "baseline",
+        "n": 1141,
+        "win_rate": 0.5635,
+        "profit_factor": 1.4325,
+        "net_pnl": 441345.86,
+        "avg_return_pct": 0.0173
+      }
+    },
+    "current_mechanism": {
+      "segments": {
+        "train": {
+          "label": "current_mechanism_train",
+          "n": 622,
+          "win_rate": 0.5916,
+          "profit_factor": 1.4938,
+          "net_pnl": 238044.85,
+          "avg_return_pct": 0.0196
+        },
+        "validation": {
+          "label": "current_mechanism_validation",
+          "n": 201,
+          "win_rate": 0.4428,
+          "profit_factor": 0.6455,
+          "net_pnl": -87448.1,
+          "avg_return_pct": -0.0179
+        },
+        "holdout": {
+          "label": "current_mechanism_holdout",
+          "n": 292,
+          "win_rate": 0.6062,
+          "profit_factor": 2.3716,
+          "net_pnl": 331808.66,
+          "avg_return_pct": 0.0415
+        }
+      },
+      "overall": {
+        "label": "current_mechanism",
+        "n": 1115,
+        "win_rate": 0.5686,
+        "profit_factor": 1.497,
+        "net_pnl": 482405.41,
+        "avg_return_pct": 0.0186
+      }
+    },
+    "plan_b_flat": {
+      "segments": {
+        "train": {
+          "label": "plan_b_flat_train",
+          "n": 625,
+          "win_rate": 0.5888,
+          "profit_factor": 1.548,
+          "net_pnl": 258958.66,
+          "avg_return_pct": 0.0187
+        },
+        "validation": {
+          "label": "plan_b_flat_validation",
+          "n": 212,
+          "win_rate": 0.4481,
+          "profit_factor": 0.6169,
+          "net_pnl": -96437.73,
+          "avg_return_pct": -0.0193
+        },
+        "holdout": {
+          "label": "plan_b_flat_holdout",
+          "n": 283,
+          "win_rate": 0.6254,
+          "profit_factor": 2.3864,
+          "net_pnl": 326254.52,
+          "avg_return_pct": 0.0463
+        }
+      },
+      "overall": {
+        "label": "plan_b_flat",
+        "n": 1120,
+        "win_rate": 0.5714,
+        "profit_factor": 1.5093,
+        "net_pnl": 488775.45,
+        "avg_return_pct": 0.0185
+      }
+    },
+    "plan_c_plus_a_v1_original": {
+      "segments": {
+        "train": {
+          "label": "plan_c_plus_a_v1_original_train",
+          "n": 630,
+          "win_rate": 0.5873,
+          "profit_factor": 1.5122,
+          "net_pnl": 250539.78,
+          "avg_return_pct": 0.0185
+        },
+        "validation": {
+          "label": "plan_c_plus_a_v1_original_validation",
+          "n": 210,
+          "win_rate": 0.4476,
+          "profit_factor": 0.6131,
+          "net_pnl": -98357.63,
+          "avg_return_pct": -0.019
+        },
+        "holdout": {
+          "label": "plan_c_plus_a_v1_original_holdout",
+          "n": 305,
+          "win_rate": 0.5902,
+          "profit_factor": 2.2707,
+          "net_pnl": 320007.89,
+          "avg_return_pct": 0.039
+        }
+      },
+      "overall": {
+        "label": "plan_c_plus_a_v1_original",
+        "n": 1145,
+        "win_rate": 0.5624,
+        "profit_factor": 1.4745,
+        "net_pnl": 472190.03,
+        "avg_return_pct": 0.0171
+      }
+    },
+    "plan_c_plus_a_v2_strict_mild": {
+      "segments": {
+        "train": {
+          "label": "plan_c_plus_a_v2_strict_mild_train",
+          "n": 629,
+          "win_rate": 0.5882,
+          "profit_factor": 1.5587,
+          "net_pnl": 260578.41,
+          "avg_return_pct": 0.0191
+        },
+        "validation": {
+          "label": "plan_c_plus_a_v2_strict_mild_validation",
+          "n": 208,
+          "win_rate": 0.4471,
+          "profit_factor": 0.6406,
+          "net_pnl": -85637.17,
+          "avg_return_pct": -0.0181
+        },
+        "holdout": {
+          "label": "plan_c_plus_a_v2_strict_mild_holdout",
+          "n": 287,
+          "win_rate": 0.6237,
+          "profit_factor": 2.3807,
+          "net_pnl": 333350.75,
+          "avg_return_pct": 0.0445
+        }
+      },
+      "overall": {
+        "label": "plan_c_plus_a_v2_strict_mild",
+        "n": 1124,
+        "win_rate": 0.5712,
+        "profit_factor": 1.5372,
+        "net_pnl": 508291.99,
+        "avg_return_pct": 0.0187
+      }
+    },
+    "plan_c_plus_a_v4_no_floor": {
+      "segments": {
+        "train": {
+          "label": "plan_c_plus_a_v4_no_floor_train",
+          "n": 620,
+          "win_rate": 0.5952,
+          "profit_factor": 1.5031,
+          "net_pnl": 242362.83,
+          "avg_return_pct": 0.0202
+        },
+        "validation": {
+          "label": "plan_c_plus_a_v4_no_floor_validation",
+          "n": 206,
+          "win_rate": 0.4563,
+          "profit_factor": 0.6306,
+          "net_pnl": -93747.72,
+          "avg_return_pct": -0.0177
+        },
+        "holdout": {
+          "label": "plan_c_plus_a_v4_no_floor_holdout",
+          "n": 302,
+          "win_rate": 0.5993,
+          "profit_factor": 2.2972,
+          "net_pnl": 324676.32,
+          "avg_return_pct": 0.04
+        }
+      },
+      "overall": {
+        "label": "plan_c_plus_a_v4_no_floor",
+        "n": 1128,
+        "win_rate": 0.5709,
+        "profit_factor": 1.4801,
+        "net_pnl": 473291.43,
+        "avg_return_pct": 0.0186
+      }
+    },
+    "plan_bc_blend_v1_tiered_per_order": {
+      "segments": {
+        "train": {
+          "label": "plan_bc_blend_v1_tiered_per_order_train",
+          "n": 634,
+          "win_rate": 0.5868,
+          "profit_factor": 1.5333,
+          "net_pnl": 250612.25,
+          "avg_return_pct": 0.019
+        },
+        "validation": {
+          "label": "plan_bc_blend_v1_tiered_per_order_validation",
+          "n": 210,
+          "win_rate": 0.4524,
+          "profit_factor": 0.6126,
+          "net_pnl": -99740.24,
+          "avg_return_pct": -0.0189
+        },
+        "holdout": {
+          "label": "plan_bc_blend_v1_tiered_per_order_holdout",
+          "n": 290,
+          "win_rate": 0.6138,
+          "profit_factor": 2.3556,
+          "net_pnl": 326124.75,
+          "avg_return_pct": 0.0451
+        }
+      },
+      "overall": {
+        "label": "plan_bc_blend_v1_tiered_per_order",
+        "n": 1134,
+        "win_rate": 0.5688,
+        "profit_factor": 1.4928,
+        "net_pnl": 476996.76,
+        "avg_return_pct": 0.0186
+      }
+    }
+  }
+}

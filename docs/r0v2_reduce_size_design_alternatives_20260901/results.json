@@ -1,0 +1,74 @@
+{
+  "baseline": {
+    "label": "baseline",
+    "n": 1141,
+    "win_rate": 0.5635,
+    "profit_factor": 1.4325,
+    "net_pnl": 441345.86,
+    "avg_return_pct": 0.0173,
+    "reduce_size_active_days": 0,
+    "fully_blocked_days": 0,
+    "candidates_seen_while_reduced": 0,
+    "candidates_blocked_while_reduced": 0,
+    "tier_active_days": {
+      "mild_5to8": 0,
+      "moderate_9to12": 0,
+      "severe_13plus": 0
+    },
+    "floor_rescued_candidates": 0
+  },
+  "current_mechanism": {
+    "label": "current_mechanism",
+    "n": 1115,
+    "win_rate": 0.5686,
+    "profit_factor": 1.497,
+    "net_pnl": 482405.41,
+    "avg_return_pct": 0.0186,
+    "reduce_size_active_days": 63,
+    "fully_blocked_days": 13,
+    "candidates_seen_while_reduced": 117,
+    "candidates_blocked_while_reduced": 61,
+    "tier_active_days": {
+      "mild_5to8": 0,
+      "moderate_9to12": 0,
+      "severe_13plus": 0
+    },
+    "floor_rescued_candidates": 0
+  },
+  "plan_b": {
+    "label": "plan_b",
+    "n": 1120,
+    "win_rate": 0.5714,
+    "profit_factor": 1.5093,
+    "net_pnl": 488775.45,
+    "avg_return_pct": 0.0185,
+    "reduce_size_active_days": 60,
+    "fully_blocked_days": 0,
+    "candidates_seen_while_reduced": 87,
+    "candidates_blocked_while_reduced": 0,
+    "tier_active_days": {
+      "mild_5to8": 0,
+      "moderate_9to12": 0,
+      "severe_13plus": 0
+    },
+    "floor_rescued_candidates": 0
+  },
+  "plan_c_plus_a": {
+    "label": "plan_c_plus_a",
+    "n": 1145,
+    "win_rate": 0.5624,
+    "profit_factor": 1.4745,
+    "net_pnl": 472190.03,
+    "avg_return_pct": 0.0171,
+    "reduce_size_active_days": 61,
+    "fully_blocked_days": 0,
+    "candidates_seen_while_reduced": 102,
+    "candidates_blocked_while_reduced": 21,
+    "tier_active_days": {
+      "mild_5to8": 39,
+      "moderate_9to12": 7,
+      "severe_13plus": 15
+    },
+    "floor_rescued_candidates": 22
+  }
+}

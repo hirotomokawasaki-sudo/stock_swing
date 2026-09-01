@@ -3825,3 +3825,40 @@ MEMORY.md標準手順上xhigh reasoning必須のため、今回はshadow実装�
 ```
 
 詳細: `docs/daily_logs/2026-09-01.md`
+
+---
+
+## R17: reduce_size設計見直し検証（見送り、、2026-09-01）
+
+**背景**: R16の対応中、ユーザーから「degraded状態で現金が長期間遷ぶのは機会損失では？」
+との問いを受け、既存調査（08-15/08-26）で判明済みの「reduce_sizeは露光上限を
+丸ごと半減させる二値的ブロック機構」を前提に4つの設計代替案（案A：最低確保枠フロア、
+案B：new注文サイズのみ半減、案C：連敗数に応じた段階的縮小、案D：時間ベース回復）を提案し、
+案Bと案C+Aの検証をユーザー承認で実施。
+
+**検証（3段階）**:
+1. **Part 1**（全期間検証）: 新規 `scripts/r0v2_reduce_size_design_alternatives_20260901.py`。
+   08-26検証基盤（本番同一クラス`PositionSizingPolicy`、R11-Bユニバース）69銘柄）で
+   baseline/現行/案B/案C+A(v1)を検証。案Bが全指標で現行を上回る（PF 1.497→1.5093）
+2. **Part 2**（チューニング）: 新規 `scripts/r0v2_reduce_size_design_alternatives_v2_20260901.py`。
+   C+Aのtier閘値/乗数/floor幅を振っ5バリエーション + B+Cブレンド2種を追加検証。
+   `plan_c_plus_a_v2_strict_mild`（mild tierを現行と同な0.5xに戻し、moderate/severeを
+   さらに厳格化）が全期間合算で最良（PF 1.5372, net_pnl $508,292）
+3. **Part 3**（過学習検証）: 新規 `scripts/r0v2_reduce_size_segment_robustness_20260901.py`。
+   ユーザーが「狭い探索は過学習ではないか」と指摘したことを受け、既存の
+   `scripts/r11b_param_search.py`と同一のtrain(60%)/validation(20%)/holdout(20%)
+   日付分割で各メカニズムを再集計。
+   **重要な発見**: validation期間（既知の市場調整局面）だけを見ると、**現行メカニズム
+   が全候補中で最も高いPF（0.6455）**で、全期間合算で「圧勝」に見えたv2もvalidationでは
+   現行を下回る（0.6406 < 0.6455）。頃健性判定（validation・holdout両方で現行以上を要求）
+   で全候補が「ROBUST」をクリアできず。
+
+**最終結論（ユーザー判断、2026-09-01）**: **見送り**。reduce_sizeメカニズム自体は変更せず現行
+維持。「防御的な仕組みはまさに防御が必要な局面でこそコストに見合う」という、当初の仮説
+（「reduce_sizeは強すぎるのでは」）とは逆方向の構造的洞察が得られた。余剰資金の活用は
+**reduce_sizeの再設計ではなく、別の新規戦略（既存ポジションと独立した資本配分先）を検討する
+方向で対応**する。
+
+**本番コードへの影響**: なし。全て`scripts/`配下の検証スクリプト3本とドキュメントのみ。
+
+詳細: `docs/r0v2_reduce_size_design_alternatives_20260901/README.md`
