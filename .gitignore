@@ -130,3 +130,13 @@ reports/r11b_param_search_results.json
 reports/r11c2_regime_filter_results.json
 reports/r0v2_guardrail_stress_test_results.json
 reports/r0v2_reduce_size_effect_results.json
+
+# OpenClaw agent workspace artifacts (stock_swing_cron agent's workspace = this repo;
+# memory/*.md daily notes are intentionally tracked, but dreaming diary artifacts are
+# low-value generated content -- keep them out of the trading repo history)
+DREAMS.md
+memory/dreaming/
+IDENTITY.md
+SOUL.md
+USER.md
+BOOTSTRAP.md
