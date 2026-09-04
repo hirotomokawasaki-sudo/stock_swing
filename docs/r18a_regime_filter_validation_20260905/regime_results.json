@@ -1,0 +1,262 @@
+{
+  "generated_at": "2026-09-04T16:41:51.785852-04:00",
+  "n_closed": 357,
+  "market_data_range": [
+    "2025-06-02",
+    "2026-09-04"
+  ],
+  "cohorts": {
+    "全期間": {
+      "a_spy_lt_sma50": {
+        "label": "(a) SPY < 50日SMA",
+        "blocked": 9,
+        "blocked_wins": 7,
+        "blocked_losses": 2,
+        "blocked_win_pnl": 3650.35,
+        "blocked_loss_pnl": -2334.78,
+        "net_pnl_delta": -1315.57,
+        "pf_before": 0.8875,
+        "pf_after": 0.8829,
+        "net_pnl_before": -38253.27,
+        "net_pnl_after": -39568.84
+      },
+      "b_spy_lt_sma200": {
+        "label": "(b) SPY < 200日SMA",
+        "blocked": 0,
+        "blocked_wins": 0,
+        "blocked_losses": 0,
+        "blocked_win_pnl": 0,
+        "blocked_loss_pnl": 0,
+        "net_pnl_delta": 0.0,
+        "pf_before": 0.8875,
+        "pf_after": 0.8875,
+        "net_pnl_before": -38253.27,
+        "net_pnl_after": -38253.27
+      },
+      "c_vix_gt20": {
+        "label": "(c) VIX > 20",
+        "blocked": 0,
+        "blocked_wins": 0,
+        "blocked_losses": 0,
+        "blocked_win_pnl": 0,
+        "blocked_loss_pnl": 0,
+        "net_pnl_delta": 0.0,
+        "pf_before": 0.8875,
+        "pf_after": 0.8875,
+        "net_pnl_before": -38253.27,
+        "net_pnl_after": -38253.27
+      },
+      "d_vix_gt25": {
+        "label": "(d) VIX > 25",
+        "blocked": 0,
+        "blocked_wins": 0,
+        "blocked_losses": 0,
+        "blocked_win_pnl": 0,
+        "blocked_loss_pnl": 0,
+        "net_pnl_delta": 0.0,
+        "pf_before": 0.8875,
+        "pf_after": 0.8875,
+        "net_pnl_before": -38253.27,
+        "net_pnl_after": -38253.27
+      },
+      "e_sma50_or_vix25": {
+        "label": "(e) SPY<50SMA または VIX>25",
+        "blocked": 9,
+        "blocked_wins": 7,
+        "blocked_losses": 2,
+        "blocked_win_pnl": 3650.35,
+        "blocked_loss_pnl": -2334.78,
+        "net_pnl_delta": -1315.57,
+        "pf_before": 0.8875,
+        "pf_after": 0.8829,
+        "net_pnl_before": -38253.27,
+        "net_pnl_after": -39568.84
+      }
+    },
+    "exit >= 2026-07-16": {
+      "a_spy_lt_sma50": {
+        "label": "(a) SPY < 50日SMA",
+        "blocked": 4,
+        "blocked_wins": 3,
+        "blocked_losses": 1,
+        "blocked_win_pnl": 1197.78,
+        "blocked_loss_pnl": -1491.27,
+        "net_pnl_delta": 293.49,
+        "pf_before": 0.6336,
+        "pf_after": 0.6309,
+        "net_pnl_before": -34793.22,
+        "net_pnl_after": -34499.73
+      },
+      "b_spy_lt_sma200": {
+        "label": "(b) SPY < 200日SMA",
+        "blocked": 0,
+        "blocked_wins": 0,
+        "blocked_losses": 0,
+        "blocked_win_pnl": 0,
+        "blocked_loss_pnl": 0,
+        "net_pnl_delta": 0.0,
+        "pf_before": 0.6336,
+        "pf_after": 0.6336,
+        "net_pnl_before": -34793.22,
+        "net_pnl_after": -34793.22
+      },
+      "c_vix_gt20": {
+        "label": "(c) VIX > 20",
+        "blocked": 0,
+        "blocked_wins": 0,
+        "blocked_losses": 0,
+        "blocked_win_pnl": 0,
+        "blocked_loss_pnl": 0,
+        "net_pnl_delta": 0.0,
+        "pf_before": 0.6336,
+        "pf_after": 0.6336,
+        "net_pnl_before": -34793.22,
+        "net_pnl_after": -34793.22
+      },
+      "d_vix_gt25": {
+        "label": "(d) VIX > 25",
+        "blocked": 0,
+        "blocked_wins": 0,
+        "blocked_losses": 0,
+        "blocked_win_pnl": 0,
+        "blocked_loss_pnl": 0,
+        "net_pnl_delta": 0.0,
+        "pf_before": 0.6336,
+        "pf_after": 0.6336,
+        "net_pnl_before": -34793.22,
+        "net_pnl_after": -34793.22
+      },
+      "e_sma50_or_vix25": {
+        "label": "(e) SPY<50SMA または VIX>25",
+        "blocked": 4,
+        "blocked_wins": 3,
+        "blocked_losses": 1,
+        "blocked_win_pnl": 1197.78,
+        "blocked_loss_pnl": -1491.27,
+        "net_pnl_delta": 293.49,
+        "pf_before": 0.6336,
+        "pf_after": 0.6309,
+        "net_pnl_before": -34793.22,
+        "net_pnl_after": -34499.73
+      }
+    }
+  },
+  "monthly_blocked_distribution": {
+    "a_spy_lt_sma50": {
+      "blocked_pnl_by_exit_month": {
+        "2026-05": 0.0,
+        "2026-06": 0.0,
+        "2026-07": 1315.57,
+        "2026-08": 0.0,
+        "2026-09": 0.0
+      },
+      "blocked_count_by_exit_month": {
+        "2026-05": 0,
+        "2026-06": 0,
+        "2026-07": 9,
+        "2026-08": 0,
+        "2026-09": 0
+      },
+      "blocked_count_by_entry_month": {
+        "2026-05": 0,
+        "2026-06": 5,
+        "2026-07": 4,
+        "2026-08": 0,
+        "2026-09": 0
+      }
+    },
+    "b_spy_lt_sma200": {
+      "blocked_pnl_by_exit_month": {
+        "2026-05": 0.0,
+        "2026-06": 0.0,
+        "2026-07": 0.0,
+        "2026-08": 0.0,
+        "2026-09": 0.0
+      },
+      "blocked_count_by_exit_month": {
+        "2026-05": 0,
+        "2026-06": 0,
+        "2026-07": 0,
+        "2026-08": 0,
+        "2026-09": 0
+      },
+      "blocked_count_by_entry_month": {
+        "2026-05": 0,
+        "2026-06": 0,
+        "2026-07": 0,
+        "2026-08": 0,
+        "2026-09": 0
+      }
+    },
+    "c_vix_gt20": {
+      "blocked_pnl_by_exit_month": {
+        "2026-05": 0.0,
+        "2026-06": 0.0,
+        "2026-07": 0.0,
+        "2026-08": 0.0,
+        "2026-09": 0.0
+      },
+      "blocked_count_by_exit_month": {
+        "2026-05": 0,
+        "2026-06": 0,
+        "2026-07": 0,
+        "2026-08": 0,
+        "2026-09": 0
+      },
+      "blocked_count_by_entry_month": {
+        "2026-05": 0,
+        "2026-06": 0,
+        "2026-07": 0,
+        "2026-08": 0,
+        "2026-09": 0
+      }
+    },
+    "d_vix_gt25": {
+      "blocked_pnl_by_exit_month": {
+        "2026-05": 0.0,
+        "2026-06": 0.0,
+        "2026-07": 0.0,
+        "2026-08": 0.0,
+        "2026-09": 0.0
+      },
+      "blocked_count_by_exit_month": {
+        "2026-05": 0,
+        "2026-06": 0,
+        "2026-07": 0,
+        "2026-08": 0,
+        "2026-09": 0
+      },
+      "blocked_count_by_entry_month": {
+        "2026-05": 0,
+        "2026-06": 0,
+        "2026-07": 0,
+        "2026-08": 0,
+        "2026-09": 0
+      }
+    },
+    "e_sma50_or_vix25": {
+      "blocked_pnl_by_exit_month": {
+        "2026-05": 0.0,
+        "2026-06": 0.0,
+        "2026-07": 1315.57,
+        "2026-08": 0.0,
+        "2026-09": 0.0
+      },
+      "blocked_count_by_exit_month": {
+        "2026-05": 0,
+        "2026-06": 0,
+        "2026-07": 9,
+        "2026-08": 0,
+        "2026-09": 0
+      },
+      "blocked_count_by_entry_month": {
+        "2026-05": 0,
+        "2026-06": 5,
+        "2026-07": 4,
+        "2026-08": 0,
+        "2026-09": 0
+      }
+    }
+  },
+  "note": "一次近似（ブロックPnL除去のみ、再配分/複利なし）。探索的検証であり昇格にはR13-C後のout-of-sample確認を要する。"
+}
