@@ -51,6 +51,71 @@ def _load(path: Path) -> dict:
 # overnight) rather than trying to model exact market-hours schedules here.
 _CONSOLE_SUMMARY_MAX_AGE_HOURS = 30.0
 
+# ── economic_viability gate (2026-09-05, ユーザー承認済み) ──────────────────
+# 背景: Required 条件は従来すべて「システムが壊れていないか」（鮮度・整合性・
+# ガードレール）の検査であり、「そのシステムが経済的に儲かっているか」を問う
+# 条件が1つも存在しなかった。ペーパー運用実績（pnl_state.json、5/12〜09-05、
+# closed 357件）は実現PnL -$38,253 / PF 0.888 / 勝率47.3% であり、この状態の
+# ままRequired全緑=GOと報告するのは「壊れていないが儲からないシステム」への
+# GOである。economic_viability は直近コホート（デフォルト: exit_time >=
+# 2026-08-14、--econ-cohort-start で上書き可）の closed トレードから
+# n / PF（粗利益/|粗損失|）/ expectancy（1トレード平均PnL）を算出し、
+# n>=30 かつ PF>1.0 かつ expectancy>0 を要求する。n<30 は insufficient_sample
+# として fail-closed（NO-GO）。
+#
+# 注意（意図の明文化）: 2026-09-05 時点の実測は PF<1 のため、このゲートは
+# **意図的に NO-GO を出す**。これはユーザー承認済みの設計であり、GOを出す
+# ために閾値を緩めることは許可されていない。
+ECON_COHORT_START_DEFAULT = "2026-08-14"
+ECON_MIN_SAMPLE = 30
+
+
+def check_economic_viability(pnl_state: dict, cohort_start: str) -> dict:
+    """Required condition: recent-cohort economics must be viable.
+
+    Computes n / PF / expectancy over closed trades with
+    exit_time >= cohort_start. Fail-closed: missing pnl_state, missing
+    trades, or n < ECON_MIN_SAMPLE all fail (insufficient_sample).
+    """
+    trades = [
+        t for t in (pnl_state.get("trades") or [])
+        if t.get("status") == "closed"
+        and (t.get("exit_time") or "")[:10] >= cohort_start
+        and isinstance(t.get("pnl"), (int, float))
+    ]
+    n = len(trades)
+    gross_profit = sum(t["pnl"] for t in trades if t["pnl"] > 0)
+    gross_loss = sum(-t["pnl"] for t in trades if t["pnl"] < 0)
+    pf = (gross_profit / gross_loss) if gross_loss > 0 else (float("inf") if gross_profit > 0 else None)
+    expectancy = (sum(t["pnl"] for t in trades) / n) if n else None
+
+    insufficient = n < ECON_MIN_SAMPLE
+    pf_ok = pf is not None and pf > 1.0
+    expectancy_ok = expectancy is not None and expectancy > 0
+    passed = (not insufficient) and pf_ok and expectancy_ok
+
+    pf_str = "n/a" if pf is None else ("inf" if pf == float("inf") else f"{pf:.3f}")
+    exp_str = "n/a" if expectancy is None else f"${expectancy:+,.2f}"
+    actual = f"n={n}, PF={pf_str}, expectancy={exp_str} (cohort exit_time>={cohort_start})"
+    if insufficient:
+        actual = f"insufficient_sample: {actual}"
+
+    return {
+        "label": "economic_viability",
+        "pass": passed,
+        "actual": actual,
+        "required": f"n>={ECON_MIN_SAMPLE} & PF>1.0 & expectancy>0",
+        "econ_detail": {
+            "cohort_start": cohort_start,
+            "n": n,
+            "gross_profit": round(gross_profit, 2),
+            "gross_loss": round(gross_loss, 2),
+            "pf": pf_str,
+            "expectancy": exp_str,
+            "insufficient_sample": insufficient,
+        },
+    }
+
 
 def _console_summary_age_hours(summary: dict) -> float | None:
     ts = ((summary.get("run") or {}).get("timestamp"))
@@ -66,7 +131,7 @@ def _console_summary_age_hours(summary: dict) -> float | None:
         return None
 
 
-def check() -> dict[str, dict]:
+def check(econ_cohort_start: str = ECON_COHORT_START_DEFAULT) -> dict[str, dict]:
     summary_path = PROJECT_ROOT / "reports" / "console" / "latest_console_summary.json"
     summary = _load(summary_path)
     health = summary.get("health", {})
@@ -275,6 +340,12 @@ def check() -> dict[str, dict]:
         "required": ">=3 distinct days with a real scheduled paper_demo run (decisions_generated>0) in the last 7 days",
     }
 
+    # 8. economic_viability (2026-09-05, Required・fail-closed).
+    # 「壊れていない」だけでなく「儲かっている」ことをGOの必須条件にする。
+    # 詳細はモジュール上部の ECON_COHORT_START_DEFAULT コメント参照。
+    # _pnl_state は条件7 (paper_3day) で読み込んだものを再利用。
+    results["economic_viability"] = check_economic_viability(_pnl_state, econ_cohort_start)
+
     return results
 
 
@@ -480,6 +551,26 @@ def format_report(results: dict[str, dict], save: bool = False, promotion: dict[
         "",
     ]
 
+    econ_detail = (results.get("economic_viability") or {}).get("econ_detail")
+    if econ_detail:
+        lines += [
+            "## 経済性ゲート詳細: economic_viability（2026-09-05追加、Required判定に含まれる）",
+            "",
+            "| 項目 | 値 |",
+            "|------|------|",
+            f"| コホート | closed trades, exit_time >= {econ_detail['cohort_start']} |",
+            f"| n | {econ_detail['n']}（必要: >={ECON_MIN_SAMPLE}、未満は insufficient_sample として fail-closed） |",
+            f"| 粗利益 | ${econ_detail['gross_profit']:+,.2f} |",
+            f"| 粗損失 | ${-econ_detail['gross_loss']:+,.2f} |",
+            f"| PF（粗利益/\\|粗損失\\|） | {econ_detail['pf']}（必要: >1.0） |",
+            f"| expectancy（1トレード平均PnL） | {econ_detail['expectancy']}（必要: >0） |",
+            f"| insufficient_sample | {econ_detail['insufficient_sample']} |",
+            "",
+            "注: このゲートは意図的なfail-closed設計。PF<=1.0 の間は他のRequired条件が",
+            "全緑でも NO-GO を維持する（2026-09-05 ユーザー承認済み。閾値の緩和は不可）。",
+            "",
+        ]
+
     if promotion is not None:
         lines += [
             "## 補足: R5-v2 Promotion Gate（参考情報、Required判定には含まれない）",
@@ -520,7 +611,19 @@ def format_report(results: dict[str, dict], save: bool = False, promotion: dict[
 
 def main() -> int:
     save = "--save" in sys.argv
-    results = check()
+    econ_cohort_start = ECON_COHORT_START_DEFAULT
+    if "--econ-cohort-start" in sys.argv:
+        _idx = sys.argv.index("--econ-cohort-start")
+        if _idx + 1 >= len(sys.argv):
+            print("error: --econ-cohort-start requires a YYYY-MM-DD value", file=sys.stderr)
+            return 2
+        econ_cohort_start = sys.argv[_idx + 1]
+        try:
+            datetime.fromisoformat(econ_cohort_start)
+        except ValueError:
+            print(f"error: invalid --econ-cohort-start date: {econ_cohort_start}", file=sys.stderr)
+            return 2
+    results = check(econ_cohort_start=econ_cohort_start)
     promotion = check_promotion_readiness()
     report = format_report(results, save=save, promotion=promotion)
     print(report)

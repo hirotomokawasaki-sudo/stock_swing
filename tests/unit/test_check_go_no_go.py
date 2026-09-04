@@ -134,6 +134,9 @@ def test_all_pass_when_real_mismatch_zero_despite_raw_nonzero(monkeypatch, tmp_p
          re-reading health.status, which was already present verbatim in
          the same summary dict this test writes -- i.e. previously 100%
          redundant with a field this test already controls directly.
+      4. economic_viability (2026-09-05) requires a recent closed-trade
+         cohort with n>=30, PF>1.0, expectancy>0 -- see the trades fixture
+         below.
     """
     import json as _json
     from datetime import datetime, timedelta, timezone
@@ -166,8 +169,19 @@ def test_all_pass_when_real_mismatch_zero_despite_raw_nonzero(monkeypatch, tmp_p
         {"date": (today - timedelta(days=offset)).isoformat(), "equity": 1_000_000.0, "decisions_generated": 5}
         for offset in range(3)
     ]
+    # economic_viability (2026-09-05): 30+ recent closed trades with PF>1 /
+    # expectancy>0 so the new Required gate passes in this all-green fixture.
+    trades = [
+        {
+            "status": "closed",
+            "exit_time": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
+            "pnl": 200.0 if i < 20 else -100.0,
+            "symbol": f"SYM{i}",
+        }
+        for i in range(30)
+    ]
     (tracking_dir / "pnl_state.json").write_text(
-        _json.dumps({"daily_snapshots": snapshots}), encoding="utf-8"
+        _json.dumps({"daily_snapshots": snapshots, "trades": trades}), encoding="utf-8"
     )
 
     results = module.check()

@@ -4038,3 +4038,45 @@ pp改善は ORCL+6.9 / MSFT+3.5 / TSLA+1.9 / MU-2.4〜-4.8 で**ネット正**�
 （**2026-10-02目安**）のいずれか早い方で第2回レビューを実施し、有効/偽警報比と
 発火時plpc分布を再評価。その時点でサンプルが揃えばpaper_ab昇格提案を検討
 （提案のみ、実行はユーザー承認後）。
+
+## P0: Go/No-Go 経済性ゲート追加（economic_viability、2026-09-05、ユーザー承認済み）
+
+**背景**: 従来のRequired条件（鮮度・ledger・circuit breaker・mismatch・attribution・
+guardrail・cron・paper 3日確認）はすべて「システムが壊れていないか」の検査であり、
+「そのシステムが経済的に儲かっているか」を問う条件が1つも存在しなかった。ペーパー
+運用実績（pnl_state.json、5/12〜09-05、closed 357件）は実現PnL -$38,253 / PF 0.888 /
+勝率47.3%であり、この状態でRequired全緑=GOと報告するのは「壊れていないが儲からない
+システム」へのGOである。
+
+**実装（2026-09-05）**: `scripts/check_go_no_go.py` に必須チェック
+**economic_viability** を追加。
+
+- コホート: `data/tracking/pnl_state.json` の closed トレードで
+  **exit_time >= 2026-08-14**（CLIフラグ `--econ-cohort-start` で上書き可能）
+- 算出: n / PF（粗利益/|粗損失|）/ expectancy（1トレード平均PnL）
+- 合格条件: **n>=30 かつ PF>1.0 かつ expectancy>0**
+- **n<30 は insufficient_sample として fail-closed（NO-GO）**
+- レポート統合: Required条件テーブルに1行追加 + 「経済性ゲート詳細」セクション
+  （「補足: R5-v2 Promotion Gate」と同形式のテーブル）を追加。Required判定に
+  含まれるため、この条件が❌の間は他が全緑でも最終判定はNO-GO・exit code 1。
+
+**初回実行結果（2026-09-05 04:18 JST、--save → `docs/go_no_go_result_20260905.md`）**:
+
+| 項目 | 値 |
+|---|---|
+| 最終判定 | 🔴 NO-GO（economic_viabilityのみ❌、他Required 9条件は✅） |
+| n | 45（>=30 で十分） |
+| PF | **0.530**（必要: >1.0）— 粗利益 +$28,001 / 粗損失 -$52,811 |
+| expectancy | **-$551.33**（必要: >0） |
+
+**意図の明文化（重要）**: 現状PF 0.888（全期間）/ 0.530（直近コホート）のため、
+このゲートは**意図的にNO-GOを出す**。これはユーザー承認済み（2026-09-05）の
+fail-closed設計であり、**GOを出すために閾値を緩めることは許可されていない**。
+GOに戻る唯一の道は、戦略側の改善（R13群等）によって直近コホートの実測PF/expectancyが
+実際に合格域へ回復することである。
+
+**テスト**: `tests/unit/test_check_go_no_go_economic.py` 新規（15件: 合格/PF<1/
+insufficient_sample fail-closed/コホート境界/open・pnl欠損除外/PF=inf/check()統合/
+--econ-cohort-startパース/レポート出力/exit code）。既存 all-green fixture
+（`test_check_go_no_go.py`）に経済ゲート合格分のtrades追加。go_no_go関連+promotion_gate
+の計65テスト全緑を確認。
