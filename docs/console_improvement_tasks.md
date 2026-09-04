@@ -4293,7 +4293,50 @@ Xを実測値+保守マージンに更新（cost_model_definition.md §5）。
 
 - **米国内非ITユニバース拡張**: 現ユニバースはIT/半導体偏重。Alpacaのまま
   金融/ヘルスケア/エネルギー等へ拡張可能（新規契約不要）。セクター集中の構造是正
-  として有望だが、ユーザー判断待ち。
+  として有望。→ **2026-09-05 ユーザー決定: 取引は行わずshadowで検証環境を構築
+  （R19として着手済み、下記R19セクション参照）**。
 - **下落局面ヘッジ（中期）**: R18-Aの結果、指数レジームでのエントリー抑制は効果薄。
   ヘッジ（インバースETF/プット等）は別設計として中期課題に置く（IBKR移行後の
   商品アクセスも関係）。
+
+## R19: 米国非ITユニバース shadow検証（2026-09-05、ユーザー指示）
+
+**目的**: 現行モメンタムシグナルエンジンを非ITユニバースに適用した場合の
+シグナルを日次でshadow記録（**発注なし**）し、将来のユニバース拡張判断の材料を
+蓄積する。ユーザー意向（2026-09-05）: 「取引は行わずshadowで検証環境の構築を
+進めたい」。**取引は行わない。昇格（実取引ユニバースへの追加）はユーザー判断**
+であり、その際は `docs/promotion_governance.md`（R18-D）の必須条件に従う。
+
+**ユニバース（第1弾: ETFのみ、流動性高・決算なし・禁止リスト非該当）**:
+XLF(金融) / XLE(エネルギー) / XLV(ヘルスケア) / XLI(資本財) / XLP(生活必需品) /
+XLU(公益) / XLB(素材) / XLRE(不動産) / XLC(通信) + SPY（比較用ベンチマーク）。
+**個別株への拡張は将来タスク**（ETF shadowの観測結果を見てから起票）。
+
+**判定条件の出所（実装から転記、shadow scriptに同一コメントあり）**:
+本番の実クラス（`PriceMomentumFeature` / `BreakoutMomentumStrategy`）を
+そのまま使用。パラメータは本番運用値を転記:
+- `bar_limit=20`（paper_demo.py --bar-limit デフォルト、momentum窓=直近20日足）
+- `min_momentum=0.05`（本番cron payloadが明示指定）
+- `min_signal_strength=0.60`（paper_demo.py デフォルト、2026-07-29引き上げ後）
+- エントリー条件: momentum>=0.05 AND trend=="bullish" AND
+  min(momentum/0.20, 1.0)>=0.60。macro_regime係数はshadowでは無効
+  （FRED配線なし、strengthは保守側に出る。scriptのdocstringに明記）。
+- entry filter層（PF gate/cluster cap等）は通さない=戦略シグナル層のみの記録。
+
+**実装（2026-09-05）**:
+- `scripts/log_us_nonit_universe_shadow.py` 新規
+  （log_sector_rotation_shadow.py と同型のスタンドアロンshadowスクリプト、
+  yfinance利用・ブローカー接続なし・本番state無接触）。
+  ログ: `data/us_nonit_universe_shadow_log.jsonl`（日次1行、各ETFの
+  would_signal / signal_strength / reference_strength / momentum / trend /
+  ATR / latest_close）。
+- テスト: `tests/unit/test_log_us_nonit_universe_shadow.py`（7件、合成バーで
+  本番エントリー条件の再現を検証: +15%→signal(strength 0.75)、
+  +8%→strengthゲートで棄却、非ユニバース銘柄除外等）。
+- cron: `stock_swing_us_nonit_universe_shadow`
+  （id 92748ee7-1e5b-4241-9968-ac117a9dd26e、平日16:30 ET =米国市場クローズ後、
+  commandペイロード方式、成功時NO_REPLY無音・失敗時のみTelegram通知）。
+  登録後に強制実行で動作確認済み（手動+cron計2行のログ生成、status ok）。
+
+**観測期間目安**: 30営業日（〜2026-10月中旬）。その後、would_signal頻度・
+セクター分布・現ユニバースとの相関を集計してユーザーに拡張判断を仰ぐ。
