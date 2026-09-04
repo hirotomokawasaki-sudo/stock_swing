@@ -1,0 +1,1912 @@
+{
+  "groupings": [
+    {
+      "grouping": "registry sector（semis→semiconductor正規化）",
+      "caps": [
+        {
+          "cap": 0.3,
+          "cohorts": [
+            {
+              "cohort": "全期間",
+              "n": 357,
+              "blocked_n": 62,
+              "blocked_wins_n": 30,
+              "blocked_wins_pnl": 39332.46,
+              "blocked_losses_n": 32,
+              "blocked_losses_pnl": -70615.65,
+              "baseline_net": -38253.27,
+              "cf_net": -6727.62,
+              "net_diff": 31525.65,
+              "pf_before": 0.8875293038297395,
+              "pf_after": 0.9750143681069066,
+              "blocked_trades": [
+                {
+                  "trade_id": "broker_open_0119_FTXL",
+                  "symbol": "FTXL",
+                  "pnl": -6705.96,
+                  "entry_time": "2026-08-17T16:02:06.959766Z",
+                  "exit_time": "2026-08-24T13:45:14.390553+00:00",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_open_0066_CHPX",
+                  "symbol": "CHPX",
+                  "pnl": -6103.44,
+                  "entry_time": "2026-08-17T16:02:05.49015Z",
+                  "exit_time": "2026-08-24T13:45:13.882539+00:00",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0062_CHPS",
+                  "symbol": "CHPS",
+                  "pnl": -5295.75,
+                  "entry_time": "2026-06-25T13:37:33.378433Z",
+                  "exit_time": "2026-07-02T19:55:27.497296Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0058_CDNS",
+                  "symbol": "CDNS",
+                  "pnl": -4057.11,
+                  "entry_time": "2026-06-04T14:02:46.651549Z",
+                  "exit_time": "2026-06-08T13:33:42.801779Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0321_SMHX",
+                  "symbol": "SMHX",
+                  "pnl": -3946.79,
+                  "entry_time": "2026-06-25T13:37:57.596741Z",
+                  "exit_time": "2026-07-07T13:37:08.488848Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0255_PLTR",
+                  "symbol": "PLTR",
+                  "pnl": -3824.68,
+                  "entry_time": "2026-06-04T14:02:56.367717Z",
+                  "exit_time": "2026-06-08T13:36:38.950481Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0075_CRM",
+                  "symbol": "CRM",
+                  "pnl": -3795.07,
+                  "entry_time": "2026-06-04T14:02:34.447218Z",
+                  "exit_time": "2026-06-09T13:35:52.661411Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0202_MSFT",
+                  "symbol": "MSFT",
+                  "pnl": -3524.95,
+                  "entry_time": "2026-06-02T13:30:22.460482Z",
+                  "exit_time": "2026-06-03T17:01:44.124754Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0229_NOW",
+                  "symbol": "NOW",
+                  "pnl": -3424.15,
+                  "entry_time": "2026-06-04T14:02:31.961825Z",
+                  "exit_time": "2026-06-08T13:32:26.333421Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0109_FICO",
+                  "symbol": "FICO",
+                  "pnl": -3205.96,
+                  "entry_time": "2026-06-04T14:02:43.893505Z",
+                  "exit_time": "2026-06-08T13:36:38.360286Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0334_SOXQ",
+                  "symbol": "SOXQ",
+                  "pnl": -3164.56,
+                  "entry_time": "2026-05-14T17:24:10.250875Z",
+                  "exit_time": "2026-05-15T13:32:21.012759Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0280_QCOM",
+                  "symbol": "QCOM",
+                  "pnl": -2943.16,
+                  "entry_time": "2026-06-04T14:02:39.261633Z",
+                  "exit_time": "2026-06-08T13:38:56.202031Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0246_PATH",
+                  "symbol": "PATH",
+                  "pnl": -2646.0,
+                  "entry_time": "2026-06-04T14:02:41.62863Z",
+                  "exit_time": "2026-06-08T13:31:54.857389Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0177_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": -2616.84,
+                  "entry_time": "2026-07-01T16:01:15.611938Z",
+                  "exit_time": "2026-07-06T13:41:11.972546Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0073_CRDO",
+                  "symbol": "CRDO",
+                  "pnl": -2513.88,
+                  "entry_time": "2026-06-25T16:00:48.759979Z",
+                  "exit_time": "2026-06-29T13:38:02.494997Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0172_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": -1647.76,
+                  "entry_time": "2026-06-04T14:02:36.664783Z",
+                  "exit_time": "2026-06-08T13:35:29.526644Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0338_SOXX",
+                  "symbol": "SOXX",
+                  "pnl": -1632.64,
+                  "entry_time": "2026-05-12T14:23:27.144399Z",
+                  "exit_time": "2026-05-12T14:51:44.604103Z",
+                  "exit_reason": "broker_fill"
+                },
+                {
+                  "trade_id": "broker_match_0001_ADBE",
+                  "symbol": "ADBE",
+                  "pnl": -1388.75,
+                  "entry_time": "2026-06-02T13:30:14.633815Z",
+                  "exit_time": "2026-06-03T17:01:33.583514Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0057_CDNS",
+                  "symbol": "CDNS",
+                  "pnl": -1183.35,
+                  "entry_time": "2026-06-02T13:30:21.024214Z",
+                  "exit_time": "2026-06-08T13:33:42.801779Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0008_AMAT",
+                  "symbol": "AMAT",
+                  "pnl": -991.13,
+                  "entry_time": "2026-06-04T14:02:37.019727Z",
+                  "exit_time": "2026-06-08T13:38:42.229052Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0352_TTEQ",
+                  "symbol": "TTEQ",
+                  "pnl": -968.23,
+                  "entry_time": "2026-05-12T14:23:24.000876Z",
+                  "exit_time": "2026-05-12T14:51:46.958311Z",
+                  "exit_reason": "broker_fill"
+                },
+                {
+                  "trade_id": "broker_match_0108_FICO",
+                  "symbol": "FICO",
+                  "pnl": -955.2,
+                  "entry_time": "2026-05-26T17:04:51.39762Z",
+                  "exit_time": "2026-06-03T17:01:44.785294Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0153_INTC",
+                  "symbol": "INTC",
+                  "pnl": -864.15,
+                  "entry_time": "2026-05-14T15:31:10.628077Z",
+                  "exit_time": "2026-05-14T17:23:36.097668Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0215_MU",
+                  "symbol": "MU",
+                  "pnl": -843.51,
+                  "entry_time": "2026-06-29T13:37:48.631134Z",
+                  "exit_time": "2026-07-02T13:36:33.666098Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0166_KLAC",
+                  "symbol": "KLAC",
+                  "pnl": -705.67,
+                  "entry_time": "2026-06-25T16:00:58.885738Z",
+                  "exit_time": "2026-06-26T13:35:23.41956Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0161_KLAC",
+                  "symbol": "KLAC",
+                  "pnl": -656.96,
+                  "entry_time": "2026-06-04T14:02:39.216919Z",
+                  "exit_time": "2026-06-08T13:37:42.019595Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0350_TSM",
+                  "symbol": "TSM",
+                  "pnl": -637.72,
+                  "entry_time": "2026-06-04T14:02:58.34813Z",
+                  "exit_time": "2026-06-08T13:30:35.902071Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0071_CRDO",
+                  "symbol": "CRDO",
+                  "pnl": -106.68,
+                  "entry_time": "2026-06-23T19:55:31.854746Z",
+                  "exit_time": "2026-06-24T16:00:25.301489Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0170_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": -88.2,
+                  "entry_time": "2026-05-13T15:03:02.828296Z",
+                  "exit_time": "2026-05-13T15:31:09.702355Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0154_INTC",
+                  "symbol": "INTC",
+                  "pnl": -79.39,
+                  "entry_time": "2026-05-20T13:33:20.999959Z",
+                  "exit_time": "2026-05-28T14:02:09.368578Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0020_AMD",
+                  "symbol": "AMD",
+                  "pnl": -69.11,
+                  "entry_time": "2026-05-26T14:01:16.98612Z",
+                  "exit_time": "2026-06-01T14:04:02.336649Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0042_ARM",
+                  "symbol": "ARM",
+                  "pnl": -28.9,
+                  "entry_time": "2026-05-26T14:03:13.254284Z",
+                  "exit_time": "2026-05-27T17:02:47.111231Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0164_KLAC",
+                  "symbol": "KLAC",
+                  "pnl": 58.63,
+                  "entry_time": "2026-06-23T16:00:32.869711Z",
+                  "exit_time": "2026-06-23T19:55:33.284234Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0193_MRVL",
+                  "symbol": "MRVL",
+                  "pnl": 103.34,
+                  "entry_time": "2026-05-21T14:03:51.141969Z",
+                  "exit_time": "2026-05-27T14:08:35.532052Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0127_GTOP",
+                  "symbol": "GTOP",
+                  "pnl": 112.5,
+                  "entry_time": "2026-05-14T14:31:38.540941Z",
+                  "exit_time": "2026-05-14T15:14:07.870845Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0237_ORCL",
+                  "symbol": "ORCL",
+                  "pnl": 117.57,
+                  "entry_time": "2026-08-05T19:55:52.90856Z",
+                  "exit_time": "2026-08-11T16:00:28.149195Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0126_GTOP",
+                  "symbol": "GTOP",
+                  "pnl": 173.37,
+                  "entry_time": "2026-05-13T17:49:58.925428Z",
+                  "exit_time": "2026-05-14T13:32:53.838732Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0214_MU",
+                  "symbol": "MU",
+                  "pnl": 185.28,
+                  "entry_time": "2026-06-25T16:00:51.421517Z",
+                  "exit_time": "2026-06-25T19:55:24.982939Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0192_MRVL",
+                  "symbol": "MRVL",
+                  "pnl": 228.06,
+                  "entry_time": "2026-05-20T13:34:52.614322Z",
+                  "exit_time": "2026-05-27T14:08:35.532052Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0353_TTEQ",
+                  "symbol": "TTEQ",
+                  "pnl": 348.61,
+                  "entry_time": "2026-05-13T14:20:41.868641Z",
+                  "exit_time": "2026-05-13T15:02:31.170794Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0171_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": 360.44,
+                  "entry_time": "2026-05-20T13:34:29.900316Z",
+                  "exit_time": "2026-06-04T14:02:16.369404Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0194_MRVL",
+                  "symbol": "MRVL",
+                  "pnl": 561.7,
+                  "entry_time": "2026-06-04T14:02:41.344004Z",
+                  "exit_time": "2026-06-08T13:39:13.006869Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0019_AMD",
+                  "symbol": "AMD",
+                  "pnl": 687.4,
+                  "entry_time": "2026-05-20T13:33:11.492749Z",
+                  "exit_time": "2026-06-01T14:04:02.336649Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0210_MU",
+                  "symbol": "MU",
+                  "pnl": 762.97,
+                  "entry_time": "2026-05-27T17:02:46.086496Z",
+                  "exit_time": "2026-06-04T14:02:15.831878Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0176_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": 807.76,
+                  "entry_time": "2026-06-29T13:37:44.388113Z",
+                  "exit_time": "2026-07-01T13:36:00.420558Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0011_AMAT",
+                  "symbol": "AMAT",
+                  "pnl": 844.08,
+                  "entry_time": "2026-06-29T13:37:42.522784Z",
+                  "exit_time": "2026-07-01T13:35:52.847549Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0041_ARM",
+                  "symbol": "ARM",
+                  "pnl": 894.4,
+                  "entry_time": "2026-05-20T13:32:10.806827Z",
+                  "exit_time": "2026-05-27T17:02:47.111231Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0157_INTC",
+                  "symbol": "INTC",
+                  "pnl": 954.32,
+                  "entry_time": "2026-06-25T16:00:49.33742Z",
+                  "exit_time": "2026-07-01T13:36:24.025539Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0156_INTC",
+                  "symbol": "INTC",
+                  "pnl": 957.81,
+                  "entry_time": "2026-06-23T16:00:29.278003Z",
+                  "exit_time": "2026-06-25T13:36:59.276982Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0067_CRDO",
+                  "symbol": "CRDO",
+                  "pnl": 1035.29,
+                  "entry_time": "2026-06-04T14:02:55.276933Z",
+                  "exit_time": "2026-06-08T13:32:17.368026Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0165_KLAC",
+                  "symbol": "KLAC",
+                  "pnl": 1094.28,
+                  "entry_time": "2026-06-24T13:35:45.80142Z",
+                  "exit_time": "2026-06-25T13:36:43.542613Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0175_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": 1264.43,
+                  "entry_time": "2026-06-25T16:00:57.227508Z",
+                  "exit_time": "2026-06-25T19:55:26.5692Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0209_MU",
+                  "symbol": "MU",
+                  "pnl": 1307.67,
+                  "entry_time": "2026-05-26T14:02:40.630432Z",
+                  "exit_time": "2026-06-04T14:02:15.831878Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0010_AMAT",
+                  "symbol": "AMAT",
+                  "pnl": 1332.8,
+                  "entry_time": "2026-06-25T16:00:53.399178Z",
+                  "exit_time": "2026-06-25T19:55:27.223087Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0174_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": 1754.09,
+                  "entry_time": "2026-06-23T13:38:47.959809Z",
+                  "exit_time": "2026-06-25T13:36:39.447007Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0208_MU",
+                  "symbol": "MU",
+                  "pnl": 1813.4,
+                  "entry_time": "2026-05-20T13:34:41.853256Z",
+                  "exit_time": "2026-06-04T14:02:15.831878Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0316_SMH",
+                  "symbol": "SMH",
+                  "pnl": 2165.68,
+                  "entry_time": "2026-05-15T14:14:13.128631Z",
+                  "exit_time": "2026-06-04T14:06:09.203624Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0191_MRVL",
+                  "symbol": "MRVL",
+                  "pnl": 2190.74,
+                  "entry_time": "2026-05-13T13:32:22.309325Z",
+                  "exit_time": "2026-05-13T14:04:15.280988Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0319_SMHX",
+                  "symbol": "SMHX",
+                  "pnl": 3152.2,
+                  "entry_time": "2026-05-15T14:14:18.464373Z",
+                  "exit_time": "2026-06-04T14:02:16.737825Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0320_SMHX",
+                  "symbol": "SMHX",
+                  "pnl": 3502.66,
+                  "entry_time": "2026-05-15T14:14:18.464373Z",
+                  "exit_time": "2026-06-04T14:06:11.873286Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0213_MU",
+                  "symbol": "MU",
+                  "pnl": 4519.06,
+                  "entry_time": "2026-06-24T13:35:44.90185Z",
+                  "exit_time": "2026-06-25T13:36:49.626809Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0007_AMAT",
+                  "symbol": "AMAT",
+                  "pnl": 6041.92,
+                  "entry_time": "2026-05-12T15:08:34.381122Z",
+                  "exit_time": "2026-06-01T17:04:12.348044Z",
+                  "exit_reason": "time_based"
+                }
+              ]
+            },
+            {
+              "cohort": "exit>=2026-07-16",
+              "n": 97,
+              "blocked_n": 3,
+              "blocked_wins_n": 1,
+              "blocked_wins_pnl": 117.57,
+              "blocked_losses_n": 2,
+              "blocked_losses_pnl": -12809.4,
+              "baseline_net": -34793.22,
+              "cf_net": -21858.93,
+              "net_diff": 12934.29,
+              "pf_before": 0.633564106549991,
+              "pf_after": 0.7330973094745324,
+              "blocked_trades": [
+                {
+                  "trade_id": "broker_open_0119_FTXL",
+                  "symbol": "FTXL",
+                  "pnl": -6705.96,
+                  "entry_time": "2026-08-17T16:02:06.959766Z",
+                  "exit_time": "2026-08-24T13:45:14.390553+00:00",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_open_0066_CHPX",
+                  "symbol": "CHPX",
+                  "pnl": -6103.44,
+                  "entry_time": "2026-08-17T16:02:05.49015Z",
+                  "exit_time": "2026-08-24T13:45:13.882539+00:00",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0237_ORCL",
+                  "symbol": "ORCL",
+                  "pnl": 117.57,
+                  "entry_time": "2026-08-05T19:55:52.90856Z",
+                  "exit_time": "2026-08-11T16:00:28.149195Z",
+                  "exit_reason": "trailing_stop"
+                }
+              ]
+            }
+          ],
+          "blocked_open_n": 0
+        },
+        {
+          "cap": 0.4,
+          "cohorts": [
+            {
+              "cohort": "全期間",
+              "n": 357,
+              "blocked_n": 35,
+              "blocked_wins_n": 20,
+              "blocked_wins_pnl": 26707.88,
+              "blocked_losses_n": 15,
+              "blocked_losses_pnl": -22071.92,
+              "baseline_net": -38253.27,
+              "cf_net": -42889.23,
+              "net_diff": -4635.96,
+              "pf_before": 0.8875293038297395,
+              "pf_after": 0.865147604240824,
+              "blocked_trades": [
+                {
+                  "trade_id": "broker_match_0058_CDNS",
+                  "symbol": "CDNS",
+                  "pnl": -4057.11,
+                  "entry_time": "2026-06-04T14:02:46.651549Z",
+                  "exit_time": "2026-06-08T13:33:42.801779Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0255_PLTR",
+                  "symbol": "PLTR",
+                  "pnl": -3824.68,
+                  "entry_time": "2026-06-04T14:02:56.367717Z",
+                  "exit_time": "2026-06-08T13:36:38.950481Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0109_FICO",
+                  "symbol": "FICO",
+                  "pnl": -3205.96,
+                  "entry_time": "2026-06-04T14:02:43.893505Z",
+                  "exit_time": "2026-06-08T13:36:38.360286Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0246_PATH",
+                  "symbol": "PATH",
+                  "pnl": -2646.0,
+                  "entry_time": "2026-06-04T14:02:41.62863Z",
+                  "exit_time": "2026-06-08T13:31:54.857389Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0177_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": -2616.84,
+                  "entry_time": "2026-07-01T16:01:15.611938Z",
+                  "exit_time": "2026-07-06T13:41:11.972546Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0172_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": -1647.76,
+                  "entry_time": "2026-06-04T14:02:36.664783Z",
+                  "exit_time": "2026-06-08T13:35:29.526644Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0008_AMAT",
+                  "symbol": "AMAT",
+                  "pnl": -991.13,
+                  "entry_time": "2026-06-04T14:02:37.019727Z",
+                  "exit_time": "2026-06-08T13:38:42.229052Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0215_MU",
+                  "symbol": "MU",
+                  "pnl": -843.51,
+                  "entry_time": "2026-06-29T13:37:48.631134Z",
+                  "exit_time": "2026-07-02T13:36:33.666098Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0166_KLAC",
+                  "symbol": "KLAC",
+                  "pnl": -705.67,
+                  "entry_time": "2026-06-25T16:00:58.885738Z",
+                  "exit_time": "2026-06-26T13:35:23.41956Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0161_KLAC",
+                  "symbol": "KLAC",
+                  "pnl": -656.96,
+                  "entry_time": "2026-06-04T14:02:39.216919Z",
+                  "exit_time": "2026-06-08T13:37:42.019595Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0350_TSM",
+                  "symbol": "TSM",
+                  "pnl": -637.72,
+                  "entry_time": "2026-06-04T14:02:58.34813Z",
+                  "exit_time": "2026-06-08T13:30:35.902071Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0154_INTC",
+                  "symbol": "INTC",
+                  "pnl": -79.39,
+                  "entry_time": "2026-05-20T13:33:20.999959Z",
+                  "exit_time": "2026-05-28T14:02:09.368578Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0020_AMD",
+                  "symbol": "AMD",
+                  "pnl": -69.11,
+                  "entry_time": "2026-05-26T14:01:16.98612Z",
+                  "exit_time": "2026-06-01T14:04:02.336649Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0040_ARM",
+                  "symbol": "ARM",
+                  "pnl": -61.18,
+                  "entry_time": "2026-05-14T15:31:20.485202Z",
+                  "exit_time": "2026-05-14T17:07:20.928999Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0042_ARM",
+                  "symbol": "ARM",
+                  "pnl": -28.9,
+                  "entry_time": "2026-05-26T14:03:13.254284Z",
+                  "exit_time": "2026-05-27T17:02:47.111231Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0193_MRVL",
+                  "symbol": "MRVL",
+                  "pnl": 103.34,
+                  "entry_time": "2026-05-21T14:03:51.141969Z",
+                  "exit_time": "2026-05-27T14:08:35.532052Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0214_MU",
+                  "symbol": "MU",
+                  "pnl": 185.28,
+                  "entry_time": "2026-06-25T16:00:51.421517Z",
+                  "exit_time": "2026-06-25T19:55:24.982939Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0192_MRVL",
+                  "symbol": "MRVL",
+                  "pnl": 228.06,
+                  "entry_time": "2026-05-20T13:34:52.614322Z",
+                  "exit_time": "2026-05-27T14:08:35.532052Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0171_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": 360.44,
+                  "entry_time": "2026-05-20T13:34:29.900316Z",
+                  "exit_time": "2026-06-04T14:02:16.369404Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0194_MRVL",
+                  "symbol": "MRVL",
+                  "pnl": 561.7,
+                  "entry_time": "2026-06-04T14:02:41.344004Z",
+                  "exit_time": "2026-06-08T13:39:13.006869Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0019_AMD",
+                  "symbol": "AMD",
+                  "pnl": 687.4,
+                  "entry_time": "2026-05-20T13:33:11.492749Z",
+                  "exit_time": "2026-06-01T14:04:02.336649Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0210_MU",
+                  "symbol": "MU",
+                  "pnl": 762.97,
+                  "entry_time": "2026-05-27T17:02:46.086496Z",
+                  "exit_time": "2026-06-04T14:02:15.831878Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0176_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": 807.76,
+                  "entry_time": "2026-06-29T13:37:44.388113Z",
+                  "exit_time": "2026-07-01T13:36:00.420558Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0011_AMAT",
+                  "symbol": "AMAT",
+                  "pnl": 844.08,
+                  "entry_time": "2026-06-29T13:37:42.522784Z",
+                  "exit_time": "2026-07-01T13:35:52.847549Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0157_INTC",
+                  "symbol": "INTC",
+                  "pnl": 954.32,
+                  "entry_time": "2026-06-25T16:00:49.33742Z",
+                  "exit_time": "2026-07-01T13:36:24.025539Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0067_CRDO",
+                  "symbol": "CRDO",
+                  "pnl": 1035.29,
+                  "entry_time": "2026-06-04T14:02:55.276933Z",
+                  "exit_time": "2026-06-08T13:32:17.368026Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0165_KLAC",
+                  "symbol": "KLAC",
+                  "pnl": 1094.28,
+                  "entry_time": "2026-06-24T13:35:45.80142Z",
+                  "exit_time": "2026-06-25T13:36:43.542613Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0175_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": 1264.43,
+                  "entry_time": "2026-06-25T16:00:57.227508Z",
+                  "exit_time": "2026-06-25T19:55:26.5692Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0209_MU",
+                  "symbol": "MU",
+                  "pnl": 1307.67,
+                  "entry_time": "2026-05-26T14:02:40.630432Z",
+                  "exit_time": "2026-06-04T14:02:15.831878Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0010_AMAT",
+                  "symbol": "AMAT",
+                  "pnl": 1332.8,
+                  "entry_time": "2026-06-25T16:00:53.399178Z",
+                  "exit_time": "2026-06-25T19:55:27.223087Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0208_MU",
+                  "symbol": "MU",
+                  "pnl": 1813.4,
+                  "entry_time": "2026-05-20T13:34:41.853256Z",
+                  "exit_time": "2026-06-04T14:02:15.831878Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0191_MRVL",
+                  "symbol": "MRVL",
+                  "pnl": 2190.74,
+                  "entry_time": "2026-05-13T13:32:22.309325Z",
+                  "exit_time": "2026-05-13T14:04:15.280988Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0319_SMHX",
+                  "symbol": "SMHX",
+                  "pnl": 3152.2,
+                  "entry_time": "2026-05-15T14:14:18.464373Z",
+                  "exit_time": "2026-06-04T14:02:16.737825Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0320_SMHX",
+                  "symbol": "SMHX",
+                  "pnl": 3502.66,
+                  "entry_time": "2026-05-15T14:14:18.464373Z",
+                  "exit_time": "2026-06-04T14:06:11.873286Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0213_MU",
+                  "symbol": "MU",
+                  "pnl": 4519.06,
+                  "entry_time": "2026-06-24T13:35:44.90185Z",
+                  "exit_time": "2026-06-25T13:36:49.626809Z",
+                  "exit_reason": "trailing_stop"
+                }
+              ]
+            },
+            {
+              "cohort": "exit>=2026-07-16",
+              "n": 97,
+              "blocked_n": 0,
+              "blocked_wins_n": 0,
+              "blocked_wins_pnl": 0,
+              "blocked_losses_n": 0,
+              "blocked_losses_pnl": 0,
+              "baseline_net": -34793.22,
+              "cf_net": -34793.22,
+              "net_diff": 0.0,
+              "pf_before": 0.633564106549991,
+              "pf_after": 0.633564106549991,
+              "blocked_trades": []
+            }
+          ],
+          "blocked_open_n": 0
+        },
+        {
+          "cap": 0.5,
+          "cohorts": [
+            {
+              "cohort": "全期間",
+              "n": 357,
+              "blocked_n": 8,
+              "blocked_wins_n": 2,
+              "blocked_wins_pnl": 1596.99,
+              "blocked_losses_n": 6,
+              "blocked_losses_pnl": -12825.3,
+              "baseline_net": -38253.27,
+              "cf_net": -27024.96,
+              "net_diff": 11228.31,
+              "pf_before": 0.8875293038297395,
+              "pf_after": 0.9174286866946727,
+              "blocked_trades": [
+                {
+                  "trade_id": "broker_match_0058_CDNS",
+                  "symbol": "CDNS",
+                  "pnl": -4057.11,
+                  "entry_time": "2026-06-04T14:02:46.651549Z",
+                  "exit_time": "2026-06-08T13:33:42.801779Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0255_PLTR",
+                  "symbol": "PLTR",
+                  "pnl": -3824.68,
+                  "entry_time": "2026-06-04T14:02:56.367717Z",
+                  "exit_time": "2026-06-08T13:36:38.950481Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0280_QCOM",
+                  "symbol": "QCOM",
+                  "pnl": -2943.16,
+                  "entry_time": "2026-06-04T14:02:39.261633Z",
+                  "exit_time": "2026-06-08T13:38:56.202031Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0166_KLAC",
+                  "symbol": "KLAC",
+                  "pnl": -705.67,
+                  "entry_time": "2026-06-25T16:00:58.885738Z",
+                  "exit_time": "2026-06-26T13:35:23.41956Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0161_KLAC",
+                  "symbol": "KLAC",
+                  "pnl": -656.96,
+                  "entry_time": "2026-06-04T14:02:39.216919Z",
+                  "exit_time": "2026-06-08T13:37:42.019595Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0350_TSM",
+                  "symbol": "TSM",
+                  "pnl": -637.72,
+                  "entry_time": "2026-06-04T14:02:58.34813Z",
+                  "exit_time": "2026-06-08T13:30:35.902071Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0194_MRVL",
+                  "symbol": "MRVL",
+                  "pnl": 561.7,
+                  "entry_time": "2026-06-04T14:02:41.344004Z",
+                  "exit_time": "2026-06-08T13:39:13.006869Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0067_CRDO",
+                  "symbol": "CRDO",
+                  "pnl": 1035.29,
+                  "entry_time": "2026-06-04T14:02:55.276933Z",
+                  "exit_time": "2026-06-08T13:32:17.368026Z",
+                  "exit_reason": "trailing_stop"
+                }
+              ]
+            },
+            {
+              "cohort": "exit>=2026-07-16",
+              "n": 97,
+              "blocked_n": 0,
+              "blocked_wins_n": 0,
+              "blocked_wins_pnl": 0,
+              "blocked_losses_n": 0,
+              "blocked_losses_pnl": 0,
+              "baseline_net": -34793.22,
+              "cf_net": -34793.22,
+              "net_diff": 0.0,
+              "pf_before": 0.633564106549991,
+              "pf_after": 0.633564106549991,
+              "blocked_trades": []
+            }
+          ],
+          "blocked_open_n": 0
+        }
+      ]
+    },
+    {
+      "grouping": "semiconductor_related(flag) — is_semiconductor_related=True を1グループとして cap 適用",
+      "caps": [
+        {
+          "cap": 0.3,
+          "cohorts": [
+            {
+              "cohort": "全期間",
+              "n": 357,
+              "blocked_n": 53,
+              "blocked_wins_n": 26,
+              "blocked_wins_pnl": 38699.16,
+              "blocked_losses_n": 27,
+              "blocked_losses_pnl": -56845.52,
+              "baseline_net": -38253.27,
+              "cf_net": -19864.45,
+              "net_diff": 18388.82,
+              "pf_before": 0.8875293038297395,
+              "pf_after": 0.9298149579224341,
+              "blocked_trades": [
+                {
+                  "trade_id": "broker_open_0119_FTXL",
+                  "symbol": "FTXL",
+                  "pnl": -6705.96,
+                  "entry_time": "2026-08-17T16:02:06.959766Z",
+                  "exit_time": "2026-08-24T13:45:14.390553+00:00",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_open_0066_CHPX",
+                  "symbol": "CHPX",
+                  "pnl": -6103.44,
+                  "entry_time": "2026-08-17T16:02:05.49015Z",
+                  "exit_time": "2026-08-24T13:45:13.882539+00:00",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0012_AMAT",
+                  "symbol": "AMAT",
+                  "pnl": -5627.02,
+                  "entry_time": "2026-07-01T16:01:10.477411Z",
+                  "exit_time": "2026-07-07T13:37:17.606193Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0158_INTC",
+                  "symbol": "INTC",
+                  "pnl": -4098.01,
+                  "entry_time": "2026-07-01T16:01:14.191516Z",
+                  "exit_time": "2026-07-07T13:37:07.520805Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0058_CDNS",
+                  "symbol": "CDNS",
+                  "pnl": -4057.11,
+                  "entry_time": "2026-06-04T14:02:46.651549Z",
+                  "exit_time": "2026-06-08T13:33:42.801779Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0321_SMHX",
+                  "symbol": "SMHX",
+                  "pnl": -3946.79,
+                  "entry_time": "2026-06-25T13:37:57.596741Z",
+                  "exit_time": "2026-07-07T13:37:08.488848Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0334_SOXQ",
+                  "symbol": "SOXQ",
+                  "pnl": -3164.56,
+                  "entry_time": "2026-05-14T17:24:10.250875Z",
+                  "exit_time": "2026-05-15T13:32:21.012759Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0059_CDNS",
+                  "symbol": "CDNS",
+                  "pnl": -3050.39,
+                  "entry_time": "2026-06-09T19:56:08.89601Z",
+                  "exit_time": "2026-06-25T16:00:41.19626Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0280_QCOM",
+                  "symbol": "QCOM",
+                  "pnl": -2943.16,
+                  "entry_time": "2026-06-04T14:02:39.261633Z",
+                  "exit_time": "2026-06-08T13:38:56.202031Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0177_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": -2616.84,
+                  "entry_time": "2026-07-01T16:01:15.611938Z",
+                  "exit_time": "2026-07-06T13:41:11.972546Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0073_CRDO",
+                  "symbol": "CRDO",
+                  "pnl": -2513.88,
+                  "entry_time": "2026-06-25T16:00:48.759979Z",
+                  "exit_time": "2026-06-29T13:38:02.494997Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0312_SMCI",
+                  "symbol": "SMCI",
+                  "pnl": -2320.23,
+                  "entry_time": "2026-06-04T14:02:45.401132Z",
+                  "exit_time": "2026-06-08T13:32:20.422945Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0172_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": -1647.76,
+                  "entry_time": "2026-06-04T14:02:36.664783Z",
+                  "exit_time": "2026-06-08T13:35:29.526644Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0338_SOXX",
+                  "symbol": "SOXX",
+                  "pnl": -1632.64,
+                  "entry_time": "2026-05-12T14:23:27.144399Z",
+                  "exit_time": "2026-05-12T14:51:44.604103Z",
+                  "exit_reason": "broker_fill"
+                },
+                {
+                  "trade_id": "broker_match_0057_CDNS",
+                  "symbol": "CDNS",
+                  "pnl": -1183.35,
+                  "entry_time": "2026-06-02T13:30:21.024214Z",
+                  "exit_time": "2026-06-08T13:33:42.801779Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0008_AMAT",
+                  "symbol": "AMAT",
+                  "pnl": -991.13,
+                  "entry_time": "2026-06-04T14:02:37.019727Z",
+                  "exit_time": "2026-06-08T13:38:42.229052Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0153_INTC",
+                  "symbol": "INTC",
+                  "pnl": -864.15,
+                  "entry_time": "2026-05-14T15:31:10.628077Z",
+                  "exit_time": "2026-05-14T17:23:36.097668Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0215_MU",
+                  "symbol": "MU",
+                  "pnl": -843.51,
+                  "entry_time": "2026-06-29T13:37:48.631134Z",
+                  "exit_time": "2026-07-02T13:36:33.666098Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0166_KLAC",
+                  "symbol": "KLAC",
+                  "pnl": -705.67,
+                  "entry_time": "2026-06-25T16:00:58.885738Z",
+                  "exit_time": "2026-06-26T13:35:23.41956Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0161_KLAC",
+                  "symbol": "KLAC",
+                  "pnl": -656.96,
+                  "entry_time": "2026-06-04T14:02:39.216919Z",
+                  "exit_time": "2026-06-08T13:37:42.019595Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0350_TSM",
+                  "symbol": "TSM",
+                  "pnl": -637.72,
+                  "entry_time": "2026-06-04T14:02:58.34813Z",
+                  "exit_time": "2026-06-08T13:30:35.902071Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0070_CRDO",
+                  "symbol": "CRDO",
+                  "pnl": -162.96,
+                  "entry_time": "2026-06-23T16:00:29.803789Z",
+                  "exit_time": "2026-06-24T16:00:25.301489Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0071_CRDO",
+                  "symbol": "CRDO",
+                  "pnl": -106.68,
+                  "entry_time": "2026-06-23T19:55:31.854746Z",
+                  "exit_time": "2026-06-24T16:00:25.301489Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0170_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": -88.2,
+                  "entry_time": "2026-05-13T15:03:02.828296Z",
+                  "exit_time": "2026-05-13T15:31:09.702355Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0154_INTC",
+                  "symbol": "INTC",
+                  "pnl": -79.39,
+                  "entry_time": "2026-05-20T13:33:20.999959Z",
+                  "exit_time": "2026-05-28T14:02:09.368578Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0020_AMD",
+                  "symbol": "AMD",
+                  "pnl": -69.11,
+                  "entry_time": "2026-05-26T14:01:16.98612Z",
+                  "exit_time": "2026-06-01T14:04:02.336649Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0042_ARM",
+                  "symbol": "ARM",
+                  "pnl": -28.9,
+                  "entry_time": "2026-05-26T14:03:13.254284Z",
+                  "exit_time": "2026-05-27T17:02:47.111231Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0164_KLAC",
+                  "symbol": "KLAC",
+                  "pnl": 58.63,
+                  "entry_time": "2026-06-23T16:00:32.869711Z",
+                  "exit_time": "2026-06-23T19:55:33.284234Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0193_MRVL",
+                  "symbol": "MRVL",
+                  "pnl": 103.34,
+                  "entry_time": "2026-05-21T14:03:51.141969Z",
+                  "exit_time": "2026-05-27T14:08:35.532052Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0214_MU",
+                  "symbol": "MU",
+                  "pnl": 185.28,
+                  "entry_time": "2026-06-25T16:00:51.421517Z",
+                  "exit_time": "2026-06-25T19:55:24.982939Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0192_MRVL",
+                  "symbol": "MRVL",
+                  "pnl": 228.06,
+                  "entry_time": "2026-05-20T13:34:52.614322Z",
+                  "exit_time": "2026-05-27T14:08:35.532052Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0171_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": 360.44,
+                  "entry_time": "2026-05-20T13:34:29.900316Z",
+                  "exit_time": "2026-06-04T14:02:16.369404Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0194_MRVL",
+                  "symbol": "MRVL",
+                  "pnl": 561.7,
+                  "entry_time": "2026-06-04T14:02:41.344004Z",
+                  "exit_time": "2026-06-08T13:39:13.006869Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0019_AMD",
+                  "symbol": "AMD",
+                  "pnl": 687.4,
+                  "entry_time": "2026-05-20T13:33:11.492749Z",
+                  "exit_time": "2026-06-01T14:04:02.336649Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0210_MU",
+                  "symbol": "MU",
+                  "pnl": 762.97,
+                  "entry_time": "2026-05-27T17:02:46.086496Z",
+                  "exit_time": "2026-06-04T14:02:15.831878Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0176_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": 807.76,
+                  "entry_time": "2026-06-29T13:37:44.388113Z",
+                  "exit_time": "2026-07-01T13:36:00.420558Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0011_AMAT",
+                  "symbol": "AMAT",
+                  "pnl": 844.08,
+                  "entry_time": "2026-06-29T13:37:42.522784Z",
+                  "exit_time": "2026-07-01T13:35:52.847549Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0041_ARM",
+                  "symbol": "ARM",
+                  "pnl": 894.4,
+                  "entry_time": "2026-05-20T13:32:10.806827Z",
+                  "exit_time": "2026-05-27T17:02:47.111231Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0157_INTC",
+                  "symbol": "INTC",
+                  "pnl": 954.32,
+                  "entry_time": "2026-06-25T16:00:49.33742Z",
+                  "exit_time": "2026-07-01T13:36:24.025539Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0067_CRDO",
+                  "symbol": "CRDO",
+                  "pnl": 1035.29,
+                  "entry_time": "2026-06-04T14:02:55.276933Z",
+                  "exit_time": "2026-06-08T13:32:17.368026Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0165_KLAC",
+                  "symbol": "KLAC",
+                  "pnl": 1094.28,
+                  "entry_time": "2026-06-24T13:35:45.80142Z",
+                  "exit_time": "2026-06-25T13:36:43.542613Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0047_ASML",
+                  "symbol": "ASML",
+                  "pnl": 1179.52,
+                  "entry_time": "2026-06-25T16:00:46.050334Z",
+                  "exit_time": "2026-07-01T13:35:48.938275Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0175_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": 1264.43,
+                  "entry_time": "2026-06-25T16:00:57.227508Z",
+                  "exit_time": "2026-06-25T19:55:26.5692Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0209_MU",
+                  "symbol": "MU",
+                  "pnl": 1307.67,
+                  "entry_time": "2026-05-26T14:02:40.630432Z",
+                  "exit_time": "2026-06-04T14:02:15.831878Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0010_AMAT",
+                  "symbol": "AMAT",
+                  "pnl": 1332.8,
+                  "entry_time": "2026-06-25T16:00:53.399178Z",
+                  "exit_time": "2026-06-25T19:55:27.223087Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0309_SMCI",
+                  "symbol": "SMCI",
+                  "pnl": 1651.13,
+                  "entry_time": "2026-05-20T13:34:18.03963Z",
+                  "exit_time": "2026-05-29T17:02:04.763274Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0208_MU",
+                  "symbol": "MU",
+                  "pnl": 1813.4,
+                  "entry_time": "2026-05-20T13:34:41.853256Z",
+                  "exit_time": "2026-06-04T14:02:15.831878Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0316_SMH",
+                  "symbol": "SMH",
+                  "pnl": 2165.68,
+                  "entry_time": "2026-05-15T14:14:13.128631Z",
+                  "exit_time": "2026-06-04T14:06:09.203624Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0191_MRVL",
+                  "symbol": "MRVL",
+                  "pnl": 2190.74,
+                  "entry_time": "2026-05-13T13:32:22.309325Z",
+                  "exit_time": "2026-05-13T14:04:15.280988Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0319_SMHX",
+                  "symbol": "SMHX",
+                  "pnl": 3152.2,
+                  "entry_time": "2026-05-15T14:14:18.464373Z",
+                  "exit_time": "2026-06-04T14:02:16.737825Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0320_SMHX",
+                  "symbol": "SMHX",
+                  "pnl": 3502.66,
+                  "entry_time": "2026-05-15T14:14:18.464373Z",
+                  "exit_time": "2026-06-04T14:06:11.873286Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0213_MU",
+                  "symbol": "MU",
+                  "pnl": 4519.06,
+                  "entry_time": "2026-06-24T13:35:44.90185Z",
+                  "exit_time": "2026-06-25T13:36:49.626809Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0007_AMAT",
+                  "symbol": "AMAT",
+                  "pnl": 6041.92,
+                  "entry_time": "2026-05-12T15:08:34.381122Z",
+                  "exit_time": "2026-06-01T17:04:12.348044Z",
+                  "exit_reason": "time_based"
+                }
+              ]
+            },
+            {
+              "cohort": "exit>=2026-07-16",
+              "n": 97,
+              "blocked_n": 2,
+              "blocked_wins_n": 0,
+              "blocked_wins_pnl": 0,
+              "blocked_losses_n": 2,
+              "blocked_losses_pnl": -12809.4,
+              "baseline_net": -34793.22,
+              "cf_net": -21741.36,
+              "net_diff": 13051.86,
+              "pf_before": 0.633564106549991,
+              "pf_after": 0.7345328669023242,
+              "blocked_trades": [
+                {
+                  "trade_id": "broker_open_0119_FTXL",
+                  "symbol": "FTXL",
+                  "pnl": -6705.96,
+                  "entry_time": "2026-08-17T16:02:06.959766Z",
+                  "exit_time": "2026-08-24T13:45:14.390553+00:00",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_open_0066_CHPX",
+                  "symbol": "CHPX",
+                  "pnl": -6103.44,
+                  "entry_time": "2026-08-17T16:02:05.49015Z",
+                  "exit_time": "2026-08-24T13:45:13.882539+00:00",
+                  "exit_reason": "stop_loss"
+                }
+              ]
+            }
+          ],
+          "blocked_open_n": 0
+        },
+        {
+          "cap": 0.4,
+          "cohorts": [
+            {
+              "cohort": "全期間",
+              "n": 357,
+              "blocked_n": 35,
+              "blocked_wins_n": 22,
+              "blocked_wins_pnl": 28486.66,
+              "blocked_losses_n": 13,
+              "blocked_losses_pnl": -14715.51,
+              "baseline_net": -38253.27,
+              "cf_net": -52024.42,
+              "net_diff": -13771.15,
+              "pf_before": 0.8875293038297395,
+              "pf_after": 0.8401226912606446,
+              "blocked_trades": [
+                {
+                  "trade_id": "broker_match_0058_CDNS",
+                  "symbol": "CDNS",
+                  "pnl": -4057.11,
+                  "entry_time": "2026-06-04T14:02:46.651549Z",
+                  "exit_time": "2026-06-08T13:33:42.801779Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0177_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": -2616.84,
+                  "entry_time": "2026-07-01T16:01:15.611938Z",
+                  "exit_time": "2026-07-06T13:41:11.972546Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0312_SMCI",
+                  "symbol": "SMCI",
+                  "pnl": -2320.23,
+                  "entry_time": "2026-06-04T14:02:45.401132Z",
+                  "exit_time": "2026-06-08T13:32:20.422945Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0172_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": -1647.76,
+                  "entry_time": "2026-06-04T14:02:36.664783Z",
+                  "exit_time": "2026-06-08T13:35:29.526644Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0008_AMAT",
+                  "symbol": "AMAT",
+                  "pnl": -991.13,
+                  "entry_time": "2026-06-04T14:02:37.019727Z",
+                  "exit_time": "2026-06-08T13:38:42.229052Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0215_MU",
+                  "symbol": "MU",
+                  "pnl": -843.51,
+                  "entry_time": "2026-06-29T13:37:48.631134Z",
+                  "exit_time": "2026-07-02T13:36:33.666098Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0166_KLAC",
+                  "symbol": "KLAC",
+                  "pnl": -705.67,
+                  "entry_time": "2026-06-25T16:00:58.885738Z",
+                  "exit_time": "2026-06-26T13:35:23.41956Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0161_KLAC",
+                  "symbol": "KLAC",
+                  "pnl": -656.96,
+                  "entry_time": "2026-06-04T14:02:39.216919Z",
+                  "exit_time": "2026-06-08T13:37:42.019595Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0350_TSM",
+                  "symbol": "TSM",
+                  "pnl": -637.72,
+                  "entry_time": "2026-06-04T14:02:58.34813Z",
+                  "exit_time": "2026-06-08T13:30:35.902071Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0154_INTC",
+                  "symbol": "INTC",
+                  "pnl": -79.39,
+                  "entry_time": "2026-05-20T13:33:20.999959Z",
+                  "exit_time": "2026-05-28T14:02:09.368578Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0020_AMD",
+                  "symbol": "AMD",
+                  "pnl": -69.11,
+                  "entry_time": "2026-05-26T14:01:16.98612Z",
+                  "exit_time": "2026-06-01T14:04:02.336649Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0040_ARM",
+                  "symbol": "ARM",
+                  "pnl": -61.18,
+                  "entry_time": "2026-05-14T15:31:20.485202Z",
+                  "exit_time": "2026-05-14T17:07:20.928999Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0042_ARM",
+                  "symbol": "ARM",
+                  "pnl": -28.9,
+                  "entry_time": "2026-05-26T14:03:13.254284Z",
+                  "exit_time": "2026-05-27T17:02:47.111231Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0193_MRVL",
+                  "symbol": "MRVL",
+                  "pnl": 103.34,
+                  "entry_time": "2026-05-21T14:03:51.141969Z",
+                  "exit_time": "2026-05-27T14:08:35.532052Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0310_SMCI",
+                  "symbol": "SMCI",
+                  "pnl": 127.65,
+                  "entry_time": "2026-05-21T13:33:34.220183Z",
+                  "exit_time": "2026-05-29T17:02:04.763274Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0214_MU",
+                  "symbol": "MU",
+                  "pnl": 185.28,
+                  "entry_time": "2026-06-25T16:00:51.421517Z",
+                  "exit_time": "2026-06-25T19:55:24.982939Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0192_MRVL",
+                  "symbol": "MRVL",
+                  "pnl": 228.06,
+                  "entry_time": "2026-05-20T13:34:52.614322Z",
+                  "exit_time": "2026-05-27T14:08:35.532052Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0171_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": 360.44,
+                  "entry_time": "2026-05-20T13:34:29.900316Z",
+                  "exit_time": "2026-06-04T14:02:16.369404Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0194_MRVL",
+                  "symbol": "MRVL",
+                  "pnl": 561.7,
+                  "entry_time": "2026-06-04T14:02:41.344004Z",
+                  "exit_time": "2026-06-08T13:39:13.006869Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0019_AMD",
+                  "symbol": "AMD",
+                  "pnl": 687.4,
+                  "entry_time": "2026-05-20T13:33:11.492749Z",
+                  "exit_time": "2026-06-01T14:04:02.336649Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0210_MU",
+                  "symbol": "MU",
+                  "pnl": 762.97,
+                  "entry_time": "2026-05-27T17:02:46.086496Z",
+                  "exit_time": "2026-06-04T14:02:15.831878Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0176_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": 807.76,
+                  "entry_time": "2026-06-29T13:37:44.388113Z",
+                  "exit_time": "2026-07-01T13:36:00.420558Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0011_AMAT",
+                  "symbol": "AMAT",
+                  "pnl": 844.08,
+                  "entry_time": "2026-06-29T13:37:42.522784Z",
+                  "exit_time": "2026-07-01T13:35:52.847549Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0157_INTC",
+                  "symbol": "INTC",
+                  "pnl": 954.32,
+                  "entry_time": "2026-06-25T16:00:49.33742Z",
+                  "exit_time": "2026-07-01T13:36:24.025539Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0067_CRDO",
+                  "symbol": "CRDO",
+                  "pnl": 1035.29,
+                  "entry_time": "2026-06-04T14:02:55.276933Z",
+                  "exit_time": "2026-06-08T13:32:17.368026Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0165_KLAC",
+                  "symbol": "KLAC",
+                  "pnl": 1094.28,
+                  "entry_time": "2026-06-24T13:35:45.80142Z",
+                  "exit_time": "2026-06-25T13:36:43.542613Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0175_LRCX",
+                  "symbol": "LRCX",
+                  "pnl": 1264.43,
+                  "entry_time": "2026-06-25T16:00:57.227508Z",
+                  "exit_time": "2026-06-25T19:55:26.5692Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0209_MU",
+                  "symbol": "MU",
+                  "pnl": 1307.67,
+                  "entry_time": "2026-05-26T14:02:40.630432Z",
+                  "exit_time": "2026-06-04T14:02:15.831878Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0010_AMAT",
+                  "symbol": "AMAT",
+                  "pnl": 1332.8,
+                  "entry_time": "2026-06-25T16:00:53.399178Z",
+                  "exit_time": "2026-06-25T19:55:27.223087Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0309_SMCI",
+                  "symbol": "SMCI",
+                  "pnl": 1651.13,
+                  "entry_time": "2026-05-20T13:34:18.03963Z",
+                  "exit_time": "2026-05-29T17:02:04.763274Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0208_MU",
+                  "symbol": "MU",
+                  "pnl": 1813.4,
+                  "entry_time": "2026-05-20T13:34:41.853256Z",
+                  "exit_time": "2026-06-04T14:02:15.831878Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0191_MRVL",
+                  "symbol": "MRVL",
+                  "pnl": 2190.74,
+                  "entry_time": "2026-05-13T13:32:22.309325Z",
+                  "exit_time": "2026-05-13T14:04:15.280988Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0319_SMHX",
+                  "symbol": "SMHX",
+                  "pnl": 3152.2,
+                  "entry_time": "2026-05-15T14:14:18.464373Z",
+                  "exit_time": "2026-06-04T14:02:16.737825Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0320_SMHX",
+                  "symbol": "SMHX",
+                  "pnl": 3502.66,
+                  "entry_time": "2026-05-15T14:14:18.464373Z",
+                  "exit_time": "2026-06-04T14:06:11.873286Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0213_MU",
+                  "symbol": "MU",
+                  "pnl": 4519.06,
+                  "entry_time": "2026-06-24T13:35:44.90185Z",
+                  "exit_time": "2026-06-25T13:36:49.626809Z",
+                  "exit_reason": "trailing_stop"
+                }
+              ]
+            },
+            {
+              "cohort": "exit>=2026-07-16",
+              "n": 97,
+              "blocked_n": 0,
+              "blocked_wins_n": 0,
+              "blocked_wins_pnl": 0,
+              "blocked_losses_n": 0,
+              "blocked_losses_pnl": 0,
+              "baseline_net": -34793.22,
+              "cf_net": -34793.22,
+              "net_diff": 0.0,
+              "pf_before": 0.633564106549991,
+              "pf_after": 0.633564106549991,
+              "blocked_trades": []
+            }
+          ],
+          "blocked_open_n": 0
+        },
+        {
+          "cap": 0.5,
+          "cohorts": [
+            {
+              "cohort": "全期間",
+              "n": 357,
+              "blocked_n": 8,
+              "blocked_wins_n": 2,
+              "blocked_wins_pnl": 1596.99,
+              "blocked_losses_n": 6,
+              "blocked_losses_pnl": -11320.85,
+              "baseline_net": -38253.27,
+              "cf_net": -28529.41,
+              "net_diff": 9723.86,
+              "pf_before": 0.8875293038297395,
+              "pf_after": 0.9132308795818306,
+              "blocked_trades": [
+                {
+                  "trade_id": "broker_match_0058_CDNS",
+                  "symbol": "CDNS",
+                  "pnl": -4057.11,
+                  "entry_time": "2026-06-04T14:02:46.651549Z",
+                  "exit_time": "2026-06-08T13:33:42.801779Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0280_QCOM",
+                  "symbol": "QCOM",
+                  "pnl": -2943.16,
+                  "entry_time": "2026-06-04T14:02:39.261633Z",
+                  "exit_time": "2026-06-08T13:38:56.202031Z",
+                  "exit_reason": "stop_loss"
+                },
+                {
+                  "trade_id": "broker_match_0312_SMCI",
+                  "symbol": "SMCI",
+                  "pnl": -2320.23,
+                  "entry_time": "2026-06-04T14:02:45.401132Z",
+                  "exit_time": "2026-06-08T13:32:20.422945Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0166_KLAC",
+                  "symbol": "KLAC",
+                  "pnl": -705.67,
+                  "entry_time": "2026-06-25T16:00:58.885738Z",
+                  "exit_time": "2026-06-26T13:35:23.41956Z",
+                  "exit_reason": "trailing_stop"
+                },
+                {
+                  "trade_id": "broker_match_0161_KLAC",
+                  "symbol": "KLAC",
+                  "pnl": -656.96,
+                  "entry_time": "2026-06-04T14:02:39.216919Z",
+                  "exit_time": "2026-06-08T13:37:42.019595Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0350_TSM",
+                  "symbol": "TSM",
+                  "pnl": -637.72,
+                  "entry_time": "2026-06-04T14:02:58.34813Z",
+                  "exit_time": "2026-06-08T13:30:35.902071Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0194_MRVL",
+                  "symbol": "MRVL",
+                  "pnl": 561.7,
+                  "entry_time": "2026-06-04T14:02:41.344004Z",
+                  "exit_time": "2026-06-08T13:39:13.006869Z",
+                  "exit_reason": "breakeven_stop"
+                },
+                {
+                  "trade_id": "broker_match_0067_CRDO",
+                  "symbol": "CRDO",
+                  "pnl": 1035.29,
+                  "entry_time": "2026-06-04T14:02:55.276933Z",
+                  "exit_time": "2026-06-08T13:32:17.368026Z",
+                  "exit_reason": "trailing_stop"
+                }
+              ]
+            },
+            {
+              "cohort": "exit>=2026-07-16",
+              "n": 97,
+              "blocked_n": 0,
+              "blocked_wins_n": 0,
+              "blocked_wins_pnl": 0,
+              "blocked_losses_n": 0,
+              "blocked_losses_pnl": 0,
+              "baseline_net": -34793.22,
+              "cf_net": -34793.22,
+              "net_diff": 0.0,
+              "pf_before": 0.633564106549991,
+              "pf_after": 0.633564106549991,
+              "blocked_trades": []
+            }
+          ],
+          "blocked_open_n": 0
+        }
+      ]
+    }
+  ],
+  "open_positions_snapshot": {
+    "equity_approx": 961746.73,
+    "total_open_notional": 151693.57,
+    "sectors": {
+      "software": {
+        "notional": 62516.36,
+        "pct_of_equity": 0.065,
+        "pct_of_portfolio": 0.4121
+      },
+      "cloud_software": {
+        "notional": 53200.0,
+        "pct_of_equity": 0.0553,
+        "pct_of_portfolio": 0.3507
+      },
+      "semiconductor": {
+        "notional": 35977.2,
+        "pct_of_equity": 0.0374,
+        "pct_of_portfolio": 0.2372
+      }
+    },
+    "semiconductor_related": {
+      "notional": 35977.2,
+      "pct_of_equity": 0.0374,
+      "pct_of_portfolio": 0.2372
+    }
+  }
+}

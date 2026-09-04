@@ -1,0 +1,47 @@
+対象トレード: closed 357 / open 5
+registry sector カバレッジ: 未カバー銘柄 = なし（全銘柄カバー）
+equity基準: baseline $1,000,000（2026-05-12起点）+ 実現PnL累積（動的）
+
+===== グルーピング: registry sector（semis→semiconductor正規化） =====
+
+--- cap = 30% (equity比) ---
+  [全期間] n=357 block=62件 (勝ち30件 +$39,332 / 負け32件 -$70,616) net差 +31,526 PF 0.888→0.975
+  [exit>=2026-07-16] n=97 block=3件 (勝ち1件 +$118 / 負け2件 -$12,809) net差 +12,934 PF 0.634→0.733
+
+--- cap = 40% (equity比) ---
+  [全期間] n=357 block=35件 (勝ち20件 +$26,708 / 負け15件 -$22,072) net差 -4,636 PF 0.888→0.865
+  [exit>=2026-07-16] n=97 block=0件 (勝ち0件 +$0 / 負け0件 -$0) net差 +0 PF 0.634→0.634
+
+--- cap = 50% (equity比) ---
+  [全期間] n=357 block=8件 (勝ち2件 +$1,597 / 負け6件 -$12,825) net差 +11,228 PF 0.888→0.917
+  [exit>=2026-07-16] n=97 block=0件 (勝ち0件 +$0 / 負け0件 -$0) net差 +0 PF 0.634→0.634
+
+===== グルーピング: semiconductor_related(flag) — is_semiconductor_related=True を1グループとして cap 適用 =====
+
+--- cap = 30% (equity比) ---
+  [全期間] n=357 block=53件 (勝ち26件 +$38,699 / 負け27件 -$56,846) net差 +18,389 PF 0.888→0.930
+  [exit>=2026-07-16] n=97 block=2件 (勝ち0件 +$0 / 負け2件 -$12,809) net差 +13,052 PF 0.634→0.735
+
+--- cap = 40% (equity比) ---
+  [全期間] n=357 block=35件 (勝ち22件 +$28,487 / 負け13件 -$14,716) net差 -13,771 PF 0.888→0.840
+  [exit>=2026-07-16] n=97 block=0件 (勝ち0件 +$0 / 負け0件 -$0) net差 +0 PF 0.634→0.634
+
+--- cap = 50% (equity比) ---
+  [全期間] n=357 block=8件 (勝ち2件 +$1,597 / 負け6件 -$11,321) net差 +9,724 PF 0.888→0.913
+  [exit>=2026-07-16] n=97 block=0件 (勝ち0件 +$0 / 負け0件 -$0) net差 +0 PF 0.634→0.634
+
+===== 現在のオープンポジション セクター構成スナップショット =====
+equity近似（baseline+実現累積）: $961,747 / open notional合計: $151,694
+  MU     semiconductor              qty=    35 notional=$    35,977 entry=2026-08-17
+  PATH   software                   qty=    87 notional=$     1,581 entry=2026-09-01
+  PATH   software                   qty=    92 notional=$     1,669 entry=2026-09-01
+  PATH   software                   qty=  3160 notional=$    59,266 entry=2026-09-03
+  SNOW   cloud_software             qty=   140 notional=$    53,200 entry=2026-09-03
+  --- セクター別 ---
+  software                     $    62,516  equity比 6.5%  ポートフォリオ比 41.2%
+  cloud_software               $    53,200  equity比 5.5%  ポートフォリオ比 35.1%
+  semiconductor                $    35,977  equity比 3.7%  ポートフォリオ比 23.7%
+  半導体関連（is_semiconductor_related連結）: $35,977 equity比 3.7% / ポートフォリオ比 23.7%
+
+注意: 一次近似（ブロックで浮いた資金の再配分・複利は無視、名目値ベース）。ブロックは勝ちトレードも消す — 各行の勝ち負け内訳を機会損失として参照のこと。
+JSON保存: docs/r13_sector_cap_validation_20260905/cap_results.json
