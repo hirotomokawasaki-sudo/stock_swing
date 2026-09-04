@@ -1,0 +1,232 @@
+Loaded 357 closed trades. Running daily-path replay (baseline + K=[3, 4, 5]; this will take a few minutes)...
+
+==========================================================================================
+R13-A2: Daily-Path Historical Validation — Early Weakness Cut
+Rule: from day K onward, exit at close if peak gain < +2% AND return <= -3%  (K in [3, 4, 5])
+==========================================================================================
+
+==========================================================================================
+COHORT: (a) full: all closed trades
+==========================================================================================
+  Trades in cohort: 357  (excluded from replay -- same-day entry/exit or missing replay data: 62)
+  Actual recorded PnL (reference):      $-28,148.76  (PF 0.910)
+  Baseline replay PnL (comparison base): $-177,630.73  (PF 0.633, maxDD 23.11%)
+  [Sanity check] baseline replay exit_reason matches actual: 183/295 (62%)
+    (Daily-close-only replay vs. live intraday/broker fills -- mismatches expected;
+     confirms ballpark fidelity, not exact reproduction.)
+
+──────────────────────────────────────────────────────────────────────────────────────────
+  VARIANT K=3 (cut from day 3 onward: peak gain < +2% AND return <= -3%)
+──────────────────────────────────────────────────────────────────────────────────────────
+    Variant replay PnL:        $-262,195.91  (PF 0.460, maxDD 26.98%)
+    Net PnL diff vs baseline:  $-84,565.18   (PF 0.633 -> 0.460, maxDD delta +3.87pp)
+    Trades cut by the rule:    122  (avg improvement per affected trade $-693.16)
+    Opportunity loss (cut trades whose baseline path ended PROFITABLE): 25 trade(s), forgone $+146,435.78
+      AMD      2026-05-12  cut@2026-05-15($-5,094.40)  baseline=trailing_stop@2026-06-04($+20,275.20)  forgone=$+25,369.60
+      PANW     2026-06-04  cut@2026-06-09($-3,030.48)  baseline=trailing_stop@2026-07-07($+11,049.20)  forgone=$+14,079.68
+      FTNT     2026-06-04  cut@2026-06-09($-4,664.50)  baseline=trailing_stop@2026-07-08($+4,330.62)  forgone=$+8,995.12
+      SOXX     2026-05-14  cut@2026-05-19($-6,128.36)  baseline=trailing_stop@2026-06-05($+2,430.56)  forgone=$+8,558.92
+      SOXQ     2026-05-13  cut@2026-05-18($-6,666.82)  baseline=trailing_stop@2026-06-05($+1,471.25)  forgone=$+8,138.07
+      SOXQ     2026-05-14  cut@2026-05-19($-6,056.36)  baseline=trailing_stop@2026-06-05($+1,931.44)  forgone=$+7,987.80
+      QTUM     2026-05-14  cut@2026-05-19($-4,557.58)  baseline=trailing_stop@2026-06-05($+3,314.74)  forgone=$+7,872.31
+      PLTR     2026-07-15  cut@2026-07-22($-2,513.25)  baseline=trailing_stop@2026-08-05($+5,105.25)  forgone=$+7,618.50
+      HPE      2026-07-22  cut@2026-07-28($-1,833.00)  baseline=trailing_stop@2026-08-17($+5,511.22)  forgone=$+7,344.22
+      QTUM     2026-05-13  cut@2026-05-18($-3,474.69)  baseline=trailing_stop@2026-06-05($+3,648.12)  forgone=$+7,122.81
+    Top 5 improvements among cut trades:
+      INTC     2026-05-12  cut@2026-05-15($-7,545.45)  baseline=stop_loss($-15,292.65)  diff=$+7,747.20
+      PTF      2026-06-25  cut@2026-07-01($-2,291.94)  baseline=stop_loss($-6,580.50)  diff=$+4,288.56
+      DDOG     2026-07-15  cut@2026-07-21($-1,171.81)  baseline=trailing_stop($-4,053.31)  diff=$+2,881.50
+      CRDO     2026-06-25  cut@2026-07-01($-970.08)  baseline=stop_loss($-3,752.18)  diff=$+2,782.10
+      IBM      2026-06-09  cut@2026-06-15($-1,537.44)  baseline=stop_loss($-4,282.76)  diff=$+2,745.32
+
+──────────────────────────────────────────────────────────────────────────────────────────
+  VARIANT K=4 (cut from day 4 onward: peak gain < +2% AND return <= -3%)
+──────────────────────────────────────────────────────────────────────────────────────────
+    Variant replay PnL:        $-243,362.15  (PF 0.487, maxDD 25.38%)
+    Net PnL diff vs baseline:  $-65,731.43   (PF 0.633 -> 0.487, maxDD delta +2.27pp)
+    Trades cut by the rule:    88  (avg improvement per affected trade $-746.95)
+    Opportunity loss (cut trades whose baseline path ended PROFITABLE): 19 trade(s), forgone $+122,330.71
+      AMD      2026-05-12  cut@2026-05-18($-5,890.56)  baseline=trailing_stop@2026-06-04($+20,275.20)  forgone=$+26,165.77
+      PANW     2026-06-04  cut@2026-06-10($-2,533.68)  baseline=trailing_stop@2026-07-07($+11,049.20)  forgone=$+13,582.88
+      FTNT     2026-06-04  cut@2026-06-10($-4,423.91)  baseline=trailing_stop@2026-07-08($+4,330.62)  forgone=$+8,754.53
+      SOXQ     2026-05-13  cut@2026-05-19($-6,589.10)  baseline=trailing_stop@2026-06-05($+1,471.25)  forgone=$+8,060.35
+      NBIS     2026-06-04  cut@2026-06-10($-3,414.60)  baseline=trailing_stop@2026-06-23($+4,593.96)  forgone=$+8,008.56
+      QTUM     2026-05-13  cut@2026-05-19($-4,357.63)  baseline=trailing_stop@2026-06-05($+3,648.12)  forgone=$+8,005.74
+      PLTR     2026-07-15  cut@2026-07-22($-2,513.25)  baseline=trailing_stop@2026-08-05($+5,105.25)  forgone=$+7,618.50
+      HPE      2026-07-22  cut@2026-07-28($-1,833.00)  baseline=trailing_stop@2026-08-17($+5,511.22)  forgone=$+7,344.22
+      SNOW     2026-06-09  cut@2026-06-22($-1,659.98)  baseline=trailing_stop@2026-07-17($+4,348.04)  forgone=$+6,008.02
+      MSFT     2026-07-15  cut@2026-07-23($-865.86)  baseline=trailing_stop@2026-08-12($+4,998.15)  forgone=$+5,864.01
+    Top 5 improvements among cut trades:
+      INTC     2026-05-12  cut@2026-05-18($-8,029.65)  baseline=stop_loss($-15,292.65)  diff=$+7,263.00
+      PTF      2026-06-25  cut@2026-07-01($-2,291.94)  baseline=stop_loss($-6,580.50)  diff=$+4,288.56
+      DDOG     2026-07-15  cut@2026-07-21($-1,171.81)  baseline=trailing_stop($-4,053.31)  diff=$+2,881.50
+      CRDO     2026-06-25  cut@2026-07-01($-970.08)  baseline=stop_loss($-3,752.18)  diff=$+2,782.10
+      CRDO     2026-06-24  cut@2026-07-01($-897.60)  baseline=stop_loss($-3,647.35)  diff=$+2,749.75
+
+──────────────────────────────────────────────────────────────────────────────────────────
+  VARIANT K=5 (cut from day 5 onward: peak gain < +2% AND return <= -3%)
+──────────────────────────────────────────────────────────────────────────────────────────
+    Variant replay PnL:        $-211,790.13  (PF 0.545, maxDD 23.62%)
+    Net PnL diff vs baseline:  $-34,159.40   (PF 0.633 -> 0.545, maxDD delta +0.51pp)
+    Trades cut by the rule:    67  (avg improvement per affected trade $-509.84)
+    Opportunity loss (cut trades whose baseline path ended PROFITABLE): 11 trade(s), forgone $+74,491.71
+      AMD      2026-05-12  cut@2026-05-19($-7,667.20)  baseline=trailing_stop@2026-06-04($+20,275.20)  forgone=$+27,942.41
+      HPE      2026-07-22  cut@2026-07-29($-2,535.65)  baseline=trailing_stop@2026-08-17($+5,511.22)  forgone=$+8,046.87
+      PLTR     2026-07-15  cut@2026-07-22($-2,513.25)  baseline=trailing_stop@2026-08-05($+5,105.25)  forgone=$+7,618.50
+      NBIS     2026-06-04  cut@2026-06-11($-2,085.30)  baseline=trailing_stop@2026-06-23($+4,593.96)  forgone=$+6,679.26
+      SNOW     2026-06-09  cut@2026-06-22($-1,659.98)  baseline=trailing_stop@2026-07-17($+4,348.04)  forgone=$+6,008.02
+      MSFT     2026-07-15  cut@2026-07-23($-865.86)  baseline=trailing_stop@2026-08-12($+4,998.15)  forgone=$+5,864.01
+      RBRK     2026-06-09  cut@2026-06-16($-794.20)  baseline=trailing_stop@2026-07-08($+4,700.22)  forgone=$+5,494.42
+      ANET     2026-06-25  cut@2026-07-02($-1,420.20)  baseline=trailing_stop@2026-07-13($+2,388.60)  forgone=$+3,808.80
+      DELL     2026-06-04  cut@2026-06-11($-1,413.21)  baseline=trailing_stop@2026-06-25($+258.03)  forgone=$+1,671.24
+      DELL     2026-08-04  cut@2026-08-11($-1,151.38)  baseline=trailing_stop@2026-08-18($+121.90)  forgone=$+1,273.28
+    Top 5 improvements among cut trades:
+      INTC     2026-05-12  cut@2026-05-19($-5,907.24)  baseline=stop_loss($-15,292.65)  diff=$+9,385.41
+      IBM      2026-06-09  cut@2026-06-16($-1,243.45)  baseline=stop_loss($-4,282.76)  diff=$+3,039.31
+      CRDO     2026-06-24  cut@2026-07-01($-897.60)  baseline=stop_loss($-3,647.35)  diff=$+2,749.75
+      NOW      2026-07-07  cut@2026-07-14($-1,553.58)  baseline=stop_loss($-4,126.44)  diff=$+2,572.86
+      HPQ      2026-06-04  cut@2026-06-11($-2,544.48)  baseline=stop_loss($-5,055.48)  diff=$+2,511.00
+
+
+==========================================================================================
+COHORT: (b) recent: exit_time >= 2026-07-16
+==========================================================================================
+  Trades in cohort: 97  (excluded from replay -- same-day entry/exit or missing replay data: 11)
+  Actual recorded PnL (reference):      $-30,508.52  (PF 0.658)
+  Baseline replay PnL (comparison base): $-32,272.74  (PF 0.681, maxDD 4.25%)
+  [Sanity check] baseline replay exit_reason matches actual: 72/86 (84%)
+    (Daily-close-only replay vs. live intraday/broker fills -- mismatches expected;
+     confirms ballpark fidelity, not exact reproduction.)
+
+──────────────────────────────────────────────────────────────────────────────────────────
+  VARIANT K=3 (cut from day 3 onward: peak gain < +2% AND return <= -3%)
+──────────────────────────────────────────────────────────────────────────────────────────
+    Variant replay PnL:        $-32,029.01  (PF 0.622, maxDD 3.75%)
+    Net PnL diff vs baseline:  $+243.74   (PF 0.681 -> 0.622, maxDD delta -0.50pp)
+    Trades cut by the rule:    38  (avg improvement per affected trade $+6.41)
+    Opportunity loss (cut trades whose baseline path ended PROFITABLE): 8 trade(s), forgone $+24,915.89
+      PLTR     2026-07-15  cut@2026-07-22($-2,513.25)  baseline=trailing_stop@2026-08-05($+5,105.25)  forgone=$+7,618.50
+      HPE      2026-07-22  cut@2026-07-28($-1,833.00)  baseline=trailing_stop@2026-08-17($+5,511.22)  forgone=$+7,344.22
+      MSFT     2026-07-15  cut@2026-07-23($-865.86)  baseline=trailing_stop@2026-08-12($+4,998.15)  forgone=$+5,864.01
+      ANET     2026-08-05  cut@2026-08-10($-1,492.70)  baseline=trailing_stop@2026-08-14($+186.30)  forgone=$+1,679.00
+      DELL     2026-08-04  cut@2026-08-11($-1,151.38)  baseline=trailing_stop@2026-08-18($+121.90)  forgone=$+1,273.28
+      MRVL     2026-08-05  cut@2026-08-10($-398.40)  baseline=trailing_stop@2026-08-18($+48.00)  forgone=$+446.40
+      NOW      2026-08-12  cut@2026-08-17($-109.50)  baseline=trailing_stop@2026-09-01($+268.50)  forgone=$+378.00
+      MRVL     2026-08-05  cut@2026-08-10($-278.88)  baseline=trailing_stop@2026-08-18($+33.60)  forgone=$+312.48
+    Top 5 improvements among cut trades:
+      DDOG     2026-07-15  cut@2026-07-21($-1,171.81)  baseline=trailing_stop($-4,053.31)  diff=$+2,881.50
+      NVDA     2026-08-14  cut@2026-08-19($-2,590.14)  baseline=stop_loss($-5,259.66)  diff=$+2,669.52
+      NOW      2026-07-07  cut@2026-07-14($-1,553.58)  baseline=stop_loss($-4,126.44)  diff=$+2,572.86
+      FTXL     2026-08-17  cut@2026-08-20($-4,506.72)  baseline=stop_loss($-6,646.92)  diff=$+2,140.20
+      META     2026-07-10  cut@2026-07-17($-1,084.50)  baseline=stop_loss($-2,880.45)  diff=$+1,795.95
+
+──────────────────────────────────────────────────────────────────────────────────────────
+  VARIANT K=4 (cut from day 4 onward: peak gain < +2% AND return <= -3%)
+──────────────────────────────────────────────────────────────────────────────────────────
+    Variant replay PnL:        $-33,934.42  (PF 0.609, maxDD 3.83%)
+    Net PnL diff vs baseline:  $-1,661.68   (PF 0.681 -> 0.609, maxDD delta -0.42pp)
+    Trades cut by the rule:    32  (avg improvement per affected trade $-51.93)
+    Opportunity loss (cut trades whose baseline path ended PROFITABLE): 5 trade(s), forgone $+22,451.16
+      PLTR     2026-07-15  cut@2026-07-22($-2,513.25)  baseline=trailing_stop@2026-08-05($+5,105.25)  forgone=$+7,618.50
+      HPE      2026-07-22  cut@2026-07-28($-1,833.00)  baseline=trailing_stop@2026-08-17($+5,511.22)  forgone=$+7,344.22
+      MSFT     2026-07-15  cut@2026-07-23($-865.86)  baseline=trailing_stop@2026-08-12($+4,998.15)  forgone=$+5,864.01
+      DELL     2026-08-04  cut@2026-08-11($-1,151.38)  baseline=trailing_stop@2026-08-18($+121.90)  forgone=$+1,273.28
+      NOW      2026-08-12  cut@2026-08-18($-82.65)  baseline=trailing_stop@2026-09-01($+268.50)  forgone=$+351.15
+    Top 5 improvements among cut trades:
+      DDOG     2026-07-15  cut@2026-07-21($-1,171.81)  baseline=trailing_stop($-4,053.31)  diff=$+2,881.50
+      NOW      2026-07-07  cut@2026-07-14($-1,553.58)  baseline=stop_loss($-4,126.44)  diff=$+2,572.86
+      NVDA     2026-08-14  cut@2026-08-20($-2,798.88)  baseline=stop_loss($-5,259.66)  diff=$+2,460.78
+      AMZN     2026-08-03  cut@2026-08-07($-2,770.92)  baseline=stop_loss($-4,628.52)  diff=$+1,857.60
+      META     2026-07-10  cut@2026-07-17($-1,084.50)  baseline=stop_loss($-2,880.45)  diff=$+1,795.95
+
+──────────────────────────────────────────────────────────────────────────────────────────
+  VARIANT K=5 (cut from day 5 onward: peak gain < +2% AND return <= -3%)
+──────────────────────────────────────────────────────────────────────────────────────────
+    Variant replay PnL:        $-42,318.51  (PF 0.557, maxDD 4.70%)
+    Net PnL diff vs baseline:  $-10,045.77   (PF 0.681 -> 0.557, maxDD delta +0.45pp)
+    Trades cut by the rule:    27  (avg improvement per affected trade $-372.07)
+    Opportunity loss (cut trades whose baseline path ended PROFITABLE): 4 trade(s), forgone $+22,802.66
+      HPE      2026-07-22  cut@2026-07-29($-2,535.65)  baseline=trailing_stop@2026-08-17($+5,511.22)  forgone=$+8,046.87
+      PLTR     2026-07-15  cut@2026-07-22($-2,513.25)  baseline=trailing_stop@2026-08-05($+5,105.25)  forgone=$+7,618.50
+      MSFT     2026-07-15  cut@2026-07-23($-865.86)  baseline=trailing_stop@2026-08-12($+4,998.15)  forgone=$+5,864.01
+      DELL     2026-08-04  cut@2026-08-11($-1,151.38)  baseline=trailing_stop@2026-08-18($+121.90)  forgone=$+1,273.28
+    Top 5 improvements among cut trades:
+      NOW      2026-07-07  cut@2026-07-14($-1,553.58)  baseline=stop_loss($-4,126.44)  diff=$+2,572.86
+      DDOG     2026-07-15  cut@2026-07-22($-2,191.07)  baseline=trailing_stop($-4,053.31)  diff=$+1,862.24
+      NVDA     2026-08-14  cut@2026-08-21($-3,425.10)  baseline=stop_loss($-5,259.66)  diff=$+1,834.56
+      META     2026-07-10  cut@2026-07-17($-1,084.50)  baseline=stop_loss($-2,880.45)  diff=$+1,795.95
+      AMZN     2026-08-03  cut@2026-08-11($-3,341.10)  baseline=stop_loss($-4,628.52)  diff=$+1,287.42
+
+
+==========================================================================================
+COHORT: (c) attributable only
+==========================================================================================
+  Trades in cohort: 49  (excluded from replay -- same-day entry/exit or missing replay data: 6)
+  Actual recorded PnL (reference):      $+4,089.92  (PF 1.121)
+  Baseline replay PnL (comparison base): $+1,028.46  (PF 1.031, maxDD 1.30%)
+  [Sanity check] baseline replay exit_reason matches actual: 39/43 (91%)
+    (Daily-close-only replay vs. live intraday/broker fills -- mismatches expected;
+     confirms ballpark fidelity, not exact reproduction.)
+
+──────────────────────────────────────────────────────────────────────────────────────────
+  VARIANT K=3 (cut from day 3 onward: peak gain < +2% AND return <= -3%)
+──────────────────────────────────────────────────────────────────────────────────────────
+    Variant replay PnL:        $+2,311.07  (PF 1.072, maxDD 1.50%)
+    Net PnL diff vs baseline:  $+1,282.61   (PF 1.031 -> 1.072, maxDD delta +0.20pp)
+    Trades cut by the rule:    14  (avg improvement per affected trade $+91.62)
+    Opportunity loss (cut trades whose baseline path ended PROFITABLE): 4 trade(s), forgone $+3,711.16
+      ANET     2026-08-05  cut@2026-08-10($-1,492.70)  baseline=trailing_stop@2026-08-14($+186.30)  forgone=$+1,679.00
+      DELL     2026-08-04  cut@2026-08-11($-1,151.38)  baseline=trailing_stop@2026-08-18($+121.90)  forgone=$+1,273.28
+      MRVL     2026-08-05  cut@2026-08-10($-398.40)  baseline=trailing_stop@2026-08-18($+48.00)  forgone=$+446.40
+      MRVL     2026-08-05  cut@2026-08-10($-278.88)  baseline=trailing_stop@2026-08-18($+33.60)  forgone=$+312.48
+    Top 5 improvements among cut trades:
+      QTUM     2026-08-13  cut@2026-08-18($-1,583.26)  baseline=stop_loss($-2,956.12)  diff=$+1,372.86
+      AMZN     2026-08-03  cut@2026-08-06($-3,343.68)  baseline=stop_loss($-4,628.52)  diff=$+1,284.84
+      INTC     2026-08-13  cut@2026-08-18($-2,151.38)  baseline=stop_loss($-3,092.76)  diff=$+941.38
+      INTC     2026-08-17  cut@2026-08-20($-4,874.17)  baseline=stop_loss($-5,675.51)  diff=$+801.34
+      QTUM     2026-08-13  cut@2026-08-18($-571.90)  baseline=stop_loss($-1,067.80)  diff=$+495.90
+
+──────────────────────────────────────────────────────────────────────────────────────────
+  VARIANT K=4 (cut from day 4 onward: peak gain < +2% AND return <= -3%)
+──────────────────────────────────────────────────────────────────────────────────────────
+    Variant replay PnL:        $+2,877.31  (PF 1.091, maxDD 1.22%)
+    Net PnL diff vs baseline:  $+1,848.85   (PF 1.031 -> 1.091, maxDD delta -0.08pp)
+    Trades cut by the rule:    10  (avg improvement per affected trade $+184.89)
+    Opportunity loss (cut trades whose baseline path ended PROFITABLE): 1 trade(s), forgone $+1,273.28
+      DELL     2026-08-04  cut@2026-08-11($-1,151.38)  baseline=trailing_stop@2026-08-18($+121.90)  forgone=$+1,273.28
+    Top 5 improvements among cut trades:
+      AMZN     2026-08-03  cut@2026-08-07($-2,770.92)  baseline=stop_loss($-4,628.52)  diff=$+1,857.60
+      QTUM     2026-08-13  cut@2026-08-19($-2,098.74)  baseline=stop_loss($-2,956.12)  diff=$+857.38
+      QTUM     2026-08-13  cut@2026-08-19($-758.10)  baseline=stop_loss($-1,067.80)  diff=$+309.70
+      SNOW     2026-08-12  cut@2026-08-18($-72.40)  baseline=stop_loss($-169.85)  diff=$+97.45
+      AVGO     2026-08-05  cut@2026-08-14($-3,280.62)  baseline=stop_loss($-3,280.62)  diff=$+0.00
+
+──────────────────────────────────────────────────────────────────────────────────────────
+  VARIANT K=5 (cut from day 5 onward: peak gain < +2% AND return <= -3%)
+──────────────────────────────────────────────────────────────────────────────────────────
+    Variant replay PnL:        $+1,947.53  (PF 1.060, maxDD 1.28%)
+    Net PnL diff vs baseline:  $+919.07   (PF 1.031 -> 1.060, maxDD delta -0.02pp)
+    Trades cut by the rule:    8  (avg improvement per affected trade $+114.88)
+    Opportunity loss (cut trades whose baseline path ended PROFITABLE): 1 trade(s), forgone $+1,273.28
+      DELL     2026-08-04  cut@2026-08-11($-1,151.38)  baseline=trailing_stop@2026-08-18($+121.90)  forgone=$+1,273.28
+    Top 5 improvements among cut trades:
+      AMZN     2026-08-03  cut@2026-08-11($-3,341.10)  baseline=stop_loss($-4,628.52)  diff=$+1,287.42
+      QTUM     2026-08-13  cut@2026-08-20($-2,361.74)  baseline=stop_loss($-2,956.12)  diff=$+594.38
+      QTUM     2026-08-13  cut@2026-08-20($-853.10)  baseline=stop_loss($-1,067.80)  diff=$+214.70
+      SNOW     2026-08-12  cut@2026-08-19($-74.00)  baseline=stop_loss($-169.85)  diff=$+95.85
+      AVGO     2026-08-05  cut@2026-08-14($-3,280.62)  baseline=stop_loss($-3,280.62)  diff=$+0.00
+
+
+==========================================================================================
+SUMMARY TABLE (variant x cohort)
+==========================================================================================
+cohort                                  K    n  netPnL diff   PF before->after  cut oppLoss n    forgone maxDD delta
+(a) full: all closed trades             3  295   -84,565.18       0.633->0.460  122        25 +146,435.78      +3.87pp
+(a) full: all closed trades             4  295   -65,731.43       0.633->0.487   88        19 +122,330.71      +2.27pp
+(a) full: all closed trades             5  295   -34,159.40       0.633->0.545   67        11 +74,491.71      +0.51pp
+(b) recent: exit_time >= 2026-07-16     3   86      +243.74       0.681->0.622   38         8 +24,915.89      -0.50pp
+(b) recent: exit_time >= 2026-07-16     4   86    -1,661.68       0.681->0.609   32         5 +22,451.16      -0.42pp
+(b) recent: exit_time >= 2026-07-16     5   86   -10,045.77       0.681->0.557   27         4 +22,802.66      +0.45pp
+(c) attributable only                   3   43    +1,282.61       1.031->1.072   14         4  +3,711.16      +0.20pp
+(c) attributable only                   4   43    +1,848.85       1.031->1.091   10         1  +1,273.28      -0.08pp
+(c) attributable only                   5   43      +919.07       1.031->1.060    8         1  +1,273.28      -0.02pp
