@@ -2105,6 +2105,12 @@ Massive barsだ60/60成功、broker quotes/barsと44/44成功）。代わりに�
 
 ### 2026-09-04 第2回中間レビュー（Plan B/C/D/E）
 
+**👤 ユーザー決定（2026-09-04 16:24 JST）**: Plan Cのpaper_ab昇格判断は即日判断せず、
+**09-08の他レビュー4件（lot_level_exit診断・volatility_adjusted_stop・R14 dip-buy・
+R13-D配線判断）とまとめて判断する**。判断用リマインダーcron登録済み（登録後にAPI getで
+実在確認済み: `stock_swing_plan_c_promotion_decision_20260908`、09-08 10:15 JST、
+他レビュー完了後に実行）。それまで実装・設定変更は一切行わない。
+
 前回（2026-08-21）と同一の方法論で再集計した。`data/tracking/pnl_state.json` の
 **closed trade** を対象に、各shadow/diagnosticログで **true 判定が出た同一銘柄に
 ついて、判定直後15分以内に entry した実トレード**のみを紐づけて集計。
