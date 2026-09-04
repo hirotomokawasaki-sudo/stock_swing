@@ -942,6 +942,14 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 
 ## 次のアクション（直近）— v2 改訂版
 
+> 📌 **2026-09-08 レビュー5件（volatility_adjusted_stop / R16 lot_level_exit /
+> R14 dip-buy / R13-D配線判断 / Plan C昇格）の判断基準は
+> [`docs/review_criteria_20260908.md`](review_criteria_20260908.md) に事前固定済み
+> （2026-09-05）。当日は同ドキュメントの数値条件との照合から始めること。
+> 総論: 経済性ゲート現在値 n=45 / PF 0.530 / expectancy -$551 = NO-GO を全判断の
+> 前提とする。JP半導体 spillover（Phase 2.5）は半導体集中を増やす方向のため
+> 配線優先度低。**
+
 ```
 2026-07-22         ✅ R0-v2-A  safety containment（recovery_pending・SAFETY GATE）
                    ✅ R0-v2-B  ledger integrity 全完了（data repair + canonical validator + equity bridge）
