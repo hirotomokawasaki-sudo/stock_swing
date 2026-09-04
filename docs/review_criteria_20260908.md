@@ -29,6 +29,8 @@
 3. セクター集中の定量的裏付けとして、09-05実施の
    `docs/r13_sector_cap_validation_20260905/summary.md`（cap 30%で直近コホート
    PF 0.634→0.733、ただし cap は非単調で機会損失大）を各判断で参照可能。
+4. **昇格判断は `docs/promotion_governance.md`（R18-D発効、2026-09-05）の
+   必須条件（事前登録 / paper A/B前向き確認 / R13-C後out-of-sample再検証）に従う。**
 
 ---
 
