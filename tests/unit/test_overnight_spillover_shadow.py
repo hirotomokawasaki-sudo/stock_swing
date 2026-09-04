@@ -21,6 +21,28 @@ from stock_swing.strategy_engine.overnight_spillover_shadow import (
 
 
 class TestEvaluateOvernightSpilloverSignal:
+    def test_nan_benchmark_return_never_signals(self) -> None:
+        """Regression: 2026-09-04T00:20Z, a half-formed yfinance row produced
+        a NaN SOXX return; `abs(nan) < threshold` is False so evaluation fell
+        through to the large-move branch and all 11 JP candidates were logged
+        as would_signal=True garbage. NaN must always be a no-signal."""
+        import math
+        result = evaluate_overnight_spillover_signal(
+            "8035.T", "SOXX", us_benchmark_return_pct=float("nan"), threshold_pct=2.0
+        )
+        assert result.would_signal is False
+        assert result.direction == "none"
+        assert result.signal_strength == 0.0
+        assert "invalid_us_return" in result.reason
+        assert not math.isnan(result.us_benchmark_return_pct)
+
+    def test_none_benchmark_return_never_signals(self) -> None:
+        result = evaluate_overnight_spillover_signal(
+            "8035.T", "SOXX", us_benchmark_return_pct=None, threshold_pct=2.0
+        )
+        assert result.would_signal is False
+        assert "invalid_us_return" in result.reason
+
     def test_large_up_move_triggers_signal_tier1(self) -> None:
         """Acceptance: a Tier 1 symbol (Tokyo Electron) with a large US up-move
         must trigger would_signal=True, direction='up', with tier=1 recorded."""

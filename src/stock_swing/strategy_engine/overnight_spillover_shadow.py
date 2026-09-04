@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -126,6 +127,25 @@ def evaluate_overnight_spillover_signal(
         |us_benchmark_return_pct| >= threshold_pct.
     """
     tier = JP_CANDIDATE_TIERS.get(symbol)
+
+    # NaN guard (2026-09-04 regression fix): a NaN benchmark return must never
+    # count as a large move. Without this, `abs(nan) < threshold` evaluates
+    # False and falls through to the would_signal=True branch -- on
+    # 2026-09-04T00:20Z a half-formed yfinance row produced a NaN SOXX return
+    # and all 11 JP candidates were logged as would_signal=True garbage.
+    if us_benchmark_return_pct is None or math.isnan(us_benchmark_return_pct):
+        return OvernightSpilloverSignal(
+            symbol=symbol,
+            us_benchmark_symbol=us_benchmark_symbol,
+            us_benchmark_return_pct=0.0,
+            would_signal=False,
+            direction="none",
+            signal_strength=0.0,
+            reason="invalid_us_return: NaN/None benchmark return (data quality guard)",
+            tier=tier,
+            jp_open_gap_pct=jp_open_gap_pct,
+        )
+
     abs_return = abs(us_benchmark_return_pct)
 
     if abs_return < threshold_pct:

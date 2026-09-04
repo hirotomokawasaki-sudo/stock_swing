@@ -61,6 +61,14 @@ def fetch_latest_us_benchmark_return(symbol: str) -> float | None:
             return None
         closes = hist["Close"]
         latest_return = (closes.iloc[-1] / closes.iloc[-2] - 1) * 100
+        # NaN guard (2026-09-04 regression fix): yfinance can return a
+        # half-formed latest row (NaN close, e.g. pre-market placeholder),
+        # producing a NaN return that passes the `is None` check downstream
+        # and corrupts the shadow log with would_signal=True garbage.
+        import math
+        if math.isnan(float(latest_return)):
+            print(f"WARNING: {symbol} latest return is NaN (half-formed row), skipping", file=sys.stderr)
+            return None
         return float(latest_return)
     except Exception as exc:
         print(f"WARNING: failed to fetch {symbol}: {exc}", file=sys.stderr)
