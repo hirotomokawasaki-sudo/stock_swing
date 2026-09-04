@@ -1,0 +1,301 @@
+{
+  "generated_at": "2026-09-04T16:44:25.389364-04:00",
+  "n_closed": 357,
+  "event_swing_excluded": 0,
+  "coverage": {
+    "stock_trades": 264,
+    "stock_trades_covered": 264,
+    "stock_coverage_pct": 100.0,
+    "etf_trades": 93,
+    "overall_determinable_pct": 100.0,
+    "uncovered": 0
+  },
+  "cohorts": {
+    "全期間": {
+      "3": {
+        "blocked": 9,
+        "blocked_wins": 5,
+        "blocked_losses": 4,
+        "blocked_win_pnl": 14235.65,
+        "blocked_loss_pnl": -17822.53,
+        "net_pnl_delta": 3586.88,
+        "pf_before": 0.8875,
+        "pf_after": 0.8924,
+        "net_pnl_before": -38253.27,
+        "net_pnl_after": -34666.39
+      },
+      "5": {
+        "blocked": 10,
+        "blocked_wins": 6,
+        "blocked_losses": 4,
+        "blocked_win_pnl": 14454.79,
+        "blocked_loss_pnl": -17822.53,
+        "net_pnl_delta": 3367.74,
+        "pf_before": 0.8875,
+        "pf_after": 0.8918,
+        "net_pnl_before": -38253.27,
+        "net_pnl_after": -34885.53
+      },
+      "7": {
+        "blocked": 20,
+        "blocked_wins": 10,
+        "blocked_losses": 10,
+        "blocked_win_pnl": 18875.74,
+        "blocked_loss_pnl": -28000.78,
+        "net_pnl_delta": 9125.04,
+        "pf_before": 0.8875,
+        "pf_after": 0.9067,
+        "net_pnl_before": -38253.27,
+        "net_pnl_after": -29128.23
+      }
+    },
+    "exit >= 2026-07-16": {
+      "3": {
+        "blocked": 1,
+        "blocked_wins": 1,
+        "blocked_losses": 0,
+        "blocked_win_pnl": 1121.47,
+        "blocked_loss_pnl": 0,
+        "net_pnl_delta": -1121.47,
+        "pf_before": 0.6336,
+        "pf_after": 0.6218,
+        "net_pnl_before": -34793.22,
+        "net_pnl_after": -35914.69
+      },
+      "5": {
+        "blocked": 1,
+        "blocked_wins": 1,
+        "blocked_losses": 0,
+        "blocked_win_pnl": 1121.47,
+        "blocked_loss_pnl": 0,
+        "net_pnl_delta": -1121.47,
+        "pf_before": 0.6336,
+        "pf_after": 0.6218,
+        "net_pnl_before": -34793.22,
+        "net_pnl_after": -35914.69
+      },
+      "7": {
+        "blocked": 4,
+        "blocked_wins": 1,
+        "blocked_losses": 3,
+        "blocked_win_pnl": 1121.47,
+        "blocked_loss_pnl": -5445.23,
+        "net_pnl_delta": 4323.76,
+        "pf_before": 0.6336,
+        "pf_after": 0.6596,
+        "net_pnl_before": -34793.22,
+        "net_pnl_after": -30469.46
+      }
+    }
+  },
+  "blocked_detail_n7": [
+    {
+      "trade_id": "broker_match_0007_AMAT",
+      "symbol": "AMAT",
+      "entry_date": "2026-05-12",
+      "next_earnings": "2026-05-14",
+      "days_to_earnings": 2,
+      "pnl": 6041.92,
+      "return_pct": 0.0908,
+      "exit_reason": "time_based"
+    },
+    {
+      "trade_id": "broker_match_0037_ANET",
+      "symbol": "ANET",
+      "entry_date": "2026-08-04",
+      "next_earnings": "2026-08-04",
+      "days_to_earnings": 0,
+      "pnl": 1121.47,
+      "return_pct": 0.0351,
+      "exit_reason": "trailing_stop"
+    },
+    {
+      "trade_id": "broker_match_0053_AVGO",
+      "symbol": "AVGO",
+      "entry_date": "2026-06-02",
+      "next_earnings": "2026-06-03",
+      "days_to_earnings": 1,
+      "pnl": -8618.54,
+      "return_pct": -0.1633,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "trade_id": "broker_match_0098_DELL",
+      "symbol": "DELL",
+      "entry_date": "2026-05-21",
+      "next_earnings": "2026-05-28",
+      "days_to_earnings": 7,
+      "pnl": 2085.47,
+      "return_pct": 0.8395,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "trade_id": "broker_match_0121_GOOGL",
+      "symbol": "GOOGL",
+      "entry_date": "2026-07-16",
+      "next_earnings": "2026-07-22",
+      "days_to_earnings": 6,
+      "pnl": -1165.14,
+      "return_pct": -0.0562,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "trade_id": "broker_match_0122_GOOGL",
+      "symbol": "GOOGL",
+      "entry_date": "2026-07-16",
+      "next_earnings": "2026-07-22",
+      "days_to_earnings": 6,
+      "pnl": -1182.21,
+      "return_pct": -0.057,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "trade_id": "broker_match_0134_HPE",
+      "symbol": "HPE",
+      "entry_date": "2026-05-27",
+      "next_earnings": "2026-06-01",
+      "days_to_earnings": 5,
+      "pnl": 219.14,
+      "return_pct": 0.5913,
+      "exit_reason": "trailing_stop"
+    },
+    {
+      "trade_id": "broker_match_0181_MDB",
+      "symbol": "MDB",
+      "entry_date": "2026-05-21",
+      "next_earnings": "2026-05-28",
+      "days_to_earnings": 7,
+      "pnl": -153.6,
+      "return_pct": -0.0486,
+      "exit_reason": "breakeven_stop"
+    },
+    {
+      "trade_id": "broker_match_0182_MDB",
+      "symbol": "MDB",
+      "entry_date": "2026-05-21",
+      "next_earnings": "2026-05-28",
+      "days_to_earnings": 7,
+      "pnl": -169.32,
+      "return_pct": -0.0533,
+      "exit_reason": "breakeven_stop"
+    },
+    {
+      "trade_id": "broker_match_0192_MRVL",
+      "symbol": "MRVL",
+      "entry_date": "2026-05-20",
+      "next_earnings": "2026-05-27",
+      "days_to_earnings": 7,
+      "pnl": 228.06,
+      "return_pct": 0.0803,
+      "exit_reason": "trailing_stop"
+    },
+    {
+      "trade_id": "broker_match_0193_MRVL",
+      "symbol": "MRVL",
+      "entry_date": "2026-05-21",
+      "next_earnings": "2026-05-27",
+      "days_to_earnings": 6,
+      "pnl": 103.34,
+      "return_pct": 0.0532,
+      "exit_reason": "trailing_stop"
+    },
+    {
+      "trade_id": "broker_match_0213_MU",
+      "symbol": "MU",
+      "entry_date": "2026-06-24",
+      "next_earnings": "2026-06-24",
+      "days_to_earnings": 0,
+      "pnl": 4519.06,
+      "return_pct": 0.1618,
+      "exit_reason": "trailing_stop"
+    },
+    {
+      "trade_id": "broker_match_0217_NBIS",
+      "symbol": "NBIS",
+      "entry_date": "2026-05-12",
+      "next_earnings": "2026-05-13",
+      "days_to_earnings": 1,
+      "pnl": 1123.2,
+      "return_pct": 0.1755,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "trade_id": "broker_match_0218_NBIS",
+      "symbol": "NBIS",
+      "entry_date": "2026-05-13",
+      "next_earnings": "2026-05-13",
+      "days_to_earnings": 0,
+      "pnl": 1430.0,
+      "return_pct": 0.0264,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "trade_id": "broker_match_0227_NBIS",
+      "symbol": "NBIS",
+      "entry_date": "2026-08-05",
+      "next_earnings": "2026-08-12",
+      "days_to_earnings": 7,
+      "pnl": -3097.88,
+      "return_pct": -0.1456,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "trade_id": "broker_match_0232_NVDA",
+      "symbol": "NVDA",
+      "entry_date": "2026-05-20",
+      "next_earnings": "2026-05-20",
+      "days_to_earnings": 0,
+      "pnl": -99.53,
+      "return_pct": -0.028,
+      "exit_reason": "breakeven_stop"
+    },
+    {
+      "trade_id": "broker_match_0235_ORCL",
+      "symbol": "ORCL",
+      "entry_date": "2026-06-04",
+      "next_earnings": "2026-06-10",
+      "days_to_earnings": 6,
+      "pnl": -4410.1,
+      "return_pct": -0.0776,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "trade_id": "broker_match_0236_ORCL",
+      "symbol": "ORCL",
+      "entry_date": "2026-06-09",
+      "next_earnings": "2026-06-10",
+      "days_to_earnings": 1,
+      "pnl": -4752.0,
+      "return_pct": -0.1287,
+      "exit_reason": "trailing_stop"
+    },
+    {
+      "trade_id": "broker_match_0293_RBRK",
+      "symbol": "RBRK",
+      "entry_date": "2026-06-04",
+      "next_earnings": "2026-06-04",
+      "days_to_earnings": 0,
+      "pnl": -4352.46,
+      "return_pct": -0.0942,
+      "exit_reason": "time_based"
+    },
+    {
+      "trade_id": "broker_match_0322_SNOW",
+      "symbol": "SNOW",
+      "entry_date": "2026-05-20",
+      "next_earnings": "2026-05-27",
+      "days_to_earnings": 7,
+      "pnl": 2004.08,
+      "return_pct": 0.5408,
+      "exit_reason": "trailing_stop"
+    }
+  ],
+  "gap_through": {
+    "total": 29,
+    "total_pnl": -111018.44,
+    "with_earnings_in_holding": 1,
+    "with_earnings_pnl": -8618.54,
+    "undeterminable": 0
+  },
+  "note": "一次近似（ブロックPnL除去のみ）。探索的検証であり昇格にはR13-C後のout-of-sample確認を要する。"
+}
