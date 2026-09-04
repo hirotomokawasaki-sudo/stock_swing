@@ -1,0 +1,997 @@
+{
+  "generated_from": "/Users/hirotomookawasaki/stock_swing/data/tracking/pnl_state.json",
+  "cohorts": [
+    {
+      "label": "全期間",
+      "n": 132,
+      "baseline_net": -83465.4,
+      "baseline_pf": 0.46078811707130896,
+      "variants": [
+        {
+          "band": "[0.85,1.00)",
+          "band_lo": 0.85,
+          "factor": 0.5,
+          "affected_n": 14,
+          "affected_wins_n": 4,
+          "affected_wins_pnl": 5115.22,
+          "affected_losses_n": 10,
+          "affected_losses_pnl": -24083.41,
+          "cf_net": -73981.31,
+          "net_diff": 9484.09,
+          "pf_before": 0.46078811707130896,
+          "pf_after": 0.4817413184533088,
+          "affected_trades": [
+            {
+              "trade_id": "broker_open_0119_FTXL",
+              "symbol": "FTXL",
+              "ss": 0.8748,
+              "pnl": -6705.96,
+              "exit_time": "2026-08-24T13:45:14.390553+00:00",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_open_0066_CHPX",
+              "symbol": "CHPX",
+              "ss": 0.8707,
+              "pnl": -6103.44,
+              "exit_time": "2026-08-24T13:45:13.882539+00:00",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_match_0177_LRCX",
+              "symbol": "LRCX",
+              "ss": 0.886,
+              "pnl": -2616.84,
+              "exit_time": "2026-07-06T13:41:11.972546Z",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_match_0230_NOW",
+              "symbol": "NOW",
+              "ss": 0.9552,
+              "pnl": -2459.21,
+              "exit_time": "2026-07-16T13:35:32.401726Z",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "NOW-5144f488",
+              "symbol": "NOW",
+              "ss": 0.9185,
+              "pnl": -2333.1,
+              "exit_time": "2026-09-01T19:55:42.254591+00:00",
+              "exit_reason": "time_based"
+            },
+            {
+              "trade_id": "broker_match_0186_META",
+              "symbol": "META",
+              "ss": 0.8648,
+              "pnl": -1936.48,
+              "exit_time": "2026-07-09T13:35:45.805549Z",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_match_0188_META",
+              "symbol": "META",
+              "ss": 0.9495,
+              "pnl": -1193.36,
+              "exit_time": "2026-07-17T13:35:47.386554Z",
+              "exit_reason": "breakeven_stop"
+            },
+            {
+              "trade_id": "broker_match_0005_ADBE",
+              "symbol": "ADBE",
+              "ss": 0.8837,
+              "pnl": -492.56,
+              "exit_time": "2026-08-12T16:00:50.125627Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_open_0066_CHPX",
+              "symbol": "CHPX",
+              "ss": 0.8707,
+              "pnl": -233.48,
+              "exit_time": "2026-08-24T16:00:24.933742+00:00",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_open_0066_CHPX",
+              "symbol": "CHPX",
+              "ss": 0.8707,
+              "pnl": -8.98,
+              "exit_time": "2026-08-24T16:15:13.801975+00:00",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_match_0004_ADBE",
+              "symbol": "ADBE",
+              "ss": 0.8837,
+              "pnl": 28.49,
+              "exit_time": "2026-08-12T13:35:52.074073Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0325_SNOW",
+              "symbol": "SNOW",
+              "ss": 0.8886,
+              "pnl": 344.58,
+              "exit_time": "2026-07-17T13:36:39.345306Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0038_ANET",
+              "symbol": "ANET",
+              "ss": 0.8733,
+              "pnl": 542.83,
+              "exit_time": "2026-08-17T13:37:00.486562Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0146_HPQ",
+              "symbol": "HPQ",
+              "ss": 0.9598,
+              "pnl": 4199.32,
+              "exit_time": "2026-08-13T13:35:45.213565Z",
+              "exit_reason": "trailing_stop"
+            }
+          ]
+        },
+        {
+          "band": "[0.85,1.00)",
+          "band_lo": 0.85,
+          "factor": 0.0,
+          "affected_n": 14,
+          "affected_wins_n": 4,
+          "affected_wins_pnl": 5115.22,
+          "affected_losses_n": 10,
+          "affected_losses_pnl": -24083.41,
+          "cf_net": -64497.21,
+          "net_diff": 18968.19,
+          "pf_before": 0.46078811707130896,
+          "pf_after": 0.5065552193185333,
+          "affected_trades": [
+            {
+              "trade_id": "broker_open_0119_FTXL",
+              "symbol": "FTXL",
+              "ss": 0.8748,
+              "pnl": -6705.96,
+              "exit_time": "2026-08-24T13:45:14.390553+00:00",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_open_0066_CHPX",
+              "symbol": "CHPX",
+              "ss": 0.8707,
+              "pnl": -6103.44,
+              "exit_time": "2026-08-24T13:45:13.882539+00:00",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_match_0177_LRCX",
+              "symbol": "LRCX",
+              "ss": 0.886,
+              "pnl": -2616.84,
+              "exit_time": "2026-07-06T13:41:11.972546Z",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_match_0230_NOW",
+              "symbol": "NOW",
+              "ss": 0.9552,
+              "pnl": -2459.21,
+              "exit_time": "2026-07-16T13:35:32.401726Z",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "NOW-5144f488",
+              "symbol": "NOW",
+              "ss": 0.9185,
+              "pnl": -2333.1,
+              "exit_time": "2026-09-01T19:55:42.254591+00:00",
+              "exit_reason": "time_based"
+            },
+            {
+              "trade_id": "broker_match_0186_META",
+              "symbol": "META",
+              "ss": 0.8648,
+              "pnl": -1936.48,
+              "exit_time": "2026-07-09T13:35:45.805549Z",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_match_0188_META",
+              "symbol": "META",
+              "ss": 0.9495,
+              "pnl": -1193.36,
+              "exit_time": "2026-07-17T13:35:47.386554Z",
+              "exit_reason": "breakeven_stop"
+            },
+            {
+              "trade_id": "broker_match_0005_ADBE",
+              "symbol": "ADBE",
+              "ss": 0.8837,
+              "pnl": -492.56,
+              "exit_time": "2026-08-12T16:00:50.125627Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_open_0066_CHPX",
+              "symbol": "CHPX",
+              "ss": 0.8707,
+              "pnl": -233.48,
+              "exit_time": "2026-08-24T16:00:24.933742+00:00",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_open_0066_CHPX",
+              "symbol": "CHPX",
+              "ss": 0.8707,
+              "pnl": -8.98,
+              "exit_time": "2026-08-24T16:15:13.801975+00:00",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_match_0004_ADBE",
+              "symbol": "ADBE",
+              "ss": 0.8837,
+              "pnl": 28.49,
+              "exit_time": "2026-08-12T13:35:52.074073Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0325_SNOW",
+              "symbol": "SNOW",
+              "ss": 0.8886,
+              "pnl": 344.58,
+              "exit_time": "2026-07-17T13:36:39.345306Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0038_ANET",
+              "symbol": "ANET",
+              "ss": 0.8733,
+              "pnl": 542.83,
+              "exit_time": "2026-08-17T13:37:00.486562Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0146_HPQ",
+              "symbol": "HPQ",
+              "ss": 0.9598,
+              "pnl": 4199.32,
+              "exit_time": "2026-08-13T13:35:45.213565Z",
+              "exit_reason": "trailing_stop"
+            }
+          ]
+        },
+        {
+          "band": "[0.88,1.00)",
+          "band_lo": 0.88,
+          "factor": 0.5,
+          "affected_n": 8,
+          "affected_wins_n": 3,
+          "affected_wins_pnl": 4572.39,
+          "affected_losses_n": 5,
+          "affected_losses_pnl": -9095.07,
+          "cf_net": -81204.06,
+          "net_diff": 2261.34,
+          "pf_before": 0.46078811707130896,
+          "pf_after": 0.45951854895174304,
+          "affected_trades": [
+            {
+              "trade_id": "broker_match_0177_LRCX",
+              "symbol": "LRCX",
+              "ss": 0.886,
+              "pnl": -2616.84,
+              "exit_time": "2026-07-06T13:41:11.972546Z",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_match_0230_NOW",
+              "symbol": "NOW",
+              "ss": 0.9552,
+              "pnl": -2459.21,
+              "exit_time": "2026-07-16T13:35:32.401726Z",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "NOW-5144f488",
+              "symbol": "NOW",
+              "ss": 0.9185,
+              "pnl": -2333.1,
+              "exit_time": "2026-09-01T19:55:42.254591+00:00",
+              "exit_reason": "time_based"
+            },
+            {
+              "trade_id": "broker_match_0188_META",
+              "symbol": "META",
+              "ss": 0.9495,
+              "pnl": -1193.36,
+              "exit_time": "2026-07-17T13:35:47.386554Z",
+              "exit_reason": "breakeven_stop"
+            },
+            {
+              "trade_id": "broker_match_0005_ADBE",
+              "symbol": "ADBE",
+              "ss": 0.8837,
+              "pnl": -492.56,
+              "exit_time": "2026-08-12T16:00:50.125627Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0004_ADBE",
+              "symbol": "ADBE",
+              "ss": 0.8837,
+              "pnl": 28.49,
+              "exit_time": "2026-08-12T13:35:52.074073Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0325_SNOW",
+              "symbol": "SNOW",
+              "ss": 0.8886,
+              "pnl": 344.58,
+              "exit_time": "2026-07-17T13:36:39.345306Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0146_HPQ",
+              "symbol": "HPQ",
+              "ss": 0.9598,
+              "pnl": 4199.32,
+              "exit_time": "2026-08-13T13:35:45.213565Z",
+              "exit_reason": "trailing_stop"
+            }
+          ]
+        },
+        {
+          "band": "[0.88,1.00)",
+          "band_lo": 0.88,
+          "factor": 0.0,
+          "affected_n": 8,
+          "affected_wins_n": 3,
+          "affected_wins_pnl": 4572.39,
+          "affected_losses_n": 5,
+          "affected_losses_pnl": -9095.07,
+          "cf_net": -78942.72,
+          "net_diff": 4522.68,
+          "pf_before": 0.46078811707130896,
+          "pf_after": 0.45816972828429525,
+          "affected_trades": [
+            {
+              "trade_id": "broker_match_0177_LRCX",
+              "symbol": "LRCX",
+              "ss": 0.886,
+              "pnl": -2616.84,
+              "exit_time": "2026-07-06T13:41:11.972546Z",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_match_0230_NOW",
+              "symbol": "NOW",
+              "ss": 0.9552,
+              "pnl": -2459.21,
+              "exit_time": "2026-07-16T13:35:32.401726Z",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "NOW-5144f488",
+              "symbol": "NOW",
+              "ss": 0.9185,
+              "pnl": -2333.1,
+              "exit_time": "2026-09-01T19:55:42.254591+00:00",
+              "exit_reason": "time_based"
+            },
+            {
+              "trade_id": "broker_match_0188_META",
+              "symbol": "META",
+              "ss": 0.9495,
+              "pnl": -1193.36,
+              "exit_time": "2026-07-17T13:35:47.386554Z",
+              "exit_reason": "breakeven_stop"
+            },
+            {
+              "trade_id": "broker_match_0005_ADBE",
+              "symbol": "ADBE",
+              "ss": 0.8837,
+              "pnl": -492.56,
+              "exit_time": "2026-08-12T16:00:50.125627Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0004_ADBE",
+              "symbol": "ADBE",
+              "ss": 0.8837,
+              "pnl": 28.49,
+              "exit_time": "2026-08-12T13:35:52.074073Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0325_SNOW",
+              "symbol": "SNOW",
+              "ss": 0.8886,
+              "pnl": 344.58,
+              "exit_time": "2026-07-17T13:36:39.345306Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0146_HPQ",
+              "symbol": "HPQ",
+              "ss": 0.9598,
+              "pnl": 4199.32,
+              "exit_time": "2026-08-13T13:35:45.213565Z",
+              "exit_reason": "trailing_stop"
+            }
+          ]
+        },
+        {
+          "band": "[0.90,1.00)",
+          "band_lo": 0.9,
+          "factor": 0.5,
+          "affected_n": 4,
+          "affected_wins_n": 1,
+          "affected_wins_pnl": 4199.32,
+          "affected_losses_n": 3,
+          "affected_losses_pnl": -5985.67,
+          "cf_net": -82572.23,
+          "net_diff": 893.17,
+          "pf_before": 0.46078811707130896,
+          "pf_after": 0.45604105728618705,
+          "affected_trades": [
+            {
+              "trade_id": "broker_match_0230_NOW",
+              "symbol": "NOW",
+              "ss": 0.9552,
+              "pnl": -2459.21,
+              "exit_time": "2026-07-16T13:35:32.401726Z",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "NOW-5144f488",
+              "symbol": "NOW",
+              "ss": 0.9185,
+              "pnl": -2333.1,
+              "exit_time": "2026-09-01T19:55:42.254591+00:00",
+              "exit_reason": "time_based"
+            },
+            {
+              "trade_id": "broker_match_0188_META",
+              "symbol": "META",
+              "ss": 0.9495,
+              "pnl": -1193.36,
+              "exit_time": "2026-07-17T13:35:47.386554Z",
+              "exit_reason": "breakeven_stop"
+            },
+            {
+              "trade_id": "broker_match_0146_HPQ",
+              "symbol": "HPQ",
+              "ss": 0.9598,
+              "pnl": 4199.32,
+              "exit_time": "2026-08-13T13:35:45.213565Z",
+              "exit_reason": "trailing_stop"
+            }
+          ]
+        },
+        {
+          "band": "[0.90,1.00)",
+          "band_lo": 0.9,
+          "factor": 0.0,
+          "affected_n": 4,
+          "affected_wins_n": 1,
+          "affected_wins_pnl": 4199.32,
+          "affected_losses_n": 3,
+          "affected_losses_pnl": -5985.67,
+          "cf_net": -81679.05,
+          "net_diff": 1786.35,
+          "pf_before": 0.46078811707130896,
+          "pf_after": 0.4511030484026833,
+          "affected_trades": [
+            {
+              "trade_id": "broker_match_0230_NOW",
+              "symbol": "NOW",
+              "ss": 0.9552,
+              "pnl": -2459.21,
+              "exit_time": "2026-07-16T13:35:32.401726Z",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "NOW-5144f488",
+              "symbol": "NOW",
+              "ss": 0.9185,
+              "pnl": -2333.1,
+              "exit_time": "2026-09-01T19:55:42.254591+00:00",
+              "exit_reason": "time_based"
+            },
+            {
+              "trade_id": "broker_match_0188_META",
+              "symbol": "META",
+              "ss": 0.9495,
+              "pnl": -1193.36,
+              "exit_time": "2026-07-17T13:35:47.386554Z",
+              "exit_reason": "breakeven_stop"
+            },
+            {
+              "trade_id": "broker_match_0146_HPQ",
+              "symbol": "HPQ",
+              "ss": 0.9598,
+              "pnl": 4199.32,
+              "exit_time": "2026-08-13T13:35:45.213565Z",
+              "exit_reason": "trailing_stop"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "exit>=2026-07-16",
+      "n": 90,
+      "baseline_net": -40103.13,
+      "baseline_pf": 0.5619687715755868,
+      "variants": [
+        {
+          "band": "[0.85,1.00)",
+          "band_lo": 0.85,
+          "factor": 0.5,
+          "affected_n": 12,
+          "affected_wins_n": 4,
+          "affected_wins_pnl": 5115.22,
+          "affected_losses_n": 8,
+          "affected_losses_pnl": -19530.09,
+          "cf_net": -32895.69,
+          "net_diff": 7207.43,
+          "pf_before": 0.5619687715755868,
+          "pf_after": 0.597793553914363,
+          "affected_trades": [
+            {
+              "trade_id": "broker_open_0119_FTXL",
+              "symbol": "FTXL",
+              "ss": 0.8748,
+              "pnl": -6705.96,
+              "exit_time": "2026-08-24T13:45:14.390553+00:00",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_open_0066_CHPX",
+              "symbol": "CHPX",
+              "ss": 0.8707,
+              "pnl": -6103.44,
+              "exit_time": "2026-08-24T13:45:13.882539+00:00",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_match_0230_NOW",
+              "symbol": "NOW",
+              "ss": 0.9552,
+              "pnl": -2459.21,
+              "exit_time": "2026-07-16T13:35:32.401726Z",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "NOW-5144f488",
+              "symbol": "NOW",
+              "ss": 0.9185,
+              "pnl": -2333.1,
+              "exit_time": "2026-09-01T19:55:42.254591+00:00",
+              "exit_reason": "time_based"
+            },
+            {
+              "trade_id": "broker_match_0188_META",
+              "symbol": "META",
+              "ss": 0.9495,
+              "pnl": -1193.36,
+              "exit_time": "2026-07-17T13:35:47.386554Z",
+              "exit_reason": "breakeven_stop"
+            },
+            {
+              "trade_id": "broker_match_0005_ADBE",
+              "symbol": "ADBE",
+              "ss": 0.8837,
+              "pnl": -492.56,
+              "exit_time": "2026-08-12T16:00:50.125627Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_open_0066_CHPX",
+              "symbol": "CHPX",
+              "ss": 0.8707,
+              "pnl": -233.48,
+              "exit_time": "2026-08-24T16:00:24.933742+00:00",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_open_0066_CHPX",
+              "symbol": "CHPX",
+              "ss": 0.8707,
+              "pnl": -8.98,
+              "exit_time": "2026-08-24T16:15:13.801975+00:00",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_match_0004_ADBE",
+              "symbol": "ADBE",
+              "ss": 0.8837,
+              "pnl": 28.49,
+              "exit_time": "2026-08-12T13:35:52.074073Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0325_SNOW",
+              "symbol": "SNOW",
+              "ss": 0.8886,
+              "pnl": 344.58,
+              "exit_time": "2026-07-17T13:36:39.345306Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0038_ANET",
+              "symbol": "ANET",
+              "ss": 0.8733,
+              "pnl": 542.83,
+              "exit_time": "2026-08-17T13:37:00.486562Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0146_HPQ",
+              "symbol": "HPQ",
+              "ss": 0.9598,
+              "pnl": 4199.32,
+              "exit_time": "2026-08-13T13:35:45.213565Z",
+              "exit_reason": "trailing_stop"
+            }
+          ]
+        },
+        {
+          "band": "[0.85,1.00)",
+          "band_lo": 0.85,
+          "factor": 0.0,
+          "affected_n": 12,
+          "affected_wins_n": 4,
+          "affected_wins_pnl": 5115.22,
+          "affected_losses_n": 8,
+          "affected_losses_pnl": -19530.09,
+          "cf_net": -25688.26,
+          "net_diff": 14414.87,
+          "pf_before": 0.5619687715755868,
+          "pf_after": 0.6433327446328285,
+          "affected_trades": [
+            {
+              "trade_id": "broker_open_0119_FTXL",
+              "symbol": "FTXL",
+              "ss": 0.8748,
+              "pnl": -6705.96,
+              "exit_time": "2026-08-24T13:45:14.390553+00:00",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_open_0066_CHPX",
+              "symbol": "CHPX",
+              "ss": 0.8707,
+              "pnl": -6103.44,
+              "exit_time": "2026-08-24T13:45:13.882539+00:00",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_match_0230_NOW",
+              "symbol": "NOW",
+              "ss": 0.9552,
+              "pnl": -2459.21,
+              "exit_time": "2026-07-16T13:35:32.401726Z",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "NOW-5144f488",
+              "symbol": "NOW",
+              "ss": 0.9185,
+              "pnl": -2333.1,
+              "exit_time": "2026-09-01T19:55:42.254591+00:00",
+              "exit_reason": "time_based"
+            },
+            {
+              "trade_id": "broker_match_0188_META",
+              "symbol": "META",
+              "ss": 0.9495,
+              "pnl": -1193.36,
+              "exit_time": "2026-07-17T13:35:47.386554Z",
+              "exit_reason": "breakeven_stop"
+            },
+            {
+              "trade_id": "broker_match_0005_ADBE",
+              "symbol": "ADBE",
+              "ss": 0.8837,
+              "pnl": -492.56,
+              "exit_time": "2026-08-12T16:00:50.125627Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_open_0066_CHPX",
+              "symbol": "CHPX",
+              "ss": 0.8707,
+              "pnl": -233.48,
+              "exit_time": "2026-08-24T16:00:24.933742+00:00",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_open_0066_CHPX",
+              "symbol": "CHPX",
+              "ss": 0.8707,
+              "pnl": -8.98,
+              "exit_time": "2026-08-24T16:15:13.801975+00:00",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "broker_match_0004_ADBE",
+              "symbol": "ADBE",
+              "ss": 0.8837,
+              "pnl": 28.49,
+              "exit_time": "2026-08-12T13:35:52.074073Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0325_SNOW",
+              "symbol": "SNOW",
+              "ss": 0.8886,
+              "pnl": 344.58,
+              "exit_time": "2026-07-17T13:36:39.345306Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0038_ANET",
+              "symbol": "ANET",
+              "ss": 0.8733,
+              "pnl": 542.83,
+              "exit_time": "2026-08-17T13:37:00.486562Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0146_HPQ",
+              "symbol": "HPQ",
+              "ss": 0.9598,
+              "pnl": 4199.32,
+              "exit_time": "2026-08-13T13:35:45.213565Z",
+              "exit_reason": "trailing_stop"
+            }
+          ]
+        },
+        {
+          "band": "[0.88,1.00)",
+          "band_lo": 0.88,
+          "factor": 0.5,
+          "affected_n": 7,
+          "affected_wins_n": 3,
+          "affected_wins_pnl": 4572.39,
+          "affected_losses_n": 4,
+          "affected_losses_pnl": -6478.23,
+          "cf_net": -39150.21,
+          "net_diff": 952.92,
+          "pf_before": 0.5619687715755868,
+          "pf_after": 0.5566931250945844,
+          "affected_trades": [
+            {
+              "trade_id": "broker_match_0230_NOW",
+              "symbol": "NOW",
+              "ss": 0.9552,
+              "pnl": -2459.21,
+              "exit_time": "2026-07-16T13:35:32.401726Z",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "NOW-5144f488",
+              "symbol": "NOW",
+              "ss": 0.9185,
+              "pnl": -2333.1,
+              "exit_time": "2026-09-01T19:55:42.254591+00:00",
+              "exit_reason": "time_based"
+            },
+            {
+              "trade_id": "broker_match_0188_META",
+              "symbol": "META",
+              "ss": 0.9495,
+              "pnl": -1193.36,
+              "exit_time": "2026-07-17T13:35:47.386554Z",
+              "exit_reason": "breakeven_stop"
+            },
+            {
+              "trade_id": "broker_match_0005_ADBE",
+              "symbol": "ADBE",
+              "ss": 0.8837,
+              "pnl": -492.56,
+              "exit_time": "2026-08-12T16:00:50.125627Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0004_ADBE",
+              "symbol": "ADBE",
+              "ss": 0.8837,
+              "pnl": 28.49,
+              "exit_time": "2026-08-12T13:35:52.074073Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0325_SNOW",
+              "symbol": "SNOW",
+              "ss": 0.8886,
+              "pnl": 344.58,
+              "exit_time": "2026-07-17T13:36:39.345306Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0146_HPQ",
+              "symbol": "HPQ",
+              "ss": 0.9598,
+              "pnl": 4199.32,
+              "exit_time": "2026-08-13T13:35:45.213565Z",
+              "exit_reason": "trailing_stop"
+            }
+          ]
+        },
+        {
+          "band": "[0.88,1.00)",
+          "band_lo": 0.88,
+          "factor": 0.0,
+          "affected_n": 7,
+          "affected_wins_n": 3,
+          "affected_wins_pnl": 4572.39,
+          "affected_losses_n": 4,
+          "affected_losses_pnl": -6478.23,
+          "cf_net": -38197.29,
+          "net_diff": 1905.84,
+          "pf_before": 0.5619687715755868,
+          "pf_after": 0.5510157520020594,
+          "affected_trades": [
+            {
+              "trade_id": "broker_match_0230_NOW",
+              "symbol": "NOW",
+              "ss": 0.9552,
+              "pnl": -2459.21,
+              "exit_time": "2026-07-16T13:35:32.401726Z",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "NOW-5144f488",
+              "symbol": "NOW",
+              "ss": 0.9185,
+              "pnl": -2333.1,
+              "exit_time": "2026-09-01T19:55:42.254591+00:00",
+              "exit_reason": "time_based"
+            },
+            {
+              "trade_id": "broker_match_0188_META",
+              "symbol": "META",
+              "ss": 0.9495,
+              "pnl": -1193.36,
+              "exit_time": "2026-07-17T13:35:47.386554Z",
+              "exit_reason": "breakeven_stop"
+            },
+            {
+              "trade_id": "broker_match_0005_ADBE",
+              "symbol": "ADBE",
+              "ss": 0.8837,
+              "pnl": -492.56,
+              "exit_time": "2026-08-12T16:00:50.125627Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0004_ADBE",
+              "symbol": "ADBE",
+              "ss": 0.8837,
+              "pnl": 28.49,
+              "exit_time": "2026-08-12T13:35:52.074073Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0325_SNOW",
+              "symbol": "SNOW",
+              "ss": 0.8886,
+              "pnl": 344.58,
+              "exit_time": "2026-07-17T13:36:39.345306Z",
+              "exit_reason": "trailing_stop"
+            },
+            {
+              "trade_id": "broker_match_0146_HPQ",
+              "symbol": "HPQ",
+              "ss": 0.9598,
+              "pnl": 4199.32,
+              "exit_time": "2026-08-13T13:35:45.213565Z",
+              "exit_reason": "trailing_stop"
+            }
+          ]
+        },
+        {
+          "band": "[0.90,1.00)",
+          "band_lo": 0.9,
+          "factor": 0.5,
+          "affected_n": 4,
+          "affected_wins_n": 1,
+          "affected_wins_pnl": 4199.32,
+          "affected_losses_n": 3,
+          "affected_losses_pnl": -5985.67,
+          "cf_net": -39209.96,
+          "net_diff": 893.17,
+          "pf_before": 0.5619687715755868,
+          "pf_after": 0.5572513054524039,
+          "affected_trades": [
+            {
+              "trade_id": "broker_match_0230_NOW",
+              "symbol": "NOW",
+              "ss": 0.9552,
+              "pnl": -2459.21,
+              "exit_time": "2026-07-16T13:35:32.401726Z",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "NOW-5144f488",
+              "symbol": "NOW",
+              "ss": 0.9185,
+              "pnl": -2333.1,
+              "exit_time": "2026-09-01T19:55:42.254591+00:00",
+              "exit_reason": "time_based"
+            },
+            {
+              "trade_id": "broker_match_0188_META",
+              "symbol": "META",
+              "ss": 0.9495,
+              "pnl": -1193.36,
+              "exit_time": "2026-07-17T13:35:47.386554Z",
+              "exit_reason": "breakeven_stop"
+            },
+            {
+              "trade_id": "broker_match_0146_HPQ",
+              "symbol": "HPQ",
+              "ss": 0.9598,
+              "pnl": 4199.32,
+              "exit_time": "2026-08-13T13:35:45.213565Z",
+              "exit_reason": "trailing_stop"
+            }
+          ]
+        },
+        {
+          "band": "[0.90,1.00)",
+          "band_lo": 0.9,
+          "factor": 0.0,
+          "affected_n": 4,
+          "affected_wins_n": 1,
+          "affected_wins_pnl": 4199.32,
+          "affected_losses_n": 3,
+          "affected_losses_pnl": -5985.67,
+          "cf_net": -38316.78,
+          "net_diff": 1786.35,
+          "pf_before": 0.5619687715755868,
+          "pf_after": 0.5522038401046379,
+          "affected_trades": [
+            {
+              "trade_id": "broker_match_0230_NOW",
+              "symbol": "NOW",
+              "ss": 0.9552,
+              "pnl": -2459.21,
+              "exit_time": "2026-07-16T13:35:32.401726Z",
+              "exit_reason": "stop_loss"
+            },
+            {
+              "trade_id": "NOW-5144f488",
+              "symbol": "NOW",
+              "ss": 0.9185,
+              "pnl": -2333.1,
+              "exit_time": "2026-09-01T19:55:42.254591+00:00",
+              "exit_reason": "time_based"
+            },
+            {
+              "trade_id": "broker_match_0188_META",
+              "symbol": "META",
+              "ss": 0.9495,
+              "pnl": -1193.36,
+              "exit_time": "2026-07-17T13:35:47.386554Z",
+              "exit_reason": "breakeven_stop"
+            },
+            {
+              "trade_id": "broker_match_0146_HPQ",
+              "symbol": "HPQ",
+              "ss": 0.9598,
+              "pnl": 4199.32,
+              "exit_time": "2026-08-13T13:35:45.213565Z",
+              "exit_reason": "trailing_stop"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
