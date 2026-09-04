@@ -4262,13 +4262,32 @@ cut・R18-A・R18-B、以後も増える）は多重検定であり、最良に�
   反実仮想は**当日中の台帳追記が必須**、追記なしの結果は昇格判断に引用不可。
 - holdout期間の設定（例: 直近1ヶ月温存）も同文書に規律として明記。
 
-### R18-E: コストモデル実装確認（起票のみ）
+### R18-E: コストモデル実装確認（起票 → **定義+実測完了 2026-09-05**）
 
-経済性ゲート（check_go_no_go.py economic_viability）および各反実仮想のPnLに
-スリッページ/手数料の控除が入っているかをコードレベルで確認する（pnl_state.jsonの
-pnlはbroker fill価格ベース=paperのシミュレート済みスリッページのみの可能性）。
-確認結果をdocs化し、実弾移行前に「実弾スリッページの実測計画」（小サイズでの
-市場注文/指値のfill品質測定）を策定する。
+**確認結果（2026-09-05、コードレベル）**: pnl_state.jsonのPnLに手数料/
+スリッページ控除は**一切入っていない**（fee/commission/slippageフィールド
+自体が存在せず、経済性ゲート・各反実仮想のPnLも同様＝全て「コストゼロ世界」の
+PF）。全注文はmarket注文（limit発注パスなし）。さらにstale-fillガードにより
+記録価格の一部はsizing_price（fillではない参照価格）。entry_fill_idは0件/
+exit_fill_idは10件のみでfill台帳（fill_ledger.jsonl 124件）との突合は現状不可。
+
+**実施済み（2026-09-05）**:
+- `scripts/analyze_execution_costs.py` 新規（読み取り専用）: 記録価格 vs
+  基準価格（当日始値/前営業日終値。分足未保存のため上限推計）のbps分布を
+  時間帯バケット別に集計。オープン直後entry median +49bps、日中stop exit
+  median +139bps（vs当日始値）はいずれもドリフト支配で真のスリッページとは
+  区別。714 leg中13 legが当日[low,high]レンジ外（stale/合成価格疑い、除外）。
+- `docs/cost_model_definition.md` 新規: cost-adjusted PF定義式（片道X bps控除、
+  保守的デフォルトX=5）、試算（X=5で全期間PF 0.888→0.853、直近コホート
+  0.530→0.511）、実弾追加コスト項目（スプレッド/2・スリッページ・SEC/TAF・
+  将来JP為替）、経済性ゲートへの2段階組み込み案（補助表示→ユーザー承認後
+  Required化）。
+- `check_go_no_go.py` は**未変更**（Required化はユーザー承認後の別タスク）。
+- エビデンス: `docs/r18e_execution_cost_analysis_20260905/`（full_run.txt /
+  results.json）。
+
+**残タスク**: 実弾移行時に「注文送信時NBBO mid vs 実fill」の小サイズ実測で
+Xを実測値+保守マージンに更新（cost_model_definition.md §5）。
 
 ### 備考
 

@@ -1,0 +1,36 @@
+=== R18-E Execution Cost Analysis (read-only) ===
+closed trades with usable prices: 357
+order type: all market orders (decision_engine.py:213, limit path does not exist)
+
+fetching daily bars via yfinance: 58 symbols, 2026-05-12..2026-09-02 ...
+got bars for 58/58 symbols
+
+legs total=714  measured=701  missing_bar=0  outside_day_range(stale/synthetic suspect)=13 (excluded from distributions)
+
+── 実効スリッページ分布（+ = コスト方向: buyは基準より高く、sellは基準より安く約定）──
+
+[ref=当日始値]
+  entry (all)                                      n=354  mean=   +9.7  median=  +10.3  p25=  -85.3  p75= +117.8  p90= +264.2  p95= +417.7
+  entry 09:2x-09:4x ET (near-open runs; cleanest)  n=107  mean=  +47.8  median=  +48.8  p25=  -49.3  p75= +124.4  p90= +203.1  p95= +299.7
+  entry 12:00 ET run                               n= 58  mean=  +99.9  median= +107.7  p25=  -81.1  p75= +372.2  p90= +510.3  p95= +651.1
+  entry 15:5x ET run                               n= 42  mean= -159.7  median= -130.8  p25= -365.1  p75=  +27.5  p90= +412.3  p95= +451.5
+  exit (all)                                       n=347  mean= +113.4  median=  +96.8  p25=   -0.4  p75= +204.2  p90= +368.8  p95= +541.1
+  exit hour 09 ET                                  n=153  mean=  +52.9  median=  +48.9  p25=  -10.2  p75= +115.0  p90= +178.8  p95= +313.0
+  exit hour 10-15 ET (intraday stops)              n=194  mean= +161.1  median= +138.9  p25=  +36.4  p75= +270.5  p90= +522.6  p95= +648.6
+
+[ref=前営業日終値]
+  entry (all)                                      n=327  mean=  +49.2  median=  +60.1  p25= -159.8  p75= +283.3  p90= +502.2  p95= +698.6
+  entry 09:2x-09:4x ET (near-open runs; cleanest)  n=105  mean= +134.4  median= +111.8  p25=  -69.7  p75= +334.4  p90= +524.6  p95= +629.0
+  entry 12:00 ET run                               n= 58  mean= +148.5  median= +220.5  p25=  -88.6  p75= +407.3  p90= +735.5  p95= +947.6
+  entry 15:5x ET run                               n= 42  mean=  -75.3  median=  -89.9  p25= -272.7  p75= +104.2  p90= +393.7  p95= +555.8
+  exit (all)                                       n=336  mean=  +87.0  median= +101.3  p25=  -78.0  p75= +368.7  p90= +630.5  p95= +801.8
+  exit hour 09 ET                                  n=153  mean=  -11.0  median=  +10.7  p25= -145.3  p75= +229.4  p90= +450.3  p95= +763.6
+  exit hour 10-15 ET (intraday stops)              n=183  mean= +168.9  median= +205.4  p25=  -35.8  p75= +453.3  p90= +686.4  p95= +857.5
+
+── cost-adjusted PF 試算（片道 X bps を両legのnotionalに課金）──
+X bps/side |     全期間 PF          Net | 直近(exit>=2026-08-14) PF          Net
+       0.0 |      0.888      -38,253 |      0.530      -24,810   (n_full=357, n_recent=45)
+       2.0 |      0.873      -43,450 |      0.522      -25,355   (n_full=357, n_recent=45)
+       5.0 |      0.853      -51,246 |      0.511      -26,172   (n_full=357, n_recent=45)
+      10.0 |      0.819      -64,239 |      0.492      -27,534   (n_full=357, n_recent=45)
+      15.0 |      0.787      -77,232 |      0.474      -28,897   (n_full=357, n_recent=45)
