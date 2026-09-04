@@ -4158,3 +4158,15 @@ insufficient_sample fail-closed/コホート境界/open・pnl欠損除外/PF=inf
 --econ-cohort-startパース/レポート出力/exit code）。既存 all-green fixture
 （`test_check_go_no_go.py`）に経済ゲート合格分のtrades追加。go_no_go関連+promotion_gate
 の計65テスト全緑を確認。
+
+---
+
+## 日本市場拡張ロードマップ(総合版)策定(2026-09-05、ユーザー指示)
+
+`docs/jp_market_expansion_roadmap.md` を新設。IBKR移行後の日本市場拡張を3トラックで優先順位付け:
+
+1. 🥇 **JPセクターETFローテーション**(R13-D日本版) — 実装再利用度最大・購入禁止リスト制約を構造回避・JPY建て分散
+2. 🥈 **US→JPオーバーナイト・スピルオーバーの一般化** — 半導体特化版(Phase 2.5 shadow稼働中)の実配線優先度は集中リスクにより「低」へ変更。金融/エネルギー/ディフェンス等の非半導体ペアへ一般化(Go基準: 相関0.4以上 or 方向一致60%以上)
+3. 🥉 **JP決算PEADスイング** — event_swing_v1骨格・R10決算カレンダー流用。データ整備が律速で3番手
+
+大原則: 「勝てていない戦略を新市場に輸出しない」(経済性ゲートNO-GO中は米国側改善が優先)/ 全トラック同一規律(Phase1検証→shadow→paper A/B→経済性ゲート→ユーザー承認)/ 半導体連結エクスポージャ30%予算にJP半導体分も合算。Track 1/2のPhase 1着手は9/8レビュー・9/14 Go/No-Go後にユーザー承認を得てから。
