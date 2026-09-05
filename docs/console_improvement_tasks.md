@@ -546,8 +546,15 @@ return_pct基準の7日tierがstandard/high-conviction銘柄で到達不可能�
 
 #### R3-v2-Breakeven: Staged Floor（段階的floor、Breakeven Stop）
 
-**Status**: IMPLEMENTED_UNVERIFIED（2026-08-05）  
+**Status**: IMPLEMENTED_UNVERIFIED — 第1回レビュー実施済み・判定不能（2026-09-05、n=0）  
 **Priority**: P2（sector_shock A/Bとは独立、即日実施可）
+
+**第1回中間レビュー結果（2026-09-05）**:
+- (1) config確認: `staged_breakeven_enabled: true`、3段階レベル（+5%→floor 0% / +8%→+3% / +12%→+6%）有効を確認 ✅
+- (2) paper実測: **導入後（08-05〜09-05）のbreakeven_stop発火は0件**。同期間のclosed trade 46件の内訳は trailing_stop 23 / stop_loss 17 / time_based 5 / strategy_exit 1。net_pnl改善傾向の評価はサンプル不足で不可能
+- (3) exit_reason記録: "Staged breakeven stop" のイベント記録なし（発火自体が0件のため）。コードパス（`simple_exit_v2_strategy.py` L729）はstagedレベル適用時に同ラベルを記録する実装であることを確認済み
+- 補足: 全履歴でもbreakeven_stop発火は14件全て2026-07-22以前。導入前の8月も0件であり、exit mixの変化（staged trailing等が先に発火）により breakeven_stop 自体が稀になっている可能性が高い
+- **判定: INCONCLUSIVE（n=0）。第2回レビューを2026-10-05目安（または初のstaged breakeven発火時の早い方）に延長**
 
 **背景**: Breakeven Stop（peak_returnが活性化ライン到達後、return≤40%で即exit、
 floor固定0%）はPF 0.7前後・WR 20〜27%とExit 3戦略中最弱。Post-exit driftシミュレー
@@ -1001,7 +1008,7 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
 
 2026-08-19頃          ✅ R3-v2-Stop 中間レビュー: post-exit drift再分析で「正しい止損率」改善確認
 
-2026-09-05          🔲 R3-v2-Breakeven 中間レビュー: staged floorのpaper実測での改善確認（08-05導入から1ヶ月後）
+2026-09-05          ✅ R3-v2-Breakeven 第1回中間レビュー: 発火0件で判定不能（INCONCLUSIVE、第2回を10-05目安に延長）
 
 2026-08-03〜08-14  R3-v2    exit replay / sector shock shadow（R0-v2 完了後のみ）
                    R7-v2    data SLA / source lineage
@@ -1027,8 +1034,9 @@ ORCL n=3 pnl=-$8,306 WR=33%、PLTR n=2 pnl=-$6,712 WR=0%、CDNS n=2 pnl=-$5,940 
                          各閾値が偽陽性/偽陰性を出していないか実トレード結果と突き合わせ
                    R7-v2    残: event_time/available_at等canonical schema拡張（R7-Aの残項目）
 
-2026-09-05（土）    🔲 R3-v2-Breakeven 中間レビュー: staged floorのpaper実測での改善確認
-                         （08-05導入から1ヶ月後、cron登録済み: stock_swing_breakeven_staged_floor_review）
+2026-09-05（土）    ✅ R3-v2-Breakeven 第1回中間レビュー実施: 導入後breakeven_stop発火0件のため
+                         INCONCLUSIVE。config有効・コードパス正常を確認。第2回レビューは2026-10-05目安
+                         （または初のstaged breakeven発火時の早い方）に延長
 
 2026-08-23         ✅ 監査対応完了: docs/audit_fixes_20260823/ の6パッチ（console_summary鮮度、
                          equity_bridge quarantined_pnl、broker_bars pagination、
