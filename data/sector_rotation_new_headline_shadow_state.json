@@ -1,0 +1,25 @@
+{
+  "current_holdings": [
+    "CHPS",
+    "CHPX",
+    "FRWD",
+    "FTXL",
+    "GTOP",
+    "PSCT",
+    "PTF",
+    "QTEC",
+    "SHOC",
+    "SMH",
+    "SMHX",
+    "SOXQ",
+    "SOXX",
+    "TDIV",
+    "TTEQ"
+  ],
+  "current_sectors": [
+    "semiconductor",
+    "software"
+  ],
+  "last_rebalance_date": "2026-09-08",
+  "rebalance_count": 1
+}

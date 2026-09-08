@@ -1,0 +1,27 @@
+{
+  "id": "16320fe1-e420-4873-9df5-991135492003",
+  "name": "stock_swing_sector_rotation_shadow",
+  "description": "R13-D Phase 2.5相当: sector_rotation_v1（本番未配線）の実クラス（SectorMomentumFeature/SectorRotationStrategy/SectorRotationStateStore）をそのまま使い、日次でshadowログに記録。発注なし、ブローカー接続不要、本番state fileには一切触れない（別ファイルdata/sector_rotation_shadow_state.json使用）。09-08本番配線判断レビューの材料蓄積用。",
+  "enabled": true,
+  "schedule": {
+    "kind": "cron",
+    "expr": "33 9 * * 1-5",
+    "tz": "Asia/Tokyo"
+  },
+  "sessionTarget": "isolated",
+  "wakeMode": "next-heartbeat",
+  "payload": {
+    "kind": "script",
+    "script": "async function waitOut(r) {\n  if (!r) { return ''; }\n  if (r.status === 'running' && r.sessionId) {\n    for (let i = 0; i < 20; i++) {\n      let p = null;\n      try { p = await process({ action: 'poll', sessionId: r.sessionId, timeout: 10000 }); } catch (e) { break; }\n      if (p && p.status && p.status !== 'running') { r = p; break; }\n    }\n    try { const lg = await process({ action: 'log', sessionId: r.sessionId }); if (lg) { if (lg.output !== undefined) { return String(lg.output); } if (lg.log !== undefined) { return String(lg.log); } return JSON.stringify(lg); } } catch (e) {}\n  }\n  if (r.aggregated !== undefined) { return String(r.aggregated); }\n  if (r.output !== undefined) { return String(r.output); }\n  if (r.stdout !== undefined) { return String(r.stdout); }\n  if (r.tail !== undefined) { return String(r.tail); }\n  return JSON.stringify(r);\n}\nconst res = await exec({ command: 'cd ~/stock_swing && . venv/bin/activate && python scripts/log_sector_rotation_shadow.py 2>&1; echo EXIT_CODE=$?', timeoutSeconds: 260, yieldMs: 270000 });\nconst outStr = await waitOut(res);\nconst m = outStr.match(/EXIT_CODE=(\\d+)/);\nif (m && m[1] === '0') { return {}; }\nreturn { notify: '❌ sector_rotation_shadow 実行エラー\\n' + outStr.slice(-600) };",
+    "timeoutSeconds": 300,
+    "toolBudget": 50,
+    "toolsAllow": ["exec", "process"]
+  },
+  "delivery": {
+    "mode": "announce",
+    "channel": "telegram",
+    "to": "8417431746"
+  },
+  "capturedAt": "2026-09-08T11:10:00+09:00",
+  "configRevision": "sha256:SDDd6dXHUrgZAUfDRqr_qqi66s1mWEsiHiC8u5afPRc"
+}

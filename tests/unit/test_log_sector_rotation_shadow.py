@@ -18,7 +18,11 @@ SCRIPT = PROJECT_ROOT / "scripts" / "log_sector_rotation_shadow.py"
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from log_sector_rotation_shadow import load_etf_sector_map, log_shadow  # noqa: E402
+from log_sector_rotation_shadow import (  # noqa: E402
+    filter_sector_map_by_min_members,
+    load_etf_sector_map,
+    log_shadow,
+)
 
 
 def test_state_path_guard_rejects_real_production_state_file(tmp_path):
@@ -76,3 +80,28 @@ def test_log_shadow_appends_multiple_records(tmp_path):
         log_shadow({"date": f"2026-08-{26 + i}", "mode": "shadow"}, shadow_log_path=log_path)
     lines = log_path.read_text(encoding="utf-8").strip().splitlines()
     assert len(lines) == 3
+
+
+def test_filter_sector_map_by_min_members_excludes_single_member_sectors():
+    sector_map = {
+        "SOXX": "semiconductor",
+        "SMH": "semiconductor",
+        "SKYY": "technology_cloud",
+        "BOTZ": "robotics_ai",
+        "ROBO": "robotics_ai",
+    }
+    filtered, excluded = filter_sector_map_by_min_members(sector_map, 2)
+    assert filtered == {
+        "SOXX": "semiconductor",
+        "SMH": "semiconductor",
+        "BOTZ": "robotics_ai",
+        "ROBO": "robotics_ai",
+    }, "new headline must exclude sectors represented by only one ETF"
+    assert excluded == ["technology_cloud"]
+
+
+def test_filter_sector_map_by_min_members_one_preserves_legacy_universe():
+    sector_map = {"SOXX": "semiconductor", "SKYY": "technology_cloud"}
+    filtered, excluded = filter_sector_map_by_min_members(sector_map, 1)
+    assert filtered == sector_map, "legacy headline must preserve its historical universe"
+    assert excluded == []
