@@ -17,6 +17,7 @@ from typing import Any
 from stock_swing.feature_engine.base_feature import FeatureResult
 from stock_swing.pricing import PriceResolver
 from stock_swing.strategy_engine.base_strategy import BaseStrategy, CandidateSignal
+from stock_swing.utils.stale_price import apply_price_overrides
 
 logger = logging.getLogger(__name__)
 
@@ -496,17 +497,20 @@ class SimpleExitV2Strategy(BaseStrategy):
         except Exception as e:
             logger.warning(f"SimpleExitV2: Failed to load price overrides: {e}")
         
-        # Apply price overrides to current_positions
-        overrides_applied = 0
-        for symbol in current_positions:
-            if symbol in price_overrides:
-                fresh_price = float(price_overrides[symbol]["fresh_price"])
-                old_price = float(current_positions[symbol].get("current_price") or 0)
-                current_positions[symbol]["current_price"] = fresh_price
-                overrides_applied += 1
+        # Re-apply persisted overrides through the same live-session guard as
+        # runtime overrides. This prevents yesterday's daily close from
+        # masking an intraday stop even when the previous file is retained.
+        old_prices = {
+            symbol: float(position.get("current_price") or 0)
+            for symbol, position in current_positions.items()
+        }
+        overrides_applied = apply_price_overrides(current_positions, price_overrides)
+        for symbol, old_price in old_prices.items():
+            new_price = float(current_positions[symbol].get("current_price") or 0)
+            if new_price != old_price:
                 logger.info(
                     f"SimpleExitV2: Applied price override for {symbol}: "
-                    f"${old_price:.2f} → ${fresh_price:.2f}"
+                    f"${old_price:.2f} → ${new_price:.2f}"
                 )
         
         if overrides_applied > 0:

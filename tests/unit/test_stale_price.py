@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from stock_swing.utils.stale_price import apply_empty_override_guard, apply_price_overrides
 
 
@@ -43,7 +45,12 @@ def test_apply_price_overrides_updates_in_place():
         "QTEC": {"fresh_price": 299.49},
     }
 
-    applied = apply_price_overrides(positions, overrides)
+    # Closed US weekend: prior-session/manual-style overrides remain allowed.
+    applied = apply_price_overrides(
+        positions,
+        overrides,
+        as_of=datetime(2026, 5, 23, 15, 0, tzinfo=UTC),
+    )
 
     assert applied == 2
     assert positions["CHPX"]["current_price"] == 93.07
