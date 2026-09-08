@@ -329,6 +329,58 @@ class TestG1V2cFastFillSellPhantom:
         assert {"GOOG", "SKYY"} <= result.excused_presence
 
 
+class TestG1V2eCrossRunPendingSellLag:
+    """A recent pending SELL remains excusable across the next paper run."""
+
+    def test_regression_path_sell_fill_ingested_on_next_run_20260908(self):
+        diff = _build_diff(
+            broker_symbols=["SNOW"],
+            tracker_symbols=["SNOW", "PATH"],
+        )
+
+        result = apply_lag_exclusion(
+            diff,
+            [],
+            pending_sell_symbols={"PATH"},
+        )
+
+        assert result.adjusted_mismatch_count == 0
+        assert "PATH" in result.excused_presence
+
+    def test_pending_sell_does_not_excuse_another_symbol(self):
+        diff = _build_diff(
+            broker_symbols=["AAPL"],
+            tracker_symbols=["AAPL", "SNOW"],
+        )
+
+        result = apply_lag_exclusion(
+            diff,
+            [],
+            pending_sell_symbols={"PATH"},
+        )
+
+        assert result.adjusted_mismatch_count == 1
+        assert "SNOW" not in result.excused_presence
+
+    def test_pending_sell_excuses_cross_run_partial_fill_qty_lag(self):
+        diff = _build_diff(
+            broker_symbols=["PATH"],
+            tracker_symbols=["PATH"],
+            qty_mismatches=[
+                {"symbol": "PATH", "broker_qty": 100, "tracker_qty": 3339},
+            ],
+        )
+
+        result = apply_lag_exclusion(
+            diff,
+            [],
+            pending_sell_symbols={"PATH"},
+        )
+
+        assert result.adjusted_mismatch_count == 0
+        assert "PATH" in result.excused_qty
+
+
 class TestG1V2dBuyAddToExistingPositionQtyLag:
     """G1-v2-d: qty-mismatch lag on BUY that adds to an EXISTING open position.
 
@@ -460,3 +512,10 @@ class TestPaperDemoUsesCanonicalModule:
             "paper_demo.py must pass _adjusted_mismatch to build_risk_snapshot() "
             "as broker_tracker_mismatch_count (R0-v2-C requirement)"
         )
+
+    def test_paper_demo_passes_recent_pending_sells_to_lag_exclusion(self):
+        from pathlib import Path
+        src = Path("src/stock_swing/cli/paper_demo.py").read_text()
+
+        assert "read_recent_pending_exit_symbols" in src
+        assert "pending_sell_symbols=_pending_sell_symbols" in src

@@ -14,6 +14,8 @@ def test_next_report_schedule_text_for_sunday_jst_rolls_to_tuesday() -> None:
 
 def test_build_report_uses_japanese_mode_labels_and_new_footer(monkeypatch) -> None:
     monkeypatch.setattr(daily_report, "_next_report_schedule_text", lambda: "次回レポート予定: 2026-05-16 09:00 JST")
+    # Report layout must not depend on the live runtime circuit-breaker file.
+    monkeypatch.setattr(daily_report, "_load_circuit_breaker", lambda _root: {"status": "ok"})
 
     snapshot = PerformanceSnapshot(
         equity=1_000_000.0,

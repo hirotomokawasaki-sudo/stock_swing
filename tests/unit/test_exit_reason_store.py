@@ -12,6 +12,7 @@ from stock_swing.tracking.exit_reason_store import (
     delete_exit_reason,
     purge_old_entries,
     read_exit_reason,
+    read_recent_pending_exit_symbols,
     write_exit_reason,
 )
 
@@ -92,3 +93,40 @@ def test_write_with_empty_order_id_is_noop(tmp_root: Path) -> None:
     write_exit_reason(tmp_root, "", "AAPL", "Stop loss triggered", "stop_loss")
     store_path = tmp_root / "data" / "tracking" / "pending_exit_reasons.json"
     assert not store_path.exists()
+
+
+def test_read_recent_pending_exit_symbols_applies_strict_ttl(tmp_root: Path) -> None:
+    store_path = tmp_root / "data" / "tracking" / "pending_exit_reasons.json"
+    store_path.parent.mkdir(parents=True, exist_ok=True)
+    now = datetime(2026, 9, 8, 13, 35, tzinfo=timezone.utc)
+    store_path.write_text(json.dumps({
+        "recent": {
+            "symbol": "PATH",
+            "written_at": (now - timedelta(minutes=10)).isoformat(),
+        },
+        "boundary": {
+            "symbol": "MU",
+            "written_at": (now - timedelta(minutes=30)).isoformat(),
+        },
+        "stale": {
+            "symbol": "SNOW",
+            "written_at": (now - timedelta(minutes=31)).isoformat(),
+        },
+        "future": {
+            "symbol": "META",
+            "written_at": (now + timedelta(seconds=1)).isoformat(),
+        },
+        "malformed": {"symbol": "AMD", "written_at": "not-a-date"},
+    }), encoding="utf-8")
+
+    assert read_recent_pending_exit_symbols(
+        tmp_root, max_age_seconds=1800, now=now,
+    ) == {"PATH", "MU"}
+
+
+def test_read_recent_pending_exit_symbols_fails_closed_on_corrupt_store(tmp_root: Path) -> None:
+    store_path = tmp_root / "data" / "tracking" / "pending_exit_reasons.json"
+    store_path.parent.mkdir(parents=True, exist_ok=True)
+    store_path.write_text("not-json", encoding="utf-8")
+
+    assert read_recent_pending_exit_symbols(tmp_root) == set()

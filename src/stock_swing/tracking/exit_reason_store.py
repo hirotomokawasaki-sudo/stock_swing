@@ -104,6 +104,59 @@ def read_exit_reason(project_root: Path, broker_order_id: str) -> dict[str, Any]
         return None
 
 
+def read_recent_pending_exit_symbols(
+    project_root: Path,
+    max_age_seconds: int = 30 * 60,
+    *,
+    now: datetime | None = None,
+) -> set[str]:
+    """Return symbols with a recently submitted, not-yet-consumed SELL.
+
+    The pending-exit store survives across ``paper_demo`` runs, unlike the
+    current run's in-memory submission list.  A short, strict TTL lets the
+    post-run mismatch guard excuse the known fill-ingestion window without
+    hiding a persistent broker/tracker discrepancy.
+
+    Missing, corrupt, malformed, stale, or future-dated entries are ignored
+    (fail closed).  An entry exactly on the TTL boundary remains valid.
+    """
+    if max_age_seconds < 0:
+        return set()
+
+    path = _store_path(project_root)
+    if not path.exists():
+        return set()
+
+    try:
+        store: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return set()
+
+    reference_time = now or datetime.now(timezone.utc)
+    if reference_time.tzinfo is None:
+        reference_time = reference_time.replace(tzinfo=timezone.utc)
+
+    symbols: set[str] = set()
+    for entry in store.values():
+        if not isinstance(entry, dict):
+            continue
+        symbol = entry.get("symbol")
+        written_at = entry.get("written_at")
+        if not isinstance(symbol, str) or not symbol.strip() or not isinstance(written_at, str):
+            continue
+        try:
+            written = datetime.fromisoformat(written_at.replace("Z", "+00:00"))
+            if written.tzinfo is None:
+                written = written.replace(tzinfo=timezone.utc)
+            age_seconds = (reference_time - written).total_seconds()
+        except (TypeError, ValueError):
+            continue
+        if 0 <= age_seconds <= max_age_seconds:
+            symbols.add(symbol.strip().upper())
+
+    return symbols
+
+
 def delete_exit_reason(project_root: Path, broker_order_id: str) -> None:
     """Remove a fulfilled entry from the store atomically (cleanup after fill recorded)."""
     if not broker_order_id:

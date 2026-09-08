@@ -28,6 +28,11 @@ History:
     Incident: 2026-08-03 19:55 JST SNOW false HALT (existing 116-share position
     + new 116-share BUY; postrun check ran ~4s before the second fill
     propagated; broker=116 vs tracker=232). See docs/daily_logs/2026-08-04.md.
+  G1-v2-e (2026-09-08): extend SELL lag exclusion across paper_demo runs while
+    the persisted pending-exit record is recent. PATH filled after the 13:25Z
+    run, appeared tracker_only at 13:35Z, and was consumed at 13:45Z. The old
+    current-run-only submission list caused a false HALT. A strict TTL is
+    applied by exit_reason_store before symbols reach this function.
 """
 from __future__ import annotations
 
@@ -54,6 +59,8 @@ class LagExclusionResult:
 def apply_lag_exclusion(
     bt_diff: dict[str, Any],
     new_submissions: list[Any],   # OrderSubmission or duck-typed
+    *,
+    pending_sell_symbols: set[str] | None = None,
 ) -> LagExclusionResult:
     """Compute adjusted mismatch count by excluding submission-lag false positives.
 
@@ -85,7 +92,12 @@ def apply_lag_exclusion(
           that resolves within minutes — not a real mismatch.
         Incident: 2026-07-24 SKYY false HALT (see docs/daily_logs/2026-07-25.md).
 
-    Real mismatches (symbol/qty not linked to this run's submissions) still count.
+    G1-v2-e (cross-run pending SELL lag):
+      - Apply the same SELL presence/qty exclusions to symbols whose persisted
+        pending-exit record is still inside the strict TTL enforced by
+        exit_reason_store. This covers fills that occur between paper runs.
+
+    Real mismatches not linked to a current/recent pending submission still count.
     """
     new_buy_symbols: set[str] = {
         s.symbol for s in new_submissions if getattr(s, "side", "") == "buy"
@@ -93,6 +105,7 @@ def apply_lag_exclusion(
     new_sell_symbols: set[str] = {
         s.symbol for s in new_submissions if getattr(s, "side", "") == "sell"
     }
+    new_sell_symbols.update(pending_sell_symbols or set())
 
     # G1-v2: presence lag
     # G1-v2-c: also excuse tracker_only ∩ new_sell_symbols (fast-fill SELL phantom)
@@ -135,7 +148,8 @@ def apply_lag_exclusion(
     if result.any_excused:
         logger.info(
             "post_run_mismatch: excused presence=%s qty=%s "
-            "(broker API lag after submission); raw=%d adjusted=%d",
+            "(broker API/fill-ingestion lag after current or recent pending submission); "
+            "raw=%d adjusted=%d",
             sorted(excused_presence),
             excused_qty,
             raw,

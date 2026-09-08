@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import patch
 
@@ -55,6 +56,8 @@ def test_build_overrides_detects_stale_symbols():
         massive=massive,
         min_deviation_pct=5.0,
         previous_overrides={},
+        # Fixed market-closed time keeps the session guard deterministic.
+        as_of=datetime(2026, 5, 23, 12, 0, tzinfo=UTC),
     )
 
     assert set(overrides) == {"CHPX", "QTEC"}

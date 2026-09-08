@@ -50,6 +50,7 @@ def build_overrides(
     massive: MassiveClient,
     min_deviation_pct: float,
     previous_overrides: dict[str, Any] | None = None,
+    as_of: datetime | None = None,
 ) -> tuple[dict[str, Any], list[str], list[str]]:
     positions_env = broker.fetch_positions()
     positions = positions_env.payload if hasattr(positions_env, "payload") else positions_env
@@ -58,6 +59,7 @@ def build_overrides(
         massive,
         min_deviation_pct=min_deviation_pct,
         previous_overrides=previous_overrides,
+        as_of=as_of,
     )
 
 

@@ -87,7 +87,11 @@ from stock_swing.strategy_engine.sector_shock_hold import (
     SectorShockHoldConfig,
     get_symbol_sector_returns,
 )
-from stock_swing.tracking.exit_reason_store import delete_exit_reason, write_exit_reason
+from stock_swing.tracking.exit_reason_store import (
+    delete_exit_reason,
+    read_recent_pending_exit_symbols,
+    write_exit_reason,
+)
 from stock_swing.tracking.trade_event_store import TradeEvent
 from stock_swing.tracking.pnl_tracker import PnLTracker
 from stock_swing.tracking.fill_ledger import FillLedger, FillAlreadyConsumedError, FillQuarantinedError
@@ -2865,10 +2869,21 @@ def main() -> int:  # noqa: C901
             # positions API may lag (especially at market open) → symbol appears in tracker_only.
             # When a SELL is just submitted, the tracker closes it immediately but the broker
             # may still show it → symbol appears in broker_only.
-            # Both are transient API-lag false positives, not real integrity issues.
-            # G1-v2 / G1-v2-b: delegate to canonical module so tests call same code
+            # Both are transient API/fill-ingestion false positives, not real
+            # integrity issues. G1-v2-e also covers a SELL that filled between
+            # runs, but only while its persisted pending-exit record is <=30m old.
+            # Older/malformed records fail closed and remain real mismatches.
+            _pending_sell_symbols = read_recent_pending_exit_symbols(
+                project_root,
+                max_age_seconds=30 * 60,
+            )
+            # G1-v2 / G1-v2-b/e: delegate to canonical module so tests call same code
             from stock_swing.guardrails.postrun_mismatch import apply_lag_exclusion
-            _lag_result = apply_lag_exclusion(_bt_diff_postrun, _new_submissions)
+            _lag_result = apply_lag_exclusion(
+                _bt_diff_postrun,
+                _new_submissions,
+                pending_sell_symbols=_pending_sell_symbols,
+            )
             _adjusted_mismatch = _lag_result.adjusted_mismatch_count
 
             # R0-v2-C: full RiskSnapshot for post-run evaluation
