@@ -58,6 +58,58 @@ def _base_health(**overrides) -> dict:
     return base
 
 
+def test_console_summary_freshness_accepts_friday_close_on_weekend(monkeypatch, tmp_path):
+    """A Friday close summary remains valid while the US market is shut."""
+    from datetime import datetime, timezone
+
+    module = _load_module(monkeypatch, tmp_path)
+    summary = {"run": {"timestamp": "2026-09-11T19:55:00+00:00"}}
+    result = module._console_summary_freshness(
+        summary,
+        now=datetime(2026, 9, 13, 20, 0, tzinfo=timezone.utc),
+    )
+    assert result["pass"] is True
+    assert "2026-09-11 covered" in result["actual"]
+
+
+def test_console_summary_freshness_rejects_thursday_on_weekend(monkeypatch, tmp_path):
+    """Calendar awareness must not excuse a missed Friday run."""
+    from datetime import datetime, timezone
+
+    module = _load_module(monkeypatch, tmp_path)
+    summary = {"run": {"timestamp": "2026-09-10T19:55:00+00:00"}}
+    result = module._console_summary_freshness(
+        summary,
+        now=datetime(2026, 9, 13, 20, 0, tzinfo=timezone.utc),
+    )
+    assert result["pass"] is False
+    assert "not_covered" in result["actual"]
+
+
+def test_console_summary_freshness_rejects_stale_weekday_summary(monkeypatch, tmp_path):
+    from datetime import datetime, timezone
+
+    module = _load_module(monkeypatch, tmp_path)
+    summary = {"run": {"timestamp": "2026-09-08T19:55:00+00:00"}}
+    result = module._console_summary_freshness(
+        summary,
+        now=datetime(2026, 9, 10, 19, 0, tzinfo=timezone.utc),
+    )
+    assert result["pass"] is False
+
+
+def test_console_summary_freshness_accepts_recent_summary(monkeypatch, tmp_path):
+    from datetime import datetime, timezone
+
+    module = _load_module(monkeypatch, tmp_path)
+    summary = {"run": {"timestamp": "2026-09-10T18:00:00+00:00"}}
+    result = module._console_summary_freshness(
+        summary,
+        now=datetime(2026, 9, 10, 19, 0, tzinfo=timezone.utc),
+    )
+    assert result["pass"] is True
+
+
 def test_mismatch_check_uses_real_mismatch_count_when_available(monkeypatch, tmp_path):
     """Regression: raw mismatch_count=2 (lag-excused) must PASS when
     broker_tracker_diff.real_mismatch_count=0 is present (2026-08-05 fix).

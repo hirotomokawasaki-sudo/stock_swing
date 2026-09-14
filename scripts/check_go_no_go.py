@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import zoneinfo
@@ -20,6 +20,8 @@ import zoneinfo
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 sys.path.insert(0, str(PROJECT_ROOT))  # for `console.*` imports (promotion readiness)
+
+from stock_swing.utils.market_calendar import MarketCalendar
 
 JST = zoneinfo.ZoneInfo("Asia/Tokyo")
 CURRENT_MODE_PATH = PROJECT_ROOT / "config" / "runtime" / "current_mode.yaml"
@@ -47,9 +49,11 @@ def _load(path: Path) -> dict:
 # Paper_demo cron jobs run at minimum every ~4 hours on trading days (see
 # docs/console_improvement_tasks.md schedule); a summary older than this
 # is either a real staleness bug or a market-closed/weekend gap. Use a
-# generous 30h threshold (covers one full weekday of a delayed cron plus
-# overnight) rather than trying to model exact market-hours schedules here.
+# generous 30h threshold for ordinary weekdays.  Weekend and holiday gaps are
+# evaluated against the most recently completed US market close so a valid
+# Friday close summary does not become stale merely because markets are shut.
 _CONSOLE_SUMMARY_MAX_AGE_HOURS = 30.0
+_CONSOLE_SUMMARY_CLOSE_TOLERANCE = timedelta(minutes=30)
 
 # ── economic_viability gate (2026-09-05, ユーザー承認済み) ──────────────────
 # 背景: Required 条件は従来すべて「システムが壊れていないか」（鮮度・整合性・
@@ -117,7 +121,7 @@ def check_economic_viability(pnl_state: dict, cohort_start: str) -> dict:
     }
 
 
-def _console_summary_age_hours(summary: dict) -> float | None:
+def _console_summary_timestamp(summary: dict) -> datetime | None:
     ts = ((summary.get("run") or {}).get("timestamp"))
     if not ts:
         return None
@@ -125,10 +129,61 @@ def _console_summary_age_hours(summary: dict) -> float | None:
         parsed = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
         if parsed.tzinfo is None:
             parsed = parsed.replace(tzinfo=timezone.utc)
-        age = (datetime.now(timezone.utc) - parsed).total_seconds() / 3600.0
-        return round(age, 2)
+        return parsed.astimezone(timezone.utc)
     except Exception:
         return None
+
+
+def _console_summary_age_hours(
+    summary: dict,
+    *,
+    now: datetime | None = None,
+) -> float | None:
+    parsed = _console_summary_timestamp(summary)
+    if parsed is None:
+        return None
+    reference = now or datetime.now(timezone.utc)
+    if reference.tzinfo is None:
+        reference = reference.replace(tzinfo=timezone.utc)
+    age = (reference.astimezone(timezone.utc) - parsed).total_seconds() / 3600.0
+    return round(age, 2)
+
+
+def _console_summary_freshness(
+    summary: dict,
+    *,
+    now: datetime | None = None,
+) -> dict:
+    """Evaluate freshness using wall-clock age and the US trading calendar."""
+    reference = now or datetime.now(timezone.utc)
+    if reference.tzinfo is None:
+        reference = reference.replace(tzinfo=timezone.utc)
+    reference = reference.astimezone(timezone.utc)
+    parsed = _console_summary_timestamp(summary)
+    age_hours = _console_summary_age_hours(summary, now=reference)
+    if parsed is None or age_hours is None:
+        return {
+            "pass": False,
+            "actual": "missing_timestamp",
+            "required": "<=30h old OR covers latest completed US session",
+        }
+
+    recent = 0.0 <= age_hours <= _CONSOLE_SUMMARY_MAX_AGE_HOURS
+    latest_close = MarketCalendar.previous_trading_close_utc(reference)
+    covers_latest_session = (
+        parsed <= reference
+        and parsed >= latest_close - _CONSOLE_SUMMARY_CLOSE_TOLERANCE
+    )
+    passed = recent or covers_latest_session
+    session_status = "covered" if covers_latest_session else "not_covered"
+    return {
+        "pass": passed,
+        "actual": (
+            f"{age_hours}h old; latest_completed_session="
+            f"{latest_close.date().isoformat()} {session_status}"
+        ),
+        "required": "<=30h old OR covers latest completed US session",
+    }
 
 
 def check(econ_cohort_start: str = ECON_COHORT_START_DEFAULT) -> dict[str, dict]:
@@ -145,12 +200,10 @@ def check(econ_cohort_start: str = ECON_COHORT_START_DEFAULT) -> dict[str, dict]
     results: dict[str, dict] = {}
 
     # 0. console summary freshness (gates trust in every health.* field below)
-    _age_hours = _console_summary_age_hours(summary)
+    _freshness = _console_summary_freshness(summary)
     results["console_summary_freshness"] = {
         "label": "console_summary_freshness",
-        "pass": _age_hours is not None and _age_hours <= _CONSOLE_SUMMARY_MAX_AGE_HOURS,
-        "actual": f"{_age_hours}h old" if _age_hours is not None else "missing_timestamp",
-        "required": f"<={_CONSOLE_SUMMARY_MAX_AGE_HOURS:.0f}h old",
+        **_freshness,
     }
 
     # 0b. AUDIT FIX (2026-08-23): a diagnostic `--dry-run` invocation writes
