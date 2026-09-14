@@ -11,8 +11,9 @@ See SOURCE_MAPPING.md for field mappings.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, time, timezone
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from stock_swing.core.types import CanonicalRecord, RawEnvelope
 from stock_swing.normalization.normalizer import BaseNormalizer
@@ -80,9 +81,20 @@ class FinnhubNormalizer(BaseNormalizer):
             symbol = item.get("symbol", raw.request_params.get("symbol", "UNKNOWN"))
             date = item.get("date", raw.fetched_at.date().isoformat())
             
-            # Parse event time from date
+            # Finnhub supplies the exchange-local release bucket in ``hour``.
+            # Treating the date as 00:00 UTC made a same-day AMC release look
+            # historical for every US trading run after 00:00 UTC (PATH,
+            # 2026-09-03). Preserve the release bucket in the timestamp so
+            # same-day pre/post-event checks remain point-in-time correct.
+            release_bucket = str(item.get("hour") or "").strip().lower()
+            release_time_et = time(8, 0) if release_bucket == "bmo" else time(16, 0)
             try:
-                event_time = datetime.fromisoformat(date).replace(tzinfo=timezone.utc)
+                event_date = datetime.fromisoformat(date).date()
+                event_time = datetime.combine(
+                    event_date,
+                    release_time_et,
+                    tzinfo=ZoneInfo("America/New_York"),
+                ).astimezone(timezone.utc)
             except (ValueError, TypeError):
                 event_time = raw.fetched_at
             

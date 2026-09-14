@@ -939,6 +939,7 @@ def main() -> int:  # noqa: C901
     # a missing/stale snapshot must not fail paper_demo -- it just means
     # event_swing_v1 sees 0 candidates for this run, same as it always has.
     earnings_event_results = []
+    _earnings_records = []
     try:
         from stock_swing.normalization.finnhub_normalizer import FinnhubNormalizer
         _earnings_raw_dir = project_root / "data" / "raw" / "finnhub"
@@ -1820,6 +1821,7 @@ def main() -> int:  # noqa: C901
     # already overbought. Never blocks. See
     # src/stock_swing/risk/rsi_diagnostic.py.
     from stock_swing.risk.rsi_diagnostic import RsiDiagnosticConfig, classify_rsi_overbought, fetch_latest_rsi, log_shadow as log_rsi_shadow
+    from stock_swing.risk.earnings_proximity_shadow import classify_earnings_proximity, log_observation as log_earnings_proximity
 
     _vol_gate_config = VolatilityGateConfig.from_env()
     _dfh_config = DistanceFromHighConfig.from_env()
@@ -1830,6 +1832,7 @@ def main() -> int:  # noqa: C901
     _dfh_log_path = project_root / "data" / "distance_from_high_log.jsonl"
     _news_sentiment_log_path = project_root / "data" / "news_sentiment_shadow_log.jsonl"
     _rsi_shadow_log_path = project_root / "data" / "rsi_diagnostic_shadow_log.jsonl"
+    _earnings_proximity_log_path = project_root / "data" / "earnings_proximity_shadow_log.jsonl"
     # Lazy, best-effort MassiveClient for the RSI shadow diagnostic only.
     # Constructed once per run (not per-symbol) and never allowed to fail
     # the run: if MASSIVE_API_KEY is missing or the SDK errors, the RSI
@@ -1979,9 +1982,19 @@ def main() -> int:  # noqa: C901
                         decision.symbol, _rsi_value, _rsi_diag_config,
                     )
                     log_rsi_shadow(_rsi_result, shadow_log_path=_rsi_shadow_log_path)
+                _earnings_proximity = classify_earnings_proximity(
+                    decision.symbol,
+                    decision.strategy_id,
+                    _earnings_records,
+                    observed_at=decision.generated_at,
+                )
+                log_earnings_proximity(
+                    _earnings_proximity,
+                    log_path=_earnings_proximity_log_path,
+                )
             except Exception as _shadow_exc:
                 logger.warning(
-                    "volatility_gate/distance_from_high/news_sentiment/rsi_diagnostic shadow check failed for %s (non-fatal): %s",
+                    "volatility_gate/distance_from_high/news_sentiment/rsi_diagnostic/earnings_proximity shadow check failed for %s (non-fatal): %s",
                     decision.symbol, _shadow_exc,
                 )
 

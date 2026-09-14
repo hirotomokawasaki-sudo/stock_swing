@@ -508,7 +508,7 @@ def collect_finnhub(symbols, store, max_runtime_seconds=0):
     return written, timed_out
 
 
-def collect_earnings_calendar(symbols, store, lookahead_days=10):
+def collect_earnings_calendar(symbols, store, lookahead_days=10, history_days=2):
     """Fetch upcoming earnings dates for the trading universe from Finnhub.
 
     2026-08-07: EventSwingStrategy (event_swing_v1) requires an
@@ -534,6 +534,8 @@ def collect_earnings_calendar(symbols, store, lookahead_days=10):
             than EarningsEventFeature's own 7-day lookahead window so a
             symbol's event doesn't fall out of range between collection
             runs before the feature re-evaluates it).
+        history_days: How many prior calendar days to retain (default 2) so
+            post-earnings chase risk can be observed in shadow mode.
 
     Returns:
         (written_paths, status_dict) tuple.
@@ -579,7 +581,7 @@ def collect_earnings_calendar(symbols, store, lookahead_days=10):
         return written, status
 
     today = datetime.now(timezone.utc).date()
-    from_date = today.isoformat()
+    from_date = (today - timedelta(days=history_days)).isoformat()
     to_date = (today + timedelta(days=lookahead_days)).isoformat()
 
     try:

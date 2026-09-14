@@ -26,11 +26,18 @@ class EarningsEventFeature(BaseFeature):
         """
         self.lookahead_days = lookahead_days
     
-    def compute(self, records: list[CanonicalRecord]) -> list[FeatureResult]:
+    def compute(
+        self,
+        records: list[CanonicalRecord],
+        *,
+        now: datetime | None = None,
+    ) -> list[FeatureResult]:
         """Compute earnings event proximity for symbols.
         
         Args:
             records: Canonical records (earnings calendar, filings, etc.).
+            now: Point-in-time evaluation timestamp. Defaults to current UTC;
+                injectable for deterministic replay/tests.
             
         Returns:
             List of FeatureResult (one per symbol with upcoming events).
@@ -54,7 +61,9 @@ class EarningsEventFeature(BaseFeature):
         
         # Compute features per symbol
         results = []
-        now = datetime.now(timezone.utc)
+        now = now or datetime.now(timezone.utc)
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=timezone.utc)
         lookahead = now + timedelta(days=self.lookahead_days)
         
         for symbol, symbol_records in symbols.items():
