@@ -41,6 +41,27 @@ def test_clear_state(tmp_path):
     assert read_observation(tmp_path)["status"] == "clear"
 
 
+def test_clear_state_accepts_console_string_none(tmp_path):
+    """Regression: the production snapshot serializes no pairs as "none"."""
+    _write_snapshot(tmp_path, "snapshot_20260915_003002.json", {"pass": True, "actual": "none"})
+    result = read_observation(tmp_path)
+    assert result["status"] == "clear"
+    assert result["pairs"] == []
+    assert result["signature"] == ""
+
+
+def test_single_string_pair_is_not_split_into_characters(tmp_path):
+    _write_snapshot(
+        tmp_path,
+        "snapshot_20260915_003002.json",
+        {"pass": False, "actual": "DELL/HPE=0.8835"},
+    )
+    result = read_observation(tmp_path)
+    assert result["status"] == "alert"
+    assert result["pairs"] == ["DELL/HPE=0.8835"]
+    assert result["signature"] == "DELL/HPE=0.8835"
+
+
 def test_missing_snapshot_fails_closed(tmp_path):
     with pytest.raises(FileNotFoundError):
         read_observation(tmp_path)

@@ -1,0 +1,37 @@
+{
+  "id": "bff09532-dcda-4bfb-9892-de779a2b8a7d",
+  "declarationKey": "stock_swing_high_correlation_pair_monitor",
+  "name": "stock_swing_high_correlation_pair_monitor",
+  "displayName": "高相関ペア変化監視（日次・silent）",
+  "enabled": true,
+  "agentId": "main",
+  "schedule": {
+    "kind": "cron",
+    "expr": "35 9 * * *",
+    "tz": "Asia/Tokyo",
+    "staggerMs": 0
+  },
+  "sessionTarget": "isolated",
+  "payload": {
+    "kind": "script",
+    "timeoutSeconds": 60,
+    "toolBudget": 5,
+    "toolsAllow": ["exec"],
+    "scriptSource": "scripts/automation_payloads/high_correlation_monitor.js@7f06e5e"
+  },
+  "delivery": {
+    "mode": "announce",
+    "channel": "telegram",
+    "to": "8417431746"
+  },
+  "state": {
+    "lastRunStatus": "ok",
+    "consecutiveErrors": 0,
+    "triggerState": {
+      "status": "alert",
+      "signature": "e|n|n|o",
+      "snapshot": "snapshot_20260915_003002.json",
+      "captured_at": "2026-09-15T00:30:02.839322+00:00"
+    }
+  }
+}

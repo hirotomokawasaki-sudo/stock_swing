@@ -27,7 +27,18 @@ def read_observation(snapshot_dir: Path) -> dict:
     if "pass" not in gate:
         raise ValueError("latest snapshot has no pairwise_correlation verdict")
 
-    pairs = sorted(str(item) for item in (gate.get("actual") or []) if item)
+    raw_actual = gate.get("actual")
+    if isinstance(raw_actual, list):
+        pairs = sorted(str(item) for item in raw_actual if item)
+    elif isinstance(raw_actual, str):
+        value = raw_actual.strip()
+        pairs = [] if value.lower() in {"", "none", "n/a"} else [value]
+    elif raw_actual is None:
+        pairs = []
+    else:
+        raise ValueError(
+            f"unsupported pairwise_correlation actual type: {type(raw_actual).__name__}"
+        )
     status = "clear" if bool(gate["pass"]) and not pairs else "alert"
     if status == "alert" and not pairs:
         pairs = ["pairwise_correlation failed without pair detail"]

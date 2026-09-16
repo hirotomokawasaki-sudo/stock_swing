@@ -16,6 +16,11 @@ try {
 
 const previous = trigger.state?.status ?? "unknown";
 const previousSignature = trigger.state?.signature ?? "";
+const pairs = Array.isArray(observation.pairs)
+  ? observation.pairs.map(String)
+  : observation.pairs
+    ? [String(observation.pairs)]
+    : [];
 const signature = observation.status === "alert"
   ? String(observation.signature ?? "")
   : observation.status === "error"
@@ -26,7 +31,7 @@ let notify;
 if (observation.status === "error") {
   notify = `❌ 高相関ペア監視エラー\n${signature.slice(0, 500)}`;
 } else if (observation.status === "alert" && (previous !== "alert" || signature !== previousSignature)) {
-  notify = `⚠️ 高相関ペア変化\n${(observation.pairs ?? []).join("\n")}\n基準: |correlation| >= 0.8`;
+  notify = `⚠️ 高相関ペア変化\n${pairs.join("\n")}\n基準: |correlation| >= 0.8`;
 } else if (observation.status === "clear" && previous === "alert") {
   notify = "✅ 高相関ペア監視: 閾値超過ペアが解消しました";
 }
