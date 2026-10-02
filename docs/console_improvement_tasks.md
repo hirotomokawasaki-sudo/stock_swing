@@ -3705,28 +3705,28 @@ min_members修正込みの数値を新headlineとして採用することを推�
 - 本レビューはcronによる提言であり、配線・コード・設定の変更は一切実施していない。
 
 **2026-10-02 第2回配線判断レビュー（cron実施、提言・記録のみ）**:
-09:00 JST時点では当日09:33 JST頃のlogger実行前のため、2026-10-01分までを集計した。
+09:45 JST時点で当日09:33 JSTのlogger実行後まで（2026-10-02分を含む）集計した。
 
 - **並行ログへの移行を確認**: 旧headlineは`data/sector_rotation_shadow_log.jsonl`
   （top_n=2/lookback=63d/min_members未適用）で継続しつつ、09-08から
   `data/sector_rotation_new_headline_shadow_log.jsonl`に新headline
   （top_n=2/lookback=126d/min_members=2）を分離して毎日並行記録している。
   したがって09-08時点の「旧headlineのみ」という先行条件違反は解消した。
-- **蓄積・エラー・rebalance**: 旧系列は29レコード/27ユニーク平日
-  （08-26〜10-01、平日欠落0、08-26/09-08に重複各1、JSON/error記録0）、
-  `rebalance_due=True`は08-26/09-16の2回。新系列は18レコード/18営業日
-  （09-08〜10-01、欠落0、JSON/error記録0）、Trueは09-08/09-29の**2回**。
+- **蓄積・エラー・rebalance**: 旧系列は30レコード/28ユニーク実行日
+  （08-26〜10-02、平日欠落0、08-26/09-08に重複各1、JSON/error記録0）、
+  `rebalance_due=True`は08-26/09-16の2回。新系列は19レコード/19実行日
+  （09-08〜10-02、欠落0、JSON/error記録0）、Trueは09-08/09-29の**2回**。
   判断対象である新headlineは事前基準の3回以上に未達。
-- **フリップ/安定性**: 旧系列は連続26遷移中11回（42.3%）フリップし、
-  `robotics_ai+semiconductor` 17/27日（63.0%）、
-  `technology_cloud+broad_market` 10/27日。新系列も17遷移中7回（41.2%）フリップ。
-  ただし新系列では`semiconductor`が18/18日（100%）選択され、
-  `robotics_ai+semiconductor` 14/18日（77.8%）、`semiconductor+software` 4/18日。
+- **フリップ/安定性**: 旧系列は連続27遷移中11回（40.7%）フリップし、
+  `robotics_ai+semiconductor` 18/28日（64.3%）、
+  `technology_cloud+broad_market` 10/28日。新系列も18遷移中7回（38.9%）フリップ。
+  ただし新系列では`semiconductor`が19/19日（100%）選択され、
+  `robotics_ai+semiconductor` 15/19日（78.9%）、`semiconductor+software` 4/19日。
   第2枠は不安定だが、半導体集中方向はむしろ極めて安定している。
 - **候補と既存露出**: `robotics_ai+semiconductor`時の候補は BOTZ/ROBO と
   CHPS/CHPX/FTXL/SHOC/SMH/SMHX/SOXQ/SOXX（10銘柄中8銘柄が半導体関連）。
   `semiconductor+software`時も半導体8銘柄を含む15銘柄で、既知の出血コホート
-  **FTXL/CHPXは新系列18/18日すべてに再登場**。10-02 00:00 UTC更新のtrackerでは
+  **FTXL/CHPXは新系列19/19日すべてに再登場**。10-02 00:00 UTC更新のtrackerでは
   半導体関連openは ARM/CDNS/CRDO/FTXL/MRVL/MU/SMHX/SOXQ/SOXX、entry notional近似
   **$470,246.78 / equity $1,011,816.55 = 46.5%**。FTXL自体もopenであり、
   新規配線余地は30%基準上ゼロ（時価ではなくentry価格近似である点に注意）。
@@ -3737,8 +3737,9 @@ min_members修正込みの数値を新headlineとして採用することを推�
   方式。実際に連結露出46.5%まで積み上がっており、09-05検証で有効だった30%上限の
   代替として機能していない。
 - **判断: 本番配線見送り / paper層提案も現時点では行わず / shadow継続**。
-  economic viability NO-GO下のエクスポージャ増施策であり、(1) 新headlineの
-  rebalance実績2回<3回、(2) 半導体が18/18日選択、(3) 既存連結露出が30%超、
+  最新economic viabilityは **n=65 / PF=0.890 / expectancy=-$129.07** でNO-GO。
+  その下でのエクスポージャ増施策であり、(1) 新headlineの
+  rebalance実績2回<3回、(2) 半導体が19/19日選択、(3) 既存連結露出が30%超、
   (4) 必須30% cap未実装、のため。コード・config・本番/paper配線は変更していない。
 - **次回提案**: 新headlineの3回目のrebalance見込み（10-20）後の
   **2026-10-21 09:45 JST**。本automation権限では新規jobを登録できないため未登録。
