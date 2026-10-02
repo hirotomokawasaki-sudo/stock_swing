@@ -76,9 +76,14 @@ paper A/B昇格を含むすべての本番挙動変更は、以下 (a)(b)(c) を
 | 8 | 2026-09-05 | R18-B: 決算前Nカレンダー日ブラックアウト | `analyze_earnings_blackout_counterfactual.py` | N∈{3,5,7} | 全closed 357件（個別株264） | N=7で+$9,125（PF 0.888→0.907）だが4件の大負け依存。ギャップ貫通29件中決算またぎ1件のみ | △ 単独昇格なし（R18-Cのオプション束へ） |
 | 9 | 2026-09-08 | volatility_adjusted_stop max=1.25上限制限 | `simulate_daily_path_volatility_stop.py` | 1 | closed 357件（PnL比較292件） | baseline比+$8,228、改善22/悪化14、新規誤stop 0。ただし最大悪化INTC -$8,199、reason一致率59% | △ 9/22正式評価候補、本番変更なし |
 | 10 | 2026-09-08 | R18-C: ATR定額リスクサイジング（reduce-only） | `analyze_atr_risk_sizing_counterfactual.py` | 事前主候補1+感度3 × 3区間 | closed 357件、ATR coverage 100% | P0は全期間+$47,097/PF 0.888→1.039、pseudo-holdout+$6,467/PF 0.779→0.834、CVaR/maxDD改善 | △ 事前基準通過、paper A/B候補（真のOOSではない） |
+| 11 | 2026-09-22 | volatility_adjusted_stop max=1.25正式評価 | `simulate_daily_path_volatility_stop.py` | 2（max=1.75/1.25） | closed 367件（PnL比較310件） | baseline比は現行+$13,156、候補+$9,302。候補は新規誤発動0だが現行比-$3,855 | △ max変更見送り（sample基準未達・全履歴劣後） |
+| 12 | 2026-09-22 | R16 lot-level exit（CRWD希釈exit） | shadow log + yfinance 1分/日次実価格 | 1 | 独立1 position episode（CRWD 2ロット） | per-lot反実仮想は09-21終値markで実績比約+$1,225。若ロットstop床未到達だが未実現 | △ shadow維持（独立sample不足・A/B基準未登録） |
+| 13 | 2026-09-22 | R14 dip-buy shadow候補の5〜10営業日反実仮想 | shadow log + yfinance日次OHLC + 既存SimpleExitV2 replay helper | 1 | 日次重複除去357候補（10日成熟175、09-02/03成熟75） | 10日成熟は平均+1.59%/勝率69.7%。09-02/03は+2.85%だが09-04は9日時点-2.32%。半導体約半数・候補間非独立 | △ shadow維持（設計3条件・A/B・OOS未完、economic NO-GO） |
+| 14 | 2026-10-02 | R14 dip-buy signal後1/3/5営業日実リターン | shadow log + yfinance日次OHLC | 1（3 horizon） | 日次重複除去411候補（成熟394/378/368） | 平均+0.16%/+1.32%/+1.58%、precision 51.8%/55.3%/57.3%。5日p5=-10.27%、最悪-33.42%、半導体43.1% | △ shadow維持（探索値で未事前登録、A/B・OOS・設計条件未完、30% cap超過） |
 
-**多重検定の現状カウント**: 同一トレード集合への反実仮想は累計10本
-（2026-09-05に5本、2026-09-08に2本）。以後増えるたびにこの台帳で管理する。
+**多重検定の現状カウント**: 反実仮想/ヒストリカル検証は累計14本
+（2026-09-05に5本、2026-09-08に2本、2026-09-22に3本、2026-10-02に1本追加）。以後増えるたびに
+この台帳で管理する。
 
 ### 現時点の昇格候補セット（すべて上記必須条件の対象）
 

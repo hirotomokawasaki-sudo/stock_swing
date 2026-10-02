@@ -3704,6 +3704,48 @@ min_members修正込みの数値を新headlineとして採用することを推�
   3. rebalance_due=True が3回以上蓄積した後、次回レビュー（10-02目安）で再判断
 - 本レビューはcronによる提言であり、配線・コード・設定の変更は一切実施していない。
 
+**2026-10-02 第2回配線判断レビュー（cron実施、提言・記録のみ）**:
+09:00 JST時点では当日09:33 JST頃のlogger実行前のため、2026-10-01分までを集計した。
+
+- **並行ログへの移行を確認**: 旧headlineは`data/sector_rotation_shadow_log.jsonl`
+  （top_n=2/lookback=63d/min_members未適用）で継続しつつ、09-08から
+  `data/sector_rotation_new_headline_shadow_log.jsonl`に新headline
+  （top_n=2/lookback=126d/min_members=2）を分離して毎日並行記録している。
+  したがって09-08時点の「旧headlineのみ」という先行条件違反は解消した。
+- **蓄積・エラー・rebalance**: 旧系列は29レコード/27ユニーク平日
+  （08-26〜10-01、平日欠落0、08-26/09-08に重複各1、JSON/error記録0）、
+  `rebalance_due=True`は08-26/09-16の2回。新系列は18レコード/18営業日
+  （09-08〜10-01、欠落0、JSON/error記録0）、Trueは09-08/09-29の**2回**。
+  判断対象である新headlineは事前基準の3回以上に未達。
+- **フリップ/安定性**: 旧系列は連続26遷移中11回（42.3%）フリップし、
+  `robotics_ai+semiconductor` 17/27日（63.0%）、
+  `technology_cloud+broad_market` 10/27日。新系列も17遷移中7回（41.2%）フリップ。
+  ただし新系列では`semiconductor`が18/18日（100%）選択され、
+  `robotics_ai+semiconductor` 14/18日（77.8%）、`semiconductor+software` 4/18日。
+  第2枠は不安定だが、半導体集中方向はむしろ極めて安定している。
+- **候補と既存露出**: `robotics_ai+semiconductor`時の候補は BOTZ/ROBO と
+  CHPS/CHPX/FTXL/SHOC/SMH/SMHX/SOXQ/SOXX（10銘柄中8銘柄が半導体関連）。
+  `semiconductor+software`時も半導体8銘柄を含む15銘柄で、既知の出血コホート
+  **FTXL/CHPXは新系列18/18日すべてに再登場**。10-02 00:00 UTC更新のtrackerでは
+  半導体関連openは ARM/CDNS/CRDO/FTXL/MRVL/MU/SMHX/SOXQ/SOXX、entry notional近似
+  **$470,246.78 / equity $1,011,816.55 = 46.5%**。FTXL自体もopenであり、
+  新規配線余地は30%基準上ゼロ（時価ではなくentry価格近似である点に注意）。
+- **30% capの実装・有効性**: R13-Dに必要な`is_semiconductor_related`横断の
+  equity比30% hard capは未実装。runtimeは一般sector cap 80%、相関clusterは
+  `semis_combined` 40%（`semis_us` 30%/`semis_etf` 15%は別枠）で、しかもcluster
+  filterは提案注文量込みのprojected exposureではなく現状超過時に後続buyを止める
+  方式。実際に連結露出46.5%まで積み上がっており、09-05検証で有効だった30%上限の
+  代替として機能していない。
+- **判断: 本番配線見送り / paper層提案も現時点では行わず / shadow継続**。
+  economic viability NO-GO下のエクスポージャ増施策であり、(1) 新headlineの
+  rebalance実績2回<3回、(2) 半導体が18/18日選択、(3) 既存連結露出が30%超、
+  (4) 必須30% cap未実装、のため。コード・config・本番/paper配線は変更していない。
+- **次回提案**: 新headlineの3回目のrebalance見込み（10-20）後の
+  **2026-10-21 09:45 JST**。本automation権限では新規jobを登録できないため未登録。
+  メインセッションからレビューautomationを登録し、一覧で実在確認すること。次回も
+  30% projected hard capの承認・実装・検証がない限り配線不可とする。
+- 詳細: `docs/daily_logs/2026-10-02.md`
+
 **既存進捗**:
 - JP半導体overnight spillover: Phase 1（相関検証、GO判定済み）、Phase 2（戦略設計）、
   Phase 2.5（shadow検証、日次収集中）完了済み。IBKR接続確立後にPhase 3（実配線）へ
@@ -4100,6 +4142,31 @@ point-in-time（lookaheadなし）で「もし共有EntryFilterEngineで両戦�
   事前登録が完了した場合のみ再審査。必要ならメインセッションから
   `stock_swing_r14_dip_buy_promotion_review_20261020`を登録して実在確認する。
   詳細: `docs/daily_logs/2026-09-22.md`。
+
+
+### 第2回Promotionレビュー（2026-10-02、観察・記録・提言のみ）
+
+- **蓄積/健全性**: 累計 **1,304行 / 27営業日 / 105 run**。予定108 runとの差3は
+  09-01 13:25/13:35/16:00 UTCの既知paper_demo欠落のみ。JSON欠損・条件違反・
+  dip-buy関連WARNING/ERRORはいずれも0。09-22以降の増分は177行/8営業日/32 run。
+- **頻度/集中**: 日次run重複を除く`symbol×signal日`は411候補（53銘柄）。raw上位は
+  FICO 75 / PATH 68 / AMAT 62 / MDB 61 / ADBE 61 / CRDO 58。最大銘柄比率5.8%。
+  半導体関連はraw **565/1,304=43.3%**、日次重複除去後 **177/411=43.1%**。
+- **実リターン（look-aheadなし）**: signal翌営業日始値+10bpsでentryし、1/3/5営業日
+  終値-10bpsでmark。成熟候補は順にn=394/378/368、precision（ret>0）は
+  **51.8%/55.3%/57.3%**、平均 **+0.16%/+1.32%/+1.58%**、中央値
+  **+0.06%/+1.36%/+1.35%**。下方尾p5は **-3.90%/-7.20%/-10.27%**、最悪値は
+  **-12.59%/-30.67%/-33.42%**。正の平均だけでなく5日下方尾の拡大を重視する。
+- **30% cap不整合**: 10-02 trackerの半導体関連open entry notionalは
+  **$470,246.78 / equity $1,011,816.55 = 46.5%**（11 lot、9銘柄）。既に30%上限を
+  16.5pt超過し、追加可能枠は0。R14候補の43%はcap適用前の非配線可能候補。
+- **判断: shadow継続、paper A/B提案・本番promotion不可**。1/3/5日平均は正だが、
+  これは事前登録された昇格基準ではなく探索値のため後付け採用しない。chop連動、Gate 3
+  strategy-scoping、sub-ledger資本配分、前向きpaper A/B、R13-C後OOSは未完で、
+  economic viabilityもNO-GO。設定・コード・発注ロジックは変更していない。
+- **次アクション**: 設計3条件と30% projected hard capを先に解消し、A/Bのsample数・
+  観測期間・precision/期待値/下方尾の合格/中止基準をレビュー前に事前登録する。
+  次回目安は既定どおり2026-10-20。詳細: `docs/daily_logs/2026-10-02.md`。
 
 
 ---
