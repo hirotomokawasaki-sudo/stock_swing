@@ -4348,6 +4348,45 @@ trailing_stop由来で同フラグの対象外。time_based機能の追加実績
 `stock_swing_lot_level_exit_diagnostic_review_20261006`を登録して一覧で実在確認する
 必要がある。詳細: `docs/daily_logs/2026-09-22.md`
 
+### 📋 2026-10-06 第3回中間レビュー結果（cron `stock_swing_lot_level_exit_diagnostic_review_20261006`）
+
+**1) 増分と独立episode**: shadow logは**30件**（09-22レビュー時7件から**+23件**）。
+増分内訳は `aggregate_missed_lot_exit` **18件**、`aggregate_exit_lot_disagreement`
+**5件**。同じlot組のrun重複を除くと、増分は**4独立position episode**
+（MRVL/HPE/MU/HPQ）、累計は**8 episode**（NOW/ORCL/PLTR/CRWD/MRVL/HPE/MU/HPQ）。
+MRVLとHPEは価格時点によりmissedとdisagreementの両方へ遷移、MUはmissedのみ、
+HPQはtime_based disagreementのみ。PATHの新規discrepancyは0件だった。
+
+**2) CRWD反実仮想更新**: 09-18初検出で旧167株だけを$238.415で売る経路の
+確定相当PnLは約**+$2,990**（実績旧ロット+$3,053に対して-$63）。保有継続する若123株は
+10-05にpeak **$274.23（entry比+11.47%）**、regular-session終値**$272.76**で
+評価益約**+$3,290**。8%段階trailingの床はpeak×97%=**$266.00**で、10-05安値
+$268.33まで未到達のため依然未実現。反実仮想合計は約+$6,280、実績合計+$2,165に対し
+**約+$4,115有利**（実現差-$63、未実現差+$4,178）。日次/1分yfinance価格による
+mark-to-marketであり、確定的な改善額ではない。
+
+**3) 新規事例とtime_basedフラグ**: 新規missedはMRVL/HPE/MUの3 episode、新規
+disagreementはHPE/MRVL/HPQの3 episode。HPQでは10-05、旧1321株（hold 20日）に
+max_holdが発火し、若975株（18日）も含む2296株全量を$31.46で売却。若ロットは
+**-$1,823**を実現した。`per_lot_time_based_exit_enabled`は引き続き**false**で、
+部分売却実績は0件。09-01のNOW/ORCL/PLTRに続く独立time_based再発であり、既実装の
+部分売却フラグをpaper A/B候補とする判断材料は強まった。既実装time_based経路は
+期限到達株数だけを発注しtrackerがFIFO配賦、entry_time不正時は全量exitへfail-closedする。
+関連unit testは32 passed。ただしfull per-lot trailingの部分数量発注/FIFO統合は未実証。
+
+**4) governance判断**: 本番変更はせず、shadow収集を維持する。同時に、独立episode
+基準（09-22設定の3件）を超えたため、**per-lot time_based部分売却とfull per-lot
+trailingを分けたpaper A/Bの事前登録作成を提案**する。ただし
+`docs/promotion_governance.md`の本番昇格3点セットは未充足。paper A/B開始前に
+(a)数値基準を事前登録し、ユーザー承認を得る必要がある。最終昇格にはさらに
+(b)前向きpaper A/Bと(c)R13-C後OOSが必要。full per-lot側は部分数量発注/FIFO配賦の
+統合設計も先に必要で、configは変更しない。
+
+**5) 次回**: shadow維持中の次回目安は**2026-10-20 09:00 JST**、またはpaper A/Bの
+事前登録が承認された時点の早い方。`automations list`では次回job未登録（本jobのみ）を
+確認したため、メインセッションで登録し実在確認する必要がある。詳細:
+`docs/daily_logs/2026-10-06.md`。
+
 ---
 
 ## R17: reduce_size設計見直し検証（見送り、、2026-09-01）
