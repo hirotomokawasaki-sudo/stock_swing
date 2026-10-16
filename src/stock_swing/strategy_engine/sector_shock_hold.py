@@ -67,6 +67,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 import tempfile
 from dataclasses import dataclass, field
@@ -92,6 +93,10 @@ class SectorShockHoldConfig:
         SECTOR_SHOCK_BENCHMARK_SYMBOLS  comma-separated, default SMH,SOXX
         SECTOR_SHOCK_THRESHOLD_PCT      sector 1-day decline to trigger shock detection
                                         default -3.0 (i.e. -3%)
+        SECTOR_SHOCK_MIN_BENCHMARKS     minimum benchmarks breaching the threshold
+                                        default 2
+        SECTOR_SHOCK_BREADTH_MIN        minimum fraction of benchmarks breaching
+                                        the threshold, default 0.5
         SECTOR_SHOCK_REL_WEAKNESS_MAX   max relative weakness vs sector to allow hold
                                         default 2.0 (symbol can be 2x worse than sector)
         SECTOR_SHOCK_MAX_HOLD_DAYS_3    first review window in trading days (default 3)
@@ -118,6 +123,8 @@ class SectorShockHoldConfig:
     # the trade history (see docs/daily_logs/2026-08-14.md "Stop Loss 再設計").
     sector_shock_rolling_days: int = 3
     sector_shock_rolling_threshold_pct: float = -5.0  # rolling 3d return below this = shock
+    sector_shock_min_benchmarks: int = 2
+    sector_shock_breadth_min: float = 0.5
     relative_weakness_max: float = 2.0        # symbol can be at most 2x the sector decline
     max_hold_days_3: int = 3
     max_hold_days_5: int = 5
@@ -143,6 +150,13 @@ class SectorShockHoldConfig:
             ),
             sector_shock_rolling_threshold_pct=float(
                 os.environ.get("SECTOR_SHOCK_ROLLING_THRESHOLD_PCT", -5.0)
+            ),
+            sector_shock_min_benchmarks=max(
+                1, int(os.environ.get("SECTOR_SHOCK_MIN_BENCHMARKS", 2))
+            ),
+            sector_shock_breadth_min=min(
+                1.0,
+                max(0.0, float(os.environ.get("SECTOR_SHOCK_BREADTH_MIN", 0.5))),
             ),
             relative_weakness_max=float(
                 os.environ.get("SECTOR_SHOCK_REL_WEAKNESS_MAX", 2.0)
@@ -211,7 +225,7 @@ class SectorShockAnalyzer:
         self,
         symbol: str,
         current_return_pct: float,
-        symbol_1d_return_pct: float,
+        symbol_1d_return_pct: float | None,
         sector_1d_return_pcts: dict[str, float],
         sector_rolling_return_pcts: dict[str, float] | None = None,
         days_held: int = 0,
@@ -244,7 +258,11 @@ class SectorShockAnalyzer:
         shadow_log: dict[str, Any] = {
             "symbol": symbol,
             "current_return_pct": round(current_return_pct * 100, 2),
-            "symbol_1d_return_pct": round(symbol_1d_return_pct * 100, 2),
+            "symbol_1d_return_pct": (
+                round(symbol_1d_return_pct * 100, 2)
+                if symbol_1d_return_pct is not None
+                else None
+            ),
             "sector_1d_return_pcts": {
                 k: round(v * 100, 2) for k, v in sector_1d_return_pcts.items()
             },
@@ -311,6 +329,29 @@ class SectorShockAnalyzer:
                 recommended_action="exit",
             )
 
+        # Missing symbol or sector returns cannot support a shock-recovery
+        # exception.  Keep the baseline exit and make the data-quality failure
+        # explicit rather than substituting signal_strength as a fake return.
+        if symbol_1d_return_pct is None or not sector_1d_return_pcts:
+            missing = []
+            if symbol_1d_return_pct is None:
+                missing.append("symbol_session_return")
+            if not sector_1d_return_pcts:
+                missing.append("sector_session_returns")
+            reasoning.append(
+                "insufficient_data: missing " + ",".join(missing) + "; baseline exit retained"
+            )
+            shadow_log["decision_reason"] = "insufficient_data"
+            shadow_log["missing_inputs"] = missing
+            return ExitClassification(
+                symbol=symbol,
+                classification="insufficient_data",
+                confidence="low",
+                reasoning=reasoning,
+                shadow_log=shadow_log,
+                recommended_action="exit",
+            )
+
         # ── Rule 5: Detect sector-wide shock ─────────────────────────────────
         # Use ALL benchmarks passed in sector_1d_return_pcts.
         # (2026-07-28 fix): previously this filtered by cfg.benchmark_symbols (global [SMH, SOXX]),
@@ -324,8 +365,23 @@ class SectorShockAnalyzer:
         avg_sector_return = 0.0
         if relevant_benchmarks:
             avg_sector_return = sum(relevant_benchmarks.values()) / len(relevant_benchmarks)
-            sector_shock_detected = avg_sector_return * 100 <= cfg.sector_shock_threshold_pct
+            shock_count_1d = sum(
+                1
+                for value in relevant_benchmarks.values()
+                if value * 100 <= cfg.sector_shock_threshold_pct
+            )
+            required_count_1d = min(
+                cfg.sector_shock_min_benchmarks,
+                max(1, math.ceil(len(relevant_benchmarks) * cfg.sector_shock_breadth_min)),
+            )
+            shock_breadth_1d = shock_count_1d / len(relevant_benchmarks)
+            sector_shock_detected = (
+                shock_count_1d >= required_count_1d
+                and shock_breadth_1d >= cfg.sector_shock_breadth_min
+            )
             shadow_log["avg_sector_return_pct"] = round(avg_sector_return * 100, 2)
+            shadow_log["sector_shock_count_1d"] = shock_count_1d
+            shadow_log["sector_shock_breadth_1d"] = round(shock_breadth_1d, 3)
             shadow_log["sector_shock_detected_1d"] = sector_shock_detected
 
         # ── Rule 5b (2026-08-14): rolling N-day sector shock check ──────────
@@ -342,10 +398,25 @@ class SectorShockAnalyzer:
             relevant_rolling = dict(sector_rolling_return_pcts)
             if relevant_rolling:
                 avg_sector_rolling_return = sum(relevant_rolling.values()) / len(relevant_rolling)
+                shock_count_rolling = sum(
+                    1
+                    for value in relevant_rolling.values()
+                    if value * 100 <= cfg.sector_shock_rolling_threshold_pct
+                )
+                required_count_rolling = min(
+                    cfg.sector_shock_min_benchmarks,
+                    max(1, math.ceil(len(relevant_rolling) * cfg.sector_shock_breadth_min)),
+                )
+                shock_breadth_rolling = shock_count_rolling / len(relevant_rolling)
                 rolling_shock_detected = (
-                    avg_sector_rolling_return * 100 <= cfg.sector_shock_rolling_threshold_pct
+                    shock_count_rolling >= required_count_rolling
+                    and shock_breadth_rolling >= cfg.sector_shock_breadth_min
                 )
                 shadow_log["avg_sector_rolling_return_pct"] = round(avg_sector_rolling_return * 100, 2)
+                shadow_log["sector_shock_count_rolling"] = shock_count_rolling
+                shadow_log["sector_shock_breadth_rolling"] = round(
+                    shock_breadth_rolling, 3
+                )
                 shadow_log["sector_shock_rolling_days"] = cfg.sector_shock_rolling_days
                 shadow_log["sector_shock_detected_rolling"] = rolling_shock_detected
 
@@ -430,18 +501,18 @@ class SectorShockAnalyzer:
                 shadow_log=shadow_log,
                 recommended_action="monitor",
             )
-        else:
-            # No sector data available → cannot determine regime; default hard_stop
-            reasoning.append("no_sector_data: cannot determine regime; defaulting to hard_stop")
-            shadow_log["decision_reason"] = "no_sector_data"
-            return ExitClassification(
-                symbol=symbol,
-                classification="hard_stop",
-                confidence="low",
-                reasoning=reasoning,
-                shadow_log=shadow_log,
-                recommended_action="exit",
-            )
+        # The missing-data path is handled before shock detection. This branch
+        # is unreachable for valid finite inputs but remains fail-closed.
+        reasoning.append("insufficient_data: unclassifiable regime; baseline exit retained")
+        shadow_log["decision_reason"] = "insufficient_data"
+        return ExitClassification(
+            symbol=symbol,
+            classification="insufficient_data",
+            confidence="low",
+            reasoning=reasoning,
+            shadow_log=shadow_log,
+            recommended_action="exit",
+        )
 
     def log_shadow(
         self,

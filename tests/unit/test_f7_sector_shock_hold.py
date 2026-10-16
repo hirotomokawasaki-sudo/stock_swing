@@ -83,6 +83,46 @@ def test_sector_shock_hold_when_broad_selloff():
     assert result.recommended_action == "hold"
 
 
+def test_1014_amat_breadth_detects_semiconductor_shock_without_broad_market_dilution():
+    """SMH/SOXX both shocked; QQQ/SPY must not average that evidence away."""
+    result = SectorShockAnalyzer(_default_config()).classify(
+        symbol="AMAT",
+        current_return_pct=-0.1282,
+        symbol_1d_return_pct=-0.0379,
+        sector_1d_return_pcts={
+            "SMH": -0.0398,
+            "SOXX": -0.0450,
+            "QQQ": -0.0197,
+            "SPY": -0.0108,
+        },
+        sector_rolling_return_pcts={
+            "SMH": -0.0640,
+            "SOXX": -0.0715,
+            "QQQ": -0.0297,
+            "SPY": -0.0115,
+        },
+        days_held=6,
+    )
+    assert result.classification == "sector_shock_hold"
+    assert result.shadow_log["sector_shock_count_1d"] == 2
+    assert result.shadow_log["sector_shock_breadth_1d"] == 0.5
+
+
+def test_one_of_four_benchmarks_below_threshold_is_not_broad_shock():
+    result = SectorShockAnalyzer(_default_config()).classify(
+        symbol="AMAT",
+        current_return_pct=-0.08,
+        symbol_1d_return_pct=-0.02,
+        sector_1d_return_pcts={
+            "SMH": -0.04,
+            "SOXX": -0.02,
+            "QQQ": -0.01,
+            "SPY": -0.005,
+        },
+    )
+    assert result.classification == "soft_stop"
+
+
 def test_sector_shock_hold_partial_deRisk_at_5d():
     """After 5 trading days still in shock → partial exit recommended."""
     config = _default_config()
@@ -160,8 +200,8 @@ def test_disabled_mode():
 
 # ── 2026-07-17 fix: sector_1d fallback · symbol_1d 修正の検証 ─────────────────────────────────
 
-def test_no_sector_data_returns_hard_stop():
-    """Empty sector_1d_return_pcts still returns hard_stop (no-data fallback)."""
+def test_no_sector_data_returns_insufficient_data_and_keeps_exit():
+    """Missing regime data is explicit and fail-closed to the baseline exit."""
     config = _default_config()
     analyzer = SectorShockAnalyzer(config)
     result = analyzer.classify(
@@ -170,8 +210,22 @@ def test_no_sector_data_returns_hard_stop():
         symbol_1d_return_pct=0.0,
         sector_1d_return_pcts={},  # データなし
     )
-    assert result.classification == "hard_stop"
-    assert any("no_sector_data" in r for r in result.reasoning)
+    assert result.classification == "insufficient_data"
+    assert result.recommended_action == "exit"
+    assert any("insufficient_data" in r for r in result.reasoning)
+
+
+def test_missing_return_never_uses_signal_strength_proxy():
+    config = _default_config()
+    result = SectorShockAnalyzer(config).classify(
+        symbol="AMAT",
+        current_return_pct=-0.08,
+        symbol_1d_return_pct=None,
+        sector_1d_return_pcts={"SMH": -0.04, "SOXX": -0.04},
+    )
+    assert result.classification == "insufficient_data"
+    assert result.shadow_log["symbol_1d_return_pct"] is None
+    assert result.recommended_action == "exit"
 
 
 def test_soft_stop_07_10_us_scenario():
@@ -389,6 +443,6 @@ class TestSshShadowCountOnlySectorShockHold:
             symbol_1d_return_pct=-0.02,
             sector_1d_return_pcts={},  # empty = no sector data
         )
-        assert result.classification == "hard_stop"  # no_sector_data → hard_stop
-        assert "no_sector_data" in result.reasoning[0]
+        assert result.classification == "insufficient_data"
+        assert "insufficient_data" in result.reasoning[0]
         assert result.classification != "sector_shock_hold"

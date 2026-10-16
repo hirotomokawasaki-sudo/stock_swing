@@ -62,6 +62,20 @@ from stock_swing.risk.entry_filter import (
 )
 from stock_swing.risk.open_shock_cooldown import apply_open_shock_cooldown
 from stock_swing.risk.same_symbol_cooldown import filter_buys_by_same_symbol_cooldown
+from stock_swing.risk.losing_position_add_guard import (
+    LosingPositionAddGuardConfig,
+    evaluate_losing_position_adds,
+    log_losing_position_add_shadow,
+)
+from stock_swing.risk.session_return_snapshot import (
+    build_session_return_observations,
+    expected_completed_session_date,
+)
+from stock_swing.risk.shock_aware_staged_exit import (
+    ShockAwareStagedExitConfig,
+    build_shock_aware_staged_exit_plan,
+    log_staged_exit_shadow,
+)
 from stock_swing.risk.portfolio_allocator import PortfolioAllocator
 from stock_swing.risk.allocation_config import (
     get_etf_symbols_from_registry,
@@ -384,6 +398,8 @@ def _classify_exit_reason_from_notes(notes_text: str) -> tuple[str, str]:
         return "Trailing stop triggered", "trailing_stop"
     if "breakeven stop" in t:
         return "Breakeven stop triggered", "breakeven_stop"
+    if "emergency stop" in t:
+        return "Emergency stop triggered", "stop_loss"
     if "stop loss" in t:
         return "Stop loss triggered", "stop_loss"
     if "take profit" in t:
@@ -1461,21 +1477,9 @@ def main() -> int:  # noqa: C901
     # F7: sector_shock_hold shadow analysis — annotate exit signals with regime context
     _ssh_config = SectorShockHoldConfig.from_env()
     _ssh_analyzer = SectorShockAnalyzer(_ssh_config)
+    _staged_exit_config = ShockAwareStagedExitConfig.from_env()
     _ssh_shadow_count = 0
     if _ssh_analyzer.is_enabled() and exit_signals:
-        # Fix 1: build symbol → return_1d map from all price_momentum features
-        _feat_return_1d: dict[str, float] = {}
-        for _feat in all_features:
-            _sym_f = getattr(_feat, "symbol", None)
-            _vals_f = getattr(_feat, "values", {})
-            if _sym_f and isinstance(_vals_f, dict):
-                _r1d = _vals_f.get("return_1d")
-                if _r1d is not None:
-                    try:
-                        _feat_return_1d[_sym_f] = float(_r1d)
-                    except (TypeError, ValueError):
-                        pass
-
         # Build returns for ALL benchmark symbols used across the entire registry
         # (2026-07-28 fix): previously only global [SMH, SOXX] were fetched, meaning
         # non-semiconductor stocks (ADBE/AMZN/PLTR/META) were always evaluated against
@@ -1485,36 +1489,32 @@ def main() -> int:  # noqa: C901
         for _reg_info in _SYMBOL_REGISTRY.values():
             for _bm in (_reg_info.get("benchmark_symbols") or []):
                 _all_bm_symbols.add(_bm)
-
-        # Sector 1d return: prefer all_features (real-time), fall back to
-        # benchmark_returns.csv (most recent row) for any benchmark still missing.
-        _all_benchmark_1d: dict[str, float] = {
-            _bm: _feat_return_1d[_bm]
-            for _bm in _all_bm_symbols
-            if _bm in _feat_return_1d
+        _exit_symbols = {
+            str(getattr(_sig, "symbol", "") or "").upper()
+            for _sig in exit_signals
+            if getattr(_sig, "symbol", None)
         }
-        _missing_bms = [b for b in _all_bm_symbols if b not in _all_benchmark_1d]
-        if _missing_bms:
-            _bm_csv = project_root / "data" / "benchmarks" / "benchmark_returns.csv"
-            if _bm_csv.exists():
-                _bm_latest: dict[str, tuple[str, float]] = {}
-                with open(_bm_csv, newline="") as _f:
-                    for _row in csv.DictReader(_f):
-                        _sym_bm = _row.get("symbol", "")
-                        _ret_str = _row.get("daily_return", "")
-                        _dt_str = _row.get("date", "")
-                        if _sym_bm in _missing_bms and _ret_str:
-                            try:
-                                _bm_latest[_sym_bm] = (_dt_str, float(_ret_str))
-                            except (TypeError, ValueError):
-                                pass
-                for _bm_sym, (_bm_dt, _bm_r) in _bm_latest.items():
-                    _all_benchmark_1d[_bm_sym] = _bm_r
-                    logger.debug(
-                        "sector_shock: %s return_1d=%.4f loaded from benchmark_returns.csv "
-                        "(date=%s; features had no data)",
-                        _bm_sym, _bm_r, _bm_dt,
-                    )
+        _ssh_now_utc = datetime.now(timezone.utc)
+        _session_returns = build_session_return_observations(
+            features=all_features,
+            symbols=_exit_symbols | _all_bm_symbols,
+            get_mid_price=get_mid_price,
+            now_utc=_ssh_now_utc,
+            benchmark_prices_path=(
+                project_root / "data" / "benchmarks" / "benchmark_prices.csv"
+            ),
+            benchmark_returns_path=(
+                project_root / "data" / "benchmarks" / "benchmark_returns.csv"
+            ),
+        )
+        _all_benchmark_1d: dict[str, float] = {
+            _bm: _obs.return_pct
+            for _bm in _all_bm_symbols
+            if (_obs := _session_returns.get(_bm)) is not None
+            and _obs.is_valid
+            and _obs.return_pct is not None
+        }
+        _ssh_expected_date = expected_completed_session_date(_ssh_now_utc).isoformat()
 
         # 2026-08-14 (Stop Loss role-purification redesign): rolling N-day
         # cumulative sector return, needed for SectorShockAnalyzer's rolling
@@ -1536,7 +1536,11 @@ def main() -> int:  # noqa: C901
                     _sym_bm = _row.get("symbol", "")
                     _ret_str = _row.get(_rolling_col, "")
                     _dt_str = _row.get("date", "")
-                    if _sym_bm in _all_bm_symbols and _ret_str:
+                    if (
+                        _sym_bm in _all_bm_symbols
+                        and _ret_str
+                        and _dt_str == _ssh_expected_date
+                    ):
                         try:
                             _bm_rolling_latest[_sym_bm] = (_dt_str, float(_ret_str))
                         except (TypeError, ValueError):
@@ -1550,10 +1554,11 @@ def main() -> int:  # noqa: C901
                 continue
             _pos = current_positions_full.get(_sym) or {}
             _unrealized_pct = float(_pos.get("unrealized_plpc", 0) or 0)
-            # Fix 2: use actual return_1d from features; fall back to signal_strength proxy
-            _1d_sym = _feat_return_1d.get(
-                _sym,
-                float((getattr(_sig, "signal_strength", 0) or 0)) * -1,
+            _sym_return_obs = _session_returns.get(_sym)
+            _1d_sym = (
+                _sym_return_obs.return_pct
+                if _sym_return_obs is not None and _sym_return_obs.is_valid
+                else None
             )
             # Per-symbol benchmark selection from symbol_registry.yaml (2026-07-28 fix)
             _sym_sector_1d = get_symbol_sector_returns(
@@ -1576,7 +1581,51 @@ def main() -> int:  # noqa: C901
                 symbol_1d_return_pct=_1d_sym,
                 sector_1d_return_pcts=_sym_sector_1d,
                 sector_rolling_return_pcts=_sym_sector_rolling,
+                days_held=int((getattr(_sig, "metadata", {}) or {}).get("hold_days") or 0),
             )
+            _ssh_result.shadow_log["session_return_quality"] = {
+                "symbol": (
+                    _sym_return_obs.quality_status
+                    if _sym_return_obs is not None
+                    else "insufficient_data"
+                ),
+                "symbol_reason": (
+                    _sym_return_obs.reason
+                    if _sym_return_obs is not None
+                    else "missing_observation"
+                ),
+                "valid_benchmarks": sorted(_sym_sector_1d),
+                "expected_session_date": _ssh_expected_date,
+            }
+            if _staged_exit_config.is_enabled() and not args.dry_run:
+                _sig_metadata = getattr(_sig, "metadata", {}) or {}
+                _baseline_qty = int(
+                    _sig_metadata.get("qty")
+                    or _pos.get("qty")
+                    or current_positions.get(_sym)
+                    or 0
+                )
+                _staged_plan = build_shock_aware_staged_exit_plan(
+                    symbol=_sym,
+                    exit_trigger=str(_sig_metadata.get("exit_trigger") or ""),
+                    baseline_qty=_baseline_qty,
+                    classification=_ssh_result,
+                    current_return_pct=_unrealized_pct,
+                    config=_staged_exit_config,
+                )
+                try:
+                    log_staged_exit_shadow(
+                        _staged_plan,
+                        shadow_log_path=(
+                            project_root / "data" / "shock_aware_staged_exit_shadow_log.jsonl"
+                        ),
+                        run_id=run_context.run_id,
+                    )
+                except Exception as _staged_log_exc:
+                    logger.warning(
+                        "shock_aware_staged_exit: shadow log failed (non-fatal): %s",
+                        _staged_log_exc,
+                    )
             # R3-v2 / F7: write to persistent JSONL shadow log for A/B activation tracking
             _ssh_log_path = project_root / "data" / "sector_shock_shadow_log.jsonl"
             _ssh_analyzer.log_shadow(_ssh_result, shadow_log_path=_ssh_log_path)
@@ -2192,6 +2241,38 @@ def main() -> int:  # noqa: C901
             "entry_filter_blocked_buys",
             details=f"{len(_ef_result.blocked)} buy(s): {[s for s, _ in _ef_result.blocked[:5]]}",
         )
+
+    # Shadow-only diagnostic for CIEN-style losing-position pyramiding. The
+    # existing 24h cooldown allowed a second lot after the timer expired even
+    # though the first lot was already roughly -10%. Record the counterfactual
+    # block here, but do not remove or mutate any actionable decision.
+    _losing_add_config = LosingPositionAddGuardConfig.from_env()
+    _losing_add_observations = evaluate_losing_position_adds(
+        actionable,
+        current_positions_full,
+        config=_losing_add_config,
+    )
+    if _losing_add_config.is_enabled() and not args.dry_run:
+        _losing_add_log = project_root / "data" / "losing_position_add_shadow_log.jsonl"
+        for _losing_add_obs in _losing_add_observations:
+            try:
+                log_losing_position_add_shadow(
+                    _losing_add_obs,
+                    shadow_log_path=_losing_add_log,
+                    run_id=run_context.run_id,
+                )
+            except Exception as _losing_add_log_exc:
+                logger.warning(
+                    "losing_position_add_guard: shadow log failed (non-fatal): %s",
+                    _losing_add_log_exc,
+                )
+        _would_block_adds = [obs for obs in _losing_add_observations if obs.would_block]
+        if _would_block_adds:
+            logger.info(
+                "losing_position_add_guard SHADOW would_block=%d symbols=%s",
+                len(_would_block_adds),
+                [obs.symbol for obs in _would_block_adds],
+            )
 
     # Same-symbol buy cooldown (2026-08-07, NBIS incident): block additional
     # BUYs into a symbol that already has an open tracker position entered

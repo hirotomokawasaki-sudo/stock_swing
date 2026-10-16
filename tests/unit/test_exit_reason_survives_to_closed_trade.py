@@ -69,6 +69,14 @@ class TestClassifyExitReasonFromNotes:
         assert reason == "stop_loss"
         assert "stop" in trigger.lower()
 
+    def test_1014_emergency_stop_is_classified_as_stop_loss(self):
+        """CIEN incident: emergency min-hold bypass is still a stop-loss exit."""
+        trigger, reason = self.classify(
+            "Emergency stop triggered (min_hold bypass): -16.73% <= -12.00%"
+        )
+        assert reason == "stop_loss"
+        assert trigger == "Emergency stop triggered"
+
     def test_take_profit(self):
         trigger, reason = self.classify("Take profit reached at +12%")
         assert reason == "take_profit"
