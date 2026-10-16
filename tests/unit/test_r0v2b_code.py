@@ -222,34 +222,49 @@ def test_equity_bridge_zero_diff() -> None:
     assert result.within_tolerance
 
 
-def test_equity_bridge_diff_explained_by_quarantined_pnl() -> None:
-    """Diff fully explained by quarantined PnL → unexplained_diff=0 → within_tolerance."""
+def test_equity_bridge_only_applies_verified_quarantine_pnl() -> None:
+    """Raw reconstruction P&L is visible but only verified P&L is applied."""
     result = compute_equity_bridge(
-        broker_equity=980_000.0,
-        baseline_equity=1_000_000.0,
-        tracker_realized=-50_000.0,
-        tracker_unrealized=0.0,
-        quarantined_pnl=-30_000.0,  # executed at broker, excluded from tracker
-        # broker sees baseline - 50K clean - 30K quarantined = 920K... hmm
-        # Let's do a consistent example:
-        # baseline=1M, tracker_realized=-20K (clean), quarantined=-30K (executed at broker)
-        # broker_equity = 1M - 20K - 30K = 950K
-        # tracker_computed = 1M - 20K = 980K
-        # diff = 950K - 980K = -30K = quarantined_pnl → unexplained=0
-    )
-    # Fix the numbers for consistency
-    result2 = compute_equity_bridge(
         broker_equity=950_000.0,
         baseline_equity=1_000_000.0,
         tracker_realized=-20_000.0,
         tracker_unrealized=0.0,
         quarantined_pnl=-30_000.0,
+        quarantined_pnl_adjustment=-30_000.0,
     )
-    # diff = 950K - (1M - 20K) = 950K - 980K = -30K
-    # unexplained = -30K - (-30K) = 0
-    assert result2.diff_usd == pytest.approx(-30_000.0, abs=0.01)
-    assert result2.unexplained_diff == pytest.approx(0.0, abs=0.01)
-    assert result2.within_tolerance
+    assert result.diff_usd == pytest.approx(-30_000.0, abs=0.01)
+    assert result.unexplained_diff == pytest.approx(0.0, abs=0.01)
+    assert result.within_tolerance
+
+
+def test_equity_bridge_raw_quarantine_is_observability_only() -> None:
+    result = compute_equity_bridge(
+        broker_equity=980_000.0,
+        baseline_equity=1_000_000.0,
+        tracker_realized=-20_000.0,
+        tracker_unrealized=0.0,
+        quarantined_pnl=-30_000.0,
+    )
+    assert result.quarantined_pnl == -30_000.0
+    assert result.quarantined_pnl_adjustment == 0.0
+    assert result.unexplained_diff == pytest.approx(0.0, abs=0.01)
+
+
+def test_equity_bridge_applies_audited_realized_fees_and_cash_adjustments() -> None:
+    result = compute_equity_bridge(
+        broker_equity=937_354.35,
+        baseline_equity=1_000_000.0,
+        tracker_realized=-56_841.92,
+        tracker_unrealized=-11_916.01,
+        realized_pnl_adjustment=6_206.86,
+        external_cash_adjustment=0.0,
+        fees=94.58,
+        quarantined_pnl=-44_670.42,
+    )
+    assert result.raw_tracker_computed == pytest.approx(931_242.07, abs=0.01)
+    assert result.tracker_computed == pytest.approx(937_354.35, abs=0.01)
+    assert result.unexplained_diff == pytest.approx(0.0, abs=0.01)
+    assert result.within_tolerance
 
 
 def test_equity_bridge_unexplained_diff_flags_out_of_tolerance() -> None:
@@ -298,8 +313,10 @@ def test_equity_bridge_to_dict_keys() -> None:
     d = result.to_dict()
     expected_keys = {
         "baseline_equity", "tracker_realized", "tracker_unrealized", "fees",
+        "raw_tracker_computed", "realized_pnl_adjustment", "external_cash_adjustment",
         "tracker_computed", "broker_equity", "diff_usd", "diff_bp",
-        "quarantined_pnl", "unexplained_diff", "within_tolerance", "tolerance_usd",
+        "quarantined_pnl", "quarantined_pnl_adjustment", "unexplained_diff",
+        "within_tolerance", "tolerance_usd",
     }
     assert set(d.keys()) == expected_keys
 

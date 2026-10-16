@@ -3275,43 +3275,40 @@ def _build_equity_bridge(
 ) -> dict:
     """R0-v2-B: Build equity bridge dict for ConsoleSummary.
 
-    AUDIT FIX (2026-08-23): quarantined_pnl was hardcoded to 0.0 with a
-    comment claiming quarantined trades are "data reconstruction errors, not
-    real broker fills". That is no longer true (and may never have been for
-    most of them): every one of the 101 current quarantined_trades entries
-    carries a real broker_order_id + exit_broker_order_id -- they ARE real
-    broker fills, just ones our tracker excluded from the closed-trade
-    ledger because of a chronology/holding-days data defect (see
-    quarantine_reason). Their PnL (~-$156K as of 2026-08-21) already landed
-    in broker_equity but never in tracker_realized, so it was silently
-    folded into "unexplained" -- except unexplained_diff was masked by a
-    $100K tolerance picked specifically to keep this panel green, not
-    because $100K of daily unexplained drift is actually acceptable. Both
-    the quarantined_pnl computation and the tolerance are fixed here so the
-    bridge either genuinely reconciles or visibly reports that it doesn't;
-    it does not paper over a wrong sum with a wide tolerance:
-      - quarantined_pnl is now pnl_tracker.get_quarantined_trades() summed,
-        matching the panel's own "quarantined_pnl (台帳外・brokerは記録済み)"
-        label semantics.
-      - tolerance_usd is now read from config/runtime/current_mode.yaml's
-        ledger_quality_gate.acceptance_criteria.broker_equity_bridge_tolerance_usd
-        (the single documented source of truth for this threshold) instead
-        of a second, disconnected, much looser hardcoded value living only
-        in this function. Falls back to $5,000 (not $100,000) if the config
-        value is missing/unparseable, since $1 (the current YAML value) is
-        unrealistically tight for a bridge that still has an unexplained
-        pre-tracker-epoch gap; $5,000 is a deliberately conservative
-        placeholder pending an explicit operator decision on the real
-        number, not a silent restoration of the old $100K mask.
+    The raw quarantine sum is observability-only. Historical quarantine rows
+    can contain impossible chronology or split-scale P&L, so only an audited
+    ``quarantined_pnl_adjustment`` may affect reconciliation arithmetic.
+    ``data/audits/equity_bridge_reconciliation.json`` supplies a separately
+    verified broker cash-flow adjustment and cumulative fees without mutating
+    the strategy trade ledger.
     """
     try:
         import json as _json
         import yaml as _yaml
+        from stock_swing.reporting.equity_bridge_reconciliation import (
+            load_reconciliation_snapshot,
+        )
         state = pnl_tracker.state
         baseline = float(getattr(state, "baseline_equity", None) or
                          _json.loads((pnl_tracker.project_root / "data" / "tracking" / "pnl_state.json").read_text()).get("baseline_equity", 1_000_000))
         realized = float(state.cumulative_realized_pnl or 0)
         quarantined_pnl = sum(float(t.get("pnl") or 0) for t in pnl_tracker.get_quarantined_trades())
+
+        reconciliation = load_reconciliation_snapshot(
+            pnl_tracker.project_root / "data" / "audits" / "equity_bridge_reconciliation.json",
+            expected_baseline_equity=baseline,
+            expected_account_id=getattr(state, "broker_account_id", None),
+            current_trades=getattr(state, "trades", []),
+        )
+        realized_adjustment = 0.0
+        fees = 0.0
+        external_cash_adjustment = 0.0
+        quarantined_adjustment = 0.0
+        if reconciliation:
+            realized_adjustment = float(reconciliation["realized_pnl_adjustment"])
+            fees = float(reconciliation["fees"])
+            external_cash_adjustment = float(reconciliation["external_cash_adjustment"])
+            quarantined_adjustment = float(reconciliation["quarantined_pnl_adjustment"])
 
         tolerance_usd = 5_000.0
         try:
@@ -3330,9 +3327,17 @@ def _build_equity_bridge(
             tracker_realized=realized,
             tracker_unrealized=unrealized_pnl,
             quarantined_pnl=quarantined_pnl,
+            quarantined_pnl_adjustment=quarantined_adjustment,
+            realized_pnl_adjustment=realized_adjustment,
+            external_cash_adjustment=external_cash_adjustment,
+            fees=fees,
             tolerance_usd=tolerance_usd,
         )
-        return result.to_dict()
+        payload = result.to_dict()
+        if reconciliation:
+            payload["reconciliation_as_of"] = reconciliation.get("generated_at")
+            payload["reconciliation_method"] = reconciliation.get("method")
+        return payload
     except Exception as exc:
         import logging as _logging
         _logging.getLogger(__name__).warning("equity_bridge computation failed: %s", exc)

@@ -1,0 +1,393 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-16T04:40:05.894468+00:00",
+  "method": "filled_order_cash_flow_plus_open_cost_basis",
+  "broker_account_id": "PA3SEQKOZ91C",
+  "baseline_date": "2026-05-12",
+  "baseline_equity": 1000000.0,
+  "order_count": 805,
+  "activity_count": 2037,
+  "last_filled_at": "2026-10-15T13:37:13.664116Z",
+  "tracker_closed_count_at_reconciliation": 414,
+  "tracker_history_fingerprint": "f482acfead0861c0778c63180373fd3800c7cbae92bc524ec64a461fa2696ff7",
+  "tracker_realized_at_reconciliation": -56841.92,
+  "broker_order_cash_realized": -50635.06,
+  "realized_pnl_adjustment": 6206.86,
+  "fees": 94.58,
+  "external_cash_adjustment": 0.0,
+  "broker_unrealized_at_reconciliation": -11916.01,
+  "broker_equity_at_reconciliation": 937354.36,
+  "account_check_expected_equity": 937354.35,
+  "account_check_diff": 0.01,
+  "quarantine_count": 6,
+  "quarantined_pnl_raw": -44670.42,
+  "quarantined_pnl_adjustment": 0.0,
+  "quarantine_policy": "unverified_reconstruction_pnl_is_observability_only",
+  "symbol_deltas": [
+    {
+      "symbol": "KLAC",
+      "broker_cash_realized": 5130.55,
+      "tracker_realized": -331.65,
+      "delta": 5462.2
+    },
+    {
+      "symbol": "CRWD",
+      "broker_cash_realized": 3404.87,
+      "tracker_realized": 3971.41,
+      "delta": -566.54
+    },
+    {
+      "symbol": "ARM",
+      "broker_cash_realized": 8692.07,
+      "tracker_realized": 8245.85,
+      "delta": 446.22
+    },
+    {
+      "symbol": "SNOW",
+      "broker_cash_realized": -4942.87,
+      "tracker_realized": -5368.45,
+      "delta": 425.58
+    },
+    {
+      "symbol": "MRVL",
+      "broker_cash_realized": 4843.52,
+      "tracker_realized": 5267.85,
+      "delta": -424.33
+    },
+    {
+      "symbol": "HPE",
+      "broker_cash_realized": 199.1,
+      "tracker_realized": -66.99,
+      "delta": 266.09
+    },
+    {
+      "symbol": "META",
+      "broker_cash_realized": 9007.86,
+      "tracker_realized": 8780.74,
+      "delta": 227.12
+    },
+    {
+      "symbol": "CIEN",
+      "broker_cash_realized": -9510.96,
+      "tracker_realized": -9298.45,
+      "delta": -212.51
+    },
+    {
+      "symbol": "CRDO",
+      "broker_cash_realized": -1211.93,
+      "tracker_realized": -1418.42,
+      "delta": 206.49
+    },
+    {
+      "symbol": "AMAT",
+      "broker_cash_realized": 4282.06,
+      "tracker_realized": 4452.03,
+      "delta": -169.97
+    },
+    {
+      "symbol": "DDOG",
+      "broker_cash_realized": 8981.62,
+      "tracker_realized": 8820.22,
+      "delta": 161.4
+    },
+    {
+      "symbol": "NOW",
+      "broker_cash_realized": -6624.8,
+      "tracker_realized": -6775.02,
+      "delta": 150.22
+    },
+    {
+      "symbol": "HPQ",
+      "broker_cash_realized": 5072.64,
+      "tracker_realized": 4953.87,
+      "delta": 118.77
+    },
+    {
+      "symbol": "MU",
+      "broker_cash_realized": 12099.45,
+      "tracker_realized": 11986.45,
+      "delta": 113.0
+    },
+    {
+      "symbol": "SOXX",
+      "broker_cash_realized": -1789.67,
+      "tracker_realized": -1739.55,
+      "delta": -50.12
+    },
+    {
+      "symbol": "CDNS",
+      "broker_cash_realized": -2191.71,
+      "tracker_realized": -2240.51,
+      "delta": 48.8
+    },
+    {
+      "symbol": "QCOM",
+      "broker_cash_realized": -2036.87,
+      "tracker_realized": -1990.95,
+      "delta": -45.92
+    },
+    {
+      "symbol": "PATH",
+      "broker_cash_realized": -3285.01,
+      "tracker_realized": -3318.27,
+      "delta": 33.26
+    },
+    {
+      "symbol": "SOXQ",
+      "broker_cash_realized": -4758.94,
+      "tracker_realized": -4739.89,
+      "delta": -19.05
+    },
+    {
+      "symbol": "PANW",
+      "broker_cash_realized": 8352.6,
+      "tracker_realized": 8336.71,
+      "delta": 15.89
+    },
+    {
+      "symbol": "AMD",
+      "broker_cash_realized": -3250.16,
+      "tracker_realized": -3263.94,
+      "delta": 13.78
+    },
+    {
+      "symbol": "SMHX",
+      "broker_cash_realized": 3353.11,
+      "tracker_realized": 3344.81,
+      "delta": 8.3
+    },
+    {
+      "symbol": "FTNT",
+      "broker_cash_realized": 5157.5,
+      "tracker_realized": 5163.04,
+      "delta": -5.54
+    },
+    {
+      "symbol": "FTXL",
+      "broker_cash_realized": -6776.74,
+      "tracker_realized": -6779.68,
+      "delta": 2.94
+    },
+    {
+      "symbol": "DELL",
+      "broker_cash_realized": -1068.43,
+      "tracker_realized": -1068.9,
+      "delta": 0.47
+    },
+    {
+      "symbol": "MSFT",
+      "broker_cash_realized": 3813.09,
+      "tracker_realized": 3812.88,
+      "delta": 0.21
+    },
+    {
+      "symbol": "IBM",
+      "broker_cash_realized": -9013.53,
+      "tracker_realized": -9013.63,
+      "delta": 0.1
+    },
+    {
+      "symbol": "NVDA",
+      "broker_cash_realized": -4976.65,
+      "tracker_realized": -4976.69,
+      "delta": 0.04
+    },
+    {
+      "symbol": "PLTR",
+      "broker_cash_realized": -4534.73,
+      "tracker_realized": -4534.71,
+      "delta": -0.02
+    },
+    {
+      "symbol": "SKYY",
+      "broker_cash_realized": 6291.44,
+      "tracker_realized": 6291.45,
+      "delta": -0.01
+    },
+    {
+      "symbol": "MDB",
+      "broker_cash_realized": -6005.02,
+      "tracker_realized": -6005.02,
+      "delta": -0.0
+    },
+    {
+      "symbol": "LRCX",
+      "broker_cash_realized": -300.28,
+      "tracker_realized": -300.28,
+      "delta": 0.0
+    },
+    {
+      "symbol": "AMZN",
+      "broker_cash_realized": -7222.4,
+      "tracker_realized": -7222.4,
+      "delta": 0.0
+    },
+    {
+      "symbol": "FRWD",
+      "broker_cash_realized": 3116.93,
+      "tracker_realized": 3116.93,
+      "delta": -0.0
+    },
+    {
+      "symbol": "ADBE",
+      "broker_cash_realized": -1832.47,
+      "tracker_realized": -1832.47,
+      "delta": 0.0
+    },
+    {
+      "symbol": "ORCL",
+      "broker_cash_realized": -11097.36,
+      "tracker_realized": -11097.36,
+      "delta": -0.0
+    },
+    {
+      "symbol": "RBRK",
+      "broker_cash_realized": -4881.94,
+      "tracker_realized": -4881.94,
+      "delta": -0.0
+    },
+    {
+      "symbol": "FICO",
+      "broker_cash_realized": -4704.54,
+      "tracker_realized": -4704.54,
+      "delta": -0.0
+    },
+    {
+      "symbol": "PTF",
+      "broker_cash_realized": -7949.41,
+      "tracker_realized": -7949.41,
+      "delta": -0.0
+    },
+    {
+      "symbol": "CRM",
+      "broker_cash_realized": -2161.78,
+      "tracker_realized": -2161.78,
+      "delta": -0.0
+    },
+    {
+      "symbol": "NBIS",
+      "broker_cash_realized": -4337.46,
+      "tracker_realized": -4337.46,
+      "delta": -0.0
+    },
+    {
+      "symbol": "SMCI",
+      "broker_cash_realized": -4121.09,
+      "tracker_realized": -4121.09,
+      "delta": -0.0
+    },
+    {
+      "symbol": "GTOP",
+      "broker_cash_realized": 815.06,
+      "tracker_realized": 815.06,
+      "delta": 0.0
+    },
+    {
+      "symbol": "SNPS",
+      "broker_cash_realized": 0.0,
+      "tracker_realized": 0.0,
+      "delta": 0.0
+    },
+    {
+      "symbol": "INTC",
+      "broker_cash_realized": -6233.83,
+      "tracker_realized": -6233.83,
+      "delta": -0.0
+    },
+    {
+      "symbol": "PSCT",
+      "broker_cash_realized": 2849.14,
+      "tracker_realized": 2849.14,
+      "delta": -0.0
+    },
+    {
+      "symbol": "SMH",
+      "broker_cash_realized": 248.5,
+      "tracker_realized": 248.5,
+      "delta": -0.0
+    },
+    {
+      "symbol": "CHPS",
+      "broker_cash_realized": 1367.16,
+      "tracker_realized": 1367.16,
+      "delta": -0.0
+    },
+    {
+      "symbol": "CHPX",
+      "broker_cash_realized": -3680.71,
+      "tracker_realized": -3680.71,
+      "delta": 0.0
+    },
+    {
+      "symbol": "TSLA",
+      "broker_cash_realized": -1720.63,
+      "tracker_realized": -1720.63,
+      "delta": 0.0
+    },
+    {
+      "symbol": "ASML",
+      "broker_cash_realized": 3308.56,
+      "tracker_realized": 3308.56,
+      "delta": 0.0
+    },
+    {
+      "symbol": "AVGO",
+      "broker_cash_realized": -17020.61,
+      "tracker_realized": -17020.61,
+      "delta": -0.0
+    },
+    {
+      "symbol": "QTEC",
+      "broker_cash_realized": 4400.61,
+      "tracker_realized": 4400.61,
+      "delta": -0.0
+    },
+    {
+      "symbol": "TTEQ",
+      "broker_cash_realized": 157.12,
+      "tracker_realized": 157.12,
+      "delta": -0.0
+    },
+    {
+      "symbol": "ANET",
+      "broker_cash_realized": 11596.98,
+      "tracker_realized": 11596.98,
+      "delta": 0.0
+    },
+    {
+      "symbol": "SHOC",
+      "broker_cash_realized": -6213.33,
+      "tracker_realized": -6213.33,
+      "delta": -0.0
+    },
+    {
+      "symbol": "TSM",
+      "broker_cash_realized": -7632.17,
+      "tracker_realized": -7632.17,
+      "delta": -0.0
+    },
+    {
+      "symbol": "CSCO",
+      "broker_cash_realized": 365.72,
+      "tracker_realized": 365.72,
+      "delta": 0.0
+    },
+    {
+      "symbol": "GOOGL",
+      "broker_cash_realized": -2822.11,
+      "tracker_realized": -2822.11,
+      "delta": -0.0
+    },
+    {
+      "symbol": "QTUM",
+      "broker_cash_realized": -1632.17,
+      "tracker_realized": -1632.17,
+      "delta": 0.0
+    }
+  ],
+  "activity_counts": {
+    "FEE": 145,
+    "FILL": 1887,
+    "SPLIT": 4
+  }
+}
