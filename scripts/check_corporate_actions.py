@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Corporate Action Detector — R7-A 基礎版
 
-Compares broker avg_entry_price with tracker entry_price for open positions.
+Compares broker avg_entry_price with the quantity-weighted tracker entry price
+for open positions.
 Flags potential unrecorded splits / reverse-splits by detecting price ratios
 close to common corporate-action factors.
 
@@ -70,19 +71,42 @@ def _get_broker_positions() -> list[dict]:
 
 
 def _get_tracker_open() -> dict[str, dict]:
-    """Return {symbol: trade} for open tracker positions."""
+    """Return aggregate open tracker positions keyed by symbol.
+
+    The tracker stores each entry lot as a separate trade while the broker
+    exposes one blended average cost per symbol.  Comparing the broker average
+    with a single tracker lot creates false corporate-action alerts, so combine
+    every valid open lot using a quantity-weighted entry price.
+    """
     if not PNL_STATE_PATH.exists():
         return {}
     try:
         state = json.loads(PNL_STATE_PATH.read_text(encoding="utf-8"))
-        result: dict[str, dict] = {}
+        totals: dict[str, dict[str, float]] = {}
         for t in state.get("trades", []):
             if t.get("status") == "open":
                 sym = str(t.get("symbol") or "").upper()
-                # keep highest-qty entry if duplicate
-                if sym not in result or (t.get("qty") or 0) > (result[sym].get("qty") or 0):
-                    result[sym] = t
-        return result
+                try:
+                    qty = float(t.get("qty") or 0)
+                    entry_price = float(t.get("entry_price") or 0)
+                except (TypeError, ValueError):
+                    continue
+                if not sym or qty <= 0 or entry_price <= 0:
+                    continue
+                aggregate = totals.setdefault(sym, {"qty": 0.0, "cost": 0.0})
+                aggregate["qty"] += qty
+                aggregate["cost"] += qty * entry_price
+
+        return {
+            sym: {
+                "symbol": sym,
+                "status": "open",
+                "qty": aggregate["qty"],
+                "entry_price": aggregate["cost"] / aggregate["qty"],
+            }
+            for sym, aggregate in totals.items()
+            if aggregate["qty"] > 0
+        }
     except Exception as exc:
         print(f"[WARN] Could not read pnl_state.json: {exc}", file=sys.stderr)
         return {}
