@@ -102,6 +102,36 @@ def test_halt_banner_shows_halted_label() -> None:
     assert "BUYS BLOCKED" in out or "ALL BUYS" in out
 
 
+def test_halt_banner_shows_latest_evaluation_separately_from_trigger() -> None:
+    """Regression: 2026-10-17 trigger value stayed stale while HALT was latched."""
+    original = {
+        "name": "weekly_total_loss_pct",
+        "metric": "weekly_total_loss_pct",
+        "observed": -6.1043,
+        "operator": "<=",
+        "threshold": -6.0,
+        "action": 5,
+        "severity": "critical",
+    }
+    latest = dict(original, observed=-7.8177)
+    out = _renderer.render(
+        _halted_summary(
+            {
+                "status": "halted",
+                "action": "halt",
+                "triggered_at": _TRIGGERED_AT_UTC,
+                "triggered_rules": [original],
+                "latest_decision_action": "halt",
+                "latest_triggered_rules": [latest],
+                "reason": "guardrail_halt",
+            }
+        )
+    )
+    assert "observed=-6.1043" in out
+    assert "latest    : action=halt" in out
+    assert "observed=-7.8177" in out
+
+
 def test_recovery_banner_rendered_when_recovery_pending() -> None:
     """AC: recovery_pending 時もバナーを表示する（別ラベル）。"""
     out = _renderer.render(_recovery_summary())

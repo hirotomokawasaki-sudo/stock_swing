@@ -34,6 +34,11 @@ class CircuitBreakerState:
     # guardrail loop, since the file was previously only rewritten on state
     # transitions (see 2026-08-07 self-check false-positive investigation).
     last_evaluated_at: str | None = None
+    # Preserve the original trigger evidence above, while separately exposing
+    # the most recent evaluation.  A latched HALT must not look as though its
+    # metric is frozen forever at the value observed when it first fired.
+    latest_decision_action: str | None = None
+    latest_triggered_rules: list[dict[str, Any]] = field(default_factory=list)
 
     @property
     def is_halted(self) -> bool:
@@ -75,8 +80,14 @@ class CircuitBreakerStore:
     def apply_decision(self, decision: GuardDecision) -> CircuitBreakerState:
         current = self.load()
         now = _now()
+        latest_rules = [asdict(item) for item in decision.triggered]
         if current.is_halted:
-            stamped = replace(current, last_evaluated_at=now)
+            stamped = replace(
+                current,
+                last_evaluated_at=now,
+                latest_decision_action=decision.action.name,
+                latest_triggered_rules=latest_rules,
+            )
             self.save(stamped)
             return stamped
 
@@ -86,8 +97,10 @@ class CircuitBreakerStore:
                 action=decision.action.name,
                 triggered_at=now,
                 reason="guardrail_halt",
-                triggered_rules=[asdict(item) for item in decision.triggered],
+                triggered_rules=latest_rules,
                 last_evaluated_at=now,
+                latest_decision_action=decision.action.name,
+                latest_triggered_rules=latest_rules,
             )
             self.save(state)
             return state
@@ -98,8 +111,10 @@ class CircuitBreakerStore:
                 action=decision.action.name,
                 triggered_at=now,
                 reason="guardrail_degraded",
-                triggered_rules=[asdict(item) for item in decision.triggered],
+                triggered_rules=latest_rules,
                 last_evaluated_at=now,
+                latest_decision_action=decision.action.name,
+                latest_triggered_rules=latest_rules,
             )
             self.save(state)
             return state
@@ -107,20 +122,36 @@ class CircuitBreakerStore:
         # R0-v2-A: recovery_pending can only exit via mark_clean_run_complete().
         # Do NOT auto-clear to ok here; a verified clean scheduled run is required.
         if current.is_recovery_pending:
-            stamped = replace(current, last_evaluated_at=now)
+            stamped = replace(
+                current,
+                last_evaluated_at=now,
+                latest_decision_action=decision.action.name,
+                latest_triggered_rules=latest_rules,
+            )
             self.save(stamped)
             return stamped
 
         if current.status != "ok":
             state = CircuitBreakerState(
-                status="ok", action="allow", cleared_at=now, reason="metrics_normalized", last_evaluated_at=now
+                status="ok",
+                action="allow",
+                cleared_at=now,
+                reason="metrics_normalized",
+                last_evaluated_at=now,
+                latest_decision_action=decision.action.name,
+                latest_triggered_rules=latest_rules,
             )
             self.save(state)
             return state
 
         # Status stays 'ok' and unchanged: still heartbeat-stamp so freshness
         # checks can distinguish "actively evaluated, healthy" from "stale".
-        stamped = replace(current, last_evaluated_at=now)
+        stamped = replace(
+            current,
+            last_evaluated_at=now,
+            latest_decision_action=decision.action.name,
+            latest_triggered_rules=latest_rules,
+        )
         self.save(stamped)
         return stamped
 
@@ -152,6 +183,8 @@ class CircuitBreakerStore:
             cleared_by=cleared_by,
             clear_note=note,
             last_evaluated_at=now,
+            latest_decision_action="allow",
+            latest_triggered_rules=[],
         )
         self.save(state)
         return state
@@ -173,6 +206,8 @@ class CircuitBreakerStore:
             cleared_at=now,
             reason="clean_run_verified",
             last_evaluated_at=now,
+            latest_decision_action="allow",
+            latest_triggered_rules=[],
         )
         self.save(state)
         return state

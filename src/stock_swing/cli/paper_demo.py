@@ -26,6 +26,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root / "src"))
@@ -836,6 +837,80 @@ def main() -> int:  # noqa: C901
     except Exception as exc:
         print(f"  ERROR: Account fetch failed: {exc}")
         return finish(1)
+
+    # 2026-10-17 Phase 1: evaluate economic drawdown independently from the
+    # operational circuit breaker.  The configured rollout is shadow-only;
+    # enforcement plumbing exists for a later explicit promotion without
+    # changing the current incident response mid-HALT.
+    _economic_risk_policy = None
+    _economic_risk_state = None
+    _economic_risk_summary: dict[str, Any] = {}
+    _economic_risk_fail_closed = False
+    try:
+        from stock_swing.guardrails.economic_risk_off import (
+            EconomicRiskStore,
+            load_cumulative_external_cash_flow,
+            load_policy_from_dict,
+        )
+
+        _economic_risk_policy = load_policy_from_dict(
+            _guardrail_raw if "_guardrail_raw" in dir() else {}
+        )
+        if _economic_risk_policy.enabled:
+            _economic_external_cash_flow = load_cumulative_external_cash_flow(
+                project_root / "data" / "audits" / "equity_bridge_reconciliation.json",
+                expected_account_id=str(acct.get("account_number") or "") or None,
+            )
+            _economic_risk_store = EconomicRiskStore(
+                project_root / "data" / "guardrails" / "economic_risk_off.json"
+            )
+            _economic_risk_state = _economic_risk_store.observe(
+                _economic_risk_policy,
+                equity=equity,
+                cumulative_external_cash_flow=_economic_external_cash_flow,
+                persist=not args.dry_run,
+            )
+            _economic_risk_summary = _economic_risk_state.to_summary(_economic_risk_policy)
+            _economic_observed = _economic_risk_state.observed_pct
+            _economic_observed_text = (
+                "collecting"
+                if _economic_observed is None
+                else f"{_economic_observed:.2f}%"
+            )
+            print(
+                "  Economic risk-off "
+                f"[{_economic_risk_policy.mode}]: "
+                f"status={_economic_risk_state.status} "
+                f"metric={_economic_observed_text} "
+                f"data={_economic_risk_state.data_status}"
+            )
+    except Exception as _economic_risk_exc:
+        _economic_raw = (
+            (_guardrail_raw.get("economic_risk_off") or {})
+            if "_guardrail_raw" in dir() and isinstance(_guardrail_raw, dict)
+            else {}
+        )
+        _economic_mode = str(
+            getattr(_economic_risk_policy, "mode", _economic_raw.get("mode", "shadow"))
+        )
+        _economic_enabled = bool(
+            getattr(_economic_risk_policy, "enabled", _economic_raw.get("enabled", False))
+        )
+        _economic_risk_fail_closed = bool(
+            _economic_enabled and _economic_mode == "enforce"
+        )
+        _economic_risk_summary = {
+            "enabled": _economic_enabled,
+            "mode": _economic_mode,
+            "enforced": _economic_risk_fail_closed,
+            "status": "error",
+            "action": "block_buys" if _economic_risk_fail_closed else "observe_error",
+            "data_status": "error",
+            "error": type(_economic_risk_exc).__name__,
+        }
+        logger.error("economic_risk_off evaluation failed: %s", _economic_risk_exc)
+        if _economic_risk_fail_closed:
+            print("  ERROR: Economic risk-off evidence missing; enforced mode will block BUYs")
 
     # Infrastructure
     paths = PathManager(project_root)
@@ -2318,6 +2393,9 @@ def main() -> int:  # noqa: C901
         _final_exit_code = 1
         _final_reason = _final_reason or "guardrail_missing_metrics"
 
+    _reduce_size_multiplier = 1.0
+    _guardrail_blocked = []
+    _economic_risk_blocked: list[str] = []
     if (
         not _critical_buy_halt_reasons
         and _guard_engine is not None
@@ -2346,7 +2424,6 @@ def main() -> int:  # noqa: C901
         _guard_decision_now = _guard_engine.evaluate(_guard_metrics_now)
 
         # R0-v2-C: reduce_size → exposure_cap_override に反映
-        _reduce_size_multiplier = 1.0
         from stock_swing.guardrails.rule_engine import GuardAction as _GA
         if _guard_decision_now.action == _GA.reduce_size:
             _reduce_size_multiplier = 0.5
@@ -2358,7 +2435,6 @@ def main() -> int:  # noqa: C901
             print(f"  ⚠️  Guardrail flatten_risky: manual approval required for {len(_risky_syms)} position(s): {', '.join(_risky_syms[:5])}")
             logger.warning("guardrail_flatten_risky positions=%s (operator approval required, NOT auto-flattened)", _risky_syms)
 
-        _guardrail_blocked = []
         _new_actionable = []
         for _cand in actionable:
             _cand_dict = {"symbol": getattr(_cand, "symbol", ""), "action": getattr(_cand, "action", "")}
@@ -2370,6 +2446,41 @@ def main() -> int:  # noqa: C901
         if _guardrail_blocked:
             print(f"  🛡 Guardrail blocked {len(_guardrail_blocked)} buy(s): {', '.join(_guardrail_blocked[:5])}")
         actionable = _new_actionable
+
+    # This path is dormant while mode=shadow.  It is deliberately separate
+    # from CircuitBreakerStore: economic recovery must never clear or mutate a
+    # manually latched operational HALT.
+    if _economic_risk_fail_closed or (
+        _economic_risk_policy is not None and _economic_risk_policy.enforced
+    ):
+        _economic_evidence_ready = (
+            _economic_risk_state is not None
+            and _economic_risk_state.data_status == "ready"
+            and not _economic_risk_fail_closed
+        )
+        if not _economic_evidence_ready or _economic_risk_state.blocks_new_buys:
+            _new_actionable = []
+            for _cand in actionable:
+                if getattr(_cand, "action", "") == "buy":
+                    _economic_risk_blocked.append(getattr(_cand, "symbol", ""))
+                else:
+                    _new_actionable.append(_cand)
+            actionable = _new_actionable
+            if _economic_risk_blocked:
+                print(
+                    "  🛡 Economic risk-off blocked "
+                    f"{len(_economic_risk_blocked)} buy(s): "
+                    f"{', '.join(_economic_risk_blocked[:5])}"
+                )
+        elif _economic_risk_state.status == "reduce_size":
+            _reduce_size_multiplier = min(
+                _reduce_size_multiplier,
+                _economic_risk_policy.size_multiplier,
+            )
+            print(
+                "  🛡 Economic risk-off reduce_size: position sizing reduced to "
+                f"{_reduce_size_multiplier:.0%}"
+            )
     if blocked_cluster_cap:
         for sym, reason in blocked_cluster_cap:
             print(f"  🚫 Cluster cap block: {sym} — {reason}")
@@ -2455,7 +2566,11 @@ def main() -> int:  # noqa: C901
                 "entry_blocked": len(_ef_result.blocked) if "_ef_result" in dir() else 0,
                 "cluster_blocked": len(blocked_cluster_cap) if "blocked_cluster_cap" in dir() else 0,
                 "allocation_blocked": _allocation_blocked_count if "_allocation_blocked_count" in dir() else 0,
-                "guardrail_blocked": 0,
+                "guardrail_blocked": (
+                    len(_guardrail_blocked) + len(_economic_risk_blocked)
+                    if "_guardrail_blocked" in dir() and "_economic_risk_blocked" in dir()
+                    else 0
+                ),
                 "qty_zero": sum(skipped_buy_reasons.values()) if "skipped_buy_reasons" in dir() else 0,
                 "submitted": 0,
                 "accepted": 0,
@@ -2468,10 +2583,14 @@ def main() -> int:  # noqa: C901
             # circuit breaker detail for HALT visibility
             circuit_breaker_detail={
                 "status": _breaker_state.status if "_breaker_state" in dir() and _breaker_state is not None else "unknown",
+                "action": _breaker_state.action if "_breaker_state" in dir() and _breaker_state is not None else "unknown",
                 "triggered_at": _breaker_state.triggered_at if "_breaker_state" in dir() and _breaker_state is not None else None,
                 "triggered_rules": list(_breaker_state.triggered_rules or []) if "_breaker_state" in dir() and _breaker_state is not None else [],
+                "latest_decision_action": _breaker_state.latest_decision_action if "_breaker_state" in dir() and _breaker_state is not None else None,
+                "latest_triggered_rules": list(_breaker_state.latest_triggered_rules or []) if "_breaker_state" in dir() and _breaker_state is not None else [],
                 "reason": _breaker_state.reason if "_breaker_state" in dir() and _breaker_state is not None else "",
             },
+            economic_risk_off=_economic_risk_summary,
             # Plan A: Stop Loss Health panel
             stop_loss_health=_build_stop_loss_health(
                 pnl_tracker=pnl_tracker,
@@ -3136,8 +3255,11 @@ def main() -> int:  # noqa: C901
     _final_cb_detail: dict = (
         {
             "status": _final_breaker_state_obj.status,
+            "action": _final_breaker_state_obj.action,
             "triggered_at": _final_breaker_state_obj.triggered_at,
             "triggered_rules": list(_final_breaker_state_obj.triggered_rules or []),
+            "latest_decision_action": _final_breaker_state_obj.latest_decision_action,
+            "latest_triggered_rules": list(_final_breaker_state_obj.latest_triggered_rules or []),
             "reason": _final_breaker_state_obj.reason,
             "clear_note": _final_breaker_state_obj.clear_note,
         }
@@ -3196,7 +3318,10 @@ def main() -> int:  # noqa: C901
             "entry_blocked": len(_ef_result.blocked) if "_ef_result" in dir() else 0,
             "cluster_blocked": len(blocked_cluster_cap) if "blocked_cluster_cap" in dir() else 0,
             "allocation_blocked": _allocation_blocked_count,
-            "guardrail_blocked": len(_guardrail_blocked) if "_guardrail_blocked" in dir() else 0,
+            "guardrail_blocked": (
+                (len(_guardrail_blocked) if "_guardrail_blocked" in dir() else 0)
+                + (len(_economic_risk_blocked) if "_economic_risk_blocked" in dir() else 0)
+            ),
             "qty_zero": sum(skipped_buy_reasons.values()) if "skipped_buy_reasons" in dir() else 0,
             "submitted": len([s for s in submissions if s.status not in {"rejected"}]),
             "accepted": len([s for s in submissions if s.status in {"accepted", "new", "pending_new", "filled", "partially_filled"}]),
@@ -3209,6 +3334,8 @@ def main() -> int:  # noqa: C901
         ),
         # circuit breaker detail for HALT visibility in console
         circuit_breaker_detail=_final_cb_detail,
+        # Independent economic drawdown state (shadow-first rollout).
+        economic_risk_off=_economic_risk_summary,
         # Plan A: Stop Loss Health panel
         stop_loss_health=_build_stop_loss_health(
             pnl_tracker=pnl_tracker,

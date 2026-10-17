@@ -25,6 +25,23 @@ def _allow_decision() -> GuardDecision:
     return GuardDecision(action=GuardAction.allow, triggered=[])
 
 
+def _weekly_loss_halt(observed: float) -> GuardDecision:
+    return GuardDecision(
+        action=GuardAction.halt,
+        triggered=[
+            TriggeredRule(
+                name="weekly_total_loss_pct",
+                metric="weekly_total_loss_pct",
+                observed=observed,
+                operator="<=",
+                threshold=-6.0,
+                action=GuardAction.halt,
+                severity="critical",
+            )
+        ],
+    )
+
+
 def test_circuit_breaker_halt_persists_across_reload(tmp_path: Path) -> None:
     store = CircuitBreakerStore(tmp_path / "cb.json")
     state = store.apply_decision(_halt_decision())
@@ -256,6 +273,33 @@ def test_apply_decision_stamps_last_evaluated_at_while_already_halted(tmp_path: 
     assert second.last_evaluated_at != first.last_evaluated_at
 
 
+def test_latched_halt_preserves_trigger_and_records_latest_evaluation(tmp_path: Path) -> None:
+    """Regression: 2026-10-17 displayed -6.1043% after the metric reached -7.8177%.
+
+    The original trigger remains immutable audit evidence, while the latest
+    evaluation is recorded separately for operator decisions.
+    """
+    store = CircuitBreakerStore(tmp_path / "cb.json")
+    first = store.apply_decision(_weekly_loss_halt(-6.1043))
+    second = store.apply_decision(_weekly_loss_halt(-7.8177))
+
+    assert first.triggered_rules[0]["observed"] == -6.1043
+    assert second.triggered_rules[0]["observed"] == -6.1043
+    assert second.latest_decision_action == "halt"
+    assert second.latest_triggered_rules[0]["observed"] == -7.8177
+
+
+def test_latched_halt_records_latest_allow_without_clearing_trigger(tmp_path: Path) -> None:
+    store = CircuitBreakerStore(tmp_path / "cb.json")
+    store.apply_decision(_weekly_loss_halt(-6.1043))
+    state = store.apply_decision(_allow_decision())
+
+    assert state.is_halted, "allow must not clear a manually latched operational HALT"
+    assert state.triggered_rules[0]["observed"] == -6.1043
+    assert state.latest_decision_action == "allow"
+    assert state.latest_triggered_rules == []
+
+
 def test_apply_decision_stamps_last_evaluated_at_during_recovery_pending(tmp_path: Path) -> None:
     store = CircuitBreakerStore(tmp_path / "cb.json")
     store.apply_decision(_halt_decision())
@@ -307,3 +351,5 @@ def test_load_defaults_last_evaluated_at_to_none_for_legacy_file(tmp_path: Path)
     state = store.load()
     assert state.status == "ok"
     assert state.last_evaluated_at is None
+    assert state.latest_decision_action is None
+    assert state.latest_triggered_rules == []

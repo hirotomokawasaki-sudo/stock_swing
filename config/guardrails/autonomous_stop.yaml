@@ -1,5 +1,26 @@
 paper_warning_only: false  # hard-halt enabled 2026-07-01 (6-day calibration confirmed zero false positives)
 
+# 2026-10-17 Phase 1: independent economic drawdown state machine.
+# Shadow-only until enough paper observations exist to compare drawdown
+# reduction against blocked-trade opportunity cost.  The legacy daily/weekly
+# rules below remain enforced during this phase, so this rollout cannot clear
+# or weaken the currently latched circuit breaker.
+economic_risk_off:
+  enabled: true
+  mode: shadow
+  lookback_sessions: 5
+  max_history_sessions: 20
+  size_multiplier: 0.5
+  thresholds:
+    reduce_size_pct: -4.0
+    block_buys_pct: -6.0
+    halt_new_risk_pct: -8.0
+  recovery:
+    reduce_size_above_pct: -3.0
+    block_buys_above_pct: -4.5
+    halt_new_risk_above_pct: -6.5
+    consecutive_sessions: 2
+
 rules:
   stale_price_events:
     metric: stale_price_event_count

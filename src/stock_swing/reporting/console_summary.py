@@ -115,6 +115,7 @@ class ConsoleSummary:
     funnel_stages: dict[str, int] = field(default_factory=dict)          # R6-v2: 7-stage decision funnel
     open_position_details: list[dict[str, Any]] = field(default_factory=list)  # entry signal per position
     circuit_breaker_detail: dict = field(default_factory=dict)           # triggered_at / triggered_rules / reason
+    economic_risk_off: dict = field(default_factory=dict)                # staged drawdown policy (shadow/enforce)
 
     # --- Plan A: Stop Loss Health (2026-07-27) ---
     stop_loss_health: dict[str, Any] = field(default_factory=dict)
@@ -178,6 +179,8 @@ class ConsoleSummary:
                 "ledger_gate_status": self.ledger_gate_status,
                 # circuit breaker detail (triggered_at / triggered_rules for renderer)
                 "circuit_breaker_detail": self.circuit_breaker_detail,
+                # Economic drawdown is deliberately separate from operational HALT.
+                "economic_risk_off": self.economic_risk_off,
                 # R0-v2-B: equity bridge
                 "equity_bridge": self.equity_bridge,
             },
@@ -323,6 +326,8 @@ class ConsoleSummary:
         open_position_details: list[dict[str, Any]] | None = None,
         # circuit breaker detail (triggered_at, triggered_rules, reason)
         circuit_breaker_detail: dict | None = None,
+        # staged economic drawdown policy (independent from operational HALT)
+        economic_risk_off: dict | None = None,
         # Plan A: Stop Loss Health (2026-07-27)
         stop_loss_health: dict[str, Any] | None = None,
         # R7-v2-A: Source SLA (2026-07-30)
@@ -486,6 +491,7 @@ class ConsoleSummary:
             funnel_stages=funnel_stages or {},
             open_position_details=open_position_details or [],
             circuit_breaker_detail=circuit_breaker_detail or {},
+            economic_risk_off=economic_risk_off or {},
             stop_loss_health=stop_loss_health or {},
             source_sla=source_sla or {},
             dry_run=dry_run,

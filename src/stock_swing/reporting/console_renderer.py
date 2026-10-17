@@ -37,6 +37,7 @@ class ConsoleRenderer:
             self._halt_banner(d),   # 最上位: HALTED 時のみ表示
             self._run_health(d),
             self._safety_gate(d),
+            self._economic_risk_off(d),
             self._alerts(d),
             self._portfolio(d),
             self._exit_attribution(d),
@@ -63,6 +64,8 @@ class ConsoleRenderer:
         cb_detail = health.get("circuit_breaker_detail", {})
         triggered_at_raw = cb_detail.get("triggered_at") or health.get("triggered_at")
         triggered_rules: list[dict] = cb_detail.get("triggered_rules") or []
+        latest_action = cb_detail.get("latest_decision_action")
+        latest_rules: list[dict] = cb_detail.get("latest_triggered_rules") or []
 
         # Format timestamp in local-friendly form (JST offset shown as-is)
         triggered_str = "unknown"
@@ -105,6 +108,20 @@ class ConsoleRenderer:
                     lines.append(f"  detail    : {alert.get('message', '')}")
                     break
 
+        if latest_action and (
+            latest_action != cb_detail.get("action") or latest_rules != triggered_rules
+        ):
+            lines.append(_SEP)
+            lines.append(f"  latest    : action={latest_action}")
+            for rule in latest_rules[:3]:
+                metric = rule.get("metric", "?")
+                observed = rule.get("observed", "?")
+                threshold = rule.get("threshold", "?")
+                op = rule.get("operator", ">=")
+                lines.append(
+                    f"              {metric} observed={observed} {op} threshold={threshold}"
+                )
+
         lines += [
             _SEP,
             "  resolve:",
@@ -113,6 +130,40 @@ class ConsoleRenderer:
             "    3. python scripts/clear_circuit_breaker.py",
             _HALT_SEP,
         ]
+        return "\n".join(lines)
+
+    def _economic_risk_off(self, d: dict) -> str:
+        """Render staged economic drawdown separately from operational HALT."""
+        risk = d.get("health", {}).get("economic_risk_off") or {}
+        if not risk.get("enabled"):
+            return ""
+
+        status = str(risk.get("status") or "unknown")
+        mode = str(risk.get("mode") or "shadow").upper()
+        observed = risk.get("observed_pct")
+        observed_text = "collecting" if observed is None else _fmt_pct(observed, 2)
+        window_start = risk.get("window_start_date") or "unknown"
+        window_end = risk.get("window_end_date") or "unknown"
+        recovery = int(risk.get("recovery_sessions") or 0)
+        recovery_required = int(risk.get("recovery_sessions_required") or 0)
+
+        icon = {
+            "normal": "✅",
+            "reduce_size": "⚠️ ",
+            "block_buys": "🟠",
+            "halt_new_risk": "🔴",
+        }.get(status, "❓")
+        lines = [
+            f"{icon} ECONOMIC RISK-OFF  {status.upper()}  [{mode}]",
+            _SEP,
+            f"  metric     = {observed_text}  ({risk.get('data_status', 'unknown')})",
+            f"  window     = {window_start} → {window_end}",
+            f"  action     = {risk.get('action', 'unknown')}",
+        ]
+        if status != "normal" and recovery_required:
+            lines.append(f"  recovery   = {recovery}/{recovery_required} clean sessions")
+        if mode == "SHADOW":
+            lines.append("  effect     = observation only; orders unchanged")
         return "\n".join(lines)
 
     def _run_health(self, d: dict) -> str:
