@@ -80,9 +80,10 @@ paper A/B昇格を含むすべての本番挙動変更は、以下 (a)(b)(c) を
 | 12 | 2026-09-22 | R16 lot-level exit（CRWD希釈exit） | shadow log + yfinance 1分/日次実価格 | 1 | 独立1 position episode（CRWD 2ロット） | per-lot反実仮想は09-21終値markで実績比約+$1,225。若ロットstop床未到達だが未実現 | △ shadow維持（独立sample不足・A/B基準未登録） |
 | 13 | 2026-09-22 | R14 dip-buy shadow候補の5〜10営業日反実仮想 | shadow log + yfinance日次OHLC + 既存SimpleExitV2 replay helper | 1 | 日次重複除去357候補（10日成熟175、09-02/03成熟75） | 10日成熟は平均+1.59%/勝率69.7%。09-02/03は+2.85%だが09-04は9日時点-2.32%。半導体約半数・候補間非独立 | △ shadow維持（設計3条件・A/B・OOS未完、economic NO-GO） |
 | 14 | 2026-10-02 | R14 dip-buy signal後1/3/5営業日実リターン | shadow log + yfinance日次OHLC | 1（3 horizon） | 日次重複除去411候補（成熟394/378/368） | 平均+0.16%/+1.32%/+1.58%、precision 51.8%/55.3%/57.3%。5日p5=-10.27%、最悪-33.42%、半導体43.1% | △ shadow維持（探索値で未事前登録、A/B・OOS・設計条件未完、30% cap超過） |
+| 15 | 2026-10-20 | R16 lot-level exit 第4回（確定相当・max_hold再発） | shadow log + tracking events + feature snapshots | 1 | 累計11独立position episode（増分3: FTNT/CRDO/CIEN、MUは継続） | 累計49ログ。CRWD反実仮想は10-07 trailing発火proxyで実績比約+$3,517へ確定相当化。MU若ロット-$2,366、FTNT若ロット+$3,466 | △ shadow維持。time_based Arm Aは事前登録案作成可能だが、基準・A/B telemetry・承認未完。Arm Bはscope/統合未確定 |
 
-**多重検定の現状カウント**: 反実仮想/ヒストリカル検証は累計14本
-（2026-09-05に5本、2026-09-08に2本、2026-09-22に3本、2026-10-02に1本追加）。以後増えるたびに
+**多重検定の現状カウント**: 反実仮想/ヒストリカル検証は累計15本
+（2026-09-05に5本、2026-09-08に2本、2026-09-22に3本、2026-10-02に1本、2026-10-20に1本追加）。以後増えるたびに
 この台帳で管理する。
 
 ### 現時点の昇格候補セット（すべて上記必須条件の対象）

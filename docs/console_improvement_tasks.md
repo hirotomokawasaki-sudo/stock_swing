@@ -4387,6 +4387,31 @@ trailingを分けたpaper A/Bの事前登録作成を提案**する。ただし
 確認したため、メインセッションで登録し実在確認する必要がある。詳細:
 `docs/daily_logs/2026-10-06.md`。
 
+### 📋 2026-10-20 第4回中間レビュー結果（cron `stock_swing_lot_level_exit_diagnostic_review_20261020`）
+
+**1) 増分とepisode**: shadow logは**49件**（第3回30件から**+19件**）。増分は
+`aggregate_missed_lot_exit` **14件**、`aggregate_exit_lot_disagreement` **5件**、
+累計は33件 / 16件。増分のMU 15ログは既存episode継続で、新規は**3独立episode**
+（FTNT / CRDO / CIEN）、累計**11 episode**。データ最終時点は10-14 19:55 UTC。
+
+**2) CRWD確定相当更新**: 若123株はpeak $281.875、12%段階trailing床$274.83に対し
+10-07 16:00 UTC mark $268.05で発火条件を満たした。同時刻fill $267.90をproxyにすると
+若ロットは約+$2,692、実績-$888との差は約+$3,580。旧ロット差-$63を含むCRWD全体は
+実績比約**+$3,517**（反実仮想約+$5,682対実績+$2,165）。10-05時点の未実現+$4,115
+から縮小したが確定相当へ移行した。CRDO/CIENの初回stop_loss missedも、単純比較では
+旧ロットを先に閉じる経路がそれぞれ約+$1.1k / +$1.5k方向だった。
+
+**3) max_hold再発**: MUは若30株を巻き込み**-$2,366.40**、FTNTは若193株を巻き込み
+**+$3,466.28**。累計6 time_based episodeのうち若ロット損失は4件、損失合計約-$9,290。
+`per_lot_time_based_exit_enabled`は**false**、部分売却実績0件。
+
+**4) 判断**: **shadow維持、本番変更なし**。time_based限定Arm Aは事前登録案を作る
+材料が整ったが、数値基準文書・deterministic assignment・A/B attribution telemetry・
+ユーザー承認が未完で開始条件未充足。Arm Bは部分数量/FIFO統合未実証に加え、新規
+CRDO/CIENがstop_loss由来のため、trailing限定か全price exitかのscope固定が必要。
+次回目安は**2026-11-03 09:00 JST**または事前登録承認時。次回automationは未登録で、
+メインセッションから登録・実在確認が必要。詳細: `docs/daily_logs/2026-10-20.md`。
+
 ---
 
 ## R17: reduce_size設計見直し検証（見送り、、2026-09-01）
