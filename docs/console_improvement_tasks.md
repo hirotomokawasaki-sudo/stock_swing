@@ -3779,6 +3779,36 @@ min_members修正込みの数値を新headlineとして採用することを推�
   30% projected hard capの承認・実装・検証がない限り配線不可とする。
 - 詳細: `docs/daily_logs/2026-10-02.md`
 
+**2026-10-21 第3回配線判断レビュー（cron実施、分析・記録のみ）**:
+
+- **判断: shadow継続 / paper A/B提案見送り / 本番配線見送り**。固定基準は変更しない。
+- **新系列rebalanceは3回に到達**（09-08/09-29/10-20、stateもcount=3）。
+  ただし3回目はenter/exitとも空のno-opであり、3回の実売買や独立収益実績ではない。
+  hold_days=21は現行コードで**暦日**（Phase 1は取引日）。過去の「21営業日」表現を訂正。
+- **蓄積**: 新126d/min2は31行/31実行日、旧63dは42行/40実行日、最新10-21 09:33 JST。
+  JSON不正・errorレコードは0だが、新旧とも**10-19が1平日欠落**。無障害連続蓄積とは扱わない。
+- **集中改善なし**: 新系列semiconductor **31/31日（100%）**、FTXL/CHPXも各31/31日候補入り。
+  robotics_ai+semiconductor 25/31日、software+semiconductor 6/31日。
+  選択集合フリップ11/30遷移（36.7%）、10-02後のみ3/11（27.3%）でも半導体偏重は継続。
+  前提の18/18は10-02当日を含まない値で、前回文書と原ログは当日込み19/19と一致。
+- **現保有は改善、capは未解決**: 10-21 00:00 UTC trackerはopen=0、半導体露出
+  **$0 / equity $930,032.83 = 0.0%**（entry notional近似）。10-20 21:00 UTCの
+  broker/tracker照合も双方0。不足capが効いた結果でもR13-Dの効果でもない。
+- **必須30% projected hard capは未実装・未検証**。既存clusterはcombined40%等、
+  現状超過の検査のみで注文量を受け取らず、registry半導体関連全体も網羅しない。
+  現在0%というsnapshotを将来の再集中抑制の証拠にはできない。
+- **economic viabilityはNO-GO**（exit>=08-14、n=109 / PF=0.639570 / expectancy=-$573.54）。
+  due回数充足だけでは連結cap・安定蓄積・独立risk budget・事前登録/A-B/OOSを代替しない。
+- **承認事項（無人runでは未実施）**: 連結30% projected capの実装・検証・適用、cadence整合、
+  将来の配線。paper A/Bでも初期配分は全体exposure10%以下、別ID/台帳/予算と明示承認が必要。
+- **次回**: 前提実装・検証が揃えば早期再審査。未完なら次due見込み11-10後の
+  **2026-11-11 09:45 JST**を継続コスト・欠落/集中確認の目安とする。
+  **次回automationは未登録**。メインセッションから
+  `stock_swing_sector_rotation_wiring_review_20261111`を登録・get/list確認すること。
+  今回は本番コード・設定・配線・台帳・automationを変更していない。
+- 詳細・再現・source hashes: `docs/daily_logs/2026-10-21.md` /
+  `docs/r13d_wiring_review_20261021/`。
+
 **既存進捗**:
 - JP半導体overnight spillover: Phase 1（相関検証、GO判定済み）、Phase 2（戦略設計）、
   Phase 2.5（shadow検証、日次収集中）完了済み。IBKR接続確立後にPhase 3（実配線）へ

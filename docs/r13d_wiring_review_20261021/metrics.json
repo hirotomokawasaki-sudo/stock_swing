@@ -1,0 +1,297 @@
+{
+  "review_date_jst": "2026-10-21",
+  "source_head": "677c790d8001031edc8311099210e2d330cb492c",
+  "new_headline": {
+    "records": 31,
+    "first_date": "2026-09-08",
+    "last_date": "2026-10-21",
+    "last_logged_at": "2026-10-21T00:33:01.879442+00:00",
+    "invalid_json": 0,
+    "error_records": 0,
+    "duplicate_dates": {},
+    "missing_weekdays": [
+      "2026-10-19"
+    ],
+    "rebalance_due": [
+      {
+        "date": "2026-09-08",
+        "prior_state_rebalance_count": 0,
+        "diff_enter": [
+          "CHPS",
+          "CHPX",
+          "FRWD",
+          "FTXL",
+          "GTOP",
+          "PSCT",
+          "PTF",
+          "QTEC",
+          "SHOC",
+          "SMH",
+          "SMHX",
+          "SOXQ",
+          "SOXX",
+          "TDIV",
+          "TTEQ"
+        ],
+        "diff_exit": []
+      },
+      {
+        "date": "2026-09-29",
+        "prior_state_rebalance_count": 1,
+        "diff_enter": [
+          "BOTZ",
+          "ROBO"
+        ],
+        "diff_exit": [
+          "FRWD",
+          "GTOP",
+          "PSCT",
+          "PTF",
+          "QTEC",
+          "TDIV",
+          "TTEQ"
+        ]
+      },
+      {
+        "date": "2026-10-20",
+        "prior_state_rebalance_count": 2,
+        "diff_enter": [],
+        "diff_exit": []
+      }
+    ],
+    "all": {
+      "days": 31,
+      "sector_days": {
+        "semiconductor": 31,
+        "software": 6,
+        "robotics_ai": 25
+      },
+      "combinations": {
+        "semiconductor+software": 6,
+        "robotics_ai+semiconductor": 25
+      },
+      "transitions": 30,
+      "selection_flips": 11,
+      "ftxl_candidate_days": 31,
+      "chpx_candidate_days": 31
+    },
+    "through_2026_10_02": {
+      "days": 19,
+      "sector_days": {
+        "semiconductor": 19,
+        "software": 4,
+        "robotics_ai": 15
+      },
+      "combinations": {
+        "semiconductor+software": 4,
+        "robotics_ai+semiconductor": 15
+      },
+      "transitions": 18,
+      "selection_flips": 7,
+      "ftxl_candidate_days": 19,
+      "chpx_candidate_days": 19
+    },
+    "after_2026_10_02": {
+      "days": 12,
+      "sector_days": {
+        "semiconductor": 12,
+        "software": 2,
+        "robotics_ai": 10
+      },
+      "combinations": {
+        "semiconductor+software": 2,
+        "robotics_ai+semiconductor": 10
+      },
+      "transitions": 11,
+      "selection_flips": 3,
+      "ftxl_candidate_days": 12,
+      "chpx_candidate_days": 12
+    },
+    "headline_configs": [
+      [
+        2,
+        126,
+        21,
+        2
+      ]
+    ]
+  },
+  "legacy": {
+    "records": 42,
+    "first_date": "2026-08-26",
+    "last_date": "2026-10-21",
+    "last_logged_at": "2026-10-21T00:33:01.876874+00:00",
+    "invalid_json": 0,
+    "error_records": 0,
+    "duplicate_dates": {
+      "2026-08-26": 2,
+      "2026-09-08": 2
+    },
+    "missing_weekdays": [
+      "2026-10-19"
+    ],
+    "rebalance_due": [
+      {
+        "date": "2026-08-26",
+        "prior_state_rebalance_count": 0,
+        "diff_enter": [
+          "SKYY",
+          "SPY"
+        ],
+        "diff_exit": []
+      },
+      {
+        "date": "2026-09-16",
+        "prior_state_rebalance_count": 1,
+        "diff_enter": [
+          "BOTZ",
+          "CHPS",
+          "CHPX",
+          "FTXL",
+          "ROBO",
+          "SHOC",
+          "SMH",
+          "SMHX",
+          "SOXQ",
+          "SOXX"
+        ],
+        "diff_exit": [
+          "SKYY",
+          "SPY"
+        ]
+      },
+      {
+        "date": "2026-10-07",
+        "prior_state_rebalance_count": 2,
+        "diff_enter": [],
+        "diff_exit": []
+      }
+    ],
+    "all": {
+      "days": 40,
+      "sector_days": {
+        "technology_cloud": 12,
+        "broad_market": 10,
+        "robotics_ai": 28,
+        "semiconductor": 28,
+        "technology": 2
+      },
+      "combinations": {
+        "broad_market+technology_cloud": 10,
+        "robotics_ai+semiconductor": 28,
+        "technology+technology_cloud": 2
+      },
+      "transitions": 39,
+      "selection_flips": 15,
+      "ftxl_candidate_days": 28,
+      "chpx_candidate_days": 28
+    },
+    "through_2026_10_02": {
+      "days": 28,
+      "sector_days": {
+        "technology_cloud": 10,
+        "broad_market": 10,
+        "robotics_ai": 18,
+        "semiconductor": 18
+      },
+      "combinations": {
+        "broad_market+technology_cloud": 10,
+        "robotics_ai+semiconductor": 18
+      },
+      "transitions": 27,
+      "selection_flips": 11,
+      "ftxl_candidate_days": 18,
+      "chpx_candidate_days": 18
+    },
+    "after_2026_10_02": {
+      "days": 12,
+      "sector_days": {
+        "technology_cloud": 2,
+        "technology": 2,
+        "robotics_ai": 10,
+        "semiconductor": 10
+      },
+      "combinations": {
+        "technology+technology_cloud": 2,
+        "robotics_ai+semiconductor": 10
+      },
+      "transitions": 11,
+      "selection_flips": 3,
+      "ftxl_candidate_days": 10,
+      "chpx_candidate_days": 10
+    },
+    "headline_configs": [
+      [
+        2,
+        63,
+        21,
+        0
+      ]
+    ]
+  },
+  "new_shadow_state": {
+    "current_holdings": [
+      "BOTZ",
+      "CHPS",
+      "CHPX",
+      "FTXL",
+      "ROBO",
+      "SHOC",
+      "SMH",
+      "SMHX",
+      "SOXQ",
+      "SOXX"
+    ],
+    "current_sectors": [
+      "robotics_ai",
+      "semiconductor"
+    ],
+    "last_rebalance_date": "2026-10-20",
+    "rebalance_count": 3
+  },
+  "portfolio": {
+    "tracker_last_updated": "2026-10-21T00:00:01.277398+00:00",
+    "open_lots": 0,
+    "semiconductor_open_lots": 0,
+    "semiconductor_symbols": [],
+    "entry_notional_proxy": 0,
+    "latest_snapshot_date": "2026-10-21",
+    "snapshot_equity": 930032.83,
+    "entry_notional_equity_ratio": 0.0,
+    "unregistered_open_symbols": []
+  },
+  "economic_viability": {
+    "cohort_start": "2026-08-14",
+    "n": 109,
+    "gross_profit": 110932.54,
+    "gross_loss": 173448.59,
+    "pf": 0.6395701458282249,
+    "expectancy": -573.5417431192661,
+    "pass": false
+  },
+  "cluster_probe": {
+    "existing_equity": 100000,
+    "existing_ARM_market_value": 29000,
+    "ARM_buy_blocked": false,
+    "CRDO_buy_blocked": false,
+    "note": "ARM at 29% is allowed without examining proposed size; CRDO is registry-semiconductor but absent from cluster membership. No proposed-order notional argument exists."
+  },
+  "sha256": {
+    "data/sector_rotation_new_headline_shadow_log.jsonl": "3326ed5eecb4f18200ccacdf6563d95a3dd9f3368672379edff80846806bef54",
+    "data/sector_rotation_shadow_log.jsonl": "d2c3f0495634e570ad26901f0733ed7981d0b35b06ff41a01d903867df74ac0f",
+    "data/sector_rotation_new_headline_shadow_state.json": "7abcd503ad2b921d8aef6a5ac4e1734a7a54f4f630c6d5d8b84fd7c9b6594d76",
+    "data/sector_rotation_shadow_state.json": "43da698fe9528caeb6c8c830cbdced024fee6ec9810bb365aa98c5525bfb8e2f",
+    "data/tracking/pnl_state.json": "366380c60892e31fa69999bb38a0989c854c52c0a6994d9b787ca2235f5350b9",
+    "data/analysis/broker_tracker_reconciliation.md": "68df4731e640369315224c093db9af6690d4ccdf0dac5a402b0dbe0df59cc40c",
+    "config/reference/symbol_registry.yaml": "aac5bab3a0ee16fd935f9ae541dd9566835fc49de21d98e31bae40c288057e4e",
+    "config/strategy/portfolio_allocation.yaml": "d89a0828ff737e400b7b6e8edf6fe8c80c91231e114752a9aeb0daed3a696011",
+    "config/runtime/current_mode.yaml": "d40d1bf835fc846b06f9f9bb527f4f904ee1df10f3c00d5794c7452d70f93374",
+    "src/stock_swing/risk/correlation_cluster.py": "4e5ef7567f3320a0e7ae64f4e16a4e808b783e959c81bafbe7b5a66b876a6cba",
+    "src/stock_swing/cli/paper_demo.py": "9df3a2226c764a36b8e89e30226dd34fb8e7b33d62ffd702321826e12d471326",
+    "src/stock_swing/strategy_engine/sector_rotation_strategy.py": "74119544d9f6ea9cb698c82c14418377ba9e642580fd811f0b7bd51e89a84d8f",
+    "src/stock_swing/strategy_engine/sector_rotation_state.py": "899721ed8dc2f6ad5b17fc84c92eb92bfc55e170f43896b177a6a24219ea8bc6",
+    "scripts/log_sector_rotation_shadow.py": "60452068945fe33e0e3221b85107bdfe984dec5f2ab26ffcb733e3b06a80c212",
+    "scripts/check_go_no_go.py": "6f9a41806cbf3e86dd8e90a9ecc9ec7872347baf038bf1c3c23dd465bf4fb330",
+    "docs/review_criteria_20260908.md": "d36c6b32a04eb9b93cbb27834bed7fcdbd5c731dafe4ccd3cc43574493ae5f16"
+  }
+}
