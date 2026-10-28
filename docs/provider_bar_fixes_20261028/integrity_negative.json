@@ -1,0 +1,26 @@
+[
+  {
+    "case": "missing_source",
+    "exit_code": 1,
+    "output_created": false,
+    "refused_before_test_execution": true
+  },
+  {
+    "case": "modified_verifier",
+    "exit_code": 1,
+    "output_created": false,
+    "refused_before_test_execution": true
+  },
+  {
+    "case": "extra_file",
+    "exit_code": 1,
+    "output_created": false,
+    "refused_before_test_execution": true
+  },
+  {
+    "case": "malformed_manifest",
+    "exit_code": 1,
+    "output_created": false,
+    "refused_before_test_execution": true
+  }
+]

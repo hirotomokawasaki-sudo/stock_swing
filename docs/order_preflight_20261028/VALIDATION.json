@@ -1,0 +1,42 @@
+{
+  "actual_cli_cases": 18,
+  "canonical_17_milestones_unchanged": true,
+  "combined_patch_readonly_check": true,
+  "disposable_apply_reverse_bytes_modes": true,
+  "focused_new_passed": 60,
+  "full_unique_passed": 2740,
+  "integrity_refusals": {
+    "changed": {
+      "exit_code": 1,
+      "reason": "ValueError: byte/mode mismatch: code/src/stock_swing/risk/order_preflight.py"
+    },
+    "extra": {
+      "exit_code": 1,
+      "reason": "ValueError: packet inventory mismatch"
+    },
+    "manifest": {
+      "exit_code": 1,
+      "reason": "json.decoder.JSONDecodeError: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)"
+    },
+    "missing": {
+      "exit_code": 1,
+      "reason": "ValueError: packet inventory mismatch"
+    }
+  },
+  "main_sources_unchanged": true,
+  "packet_only_replay": {
+    "cli_cases": 18,
+    "focused_passed": 135,
+    "integrity": "verified",
+    "known_unfixed_first_intent_retries": 3,
+    "normalized_outcomes_match": true,
+    "production_applied": false
+  },
+  "prior_packet_untouched": true,
+  "production_applied": false,
+  "production_head": "8909e79c1a83e04d508715b132575625454b7856",
+  "protected_main_files": 660,
+  "skipped": 3,
+  "unfixed_transport_retries": 3,
+  "warning": 1
+}

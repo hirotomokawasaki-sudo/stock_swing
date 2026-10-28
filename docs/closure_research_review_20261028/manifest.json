@@ -1,0 +1,52 @@
+{
+  "files": {
+    "CALLER_CONFIG_AUDIT.md": {
+      "mode": 384,
+      "sha256": "f0010d0b0aa52bf170b3214298530581b547afceeeb90c66573ad1096b4dd69d"
+    },
+    "FIRST_REVIEW_DRAFT.md": {
+      "mode": 384,
+      "sha256": "936b0130727ae3d949eadf634864310190c4aa81515c10feaa3fe128c9a606e5"
+    },
+    "POLICY_OPTIONS.md": {
+      "mode": 384,
+      "sha256": "f8702582d85fa53881281eada1d8b7fa89bdd29c921eddc47b3fceefffc4b502"
+    },
+    "README.md": {
+      "mode": 384,
+      "sha256": "73122d8b3acdfd7fd620eed167000928950cb12ba5598cbef39e419efc83a441"
+    },
+    "SPEC.json": {
+      "mode": 384,
+      "sha256": "5ad862eae2947ee26501256544a5ac528e6bf50c23ed9797183d4c523b1e2d8b"
+    },
+    "VALIDATION.json": {
+      "mode": 384,
+      "sha256": "224019f61772ec824ac67bc74ba9f732fe0fc915082aef597d583d058f020708"
+    },
+    "boundary_classification.json": {
+      "mode": 384,
+      "sha256": "ea07c7023ca813cc3e9d429fa330666c27d62c9d359d028230e3b915d20a3744"
+    },
+    "config_inventory.json": {
+      "mode": 384,
+      "sha256": "8da515f4492d4fd66390b16cb77e0f88ac1975147ea7cbabe99cd990885a4201"
+    },
+    "evidence_summary.json": {
+      "mode": 384,
+      "sha256": "ff258ce32b6faafdb906139eff8b7f0f1b30859c1477a8a370fe61529bfc8032"
+    },
+    "plan_check.json": {
+      "mode": 384,
+      "sha256": "6f579c7a1aa0dcdd4d5fb0166c988889057d0ee135f867d22ee7ec899c14f9a2"
+    },
+    "source_pins.json": {
+      "mode": 384,
+      "sha256": "b5313aeaf8313cca2772e2c3c031f9f6e54a59051c61a668e9de69580429acec"
+    },
+    "static_inventory.json": {
+      "mode": 384,
+      "sha256": "3f78065f69f0162260c8dc528fbb3cbb7b0e4935d8ba7356089096a94468f510"
+    }
+  }
+}

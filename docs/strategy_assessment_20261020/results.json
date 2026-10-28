@@ -1,0 +1,380 @@
+{
+  "ledger_last_updated": "2026-10-17T00:00:03.992665+00:00",
+  "baseline_equity": 1000000.0,
+  "baseline_date": "2026-05-12",
+  "ledger_max_drawdown_pct_field": 0.1055,
+  "closed_trades": 420,
+  "quarantined_excluded": 6,
+  "equity": {
+    "first_date": "2026-05-27",
+    "last_date": "2026-10-17",
+    "n_dates": 120,
+    "last_equity": 929860.7,
+    "peak_equity": 1120170.7,
+    "peak_date": "2026-06-03",
+    "total_return_vs_baseline": -0.0701,
+    "annualized_simple_compound": -0.1546,
+    "daily_vol_ann": 0.2877,
+    "naive_sharpe_rf0": -0.81,
+    "max_drawdown_curve": -0.1699,
+    "dd_from_peak_now": -0.1699,
+    "days_over_5pct_below_peak": 107
+  },
+  "monthly_return": {
+    "2026-05": 0.0813,
+    "2026-06": 0.0038,
+    "2026-07": -0.0904,
+    "2026-08": -0.0105,
+    "2026-09": 0.0172,
+    "2026-10": -0.0644
+  },
+  "all": {
+    "n": 420,
+    "net": -72333,
+    "pf": 0.842,
+    "win_rate": 0.49,
+    "avg_win": 1868,
+    "avg_loss": -2136,
+    "expectancy": -172
+  },
+  "breakeven_win_rate": 0.533,
+  "by_exit_reason": {
+    "stop_loss": {
+      "n": 161,
+      "net": -299667,
+      "pf": 0.114,
+      "win_rate": 0.255,
+      "avg_win": 939,
+      "avg_loss": -2818,
+      "expectancy": -1861
+    },
+    "trailing_stop": {
+      "n": 161,
+      "net": 246724,
+      "pf": 11.649,
+      "win_rate": 0.832,
+      "avg_win": 2014,
+      "avg_loss": -858,
+      "expectancy": 1532
+    },
+    "breakeven_stop": {
+      "n": 47,
+      "net": -9377,
+      "pf": 0.631,
+      "win_rate": 0.213,
+      "avg_win": 1601,
+      "avg_loss": -686,
+      "expectancy": -200
+    },
+    "time_based": {
+      "n": 31,
+      "net": 33171,
+      "pf": 2.291,
+      "win_rate": 0.548,
+      "avg_win": 3463,
+      "avg_loss": -1835,
+      "expectancy": 1070
+    },
+    "broker_fill": {
+      "n": 13,
+      "net": -11158,
+      "pf": 0.074,
+      "win_rate": 0.231,
+      "avg_win": 298,
+      "avg_loss": -1205,
+      "expectancy": -858
+    },
+    "strategy_exit": {
+      "n": 5,
+      "net": -29000,
+      "pf": 0.0,
+      "win_rate": 0.0,
+      "avg_win": 0,
+      "avg_loss": -5800,
+      "expectancy": -5800
+    },
+    "corporate_action": {
+      "n": 2,
+      "net": -3027,
+      "pf": 0.169,
+      "win_rate": 0.5,
+      "avg_win": 617,
+      "avg_loss": -3644,
+      "expectancy": -1513
+    }
+  },
+  "by_asset_class": {
+    "stock": {
+      "n": 323,
+      "net": -62189,
+      "pf": 0.823,
+      "win_rate": 0.48,
+      "avg_win": 1868,
+      "avg_loss": -2094,
+      "expectancy": -193
+    },
+    "etf": {
+      "n": 97,
+      "net": -10144,
+      "pf": 0.904,
+      "win_rate": 0.526,
+      "avg_win": 1868,
+      "avg_loss": -2292,
+      "expectancy": -105
+    }
+  },
+  "by_month": {
+    "2026-06": {
+      "n": 129,
+      "net": 87540,
+      "pf": 1.758,
+      "win_rate": 0.558,
+      "avg_win": 2820,
+      "avg_loss": -2027,
+      "expectancy": 679
+    },
+    "2026-05": {
+      "n": 90,
+      "net": -22510,
+      "pf": 0.54,
+      "win_rate": 0.478,
+      "avg_win": 615,
+      "avg_loss": -1041,
+      "expectancy": -250
+    },
+    "2026-07": {
+      "n": 67,
+      "net": -85578,
+      "pf": 0.202,
+      "win_rate": 0.299,
+      "avg_win": 1082,
+      "avg_loss": -2281,
+      "expectancy": -1277
+    },
+    "2026-08": {
+      "n": 62,
+      "net": -22029,
+      "pf": 0.651,
+      "win_rate": 0.452,
+      "avg_win": 1470,
+      "avg_loss": -1859,
+      "expectancy": -355
+    },
+    "2026-10": {
+      "n": 44,
+      "net": -49098,
+      "pf": 0.476,
+      "win_rate": 0.591,
+      "avg_win": 1717,
+      "avg_loss": -5207,
+      "expectancy": -1116
+    },
+    "2026-09": {
+      "n": 28,
+      "net": 19341,
+      "pf": 1.678,
+      "win_rate": 0.607,
+      "avg_win": 2816,
+      "avg_loss": -2593,
+      "expectancy": 691
+    }
+  },
+  "by_holding": {
+    "6d+": {
+      "n": 222,
+      "net": 95442,
+      "pf": 1.439,
+      "win_rate": 0.572,
+      "avg_win": 2462,
+      "avg_loss": -2286,
+      "expectancy": 430
+    },
+    "<1d": {
+      "n": 94,
+      "net": -26104,
+      "pf": 0.541,
+      "win_rate": 0.436,
+      "avg_win": 749,
+      "avg_loss": -1072,
+      "expectancy": -278
+    },
+    "3-6d": {
+      "n": 71,
+      "net": -110180,
+      "pf": 0.183,
+      "win_rate": 0.296,
+      "avg_win": 1176,
+      "avg_loss": -2697,
+      "expectancy": -1552
+    },
+    "1-3d": {
+      "n": 33,
+      "net": -31491,
+      "pf": 0.347,
+      "win_rate": 0.515,
+      "avg_win": 985,
+      "avg_loss": -3015,
+      "expectancy": -954
+    }
+  },
+  "worst10_sum": -90775,
+  "best10_sum": 91941,
+  "avg_notional": 36601,
+  "cohort_exit_ge_2026_08_14": {
+    "n": 108,
+    "net": -58889,
+    "pf": 0.653,
+    "win_rate": 0.519,
+    "avg_win": 1981,
+    "avg_loss": -3266,
+    "expectancy": -545
+  },
+  "weekly": {
+    "weeks": 22,
+    "positive_weeks": 9,
+    "worst5": [
+      [
+        -80411,
+        "2026-W24"
+      ],
+      [
+        -72716,
+        "2026-W42"
+      ],
+      [
+        -38887,
+        "2026-W28"
+      ],
+      [
+        -25866,
+        "2026-W20"
+      ],
+      [
+        -20600,
+        "2026-W37"
+      ]
+    ],
+    "best5": [
+      [
+        17732,
+        "2026-W40"
+      ],
+      [
+        19305,
+        "2026-W39"
+      ],
+      [
+        22216,
+        "2026-W41"
+      ],
+      [
+        63362,
+        "2026-W26"
+      ],
+      [
+        103485,
+        "2026-W23"
+      ]
+    ]
+  },
+  "bootstrap": {
+    "trade_level": {
+      "expectancy_ci95": [
+        -474,
+        105
+      ],
+      "pf_ci95": [
+        0.62,
+        1.11
+      ],
+      "p_pf_gt_1": 0.12
+    },
+    "week_block": {
+      "expectancy_ci95": [
+        -1005,
+        682
+      ],
+      "pf_ci95": [
+        0.35,
+        1.97
+      ],
+      "p_pf_gt_1": 0.33
+    },
+    "t_stat_expectancy": -1.17
+  },
+  "power": {
+    "sd_per_trade": 3006,
+    "design_effect": 8.5,
+    "trades_per_month": 81.4,
+    "one_sided_alpha": 0.05,
+    "power": 0.8,
+    "by_expectancy_delta_usd": {
+      "300": {
+        "n_independent": 620,
+        "n_with_deff": 5289,
+        "months_at_current_pace": 64.9
+      },
+      "500": {
+        "n_independent": 223,
+        "n_with_deff": 1904,
+        "months_at_current_pace": 23.4
+      },
+      "1000": {
+        "n_independent": 56,
+        "n_with_deff": 476,
+        "months_at_current_pace": 5.8
+      }
+    }
+  },
+  "annual_gross_loss_over_equity": 1.06,
+  "reconstructed_gross_over_equity_by_month": {
+    "2026-05": 0.92,
+    "2026-06": 0.81,
+    "2026-07": 0.47,
+    "2026-08": 0.77,
+    "2026-09": 0.53,
+    "2026-10": 0.76
+  },
+  "benchmarks": {
+    "SPY": {
+      "r11_cache_2026-05-12_to_2026-08-14": [
+        "2026-05-12",
+        "2026-08-14",
+        0.0517
+      ],
+      "benchmarks_csv_from_2026-07-20": [
+        "2026-07-20",
+        "2026-10-16",
+        0.0311
+      ]
+    },
+    "QQQ": {
+      "r11_cache_2026-05-12_to_2026-08-14": [
+        "2026-05-12",
+        "2026-08-14",
+        0.0337
+      ],
+      "benchmarks_csv_from_2026-07-20": [
+        "2026-07-20",
+        "2026-10-16",
+        0.0208
+      ]
+    },
+    "SMH": {
+      "r11_cache_2026-05-12_to_2026-08-14": [
+        "2026-05-12",
+        "2026-08-14",
+        0.0473
+      ],
+      "benchmarks_csv_from_2026-07-20": [
+        "2026-07-20",
+        "2026-10-16",
+        -0.0341
+      ]
+    }
+  },
+  "strategy_equity_2026-07-20_to_last": [
+    999672.45,
+    929860.7
+  ]
+}

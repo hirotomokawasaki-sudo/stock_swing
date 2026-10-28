@@ -1,0 +1,484 @@
+{
+  "baseline_batch": {
+    "copy_origin": true,
+    "exit": 0,
+    "posts": [
+      {
+        "qty": 61,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "MSFT",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "CRM",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "preflight": []
+  },
+  "baseline_buy_sell_conflict": {
+    "copy_origin": true,
+    "exit": 0,
+    "posts": [
+      {
+        "qty": 1,
+        "side": "sell",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "preflight": []
+  },
+  "baseline_cluster": {
+    "copy_origin": true,
+    "exit": 0,
+    "posts": [
+      {
+        "qty": 61,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "MSFT",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "preflight": []
+  },
+  "baseline_duplicate_buy": {
+    "copy_origin": true,
+    "exit": 0,
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "preflight": []
+  },
+  "baseline_normal": {
+    "copy_origin": true,
+    "exit": 0,
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "preflight": []
+  },
+  "baseline_order_page_unknown": {
+    "copy_origin": true,
+    "exit": 0,
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "preflight": []
+  },
+  "baseline_pending": {
+    "copy_origin": true,
+    "exit": 0,
+    "posts": [
+      {
+        "qty": 61,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "MSFT",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "preflight": []
+  },
+  "baseline_response_lost": {
+    "copy_origin": true,
+    "exit": 0,
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "MSFT",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "MSFT",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "MSFT",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "CRM",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "CRM",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "CRM",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "preflight": []
+  },
+  "baseline_same_symbol_pending": {
+    "copy_origin": true,
+    "exit": 0,
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "preflight": []
+  },
+  "candidate_batch": {
+    "copy_origin": true,
+    "exit": 0,
+    "posts": [
+      {
+        "qty": 61,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "MSFT",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "preflight": [
+      {
+        "receipts": [
+          {
+            "allowed": true,
+            "current_symbol_notional": "0",
+            "planned_notional": "7930.0",
+            "reason": "reserved_before_submit",
+            "snapshot_available_after_submit": true,
+            "submission_status": "submitted",
+            "symbol": "MSFT",
+            "symbol_cap": "8000.000"
+          },
+          {
+            "allowed": false,
+            "cluster": "cloud_software",
+            "cluster_cap": "35000.000",
+            "current_symbol_notional": "0",
+            "planned_notional": "7930.0",
+            "projected_cluster_notional": "40860.0",
+            "reason": "projected_cluster_cap_exceeded",
+            "symbol": "CRM",
+            "symbol_cap": "8000.000"
+          }
+        ],
+        "snapshot_available": true,
+        "snapshot_reason": "qualified_single_snapshot"
+      }
+    ]
+  },
+  "candidate_buy_sell_conflict": {
+    "copy_origin": true,
+    "exit": 0,
+    "posts": [
+      {
+        "qty": 1,
+        "side": "sell",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "preflight": [
+      {
+        "receipts": [
+          {
+            "allowed": false,
+            "reason": "same_symbol_buy_sell_conflict",
+            "symbol": "NVDA"
+          }
+        ],
+        "snapshot_available": true,
+        "snapshot_reason": "qualified_single_snapshot"
+      }
+    ]
+  },
+  "candidate_cluster": {
+    "copy_origin": true,
+    "exit": 0,
+    "posts": [
+      {
+        "qty": 61,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "preflight": [
+      {
+        "receipts": [
+          {
+            "allowed": false,
+            "cluster": "cloud_software",
+            "cluster_cap": "35000.000",
+            "current_symbol_notional": "0",
+            "planned_notional": "7930.0",
+            "projected_cluster_notional": "41930.0",
+            "reason": "projected_cluster_cap_exceeded",
+            "symbol": "MSFT",
+            "symbol_cap": "8000.000"
+          }
+        ],
+        "snapshot_available": true,
+        "snapshot_reason": "qualified_single_snapshot"
+      }
+    ]
+  },
+  "candidate_duplicate_buy": {
+    "copy_origin": true,
+    "exit": 0,
+    "posts": [],
+    "preflight": [
+      {
+        "receipts": [
+          {
+            "allowed": false,
+            "reason": "same_symbol_duplicate_buy",
+            "symbol": "NVDA"
+          },
+          {
+            "allowed": false,
+            "reason": "same_symbol_duplicate_buy",
+            "symbol": "NVDA"
+          }
+        ],
+        "snapshot_available": true,
+        "snapshot_reason": "qualified_single_snapshot"
+      }
+    ]
+  },
+  "candidate_normal": {
+    "copy_origin": true,
+    "exit": 0,
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "preflight": [
+      {
+        "receipts": [
+          {
+            "allowed": true,
+            "current_symbol_notional": "0",
+            "planned_notional": "7930.0",
+            "reason": "reserved_before_submit",
+            "snapshot_available_after_submit": true,
+            "submission_status": "submitted",
+            "symbol": "NVDA",
+            "symbol_cap": "8000.000"
+          }
+        ],
+        "snapshot_available": true,
+        "snapshot_reason": "qualified_single_snapshot"
+      }
+    ]
+  },
+  "candidate_order_page_unknown": {
+    "copy_origin": true,
+    "exit": 0,
+    "posts": [],
+    "preflight": [
+      {
+        "receipts": [
+          {
+            "allowed": false,
+            "reason": "snapshot_unavailable:incomplete_or_invalid_snapshot",
+            "symbol": "NVDA"
+          }
+        ],
+        "snapshot_available": false,
+        "snapshot_reason": "snapshot_unavailable:incomplete_or_invalid_snapshot"
+      }
+    ]
+  },
+  "candidate_pending": {
+    "copy_origin": true,
+    "exit": 0,
+    "posts": [
+      {
+        "qty": 61,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "preflight": [
+      {
+        "receipts": [
+          {
+            "allowed": false,
+            "cluster": "cloud_software",
+            "cluster_cap": "35000.000",
+            "current_symbol_notional": "0",
+            "planned_notional": "7930.0",
+            "projected_cluster_notional": "39230.0",
+            "reason": "projected_cluster_cap_exceeded",
+            "symbol": "MSFT",
+            "symbol_cap": "8000.000"
+          }
+        ],
+        "snapshot_available": true,
+        "snapshot_reason": "qualified_single_snapshot"
+      }
+    ]
+  },
+  "candidate_response_lost": {
+    "copy_origin": true,
+    "exit": 0,
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "MSFT",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "MSFT",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "MSFT",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "preflight": [
+      {
+        "receipts": [
+          {
+            "allowed": true,
+            "current_symbol_notional": "0",
+            "planned_notional": "7930.0",
+            "reason": "reserved_before_submit",
+            "snapshot_available_after_submit": false,
+            "submission_status": "rejected",
+            "symbol": "MSFT",
+            "symbol_cap": "8000.000"
+          },
+          {
+            "allowed": false,
+            "reason": "submission_outcome_unknown",
+            "symbol": "CRM"
+          }
+        ],
+        "snapshot_available": false,
+        "snapshot_reason": "submission_outcome_unknown"
+      }
+    ]
+  },
+  "candidate_same_symbol_pending": {
+    "copy_origin": true,
+    "exit": 0,
+    "posts": [],
+    "preflight": [
+      {
+        "receipts": [
+          {
+            "allowed": false,
+            "reason": "same_symbol_open_order",
+            "symbol": "NVDA"
+          }
+        ],
+        "snapshot_available": true,
+        "snapshot_reason": "qualified_single_snapshot"
+      }
+    ]
+  }
+}

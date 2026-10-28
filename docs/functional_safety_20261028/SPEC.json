@@ -1,0 +1,14 @@
+{
+  "base": "8909e79c1a83e04d508715b132575625454b7856",
+  "scope": "K03 isolated minimal correction; K01 K02 reproduction and K04 input map only",
+  "unknown_risk": "null, unavailable, BUY blocked; existing SELL checks unchanged",
+  "valid_rules": "WARN .04 BLOCK .06 and stop fractions .05/.08/.09 unchanged",
+  "override": "measured thresholds only, not unknown",
+  "not_claimed": [
+    "production deployment",
+    "all precomputed executor paths safe",
+    "qualified economic evidence",
+    "K01 K02 fixed",
+    "complete historical reconstruction"
+  ]
+}

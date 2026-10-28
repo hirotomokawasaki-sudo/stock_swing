@@ -278,8 +278,8 @@ class ConsoleRenderer:
             _SEP,
             f"  equity        = ${p.get('equity', 0):,.2f}",
             f"  realized_pnl  = ${p.get('realized_pnl', 0):+,.2f}",
-            f"  unrealized_pnl= ${p.get('unrealized_pnl', 0):+,.2f}",
-            f"  total_pnl     = ${p.get('total_pnl', 0):+,.2f}",
+            f"  unrealized_pnl= ${p.get('unrealized_pnl', 0):+,.2f}" if p.get('unrealized_pnl') is not None else "  unrealized_pnl= N/A",
+            f"  total_pnl     = ${p.get('total_pnl', 0):+,.2f}" if p.get('total_pnl') is not None else "  total_pnl     = N/A",
             f"  open_positions= {p.get('open_positions', 0)}",
         ]
         # R2-B: ETF vs Stock breakdown
@@ -689,6 +689,17 @@ class ConsoleRenderer:
                 pnl    = entry.get("net_pnl", 0)
                 wr     = entry.get("win_rate", 0)
                 lines.append(f"  {sym:<6} {n_t:>3}  {pnl:>10.2f}  {wr*100:>4.0f}%")
+
+        review = funnel.get("entry_restriction_review", {})
+        if review:
+            lines.append("")
+            lines.append("  購入停止の観測 [参考診断・自動解除なし]")
+            status = review.get("status", "unknown")
+            labels = {"observing": "観測中", "disabled": "観測停止", "dry_run": "dry-run・記録なし", "error": "保留・観測データを確認"}
+            lines.append(f"  状態: {labels.get(status, status)}")
+            for row in review.get("rows", []):
+                label = {"review_candidate": "再検証候補・解除は要承認", "collecting": "蓄積中", "deferred": "再検証保留"}.get(row["status"], row["status"])
+                lines.append(f"  {row['symbol']} {row['strategy_id']}: {row['completed']}/{row['required']}件、待ち{row['pending']}件 {label}")
 
         return lines
 

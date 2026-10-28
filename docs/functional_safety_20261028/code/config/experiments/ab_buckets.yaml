@@ -1,0 +1,11 @@
+default_bucket: control
+buckets:
+  control:
+    allocation_pct: 80
+    strategy_version: swing-v1
+    max_capital_pct: 80
+  test:
+    allocation_pct: 20
+    strategy_version: swing-v2
+    max_capital_pct: 20
+salt: "stock-swing-20260624"

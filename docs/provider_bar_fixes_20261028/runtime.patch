@@ -1,0 +1,1055 @@
+diff --git a/src/stock_swing/cli/paper_demo.py b/src/stock_swing/cli/paper_demo.py
+index 2a1629f..7f7836f 100644
+--- a/src/stock_swing/cli/paper_demo.py
++++ b/src/stock_swing/cli/paper_demo.py
+@@ -522,6 +522,8 @@ def main() -> int:  # noqa: C901
+     parser.add_argument("--telegram", action="store_true", help="Send summary to Telegram")
+     parser.add_argument("--silent", action="store_true", help="Send Telegram notification silently")
+     parser.add_argument("--cron-summary-json", action="store_true", help="Emit one compact CRON_SUMMARY_JSON line at the end")
++    parser.add_argument("--capture-provider-contracts", action="store_true",
++                        help="Record partial bar-response lineage; not full replay or F1")
+     args = parser.parse_args()
+ 
+     # Configure logging so logger.info() messages (exit_signal_fired, exit_signal_generated,
+@@ -548,6 +550,7 @@ def main() -> int:  # noqa: C901
+     _final_exit_code = 0
+     _final_reason: str | None = None
+     _buy_halt_reasons: list[str] = []
++    _provider_recorder = None
+ 
+     def finish(
+         exit_code: int,
+@@ -556,6 +559,19 @@ def main() -> int:  # noqa: C901
+         equity_value: float = 0.0,
+         extra: dict | None = None,
+     ) -> int:
++        if _provider_recorder is not None:
++            exit_code = exit_code or (1 if _provider_recorder.failures else 0)
++            _provider_recorder.observe('run_end', dict(exit_code=exit_code,
++                observations_before_end=_provider_recorder.committed,
++                capture_failures=_provider_recorder.failures,
++                scheduled_execution_proven=False, full_replay_ready=False))
++            try:
++                _provider_recorder.seal()
++            except Exception:
++                logger.error('Provider contract recording not sealed')
++                exit_code = exit_code or 1
++            if _provider_recorder.failures:
++                exit_code = exit_code or 1
+         if latency_tracker is not None:
+             latency_tracker.flush()
+         if args.cron_summary_json:
+@@ -584,6 +600,9 @@ def main() -> int:  # noqa: C901
+ 
+     _banner("stock_swing Paper Trading Demo")
+     run_context = RunContext.create("paper_demo")
++    if args.capture_provider_contracts:
++        from stock_swing.experiments.decision_input_capture import DecisionInputRecorder
++        _provider_recorder = DecisionInputRecorder(project_root, enabled=True, run_id=run_context.run_id)
+     experiment_context = None
+     print(f"  Symbols   : {', '.join(symbols)}")
+     print(f"  Timeframe : {args.timeframe} x {args.bar_limit} bars")
+@@ -731,6 +750,8 @@ def main() -> int:  # noqa: C901
+         paper_mode=True,
+         base_url=os.environ["BROKER_BASE_URL"],
+     )
++    if _provider_recorder is not None:
++        broker.measurement_recorder = _provider_recorder
+     latency_tracker = LatencyTracker(
+         project_root / "data" / "analysis" / "api_latency.csv"
+     )
+@@ -931,7 +952,8 @@ def main() -> int:  # noqa: C901
+     hybrid_fetcher = HybridDataFetcher(
+         broker_client=broker,
+         etf_symbols=ETF_SYMBOLS,
+-        massive_api_key=os.environ.get("MASSIVE_API_KEY")
++        massive_api_key=os.environ.get("MASSIVE_API_KEY"),
++        **({"measurement_recorder": _provider_recorder} if _provider_recorder is not None else {}),
+     )
+     
+     all_records: list[CanonicalRecord] = []
+diff --git a/src/stock_swing/experiments/decision_input_capture.py b/src/stock_swing/experiments/decision_input_capture.py
+new file mode 100644
+index 0000000..25eaded
+--- /dev/null
++++ b/src/stock_swing/experiments/decision_input_capture.py
+@@ -0,0 +1,242 @@
++"""Opt-in immutable actual-boundary observations; never a full-replay certificate.
++
++Reuses the existing fsynced blob/manifest publication. No environment dump,
++broker I/O, ledger mutation, policy change or automatic measurement promotion.
++"""
++from dataclasses import asdict, is_dataclass
++from datetime import datetime, timezone
++from enum import Enum
++import json
++from pathlib import Path
++import threading
++import re
++from urllib.parse import urlsplit, parse_qsl
++from uuid import uuid4
++
++from .measurement_capture import CaptureError, _encode, _sha, _token, _storage, _publish
++from .measurement_capture import _sync_directory
++
++
++def _credential_field(key):
++    canonical=re.sub('[^a-z0-9]','',key.lower())
++    return any(term in canonical for term in ('apikey','apisecret','authorization',
++        'password','accesstoken','refreshtoken','privatekey','sessiontoken'))
++
++
++def capture_value(value):
++    """Freeze typed consumer arguments; refuse unsupported objects and secrets."""
++    if is_dataclass(value): return capture_value(asdict(value))
++    if isinstance(value, Enum): return capture_value(value.value)
++    if isinstance(value, datetime):
++        if value.utcoffset() is None: raise CaptureError('naive input observation clock')
++        return value.isoformat()
++    if isinstance(value, dict):
++        result={}
++        for key,item in value.items():
++            if not isinstance(key,str): raise CaptureError('nontext input field')
++            if _credential_field(key):
++                raise CaptureError('credential field not permitted in measurement')
++            result[key]=capture_value(item)
++        return result
++    if isinstance(value,(list,tuple)): return [capture_value(v) for v in value]
++    if isinstance(value,(set,frozenset)):
++        return sorted((capture_value(v) for v in value),key=lambda v:_encode(v))
++    if isinstance(value,str) and '://' in value:
++        try:
++            parts=urlsplit(value)
++            if parts.username is not None or parts.password is not None or any(
++                    _credential_field(key) for key,_ in parse_qsl(parts.query,keep_blank_values=True)):
++                raise CaptureError('credential URL not permitted in measurement')
++        except ValueError as exc:
++            raise CaptureError('invalid input URL') from exc
++    if value is None or type(value) in (str,int,float,bool):
++        try: _encode(value)
++        except (ValueError,OverflowError): raise CaptureError('nonfinite input value') from None
++        return value
++    raise CaptureError('unsupported input value')
++
++
++class DecisionInputRecorder:
++    """A run-scoped recorder. Disabled is zero storage I/O, even for bad inputs.
++
++    record() is strict. observe() is a non-disruptive instrumentation adapter:
++    failure is retained in memory and must be surfaced by the run finalizer.
++    An observed broker ACK is not a fill; an order aggregate is not an execution.
++    """
++    def __init__(self, project_root, *, enabled, run_id):
++        if type(enabled) is not bool: raise CaptureError('invalid observation mode')
++        self.root=Path(project_root);self.enabled=enabled;self.run_id=run_id
++        self.failures=0;self.committed=0;self._lock=threading.RLock()
++        self._references=[];self._sealed_ref=None
++
++    def record(self, stage, identity, payload, *, observed_at):
++        if not self.enabled: return None
++        with self._lock:
++            if self._sealed_ref is not None:
++                raise CaptureError('input run already sealed')
++            ref=self._record(stage,identity,payload,observed_at=observed_at)
++            if ref not in self._references:
++                self._references.append(ref)
++                self.committed=len(self._references)
++            return ref
++
++    def _record(self, stage, identity, payload, *, observed_at):
++        try:
++            _token(self.run_id);_token(stage);_token(identity)
++            if not isinstance(observed_at,datetime) or observed_at.utcoffset() is None:
++                raise CaptureError('observation clock must be aware')
++            encoded=_encode(capture_value(payload))
++            envelope=dict(schema_version=1,run_id=self.run_id,stage=stage,identity=identity,
++                local_observed_at=observed_at.astimezone(timezone.utc).isoformat(),
++                payload_sha256=_sha(encoded),scope='actual_boundary_partial_inputs_not_F1',
++                provider_available_at_certified=False,full_replay_ready=False)
++            envelope['manifest_sha256']=_sha(_encode(envelope))
++            root,folder=_storage(self.root,create=True)
++            if (folder/'blobs').is_symlink(): raise CaptureError('symlinked input blob directory')
++            manifests=folder/'decision_manifests'
++            if manifests.is_symlink(): raise CaptureError('symlinked observation directory')
++            manifests.mkdir(mode=0o700,exist_ok=True)
++            _sync_directory(manifests.parent)
++            key=_sha(_encode([self.run_id,stage,identity]))
++            _publish(folder/'blobs'/envelope['payload_sha256'],encoded)
++            _publish(manifests/(key+'.json'),_encode(envelope))
++            ref=str((manifests/(key+'.json')).relative_to(root))
++            load_decision_input(root,ref)
++            return ref
++        except CaptureError: raise
++        except (ValueError,TypeError,OSError,OverflowError,RecursionError) as exc:
++            raise CaptureError('input observation not committed') from exc
++
++    def observe(self, stage, payload, *, identity=None, observed_at=None):
++        """Record one callback without changing trading flow on capture failure."""
++        if not self.enabled: return None
++        with self._lock:
++            try:
++                ref=self.record(stage,identity or str(uuid4()),payload,
++                    observed_at=observed_at or datetime.now(timezone.utc))
++                return ref
++            except CaptureError:
++                self.failures+=1
++                return None
++
++    def note_failure(self):
++        """Retain an explicit refused-input gap even if its safe receipt was saved."""
++        if self.enabled:
++            with self._lock:
++                if self._sealed_ref is not None:
++                    raise CaptureError('input run already sealed')
++                self.failures += 1
++
++    def seal(self):
++        """Publish the exact observed run set; this is not full-input readiness."""
++        if not self.enabled: return None
++        with self._lock:
++            try:
++                if self._sealed_ref is not None:
++                    load_input_run(self.root,self._sealed_ref)
++                    return self._sealed_ref
++                observed=[load_decision_input(self.root,ref) for ref in self._references]
++                ends=[o for o in observed if o['manifest']['stage']=='run_end']
++                if len(ends)!=1 or not observed or observed[-1] is not ends[0]:
++                    raise CaptureError('one terminal run_end observation required')
++                if (ends[0]['payload'].get('observations_before_end')!=len(observed)-1
++                        or ends[0]['payload'].get('capture_failures')!=self.failures):
++                    raise CaptureError('run_end counters do not match recorder')
++                root,folder=_storage(self.root,create=True)
++                target=folder/'run_manifests'
++                if target.is_symlink(): raise CaptureError('symlinked run directory')
++                target.mkdir(mode=0o700,exist_ok=True);_sync_directory(target.parent)
++                envelope=dict(schema_version=1,run_id=_token(self.run_id),
++                    observations=[dict(ref=ref,manifest_sha256=o['manifest']['manifest_sha256'])
++                                  for ref,o in zip(self._references,observed)],
++                    capture_failures=self.failures,full_replay_ready=False,
++                    scope='sealed_observed_subset_not_full_strategy_replay')
++                envelope['manifest_sha256']=_sha(_encode(envelope))
++                path=target/(_sha(_encode(self.run_id))+'.json')
++                _publish(path,_encode(envelope))
++                ref=str(path.relative_to(root));load_input_run(root,ref)
++                self._sealed_ref=ref
++                return ref
++            except CaptureError: raise
++            except (ValueError,KeyError,TypeError,OSError) as exc:
++                raise CaptureError('input run not sealed') from exc
++
++
++def load_input_run(project_root, ref):
++    """Verify run closure and every hash dependency; missing never means empty."""
++    try:
++        root,folder=_storage(project_root,create=False);path=Path(ref)
++        if (path.is_absolute() or path.parent!=Path('data/audits/measurement_inputs/run_manifests')
++                or path.suffix!='.json' or len(path.stem)!=64
++                or any(c not in '0123456789abcdef' for c in path.stem)
++                or (folder/'run_manifests').is_symlink() or (root/path).is_symlink()):
++            raise CaptureError('unsafe run reference')
++        envelope=json.loads((root/path).read_bytes());claimed=envelope.pop('manifest_sha256')
++        run_id=_token(envelope['run_id'])
++        if (_sha(_encode(envelope))!=claimed or envelope.get('schema_version')!=1
++                or envelope.get('scope')!='sealed_observed_subset_not_full_strategy_replay'
++                or envelope.get('full_replay_ready') is not False
++                or path.stem!=_sha(_encode(run_id))
++                or type(envelope['capture_failures']) is not int or envelope['capture_failures']<0):
++            raise CaptureError('invalid run manifest')
++        refs=envelope['observations']
++        if not isinstance(refs,list) or not refs or len({item['ref'] for item in refs})!=len(refs):
++            raise CaptureError('missing or duplicate run observations')
++        observations=[]
++        for item in refs:
++            o=load_decision_input(root,item['ref']);m=o['manifest']
++            _token(m['stage']);_token(m['identity'])
++            dt=datetime.fromisoformat(m['local_observed_at'])
++            if (m['run_id']!=run_id or m['manifest_sha256']!=item['manifest_sha256']
++                    or dt.utcoffset() is None or not isinstance(o['payload'],dict)):
++                raise CaptureError('input run dependency mismatch')
++            observations.append(o)
++        ends=[o for o in observations if o['manifest']['stage']=='run_end']
++        if len(ends)!=1 or observations[-1] is not ends[0]:
++            raise CaptureError('run closure missing or not terminal')
++        end=ends[0]['payload']
++        if (type(end.get('exit_code')) is not int
++                or type(end.get('observations_before_end')) is not int
++                or end['observations_before_end']!=len(observations)-1
++                or type(end.get('capture_failures')) is not int
++                or end['capture_failures']!=envelope['capture_failures']):
++            raise CaptureError('run closure counters invalid')
++        envelope['manifest_sha256']=claimed
++        return dict(manifest=envelope,observations=observations,
++            capture_complete=envelope['capture_failures']==0,
++            declared_exit_success=end['exit_code']==0,full_replay_ready=False)
++    except CaptureError: raise
++    except (ValueError,KeyError,TypeError,OSError,IndexError) as exc:
++        raise CaptureError('missing or invalid input run') from exc
++
++
++def load_decision_input(project_root, ref):
++    """Read a committed, hash-bound observation; no correction or fallback."""
++    try:
++        root,folder=_storage(project_root,create=False);path=Path(ref)
++        if (folder/'blobs').is_symlink(): raise CaptureError('symlinked input blob directory')
++        if (path.is_absolute() or path.parent != Path('data/audits/measurement_inputs/decision_manifests')
++                or len(path.stem)!=64 or any(c not in '0123456789abcdef' for c in path.stem)
++                or path.suffix!='.json' or (root/path).is_symlink()):
++            raise CaptureError('unsafe decision input reference')
++        # Check every storage ancestor, including the newly added manifest dir.
++        if (folder/'decision_manifests').is_symlink(): raise CaptureError('symlinked observation directory')
++        envelope=json.loads((root/path).read_bytes());claimed=envelope.pop('manifest_sha256')
++        if (_sha(_encode(envelope))!=claimed or envelope.get('schema_version')!=1
++                or envelope.get('scope')!='actual_boundary_partial_inputs_not_F1'
++                or envelope.get('full_replay_ready') is not False
++                or envelope.get('provider_available_at_certified') is not False
++                or path.stem!=_sha(_encode([envelope['run_id'],envelope['stage'],envelope['identity']]))):
++            raise CaptureError('corrupt or unsupported input manifest')
++        sha=envelope['payload_sha256']
++        if not isinstance(sha,str) or len(sha)!=64 or any(c not in '0123456789abcdef' for c in sha):
++            raise CaptureError('invalid input dependency hash')
++        blob=folder/'blobs'/sha
++        if blob.is_symlink(): raise CaptureError('symlinked input blob')
++        raw=blob.read_bytes()
++        if _sha(raw)!=sha: raise CaptureError('corrupt input dependency')
++        envelope['manifest_sha256']=claimed
++        return dict(manifest=envelope,payload=json.loads(raw))
++    except CaptureError: raise
++    except (ValueError,KeyError,TypeError,OSError) as exc:
++        raise CaptureError('missing or invalid decision input') from exc
+diff --git a/src/stock_swing/experiments/measurement_capture.py b/src/stock_swing/experiments/measurement_capture.py
+new file mode 100644
+index 0000000..9d35e38
+--- /dev/null
++++ b/src/stock_swing/experiments/measurement_capture.py
+@@ -0,0 +1,324 @@
++"""Optional, partial candidate checkpoints, not a full strategy replay recorder.
++
++Reuse the existing audits stage and standard-library immutable publication.
++StageStore/FeatureSnapshotStore alone do not provide immutable, fsynced manifest
++publication. Blobs precede the manifest; an orphan blob is NOT an observation.
++No broker, environment-variable dump, raw/free-text metadata or ledger writes.
++"""
++from __future__ import annotations
++
++from datetime import datetime, timezone
++import hashlib
++import json
++import math
++import os
++from pathlib import Path
++import re
++import tempfile
++from types import SimpleNamespace
++from zoneinfo import ZoneInfo
++
++from stock_swing.core.path_manager import PathManager
++def _sync_directory(folder):
++    """Same fsync primitive as the existing recorder, without ledger dependencies."""
++    fd = os.open(folder, os.O_RDONLY)
++    try:
++        os.fsync(fd)
++    finally:
++        os.close(fd)
++
++
++
++class CaptureError(RuntimeError):
++    """The measurement was not committed or cannot be trusted for replay."""
++
++
++_TOKEN = re.compile(r'[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}\Z')
++_STAGES = {'generated_daily', 'prioritized_entry'}
++_CLI_TYPES = {'symbols': str, 'universe': str, 'timeframe': str, 'bar_limit': int,
++              'min_momentum': float, 'min_signal_strength': float,
++              'intraday_candidate_limit': int, 'dry_run': bool,
++              'allow_outside_hours': bool}
++_MISSING = ['complete_identity_and_decision_join', 'executed_code_and_dirty_patch',
++            'effective_config', 'complete_candidate_filter_trace',
++            'raw_market_inputs_and_availability', 'account_lots_pending_reservations',
++            'dated_classification_and_lookthrough', 'entry_exit_cost_precedence',
++            'whole_run_completion_and_replay_equality']
++
++
++def _encode(value):
++    return json.dumps(value, ensure_ascii=False, sort_keys=True,
++                      separators=(',', ':'), allow_nan=False).encode() + b'\n'
++
++
++def _sha(data):
++    return hashlib.sha256(data).hexdigest()
++
++
++def _token(value):
++    if not isinstance(value, str) or not _TOKEN.fullmatch(value):
++        raise CaptureError('invalid measurement identity')
++    return value
++
++
++def _storage(project_root, *, create):
++    root = Path(project_root).absolute()
++    folder = root/'data/audits/measurement_inputs'
++    # Reject existing symlink ancestors, including the supplied root. This is a
++    # cooperative local store, not an adversarial-filesystem isolation boundary.
++    for part in [folder, *folder.parents]:
++        if part.is_symlink():
++            raise CaptureError('symlinked measurement storage')
++    if create:
++        audits = PathManager(root).data_stage('audits')
++        for target in [audits/'measurement_inputs', folder/'blobs', folder/'manifests']:
++            target.mkdir(mode=0o700, parents=True, exist_ok=True)
++            _sync_directory(target.parent)
++    return root, folder
++
++
++def _publish(path, data):
++    """Atomic no-replace link; identical retries are allowed, conflicts refuse."""
++    if path.is_symlink():
++        raise CaptureError('symlinked measurement object')
++    if path.exists():
++        if path.read_bytes() != data:
++            raise CaptureError('immutable measurement identity conflict')
++        return
++    fd, name = tempfile.mkstemp(prefix='.capture-', dir=path.parent)
++    try:
++        with os.fdopen(fd, 'wb') as stream:
++            stream.write(data)
++            stream.flush()
++            os.fsync(stream.fileno())
++        try:
++            os.link(name, path)
++        except FileExistsError:
++            if path.is_symlink() or path.read_bytes() != data:
++                raise CaptureError('immutable measurement identity conflict')
++        _sync_directory(path.parent)
++    finally:
++        if os.path.exists(name):
++            os.unlink(name)
++
++
++def _number(value):
++    if isinstance(value, bool) or not isinstance(value, (int, float)):
++        raise CaptureError('invalid candidate numeric value')
++    try:
++        if not math.isfinite(value) or not 0 <= value <= 1:
++            raise CaptureError('nonfinite or out-of-range candidate value')
++    except OverflowError as exc:
++        raise CaptureError('overflow candidate value') from exc
++    return value
++
++
++def capture_candidates(project_root, *, enabled, run_id, experiment_id, stage,
++                       observed_at, signals, stale_symbols, cli_settings,
++                       source_revision, ranking_inputs=None):
++    """Checkpoint only the caller's exact ordered signals at the named boundary.
++
++    Disabled: zero I/O. Enabled failure: raise; never report a saved observation.
++    Identity is run+stage; retries must supply the SAME recorded timestamp/inputs.
++    CLI values are a partial allowlist, explicitly NOT effective runtime config.
++    This function does not filter, sort, mutate signals, or invoke execution.
++    """
++    if enabled is False:
++        return None
++    try:
++        if enabled is not True or stage not in _STAGES:
++            raise CaptureError('invalid capture mode or stage')
++        _token(run_id)
++        if experiment_id is not None:
++            _token(experiment_id)
++        if not isinstance(source_revision, str) or not source_revision:
++            raise CaptureError('missing recorded source revision')
++        if not isinstance(observed_at, datetime) or observed_at.utcoffset() is None:
++            raise CaptureError('measurement time must be timezone-aware')
++        if not isinstance(signals, (list, tuple)) or not isinstance(stale_symbols, (list, tuple, set)):
++            raise CaptureError('invalid candidate or stale-symbol collection')
++        if not isinstance(cli_settings, dict):
++            raise CaptureError('invalid CLI settings')
++        candidates = []
++        for i, signal in enumerate(signals):
++            action = signal.action
++            if action not in {'buy', 'sell', 'hold'}:
++                raise CaptureError('invalid candidate action')
++            candidates.append(dict(ordinal=i, symbol=_token(signal.symbol),
++                                   strategy_id=_token(signal.strategy_id), action=action,
++                                   signal_strength=_number(signal.signal_strength),
++                                   confidence=_number(signal.confidence)))
++        settings = {}
++        for key, kind in _CLI_TYPES.items():
++            if key not in cli_settings:
++                continue
++            value = cli_settings[key]
++            if kind is float:
++                if type(value) not in (float, int) or not math.isfinite(value):
++                    raise CaptureError('invalid numeric CLI setting')
++            elif type(value) is not kind:
++                raise CaptureError('invalid CLI setting type')
++            settings[key] = value
++        sources = {}
++        for path in [Path(__file__), Path(__file__).parents[1]/'cli/paper_demo.py']:
++            sources[path.name] = _sha(path.read_bytes())
++        payload = dict(candidates=candidates, stale_symbols=sorted({_token(s) for s in stale_symbols}),
++                       cli_settings=settings, cli_scope='selected_arguments_not_effective_config',
++                       source_files_on_disk=sources,
++                       source_scope='recorded_revision_and_on_disk_files_not_executed_tree_attestation')
++        if ranking_inputs is not None:
++            _validated_ranking(ranking_inputs)
++            payload['ranking_inputs'] = json.loads(_encode(ranking_inputs))
++        encoded = _encode(payload)
++        manifest = dict(schema_version=1, run_id=run_id, experiment_id=experiment_id,
++                        stage=stage, observed_at=observed_at.astimezone(timezone.utc).isoformat(),
++                        et_calendar_date=observed_at.astimezone(ZoneInfo('America/New_York')).date().isoformat(),
++                        exchange_session_certified=False, source_revision=source_revision,
++                        payload_sha256=_sha(encoded), candidate_count=len(candidates),
++                        scope='partial_candidate_measurement_not_F1', full_replay_ready=False,
++                        missing_contract_sections=list(_MISSING))
++        manifest['manifest_sha256'] = _sha(_encode(manifest))
++        identity = _sha(_encode([run_id, stage]))
++        root, folder = _storage(project_root, create=True)
++        target = folder/'manifests'/f'{identity}.json'
++        # An existing manifest must also have intact dependencies on retry.
++        if target.exists():
++            loaded = load_capture(root, str(target.relative_to(root)))
++            if loaded['manifest'] != manifest:
++                raise CaptureError('immutable measurement identity conflict')
++            return str(target.relative_to(root))
++        _publish(folder/'blobs'/manifest['payload_sha256'], encoded)
++        _publish(target, _encode(manifest))
++        ref = str(target.relative_to(root))
++        load_capture(root, ref)
++        return ref
++    except CaptureError:
++        raise
++    except (OSError, ValueError, TypeError, AttributeError, OverflowError) as exc:
++        raise CaptureError('candidate measurement not committed') from exc
++
++
++def capture_ranking_inputs(*, signals, current_positions, equity, max_sector_exposure_pct):
++    """Freeze allowlisted actual ranking arguments, not whole-account state/config.
++
++    Preserve absence and numeric strings in position fields because the consumer
++    applies its own float/default semantics. Capture the module classification
++    map as used by this function, without calling it a dated registry.
++    """
++    from stock_swing.utils.signal_prioritization import SYMBOL_SECTORS
++    try:
++        def finite(value):
++            if isinstance(value,bool) or not isinstance(value,(str,int,float)) or not math.isfinite(float(value)):
++                raise CaptureError('invalid ranking numeric input')
++            return value
++        if not isinstance(signals,(list,tuple)) or not isinstance(current_positions,dict):
++            raise CaptureError('invalid ranking collection')
++        for limit in (equity,max_sector_exposure_pct):
++            if isinstance(limit,bool) or not isinstance(limit,(int,float)):
++                raise CaptureError('ranking limits must be numeric arguments')
++            finite(limit)
++        if float(equity)<0 or not 0<=float(max_sector_exposure_pct)<=1:
++            raise CaptureError('invalid ranking limit')
++        ordered=[]
++        for signal in signals:
++            metadata=getattr(signal,'metadata',None)
++            selected={}
++            if isinstance(metadata,dict) and 'estimated_notional' in metadata:
++                value=metadata['estimated_notional']
++                if isinstance(value,bool) or not isinstance(value,(int,float)) or not math.isfinite(value) or value<0:
++                    raise CaptureError('invalid estimated notional')
++                selected['estimated_notional']=value
++            if signal.action not in {'buy','sell','hold'}:raise CaptureError('invalid ranking action')
++            ordered.append(dict(symbol=_token(signal.symbol),strategy_id=_token(signal.strategy_id),
++                                action=signal.action,signal_strength=_number(signal.signal_strength),
++                                confidence=_number(signal.confidence),metadata=selected))
++        positions={}
++        for symbol,position in current_positions.items():
++            _token(symbol)
++            if not isinstance(position,dict):raise CaptureError('invalid ranking position')
++            positions[symbol]={k:finite(position[k]) for k in ['qty','current_price','avg_entry_price'] if k in position}
++        symbols={s['symbol'].upper() for s in ordered}|{s.upper() for s in positions}
++        sources={name:_sha((Path(__file__).parents[1]/directory/name).read_bytes()) for directory,name in
++                 [('utils','signal_prioritization.py'),('risk','position_sizing.py')]}
++        return dict(scope='prioritize_buy_signals_v2_arguments_only',ordered_candidates=ordered,
++                    current_positions=positions,equity=equity,max_sector_exposure_pct=max_sector_exposure_pct,
++                    symbol_sectors={s:SYMBOL_SECTORS.get(s) for s in sorted(symbols)},
++                    classification_basis='module_mapping_not_dated_registry',source_sha256=sources)
++    except CaptureError:raise
++    except (ValueError,TypeError,AttributeError,OSError,OverflowError) as exc:
++        raise CaptureError('invalid ranking input snapshot') from exc
++
++
++def _validated_ranking(saved):
++    try:
++        regenerated=capture_ranking_inputs(
++            signals=[SimpleNamespace(**row) for row in saved['ordered_candidates']],
++            current_positions=saved['current_positions'],equity=saved['equity'],
++            max_sector_exposure_pct=saved['max_sector_exposure_pct'])
++        if regenerated!=saved:raise CaptureError('ranking source/mapping/schema conflict')
++    except (KeyError,TypeError,AttributeError) as exc:
++        raise CaptureError('missing or invalid ranking inputs') from exc
++
++
++def replay_saved_ranking(observation):
++    """Replay only prioritization with captured arguments and matching local source.
++
++    This is not feature generation, order sizing/execution, PIT certification,
++    a complete effective-config replay or an economic qualification.
++    """
++    from stock_swing.utils.signal_prioritization import prioritize_buy_signals_v2
++    try:
++        saved=observation['payload']['ranking_inputs'];_validated_ranking(saved)
++        result=prioritize_buy_signals_v2(
++            signals=[SimpleNamespace(**row) for row in saved['ordered_candidates']],
++            current_positions=saved['current_positions'],equity=saved['equity'],
++            max_sector_exposure_pct=saved['max_sector_exposure_pct'])
++        fields=['symbol','strategy_id','action','signal_strength','confidence']
++        actual=[{k:getattr(s,k) for k in fields} for s in result]
++        recorded=[{k:r[k] for k in fields} for r in observation['payload']['candidates']]
++        return dict(scope='ranking_segment_only',input_count=len(saved['ordered_candidates']),
++                    output_count=len(actual),ordered_output_matches=actual==recorded,full_replay_ready=False)
++    except (KeyError,TypeError,AttributeError,ValueError) as exc:
++        raise CaptureError('cannot replay missing/invalid ranking observation') from exc
++
++
++def load_capture(project_root, ref):
++    """Verify one committed manifest and its exact dependency without mutation."""
++    try:
++        root, folder = _storage(project_root, create=False)
++        path = Path(ref)
++        if (path.is_absolute() or path.parent != Path('data/audits/measurement_inputs/manifests')
++                or not re.fullmatch(r'[0-9a-f]{64}\.json', path.name)):
++            raise CaptureError('unsafe measurement reference')
++        target = root/path
++        if target.is_symlink():
++            raise CaptureError('symlinked measurement manifest')
++        manifest = json.loads(target.read_bytes())
++        claimed = manifest.pop('manifest_sha256')
++        if _sha(_encode(manifest)) != claimed:
++            raise CaptureError('corrupt measurement manifest')
++        if (manifest['scope'] != 'partial_candidate_measurement_not_F1'
++                or manifest['full_replay_ready'] is not False
++                or manifest['missing_contract_sections'] != _MISSING
++                or manifest['stage'] not in _STAGES or manifest['schema_version'] != 1
++                or manifest['exchange_session_certified'] is not False
++                or path.stem != _sha(_encode([manifest['run_id'],manifest['stage']]))):
++            raise CaptureError('unsupported measurement contract')
++        checksum = manifest['payload_sha256']
++        if not isinstance(checksum, str) or not re.fullmatch('[0-9a-f]{64}', checksum):
++            raise CaptureError('invalid dependency hash')
++        blob = folder/'blobs'/checksum
++        if blob.is_symlink():
++            raise CaptureError('symlinked measurement dependency')
++        data = blob.read_bytes()
++        if _sha(data) != checksum:
++            raise CaptureError('corrupt measurement dependency')
++        payload = json.loads(data)
++        if len(payload['candidates']) != manifest['candidate_count']:
++            raise CaptureError('candidate count mismatch')
++        manifest['manifest_sha256'] = claimed
++        return dict(manifest=manifest, payload=payload)
++    except CaptureError:
++        raise
++    except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
++        raise CaptureError('missing or invalid measurement observation') from exc
+diff --git a/src/stock_swing/normalization/broker_normalizer.py b/src/stock_swing/normalization/broker_normalizer.py
+index 2dc57e5..7554a20 100644
+--- a/src/stock_swing/normalization/broker_normalizer.py
++++ b/src/stock_swing/normalization/broker_normalizer.py
+@@ -88,6 +88,8 @@ class BrokerNormalizer(BaseNormalizer):
+                     "trade_count": bar.get("n"),
+                 },
+             )
++            if raw.payload.get("_bar_contract") is not None:
++                record.payload["bar_contract"] = raw.payload["_bar_contract"]
+             records.append(record)
+         
+         return records if records else []
+diff --git a/src/stock_swing/sources/bar_contract.py b/src/stock_swing/sources/bar_contract.py
+new file mode 100644
+index 0000000..68d7e94
+--- /dev/null
++++ b/src/stock_swing/sources/bar_contract.py
+@@ -0,0 +1,70 @@
++"""Opt-in provider-response lineage, NOT completed-bar/PIT qualification.
++
++Reuses DecisionInputRecorder. No new store, broker requests or eligibility rules.
++Exact HTTP body hashes and decoded-envelope hashes are labelled separately.
++"""
++from copy import deepcopy
++from datetime import datetime, timezone
++import hashlib
++import json
++import re
++
++
++def normalize_interval(value):
++    """Canonicalize supported Alpaca intervals; refuse unknowns before I/O."""
++    if not isinstance(value, str):
++        raise ValueError('unsupported bar interval')
++    v = value.lower()
++    if v in {'day', 'daily', '1day', '1d'}:
++        return '1Day'
++    match = re.fullmatch(r'([1-9][0-9]?)(min|t|hour|h)', v)
++    if match:
++        n, unit = int(match[1]), match[2]
++        if unit in {'min', 't'} and n <= 59:
++            return f'{n}Min'
++        if unit in {'hour', 'h'} and n <= 23:
++            return f'{n}Hour'
++    if v in {'1week', '1w'}:
++        return '1Week'
++    match = re.fullmatch(r'(1|2|3|4|6|12)(month|m)', v)
++    if match:
++        return f'{int(match[1])}Month'
++    raise ValueError('unsupported bar interval')
++
++
++def record_bar_response(recorder, *, provider, request, response, received_at,
++                        raw_bytes=None, response_request_id=None):
++    """Bind a response version to the existing run recorder, preserving unknowns.
++
++    Exact raw bytes are hashed, not persisted. The decoded JSON is separately
++    persisted and validated by the existing recorder. No headers/auth URLs saved.
++    A decoded-only adapter must not claim its hash represents HTTP body bytes.
++    """
++    if recorder is None or not recorder.enabled:
++        return None
++    encoded = json.dumps(response, sort_keys=True, separators=(',', ':'),
++                         allow_nan=False).encode()
++    contract = dict(schema_version=1, provider=provider,
++        requested_interval=request['interval'],
++        requested_feed=request.get('feed'),
++        requested_adjustment=request.get('adjustment'),
++        request=deepcopy(request), response_adjusted=response.get('adjusted'),
++        response_request_id=response_request_id or response.get('request_id'),
++        received_at=received_at.astimezone(timezone.utc).isoformat(),
++        raw_sha256=hashlib.sha256(raw_bytes if raw_bytes is not None else encoded).hexdigest(),
++        raw_representation='HTTP_body_bytes' if raw_bytes is not None else 'decoded_JSON',
++        raw_body_saved=False, decoded_sha256=hashlib.sha256(encoded).hexdigest(),
++        provider_first_publication_at=None, provider_final=None,
++        bar_window_end=None, research_qualified=False)
++    contract['version_sha256'] = hashlib.sha256(json.dumps(contract, sort_keys=True,
++        separators=(',', ':'), allow_nan=False).encode()).hexdigest()
++    ref = recorder.observe('provider_response', dict(contract=contract, response=response),
++                           observed_at=received_at)
++    return dict(contract, observation_ref=ref)
++
++
++def observe_canonical_bars(recorder, records):
++    if recorder is not None and recorder.enabled:
++        recorder.observe('canonical_provider_bars', dict(records=records,
++            scope='returned_subset_not_all_candidate_or_decision_inputs',
++            research_qualified=False))
+diff --git a/src/stock_swing/sources/broker_client.py b/src/stock_swing/sources/broker_client.py
+index f3af953..6f66690 100644
+--- a/src/stock_swing/sources/broker_client.py
++++ b/src/stock_swing/sources/broker_client.py
+@@ -174,6 +174,8 @@ class BrokerClient(SourceClient):
+         request_params: dict[str, Any] = {
+             "symbol": symbol,
+             "timeframe": timeframe,
++            "feed": "iex",
++            "adjustment": "raw",
+         }
+         api_params: dict[str, Any] = {
+             "timeframe": timeframe,
+@@ -283,9 +285,19 @@ class BrokerClient(SourceClient):
+             if response.status_code == 204:
+                 return {}
+             try:
+-                return response.json()
++                payload = response.json()
+             except Exception as e:
+                 raise SourceResponseError(self.name, f"failed to parse JSON response: {e}", original_error=e)
++            recorder = getattr(self, 'measurement_recorder', None)
++            if path.endswith('/bars') and recorder is not None and recorder.enabled:
++                from datetime import datetime, timezone
++                from stock_swing.sources.bar_contract import record_bar_response
++                contract = record_bar_response(recorder, provider=self.name,
++                    request=dict(params, interval=params['timeframe']), response=payload,
++                    received_at=datetime.now(timezone.utc), raw_bytes=response.content,
++                    response_request_id=response.headers.get('x-request-id'))
++                payload = dict(payload, _bar_contract=contract)
++            return payload
+ 
+         return self._fetch_with_retry(fetch_func)
+ 
+diff --git a/src/stock_swing/sources/hybrid_data_fetcher.py b/src/stock_swing/sources/hybrid_data_fetcher.py
+index a24f60c..84a007b 100644
+--- a/src/stock_swing/sources/hybrid_data_fetcher.py
++++ b/src/stock_swing/sources/hybrid_data_fetcher.py
+@@ -15,6 +15,7 @@ from typing import Optional
+ import logging
+ 
+ from stock_swing.core.types import CanonicalRecord
++from stock_swing.sources.bar_contract import normalize_interval, record_bar_response, observe_canonical_bars
+ from stock_swing.sources.broker_client_protocol import BrokerClientProtocol
+ 
+ logger = logging.getLogger(__name__)
+@@ -38,7 +39,8 @@ class HybridDataFetcher:
+         self,
+         broker_client: BrokerClientProtocol,
+         etf_symbols: set[str],
+-        massive_api_key: Optional[str] = None
++        massive_api_key: Optional[str] = None,
++        measurement_recorder=None,
+     ):
+         """
+         Initialize hybrid fetcher.
+@@ -49,6 +51,7 @@ class HybridDataFetcher:
+             etf_symbols: Set of ETF ticker symbols
+             massive_api_key: Massive API key (optional, defaults to env var)
+         """
++        self.measurement_recorder = measurement_recorder
+         self.broker = broker_client
+         self.etf_symbols = etf_symbols
+         
+@@ -60,6 +63,7 @@ class HybridDataFetcher:
+             try:
+                 from stock_swing.sources.massive_client import MassiveClient
+                 self.massive_client = MassiveClient(api_key=api_key)
++                self.massive_client.measurement_recorder = measurement_recorder
+                 logger.info("Massive client initialized for ETF data")
+             except Exception as exc:
+                 logger.warning(f"Failed to initialize Massive client: {exc}")
+@@ -88,11 +92,13 @@ class HybridDataFetcher:
+             Tuple of (records, source_name)
+             source_name is "massive", "broker", or "failed"
+         """
+-        # Try Massive first for ALL symbols (if available)
+-        if self.massive_client:
++        timeframe = normalize_interval(timeframe)
++        # Try Massive only for supported intervals, never substitute daily.
++        if self.massive_client and (timeframe == "1Day" or timeframe.endswith(("Min", "Hour"))):
+             try:
+-                records = self._fetch_from_massive(symbol, limit)
++                records = self._fetch_from_massive(symbol, limit, timeframe)
+                 if records:
++                    observe_canonical_bars(self.measurement_recorder, records)
+                     return (records, "massive")
+             except Exception as exc:
+                 logger.warning(f"Massive fetch failed for {symbol}: {exc}, falling back to broker")
+@@ -104,6 +110,7 @@ class HybridDataFetcher:
+                 records = self._fetch_from_yahoo(symbol, limit)
+                 if records:
+                     logger.warning(f"Using Yahoo fallback for {symbol} after Massive failure")
++                    observe_canonical_bars(self.measurement_recorder, records)
+                     return (records, "yahoo")
+             except Exception as exc:
+                 logger.warning(f"Yahoo fallback failed for {symbol}: {exc}, falling back to broker")
+@@ -112,24 +119,28 @@ class HybridDataFetcher:
+         try:
+             records = self._fetch_from_broker(symbol, timeframe, limit)
+             logger.warning(f"Using broker data for {symbol} - may be stale (Alpaca stopped 2026-04-22)")
++            expected = {"bar_" + timeframe.lower()}
++            if timeframe == "1Day": expected.add("bar_daily")
++            if any(r.event_type not in expected for r in records):
++                raise ValueError("broker returned an incompatible bar interval")
++            observe_canonical_bars(self.measurement_recorder, records)
+             return (records, "broker")
+         except Exception as exc:
+             logger.error(f"Broker fetch failed for {symbol}: {exc}")
+             return ([], "failed")
+     
+-    def _fetch_from_massive(self, symbol: str, limit: int) -> list[CanonicalRecord]:
++    def _fetch_from_massive(self, symbol: str, limit: int, timeframe: str = "1Day") -> list[CanonicalRecord]:
+         """Fetch bars from Massive API and convert to CanonicalRecord."""
+         end_date = datetime.now(timezone.utc)
+         start_date = end_date - timedelta(days=limit)
+         from_str = start_date.strftime("%Y-%m-%d")
+         to_str = end_date.strftime("%Y-%m-%d")
+         
+-        bars = self.massive_client.fetch_daily_bars(
+-            symbol,
+-            from_date=from_str,
+-            to_date=to_str,
+-            limit=limit
+-        )
++        if timeframe == "1Day":
++            bars = self.massive_client.fetch_daily_bars(symbol, from_date=from_str, to_date=to_str, limit=limit)
++        else:
++            multiplier = int(timeframe.removesuffix('Min')) if timeframe.endswith('Min') else int(timeframe.removesuffix('Hour')) * 60
++            bars = self.massive_client.fetch_minute_bars(symbol, from_date=from_str, to_date=to_str, multiplier=multiplier, limit=limit)
+         
+         if not bars:
+             return []
+@@ -144,12 +155,13 @@ class HybridDataFetcher:
+                 bar_timestamp = bar.timestamp
+             
+             record = CanonicalRecord(
+-                record_id=f"massive_{symbol}_{bar_timestamp.isoformat()}",
++                record_id=(f"massive_{symbol}_{bar_timestamp.isoformat()}" if timeframe == "1Day"
++                           else f"massive_{symbol}_{timeframe}_{bar_timestamp.isoformat()}"),
+                 schema_version="v1",
+                 source="massive",
+                 source_type="price",
+                 symbol=symbol,
+-                event_type="bar_daily",
++                event_type="bar_daily" if timeframe == "1Day" else f"bar_{timeframe.lower()}",
+                 event_time=bar_timestamp,
+                 as_of=bar_timestamp.isoformat(),
+                 ingested_at=datetime.now(timezone.utc),
+@@ -166,6 +178,8 @@ class HybridDataFetcher:
+                 },
+                 quality_flags=[]
+             )
++            if getattr(bar, "bar_contract", None) is not None:
++                record.payload["bar_contract"] = bar.bar_contract
+             records.append(record)
+         
+         logger.info(f"Fetched {len(records)} bars for {symbol} from Massive")
+@@ -176,7 +190,12 @@ class HybridDataFetcher:
+         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=1mo"
+         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+         with urllib.request.urlopen(req, timeout=10) as resp:
+-            data = json.loads(resp.read())
++            body = resp.read()
++            received = datetime.now(timezone.utc)
++            data = json.loads(body)
++        contract = record_bar_response(self.measurement_recorder, provider='yahoo',
++            request=dict(symbol=symbol, interval='1Day', provider_interval='1d', range='1mo'),
++            response=data, received_at=received, raw_bytes=body)
+ 
+         result = data.get("chart", {}).get("result", [{}])[0]
+         timestamps = result.get("timestamp", [])
+@@ -220,6 +239,9 @@ class HybridDataFetcher:
+                 )
+             )
+ 
++        if contract is not None:
++            for record in records:
++                record.payload["bar_contract"] = contract
+         if limit > 0:
+             records = records[-limit:]
+         logger.info(f"Fetched {len(records)} bars for {symbol} from Yahoo")
+diff --git a/src/stock_swing/sources/massive_client.py b/src/stock_swing/sources/massive_client.py
+index eafad4f..ca16a5b 100644
+--- a/src/stock_swing/sources/massive_client.py
++++ b/src/stock_swing/sources/massive_client.py
+@@ -9,7 +9,7 @@ Provides access to:
+ """
+ 
+ from typing import Any, List, Optional
+-from datetime import datetime, timedelta
++from datetime import datetime, timedelta, timezone
+ from dataclasses import dataclass
+ import os
+ 
+@@ -34,6 +34,7 @@ class MassiveBar:
+     volume: int
+     vwap: Optional[float] = None
+     transactions: Optional[int] = None
++    bar_contract: Optional[dict] = None
+ 
+ 
+ class MassiveClient:
+@@ -63,6 +64,7 @@ class MassiveClient:
+                 "Install with: pip install massive"
+             )
+ 
++        self.measurement_recorder = None
+         self.client = _MassiveRESTClient(api_key=self.api_key)
+         # R7-v2 / H8: increase urllib3 connection pool maxsize to silence
+         # "Connection pool is full, discarding connection" warnings.
+@@ -82,6 +84,52 @@ class MassiveClient:
+             logger.debug("Could not patch Massive pool maxsize: %s", _e)
+         logger.info("Massive client initialized")
+     
++    def _bar_items(self, **request):
++        """SDK-decoded OFF; exact raw-page receipt ON with identical HTTP queries.
++
++        The SDK raw=True returns one page, so preserve pagination explicitly.
++        Use the pinned SDK's own decoder; never add a second metadata request.
++        """
++        recorder = getattr(self, 'measurement_recorder', None)
++        if recorder is None or not recorder.enabled:
++            for agg in self.client.list_aggs(**request):
++                yield agg, None
++            return
++        from urllib.parse import urlsplit
++        from massive.rest.models import Agg
++        from stock_swing.sources.bar_contract import record_bar_response
++        response = self.client.list_aggs(**request, raw=True)
++        seen = set()
++        while True:
++            received = datetime.now(timezone.utc)
++            data = self.client._decode(response)
++            if not isinstance(data, dict) or not isinstance(data.get('results', []), list):
++                raise ValueError('invalid aggregate response')
++            interval = '1Day' if request['timespan'] == 'day' else f"{request['multiplier']}Min"
++            if request['timespan'] == 'minute' and request['multiplier'] % 60 == 0:
++                interval = f"{request['multiplier'] // 60}Hour"
++            safe_request = dict(request, interval=interval, feed=None, adjustment=None)
++            # A page cursor is neither a publication clock nor a bar interval.
++            safe_data = {k: v for k, v in data.items() if k != 'next_url'}
++            safe_request['page_index'] = len(seen)
++            contract = record_bar_response(recorder, provider='massive',
++                request=safe_request, response=safe_data, received_at=received,
++                raw_bytes=response.data)
++            for item in data.get('results', []):
++                yield Agg.from_dict(item), contract
++            if not self.client.pagination or 'next_url' not in data:
++                return
++            next_url = data['next_url']
++            parsed = urlsplit(next_url)
++            # Match SDK path-only pagination without forwarding arbitrary hosts/auth.
++            if (parsed.scheme != 'https' or parsed.hostname not in {'api.massive.com', 'api.polygon.io'}
++                    or parsed.username or parsed.password or not parsed.path.startswith('/v2/aggs/ticker/')
++                    or next_url in seen):
++                raise ValueError('invalid or cyclic aggregate pagination')
++            seen.add(next_url)
++            path = parsed.path + ('?' + parsed.query if parsed.query else '')
++            response = self.client._get(path=path, params={}, raw=True)
++
+     def fetch_minute_bars(
+         self,
+         symbol: str,
+@@ -107,7 +155,7 @@ class MassiveClient:
+         
+         bars = []
+         try:
+-            for agg in self.client.list_aggs(
++            for agg, contract in self._bar_items(
+                 ticker=symbol,
+                 multiplier=multiplier,
+                 timespan="minute",
+@@ -116,14 +164,15 @@ class MassiveClient:
+                 limit=limit
+             ):
+                 bars.append(MassiveBar(
+-                    timestamp=datetime.fromtimestamp(agg.timestamp / 1000),
++                    timestamp=datetime.fromtimestamp(agg.timestamp / 1000, tz=timezone.utc),
+                     open=agg.open,
+                     high=agg.high,
+                     low=agg.low,
+                     close=agg.close,
+                     volume=agg.volume,
+                     vwap=getattr(agg, 'vwap', None),
+-                    transactions=getattr(agg, 'transactions', None)
++                    transactions=getattr(agg, 'transactions', None),
++                    bar_contract=contract
+                 ))
+             
+             logger.info(f"Fetched {len(bars)} minute bars for {symbol}")
+@@ -156,7 +205,7 @@ class MassiveClient:
+         
+         bars = []
+         try:
+-            for agg in self.client.list_aggs(
++            for agg, contract in self._bar_items(
+                 ticker=symbol,
+                 multiplier=1,
+                 timespan="day",
+@@ -165,14 +214,15 @@ class MassiveClient:
+                 limit=limit
+             ):
+                 bars.append(MassiveBar(
+-                    timestamp=datetime.fromtimestamp(agg.timestamp / 1000),
++                    timestamp=datetime.fromtimestamp(agg.timestamp / 1000, tz=timezone.utc),
+                     open=agg.open,
+                     high=agg.high,
+                     low=agg.low,
+                     close=agg.close,
+                     volume=agg.volume,
+                     vwap=getattr(agg, 'vwap', None),
+-                    transactions=getattr(agg, 'transactions', None)
++                    transactions=getattr(agg, 'transactions', None),
++                    bar_contract=contract
+                 ))
+             
+             logger.info(f"Fetched {len(bars)} daily bars for {symbol}")

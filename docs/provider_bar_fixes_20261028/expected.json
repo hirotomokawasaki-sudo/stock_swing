@@ -1,0 +1,14 @@
+{
+  "baseline_regressions": {
+    "failed": 5,
+    "passed": 1
+  },
+  "focused_passed": 90,
+  "full_suite_repeated": false,
+  "integrity_files": 218,
+  "isolation_policy": "caller_must_use_provided_OS_sandbox",
+  "production_applied": false,
+  "qualified_observations_added": 0,
+  "sdk_files": 46,
+  "source_pins": 199
+}

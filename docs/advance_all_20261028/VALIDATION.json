@@ -1,0 +1,77 @@
+{
+  "base": "8909e79c1a83e04d508715b132575625454b7856",
+  "production_applied": false,
+  "full_suite": {
+    "passed": 2813,
+    "skipped": 3,
+    "deselected": 1,
+    "warning": "existing TestSourceClient collection warning"
+  },
+  "disjoint_loopback_passed": 1,
+  "full_suite_union_passed": 2814,
+  "baseline_retry": {
+    "failed": 6,
+    "passed": 3,
+    "mutating_attempts_on_timeout_500_429": 3
+  },
+  "cli": {
+    "cases": 38,
+    "candidate_conditions": 19,
+    "normal_qty_unchanged": true,
+    "unknown_first_posts": 1,
+    "config_cases_buy_held_sell_preserved": 12,
+    "external_inputs": "synthetic HTTP/clock/files only, real internal CLI path"
+  },
+  "classification": {
+    "default_symbols": 60,
+    "registry_symbols": 80,
+    "missing_semis_combined": [
+      "ASML",
+      "AVGO",
+      "CRDO",
+      "SMCI",
+      "TSM"
+    ],
+    "current_broker_holdings_qualified": false
+  },
+  "packet_replay": {
+    "focused_passed": 209,
+    "cli_cases": 38,
+    "normalized_outcomes_match": true,
+    "origin": "packet-only disposable copy",
+    "network": "denied",
+    "production_writes": "denied"
+  },
+  "P4_complete": false,
+  "F1_started": false,
+  "S3_candidate_budget_used": 0,
+  "unchanged": {
+    "operational_protected_files": 660,
+    "head": true,
+    "prior_packets": {
+      "functional_safety_20261028": "inventory verified",
+      "order_preflight_20261028": "inventory verified",
+      "provider_bar_fixes_20261028": "inventory verified"
+    }
+  },
+  "limitations": [
+    "full suite not independently replayed from packet: frozen private financial fixtures not included",
+    "all callers/live input/parallel snapshot atomicity not qualified",
+    "no economic trial or production activation"
+  ],
+  "patches": {
+    "delta.patch": {
+      "files": 15,
+      "lines": 1110,
+      "apply_matches": true,
+      "reverse_matches": true
+    },
+    "combined.patch": {
+      "files": 20,
+      "lines": 2111,
+      "apply_matches": true,
+      "reverse_matches": true
+    }
+  },
+  "integrity_negatives_refused": 4
+}

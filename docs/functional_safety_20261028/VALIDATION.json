@@ -1,0 +1,66 @@
+{
+  "full_suite": {
+    "collection_warnings": 1,
+    "loopback_only_passed": 1,
+    "network_denied_passed": 2679,
+    "skipped": 3,
+    "unique_passed": 2680
+  },
+  "head_unchanged": "8909e79c1a83e04d508715b132575625454b7856",
+  "integrity_rejected": [
+    "missing",
+    "changed",
+    "extra",
+    "bad_manifest"
+  ],
+  "not_done": [
+    "K01/K02/K04 complete correction",
+    "all precomputed inputs and upstream CLI failures",
+    "production deployment and genuine scheduled run",
+    "economic improvement or F1"
+  ],
+  "packet_replay": {
+    "K01_K02_diagnostic_cases": 5,
+    "baseline_contract_failed": 46,
+    "baseline_contract_passed": 1,
+    "cli_cases": 10,
+    "cli_http_methods": [
+      "GET"
+    ],
+    "cli_threshold_changes_signal": true,
+    "exit_null_aborts": true,
+    "focused_passed": 75,
+    "full_suite_repeated": false,
+    "normal_buy_preserved": true,
+    "production_applied": false,
+    "unknown_buy_held": true,
+    "yaml_disabled_still_same": true
+  },
+  "patch": {
+    "baseline_byte_mode_restored": true,
+    "candidate_byte_mode_match": true,
+    "forward_apply": true,
+    "reverse_apply": true
+  },
+  "plan_checks": {
+    "docs/console_improvement_tasks.md": {
+      "changed": true,
+      "milestone_rows_preserved": 11
+    },
+    "docs/p4_advance_review_20261028.md": {
+      "changed": true,
+      "milestone_rows_preserved": 0
+    },
+    "docs/signal_evaluation_improvement_plan_20261028.md": {
+      "changed": true,
+      "milestone_rows_preserved": 6
+    },
+    "docs/strategy_improvement_validation_plan_20261020.md": {
+      "changed": true,
+      "milestone_rows_preserved": 17
+    }
+  },
+  "private_evidence": "/Users/hirotomookawasaki/.openclaw/tmp/functional-safety-20261028-mfvx515k",
+  "production_applied": false,
+  "protected_files_unchanged": 661
+}

@@ -1,0 +1,603 @@
+--- a/src/stock_swing/cli/paper_demo.py
++++ b/src/stock_swing/cli/paper_demo.py
+@@ -321,19 +321,27 @@
+     """Block all new BUY decisions when portfolio open risk exceeds BLOCK_PCT.
+ 
+     Open risk = sum of (qty × entry_price × stop_loss_pct) for all open trades.
+-    Thresholds: WARN=5%, BLOCK=8% of equity.  Sell decisions are never blocked.
+-    Override: export PAPER_DEMO_SKIP_RISK_BUDGET=true
++    Thresholds: WARN=4%, BLOCK=6% of equity. Sell decisions are never blocked.
++    Override measured thresholds only: PAPER_DEMO_SKIP_RISK_BUDGET=true
+     """
+     import os
+-    from stock_swing.risk.risk_budget import compute_open_risk
+-
++    from stock_swing.risk.risk_budget import compute_open_risk, _unavailable_risk
++
++    try:
++        risk = compute_open_risk(project_root, equity)
++    except Exception as exc:
++        risk = _unavailable_risk("risk_calculation_failed:" + type(exc).__name__)
++
++    if risk.get("error"):
++        allowed = [d for d in decisions if d.action != "buy"]
++        blocked = [d.symbol for d in decisions if d.action == "buy"]
++        print(f"  🚫 Risk budget UNAVAILABLE ({risk['error']}) — blocked {len(blocked)} new buy(s); SELL checks unchanged")
++        return allowed, blocked, risk
++
++    # Preserve the existing operator override for measured thresholds only.
++    # Unknown inputs cannot be explicitly or accidentally interpreted as flat.
+     if os.environ.get("PAPER_DEMO_SKIP_RISK_BUDGET", "").lower() == "true":
+-        return decisions, [], {}
+-
+-    risk = compute_open_risk(project_root, equity)
+-
+-    if risk.get("error"):
+-        print(f"  ⚠️  Risk budget: could not compute ({risk['error']}) — skipping guard")
++        risk["status"] = "bypassed"
+         return decisions, [], risk
+ 
+     pct = risk["pct_of_equity"]
+@@ -344,7 +352,7 @@
+         blocked = [d.symbol for d in decisions if d.action == "buy"]
+         print(
+             f"  🚫 Risk budget BLOCK: open risk ${total:,.0f} = {pct:.1%} of equity "
+-            f"(limit {risk['block_threshold']:,.0f} / 8%) — "
++            f"(limit {risk['block_threshold']:,.0f} / 6%) — "
+             f"blocked {len(blocked)} new buy(s): {', '.join(blocked[:5])}"
+             + (f" +{len(blocked)-5} more" if len(blocked) > 5 else "")
+         )
+@@ -353,12 +361,12 @@
+     if risk["is_warn"]:
+         print(
+             f"  ⚠️  Risk budget WARN: open risk ${total:,.0f} = {pct:.1%} of equity "
+-            f"(warn at 5%, block at 8%) — buys allowed"
++            f"(warn at 4%, block at 6%) — buys allowed"
+         )
+     else:
+         print(
+             f"  ✅ Risk budget OK: open risk ${total:,.0f} = {pct:.1%} of equity "
+-            f"(warn at 5%, block at 8%)"
++            f"(warn at 4%, block at 6%)"
+         )
+ 
+     return decisions, [], risk
+@@ -2264,8 +2272,8 @@
+     if blocked_etf_buys:
+         print(f"  ETF buy guardrail: blocked {len(blocked_etf_buys)} new ETF buy(s): {', '.join(blocked_etf_buys)}")
+ 
+-    # Risk budget guardrail: block all new buys when open risk >= 8% of equity
+-    # Warn at 5%. Override: export PAPER_DEMO_SKIP_RISK_BUDGET=true
++    # Risk budget guardrail: block at 6%; warn at 4%. Unknown inputs block BUY.
++    # The existing override applies only to successfully measured risk.
+     actionable, blocked_risk_budget, risk_budget_result = _filter_buys_by_risk_budget(
+         actionable, project_root, equity
+     )
+@@ -2515,6 +2523,11 @@
+                 "  🛡 Economic risk-off reduce_size: position sizing reduced to "
+                 f"{_reduce_size_multiplier:.0%}"
+             )
++    if blocked_risk_budget:
++        audit_log.log_system_event(
++            "risk_budget_blocked_buys",
++            details=f"status={risk_budget_result.get('status', 'unknown')}; symbols={blocked_risk_budget}",
++        )
+     if blocked_cluster_cap:
+         for sym, reason in blocked_cluster_cap:
+             print(f"  🚫 Cluster cap block: {sym} — {reason}")
+@@ -2553,7 +2566,8 @@
+             decisions=decisions,
+             submissions=[],
+             cluster_blocks=[sym for sym, _ in blocked_cluster_cap] if "blocked_cluster_cap" in dir() else [],
+-            risk_budget_pct=risk_budget_result.get("pct_of_equity", 0) if "risk_budget_result" in dir() else 0,
++            risk_budget_pct=risk_budget_result.get("pct_of_equity") if "risk_budget_result" in dir() else None,
++            risk_budget_status=risk_budget_result.get("status", "unknown") if "risk_budget_result" in dir() else "unknown",
+             stale_symbols=list(stale_symbols) if "stale_symbols" in dir() else [],
+             price_sources={},
+             market_regime=regime_for_sizing if "regime_for_sizing" in dir() else "unknown",
+@@ -2592,6 +2606,7 @@
+                 "risk_denied": sum(1 for d in decisions if getattr(d, "action", "") == "deny"),
+                 "entry_blocked": len(_ef_result.blocked) if "_ef_result" in dir() else 0,
+                 "cluster_blocked": len(blocked_cluster_cap) if "blocked_cluster_cap" in dir() else 0,
++                "risk_budget_blocked": len(blocked_risk_budget),
+                 "allocation_blocked": _allocation_blocked_count if "_allocation_blocked_count" in dir() else 0,
+                 "guardrail_blocked": (
+                     len(_guardrail_blocked) + len(_economic_risk_blocked)
+@@ -3309,7 +3324,8 @@
+         decisions=decisions,
+         submissions=submissions,
+         cluster_blocks=[sym for sym, _ in blocked_cluster_cap] if "blocked_cluster_cap" in dir() else [],
+-        risk_budget_pct=risk_budget_result.get("pct_of_equity", 0) if "risk_budget_result" in dir() else 0,
++        risk_budget_pct=risk_budget_result.get("pct_of_equity") if "risk_budget_result" in dir() else None,
++        risk_budget_status=risk_budget_result.get("status", "unknown") if "risk_budget_result" in dir() else "unknown",
+         stale_symbols=list(stale_symbols) if "stale_symbols" in dir() else [],
+         price_sources=ps_sources,
+         market_regime=regime_for_sizing if "regime_for_sizing" in dir() else "unknown",
+@@ -3350,6 +3366,7 @@
+             "risk_denied": sum(1 for d in decisions if getattr(d, "action", "") == "deny"),
+             "entry_blocked": len(_ef_result.blocked) if "_ef_result" in dir() else 0,
+             "cluster_blocked": len(blocked_cluster_cap) if "blocked_cluster_cap" in dir() else 0,
++            "risk_budget_blocked": len(blocked_risk_budget),
+             "allocation_blocked": _allocation_blocked_count,
+             "guardrail_blocked": (
+                 (len(_guardrail_blocked) if "_guardrail_blocked" in dir() else 0)
+--- a/src/stock_swing/execution/paper_executor.py
++++ b/src/stock_swing/execution/paper_executor.py
+@@ -335,27 +335,51 @@
+         if not proposed:
+             return 0, {"skip_reason": "missing_proposed_order"}
+ 
+-        account_env = self.broker_client.fetch_account()
+-        account = account_env.payload if hasattr(account_env, 'payload') else account_env
+-        equity = float(account.get("equity", 0) or 0)
+-
+-        positions_env = self.broker_client.fetch_positions()
+-        positions_resp = positions_env.payload if hasattr(positions_env, 'payload') else positions_env
+-        current_total_exposure = 0.0
+-        current_sector_exposure = 0.0
++        # K03: broker I/O failure or malformed holdings is unknown, not flat.
+         try:
++            account_env = self.broker_client.fetch_account()
++            account = account_env.payload if hasattr(account_env, 'payload') else account_env
++            equity_raw = account.get("equity")
++            if isinstance(equity_raw, bool):
++                raise ValueError("invalid equity")
++            equity = float(equity_raw)
++            if not math.isfinite(equity) or equity <= 0:
++                raise ValueError("invalid equity")
++            positions_env = self.broker_client.fetch_positions()
++            positions_resp = positions_env.payload if hasattr(positions_env, 'payload') else positions_env
++            if not isinstance(positions_resp, list):
++                raise ValueError("invalid positions schema")
++            current_total_exposure = 0.0
++            current_sector_exposure = 0.0
+             from stock_swing.risk.position_sizing import SYMBOL_SECTORS
+             current_sector = SYMBOL_SECTORS.get(proposed.symbol.upper())
+             for pos in positions_resp:
+-                qty = float(pos.get("qty", 0) or 0)
+-                price = float(pos.get("current_price", pos.get("avg_entry_price", 0)) or 0)
++                if not isinstance(pos, dict) or not isinstance(pos.get("symbol"), str) or not pos["symbol"].strip():
++                    raise ValueError("invalid position symbol")
++                raw_qty = pos.get("qty")
++                if isinstance(raw_qty, bool):
++                    raise ValueError("invalid position quantity")
++                qty = float(raw_qty)
++                if not math.isfinite(qty):
++                    raise ValueError("invalid position quantity")
++                if qty == 0:
++                    continue
++                raw_price = pos.get("current_price", pos.get("avg_entry_price"))
++                if isinstance(raw_price, bool):
++                    raise ValueError("invalid position price")
++                price = float(raw_price)
++                if not math.isfinite(price) or price <= 0:
++                    raise ValueError("invalid position price")
+                 notional = abs(qty * price)
+                 current_total_exposure += notional
+-                if current_sector and SYMBOL_SECTORS.get(str(pos.get("symbol", "")).upper()) == current_sector:
++                if not math.isfinite(current_total_exposure):
++                    raise ValueError("position exposure overflow")
++                if current_sector and SYMBOL_SECTORS.get(pos["symbol"].upper()) == current_sector:
+                     current_sector_exposure += notional
+-        except Exception:
+-            current_total_exposure = 0.0
+-            current_sector_exposure = 0.0
++        except Exception as exc:
++            return 0, {"skip_reason": "risk_inputs_unavailable", "final_shares": 0,
++                       "risk_inputs_error": type(exc).__name__,
++                       "current_total_exposure": None, "current_sector_exposure": None}
+ 
+         resolver = PriceResolver(
+             broker_client=self.broker_client,
+--- a/src/stock_swing/reporting/console_renderer.py
++++ b/src/stock_swing/reporting/console_renderer.py
+@@ -335,6 +335,10 @@
+         lines.append(f"  regime        = {regime}")
+         if budget is not None:
+             lines.append(f"  open_risk_pct = {_fmt_pct(budget * 100)}")
++        else:
++            lines.append("  open_risk_pct = UNAVAILABLE (new BUYs held)")
++        if risk.get("risk_budget_status") == "bypassed":
++            lines.append("  risk_budget   = BYPASSED (measured-threshold override)")
+         blocks = risk.get("cluster_blocks", [])
+         if blocks:
+             lines.append(f"  cluster_blocks= {', '.join(blocks[:5])}")
+--- a/src/stock_swing/reporting/console_summary.py
++++ b/src/stock_swing/reporting/console_summary.py
+@@ -60,7 +60,8 @@
+     orders_submitted: int
+     orders_rejected: int
+     cluster_blocks: list[str] = field(default_factory=list)
+-    risk_budget_pct: float = 0.0
++    risk_budget_pct: float | None = 0.0
++    risk_budget_status: str = "unknown"
+     stale_symbols: list[str] = field(default_factory=list)
+     price_sources: dict[str, int] = field(default_factory=dict)
+     market_regime: str = "unknown"
+@@ -224,7 +225,8 @@
+             "broker_tracker_diff": self.broker_tracker_diff,
+             "risk": {
+                 "cluster_blocks": self.cluster_blocks,
+-                "risk_budget_pct": round(self.risk_budget_pct, 3),
++                "risk_budget_pct": round(self.risk_budget_pct, 3) if self.risk_budget_pct is not None else None,
++                "risk_budget_status": self.risk_budget_status,
+                 "market_regime": self.market_regime,
+             },
+             "price_integrity": self.price_integrity
+@@ -293,7 +295,8 @@
+         decisions: list | None = None,
+         submissions: list | None = None,
+         cluster_blocks: list[str] | None = None,
+-        risk_budget_pct: float = 0.0,
++        risk_budget_pct: float | None = 0.0,
++        risk_budget_status: str = "unknown",
+         stale_symbols: list[str] | None = None,
+         price_sources: dict[str, int] | None = None,
+         market_regime: str = "unknown",
+@@ -364,6 +367,12 @@
+                 (entry_filter_stats or {}).get("entry_restriction_review")
+             ))
+         missing: list[str] = []
++        if risk_budget_status == "unavailable":
++            missing.append("risk_budget_pct")
++            alerts.append(ConsoleAlert(
++                severity="warning", code="risk_budget_unavailable",
++                message="Open risk unavailable; new BUYs held",
++            ))
+         if unrealized_pnl is None:
+             missing.append("unrealized_pnl")
+             alerts.append(ConsoleAlert(
+@@ -478,6 +487,7 @@
+             orders_rejected=rejected,
+             cluster_blocks=cluster_blocks or [],
+             risk_budget_pct=risk_budget_pct,
++            risk_budget_status=risk_budget_status,
+             stale_symbols=stale_symbols,
+             price_sources=price_sources or {},
+             market_regime=market_regime,
+--- a/src/stock_swing/risk/risk_budget.py
++++ b/src/stock_swing/risk/risk_budget.py
+@@ -12,8 +12,8 @@
+ 
+ Thresholds
+ ----------
+-WARN_PCT  = 0.05 (5% of equity)  → warn but allow buys
+-BLOCK_PCT = 0.08 (8% of equity)  → deny all new buy decisions
++WARN_PCT  = 0.04 (4% of equity)  → warn but allow buys
++BLOCK_PCT = 0.06 (6% of equity)  → deny all new buy decisions
+ 
+ Sell decisions are NEVER blocked.
+ """
+@@ -21,6 +21,7 @@
+ from __future__ import annotations
+ 
+ import json
++import math
+ from pathlib import Path
+ from typing import Any
+ 
+@@ -43,88 +44,86 @@
+     return 0.05       # low conviction / conservative
+ 
+ 
++def _unavailable_risk(reason: str) -> dict[str, Any]:
++    """Unknown risk is not a measured zero and must deny new BUYs."""
++    return {
++        "status": "unavailable", "error": reason,
++        "open_trades_count": None, "total_open_risk": None,
++        "pct_of_equity": None, "warn_threshold": None, "block_threshold": None,
++        "is_warn": False, "is_blocked": True, "per_symbol": [],
++    }
++
++
++def _finite_number(value: Any) -> float:
++    if isinstance(value, bool):
++        raise ValueError("boolean is not a risk number")
++    number = float(value)
++    if not math.isfinite(number):
++        raise ValueError("non-finite risk number")
++    return number
++
++
+ def compute_open_risk(project_root: Path, equity: float) -> dict[str, Any]:
+-    """Compute current open risk from pnl_state.json.
++    """Compute the existing stop-based estimate, or return explicit unknown.
+ 
+-    Returns
+-    -------
+-    dict with keys:
+-        open_trades_count   int
+-        total_open_risk     float  — sum of (qty × entry_price × stop_loss_pct)
+-        pct_of_equity       float  — total_open_risk / equity
+-        warn_threshold      float  — WARN_PCT × equity
+-        block_threshold     float  — BLOCK_PCT × equity
+-        is_warn             bool
+-        is_blocked          bool
+-        per_symbol          list[dict]  — per-symbol breakdown
++    Confirmed empty ``trades`` is flat. Missing/malformed state, invalid open
++    lots, and invalid equity are unknown; never expose a partial sum as total.
++    This estimate is not a broker reconciliation or a guaranteed loss bound.
+     """
++    try:
++        equity = _finite_number(equity)
++        if equity <= 0:
++            raise ValueError("non-positive equity")
++    except (TypeError, ValueError, OverflowError):
++        return _unavailable_risk("invalid_equity")
++
+     state_path = project_root / "data" / "tracking" / "pnl_state.json"
++    try:
++        state = json.loads(state_path.read_text(encoding="utf-8"))
++    except (OSError, ValueError) as exc:
++        return _unavailable_risk("state_read_failed:" + type(exc).__name__)
++    if not isinstance(state, dict) or not isinstance(state.get("trades"), list):
++        return _unavailable_risk("invalid_state_schema")
+ 
+-    if not state_path.exists():
+-        # No state → no risk
+-        return {
+-            "open_trades_count": 0,
+-            "total_open_risk": 0.0,
+-            "pct_of_equity": 0.0,
+-            "warn_threshold": equity * WARN_PCT,
+-            "block_threshold": equity * BLOCK_PCT,
+-            "is_warn": False,
+-            "is_blocked": False,
+-            "per_symbol": [],
+-            "error": "pnl_state.json not found",
+-        }
++    by_symbol: dict[str, dict] = {}
++    open_count = 0
++    for t in state["trades"]:
++        if not isinstance(t, dict) or not isinstance(t.get("status"), str) or t["status"] not in {"open", "closed", "quarantined"}:
++            return _unavailable_risk("invalid_trade_status")
++        if t["status"] != "open":
++            continue
++        try:
++            sym = t.get("symbol")
++            if not isinstance(sym, str) or not sym.strip():
++                raise ValueError("missing symbol")
++            qty = _finite_number(t.get("qty"))
++            entry = _finite_number(t.get("entry_price"))
++            if qty <= 0 or entry <= 0:
++                raise ValueError("non-positive open lot")
++            sig = t.get("entry_signal_strength", t.get("signal_strength"))
++            if sig is not None:
++                sig = _finite_number(sig)
++                if not 0 <= sig <= 1:
++                    raise ValueError("invalid signal strength")
++            notional = _finite_number(qty * entry)
++            max_loss = _finite_number(notional * _stop_loss_pct(sig))
++            row = by_symbol.setdefault(sym, {"symbol": sym, "lots": 0, "max_loss": 0.0, "market_value": 0.0})
++            row["lots"] += 1
++            row["max_loss"] = _finite_number(row["max_loss"] + max_loss)
++            row["market_value"] = _finite_number(row["market_value"] + notional)
++            open_count += 1
++        except (TypeError, ValueError, OverflowError):
++            return _unavailable_risk("invalid_open_lot")
+ 
+     try:
+-        state = json.loads(state_path.read_text())
+-    except Exception as exc:
+-        return {
+-            "open_trades_count": 0,
+-            "total_open_risk": 0.0,
+-            "pct_of_equity": 0.0,
+-            "warn_threshold": equity * WARN_PCT,
+-            "block_threshold": equity * BLOCK_PCT,
+-            "is_warn": False,
+-            "is_blocked": False,
+-            "per_symbol": [],
+-            "error": str(exc),
+-        }
+-
+-    trades: list[dict] = state.get("trades", [])
+-    open_trades = [t for t in trades if t.get("status") == "open"]
+-
+-    # Aggregate per symbol
+-    by_symbol: dict[str, dict] = {}
+-    for t in open_trades:
+-        sym = t.get("symbol", "?")
+-        qty = float(t.get("qty", 0))
+-        entry = float(t.get("entry_price", 0))
+-        sig = t.get("entry_signal_strength", t.get("signal_strength", None))  # entry_signal_strength preferred; signal_strength kept for backward compat
+-        if sig is not None:
+-            try:
+-                sig = float(sig)
+-            except (TypeError, ValueError):
+-                sig = None
+-
+-        stop_pct = _stop_loss_pct(sig)
+-        max_loss = qty * entry * stop_pct
+-
+-        if sym not in by_symbol:
+-            by_symbol[sym] = {"symbol": sym, "lots": 0, "max_loss": 0.0, "market_value": 0.0}
+-        by_symbol[sym]["lots"] += 1
+-        by_symbol[sym]["max_loss"] += max_loss
+-        by_symbol[sym]["market_value"] += qty * entry
+-
+-    total_open_risk = sum(v["max_loss"] for v in by_symbol.values())
+-    pct = total_open_risk / equity if equity > 0 else 0.0
+-    per_symbol = sorted(by_symbol.values(), key=lambda x: -x["max_loss"])
+-
++        total = _finite_number(sum(v["max_loss"] for v in by_symbol.values()))
++        pct = _finite_number(total / equity)
++    except (ValueError, OverflowError):
++        return _unavailable_risk("risk_aggregation_overflow")
+     return {
+-        "open_trades_count": len(open_trades),
+-        "total_open_risk": total_open_risk,
+-        "pct_of_equity": pct,
+-        "warn_threshold": equity * WARN_PCT,
+-        "block_threshold": equity * BLOCK_PCT,
+-        "is_warn": pct >= WARN_PCT,
+-        "is_blocked": pct >= BLOCK_PCT,
+-        "per_symbol": per_symbol,
++        "status": "ok", "open_trades_count": open_count,
++        "total_open_risk": total, "pct_of_equity": pct,
++        "warn_threshold": equity * WARN_PCT, "block_threshold": equity * BLOCK_PCT,
++        "is_warn": pct >= WARN_PCT, "is_blocked": pct >= BLOCK_PCT,
++        "per_symbol": sorted(by_symbol.values(), key=lambda x: -x["max_loss"]),
+     }
+--- a/tests/unit/test_risk_budget.py
++++ b/tests/unit/test_risk_budget.py
+@@ -48,10 +48,10 @@
+ 
+ 
+ class TestComputeOpenRiskNoState:
+-    def test_missing_file_returns_zero_risk(self, tmp_path):
++    def test_missing_file_returns_unknown_risk(self, tmp_path):
+         result = compute_open_risk(tmp_path, equity=1_000_000)
+-        assert result["total_open_risk"] == 0.0
+-        assert result["is_blocked"] is False
++        assert result["total_open_risk"] is None
++        assert result["is_blocked"] is True
+         assert result["is_warn"] is False
+         assert "error" in result
+ 
+--- /dev/null
++++ b/tests/unit/test_risk_fail_closed.py
+@@ -0,0 +1,143 @@
++"""Acceptance K03; 2026-10-28 risk-unknown BUY leak at base 8909e79.
++
++Exercise production logic, substituting broker I/O only. No monetary outcome
++is measured; valid threshold behavior and risk-reducing SELL stay unchanged.
++"""
++from datetime import datetime, timezone
++import json
++from types import SimpleNamespace
++import pytest
++
++from stock_swing.cli.paper_demo import _filter_buys_by_risk_budget
++from stock_swing.core.runtime import RuntimeMode
++from stock_swing.decision_engine.decision_engine import DecisionRecord, ProposedOrder
++from stock_swing.execution.paper_executor import PaperExecutor
++from stock_swing.risk.risk_budget import compute_open_risk
++from stock_swing.reporting.console_summary import ConsoleSummary
++from stock_swing.reporting.console_renderer import ConsoleRenderer
++
++
++def state(root, value):
++    path = root / 'data/tracking/pnl_state.json'
++    path.parent.mkdir(parents=True, exist_ok=True)
++    path.write_text(json.dumps(value))
++
++
++def trade(**changes):
++    return dict(status='open', symbol='AAPL', qty=10, entry_price=100, **changes)
++
++
++def decisions():
++    return [SimpleNamespace(action='buy', symbol='NVDA'),
++            SimpleNamespace(action='sell', symbol='AAPL')]
++
++
++@pytest.mark.parametrize('value', [None, [], {}, {'trades': None}, {'trades': {}},
++    {'trades': [dict(status=[])]}, {'trades': [None]}, {'trades': [{}]}, {'trades': [dict(status='unknown')]}])
++def test_ac_malformed_state_is_unknown_and_blocks_only_buys(tmp_path, value, monkeypatch):
++    monkeypatch.delenv('PAPER_DEMO_SKIP_RISK_BUDGET', raising=False)
++    state(tmp_path, value)
++    original = decisions()
++    allowed, blocked, risk = _filter_buys_by_risk_budget(original, tmp_path, 100000)
++    assert allowed == [original[1]], 'unknown risk must preserve SELL, not BUY'
++    assert blocked == ['NVDA'], 'all new BUYs must be held'
++    assert risk['pct_of_equity'] is None, 'unknown is not measured zero'
++    assert risk['is_blocked'] is True and risk['error'], 'reason must be explicit'
++
++
++@pytest.mark.parametrize('scenario', ['missing', 'broken', 'unreadable'])
++def test_ac_file_failures_block_buys(tmp_path, scenario, monkeypatch):
++    monkeypatch.delenv('PAPER_DEMO_SKIP_RISK_BUDGET', raising=False)
++    path = tmp_path / 'data/tracking/pnl_state.json'
++    path.parent.mkdir(parents=True)
++    if scenario == 'broken': path.write_text('{')
++    if scenario == 'unreadable': path.mkdir()
++    allowed, blocked, risk = _filter_buys_by_risk_budget(decisions(), tmp_path, 100000)
++    assert [d.action for d in allowed] == ['sell'], 'SELL must survive file failures'
++    assert blocked == ['NVDA'] and risk['pct_of_equity'] is None, 'BUY must not bypass unknown'
++
++
++@pytest.mark.parametrize('field,value', [
++    ('qty', None), ('qty', 'oops'), ('qty', -1), ('qty', 0), ('qty', float('nan')),
++    ('qty', float('inf')), ('qty', True), ('entry_price', 0), ('entry_price', 'bad'),
++    ('entry_price', float('inf')), ('entry_price', float('nan')),
++    ('entry_signal_strength', 'bad'), ('entry_signal_strength', float('nan')),
++    ('entry_signal_strength', 1.1), ('symbol', ''),
++])
++def test_ac_invalid_open_lot_cannot_reduce_risk_to_zero(tmp_path, field, value):
++    row = trade(); row[field] = value
++    state(tmp_path, {'trades': [row]})
++    risk = compute_open_risk(tmp_path, 100000)
++    assert risk.get('error') and risk['is_blocked'], 'invalid open lot must fail closed'
++    assert risk['total_open_risk'] is None, 'partial sum cannot be reported as complete risk'
++
++
++@pytest.mark.parametrize('equity', [0, -1, None, 'bad', True, float('nan'), float('inf')])
++def test_ac_invalid_equity_is_unknown(tmp_path, equity):
++    state(tmp_path, {'trades': []})
++    result = compute_open_risk(tmp_path, equity)
++    assert result['is_blocked'] and result['pct_of_equity'] is None, 'bad equity is not zero risk'
++
++
++def test_ac_confirmed_empty_recovery_and_threshold_override(tmp_path, monkeypatch):
++    monkeypatch.setenv('PAPER_DEMO_SKIP_RISK_BUDGET', 'true')
++    assert _filter_buys_by_risk_budget(decisions(), tmp_path, 100000)[1] == ['NVDA'], 'override must not bypass unknown'
++    state(tmp_path, {'trades': []})
++    assert not compute_open_risk(tmp_path, 100000)['is_blocked'], 'confirmed flat recovers normally'
++    row=trade(); row['qty']=1300; state(tmp_path, {'trades':[row]})
++    assert not _filter_buys_by_risk_budget(decisions(),tmp_path,100000)[1], 'existing explicit override for measured risk stays supported'
++    monkeypatch.delenv('PAPER_DEMO_SKIP_RISK_BUDGET')
++    assert _filter_buys_by_risk_budget(decisions(),tmp_path,100000)[1] == ['NVDA'], 'normal threshold remains 6%'
++
++
++class Broker:
++    def __init__(self, positions, equity=100000):
++        self.positions, self.equity, self.sent = positions, equity, []
++    def fetch_account(self): return SimpleNamespace(payload={'equity':self.equity})
++    def fetch_positions(self): return SimpleNamespace(payload=self.positions)
++    def fetch_bars(self, *args, **kwargs): return SimpleNamespace(payload={'bars':[{'c':100}]})
++    def fetch_quote(self, *args, **kwargs): return SimpleNamespace(payload={'quote':{'bp':99,'ap':101}})
++    def submit_order(self, **kwargs):
++        self.sent.append(kwargs); return {'id':'fixture-order','status':'accepted'}
++
++
++def decision(side='buy'):
++    return DecisionRecord(decision_id='fixture-'+side,schema_version='v1',generated_at=datetime.now(timezone.utc),
++        mode='paper',strategy_id='breakout_momentum_v1',strategy_version_id='fixture',symbol='AAPL',
++        action=side,confidence=.8,signal_strength=.8,risk_state='pass',deny_reasons=[],
++        requires_operator_approval=False,time_horizon='5d',evidence={},
++        proposed_order=ProposedOrder(symbol='AAPL',side=side,order_type='market',qty=2,time_in_force='day'))
++
++
++@pytest.mark.parametrize('positions', [None, {}, {'symbol':'AAPL'}, [None],
++    [{'symbol':'MSFT','qty':'bad','current_price':100}],
++    [{'symbol':'MSFT','qty':10}], [{'symbol':'MSFT','qty':10,'current_price':0}],
++    [{'symbol':'MSFT','qty':10,'current_price':float('nan')}],
++    [{'symbol':'MSFT','qty':float('inf'),'current_price':100}],
++    [{'symbol':'','qty':10,'current_price':100}]])
++def test_ac_actual_executor_rejects_unknown_exposure_without_submit(positions):
++    broker=Broker(positions); executor=PaperExecutor(RuntimeMode.PAPER,broker)
++    qty, details=executor._calculate_position_size(decision())
++    assert qty == 0 and details['skip_reason']=='risk_inputs_unavailable', 'malformed holdings must not size as flat'
++    assert details['current_total_exposure'] is None, 'unknown exposure stays unknown'
++    with pytest.raises(ValueError): executor.submit(decision())
++    assert broker.sent == [], 'no order may cross the broker boundary'
++
++
++def test_ac_executor_verified_sell_does_not_require_risk_sizing():
++    broker=Broker(None); executor=PaperExecutor(RuntimeMode.PAPER,broker)
++    submission=executor.submit(decision('sell'),current_qty=10)
++    assert submission.qty == 10 and submission.side == 'sell', 'existing SELL quantity checks must be retained'
++    assert len(broker.sent)==1, 'fixture SELL remains permitted'
++
++
++def test_ac_unknown_survives_summary_and_renderer(tmp_path):
++    risk=compute_open_risk(tmp_path,100000)
++    summary=ConsoleSummary.build(run_id='fixture',equity=100000,open_position_count=0,
++        risk_budget_pct=risk['pct_of_equity'],risk_budget_status=risk['status'])
++    payload=summary.to_dict()
++    assert payload['risk']['risk_budget_pct'] is None, 'unknown must remain null in JSON'
++    assert payload['risk']['risk_budget_status']=='unavailable', 'status must be consumable'
++    assert summary.run_status == 'DEGRADED', 'unknown risk must not be healthy OK'
++    rendered=ConsoleRenderer().render(summary)
++    assert 'UNAVAILABLE' in rendered, 'operator must not see a measured zero'

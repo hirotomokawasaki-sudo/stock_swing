@@ -1,0 +1,40 @@
+{
+  "audit_tests": 10,
+  "canonical_plan_rows_unchanged": 17,
+  "delta_from_safety": 8,
+  "direct_script_cases": 46,
+  "full_regression": {
+    "focused_subset": 295,
+    "includes_disjoint_localhost": 1,
+    "passed": 2900,
+    "skipped": 3
+  },
+  "integrity_negative_cases": 5,
+  "invoice_evidence": false,
+  "packet_replay": {
+    "audit_passed": 10,
+    "cli_cases": 40,
+    "focused_passed": 295,
+    "full_replay_qualified": false,
+    "full_suite_repeated": false,
+    "integrity": "verified",
+    "normalized_outcomes_match": true,
+    "origin": "packet-only resolved copy",
+    "production_applied": false,
+    "script_cases": 46,
+    "usage_summary_match": true
+  },
+  "production_applied": false,
+  "real_cli_cases": 40,
+  "real_orders": 0,
+  "remaining": [
+    "direct-script repeat-intent/unknown-status/fractional policy",
+    "actual provider/account snapshot and all callers",
+    "point-in-time/full-input qualification",
+    "policy adoption and deployment",
+    "formal U/tolerances/sample and prospective observations",
+    "invoiced API/AI cost and currency"
+  ],
+  "research_qualified": false,
+  "runtime_source_files": 18
+}

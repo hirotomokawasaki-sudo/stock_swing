@@ -1,0 +1,17 @@
+{
+  "K01_K02_diagnostic_cases": 5,
+  "baseline_contract_failed": 46,
+  "baseline_contract_passed": 1,
+  "cli_cases": 10,
+  "cli_http_methods": [
+    "GET"
+  ],
+  "cli_threshold_changes_signal": true,
+  "exit_null_aborts": true,
+  "focused_passed": 75,
+  "full_suite_repeated": false,
+  "normal_buy_preserved": true,
+  "production_applied": false,
+  "unknown_buy_held": true,
+  "yaml_disabled_still_same": true
+}

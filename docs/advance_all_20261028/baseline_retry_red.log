@@ -1,0 +1,58 @@
+FFF.FFF..                                                                [100%]
+=================================== FAILURES ===================================
+_________________ test_ac_mutation_never_retried[POST-timeout] _________________
+tests/unit/test_submit_retry_boundary.py:21: in test_ac_mutation_never_retried
+    assert calls==[method], "unknown mutating result must not be automatically replayed"
+E   AssertionError: unknown mutating result must not be automatically replayed
+E   assert ['POST', 'POST', 'POST'] == ['POST']
+E     
+E     Left contains 2 more items, first extra item: 'POST'
+E     Use -v to get more diff
+_________________ test_ac_mutation_never_retried[POST-server] __________________
+tests/unit/test_submit_retry_boundary.py:21: in test_ac_mutation_never_retried
+    assert calls==[method], "unknown mutating result must not be automatically replayed"
+E   AssertionError: unknown mutating result must not be automatically replayed
+E   assert ['POST', 'POST', 'POST'] == ['POST']
+E     
+E     Left contains 2 more items, first extra item: 'POST'
+E     Use -v to get more diff
+__________________ test_ac_mutation_never_retried[POST-rate] ___________________
+tests/unit/test_submit_retry_boundary.py:21: in test_ac_mutation_never_retried
+    assert calls==[method], "unknown mutating result must not be automatically replayed"
+E   AssertionError: unknown mutating result must not be automatically replayed
+E   assert ['POST', 'POST', 'POST'] == ['POST']
+E     
+E     Left contains 2 more items, first extra item: 'POST'
+E     Use -v to get more diff
+________________ test_ac_mutation_never_retried[DELETE-timeout] ________________
+tests/unit/test_submit_retry_boundary.py:21: in test_ac_mutation_never_retried
+    assert calls==[method], "unknown mutating result must not be automatically replayed"
+E   AssertionError: unknown mutating result must not be automatically replayed
+E   assert ['DELETE', 'DELETE', 'DELETE'] == ['DELETE']
+E     
+E     Left contains 2 more items, first extra item: 'DELETE'
+E     Use -v to get more diff
+________________ test_ac_mutation_never_retried[DELETE-server] _________________
+tests/unit/test_submit_retry_boundary.py:21: in test_ac_mutation_never_retried
+    assert calls==[method], "unknown mutating result must not be automatically replayed"
+E   AssertionError: unknown mutating result must not be automatically replayed
+E   assert ['DELETE', 'DELETE', 'DELETE'] == ['DELETE']
+E     
+E     Left contains 2 more items, first extra item: 'DELETE'
+E     Use -v to get more diff
+_________________ test_ac_mutation_never_retried[DELETE-rate] __________________
+tests/unit/test_submit_retry_boundary.py:21: in test_ac_mutation_never_retried
+    assert calls==[method], "unknown mutating result must not be automatically replayed"
+E   AssertionError: unknown mutating result must not be automatically replayed
+E   assert ['DELETE', 'DELETE', 'DELETE'] == ['DELETE']
+E     
+E     Left contains 2 more items, first extra item: 'DELETE'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/unit/test_submit_retry_boundary.py::test_ac_mutation_never_retried[POST-timeout]
+FAILED tests/unit/test_submit_retry_boundary.py::test_ac_mutation_never_retried[POST-server]
+FAILED tests/unit/test_submit_retry_boundary.py::test_ac_mutation_never_retried[POST-rate]
+FAILED tests/unit/test_submit_retry_boundary.py::test_ac_mutation_never_retried[DELETE-timeout]
+FAILED tests/unit/test_submit_retry_boundary.py::test_ac_mutation_never_retried[DELETE-server]
+FAILED tests/unit/test_submit_retry_boundary.py::test_ac_mutation_never_retried[DELETE-rate]
+6 failed, 3 passed in 0.12s

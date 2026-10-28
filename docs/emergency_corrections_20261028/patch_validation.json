@@ -1,0 +1,20 @@
+{
+  "combined": {
+    "files": 21,
+    "forward_bytes_match": true,
+    "privacy_modes_restored_from_pins": true,
+    "reverse_bytes_match": true
+  },
+  "delta": {
+    "files": 5,
+    "forward_bytes_match": true,
+    "privacy_modes_restored_from_pins": true,
+    "reverse_bytes_match": true
+  },
+  "tests": {
+    "files": 2,
+    "forward_bytes_match": true,
+    "privacy_modes_restored_from_pins": true,
+    "reverse_bytes_match": true
+  }
+}

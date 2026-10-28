@@ -15,6 +15,7 @@ from console.adapters.data_adapter import DataAdapter
 from console.adapters.system_adapter import SystemAdapter
 from console.utils.time_utils import now_iso
 from stock_swing.utils.market_calendar import MarketCalendar
+from stock_swing.reporting.restriction_review_alerts import build_restriction_review_alerts
 
 # P&L tracker
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
@@ -1794,6 +1795,8 @@ class DashboardService:
         if cb_alert:
             alerts.append(cb_alert)
 
+        alerts.extend(self._get_entry_restriction_review_alerts())
+
         # Check broker-tracker consistency
         consistency = self.check_broker_tracker_consistency()
         if consistency.get("available"):
@@ -1922,6 +1925,43 @@ class DashboardService:
 
         severity_order = {"critical": 0, "warning": 1, "info": 2}
         return sorted(alerts, key=lambda a: severity_order.get(a.get("severity", "info"), 99))
+
+    def _get_entry_restriction_review_alerts(
+        self, *, now: datetime | None = None,
+    ) -> List[Dict[str, Any]]:
+        """Read a fresh, real paper-run snapshot; never run research on UI refresh.
+
+        A replaced/withdrawn, missing, corrupt, dry-run, future or >24h-old
+        snapshot cannot keep advertising a candidate. No last-good fallback.
+        """
+        path = self.project_root / "reports/console/latest_console_summary.json"
+        try:
+            snapshot = self._load_json_cached(path)
+            run = snapshot["run"]
+            if (run.get("mode") != "paper" or run.get("dry_run") is not False
+                    or run.get("invocation_source") != "paper_demo_scheduled"
+                    or not isinstance(run.get("run_id"), str) or not run["run_id"].strip()):
+                return []
+            stamp = datetime.fromisoformat(run["timestamp"].replace("Z", "+00:00"))
+            if stamp.tzinfo is None or stamp.utcoffset() is None:
+                return []
+            age = ((now or datetime.now(timezone.utc)) - stamp).total_seconds()
+            if not 0 <= age <= 24 * 3600:
+                return []
+            result = build_restriction_review_alerts(
+                snapshot["decision_funnel"].get("entry_restriction_review")
+            )
+            for alert in result:
+                alert.update({
+                    "title": "購入停止の再検証候補（要承認）",
+                    "action_hint": "本来のExit検証後に解除案を確認・承認してください。この画面からは解除しません。",
+                    "updated_at": stamp.isoformat(),
+                    "message": alert["message"] + f" 最終観測: {stamp.isoformat()}",
+                })
+                alert["details"].update({"run_id": run["run_id"], "source": str(path.relative_to(self.project_root))})
+            return result
+        except (OSError, ValueError, TypeError, KeyError, AttributeError):
+            return []
 
     def _check_circuit_breaker_alert(self) -> Optional[Dict[str, Any]]:
         """Return a critical/warning alert dict when the circuit breaker is

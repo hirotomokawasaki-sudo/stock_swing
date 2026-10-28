@@ -1,0 +1,23 @@
+{
+  "F1_started": false,
+  "P4_complete": false,
+  "focused_passed": 90,
+  "full_suite": {
+    "existing_collection_warnings": 1,
+    "loopback_only_passed": 1,
+    "network_denied_passed": 2718,
+    "skipped": 3,
+    "total_passed": 2719
+  },
+  "new_same_cases": {
+    "passed": 6
+  },
+  "old_same_cases": {
+    "failed": 5,
+    "passed": 1
+  },
+  "production_applied": false,
+  "production_recording_enabled": false,
+  "qualified_observations_added": 0,
+  "status": "isolated_technical_preparation_pass"
+}

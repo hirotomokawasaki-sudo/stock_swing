@@ -1,0 +1,2598 @@
+{
+  "blocked_capture_normal": {
+    "business": {
+      "alert_codes": [],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [
+        "reserved_before_submit"
+      ],
+      "main_exit": 1,
+      "posts": [
+        {
+          "qty": 61,
+          "side": "buy",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "OK"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "blocked_capture_sell_and_buy": {
+    "business": {
+      "alert_codes": [],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 2,
+        "unknown": 0
+      },
+      "hold_reasons": [
+        "reserved_before_submit",
+        "same_symbol_buy_sell_conflict"
+      ],
+      "main_exit": 1,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        },
+        {
+          "qty": 61,
+          "side": "buy",
+          "symbol": "MSFT",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "OK"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_off_alloc_bad_bool": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [
+            "allocation_config_unavailable:ValueError"
+          ],
+          "kind": "allocation",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_off_alloc_list": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [
+            "allocation_config_unavailable:ValueError"
+          ],
+          "kind": "allocation",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_off_alloc_nan": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [
+            "allocation_config_unavailable:ValueError"
+          ],
+          "kind": "allocation",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_off_alloc_null": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [
+            "allocation_config_unavailable:ValueError"
+          ],
+          "kind": "allocation",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_off_exit_bad_bool": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [
+            "invalid_boolean:min_hold_days_enabled"
+          ],
+          "kind": "exit",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_off_exit_broken": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [
+            "ParserError"
+          ],
+          "kind": "exit",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_off_exit_list": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [
+            "root_not_mapping"
+          ],
+          "kind": "exit",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_off_exit_missing": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [
+            "FileNotFoundError"
+          ],
+          "kind": "exit",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_off_exit_nan": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [
+            "nonfinite_or_invalid_number"
+          ],
+          "kind": "exit",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_off_exit_null": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [
+            "root_not_mapping"
+          ],
+          "kind": "exit",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_off_gap_candidate": {
+    "business": {
+      "alert_codes": [],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 0,
+        "unknown": 0
+      },
+      "hold_reasons": [
+        "semiconductor_cluster_coverage_gap"
+      ],
+      "main_exit": 0,
+      "posts": [],
+      "run_status": "OK"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_off_gap_holding": {
+    "business": {
+      "alert_codes": [
+        "broker_tracker_mismatch"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [
+        "reserved_before_submit",
+        "semiconductor_cluster_coverage_gap"
+      ],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 61,
+          "side": "buy",
+          "symbol": "MSFT",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "HALTED"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_off_gap_pending": {
+    "business": {
+      "alert_codes": [],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [
+        "reserved_before_submit",
+        "semiconductor_cluster_coverage_gap"
+      ],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 61,
+          "side": "buy",
+          "symbol": "MSFT",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "OK"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_off_intraday_null": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [
+            "root_not_mapping"
+          ],
+          "kind": "intraday",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_off_lost_found": {
+    "business": {
+      "alert_codes": [],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 2,
+        "unknown": 0
+      },
+      "hold_reasons": [
+        "reserved_before_submit"
+      ],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 61,
+          "side": "buy",
+          "symbol": "MSFT",
+          "time_in_force": "day",
+          "type": "market"
+        },
+        {
+          "qty": 61,
+          "side": "buy",
+          "symbol": "CRM",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "OK"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_off_lost_not_found": {
+    "business": {
+      "alert_codes": [
+        "submission_unresolved_or_held"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 0,
+        "unknown": 1
+      },
+      "hold_reasons": [
+        "reserved_before_submit",
+        "submission_outcome_unknown"
+      ],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 61,
+          "side": "buy",
+          "symbol": "MSFT",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_off_normal": {
+    "business": {
+      "alert_codes": [],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [
+        "reserved_before_submit"
+      ],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 61,
+          "side": "buy",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "OK"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_off_registry_list": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [
+            "classification_unavailable"
+          ],
+          "kind": "registry",
+          "status": "unavailable",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_off_sell_and_buy": {
+    "business": {
+      "alert_codes": [],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 2,
+        "unknown": 0
+      },
+      "hold_reasons": [
+        "reserved_before_submit",
+        "same_symbol_buy_sell_conflict"
+      ],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        },
+        {
+          "qty": 61,
+          "side": "buy",
+          "symbol": "MSFT",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "OK"
+    },
+    "capture_complete": null,
+    "full_replay_ready": null,
+    "indices": 0,
+    "stage_counts": null
+  },
+  "integrated_on_alloc_bad_bool": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [
+            "allocation_config_unavailable:ValueError"
+          ],
+          "kind": "allocation",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": true,
+    "full_replay_ready": false,
+    "indices": 1,
+    "stage_counts": {
+      "canonical_provider_bars": 2,
+      "provider_response": 5,
+      "run_end": 1
+    }
+  },
+  "integrated_on_alloc_list": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [
+            "allocation_config_unavailable:ValueError"
+          ],
+          "kind": "allocation",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": true,
+    "full_replay_ready": false,
+    "indices": 1,
+    "stage_counts": {
+      "canonical_provider_bars": 2,
+      "provider_response": 5,
+      "run_end": 1
+    }
+  },
+  "integrated_on_alloc_nan": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [
+            "allocation_config_unavailable:ValueError"
+          ],
+          "kind": "allocation",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": true,
+    "full_replay_ready": false,
+    "indices": 1,
+    "stage_counts": {
+      "canonical_provider_bars": 2,
+      "provider_response": 5,
+      "run_end": 1
+    }
+  },
+  "integrated_on_alloc_null": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [
+            "allocation_config_unavailable:ValueError"
+          ],
+          "kind": "allocation",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": true,
+    "full_replay_ready": false,
+    "indices": 1,
+    "stage_counts": {
+      "canonical_provider_bars": 2,
+      "provider_response": 5,
+      "run_end": 1
+    }
+  },
+  "integrated_on_exit_bad_bool": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [
+            "invalid_boolean:min_hold_days_enabled"
+          ],
+          "kind": "exit",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": true,
+    "full_replay_ready": false,
+    "indices": 1,
+    "stage_counts": {
+      "canonical_provider_bars": 2,
+      "provider_response": 5,
+      "run_end": 1
+    }
+  },
+  "integrated_on_exit_broken": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [
+            "ParserError"
+          ],
+          "kind": "exit",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": true,
+    "full_replay_ready": false,
+    "indices": 1,
+    "stage_counts": {
+      "canonical_provider_bars": 2,
+      "provider_response": 5,
+      "run_end": 1
+    }
+  },
+  "integrated_on_exit_list": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [
+            "root_not_mapping"
+          ],
+          "kind": "exit",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": true,
+    "full_replay_ready": false,
+    "indices": 1,
+    "stage_counts": {
+      "canonical_provider_bars": 2,
+      "provider_response": 5,
+      "run_end": 1
+    }
+  },
+  "integrated_on_exit_missing": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [
+            "FileNotFoundError"
+          ],
+          "kind": "exit",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": true,
+    "full_replay_ready": false,
+    "indices": 1,
+    "stage_counts": {
+      "canonical_provider_bars": 2,
+      "provider_response": 5,
+      "run_end": 1
+    }
+  },
+  "integrated_on_exit_nan": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [
+            "nonfinite_or_invalid_number"
+          ],
+          "kind": "exit",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": true,
+    "full_replay_ready": false,
+    "indices": 1,
+    "stage_counts": {
+      "canonical_provider_bars": 2,
+      "provider_response": 5,
+      "run_end": 1
+    }
+  },
+  "integrated_on_exit_null": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [
+            "root_not_mapping"
+          ],
+          "kind": "exit",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": true,
+    "full_replay_ready": false,
+    "indices": 1,
+    "stage_counts": {
+      "canonical_provider_bars": 2,
+      "provider_response": 5,
+      "run_end": 1
+    }
+  },
+  "integrated_on_gap_candidate": {
+    "business": {
+      "alert_codes": [],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 0,
+        "unknown": 0
+      },
+      "hold_reasons": [
+        "semiconductor_cluster_coverage_gap"
+      ],
+      "main_exit": 0,
+      "posts": [],
+      "run_status": "OK"
+    },
+    "capture_complete": true,
+    "full_replay_ready": false,
+    "indices": 1,
+    "stage_counts": {
+      "canonical_provider_bars": 1,
+      "provider_response": 3,
+      "run_end": 1
+    }
+  },
+  "integrated_on_gap_holding": {
+    "business": {
+      "alert_codes": [
+        "broker_tracker_mismatch"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [
+        "reserved_before_submit",
+        "semiconductor_cluster_coverage_gap"
+      ],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 61,
+          "side": "buy",
+          "symbol": "MSFT",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "HALTED"
+    },
+    "capture_complete": true,
+    "full_replay_ready": false,
+    "indices": 1,
+    "stage_counts": {
+      "canonical_provider_bars": 2,
+      "provider_response": 6,
+      "run_end": 1
+    }
+  },
+  "integrated_on_gap_pending": {
+    "business": {
+      "alert_codes": [],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [
+        "reserved_before_submit",
+        "semiconductor_cluster_coverage_gap"
+      ],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 61,
+          "side": "buy",
+          "symbol": "MSFT",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "OK"
+    },
+    "capture_complete": true,
+    "full_replay_ready": false,
+    "indices": 1,
+    "stage_counts": {
+      "canonical_provider_bars": 2,
+      "provider_response": 6,
+      "run_end": 1
+    }
+  },
+  "integrated_on_intraday_null": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [
+            "root_not_mapping"
+          ],
+          "kind": "intraday",
+          "status": "unavailable",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": true,
+    "full_replay_ready": false,
+    "indices": 1,
+    "stage_counts": {
+      "canonical_provider_bars": 2,
+      "provider_response": 5,
+      "run_end": 1
+    }
+  },
+  "integrated_on_lost_found": {
+    "business": {
+      "alert_codes": [],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 2,
+        "unknown": 0
+      },
+      "hold_reasons": [
+        "reserved_before_submit"
+      ],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 61,
+          "side": "buy",
+          "symbol": "MSFT",
+          "time_in_force": "day",
+          "type": "market"
+        },
+        {
+          "qty": 61,
+          "side": "buy",
+          "symbol": "CRM",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "OK"
+    },
+    "capture_complete": true,
+    "full_replay_ready": false,
+    "indices": 1,
+    "stage_counts": {
+      "canonical_provider_bars": 2,
+      "provider_response": 6,
+      "run_end": 1
+    }
+  },
+  "integrated_on_lost_not_found": {
+    "business": {
+      "alert_codes": [
+        "submission_unresolved_or_held"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 0,
+        "unknown": 1
+      },
+      "hold_reasons": [
+        "reserved_before_submit",
+        "submission_outcome_unknown"
+      ],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 61,
+          "side": "buy",
+          "symbol": "MSFT",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": true,
+    "full_replay_ready": false,
+    "indices": 1,
+    "stage_counts": {
+      "canonical_provider_bars": 2,
+      "provider_response": 6,
+      "run_end": 1
+    }
+  },
+  "integrated_on_normal": {
+    "business": {
+      "alert_codes": [],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [
+        "reserved_before_submit"
+      ],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 61,
+          "side": "buy",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "OK"
+    },
+    "capture_complete": true,
+    "full_replay_ready": false,
+    "indices": 1,
+    "stage_counts": {
+      "canonical_provider_bars": 1,
+      "provider_response": 3,
+      "run_end": 1
+    }
+  },
+  "integrated_on_registry_list": {
+    "business": {
+      "alert_codes": [
+        "effective_config_unavailable"
+      ],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [
+            "classification_unavailable"
+          ],
+          "kind": "registry",
+          "status": "unavailable",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 1,
+        "unknown": 0
+      },
+      "hold_reasons": [],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "DEGRADED"
+    },
+    "capture_complete": true,
+    "full_replay_ready": false,
+    "indices": 1,
+    "stage_counts": {
+      "canonical_provider_bars": 2,
+      "provider_response": 5,
+      "run_end": 1
+    }
+  },
+  "integrated_on_sell_and_buy": {
+    "business": {
+      "alert_codes": [],
+      "config": [
+        {
+          "issues": [],
+          "kind": "intraday",
+          "status": "configured",
+          "unused_keys": [
+            "backtest_results",
+            "feature_class",
+            "notes"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "exit",
+          "status": "configured",
+          "unused_keys": [
+            "enabled",
+            "name"
+          ]
+        },
+        {
+          "issues": [],
+          "kind": "allocation",
+          "status": "configured",
+          "unused_keys": []
+        },
+        {
+          "issues": [],
+          "kind": "registry",
+          "status": "configured",
+          "unused_keys": []
+        }
+      ],
+      "funnel": {
+        "held": 0,
+        "rejected": 0,
+        "submitted": 2,
+        "unknown": 0
+      },
+      "hold_reasons": [
+        "reserved_before_submit",
+        "same_symbol_buy_sell_conflict"
+      ],
+      "main_exit": 0,
+      "posts": [
+        {
+          "qty": 1,
+          "side": "sell",
+          "symbol": "NVDA",
+          "time_in_force": "day",
+          "type": "market"
+        },
+        {
+          "qty": 61,
+          "side": "buy",
+          "symbol": "MSFT",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "run_status": "OK"
+    },
+    "capture_complete": true,
+    "full_replay_ready": false,
+    "indices": 1,
+    "stage_counts": {
+      "canonical_provider_bars": 2,
+      "provider_response": 6,
+      "run_end": 1
+    }
+  }
+}

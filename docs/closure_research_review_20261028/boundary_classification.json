@@ -1,0 +1,102 @@
+[
+  {
+    "path": "console/adapters/system_adapter.py",
+    "line": 598,
+    "category": "thread_pool"
+  },
+  {
+    "path": "scripts/close_hpe_short.py",
+    "line": 57,
+    "category": "submit_or_delegate"
+  },
+  {
+    "path": "scripts/emergency_sell.py",
+    "line": 46,
+    "category": "submit_or_delegate"
+  },
+  {
+    "path": "src/stock_swing/cli/paper_demo.py",
+    "line": 956,
+    "category": "thread_pool"
+  },
+  {
+    "path": "src/stock_swing/cli/paper_demo.py",
+    "line": 2844,
+    "category": "submit_or_delegate"
+  },
+  {
+    "path": "src/stock_swing/cli/paper_demo.py",
+    "line": 1303,
+    "category": "thread_pool"
+  },
+  {
+    "path": "src/stock_swing/cli/reconcile_orders.py",
+    "line": 583,
+    "category": "cancel_caller"
+  },
+  {
+    "path": "src/stock_swing/cli/reconcile_orders.py",
+    "line": 655,
+    "category": "cancel_caller"
+  },
+  {
+    "path": "src/stock_swing/cli/reconcile_orders.py",
+    "line": 733,
+    "category": "cancel_caller"
+  },
+  {
+    "path": "src/stock_swing/execution/live_guarded_executor.py",
+    "line": 277,
+    "category": "submit_or_delegate"
+  },
+  {
+    "path": "src/stock_swing/execution/paper_executor.py",
+    "line": 231,
+    "category": "submit_or_delegate"
+  },
+  {
+    "path": "src/stock_swing/execution/production_executor.py",
+    "line": 224,
+    "category": "submit_or_delegate"
+  },
+  {
+    "path": "scripts/cancel_broker_orders.py",
+    "line": 132,
+    "category": "cancel_caller"
+  },
+  {
+    "path": "src/stock_swing/sources/broker_client.py",
+    "line": 369,
+    "category": "order_read"
+  },
+  {
+    "path": "src/stock_swing/sources/broker_client.py",
+    "line": 468,
+    "category": "order_read"
+  },
+  {
+    "path": "src/stock_swing/sources/broker_client.py",
+    "line": 488,
+    "category": "adapter_mutation"
+  },
+  {
+    "path": "src/stock_swing/sources/broker_client.py",
+    "line": 533,
+    "category": "adapter_mutation"
+  },
+  {
+    "path": "src/stock_swing/sources/broker_client.py",
+    "line": 420,
+    "category": "order_read"
+  },
+  {
+    "path": "src/stock_swing/sources/broker_client.py",
+    "line": 572,
+    "category": "http_transport"
+  },
+  {
+    "path": "src/stock_swing/sources/broker_client.py",
+    "line": 574,
+    "category": "http_transport"
+  }
+]

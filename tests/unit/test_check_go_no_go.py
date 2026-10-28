@@ -194,6 +194,23 @@ def test_all_pass_when_real_mismatch_zero_despite_raw_nonzero(monkeypatch, tmp_p
     from datetime import datetime, timedelta, timezone
 
     module = _load_module(monkeypatch, tmp_path)
+    # Regression 2026-10-20: an all-green unit fixture must not depend on
+    # the host's actual failed automation history. Stub only external CLI
+    # I/O; retain the real parsing and health evaluation in SystemAdapter.
+    from types import SimpleNamespace
+    from console.adapters import system_adapter
+
+    def healthy_openclaw_run(command, **kwargs):
+        if command[1:3] == ["cron", "list"]:
+            payload = {"jobs": [{"id": "fixture-job", "name": "fixture-job", "enabled": True,
+                                "state": {"lastRunStatus": "ok", "consecutiveErrors": 0}}]}
+        elif command[1:3] == ["cron", "runs"]:
+            payload = {"entries": [{"status": "ok"}]}
+        else:
+            raise AssertionError(f"Unexpected external command: {command}")
+        return SimpleNamespace(returncode=0, stdout=_json.dumps(payload), stderr="")
+
+    monkeypatch.setattr(system_adapter.subprocess, "run", healthy_openclaw_run)
     console_dir = tmp_path / "reports" / "console"
     console_dir.mkdir(parents=True, exist_ok=True)
     summary = {

@@ -1,0 +1,21 @@
+enabled: true
+name: event_swing_v1
+
+# NOTE (2026-08-15, MaxHold audit): max_hold_days below is NOT read by any code
+# path (verified via grep across src/ and scripts/; EventSwingStrategy takes no
+# max_hold_days constructor arg and no loader reads this key).
+# The live exit-side max-hold cap is config/strategy/simple_exit_v2.yaml's
+# max_hold_days (currently 20), applied uniformly by SimpleExitV2Strategy to
+# all positions regardless of originating entry strategy. This field is kept
+# only for historical/documentation purposes — do not treat it as active.
+max_hold_days: 3  # UNUSED — see note above
+
+# NOTE (2026-08-23, strategy-contract audit): this ENTIRE FILE is not loaded
+# by any code path (verified via grep -- no `event_swing_v1.yaml` reference
+# exists in src/, scripts/, or console/). EventSwingStrategy is constructed
+# without reading this YAML, and none of use_macro_filter/use_filing_signal/
+# use_insider_signal are read by EventSwingStrategy itself either. Do not
+# assume setting these flags changes runtime behavior.
+use_macro_filter: true  # UNUSED — see note above
+use_filing_signal: true  # UNUSED — see note above
+use_insider_signal: true  # UNUSED — see note above

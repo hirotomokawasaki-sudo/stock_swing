@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-28",
+  "scope": "Read-only PF restriction research-review alerts in CLI and web console",
+  "full_tests": {
+    "offline_passed": 2633,
+    "offline_skipped": 2,
+    "offline_deselected_localhost_test": 1,
+    "offline_seconds": 83.06,
+    "localhost_only_passed": 1,
+    "localhost_only_seconds": 0.55,
+    "combined_passed": 2634,
+    "combined_skipped": 2,
+    "existing_collection_warnings": 1,
+    "new_cases": 38
+  },
+  "verification": {
+    "real_mature_observer_to_summary_and_cli_alert": "passed",
+    "real_cli_run_provenance_contract": "passed",
+    "real_dashboard_get_alerts_to_actual_js_render_and_escaping": "passed",
+    "isolated_actual_http_handler_api_and_chrome_dom_screenshot": "passed",
+    "runtime_health_unchanged_by_info_notice": "passed",
+    "withdrawn_missing_corrupt_stale_future_and_dry_inputs_suppressed": "passed"
+  },
+  "deployment": {
+    "owner": "Existing launchd console watchdog, no service or scheduler config changes",
+    "initial_tool_child_restart_did_not_persist": true,
+    "recovered_through_existing_launchd_kickstart": true,
+    "independent_http_health": "passed",
+    "independent_websocket_listener": "passed",
+    "live_api_dashboard_http_status": 200,
+    "live_review_candidate_alerts": 0,
+    "real_observer_store_exists_at_verification": false,
+    "genuine_observer_capture_and_mature_candidate": "pending existing scheduled follow-up",
+    "test_candidates_written_to_live_artifacts": false
+  },
+  "preservation": {
+    "runtime_config_tracking_guardrails_report_files_compared": 156,
+    "observer_and_cli_source_files_compared": 2,
+    "changed_protected_files": [],
+    "purchase_restrictions_or_unlock_controls_changed": false,
+    "observer_definition_or_price_diagnostics_changed": false,
+    "orders_cancels_resets_or_real_test_notifications": false,
+    "gateway_restarted_or_updated": false,
+    "scheduler_definitions_changed": false
+  },
+  "private_evidence": ".run/restriction-console-alert-20261028/"
+}

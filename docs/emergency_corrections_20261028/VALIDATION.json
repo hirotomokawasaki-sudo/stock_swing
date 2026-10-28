@@ -1,0 +1,40 @@
+{
+  "automatic_holding_epoch_rotation": false,
+  "baseline_regression_failed": 2,
+  "cli_cases": 40,
+  "combined_runtime_files": 21,
+  "concurrency_cases": 4,
+  "concurrency_processes": 12,
+  "delta_runtime_files": 5,
+  "disjoint_localhost_passed": 1,
+  "focused_passed": 355,
+  "fractional_policy_changed": false,
+  "full_research_qualification": false,
+  "full_suite": {
+    "collection_warnings": 1,
+    "deselected": 1,
+    "passed": 2959,
+    "skipped": 3
+  },
+  "full_union_passed": 2960,
+  "new_tests": 60,
+  "packet_replay": {
+    "cli_cases": 40,
+    "concurrency_cases": 4,
+    "concurrency_processes": 12,
+    "focused_passed": 355,
+    "full_suite_repeated": false,
+    "global_idempotence_claim": false,
+    "integrity": "verified",
+    "normalized_outcomes_match": true,
+    "production_applied": false,
+    "resolved_copy_origins": true,
+    "script_version_cases": 148,
+    "separate_script_processes": 198
+  },
+  "prior_focused_preserved": 295,
+  "production_applied": false,
+  "real_orders": 0,
+  "script_cases": 148,
+  "script_processes": 198
+}

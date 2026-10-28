@@ -1,0 +1,730 @@
+{
+  "universe_count": 60,
+  "registry_count": 80,
+  "held_symbols": [],
+  "pending_symbols": [],
+  "pending_source": {
+    "qualification": "no qualifying local saved orders envelope found; not a fresh broker observation"
+  },
+  "source_pins": {
+    "src/stock_swing/cli/paper_demo.py": "b08dddfccdb47cbecbb64caf34f8bcfb667227b527d5353c3f2f0bfcf6ebc2c9",
+    "config/reference/symbol_registry.yaml": "aac5bab3a0ee16fd935f9ae541dd9566835fc49de21d98e31bae40c288057e4e",
+    "data/tracking/pnl_state.json": "3f3fdda7394f98b72db1167a76336ffe113d2cdc51f1fa2f2e30ffbc7a4f0507",
+    "src/stock_swing/risk/correlation_cluster.py": "4e5ef7567f3320a0e7ae64f4e16a4e808b783e959c81bafbe7b5a66b876a6cba"
+  },
+  "rows": [
+    {
+      "symbol": "ADBE",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [
+        "cloud_software"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "AMAT",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": true,
+      "clusters": [
+        "semis_us",
+        "semis_combined"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "AMD",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": true,
+      "clusters": [
+        "semis_us",
+        "semis_combined"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "AMZN",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [
+        "hyperscale"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "ANET",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "ARM",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": true,
+      "clusters": [
+        "semis_us",
+        "semis_combined"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "ASML",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": true,
+      "clusters": [],
+      "semiconductor_gap": true
+    },
+    {
+      "symbol": "AVGO",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": true,
+      "clusters": [],
+      "semiconductor_gap": true
+    },
+    {
+      "symbol": "CDNS",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": true,
+      "clusters": [
+        "semis_us",
+        "semis_combined"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "CHPS",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "etf",
+      "semiconductor_flag": true,
+      "clusters": [
+        "semis_etf",
+        "semis_combined"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "CHPX",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "etf",
+      "semiconductor_flag": true,
+      "clusters": [
+        "semis_etf",
+        "semis_combined"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "CIEN",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "CRDO",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": true,
+      "clusters": [],
+      "semiconductor_gap": true
+    },
+    {
+      "symbol": "CRM",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [
+        "cloud_software"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "CRWD",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [
+        "cybersecurity"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "CSCO",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "DDOG",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [
+        "cloud_software"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "DELL",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "FICO",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [
+        "cloud_software"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "FRWD",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "etf",
+      "semiconductor_flag": false,
+      "clusters": [],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "FTNT",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [
+        "cybersecurity"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "FTXL",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "etf",
+      "semiconductor_flag": true,
+      "clusters": [
+        "semis_etf",
+        "semis_combined"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "GOOGL",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [
+        "hyperscale"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "GTOP",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "etf",
+      "semiconductor_flag": false,
+      "clusters": [],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "HPE",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "HPQ",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "IBM",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "INTC",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": true,
+      "clusters": [
+        "semis_us",
+        "semis_combined"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "KLAC",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": true,
+      "clusters": [
+        "semis_us",
+        "semis_combined"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "LRCX",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": true,
+      "clusters": [
+        "semis_us",
+        "semis_combined"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "MDB",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [
+        "cloud_software"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "META",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [
+        "hyperscale"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "MRVL",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": true,
+      "clusters": [
+        "semis_us",
+        "semis_combined"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "MSFT",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [
+        "cloud_software",
+        "hyperscale"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "MU",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": true,
+      "clusters": [
+        "semis_us",
+        "semis_combined"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "NBIS",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "NOW",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [
+        "cloud_software"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "NVDA",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": true,
+      "clusters": [
+        "semis_us",
+        "semis_combined",
+        "hyperscale"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "ORCL",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [
+        "cloud_software"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "PANW",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [
+        "cybersecurity"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "PATH",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [
+        "cloud_software"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "PLTR",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [
+        "cloud_software"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "PSCT",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "etf",
+      "semiconductor_flag": false,
+      "clusters": [],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "PTF",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "etf",
+      "semiconductor_flag": false,
+      "clusters": [],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "QCOM",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": true,
+      "clusters": [
+        "semis_us",
+        "semis_combined"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "QTEC",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "etf",
+      "semiconductor_flag": false,
+      "clusters": [],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "QTUM",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "etf",
+      "semiconductor_flag": false,
+      "clusters": [],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "RBRK",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [
+        "cybersecurity"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "SKYY",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "etf",
+      "semiconductor_flag": false,
+      "clusters": [],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "SMCI",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": true,
+      "clusters": [],
+      "semiconductor_gap": true
+    },
+    {
+      "symbol": "SMH",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "etf",
+      "semiconductor_flag": true,
+      "clusters": [
+        "semis_etf",
+        "semis_combined"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "SMHX",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "etf",
+      "semiconductor_flag": true,
+      "clusters": [
+        "semis_etf",
+        "semis_combined"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "SNOW",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [
+        "cloud_software"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "SNPS",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": true,
+      "clusters": [
+        "semis_us",
+        "semis_combined"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "SOXQ",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "etf",
+      "semiconductor_flag": true,
+      "clusters": [
+        "semis_etf",
+        "semis_combined"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "SOXX",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "etf",
+      "semiconductor_flag": true,
+      "clusters": [
+        "semis_etf",
+        "semis_combined"
+      ],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "TDIV",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "etf",
+      "semiconductor_flag": false,
+      "clusters": [],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "TSLA",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": false,
+      "clusters": [],
+      "semiconductor_gap": false
+    },
+    {
+      "symbol": "TSM",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "stock",
+      "semiconductor_flag": true,
+      "clusters": [],
+      "semiconductor_gap": true
+    },
+    {
+      "symbol": "TTEQ",
+      "in_default": true,
+      "held_in_saved_tracker": false,
+      "pending_in_saved_envelope": false,
+      "asset_class": "etf",
+      "semiconductor_flag": false,
+      "clusters": [],
+      "semiconductor_gap": false
+    }
+  ],
+  "unknown": [],
+  "gaps": [
+    "ASML",
+    "AVGO",
+    "CRDO",
+    "SMCI",
+    "TSM"
+  ],
+  "limits": [
+    "saved tracker != current broker holdings",
+    "no fresh or atomic pending snapshot certified",
+    "static membership does not certify detailed ETF look-through",
+    "no full PIT universe certification"
+  ],
+  "saved_tracker_status_counts": {
+    "closed": 422,
+    "quarantined": 1
+  }
+}

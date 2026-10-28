@@ -1,0 +1,455 @@
+{
+  "classes": {
+    "DistanceFromHighConfig": {
+      "path": "src/stock_swing/risk/distance_from_high.py",
+      "line": 59,
+      "fields": [
+        {
+          "name": "min_distance_from_high_pct",
+          "line": 70,
+          "annotation": "float"
+        },
+        {
+          "name": "min_bounce_momentum_pct",
+          "line": 71,
+          "annotation": "float"
+        },
+        {
+          "name": "disabled",
+          "line": 72,
+          "annotation": "bool"
+        }
+      ],
+      "literal_key_candidates": [
+        "DISTANCE_FROM_HIGH_DISABLED",
+        "DISTANCE_FROM_HIGH_MIN_MOMENTUM",
+        "DISTANCE_FROM_HIGH_MIN_PCT"
+      ]
+    },
+    "LotLevelExitDiagnosticConfig": {
+      "path": "src/stock_swing/risk/lot_level_exit_diagnostic.py",
+      "line": 90,
+      "fields": [
+        {
+          "name": "disabled",
+          "line": 101,
+          "annotation": "bool"
+        },
+        {
+          "name": "min_lots",
+          "line": 102,
+          "annotation": "int"
+        }
+      ],
+      "literal_key_candidates": [
+        "LOT_LEVEL_EXIT_DIAGNOSTIC_DISABLED",
+        "LOT_LEVEL_EXIT_DIAGNOSTIC_MIN_LOTS"
+      ]
+    },
+    "NewsSentimentConfig": {
+      "path": "src/stock_swing/risk/news_sentiment.py",
+      "line": 172,
+      "fields": [
+        {
+          "name": "max_article_age_days",
+          "line": 200,
+          "annotation": "int"
+        },
+        {
+          "name": "negative_score_threshold",
+          "line": 201,
+          "annotation": "float"
+        },
+        {
+          "name": "min_articles_for_signal",
+          "line": 202,
+          "annotation": "int"
+        },
+        {
+          "name": "disabled",
+          "line": 203,
+          "annotation": "bool"
+        },
+        {
+          "name": "relevance_filter_enabled",
+          "line": 204,
+          "annotation": "bool"
+        },
+        {
+          "name": "source_weighting_enabled",
+          "line": 205,
+          "annotation": "bool"
+        }
+      ],
+      "literal_key_candidates": [
+        "NEWS_SENTIMENT_DISABLED",
+        "NEWS_SENTIMENT_MAX_ARTICLE_AGE_DAYS",
+        "NEWS_SENTIMENT_MIN_ARTICLES",
+        "NEWS_SENTIMENT_NEGATIVE_THRESHOLD",
+        "NEWS_SENTIMENT_RELEVANCE_FILTER_DISABLED",
+        "NEWS_SENTIMENT_SOURCE_WEIGHTING_DISABLED"
+      ]
+    },
+    "NewsShockHoldConfig": {
+      "path": "src/stock_swing/risk/news_shock_hold.py",
+      "line": 84,
+      "fields": [
+        {
+          "name": "max_article_age_days",
+          "line": 97,
+          "annotation": "int"
+        },
+        {
+          "name": "negative_score_threshold",
+          "line": 98,
+          "annotation": "float"
+        },
+        {
+          "name": "min_articles_for_signal",
+          "line": 99,
+          "annotation": "int"
+        },
+        {
+          "name": "disabled",
+          "line": 100,
+          "annotation": "bool"
+        }
+      ],
+      "literal_key_candidates": [
+        "NEWS_SHOCK_HOLD_DISABLED",
+        "NEWS_SHOCK_HOLD_MAX_ARTICLE_AGE_DAYS",
+        "NEWS_SHOCK_HOLD_MIN_ARTICLES",
+        "NEWS_SHOCK_HOLD_NEGATIVE_THRESHOLD"
+      ]
+    },
+    "RsiDiagnosticConfig": {
+      "path": "src/stock_swing/risk/rsi_diagnostic.py",
+      "line": 57,
+      "fields": [
+        {
+          "name": "window",
+          "line": 69,
+          "annotation": "int"
+        },
+        {
+          "name": "overbought_threshold",
+          "line": 70,
+          "annotation": "float"
+        },
+        {
+          "name": "disabled",
+          "line": 71,
+          "annotation": "bool"
+        }
+      ],
+      "literal_key_candidates": [
+        "RSI_DIAGNOSTIC_DISABLED",
+        "RSI_DIAGNOSTIC_OVERBOUGHT_THRESHOLD",
+        "RSI_DIAGNOSTIC_WINDOW"
+      ]
+    },
+    "ShockAwareStagedExitConfig": {
+      "path": "src/stock_swing/risk/shock_aware_staged_exit.py",
+      "line": 20,
+      "fields": [
+        {
+          "name": "mode",
+          "line": 21,
+          "annotation": "str"
+        },
+        {
+          "name": "partial_fraction",
+          "line": 22,
+          "annotation": "float"
+        },
+        {
+          "name": "confirmation_sessions",
+          "line": 23,
+          "annotation": "int"
+        },
+        {
+          "name": "treatment_hard_cap_pct",
+          "line": 24,
+          "annotation": "float"
+        }
+      ],
+      "literal_key_candidates": [
+        "SHOCK_AWARE_STAGED_EXIT_CONFIRMATION_SESSIONS",
+        "SHOCK_AWARE_STAGED_EXIT_HARD_CAP_PCT",
+        "SHOCK_AWARE_STAGED_EXIT_MODE",
+        "SHOCK_AWARE_STAGED_EXIT_PARTIAL_FRACTION"
+      ]
+    },
+    "VolatilityGateConfig": {
+      "path": "src/stock_swing/risk/volatility_gate.py",
+      "line": 59,
+      "fields": [
+        {
+          "name": "mode",
+          "line": 69,
+          "annotation": "str"
+        },
+        {
+          "name": "max_3m_return_std_pct",
+          "line": 70,
+          "annotation": "float"
+        }
+      ],
+      "literal_key_candidates": [
+        "VOLATILITY_GATE_MAX_3M_STD_PCT",
+        "VOLATILITY_GATE_MODE"
+      ]
+    },
+    "DipBuySignalConfig": {
+      "path": "src/stock_swing/strategy_engine/dip_buy_meanreversion_strategy.py",
+      "line": 89,
+      "fields": [
+        {
+          "name": "min_momentum_drop",
+          "line": 101,
+          "annotation": "float"
+        },
+        {
+          "name": "min_signal_strength",
+          "line": 102,
+          "annotation": "float"
+        },
+        {
+          "name": "disabled",
+          "line": 103,
+          "annotation": "bool"
+        }
+      ],
+      "literal_key_candidates": [
+        "DIP_BUY_MIN_MOMENTUM_DROP",
+        "DIP_BUY_MIN_SIGNAL_STRENGTH",
+        "DIP_BUY_SHADOW_DISABLED"
+      ]
+    },
+    "SectorShockHoldConfig": {
+      "path": "src/stock_swing/strategy_engine/sector_shock_hold.py",
+      "line": 88,
+      "fields": [
+        {
+          "name": "mode",
+          "line": 108,
+          "annotation": "str"
+        },
+        {
+          "name": "benchmark_symbols",
+          "line": 109,
+          "annotation": "list[str]"
+        },
+        {
+          "name": "sector_shock_threshold_pct",
+          "line": 110,
+          "annotation": "float"
+        },
+        {
+          "name": "sector_shock_rolling_days",
+          "line": 124,
+          "annotation": "int"
+        },
+        {
+          "name": "sector_shock_rolling_threshold_pct",
+          "line": 125,
+          "annotation": "float"
+        },
+        {
+          "name": "sector_shock_min_benchmarks",
+          "line": 126,
+          "annotation": "int"
+        },
+        {
+          "name": "sector_shock_breadth_min",
+          "line": 127,
+          "annotation": "float"
+        },
+        {
+          "name": "relative_weakness_max",
+          "line": 128,
+          "annotation": "float"
+        },
+        {
+          "name": "max_hold_days_3",
+          "line": 129,
+          "annotation": "int"
+        },
+        {
+          "name": "max_hold_days_5",
+          "line": 130,
+          "annotation": "int"
+        },
+        {
+          "name": "max_hold_days_10",
+          "line": 131,
+          "annotation": "int"
+        },
+        {
+          "name": "hard_loss_cap_pct",
+          "line": 132,
+          "annotation": "float"
+        }
+      ],
+      "literal_key_candidates": [
+        "SECTOR_SHOCK_BENCHMARK_SYMBOLS",
+        "SECTOR_SHOCK_BREADTH_MIN",
+        "SECTOR_SHOCK_HARD_LOSS_CAP_PCT",
+        "SECTOR_SHOCK_HOLD_MODE",
+        "SECTOR_SHOCK_MAX_HOLD_DAYS_10",
+        "SECTOR_SHOCK_MAX_HOLD_DAYS_3",
+        "SECTOR_SHOCK_MAX_HOLD_DAYS_5",
+        "SECTOR_SHOCK_MIN_BENCHMARKS",
+        "SECTOR_SHOCK_REL_WEAKNESS_MAX",
+        "SECTOR_SHOCK_ROLLING_DAYS",
+        "SECTOR_SHOCK_ROLLING_THRESHOLD_PCT",
+        "SECTOR_SHOCK_THRESHOLD_PCT"
+      ]
+    }
+  },
+  "original_call_sites": [
+    {
+      "config": "VolatilityGateConfig",
+      "path": "scripts/backfill_planb_planc_historical.py",
+      "line": 145
+    },
+    {
+      "config": "DistanceFromHighConfig",
+      "path": "scripts/backfill_planb_planc_historical.py",
+      "line": 146
+    },
+    {
+      "config": "SectorShockHoldConfig",
+      "path": "scripts/sector_shock_historical_replay.py",
+      "line": 201
+    },
+    {
+      "config": "SectorShockHoldConfig",
+      "path": "src/stock_swing/cli/paper_demo.py",
+      "line": 1552
+    },
+    {
+      "config": "ShockAwareStagedExitConfig",
+      "path": "src/stock_swing/cli/paper_demo.py",
+      "line": 1554
+    },
+    {
+      "config": "VolatilityGateConfig",
+      "path": "src/stock_swing/cli/paper_demo.py",
+      "line": 1953
+    },
+    {
+      "config": "DistanceFromHighConfig",
+      "path": "src/stock_swing/cli/paper_demo.py",
+      "line": 1954
+    },
+    {
+      "config": "NewsSentimentConfig",
+      "path": "src/stock_swing/cli/paper_demo.py",
+      "line": 1955
+    },
+    {
+      "config": "RsiDiagnosticConfig",
+      "path": "src/stock_swing/cli/paper_demo.py",
+      "line": 1956
+    },
+    {
+      "config": "DipBuySignalConfig",
+      "path": "src/stock_swing/cli/paper_demo.py",
+      "line": 1257
+    },
+    {
+      "config": "LotLevelExitDiagnosticConfig",
+      "path": "src/stock_swing/cli/paper_demo.py",
+      "line": 1523
+    },
+    {
+      "config": "NewsShockHoldConfig",
+      "path": "src/stock_swing/cli/paper_demo.py",
+      "line": 2143
+    },
+    {
+      "config": "DistanceFromHighConfig",
+      "path": "src/stock_swing/risk/distance_from_high.py",
+      "line": 151
+    },
+    {
+      "config": "LotLevelExitDiagnosticConfig",
+      "path": "src/stock_swing/risk/lot_level_exit_diagnostic.py",
+      "line": 286
+    },
+    {
+      "config": "NewsSentimentConfig",
+      "path": "src/stock_swing/risk/news_sentiment.py",
+      "line": 462
+    },
+    {
+      "config": "NewsShockHoldConfig",
+      "path": "src/stock_swing/risk/news_shock_hold.py",
+      "line": 179
+    },
+    {
+      "config": "RsiDiagnosticConfig",
+      "path": "src/stock_swing/risk/rsi_diagnostic.py",
+      "line": 157
+    },
+    {
+      "config": "VolatilityGateConfig",
+      "path": "src/stock_swing/risk/volatility_gate.py",
+      "line": 123
+    },
+    {
+      "config": "DipBuySignalConfig",
+      "path": "src/stock_swing/strategy_engine/dip_buy_meanreversion_strategy.py",
+      "line": 131
+    }
+  ],
+  "candidate_cli_call_sites": [
+    {
+      "config": "SectorShockHoldConfig",
+      "path": "docs/emergency_corrections_20261028/code/src/stock_swing/cli/paper_demo.py",
+      "line": 1538
+    },
+    {
+      "config": "ShockAwareStagedExitConfig",
+      "path": "docs/emergency_corrections_20261028/code/src/stock_swing/cli/paper_demo.py",
+      "line": 1540
+    },
+    {
+      "config": "VolatilityGateConfig",
+      "path": "docs/emergency_corrections_20261028/code/src/stock_swing/cli/paper_demo.py",
+      "line": 1939
+    },
+    {
+      "config": "DistanceFromHighConfig",
+      "path": "docs/emergency_corrections_20261028/code/src/stock_swing/cli/paper_demo.py",
+      "line": 1940
+    },
+    {
+      "config": "NewsSentimentConfig",
+      "path": "docs/emergency_corrections_20261028/code/src/stock_swing/cli/paper_demo.py",
+      "line": 1941
+    },
+    {
+      "config": "RsiDiagnosticConfig",
+      "path": "docs/emergency_corrections_20261028/code/src/stock_swing/cli/paper_demo.py",
+      "line": 1942
+    },
+    {
+      "config": "DipBuySignalConfig",
+      "path": "docs/emergency_corrections_20261028/code/src/stock_swing/cli/paper_demo.py",
+      "line": 1288
+    },
+    {
+      "config": "LotLevelExitDiagnosticConfig",
+      "path": "docs/emergency_corrections_20261028/code/src/stock_swing/cli/paper_demo.py",
+      "line": 1509
+    },
+    {
+      "config": "NewsShockHoldConfig",
+      "path": "docs/emergency_corrections_20261028/code/src/stock_swing/cli/paper_demo.py",
+      "line": 2129
+    }
+  ],
+  "claim": "bounded static family inventory, not effective environment or all settings coverage"
+}

@@ -1,0 +1,41 @@
+{
+  "diagnostic_spec_frozen_before_outcomes": true,
+  "spec_sha256": "dd5ef0c6c893d07341b0ceda2b8f44ec2b038be731fbd2f0acf2135d6081cd54",
+  "isolated_network_and_production_write_denied": true,
+  "delivered_packet_replay": {
+    "reproduced": true,
+    "input_files": 6832,
+    "contract_assertions": 11,
+    "synthetic_score_cases": 210
+  },
+  "independent_verification": {
+    "closed_rows": 422,
+    "independent_count_oracle": true,
+    "outcome_decimal_cells": 20,
+    "score_tagged_rows": 197,
+    "source_score_decimal_oracle_rows": 2089,
+    "strategy_score_count_groups": 4
+  },
+  "negative_integrity_cases": [
+    {
+      "case": "missing_input",
+      "rejected_before_diagnostic_result": true,
+      "returncode": 1
+    },
+    {
+      "case": "changed_input",
+      "rejected_before_diagnostic_result": true,
+      "returncode": 1
+    },
+    {
+      "case": "changed_spec",
+      "rejected_before_diagnostic_result": true,
+      "returncode": 1
+    }
+  ],
+  "production_regression_suite_run": false,
+  "S1_S2_whole_completed": false,
+  "challenger_trial_started": false,
+  "source_config_financial_changes": false,
+  "automation_changes": 0
+}

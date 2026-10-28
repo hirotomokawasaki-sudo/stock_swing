@@ -1,0 +1,99 @@
+{
+  "status": "IMPLEMENTED_AND_TESTED_SCHEDULED_VERIFICATION_PENDING",
+  "as_of": "2026-10-28T00:46:41.761Z",
+  "scope": "Prospective fixed-horizon price diagnostics and research-review notification only",
+  "automatic_release": false,
+  "eligible_to_trade": false,
+  "tests": {
+    "passed": 2596,
+    "skipped": 2,
+    "failed": 0,
+    "new_cases": 42,
+    "nonoverlapping_partitions": [
+      {
+        "command": "python -m pytest --tb=short -q -k 'not test_remote_readonly_rejects_query_token_and_accepts_header'",
+        "passed": 2595,
+        "skipped": 2,
+        "deselected": 1,
+        "duration_seconds": 82.22,
+        "evidence": ".run/entry-restriction-review-20261028/full-offline-tests.log",
+        "network": "OS-denied"
+      },
+      {
+        "command": "python -m pytest tests/unit/test_token_accounting.py::test_remote_readonly_rejects_query_token_and_accepts_header --tb=short -q",
+        "passed": 1,
+        "duration_seconds": 0.55,
+        "evidence": ".run/entry-restriction-review-20261028/full-loopback-tests.log",
+        "network": "only localhost permitted"
+      }
+    ],
+    "existing_collection_warnings": 1,
+    "interrupted_attempt": "One initial full run was interrupted at 374 passed to add nonblocking lock regression; not included in final totals."
+  },
+  "invariants": {
+    "production_boundary": "Real paper_demo.main with only external HTTP/SDK and isolated filesystem boundaries replaced.",
+    "real_cli_cases": [
+      "enabled",
+      "disabled",
+      "corrupt",
+      "dry_run"
+    ],
+    "http_trace_identical": [
+      "enabled",
+      "disabled",
+      "corrupt"
+    ],
+    "orders_submitted": 0,
+    "orders_cancelled": 0,
+    "real_notifications_sent": 0,
+    "unchanged_trading_history_in_cli_fixtures": true,
+    "live_protected_files": 156,
+    "live_protected_changed": [],
+    "live_protected_added": [],
+    "entry_filter_pf_config_changed": false,
+    "paper_runtime_changed": false,
+    "scheduler": {
+      "existing": 36,
+      "changed": [],
+      "added": [
+        "bee2c2f4-9e2a-4166-8f1a-e243ac62f96b"
+      ]
+    },
+    "new_followup": {
+      "id": "bee2c2f4-9e2a-4166-8f1a-e243ac62f96b",
+      "scheduledAt": "2026-10-28T22:10:00.000Z",
+      "timeMatch": true,
+      "payloadMatch": true,
+      "enabled": true,
+      "deliveryMatch": true,
+      "targetMatch": true,
+      "deleteAfterRun": true,
+      "ownerSession": "agent:main:dashboard:dcdfb8ec-8c26-4dc1-aeb8-bce3dd695672"
+    },
+    "new_followup_delivery": "Current WebChat conversation; no external target"
+  },
+  "cohort_policy": {
+    "different_entry_and_signal_settings": "separate cohorts; do not pool",
+    "different_current_settings": "defer review candidates, continue recording",
+    "source_or_protocol_change": "defer until explicit new version; preserve old evidence",
+    "incomplete_or_corrupt_inputs": "unknown; no review candidate",
+    "minimum_completed_nonoverlapping": 30,
+    "outcome": "Next ET session open to fifth completed ET session close; not a production Exit/portfolio replay",
+    "cost_bps_round_trip": {
+      "base": 20,
+      "stress": 30
+    }
+  },
+  "operational": {
+    "observer_enabled": true,
+    "live_store_exists_at_check": false,
+    "loaded_source": "/Users/hirotomookawasaki/stock_swing/src/stock_swing/cli/paper_demo.py",
+    "genuine_scheduled_capture": "PENDING",
+    "prospective_outcome_ready": false,
+    "economic_validity": "NOT ESTABLISHED",
+    "release_authorization": "NOT GRANTED",
+    "historical_automation_runs_tool": "Returned not-found for existing jobs despite full get/list working; no historical run verification claimed."
+  },
+  "private_evidence": ".run/entry-restriction-review-20261028",
+  "rollback": "Revert only this implementation commit; keep observation evidence. Never clear PF history or alter skip lists."
+}

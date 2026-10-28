@@ -546,7 +546,7 @@ return_pct基準の7日tierがstandard/high-conviction銘柄で到達不可能�
 
 #### R3-v2-Breakeven: Staged Floor（段階的floor、Breakeven Stop）
 
-**Status**: IMPLEMENTED_UNVERIFIED — 第1回レビュー実施済み・判定不能（2026-09-05、n=0）  
+**Status**: CLOSED_UNOBSERVABLE — 第2回レビューでstaged trailingによる構造的先行発火を確認（2026-10-05、n=0）
 **Priority**: P2（sector_shock A/Bとは独立、即日実施可）
 
 **第1回中間レビュー結果（2026-09-05）**:
@@ -555,6 +555,13 @@ return_pct基準の7日tierがstandard/high-conviction銘柄で到達不可能�
 - (3) exit_reason記録: "Staged breakeven stop" のイベント記録なし（発火自体が0件のため）。コードパス（`simple_exit_v2_strategy.py` L729）はstagedレベル適用時に同ラベルを記録する実装であることを確認済み
 - 補足: 全履歴でもbreakeven_stop発火は14件全て2026-07-22以前。導入前の8月も0件であり、exit mixの変化（staged trailing等が先に発火）により breakeven_stop 自体が稀になっている可能性が高い
 - **判定: INCONCLUSIVE（n=0）。第2回レビューを2026-10-05目安（または初のstaged breakeven発火時の早い方）に延長**
+
+**第2回中間レビュー結果（2026-10-05）**:
+- (1) config確認: `staged_breakeven_enabled: true`、3段階レベル（+5%→floor 0% / +8%→+3% / +12%→+6%）は引き続き有効 ✅
+- (2) paper実測: **導入後（08-05〜10-05）のbreakeven_stop発火は0件**。closed trade 62件の内訳とPnLは trailing_stop 36件 / +$56,237.59、stop_loss 18件 / -$53,839.69、time_based 6件 / -$3,620.97、strategy_exit 2件 / -$12,445.26。第1回レビュー後だけでも16件（trailing_stop 13件）増えたがbreakeven_stopは0件のままで、net_pnl傾向は評価不能
+- (3) `exit_signal` を含むイベント全体に `Staged breakeven stop` の記録は0件。全履歴のbreakeven_stop 14件も最新は2026-07-22で、導入後発火なし
+- 構造確認: exit判定は trailing_stop がbreakeven_stopより先。両staged機能は同じactivation（+5/+8/+12%）を使い、trailingの発火水準はそれぞれ概算 +1.325% / +4.76% / +9.20%で、breakeven floor（0% / +3% / +6%）より常に高い。このため下落時はstaged trailingが必ず先に発火し、現設定下のstaged breakevenは実質到達不能
+- **判定: CLOSED_UNOBSERVABLE**。サンプル追加で解消する問題ではないため定期レビューは終了。フラグは有効のままだが現行staged trailing配下では実効性なし。再設計する場合は、両stopの責務・activation・優先順位を一体で見直し、事前登録したpaper A/Bで再検証する
 
 **背景**: Breakeven Stop（peak_returnが活性化ライン到達後、return≤40%で即exit、
 floor固定0%）はPF 0.7前後・WR 20〜27%とExit 3戦略中最弱。Post-exit driftシミュレー
@@ -572,14 +579,12 @@ floorを段階的に引き上げ（ratchet）:
 - テスト: +9件新規追加。フルスイート 1333 passed / 2 skipped（既知の無関係つ2件のみ）
 
 **未実施（フォローアップ課題）**:
-- シミュレーションはyfinance日次OHLCの近似であり、n=43と少ない。paper実測での
-  効果検証が未実施
+- なし。現行設定ではpaper実測によるstaged breakeven単独評価ができないためレビュー終了
 
-**Acceptance criteria**（次回フォローアップで確認）**:
-- breakeven_stop発火トレードのexit_reason別内訳を確認（"Staged breakeven stop"が
-  実際に発火しているか）
-- 直近30日のbreakeven_stop net_pnlが改善傾向にあるかを確認
-- 目安確認日: **2026-09-05**（08-05導入から1ヶ月後）
+**Acceptance criteria（2026-10-05確認完了）**:
+- breakeven_stop発火トレードのexit_reason別内訳: 0件
+- `Staged breakeven stop` の実発火: 0件
+- net_pnl改善傾向: n=0のため評価不能。構造的到達不能を確認したため追加レビューなし
 
 **ロールバック**: `staged_breakeven_enabled: false` に戻すだけ
 
@@ -733,9 +738,14 @@ paper環境で有効化。
   - 候補max=1.25: adjusted−baseline **+$9,631.76**、改善24 / 悪化17 / 不変282、
     新規誤発動0件
   - 候補は現行より正味 **-$3,856.16**。
+- 同一日次パス方法論の直近コホート（`actual_exit_date>=08-14`、comparable 65件）:
+  - 現行max=1.75: adjusted−baseline **-$3,053.71**、改善4 / 悪化10 / 不変51
+  - 候補max=1.25: adjusted−baseline **-$1,768.08**、改善4 / 悪化8 / 不変53
+  - 候補が現行より **+$1,285.63**良いが、全履歴では逆に現行優位で証拠は不一致。
 - **判断: max=1.75を現状維持し観測継続**。サンプル基準・中止条件とも未達で、
-  全履歴でも1.25が劣後するため変更提案なし。本番データ・コード・config・売買挙動の
-  変更なし。次回候補は **2026-10-20 09:00 JST** またはn>=15到達時の早い方。
+  全履歴と直近コホートの比較も不一致のため変更提案なし。本番データ・コード・config・
+  売買挙動の変更なし。次回候補は **2026-10-20 09:00 JST** またはn>=15到達時の
+  早い方。automationは未登録のためメインセッションで登録・実在確認が必要。
 - **近似の注意**: 日次終値パス、entry時ATR固定、entry日±3暦日のuniverse近似。
   詳細: `docs/daily_logs/2026-10-06.md`
 
@@ -752,7 +762,6 @@ paper環境で有効化。
   新しい事前基準または中止条件到達時のみ再開する。次回automationは未登録。
 - 近似制約: 日次終値、entry時ATR固定、entry日±3暦日のuniverse近似。
   詳細: `docs/daily_logs/2026-10-20.md`
-
 
 **未実施（今後の検証課題）**:
 - ヒストリカル検証はエントリー時点ATR固定・±3日窓universe近似・日次終値のみ
@@ -3779,6 +3788,36 @@ min_members修正込みの数値を新headlineとして採用することを推�
   30% projected hard capの承認・実装・検証がない限り配線不可とする。
 - 詳細: `docs/daily_logs/2026-10-02.md`
 
+**2026-10-21 第3回配線判断レビュー（cron実施、分析・記録のみ）**:
+
+- **判断: shadow継続 / paper A/B提案見送り / 本番配線見送り**。固定基準は変更しない。
+- **新系列rebalanceは3回に到達**（09-08/09-29/10-20、stateもcount=3）。
+  ただし3回目はenter/exitとも空のno-opであり、3回の実売買や独立収益実績ではない。
+  hold_days=21は現行コードで**暦日**（Phase 1は取引日）。過去の「21営業日」表現を訂正。
+- **蓄積**: 新126d/min2は31行/31実行日、旧63dは42行/40実行日、最新10-21 09:33 JST。
+  JSON不正・errorレコードは0だが、新旧とも**10-19が1平日欠落**。無障害連続蓄積とは扱わない。
+- **集中改善なし**: 新系列semiconductor **31/31日（100%）**、FTXL/CHPXも各31/31日候補入り。
+  robotics_ai+semiconductor 25/31日、software+semiconductor 6/31日。
+  選択集合フリップ11/30遷移（36.7%）、10-02後のみ3/11（27.3%）でも半導体偏重は継続。
+  前提の18/18は10-02当日を含まない値で、前回文書と原ログは当日込み19/19と一致。
+- **現保有は改善、capは未解決**: 10-21 00:00 UTC trackerはopen=0、半導体露出
+  **$0 / equity $930,032.83 = 0.0%**（entry notional近似）。10-20 21:00 UTCの
+  broker/tracker照合も双方0。不足capが効いた結果でもR13-Dの効果でもない。
+- **必須30% projected hard capは未実装・未検証**。既存clusterはcombined40%等、
+  現状超過の検査のみで注文量を受け取らず、registry半導体関連全体も網羅しない。
+  現在0%というsnapshotを将来の再集中抑制の証拠にはできない。
+- **economic viabilityはNO-GO**（exit>=08-14、n=109 / PF=0.639570 / expectancy=-$573.54）。
+  due回数充足だけでは連結cap・安定蓄積・独立risk budget・事前登録/A-B/OOSを代替しない。
+- **承認事項（無人runでは未実施）**: 連結30% projected capの実装・検証・適用、cadence整合、
+  将来の配線。paper A/Bでも初期配分は全体exposure10%以下、別ID/台帳/予算と明示承認が必要。
+- **次回**: 前提実装・検証が揃えば早期再審査。未完なら次due見込み11-10後の
+  **2026-11-11 09:45 JST**を継続コスト・欠落/集中確認の目安とする。
+  **次回automationは未登録**。メインセッションから
+  `stock_swing_sector_rotation_wiring_review_20261111`を登録・get/list確認すること。
+  今回は本番コード・設定・配線・台帳・automationを変更していない。
+- 詳細・再現・source hashes: `docs/daily_logs/2026-10-21.md` /
+  `docs/r13d_wiring_review_20261021/`。
+
 **既存進捗**:
 - JP半導体overnight spillover: Phase 1（相関検証、GO判定済み）、Phase 2（戦略設計）、
   Phase 2.5（shadow検証、日次収集中）完了済み。IBKR接続確立後にPhase 3（実配線）へ
@@ -4201,6 +4240,47 @@ point-in-time（lookaheadなし）で「もし共有EntryFilterEngineで両戦�
   観測期間・precision/期待値/下方尾の合格/中止基準をレビュー前に事前登録する。
   次回目安は既定どおり2026-10-20。詳細: `docs/daily_logs/2026-10-02.md`。
 
+
+---
+
+### 第3回Promotionレビュー（2026-10-20、分析・記録のみ）
+
+- **蓄積/健全性**: 09-22以降+705行/19営業日/76 run（欠落0）、累計
+  **1,832行/38営業日/149 run**。累計欠落は既知の09-01 3 runのみ。JSON不正、
+  条件違反、dip-buy関連WARNING/ERRORは0。増分47銘柄、最大銘柄FICO 10.8%。
+  momentum平均-11.78%、signal_strength平均0.5919（597 distinct）で分布異常なし。
+- **集中**: 日次重複除去は累計572候補、09-22以降215候補。半導体関連はraw累計
+  45.3% / 増分37.7%、日次候補累計44.4% / 増分36.7%。現在のopen半導体連結露出は
+  **$51,120 / equity近似$927,667=5.5%**で、09-22の31.3%超過自体は解消。ただし
+  30% projected hard capは未実装。
+- **1/3/5日実リターン**: signal翌営業日始値+10bps、h営業日目終値-10bps、
+  mark後1セッションの確定bufferで再集計。成熟n=501/461/443、precisionは
+  **51.7%/55.5%/59.4%**、平均**+0.22%/+1.17%/+1.57%**、中央値
+  **+0.06%/+1.03%/+1.62%**。p5は**-4.07%/-7.17%/-9.90%**、最悪は
+  **-12.59%/-30.67%/-33.42%**。
+- **point-in-timeレジーム**: 既存SPY 50日SMA/5日傾き/20日range規則では、choppyの
+  3日n=66がprecision 77.3%/平均+3.33%、5日n=66が74.2%/+5.12%。trending bullishは
+  3日n=395が51.9%/+0.81%、5日n=377が56.8%/+0.94%。ただしchoppy成熟候補は
+  **4 signal日**に集中し、規則も未事前登録のため探索値に留める。
+- **反実仮想**: signal翌営業日始値+10bps、日次OHLC、現行SimpleExitV2 helper、
+  exit -10bpsで再生。累計成熟候補は5日n=451で平均+0.99%/勝率63.9%/PF 1.647、
+  10日n=419で**+1.37%/68.3%/PF 1.883**。一方09-22以降signalは5日n=94で
+  +0.43%/61.7%/PF 1.300、10日n=62で**+0.54%/66.1%/PF 1.343**へ弱化。
+  同コホートの5日単純closeは平均-0.42%/PF 0.853で、exit近似依存に注意。
+- **未解消**: chop連動、Gate 3 strategy-scoping、独立environment/sub-ledger資本配分、
+  paper A/B数値基準の事前登録、前向きpaper A/B、R13-C後OOSはいずれも未完。
+- **economic viability**: **NO-GO**（n=108 / PF **0.653** / expectancy
+  **-$545.27**）。09-22のPF 0.429から改善したが必須閾値未達。
+- **判断: shadow継続、paper A/B提案・本番promotion不可、停止もしない。**
+  収集健全性と正のexit近似だけでは必須条件を上書きできず、近時効果も弱い。本番配線、
+  コード、config、売買挙動は変更していない。
+- **次回**: chop gate、strategy-scoped Gate 3、独立sub-ledger、30% projected hard cap、
+  paper A/B pass/stop基準が全て完了・test済み、かつ成熟5日リターンを持つchoppy
+  signal日が10独立日以上になった時点でpromotionを再審査する。条件未完なら
+  2026-11-17 09:30 JST目安で継続コスト/
+  停止可否のみ確認。次回automationは未登録のため、必要ならメインセッションから
+  stock_swing_r14_dip_buy_promotion_review_20261117を登録・実在確認する。
+  詳細: docs/daily_logs/2026-10-20.md。
 
 ---
 
@@ -4805,3 +4885,182 @@ XLU(公益) / XLB(素材) / XLRE(不動産) / XLC(通信) + SPY（比較用ベ�
 **検証**: PATH実データ形状の回帰テストに加え、pre-market / regular /
 after-hours、同日bar許可、週末の前営業日bar許可、保存済みoverrideの日付不明拒否を
 固定テスト化。対象・関連テスト114件、フルスイート2311 passed / 2 skipped。
+
+---
+
+## R22: 計測の確定・実績再現・前向き比較（2026-10-20 改訂r2）
+
+**10/28・残経路/政策選択肢/一次報告草案（最新§3.44）**：[成果と検証範囲](closure_research_review_20261028/README.md)。ユーザー「すすめてください」に基づき、344 Pythonファイルの静的解析で12呼出候補＋8 HTTP境界を分類。取消依頼後のCancelled表示/SELL理由削除と、共通lock外のmanual DELETE、9設定クラス/39宣言field/19 from_env呼出しの未閉包を具体化した。別保有の明示操作/自動世代認定、小数long解消/short買戻しは選択肢と受入条件のみで未採用・未実装。11/06一次報告草案はC11対U研究継続・利益資格保留、高値突破＋出来高/守備rotation現仕様の昇格見送り、R14等の保留を既存証拠へ対応付けた。**今回は文書/静的点検のみ、新規損益試行0・全体pytest再実行なし。本番未変更・実注文/取消なし。** 既存17P/S行/全日時、是正1バッチ・主C11対U/Required/P0/cap30%・S3最大1案未消費/S4固定1バッチ、P4全体未完/T0未設定/F1未開始を維持。10/30残条件/政策、11/06不足込み一次結論、11/13限定受入/固定比較または未完。新規通知/定期実行なし。以下の旧「最新」項は当時の記録。
+
+**10/28・緊急売却/short買戻しの隔離是正（最新§3.43）**：[成果/差分/追試](emergency_corrections_20261028/README.md)。ユーザー「すすめてください」に基づき、既存統合候補へ手動解消意図の安定ID/耐久記録・同口座lock/照会と保有−未約定残の数量検査を接続。失敗時の無条件「完了」を除き、銘柄別状態・JSON・非ゼロ終了へ伝播。修正前2回帰失敗→候補成功、重点355、全体2,959成功/3skip＋分離localhost1成功、実script148対照＋並行/受付後kill4対照（独立210起動）、通常CLI40の凍結結果一致。**同じ手動意図の候補で、将来の別保有の自動世代認定・非協調caller/実provider/atomic鮮度は未認定**。整数切捨ては維持し小数残を明示。本番未適用・実注文なし。既存17P/S行/日時、是正1バッチ、主C11対U/Required/P0/cap30%、S3最大1案未消費・S4固定1バッチ、P4全体未完/T0未設定/F1未開始を維持。10/30 18:00 JSTに残条件/政策、11/06不足込み一次結論、11/13限定技術受入/固定比較または未完。以下の旧「最新」項は当時の記録。
+
+**10/28・統合検証/直接発注/費用棚卸し（最新§3.42）**：[成果と再検証](integration_ops_cost_20261028/README.md)。ユーザー「すべてすすめて」に基づき、provider/時間足/記録と前回安全候補を同一コピーで統合。全体2,899成功/3skip＋分離localhost1成功、実CLI40ケースで前回安全候補/記録OFF・ONの業務結果一致と記録不可main1を確認。直接緊急SELL/short買戻し46ケースは統合前後同じだが、**ACK不明後の再実行重複・SELLエラー後の完了表示・小数切捨ては未是正**。5費用ログを固定/独立集計し、現行240行/記録408,421tokens、API遅延1,399行、推定1,939decisionの重複と旧runtime31重複を確認。cost0は請求額でなく実支払は不明。前回の「他provider候補と未統合」は今回の対象に限り更新し、旧P1/P2全候補・全caller・実provider/口座・当時利用可能時刻/窓終端・政策/配備は未認定。**本番未適用、P4全体未完/T0未設定/F1未開始**。既存17P/S行・全日時・是正1バッチ・主C11対U/Required/P0/cap30%・S3最大1案未消費・S4固定1バッチを維持。次は10/30 18:00 JSTの残条件確認、11/06不足込み一次結論、11/13技術受入/固定比較または未完。以下の旧「最新」項は当時の記録であり、本項が今回対象の最新状態。
+
+**10/28・本日前倒し可能分（最新§3.41）**：[成果/差分/追試](advance_all_20261028/README.md)、[K01〜K15/CMP9件の受入・不足表](advance_all_20261028/ACCEPTANCE_CONTRACTS.md)、[P4/S1入力・判定値案](advance_all_20261028/P4_S1_READINESS.md)を提出。前回K03/K01/K02を保持し、最初の発注再送停止・ID照会/送信前記録・協調lock、使用設定異常時のBUY保留/SELL継続案、分類漏れ関連BUY保留を隔離検証。実CLI38対照、全体2,813成功/3skip＋分離localhost1成功。**本番未適用・政策未採用**。10/30資料と11/06対象差分を前倒ししたが、全caller/実口座/全設定閉包、未来観測、実入力/正式U/本人の許容値/標本条件は未完。既存17P/S行・全日時、是正1バッチ・S3最大1案未消費・主C11対U/Required・P4未完/F1未開始を維持。次は10/30 18:00 JSTの残条件確認、11/06不足込み一次結論、11/13技術受入/固定比較または未完。以下の§3.40等は当時の記録であり、今回の対象範囲は本項で更新する。
+
+**10/28・K01/K02の実入口隔離候補（前回§3.40・当時の記録）**：[仕様・差分・検証と未達条件](order_preflight_20261028/README.md)。K03候補を保持し、数量計算後の保有/未約定BUY残/同run予約込み上限、同銘柄重複BUY・BUY/SELL競合のBUY保留案を隔離検証。実CLIコピー18ケース（内部判断は実コード・外部HTTP/時計は合成）で通常BUY維持、超過/重複BUY保留とSELL維持を確認。全体2,740成功/3skip。本番未適用・政策未採用。**応答喪失時の最初の発注3回再送は未修正**でCMP-C01の最優先未達条件。再起動/並行実行・実入力資格・分類coverage等も未完。前回§3.38と比較統合§3.39を保持し、全P/S日時・是正1バッチ・S3最大1案未消費・主C11対U・Required・P4未完/F1未開始を維持。稼働source/config/金融原本/記録ON/scheduler/実注文/CB変更なし。
+
+**10/28・他システム比較の9所見を計画へ統合（最新§3.39）**：[受入条件・既存項目との対応](strategy_improvement_validation_plan_20261020.md#external-comparison-plan-20261028)／[比較根拠](system_capability_comparison_20261028.md)。比較所見CMP-C01〜CMP-C09（研究arm C01とは別）をK01〜K15・M4/R13・移行受入へ統合。**注文応答不明/再送の同一性を最優先**、実資金/受渡/予約、企業行動と配当込み評価、信号の寿命、分類coverage/ETF重複、当時の銘柄集合、TCA/容量、停止時保護、同条件評価/寄与分解を受入条件へ追加。10/30仕様/不足表、11/06最小案・是正枠適合/未完、11/13技術受入/移行依存と工数を既存工程で確認する。K03対象2経路は隔離修正済み・本番未配備を保持し再実装しない。既存P/S日時・是正1バッチ・主C11対U・S3最大1案/変更1か所/S4固定比較1バッチ、P4未完/F1未開始は維持。本更新は計画文書のみ。新規利益試行・稼働コード/設定/記録ON・注文・scheduler変更ではない。
+
+**10/28・K03の隔離是正と設定/入力表（最新§3.38）**：[成果物・追試](functional_safety_20261028/README.md)。ユーザー「すすめて」に基づき、台帳risk計算不能時のBUY通過とexecutor露出例外時の0復帰の2経路を隔離是正。全体2,680成功/3skip、実CLI dry-runで欠損/破損時BUY保留・null/警告/監査伝播と正常時の維持を確認。K01集中上限/K02重複・競合は限定再現まで、[実効設定/不足入力表](functional_safety_20261028/CONFIG_INPUT_MAP.md)も保存。K01/K02/K04の是正全体・precomputed全経路・本番適用/正規scheduled runは未完。以下の「今回文書のみ」は計画統合時の記録であり、本項の隔離実施分で更新する。既存10/30・11/06・11/13以降の日時、是正1バッチ上限、主C11対U、S3最大1案未消費・Required・P4全体未完/F1未開始を維持。本番source/config/金融原本・記録ON・scheduler/注文/CB変更なし。
+
+**10/28・機能上の弱点を既存計画へ統合（最新§3.37）**：ユーザー依頼に基づき、[機能別課題K01〜K15](strategy_improvement_validation_plan_20261020.md#functional-improvements-20261028)と[既存工程への割付](strategy_improvement_validation_plan_20261020.md#functional-improvement-schedule-20261028)を追加した。最優先はK01購入後/同一batchの集中上限、K02同一銘柄の複数戦略・BUY/SELL統合、K03リスク計算不能時のBUY保留、K04設定と実効動作の一致。10/30仕様/受入ケース、11/06最小隔離是正1バッチの差分/実入口回帰または未完理由、11/13技術受入/条件付き適用案を既存P/S工程で提出する。記録と分析、買い/見送り/売り、数量・買い増し・有限資金配分、補助判断/改善提案は既存研究へ接続し、執行/売り監視のbroker固有実装は移行条件確定後に扱う。S3改善候補最大1案・変更1か所・固定比較1バッチ、主C11対U・既存Required・P1〜P3完了/P4未完・F1未開始と既存日程を維持。全項目の利益比較・一斉実装・新DB/汎用基盤・新注文は追加しない。今回の変更は計画文書だけで、是正実装/本番配備/設定ON・scheduler変更ではない。
+
+**10/28・シグナルの当日診断（§3.36）**：[結果・凍結入力・再現](signal_diagnostics_20261028/README.md)。仕様と6,832入力を固定し、比較可能な現行スコア2,089件が一致、同一run順位192runも再現。個別株買いの47.3%が満点同点、入口スコア記録は422決済行中197行。旧decileの同点分割/擬似確率の制約も合成例で確認。固定帯の実現成績は部分集計であり、入口予測力や高スコア排除の根拠にしない。S1/S2の一部を実施済みとして計上し、全体未完・S3/S4未開始。改善1案枠、既存全日程/主C11対U/Required/P4未完/F1未開始を維持。本番source/config/金融原本・記録ON・scheduler/注文/CB変更なし。以下の計画追加時の未実行表示はこの実施範囲で更新する。
+
+**10/28・シグナル評価/性能向上を追加（追加計画§3.35・後続§3.36）**: ユーザー依頼により[シグナル評価・改善計画](signal_evaluation_improvement_plan_20261028.md)と[統合工程§8](strategy_improvement_validation_plan_20261020.md#8-日時入り工程表2026-10-28更新全て日本時間)のS1〜S6を追加。買い/順位・見送り・売りを診断し、**10/30（金）18:00 JST評価仕様、11/06（金）18:00 JST診断と候補仕様、11/13（金）18:00 JST初回固定比較、11/20（金）18:00 JST改善案の一次判断**を提出。診断1バッチから改善候補最大1案・変更1か所・固定比較1バッチへ進み、従来の新仮説追加0はこの枠だけ改訂する。既存C11対Uの主比較と試行上限、R14品質確認の上限、11/06の全戦略一次結論、11/27のpilot終了/再見積もり、12/04/条件付き12/11を維持。入力不足でも不足/次の有界作業を期限内に提出し、11/20を優位性の確定や本番採用日としない。選定に使った履歴と独立検証を分け、勝つ閾値探索・rotation再最適化・新基盤を増やさない。Required・仕様v2/null・T0/F1未開始を維持。今回は計画文書のみで、研究計算/実装・本番source/config/金融原本・記録ON・scheduler/通知/注文操作なし。以下の旧追記より本項と詳細§8を優先する。
+
+**10/28・成績改善工程の修正（経緯§3.34、追加は後続§3.35）**: ユーザー承認に基づき、[詳細工程§8](strategy_improvement_validation_plan_20261020.md#8-日時入り工程表2026-10-28更新全て日本時間)と[P4残課題表](p4_advance_review_20261028.md)を改訂。**11/06（金）18:00 JSTを戦略再検討の一次結論提出期限**とする。10/30は採否基準案・最小入力・担当/期限・作業上限、11/13は計測パイロット/正式比較/保留の実行可否・必要期間/次の判断日の見積もりを提出。入力不足でも一次結論は継続候補・打切り・保留として出し、採用候補なしも許す。次版C11対Uの探索最大1固定バッチとR14品質確認1バッチに限定し、新仮説・勝つ閾値探索・rotation追加最適化・新基盤を増やさない。パイロットを選ぶ場合は11/27までに終了・再見積もり、12/04の研究継続判断と限定延長時のみ12/11は維持する。一次結論と収益優位性の実証/運用採用を分離。P1〜P3/対象技術の完了、P4全体未完・主C11対U/P0/cap30%・Required・T0未設定/F1未開始は維持。今回の変更は文書のみで、runtime/原本/封印済みpacket/仕様v2/null・記録ON・scheduler/通知/注文操作なし。以下の旧追記は経緯として保持し、最新の工程は本項と詳細§8を正とする。
+
+**10/28・取得記録/時間足の隔離対応完了（§3.33）**: [成果物・追試](provider_bar_fixes_20261028/README.md)。現行8909e79を保持してrecorder保存部を再利用し、要求/応答metadata・受信UTC・raw/decoded hashをrun/価格版へ結合。Massiveの5Min→日足を修正、fallbackも同interval要求。全体2,719成功/3skip、重点90・旧同6ケース5失敗→候補6成功。実CLI OFF/ON・保存先追試・4改変拒否・read-only apply check/隔離逆適用を確認。旧候補全体の互換性は認定せず、本番配備/記録ON/金融原本/定期処理変更なし。P4は10/30 18:00のまま未完で、実適格入力・正式費用/較正U/許容値/標本計画が残る。主C11対U/Required・他日程・追加適格0/T0/F1未開始を維持。
+
+**10/28・P4前倒しレビュー準備（後続§3.33）**: [比較条件と残判断の対応表](p4_advance_review_20261028.md)を保存。仕様・費用候補・U較正・許容値/単位・標本計画のレビュー準備を前倒し。実時点証拠、実較正日/U、許容値/必要期間は未確定でP4全体は未完。10/30 18:00は残条件の確認目標、先に条件が揃えば再判定可。現行HEAD094e527への旧候補適合は未検証。資料更新のみで本番source/config/金融原本/定期処理/記録ON・仕様v2/nullを変更せず、主C11対U・Required・P5以降・T0未設定/F1未開始を維持。
+
+**10/23・日足provider契約照合（最新§3.31）**: [監査結果](provider_bar_contract_audit_20261023/README.md)。公式仕様と6つの隔離HTTPシナリオで、Massiveの調整既定依存、Yahoo quote.closeの契約不明、Alpaca IEX/rawとmetadata欠落を具体化。Massiveの5Min→日足経路も再現したが未修正。23 source pin・SDK46 module hashを保存し、保存copyから同一JSONと4破損/改変拒否を確認。受信済み版の時点証拠と最終性を分ける最小案を残し、既存strict helper/本番記録は変更しない。P4は10/30 18:00のまま未完、実入力/較正U/許容値/標本計画を残す。主C11対U・P5以降・既存Required/禁止事項は不変、適格追加0・T0/F1未開始・年率保留。source/config/金融原本/定期処理/認証/注文/CBは変更なし。
+
+**10/22・R14記録/完了足/U較正の技術準備（§3.30）**: [保存結果](r14_forward_preparation_20261022/README.md)。既存部品で実CLI→実行ID/feature/価格参照→JSONL/reader、2026年NYSE通常/短縮/DSTの宣言contract、独立帳簿から露出MSEのみで100倍率を選ぶ処理を隔離検証。available_at等はnull、新規適格0、正式U/T0は未設定。累積sourceへ最小UTC差分・先行Decimal修正を再利用しrecorderを保持。全体3,537成功/2skip、重点144・旧R14同4失敗・UTC8失敗/11成功・decimal3失敗、4CLI copyで確認対象業務値/HTTP一致。固定packet併用で追試済み。P4は10/30 18:00のまま準備進展・未完、許容値/実較正区間/標本計画を残す。P1/P2/P3とP5以降は不変。main専用patchではなく未配備、原本/設定/定期処理/認証/注文/CB未変更。既存Required・主C11対U・G-M/G-R/G-F/F1未通過・年率保留を維持。
+
+**10/22・P3前倒し完了／UTC隔離修正／P4ドラフト（§3.29）**: [成果物](research_followthrough_20261022/README.md)。R14の2,112行/650組を既存55銘柄raw＋SPYで照合、1/3/5日価格対応147/142/138・時点証拠不足により新規適格0。利益検証なし。日足/分足のepoch→UTC修正候補dc8ec53を独立baseで全体2,513成功/2skip、新19は旧8失敗→新19成功。既存P1/P2記録候補との8copyで正常JST通過・実未来足拒否・選択業務出力一致。packet重点33/全1,950行照合を再現。本番未適用・過去時刻未修復・完了足/availability未認定。P3は旧10/28目標を10/22完了、P4(10/30)は仕様v2ドラフトのみでepsilon/delta/較正/標本計画が未確定。P5以降の日程と既存Requiredを維持。保護664 hash/modeとmain HEAD不変。本番source/config/金融原本/scheduler/通知/認証/注文なし、正式DD/G-M/G-R未認定・F1未開始・年率保留。
+
+**10/22・P1/P2前倒し完了（最新§3.28）**: ユーザー「２６日分までを本日進めて」に基づき、[最小入力・記録候補](loss_control_input_readiness_20261022/README.md)を保存。6分野の既存入力/欠測を整理し、既存recorderへ生成候補/実ATR方式/凍結prefilter/選択理由/ranking引数/実sizing前後を追記する隔離案を検証。新30ケース、全体3,444成功/2skip（外部通信禁止3,443＋localhost限定1）。packetのみで重点124、旧2 runtime sourceで29失敗/1成功、業務8copy＋時刻2copyを再現。日足epoch→host-local naive→UTC付け直しのTZ依存を合成入力で検出し、decoder本体未修正・比較資格/F1=falseを維持。candidate1b536d6はbase41f8f92専用増分でmain単独applyは不適合、本番一括適用なし。原本664 hash/mode不変、main HEAD不変。P1/P2は10/22前倒し完了、P3以降の日程は変更しない。本番source/config/金融原本/scheduler/認証/注文なし。正式C11対U・Required・G-M/G-R未通過・F1未開始・期待年率保留を維持。
+
+**10/22・日時入り工程の追加**: [詳細計画§8](strategy_improvement_validation_plan_20261020.md#8-日時入り工程表2026-10-28更新全て日本時間)。全て2026年JST18:00の成果物確認目標として、10/23最小入力/欠測表、10/26隔離記録案、10/28 R14資格確認、10/30次版仕様/判定値案、11/06固定バッチ初回レビュー、11/13 G-M/G-R/G-FとIBKR準備判定、11/16中旬の準備確認枠、11/20接続進捗、11/27記録/週次認証の証拠確認、12/04 G-C初回、12/11限定延長時だけ再判定を配置。D_R=10/20（旧研究D0）を維持し、D_IB（移行D0）とT0/F1は未確定。P1/P2/P3は10/22前倒し完了（最新§3.29）、P4はドラフト準備のみで未完、P5以降は予定。未準備なら最小次作業と日程を引き直す。研究を全legacy再現待ちにせず、旧基盤/DBの追加作成・結果後の主比較変更をしない。11月中旬は全切替完了の約束ではなく、F1/本番適用/G-E/G-Lは既存gate充足後の別判断。通知/automation/cron登録・変更なし。既存Requiredと「やらないこと」を維持。
+
+**10/22・損失抑制proxy比較（最新§3.27）**: [結果と検証](loss_control_proxy_20261022/README.md)。現行再現に不足があることを明示し、48株・較正38日/評価53日・5独立案×4費用を固定計算。基本5bpsは基準proxy−8.78%/DD−23.20%、ATRのみ+2.14%/−11.71%、capのみ−2.19%/−21.16%、C11−0.59%/−13.31%、単純縮小U−2.93%/−20.33%。U0.63は前半露出のみで選んだが評価の露出差11.95ポイント・主差区間0跨ぎのため優位性未認定。cap追加の便益はこの窓では支持せず、ATRへ主候補の後付け変更や採用はしない。R14は650日銘柄組でも完了足時刻・後続価格の不足で今回の新たな収益検証済み組0。研究用整数化誤差を修正し79テスト・別Decimal較正100倍率/22経路照合。次は最小全候補/確定時刻/ATR/lot・pending・予約/exit/分類の次版接続と成分確認。旧全replay/新基盤の先行作成なし。IBKR・規程未確定、正式C11対U・Required/G-M/G-R・F1未開始・期待年率保留を維持。本番source/config/原台帳/scheduler変更なし。
+
+**10/22・IBKR前提の固定rotation研究（§3.26、後続は上記）**: [全結果・追試](rotation_research_20261022/README.md)。社内売買規程は未確定、仮の制限を設けず研究し、確定後は別版で反映する。12銘柄・共通締切10/20、2018年以降2,212セッション×5独立arm×6固定条件。基本5bpsの過去CAGRはROT7.83%対同資産単純保有8.38%、同頻度再配分9.56%。最大DD−24.42%対−26.94%だがボラ増大・2021高値回復2025年、費用にも弱く、本固定仕様の追加配線/閾値探索は保留。現行ロス抑制C11対露出較正Uを引き続き優先し、filter前候補/ATR/全lot/pending/予約/exit/分類の最小入力を揃える。既存422行の両日価格存在320は比較準備診断で、ATR backtest有効件数ではない。80研究テスト・別算術30経路66,360日次25,447event・配布先28ファイルbyte一致。全条件と回復取り逃しを保存し、新基盤/DB/SDK/ジョブは追加しない。実口座権限/決済条件は未確認、本番source/config/原台帳/scheduler変更なし。正式DD未認定・G-M/G-R未通過・F1未開始・期待年率保留を維持。
+
+**10/22・前回戦略研究の優先更新（§3.25、後続は上記）**: ユーザー「移行前に現行ロスを減らし、新戦略を試す」に基づき[研究レポート](strategy_rework_20261022/README.md)を保存。81入力を凍結し、株48銘柄・4群・翌日始値・5/10日・全4費用を固定。14研究テスト、独立oracleで5,950イベント/47,600 benchmark費用セルを照合。訂正候補422決済gross−$69,866.97/PF0.850で、半導体関連/非関連とも赤字。C11対Uの正式主比較は維持し、単純縮小を超える便益と機会損失を測る。高値突破＋出来高は10日差＋1.07ポイント（区間−1.88〜＋3.96）、等イベント感度で−4.06ポイントへ反転し採用しない。DIP_CHOPも過去14日で不足。次は[広域・守備rotation仕様案](strategy_rework_20261022/DEFENSIVE_ROTATION_DRAFT.md)の固定バッチを既存63/21/top2部品で進める。移行/全計測完成を探索研究の前提にせず、新ブローカー層/DB/汎用replayは作らない。旧最大6件診断枠は歴史ケース調査のままで、新依頼の研究バッチと区別する。本研究で本番source/config/原台帳/scheduler変更なし、新規採用0、G-M/G-R未通過・正式DD未認定・F1未開始・年率推定保留。
+
+**状態**: ユーザー「すすめて」に基づき、**Phase 1監査・隔離修正、残9注文の原因分類・履歴移行の隔離実装とコピー適用を検証済み（10/21追記）、旧26入口ガード・主要読取互換性・コピー切替復帰を検証、37旧readerの分類・統合候補の隔離検証済み／実切替は未完、本番一括適用NO-GO、本番未適用・原台帳未修復・KLAC事後再構成・日次2例外残・G-M未通過**。D0=2026-10-20。Phase 2の戦略リプレイ・Phase 3/F1は未開始。
+研究用スクリプト/テスト/成果物と文書、隔離worktreeの修正パッチを追加。稼働側コード・台帳原本・config・cron・automation変更はなし。既存のRequired条件と本書「やらないこと」を維持する。
+
+**評価訂正**: 10/17更新の同一台帳420決済を再計算し、粗PF **0.841767**、片道5bps追加後 **0.811635**。
+初版の年率シナリオは客観予測としての扱いを撤回し、改善後の期待年率は推定保留。
+UTC日付の記録列によるDD約17%・年率ボラ/Sharpeは正準指標へ未昇格。DD差は再構築時に履歴を残してpeak/DDを初期化したことが原因と確認。全記録16.9894%、8/24以後10.5471%だが、評価時刻の不足は残る。
+
+| 優先順 | 作業 | 成果物 / 現状 |
+|---|---|---|
+| **Phase 1** | 計測の確定 | 初回入力7,470ファイル・監査20テスト、DD/帰属修正。10/21原約定照合15テスト・記録改善19ケースに原価/分割数量54ケースを追加、N2中断/競合34ケース、適用前の価格精度17ケース、残9注文50ケース・履歴移行45ケースを追加、最新組合せ全範囲2,743 passed（2skip）。M2/M4/M6部分確認、M3未完、G-M未通過 |
+| **Phase 2** | 実績の再現・乖離分解 | 当時ルール/入力の再生、現在ルール反実仮想との分離、PnL差額と未説明残差。未着手 |
+| **Phase 3** | 固定した前向き比較 | 現行／ATRのみ／cap30%のみ／両方＋単純縮小対照。独立した現金・保有経路、主比較は「両方対単純縮小」。未着手 |
+
+**判定設計**: 安全停止・研究継続価値・統計的推論・資本投入を分離。
+PF<0.85や100件だけで優位性を棄却せず、bootstrap割合を真の成功確率と呼ばない。
+リスク制御は許容収益減と損失抑制で評価し、少数のCVaRや実現損益DDの改善率を口座時価DDへ転用しない。
+短期PF連動の60K/80K案は不採用。既存上限の実変更ではなく、全ロット・相関グループを含むリスク予算設計へ整理する。
+
+**期間**: F1は仕様・記録・テスト・判定値を凍結した後の最初の米国セッションから開始（未開始）。
+D0（2026-10-20）から6〜8週で研究継続価値をレビューするが、確証・実弾昇格の期限とはしない。新しいautomationは登録していない。
+旧案の固定F1日付・一律DD12%・固定実弾配分10〜20%は使用しない。既存ジョブの日程は変更しない。
+
+**優先度整理**: Exit再設計・JP拡張・新戦略の追加配線は後順位。既存shadowと既定レビューは維持。
+broker paper A/B・OOSの充足は証拠対応表で確認し、研究仮想口座だけで完了扱いにしない。
+
+**10/21 戦略候補の具体化（研究準備のみ）**: ユーザー「実際に検討したい」に基づき、
+[4候補の仕様・比較対象・データ準備状況](strategy_candidate_review_20261021/README.md)を保存。
+既存C11対Uを主比較として維持し、追加BUY抑制（既存shadowの−3%案）、chop限定R14、
+高値突破＋相対出来高（20本/1.5倍の探索用一案）を別候補へ整理した。78入力を固定し、
+69銘柄/33,501日足とshadowを棚卸し。株式の条件計算は138銘柄日/45日で一致するが、
+現行BUY候補・約定・損益の件数ではない。cacheは全銘柄8/14まで、出来高0が1行、
+利用可能時刻/企業行動/PIT universeの検証は未完。8項目の独立データ確認を通過。
+本番source/config/state・既存trial registryは不変。損益試行、G-M/G-R/F1通過、
+R14 paper A/B開始、採用・年率予測ではない。既存ロードマップの順序・Required条件を変更しない。
+
+**参照**: [評価レポートr2](strategy_assessment_20261020/README.md) / [R22詳細計画r2](strategy_improvement_validation_plan_20261020.md) /
+[再計算方法](strategy_assessment_20261020/REVIEW_REPRODUCTION.md) / [再計算出力](strategy_assessment_20261020/review_metrics.json)。
+
+**初回監査の重要結果**:
+
+- 旧6月PF0.55はentry月82件。旧版のexit月では112件/PF1.510、現行は129件/PF1.758。17件追加（+$39,033.20）とCDNS数量訂正（-$1,167.73）で版差を全額説明。
+- 判断ID対応111件のうち21件はentry後の判断。共通exit注文から別entryロットへ属性転写されたことを確認。特徴量まで結合67件、時刻screen後の再現候補65件。
+- fill257行は98 SELL IDの改訂履歴。97 IDは台帳qty一致、CRWD 80株1 IDは現行台帳で未対応。AMATは台帳/fill144株に対しイベント合算242株。
+- DD/entry帰属の隔離修正・新規回帰52ケースを完了。元/復元先entryの前に生成されたraw判断とBUY注文で帰属を復元し、未来判断21行の再転写は0件。正常/異常候補混在の3購入キーは保留、復元closed87/open1。全行の経済値とquarantineは不変。
+- DDは履歴を保持し、現在の矛盾した履歴は再構築前に拒否する。約17%への自動修復はしない。ソース適用・歴史修復は別、現在は未実施。
+- 10/21原約定照合：CRWDは43→172株の分割数量未反映で未来BUY対応2leg・売却129株欠落。8/23までの訂正previewは−$335.55。AMATは台帳144株に対し98株event重複で242株、BUY cost差と増分SELL VWAP誤用によるPnL差−$169.97。原台帳は未修復。
+- 決済leg識別/イベント冪等性・観測時刻証跡を隔離実装（`1986232` / `64df9ee`）。新規19ケース、全範囲2,502 passed / 2 skipped。3台帳原子性・真の評価時刻・cashflow・完全設定manifestは未解決。原約定cost/split数量修正の続報は次項。帰属保留3キーの調査も残る。
+
+**監査成果物**: [R22計測監査](r22_measurement/README.md) / [再計算出力](r22_measurement/results/summary.json)。
+
+**隔離修正成果物**: [パッチと検証記録](r22_measurement_fixes/README.md) / [独立検証パケット](r22_measurement_fixes/review_packet/README.md)。ローカルcommit `b628bb4` / `681b0c1`、pushなし。
+
+**10/21追記成果物**: [原約定照合と記録改善](r22_execution_evidence_20261021/README.md) / [次の記録仕様・受入条件](r22_execution_evidence_20261021/RECORDING_DESIGN.md) / [匿名化検証資料](r22_execution_evidence_20261021/review_packet/README.md)。本番反映なし。
+
+**10/21 N1追加成果物**: [約定原価・分割数量の修正](r22_execution_cost_fixes_20261021/README.md) / [検証packet](r22_execution_cost_fixes_20261021/review_packet/README.md)。`5be7044` / `332545a`、本番未反映。BUY注文別cost、SELL増分VWAP、split原価保存、時系列FIFO、数量不一致停止を実装。新規54ケース、全範囲2,556 passed / 2 skipped、132保護対象hash不変。
+
+**10/21 N2追加成果物**: [KLAC数量差・台帳回復の検証](r22_ledger_recovery_20261021/README.md) / [検証packet](r22_ledger_recovery_20261021/review_packet/README.md)。`0b5712f`、本番未反映。KLAC純増189株で集計数量を説明し、旧9行/8 SELLの影響表を保存。対象lot/原価は未確定でstrict FIFO停止を維持。協調4ファイルの共有lock/journal、cron/inline共通SELL、stale writer/CAS・壊れた台帳拒否を実装。全範囲2,590 passed / 2 skipped、7中断点・実プロセス競合、凍結422取引/6隔離行/712 eventの既存経済値不変、132保護対象hash不変。全reader同時visibilityや旧直接writerまで保証しない。
+
+**10/21 適用前追加成果物**: [実入口canary・価格精度preview](r22_apply_readiness_20261021/README.md) / [検証packet](r22_apply_readiness_20261021/review_packet/README.md)。研究helper/test `1e81d95`。原単価の丸めで新コードの実cron入口が停止することを確認。132行の価格精度だけを復元したコピーは9観測通過、99 tracked SELLでは9注文をなお拒否。DDOGの12セントは利益追加ではなく表現差。KLACの$44,665.32は6/9 BUYを候補とするが権利日/原価配分未確定。新規17を含む全体2,607 passed / 2 skipped。OS crontabとdaily_reportもwriterとして切替対象に加える。本番一括適用NO-GOと経済性NO-GOは別判定。
+
+**10/21 残9注文の成果物**: [原因分類・修復差分](r22_residual_orders_20261021/README.md) / [検証packet](r22_residual_orders_20261021/review_packet/README.md)。研究commit `e218101`。5注文13行はPnL不変の精度復元、NVDA/CIEN/AMAT6行は計−$158.97、CRWD対象は既報−$335.55。前回132行との重複0。数値上の99/99通過と別に、CRWD全6 SELLでは旧隔離行による2件拒否を確認。旧eventの全数量/一部lot PnL混在と重複も差分化。新規50を含む全体2,657 passed / 2 skipped。原台帳・eventは未変更。
+
+**10/21 履歴移行の成果物**: [隔離実装・検証](r22_history_migration_20261021/README.md)／[検証packet](r22_history_migration_20261021/review_packet/README.md)。`63ad0e2`。原state byte・旧eventを保全、151行訂正・CRWD旧7記録→6leg、旧83eventをsupersede。コピーで99追跡・146影響・同一BUY全exit147・CRWD6を別母集団として照合、99実settle再送で消費/PnL/event不変。新規45ケース、全体2,702 passed / 2 skipped。snapshot旧数値/peak/DDを維持し版境界を明示。本番・原台帳未変更。
+
+**10/21 互換性・切替復帰の成果物**: [検証レポート](r22_cutover_compatibility_20261021/README.md)／[packet](r22_cutover_compatibility_20261021/review_packet/README.md)、実装`785ace7`。87経路を棚卸し、26旧保守入口を移行後拒否、主要readerはstate/event同版・旧CSV/report排除・旧snapshot保全・未検証成績の提供停止。全量コピーで4台帳完全復帰、後続記録/破損backup拒否、prepared中断回復、実console入口を検証。新規41・全体2,743 passed / 2 skipped。金融原本/コード/config/job未変更。
+
+**残る最優先**: 37旧readerの分類後、資産区分未確定6行・帰属保留3キーの時点根拠、市場期間/分割basisとexport producerの版結合を確認し、具体的な再開allowlistを確定。主要7 Gateway writerに加えてOS cron/長寿命reader/manualを切替対象とする。実writer drain・全app backup復元・本番配備後の正規定期runは未実施。旧コードだけのrollbackと、後続記録がある状態への古いbackup上書きは禁止。KLAC権利対象/時点、完全execution取得とN3は残る。本番反映・全口座PnL確定・原台帳修復・G-M・F1開始は未達。
+
+**10/21 戦略比較の会計部品（隔離研究）**: [実装・検証資料](r22_comparison_book_20261021/README.md)。
+ユーザー「すすめて」に基づき、比較armごとの現金・予約・複数lot・費用・時価評価・再生を実装
+（`205e269`、資料`bf0a2ab`）。新規56を含む全範囲は通信遮断下2,486 passed/2 skipped/1 deselected、
+分離した既存localhostテスト1 passed。保存済み6銘柄価格の25工学構成/865時点を別算術で照合し、
+差最大$5.27e-11、cap拒否15件・125日次stateのreplayも一致。任意0.5倍率はU較正ではなく、
+ATRも予約上限価格による技術境界でP0/C11忠実再現ではない。実装は本番未反映、mainには資料のみ。
+現行/当時ルールの再現、時点/企業行動の認定、U・判定値の凍結は残る。C11対Uの主比較と
+既存優先度を維持し、成績試行・利益改善・G-M/G-R通過・F1開始とは扱わない。
+
+**10/21 旧readerの処置・隔離検証**: [追加レポート](r22_reader_lineage_20261021/README.md)／[37経路表](r22_reader_lineage_20261021/READER_INVENTORY.md)。base `3a81598`、実装`9b5bd30`。前段37経路は5版付き監査・28未認定履歴拒否・4コメント参照のみへ分類。変更前5不具合を再現し、新規61を含め全体2,804成功/2skip。全量コピー423決済・隔離4・870eventの6入口で4台帳byte不変。定期decileは移行後に意図的拒否、旧export一致/市場価格欠落を全体PASSとしない。関連31ジョブ定義・OS cron・3 LaunchAgentsを読取のみ。次は完全市場期間/分割basis、exportの版結合、再開allowlist・backup/drain条件を詰める。ジョブ停止・配備・原台帳修復は未実施。KLAC等は未確定、G-M未通過・一括適用NO-GO・Phase 2/F1未開始を維持。上記の別途比較会計作業と区別する。
+
+**10/21 reader統合追補（最新レビュー候補）**: [統合レポート](r22_reader_lineage_20261021_7ce9a4/README.md)／[利用実態37件](r22_reader_lineage_20261021_7ce9a4/READER_DISPOSITION.md)／[残る証拠](r22_reader_lineage_20261021_7ce9a4/GAP_MATRIX.md)。base `3a81598`→実装`fa8159a`、9b5bd30の25ガード＋ATR fixtureはbyte一致で再利用し、重複する監査等を統合。版付き限定診断6・移行後拒否27・非reader4。新規169を含む全体2,912 passed/2 skipped（外部通信禁止2,911＋localhost1）、関連248。旧版export、破損/移行途中、bool/nonfinite、日時・status不正の誤PASSを拒否。decileは未認定を明示した記述出力のみで、9b5bd30の一律拒否と異なるためpatchを重ね貼りしない。コピー423 closed/隔離4/gross−$76,453.96の経済値と4台帳byte不変、資産区分6行により市場監査exit1を維持。原本・コード/config等384保護対象と関連29job定義は不変。資料・候補patchのみ、本番未適用・原台帳未修復・実再開未実施。G-M/G-R未通過・Phase 2/F1未開始、収益改善・期待年率を算出しない。
+
+**10/21 市場価格・集計producer追補（最新レビュー候補）**: [レポート](r22_audit_exports_20261021/README.md)、`fa8159a`→`9c4d3f1`。60銘柄・846売買日付を未調整価格で取得し、844legs/421取引を比較。CRWD買付側2件の分割取得原価は直接比較せず全体exit 2を維持。state/eventsに版付けしたledger-only exportは実producer→checker成功、口座評価/MTM/総損益/DDは未観測null。新規42、全体2,954 passed/2 skipped、保護655ファイルとコピー4台帳byte不変。初期5df3c8eは置換済み。次はCRWD2件の原価系譜、KLAC等の計測残、統合候補の実切替前提を確認する。実配備・原台帳修復・定期設定変更なし、G-M未通過・Phase 2/F1未開始を維持。上記比較会計の別作業・期待年率判定とは区別する。
+
+**10/21 CRWD・分類属性追補（最新）**: [レポート](r22_crwd_basis_20261021/README.md)、`06a4361`→`8118635`。同一BUYの元属性からCRWD分類6行のstockを保持。原BUY43株・4 FILL・$31,035.36とsplit後172株の原価保存を検証し、原証拠を指定した場合のみ未比較2件を解決。全量423取引/846legsの限定価格・台帳監査exit 0、producer/invariantも0。前回案からactive経済値不変、新規32を含む全体2,986 passed/2 skipped。元記録と既存候補の口座ラベル不一致6行・欠損fragment1件は未解決で明示し、口座帰属の修復は行っていない。旧serialized planは新コードで拒否、未移行4台帳から再生成が必要。次は口座epoch・KLAC等の計測残・切替前提。実配備・原台帳修復・定期設定変更なし、G-M未通過・Phase 2/F1未開始・期待年率推定保留。
+
+**10/21 全5項目の追補**: [レポート](r22_followthrough_20261021/README.md)／詳細計画§3.13。`e13bccf`→`2226d5f`の隔離研究実装。6行の口座差は同一口座の番号/UUID形式差と訂正、欠損fragment1は保持。KLACは同一企業行動IDからex-date6/12対posting6/25を確認、12決済・残数0。全60銘柄の注文422/個別約定1,557明細がgross−$69,866.97、fee後$930,031.84と差$0.00。日次112セッションは価格完備、記帳時差分離後110がH1内だが2日とprovider履歴の不整合が残る。22記録版の2,110スコア一致は完全戦略再現ではない。既存book統合と25構成/865技術時点を再検証、C11対Uはドラフト・T0未設定。新規49と既存book56を含む3,091成功/2skip、保護746ファイル不変。本番source/台帳/config/ジョブ変更なし、G-M/G-R未通過・正式DD未認定・F1未開始・一括適用NO-GO・期待年率推定保留。
+
+**10/21 会計統合・入力回収追補**: [レポート](r22_integration_review_20261021/README.md)／詳細計画§3.14。`943c5f7`→`8b3d89b`の隔離研究実装。全口座会計viewを既存移行案へ統合する隔離builderを実装。コピーで422決済/422有効経済eventの数量・gross−$69,866.97が一致、346SELL再読込は残約定0。元state bytes・元event prefix・fill/consumption bytes・再適用no-opを保持。171通常行（数値変更170）と257退役/251replacementをレビューし、replacement224行はentry lineage保留、通常114行は既存帰属未検証。元112→提案85のdecision ID coverageを隠さず、時計差entry54/exit70を別証跡へ残した。109実験中108のdescriptor hashをGitから再現（77記録版/76設定回収）。4,470判断中finite sizing1,865、raw_refs/context_pack非空0で、全設定・全判断再現ではない。新規48を含む3,139 passed/2skip、元/匿名化の同じverifier出力一致。新しい入力契約案を保存したが未配線・未登録。本番コード/原台帳/config/ジョブ変更なし、正式DD・G-M/G-R未認定、F1未開始、年率推定保留。
+
+**10/21 実入口・候補入力記録追補**: [レポート](r22_capture_canary_20261021/README.md)／詳細計画§3.15。`777396f`→`7a6861f`の隔離実装。実settle_sellで346/346 SELLが追加決済なし、422 closed/gross−$69,866.97を維持。消費数量一致93・歴史差253を区別し、代表1件の正の増分はgapとして4台帳不変で拒否。長寿命writer・新規部分約定・再適用・版付きproducer/checker・古いexport/restore拒否をコピー検証。候補記録は既定OFFの2checkpointを隔離実装し、不変manifest・欠損/破損拒否・公開前強制終了を検証。全入力記録ではなくCLI/on-disk sourceは部分証拠、全paper main未実行・本番観測0。新規30を含む3,169 passed/2skip。 次は歴史消費253注文の非破壊bridgeレビューとeffective config/生入力/状態/exit記録の拡張。原台帳・本番source/config/ジョブは変更なし、G-M/G-R未通過・正式DD未認定・F1未開始・期待年率推定保留。
+
+**10/21 歴史消費bridge・実引数記録追補**: [レポート](r22_consumption_bridge_20261021/README.md)／詳細計画§3.16。`2a8ca59`→`24e9799`の隔離実装。歴史消費253注文（観測未保存247・ゼロ5・部分1）を原注文/active決済/イベントへ照合し、原ログを残す明示bridgeを隔離実装。コピーで346/346消費数量一致・残差0、実settle_sell再処理は追加決済0。state/eventsはbyte不変で422 closed/gross−$69,866.97を維持。4台帳CAS・既存journal・補正markerと再試行を検証。優先順位付け関数の実引数（候補/保有状態/equity/上限/map）を既定OFFの記録へ追加し、合成3→2候補の部分リプレイ一致を確認。新規40を含む3,209 passed/2skip。 次は全設定/生入力/状態/filter/数量/exitの契約不足を埋め、日次評価一次証拠と較正を別途解消する。本番source/config/原台帳/ジョブ未変更、G-M/G-R未通過・正式DD未認定・F1未開始・期待年率推定保留。
+
+**10/21 旧3 BUYキー原証拠追補（最新）**: [レビュー資料](r22_entry_attribution_20261021/README.md)。原BUY注文→trade_opened→完全ID旧snapshot→決定的submission UUID監査を3/3で独立確認。4,470保存decisionでprefix一意、追加archive922にも競合なし。最新会計提案の対象6行は一致1・後日ID1・未設定4、5行の未適用bindingを保存。原台帳・会計提案・runtimeコード/config/jobは未変更。先行CRWD価格2件・分類6行と口座aliasは解消済みとして扱う。ログcontext永続化欠落は再現のみ、修正・有効化なし。並行の消費bridge隔離実装は保全。次は5行bindingの既存移行・bridge案への統合コピー検証と、残入力契約の記録拡張。G-M/G-R・正式DD・Phase 2/F1は未達、収益改善／年率を算出しない。旧3キーの解明を保留224行の全解決としない。
+
+**10/21 bridge再検証追補**: [レポート](r22_bridge_reverification_20261021/README.md)／計画§3.18。前回packetのmanifest77/Git原文55/旧verifier結果は再現。一方、消費履歴の矛盾・変更を受理する経路と、retryで過大消費を見逃す経路を検出。旧15反証ケースは15失敗、新検査では15成功。raw数量/履歴合計/consumer/時刻/flagと原消費履歴prefixを固定する拒否修正を隔離実装90a756e。検証開始時の最新コピーはsnapshot項目のみ更新、決済内容は同じ。253 bridge後346/346数量一致・実settlement追加0・422 closed/gross−$69,866.97・state/events byte不変を確認。重点84、全体3,224成功/2skip。 原証拠帰属5行bindingの統合とは別。旧正常結果は支持するが破損拒否は不足ありと訂正。原台帳/本番/設定/ジョブ未変更、正式DD・F1・年利認定なし。
+
+**10/21 再現packet訂正**: [レポートv2](r22_bridge_reverification_20261021_v2/README.md)／計画§3.19。再現packet中間版5565c7cはworktree内で成功したが、配布先では親pytest設定による参照先混入でcollection失敗した。中間版のstandalone合格フラグは撤回する。v2は独立pytest.ini・明示rootdir/import-mode・package origin検査で参照先を固定し、配布先で旧15失敗/修正15成功を確認する。runtime修正90a756e、最新凍結コピーの346数量一致・損益不変、全体3,224成功/2skipは変更なし。 旧packetは保持し、v2を現行とする。本番・原台帳への適用なし、正式DD・F1・年利は未認定。
+
+**10/21 単一案・記録・app画像の追補**: [レポート](r22_unified_review_20261021/README.md)／詳細計画§3.20。既存の消費拒否候補へ3 BUY・6行の原証拠bindingを統合し、正しい1行を保持して5行のみentry metadataを変更。全BUY閉包・最新4 hashを固定し、既存会計案に対する全非entryフィールド不変、253 bridge後346/346数量一致・settlement再入力346件で追加0、422 closed/gross−$69,866.97を確認。原台帳gross−$75,959.44との差+$6,092.47は前段会計訂正であり新しい収益ではない。 実引数・選択した解決済み設定/filter/exit入力・submit request/ACK・累積約定観測をopt-in記録（初期OFF）。完全ID/contextの監査sidecarはlog_file指定時に併記する変更で、入力capture flagとは独立。いずれも本番未配備。全raw/available_at・全effective config・pending/予約・個別execution ID等は未完。full_replay_ready=false、実稼働観測0。 供給app画像410→428ファイルと4台帳のbytes/mode完全復帰、後続観測と破損backupの復帰拒否、別process reader2回を検証。dirty main全体/host完全backup・実drain・service切替・正規scheduled runは未実施。 隔離commit338ab84/6bdca5f/d15c0ed。新48・重点88、全体3,272成功/2skip（外部通信禁止3,271＋localhost限定1）。初回の派生executor4不具合は修正して再実行。原証拠/匿名化の同一verifier出力一致、3分割/combined patchの順逆・bytes/modeを確認。mainへのfull-stack git apply --checkのみ成功、実適用なし。 本番未適用・原台帳未修復・正式DD未認定・G-M/G-R未通過・F1未開始・年率推定保留。
+
+**10/21 provider接続・観測run封印の追補**: [検証レポート](r22_capture_replay_20261021/README.md)／詳細計画§3.21。主なMassive/Yahoo取得と選択FRED/決算/Finnhubキャッシュを既存recorderへ接続し、実CandidateSignal・保有・RiskValidator引数・DecisionEngine出力を記録。run終了で観測集合・hash・counterを封印し、判断関数の再実行とdecision/submission/broker order ID対応を限定検証した。 199 Pythonファイルのbyte一致コピーで実paper_demo.mainを起動し、記録OFF/ONともmain戻り値0・HTTP各3回、ONは10観測・判断1件再実行一致。dry-runのため送信0、注文joinの分母0を成功率100%にしない。実module結合＋HTTP fixtureでは受理/拒否各1件のID対応、受理の累積観測1件を確認。個別executionは0。baseline欠測copyはmain1を維持し、driver process0と区別。 隔離実装9dd2be4/344ab40。新51・重点75成功、全体3,323成功/2skip（外部通信禁止3,322＋localhost限定1）。旧provider4ファイルで同じ新13ケースは13失敗。認証field/URL合成6例の拒否は旧1/6→新6/6。初回の子process参照先・localhost selector不備は最終実行条件を修正して解消し、途中失敗を成功数に加算していない。 記録は初期OFF、本番観測0。SDK解読済みfieldはwire/全page/公開時刻ではなく、封印は記録していない経路を証明しない。全effective config/由来、pending/予約、全filter/exit/cost、個別execution、現行設定での全戦略再生、完全app backup/drain/service/正規scheduled runは未完。6/2・7/29の評価一次証拠とC11対U前提も未完。253 bridge・帰属5行は統合済みのまま再実装しない。 本番・原台帳未変更、G-M/G-R/F1未通過・年率推定保留。
+
+
+**10/22 設定消費の記録（最新追補）**: [根拠資料](r22_config_provenance_20261022/README.md)／[残設定の受入条件](r22_config_provenance_20261022/CONFIG_COVERAGE.md)。 実消費したUTF-8 YAMLのbytes/hash/解読値と、配分11・entry10・losing-add2・runtime mode1・CLI13 fieldの由来を隔離記録。importとallocatorの2回読込を区別し、通常copyは設定14観測・48 binding（配分11の重複を含む）。全設定の網羅数ではない。起動後cap0.3→0.7の別hash、process envが.envより優先、欠測/破損/default・型変換・秘密拒否を検証した。秘密拒否は安全なgapとfailureを残し、既知失敗をrun_endにも非成功として反映する。 追加56・重点131成功、全体3,379成功/2skip（外部通信禁止3,378＋分離localhost1）。旧source9ファイルを戻した同じdriver/deps/fixtureでは設定観測0→新14、判断1件/HTTP3回は一致。最初の全体14失敗（OFF引数互換・import cycle）は修正して最終結合回帰も成功。記録は初期OFF・本番観測0。 全effective config完成ではない。残9 config classとPAPER_DEMO_*等の実get/default/override閉包、.env祖先、未通過YAML分岐、全filter/exit/cost/submit再生、provider失敗/PIT、実pending/予約、個別execution、完全backup/drain/切替/正規scheduled run、2評価日一次証拠、C11対U前提は未完。receipt検証はhash/declared field bindingの構造検証であり、変換/defaultの全独立replayではない。次は残り設定消費の閉包を同じ仕組みへ接続する。253 bridge/帰属5行は再実装せず維持。 **本番未適用・原台帳未修復・全入力記録未完・正式DD未認定・G-M/G-R未通過・F1未開始・期待年率推定保留**。
+
+## 運用復旧: 2026-10-20（R14/R22の昇格とは別）
+
+ユーザー「対応して」に基づき、LLM接続失敗への復旧・再発対策として、
+固定コマンド14ジョブをOpenClaw既存native commandへ変更。時刻・enabled・配送先・売買引数を維持し、
+完全ログとpaper summary検証を追加。全回帰2431 passed / 2 skipped。
+Gateway canaryはnews起動成功（時間外skip）、benchmark全5銘柄の10/19価格取得成功。
+broker/tracker最新実照合は不一致0、隔離paper canaryは注文0・live状態不変。
+
+**未完の運用証跡**: 10/19欠落は補完せず、10/20 22:25/22:35 JSTの正規runを待つ。
+22:50のnative証跡チェック（`649dfccc-3aa1-42b6-a3e4-de7d9ece6f44`）と
+既存23:00レビューでrun ID・console/CB鮮度・RiskOff初回有効観測を確認する。
+HALT/shadowは維持。RiskOff実観測0件を観測済み扱いしない。
+
+**経済性/R14**: PF 0.653（n=108）、期待値-$545.27で既存NO-GO維持。
+R14のchop gate/Gate 3 scoping/sub-ledger/30% cap/A-B事前登録は未実装・未完。
+反証テストを含む実装前契約へ分解したが、文書を実装完了と扱わない。
+11/2は10連続ready観測未達なら継続、11/17はR14前提未達なら継続コスト評価のみ。
+R22 r2文書の更新とは別件であり、その実装を今回一括で開始していない。
+
+詳細: [復旧記録](operational_recovery_20261020/README.md) /
+[R14未実装契約](operational_recovery_20261020/R14_READINESS.md)。
+
+**10/22 R22 共通設定と移行前スコープ（最新）**: [最小実装と検証](r22_portable_config_20261022/README.md)／[詳細計画§3.23](strategy_improvement_validation_plan_20261020.md)。既存記録機構へ9クラス39field・CLI9呼出箇所を接続。重点94成功、全体3,414成功/2skip。新しいブローカー機構・設定基盤・DB・schemaは追加せず、稼働ソース/原台帳/config/schedulerは未変更。ユーザーの移行予定を踏まえ今回で追加計測の一括改造を区切り、旧ブローカー完全リプレイの先行実装は保留。移行方式・最小受入条件が決まった後に必要差分だけ接続する。既存安全停止/証拠保全/残高照合を維持し、未記録・2評価日原証拠・実切替証明・G-M/G-R/F1/年率推定の未完は免除しない。既存253 bridge/帰属5行の再実装なし。
+
+
+**R22 10/22・移行前の次順更新（§3.24）**: [移行条件・既存修正の仕分け・最小候補M0](broker_migration_minimal_scope_20261022.md)を保存。既存Protocolを再利用し、旧口座の全設定/完全リプレイ・新汎用基盤の先行開発を止める。src56/scripts58/console6の累積120ファイルを一括配備せず、4台帳の整合性保護を中核とするM0だけを条件付き候補にした。独立差分は未作成・未検証。過去253注文bridge/帰属5行は保全し再実装しない。次は最新の運用障害の読取確認と移行条件の確定、並行して最大6ケースの限定診断。10/22ユーザー回答でPaper利用可・口座準備遅延により11月中旬移行見込み・週1回程度の手動認証可を反映。IB Gatewayを第一検証候補とし、API接続・週次運用・正式方式・D0は未確定。接続試験の成功を戦略/経済性合格としない。文書整理のみで本番・原台帳・設定・定期処理は変更なし。既存Required条件、正式DD未認定・G-M/G-R未通過・F1未開始・期待年率保留を維持。

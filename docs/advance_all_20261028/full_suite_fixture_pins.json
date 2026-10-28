@@ -1,0 +1,12 @@
+{
+  "data/tracking/pnl_state.json": {
+    "sha256": "3f3fdda7394f98b72db1167a76336ffe113d2cdc51f1fa2f2e30ffbc7a4f0507",
+    "mode": 384,
+    "usage": "frozen isolated full-suite fixture; bytes not included in packet"
+  },
+  "data/audits/klac_split_investigation.json": {
+    "sha256": "ef023ad845fb1e5a587fa973874d2761a226cffde371095fe459e44dc36df390",
+    "mode": 384,
+    "usage": "frozen isolated full-suite fixture; bytes not included in packet"
+  }
+}

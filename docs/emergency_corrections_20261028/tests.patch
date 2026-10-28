@@ -1,0 +1,239 @@
+diff --git a/tests/unit/test_reduction_orders.py b/tests/unit/test_reduction_orders.py
+new file mode 100644
+--- /dev/null
++++ b/tests/unit/test_reduction_orders.py
+@@ -0,0 +1,194 @@
++"""Acceptance CMP-C01/K14/K15; 2026-10-28/8909e79 emergency ACK-loss repeat.
++Uses actual BrokerClient, SubmissionGuard, event fsync and parser, external I/O only.
++"""
++from pathlib import Path
++import fcntl,json,os
++import httpx,pytest
++from stock_swing.execution.reduction_orders import reduce_position,report_results
++from stock_swing.execution.submission_guard import SubmissionGuard
++from stock_swing.sources.broker_client import BrokerClient
++from stock_swing.sources.retry import RetryConfig
++
++def pos(symbol='NOW',qty='5'):return dict(symbol=symbol,qty=qty)
++def pending(qty='3',filled='1',**extra):return dict(id='old-order',symbol='NOW',side='sell',type='market',qty=qty,filled_qty=filled,status='partially_filled',**extra)
++
++def fixture(monkeypatch,tmp_path,**changes):
++ mode=tmp_path/'config/runtime/current_mode.yaml';mode.parent.mkdir(parents=True);mode.write_text('mode: paper\n')
++ state=dict(positions=[pos()],orders=[],account=dict(id='fixture-account',status='ACTIVE'),post_status=200,lookup='found',posts=[],calls=[],accepted={},position_reads=0,account_reads=0,order_reads=0)
++ state.update(changes)
++ def transport(req):
++  state['calls'].append([req.method,req.url.path])
++  if req.url.path.endswith('/account'):
++   state['account_reads']+=1
++   account=state['account_after'] if state.get('account_after') and state['account_reads']>=2 else state['account']
++   return httpx.Response(200,json=account)
++  if req.url.path.endswith('/positions'):
++   state['position_reads']+=1
++   rows=state.get('positions_after',state['positions']) if state['position_reads']>=2 else state['positions']
++   return httpx.Response(200,json=rows)
++  if req.url.path.endswith('/orders:by_client_order_id'):
++   key=req.url.params.get('client_order_id');row=state['accepted'].get(key)
++   if not row or state['lookup']=='missing':return httpx.Response(404,json={})
++   if state['lookup']=='mismatch':row=dict(row,client_order_id='wrong-id')
++   return httpx.Response(200,json=row)
++  if req.method=='GET' and req.url.path.endswith('/orders'):
++   state['order_reads']+=1
++   rows=state.get('orders_after',state['orders']) if state['order_reads']>=2 else state['orders']
++   return httpx.Response(200,json=rows)
++  if req.method=='POST':
++   body=json.loads(req.content);state['posts'].append(body)
++   row=dict(body,id='fixture-'+str(len(state['posts'])),status=state.get('response_status','new'),filled_qty='0')
++   if state['post_status']>=400:return httpx.Response(state['post_status'],json={'message':'fixture explicit rejection'})
++   state['accepted'][body['client_order_id']]=row
++   if state.get('ack_lost'):raise httpx.ReadTimeout('fixture accepted, lost ACK',request=req)
++   if state.get('malformed_ack'):row=dict(row,qty='999')
++   return httpx.Response(200,json=row)
++  raise AssertionError(req.url.path)
++ original=httpx.Client;monkeypatch.setattr(httpx,'Client',lambda **kw:original(transport=httpx.MockTransport(transport),**kw))
++ broker=BrokerClient(api_key='fixture',api_secret='fixture',paper_mode=True,base_url='https://paper-fixture.invalid',retry_config=RetryConfig(initial_delay=.001))
++ return broker,state
++
++def run(broker,root,kind='reduce_long',symbol='NOW',confirm=None):return reduce_position(broker,root,symbol,kind,confirm)
++
++def test_ac_normal_pending_remainder_and_report_propagation(monkeypatch,tmp_path,capsys):
++ b,s=fixture(monkeypatch,tmp_path,orders=[pending()])
++ r=run(b,tmp_path);assert r.qty==3 and r.reserved_qty=='2' and r.state=='accepted'
++ assert s['posts'][0]['qty']==3 and s['posts'][0]['side']=='sell'
++ assert report_results([r])==0
++ line=[l for l in capsys.readouterr().out.splitlines() if l.startswith('REDUCTION_SUMMARY_JSON=')][0]
++ data=json.loads(line.split('=',1)[1]);assert data['results'][0]['state']=='accepted' and data['results'][0]['qty']==3
++ assert data['status']=='requests_processed_not_fill_confirmation'
++
++def test_ac_short_cover_does_not_become_new_long(monkeypatch,tmp_path):
++ b,s=fixture(monkeypatch,tmp_path,positions=[pos('HPE','-13')],orders=[dict(pending('6','2'),symbol='HPE',side='buy')])
++ r=run(b,tmp_path,'cover_short','HPE',lambda q:q==9)
++ assert r.qty==9 and r.state=='accepted' and s['posts'][0]['qty']==9
++ assert int(s['posts'][0]['qty'])+4==13,'open remainder plus new cover cannot exceed absolute short'
++
++@pytest.mark.parametrize('kind,qty,state',[('reduce_long','0','flat'),('reduce_long','-2','not_applicable'),('cover_short','2','not_applicable')])
++def test_ac_no_action_requires_valid_position(monkeypatch,tmp_path,kind,qty,state):
++ b,s=fixture(monkeypatch,tmp_path,positions=[pos(qty=qty)]);r=run(b,tmp_path,kind)
++ assert r.state==state and r.exit_code==0 and not s['posts']
++
++@pytest.mark.parametrize('positions',[[{'symbol':'NOW'}],[pos(qty='NaN')],[pos(qty='Infinity')],[pos(qty=True)],[pos(qty='bad')],[None],{},[pos(),pos()]])
++def test_ac_unqualified_positions_never_zero(monkeypatch,tmp_path,positions):
++ b,s=fixture(monkeypatch,tmp_path,positions=positions);r=run(b,tmp_path)
++ assert r.state=='held' and r.exit_code==1 and not s['posts']
++
++@pytest.mark.parametrize('orders',[[dict(pending(),side='buy')],[dict(pending(),qty='1',filled_qty='2')],[dict(pending(),status='filled')],[dict(pending(),filled_qty=None)],[dict(pending(),order_class='bracket')],[pending(),pending()],[dict(pending(),qty='10')],{},[dict(pending(),id=str(i)) for i in range(500)]])
++def test_ac_unqualified_orders_or_capacity_hold(monkeypatch,tmp_path,orders):
++ b,s=fixture(monkeypatch,tmp_path,orders=orders);r=run(b,tmp_path)
++ assert r.state=='held' and r.exit_code==1 and not s['posts']
++
++@pytest.mark.parametrize('changes',[dict(positions_after=[pos(qty='4')]),dict(orders_after=[pending()]),dict(account_after=dict(id='different',status='ACTIVE'))])
++def test_ac_snapshot_change_before_send_holds(monkeypatch,tmp_path,changes):
++ b,s=fixture(monkeypatch,tmp_path,**changes);r=run(b,tmp_path)
++ assert r.reason=='snapshot_changed_before_submit' and not s['posts']
++
++@pytest.mark.parametrize('qty,expected',[('3.7',3),('-13.7',13)])
++def test_ac_fractional_integer_policy_retained_but_not_complete(monkeypatch,tmp_path,qty,expected):
++ b,s=fixture(monkeypatch,tmp_path,positions=[pos(qty=qty)]);r=run(b,tmp_path,'cover_short' if qty.startswith('-') else 'reduce_long')
++ assert r.qty==expected and r.fractional_remainder=='0.7' and r.state=='accepted' and r.exit_code==1
++
++def test_ac_human_decline_no_prepare_no_submit(monkeypatch,tmp_path):
++ b,s=fixture(monkeypatch,tmp_path);r=run(b,tmp_path,confirm=lambda q:False)
++ assert r.state=='cancelled' and not s['posts']
++ guard=SubmissionGuard(b,tmp_path,'fixture-account');assert not guard._load(),'decline cannot persist a submission intent'
++
++@pytest.mark.parametrize('lookup,state',[('missing','unknown'),('mismatch','unknown'),('found','accepted')])
++def test_ac_ack_loss_resolve_or_unknown_no_resend(monkeypatch,tmp_path,lookup,state):
++ b,s=fixture(monkeypatch,tmp_path,ack_lost=True,lookup=lookup);first=run(b,tmp_path);second=run(b,tmp_path)
++ assert first.state==state and second.exit_code==1 and len(s['posts'])==1
++ assert first.client_order_id==second.client_order_id
++
++@pytest.mark.parametrize('status',[400,401,403,422])
++def test_ac_explicit_http_rejection_persisted_not_unknown_or_resend(monkeypatch,tmp_path,status):
++ b,s=fixture(monkeypatch,tmp_path,post_status=status);r=run(b,tmp_path);again=run(b,tmp_path)
++ assert r.state==again.state=='rejected' and len(s['posts'])==1
++ assert SubmissionGuard(b,tmp_path,'fixture-account')._load()[r.client_order_id]['state']=='rejected'
++
++@pytest.mark.parametrize('damage',['missing','partial','marker','corrupt','reverse','bad_rejection'])
++def test_ac_durable_history_damage_never_empty_reset(monkeypatch,tmp_path,damage):
++ b,s=fixture(monkeypatch,tmp_path);r=run(b,tmp_path);g=SubmissionGuard(b,tmp_path,'fixture-account')
++ if damage=='missing':g.store.path.unlink()
++ elif damage=='marker':g.marker.unlink()
++ elif damage=='partial':g.store.path.write_bytes(g.store.path.read_bytes()+b'{')
++ elif damage=='corrupt':g.store.path.write_text('{\n')
++ else:
++  row=json.loads(g.store.path.read_text().splitlines()[-1])
++  if damage=='reverse':row['event_type']='submission_intent_prepared'
++  else:row['payload'].update(state='rejected',response=None,http_rejection={'status':True})
++  with g.store.path.open('a') as f:f.write(json.dumps(row)+'\n')
++ again=run(b,tmp_path);assert again.state=='held' and len(s['posts'])==1
++
++def test_ac_fsync_failure_before_submit_holds(monkeypatch,tmp_path):
++ b,s=fixture(monkeypatch,tmp_path)
++ def fail(fd):raise OSError('fixture fsync failure')
++ monkeypatch.setattr(os,'fsync',fail);r=run(b,tmp_path)
++ assert r.state=='held' and not s['posts']
++
++def test_ac_fsync_failure_after_http_keeps_unknown_nonresend(monkeypatch,tmp_path):
++ b,s=fixture(monkeypatch,tmp_path);original=os.fsync
++ def fail_after_accept(fd):
++  if s['posts']:raise OSError('fixture outcome fsync failure')
++  return original(fd)
++ monkeypatch.setattr(os,'fsync',fail_after_accept);r=run(b,tmp_path);again=run(b,tmp_path)
++ assert r.state=='unknown' and again.exit_code==1 and len(s['posts'])==1
++
++@pytest.mark.parametrize('mode',['research','live','missing','broken'])
++def test_ac_runtime_must_be_explicit_paper_before_http(monkeypatch,tmp_path,mode):
++ b,s=fixture(monkeypatch,tmp_path);path=tmp_path/'config/runtime/current_mode.yaml'
++ if mode=='missing':path.unlink()
++ else:path.write_text('[' if mode=='broken' else 'mode: '+mode+'\n')
++ r=run(b,tmp_path);assert r.state=='held' and not s['calls']
++
++def test_ac_same_account_lock_refuses_all_scripts(monkeypatch,tmp_path):
++ b,s=fixture(monkeypatch,tmp_path);g=SubmissionGuard(b,tmp_path,'fixture-account')
++ with g.lock_path.open('a') as fh:
++  fcntl.flock(fh,fcntl.LOCK_EX|fcntl.LOCK_NB);r=run(b,tmp_path)
++ assert r.reason=='submission_guard_busy' and not s['posts']
++
++def test_ac_new_snapshot_quantity_does_not_mint_new_epoch(monkeypatch,tmp_path):
++ b,s=fixture(monkeypatch,tmp_path);r=run(b,tmp_path);s['positions']=[pos(qty='50')]
++ again=run(b,tmp_path);assert again.client_order_id==r.client_order_id and len(s['posts'])==1 and again.state=='held'
++
++@pytest.mark.parametrize('extra',[dict(type=None),dict(type='unknown'),dict(status='pending_replace')])
++def test_ac_unknown_order_type_or_replace_quantity_holds(monkeypatch,tmp_path,extra):
++ b,s=fixture(monkeypatch,tmp_path,orders=[dict(pending(),**extra)])
++ r=run(b,tmp_path);assert r.state=='held' and not s['posts']
++
++def prepared_other(b,root,s,*,symbol='NOW',side='sell',status='new'):
++ g=SubmissionGuard(b,root,'fixture-account');g._load()
++ order=dict(symbol=symbol,side=side,order_type='market',qty=2,time_in_force='day',limit_price=None)
++ key=g._client_id('previous-distinct-intent')
++ g._append('submission_intent_prepared',client_order_id=key,decision_id='previous-distinct-intent',order=order)
++ row=dict(id='known-order',client_order_id=key,symbol=symbol,side=side,type='market',qty='2',filled_qty='0',time_in_force='day',status=status)
++ s['accepted'][key]=row
++ return g,key,row
++
++def test_ac_unknown_unrelated_buy_does_not_block_verified_short_cover(monkeypatch,tmp_path):
++ b,s=fixture(monkeypatch,tmp_path,positions=[pos('HPE','-13')])
++ prepared_other(b,tmp_path,s,symbol='MSFT',side='buy')
++ r=run(b,tmp_path,'cover_short','HPE');assert r.state=='accepted' and s['posts'][0]['qty']==13
++
++@pytest.mark.parametrize('visible',['same','missing','wrong_qty','wrong_fill'])
++def test_ac_accepted_journal_requires_matching_open_reservation(monkeypatch,tmp_path,visible):
++ b,s=fixture(monkeypatch,tmp_path);g,key,row=prepared_other(b,tmp_path,s)
++ g._outcome(key,row)
++ if visible!='missing':
++  s['orders']=[dict(row)]
++  if visible=='wrong_qty':s['orders'][0]['qty']='1'
++  elif visible=='wrong_fill':s['orders'][0]['filled_qty']='1'
++ r=run(b,tmp_path)
++ if visible=='same':assert r.state=='accepted' and s['posts'][0]['qty']==3
++ else:assert r.state=='held' and not s['posts']
++
++def test_ac_prepare_fsync_failure_before_send_never_resends(monkeypatch,tmp_path):
++ b,s=fixture(monkeypatch,tmp_path);original=os.fsync;calls=[]
++ def prepare_failure(fd):
++  calls.append(fd)
++  if len(calls)==3:raise OSError('fixture prepare fsync failure')
++  original(fd)
++ monkeypatch.setattr(os,'fsync',prepare_failure)
++ first=run(b,tmp_path);second=run(b,tmp_path)
++ assert first.state=='held' and second.state=='unknown' and not s['posts']
+diff --git a/tests/unit/test_emergency_reduction_regression.py b/tests/unit/test_emergency_reduction_regression.py
+new file mode 100644
+--- /dev/null
++++ b/tests/unit/test_emergency_reduction_regression.py
+@@ -0,0 +1,35 @@
++"""Acceptance CMP-C01/K15, regression 2026-10-28 HEAD8909e79 ACK-lost rerun.
++External HTTP/human input only replaced; actual scripts and durable helper run.
++"""
++from pathlib import Path
++import contextlib,io,json,runpy,shutil
++import httpx,pytest
++
++@pytest.mark.parametrize('script,symbols,side',[('emergency_sell.py',['NOW','IBM'],'sell'),('close_hpe_short.py',['HPE'],'buy')])
++def test_ac_ack_loss_restart_never_resends_same_reduction(monkeypatch,tmp_path,script,symbols,side):
++ root=Path(__file__).resolve().parents[2]
++ (tmp_path/'scripts').mkdir();shutil.copy2(root/'scripts'/script,tmp_path/'scripts'/script)
++ (tmp_path/'config/runtime').mkdir(parents=True);(tmp_path/'config/runtime/current_mode.yaml').write_text('mode: paper\n')
++ posts=[]
++ def transport(req):
++  if req.url.path.endswith('/account'):return httpx.Response(200,json=dict(id='fixture-account',status='ACTIVE'))
++  if req.url.path.endswith('/positions'):return httpx.Response(200,json=[dict(symbol=s,qty='-13' if side=='buy' else '3') for s in symbols])
++  if req.url.path.endswith('/orders:by_client_order_id'):return httpx.Response(404,json={})
++  if req.method=='GET' and req.url.path.endswith('/orders'):return httpx.Response(200,json=[])
++  if req.method=='POST':
++   posts.append(json.loads(req.content));raise httpx.ReadTimeout('fixture accepted then ACK lost',request=req)
++  raise AssertionError(req.url.path)
++ original=httpx.Client;monkeypatch.setattr(httpx,'Client',lambda **kw:original(transport=httpx.MockTransport(transport),**kw))
++ for k,v in dict(BROKER_API_KEY='fixture',BROKER_API_SECRET='fixture',BROKER_BASE_URL='https://paper-fixture.invalid').items():monkeypatch.setenv(k,v)
++ monkeypatch.setattr('builtins.input',lambda prompt='':'yes')
++ codes=[];stdout=io.StringIO()
++ for n in range(2):
++  with contextlib.redirect_stdout(stdout),contextlib.redirect_stderr(stdout):
++   try:runpy.run_path(str(tmp_path/'scripts'/script),run_name='__main__');code=0
++   except SystemExit as exc:code=exc.code
++   except Exception:code=99
++  codes.append(code)
++ assert len(posts)==len(symbols),'same stable reduction intent must never resend on next process/run'
++ assert all(p.get('client_order_id') for p in posts),'persisted stable broker IDs required'
++ assert all(code!=0 for code in codes),'unknown or held must not exit successfully'
++ assert 'Emergency sell complete' not in stdout.getvalue(),'failure cannot print complete'

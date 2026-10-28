@@ -1,0 +1,247 @@
+{
+  "F1_started": false,
+  "S3_candidate_selected": false,
+  "asof": "2026-10-28",
+  "breakout": {
+    "primary": {
+      "break_on_common_days": 0.08966387217082178,
+      "cost_bps_per_side": 5,
+      "delta_break_minus_mom": {
+        "block_sessions": 20,
+        "calendar_sessions": 82,
+        "ci95": [
+          -0.018847708633962672,
+          0.039635844310329335
+        ],
+        "empty_resamples": 0,
+        "mean": 0.01074104781060048,
+        "nonempty_resamples": 4000,
+        "signal_days": 38,
+        "span_blocks_not_independent_count": 4.1
+      },
+      "horizon": 10,
+      "mom_on_common_days": 0.07892282436022129
+    },
+    "signal_grid_span": [
+      "2026-04-06",
+      "2026-08-14"
+    ],
+    "source": "docs/strategy_rework_20261022/results/results.json"
+  },
+  "dip_chop": {
+    "events": 171,
+    "excess_SPY": {
+      "block_sessions": 20,
+      "calendar_sessions": 82,
+      "ci95": [
+        -0.028827777879836407,
+        0.025204881580835847
+      ],
+      "empty_resamples": 154,
+      "mean": 0.013242433466158873,
+      "nonempty_resamples": 3846,
+      "signal_days": 14,
+      "span_blocks_not_independent_count": 4.1
+    },
+    "signal_days": 14
+  },
+  "new_profit_trials": 0,
+  "primary_C11_U_changed": false,
+  "r14_counts": {
+    "ET_days": 40,
+    "R14_decision_snapshot_rows": 0,
+    "benchmark_last_valid_date": "2026-10-20",
+    "coverage": {
+      "1": {
+        "date_only_mature_pairs": 572,
+        "qualified_forward_pairs": 0,
+        "symbol_and_SPY_price_covered_pairs": 147,
+        "symbol_price_covered_pairs": 147
+      },
+      "3": {
+        "date_only_mature_pairs": 535,
+        "qualified_forward_pairs": 0,
+        "symbol_and_SPY_price_covered_pairs": 142,
+        "symbol_price_covered_pairs": 142
+      },
+      "5": {
+        "date_only_mature_pairs": 476,
+        "qualified_forward_pairs": 0,
+        "symbol_and_SPY_price_covered_pairs": 138,
+        "symbol_price_covered_pairs": 138
+      }
+    },
+    "cutoff": "2026-10-21",
+    "day_symbol_groups": 650,
+    "missing_signal_fields_rows": {
+      "available_at": 2112,
+      "feature_as_of": 2112,
+      "latest_bar_at": 2112,
+      "price_as_of": 2112,
+      "run_id": 2112
+    },
+    "new_F1_observations": 0,
+    "new_network_requests": 0,
+    "production_applied": false,
+    "profitability_computed": false,
+    "raw_rows": 2112,
+    "same_day_groups_with_changed_values": 540,
+    "scope": "legacy count-only coverage, not returns, scheduler health, or valid forward evidence",
+    "snapshot_projection_rows": 2234,
+    "snapshot_strategy_counts": {
+      "breakout_momentum_v1": 1746,
+      "breakout_momentum_v1_etf": 297,
+      "event_swing_v1": 74,
+      "simple_exit_v2": 117
+    },
+    "source_market_files_reused": 55,
+    "symbols": 55,
+    "within_day_extra_rows": 1462
+  },
+  "rotation": {
+    "metrics": {
+      "EW10_BUY_HOLD": {
+        "annualized_volatility": 0.12651804128200522,
+        "end": "2026-10-20",
+        "fees_paid": 49.84348505210877,
+        "final_nav": 202958.5803292179,
+        "historical_CAGR": 0.08376428453931362,
+        "income_declared": 23488.072000000004,
+        "income_receivable_end": 24.648,
+        "max_DD": -0.26936644670542564,
+        "mean_gross_exposure": 0.9265304034367947,
+        "sessions": 2212,
+        "start": "2018-01-02",
+        "total_return": 1.029585803292179
+      },
+      "EW10_REBAL_21": {
+        "annualized_volatility": 0.13964675921264613,
+        "end": "2026-10-20",
+        "fees_paid": 259.00768285179146,
+        "final_nav": 223335.31998356056,
+        "historical_CAGR": 0.09561184492125951,
+        "income_declared": 29273.560999999998,
+        "income_receivable_end": 85.176,
+        "max_DD": -0.30103388490039396,
+        "mean_gross_exposure": 0.9946263595934703,
+        "sessions": 2212,
+        "start": "2018-01-02",
+        "total_return": 1.2333531998356055
+      },
+      "ROT_DEF": {
+        "annualized_volatility": 0.16141814882259653,
+        "end": "2026-10-20",
+        "fees_paid": 6748.546497583391,
+        "final_nav": 194159.92936456858,
+        "historical_CAGR": 0.07831947129869454,
+        "income_declared": 24330.232000000004,
+        "income_receivable_end": 0.0,
+        "max_DD": -0.2442013742709126,
+        "mean_gross_exposure": 0.9968934254878608,
+        "sessions": 2212,
+        "start": "2018-01-02",
+        "total_return": 0.9415992936456858
+      }
+    },
+    "primary_difference": {
+      "block_sessions": 63,
+      "ci95": [
+        -0.0003422031272469555,
+        0.0002863258895921141
+      ],
+      "daily_mean_difference": -1.3040793146037022e-07,
+      "interpretation": "exploratory block sensitivity, not true-edge probability or confirmatory proof",
+      "resamples": 4000
+    },
+    "scenario": {
+      "cost_bps": 5,
+      "id": "BASE5_L20",
+      "income_haircut": 0,
+      "income_lag_sessions": 20
+    },
+    "source": "docs/rotation_research_20261022/results/BASE5_L20/summary.json"
+  },
+  "shadows": {
+    "dip_buy_meanreversion_shadow_log.jsonl": {
+      "ET_date_symbol_pairs": 650,
+      "ET_logged_days": 40,
+      "interpretation": "row coverage only; not executions, maturity, attribution, or returns",
+      "negative_data_age_observations": 0,
+      "observations": 0,
+      "rows": 2112,
+      "would_signal_observations": 0
+    },
+    "economic_risk_off": {
+      "data_status": "insufficient_history",
+      "history_rows": 2,
+      "last_evaluated_at": "2026-10-21T19:55:00.847112+00:00",
+      "observed_pct": null,
+      "status": "normal"
+    },
+    "losing_position_add_shadow_log.jsonl": {
+      "ET_date_symbol_pairs": 1,
+      "ET_logged_days": 1,
+      "interpretation": "row coverage only; not executions, maturity, attribution, or returns",
+      "negative_data_age_observations": 0,
+      "observations": 0,
+      "rows": 1,
+      "would_signal_observations": 0
+    },
+    "sector_rotation_new_headline_shadow_log.jsonl": {
+      "ET_date_symbol_pairs": 0,
+      "ET_logged_days": 32,
+      "interpretation": "row coverage only; not executions, maturity, attribution, or returns",
+      "negative_data_age_observations": 0,
+      "observations": 0,
+      "rows": 32,
+      "would_signal_observations": 0
+    },
+    "sector_rotation_shadow_log.jsonl": {
+      "ET_date_symbol_pairs": 0,
+      "ET_logged_days": 41,
+      "interpretation": "row coverage only; not executions, maturity, attribution, or returns",
+      "negative_data_age_observations": 0,
+      "observations": 0,
+      "rows": 43,
+      "would_signal_observations": 0
+    },
+    "us_nonit_universe_shadow_log.jsonl": {
+      "ET_date_symbol_pairs": 0,
+      "ET_logged_days": 34,
+      "interpretation": "row coverage only; not executions, maturity, attribution, or returns",
+      "negative_data_age_observations": 310,
+      "observations": 350,
+      "rows": 35,
+      "would_signal_observations": 0
+    }
+  },
+  "signal": {
+    "closed_valid_rows": 422,
+    "counts": {
+      "base_match": 2089,
+      "eligible": 2089,
+      "final_match": 2089,
+      "raw_match": 2089
+    },
+    "explicit_entry_strength_valid": 197,
+    "forward_5_session": {
+      "computed": false,
+      "reason": "No frozen joined, qualified decision-time price and mature outcome set established in this batch; existing CSV absent at capture. No online builder run."
+    },
+    "ledger_last_updated": "2026-10-28T00:00:01.162276+00:00",
+    "missing_or_invalid_entry_strength": 225,
+    "qualification": {
+      "F1_started": false,
+      "S1_complete": false,
+      "S2_complete": false,
+      "S3_candidate_selected": false,
+      "S4_challenger_test_started": false,
+      "production_changed": false,
+      "qualified_forward_additions": 0
+    },
+    "source": "docs/signal_diagnostics_20261028/results.json",
+    "stock_records": 1792,
+    "stock_saturation_pct": 47.32142857142857,
+    "stock_score_one": 848
+  }
+}

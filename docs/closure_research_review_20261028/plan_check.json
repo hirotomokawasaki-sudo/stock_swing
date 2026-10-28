@@ -1,0 +1,10 @@
+{
+  "documents": 4,
+  "canonical_rows": 17,
+  "canonical_rows_byte_identical": true,
+  "all_old_document_bytes_preserved_after_removing_additions": true,
+  "dates_changed": false,
+  "latest_section": "3.44",
+  "individual_atomic_replace": true,
+  "globally_atomic": false
+}

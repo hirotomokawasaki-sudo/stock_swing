@@ -1,0 +1,27 @@
+{
+  "protected_files": 659,
+  "source_head": "8909e79c1a83e04d508715b132575625454b7856",
+  "unchanged": true,
+  "prior_packets": {
+    "advance_all_20261028": {
+      "files": 255,
+      "verified": true,
+      "manifest_sha256": "ea719eafde8b7e6d5a2ed814063aeea733735098d456624685ab8274793eb41f"
+    },
+    "provider_bar_fixes_20261028": {
+      "files": 218,
+      "verified": true,
+      "manifest_sha256": "506c0a905a7e80a1cc30c4eeab13d614c339ea2d9189e366a04369b62b5fe022"
+    },
+    "order_preflight_20261028": {
+      "files": 226,
+      "verified": true,
+      "manifest_sha256": "da546a2d99c3f5b7651372b95fbd3807827adeea351d52af4897ca894b021074"
+    },
+    "functional_safety_20261028": {
+      "files": 229,
+      "verified": true,
+      "manifest_sha256": "1a832140fea0c694933aea3037016ee841e108d2a35a8581f8eb52b66ca8e277"
+    }
+  }
+}

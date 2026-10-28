@@ -1,0 +1,114 @@
+{
+  "scope": "publication only; no deployment",
+  "source_head": "8909e79c1a83e04d508715b132575625454b7856",
+  "public_base": "ee2acac4f7579188938d1265671d3146c91c0295",
+  "branch": "publish/20261028-safe-updates",
+  "selected_files_before_publication_receipt": 1984,
+  "private_omissions": [
+    "docs/signal_diagnostics_20261028/input_manifest.json",
+    "docs/signal_diagnostics_20261028/inputs.zip"
+  ],
+  "aggregate_projection": {
+    "docs/strategy_assessment_20261020/results.json": [
+      "worst10",
+      "best10"
+    ]
+  },
+  "json_parse": "all selected JSON valid",
+  "symlinks_in_selected_scope": 0,
+  "supplemental_credential_scan_matches": 0,
+  "legacy_secret_scanner_exit_code": 1,
+  "legacy_secret_scanner_findings_reviewed_as_dummy_fixtures": [
+    {
+      "path": "docs/emergency_corrections_20261028/baseline_code/tests/unit/test_provider_cli_copy.py",
+      "line": 21,
+      "has_synthetic_marker": true,
+      "is_env_fixture": true,
+      "line_sha256": "5a44bc80aa3c9b99811df34ab73f12959dfde40adb386710ae34a773b3945fdf"
+    },
+    {
+      "path": "docs/emergency_corrections_20261028/code/tests/unit/test_emergency_reduction_regression.py",
+      "line": 23,
+      "has_synthetic_marker": true,
+      "is_env_fixture": true,
+      "line_sha256": "2874cb114ea037379d5d5d50077609cf5dd644841eed6cd0d5f36fdedb9c871e"
+    },
+    {
+      "path": "docs/emergency_corrections_20261028/code/tests/unit/test_provider_cli_copy.py",
+      "line": 21,
+      "has_synthetic_marker": true,
+      "is_env_fixture": true,
+      "line_sha256": "5a44bc80aa3c9b99811df34ab73f12959dfde40adb386710ae34a773b3945fdf"
+    },
+    {
+      "path": "docs/emergency_corrections_20261028/run_concurrency.py",
+      "line": 13,
+      "has_synthetic_marker": true,
+      "is_env_fixture": true,
+      "line_sha256": "5ba2b7738766496f770ba10b3e15e1b7e2d4e0f7e4b23e3c6c4da1d351c6c51b"
+    },
+    {
+      "path": "docs/emergency_corrections_20261028/run_scripts.py",
+      "line": 52,
+      "has_synthetic_marker": true,
+      "is_env_fixture": true,
+      "line_sha256": "5ba2b7738766496f770ba10b3e15e1b7e2d4e0f7e4b23e3c6c4da1d351c6c51b"
+    },
+    {
+      "path": "docs/emergency_corrections_20261028/tests.patch",
+      "line": 227,
+      "has_synthetic_marker": true,
+      "is_env_fixture": true,
+      "line_sha256": "d3894fd83fa3cfc90930489e90088d6056d1c95e4abdd5a17d5efcc320c9a89a"
+    },
+    {
+      "path": "docs/integration_ops_cost_20261028/code/tests/unit/test_provider_cli_copy.py",
+      "line": 21,
+      "has_synthetic_marker": true,
+      "is_env_fixture": true,
+      "line_sha256": "5a44bc80aa3c9b99811df34ab73f12959dfde40adb386710ae34a773b3945fdf"
+    },
+    {
+      "path": "docs/integration_ops_cost_20261028/run_emergency.py",
+      "line": 42,
+      "has_synthetic_marker": true,
+      "is_env_fixture": true,
+      "line_sha256": "5ba2b7738766496f770ba10b3e15e1b7e2d4e0f7e4b23e3c6c4da1d351c6c51b"
+    },
+    {
+      "path": "docs/provider_bar_fixes_20261028/code/tests/unit/test_provider_cli_copy.py",
+      "line": 21,
+      "has_synthetic_marker": true,
+      "is_env_fixture": true,
+      "line_sha256": "5a44bc80aa3c9b99811df34ab73f12959dfde40adb386710ae34a773b3945fdf"
+    },
+    {
+      "path": "docs/provider_bar_fixes_20261028/combined.patch",
+      "line": 1622,
+      "has_synthetic_marker": true,
+      "is_env_fixture": true,
+      "line_sha256": "c4e25c17f57169212e0afca322b12f3dd470b9f144ebeaa32a52ba4ba02c3c48"
+    },
+    {
+      "path": "docs/provider_bar_fixes_20261028/tests.patch",
+      "line": 567,
+      "has_synthetic_marker": true,
+      "is_env_fixture": true,
+      "line_sha256": "c4e25c17f57169212e0afca322b12f3dd470b9f144ebeaa32a52ba4ba02c3c48"
+    }
+  ],
+  "pytest": {
+    "exit_code": 0,
+    "summary": "359 passed, 1 skipped in 24.00s",
+    "test_files": 21,
+    "python": "3.13 existing venv",
+    "environment": "isolated checkout; external network and operational repo writes denied"
+  },
+  "full_historical_suite_rerun": false,
+  "clone_packet_replay": "not run; permission restoration/private inputs may be required",
+  "staged_changed_files": 1988,
+  "python_ast_parsed": 1684,
+  "runtime_code_diff_check_exit_code": 0,
+  "all_artifact_diff_check_exit_code": 2,
+  "artifact_whitespace_note": "Original sealed logs/patches/snapshots preserved byte-for-byte; artifact whitespace not rewritten."
+}

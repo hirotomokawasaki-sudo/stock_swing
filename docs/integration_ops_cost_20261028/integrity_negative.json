@@ -1,0 +1,22 @@
+{
+  "bytes": {
+    "refused_before_execution": true,
+    "reason": "byte/mode mismatch:SPEC.md"
+  },
+  "mode": {
+    "refused_before_execution": true,
+    "reason": "byte/mode mismatch:SPEC.md"
+  },
+  "missing": {
+    "refused_before_execution": true,
+    "reason": "inventory mismatch"
+  },
+  "extra": {
+    "refused_before_execution": true,
+    "reason": "inventory mismatch"
+  },
+  "symlink": {
+    "refused_before_execution": true,
+    "reason": "symlink in packet"
+  }
+}

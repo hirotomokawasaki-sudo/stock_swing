@@ -1,0 +1,14 @@
+{
+  "scope": [
+    "static caller/config closure",
+    "manual lifecycle/fractional alternatives, not adoption",
+    "11/06 existing-evidence draft"
+  ],
+  "created_utc": "2026-10-28T06:03:16.006009+00:00",
+  "head": "8909e79c1a83e04d508715b132575625454b7856",
+  "no_runtime_implementation": true,
+  "no_new_profit_trials": true,
+  "no_broker_or_scheduler_calls": true,
+  "policies_adopted": false,
+  "prior_protected_files": 660
+}

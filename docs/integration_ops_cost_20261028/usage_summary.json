@@ -1,0 +1,213 @@
+{
+  "actual_provider_usage_evidence": "not established by these five inputs",
+  "combined_invoiced_cost": null,
+  "combined_token_total": null,
+  "datasets": {
+    "ai_usage.jsonl": {
+      "billable_provider_tokens": null,
+      "cost_rows": 0,
+      "currency": null,
+      "earliest_utc": "2026-05-12T02:26:21.899269+00:00",
+      "exact_duplicate_rows": 0,
+      "input_tokens": 372353,
+      "invalid_cost_rows": 0,
+      "invoiced_cost": null,
+      "issues": {},
+      "latest_utc": "2026-07-10T13:35:14.575340+00:00",
+      "logged_estimated_cost_sum": null,
+      "models": {
+        "rule_based:breakout_momentum_v1": 1432,
+        "rule_based:breakout_momentum_v1_etf": 210,
+        "rule_based:breakout_momentum_v1_etf_intraday_enhanced": 6,
+        "rule_based:breakout_momentum_v1_intraday_enhanced": 86,
+        "rule_based:simple_exit_v2": 205
+      },
+      "output_tokens": 44225,
+      "parse_notes": {},
+      "parsed_rows": 1939,
+      "reported_retry_sum": 0,
+      "retry_unknown_rows": 1939,
+      "schemas": {
+        "decision_estimate": 1939
+      },
+      "telemetry_sources": {
+        "estimated_rule_based": 1939
+      },
+      "total_tokens": 416578,
+      "unique_decision_ids": 1939,
+      "valid_token_rows": 1939,
+      "workflows": {
+        "not_recorded": 1939
+      }
+    },
+    "api_latency.csv": {
+      "earliest_utc": "2026-06-24T13:25:03.487759+00:00",
+      "exact_duplicate_rows": 0,
+      "issues": {},
+      "latency": {
+        "endpoints": {
+          "broker.fetch_account": 377,
+          "broker.fetch_bars": 646,
+          "broker.fetch_positions": 376
+        },
+        "not_billable_http_count": true,
+        "p50_ms": 543.5,
+        "p95_nearest_rank_ms": 2077.4,
+        "reported_retry_sum": 0,
+        "retry_unknown_rows": 0,
+        "statuses": {
+          "error": 30,
+          "ok": 1369
+        },
+        "valid_rows": 1399
+      },
+      "latest_utc": "2026-10-27T19:55:05.959834+00:00",
+      "parse_notes": {
+        "headers": 1
+      },
+      "parsed_rows": 1399,
+      "schemas": {
+        "latency": 1399
+      }
+    },
+    "token_usage.csv": {
+      "billable_provider_tokens": null,
+      "cost_rows": 240,
+      "currency": null,
+      "earliest_utc": "2026-07-13T13:36:45.291920+00:00",
+      "exact_duplicate_rows": 0,
+      "input_tokens": 345709,
+      "invalid_cost_rows": 0,
+      "invoiced_cost": null,
+      "issues": {},
+      "latest_utc": "2026-10-27T19:55:09.300095+00:00",
+      "logged_estimated_cost_sum": "0.0",
+      "models": {
+        "breakout_momentum_v1": 219,
+        "breakout_momentum_v1_intraday_enhanced": 5,
+        "event_swing_v1": 11,
+        "rule-based": 2,
+        "simple_exit_v2": 3
+      },
+      "output_tokens": 62712,
+      "parse_notes": {
+        "headers": 1
+      },
+      "parsed_rows": 240,
+      "reported_retry_sum": 0,
+      "retry_unknown_rows": 0,
+      "schemas": {
+        "runtime_summary": 240
+      },
+      "telemetry_sources": {
+        "not_recorded": 240
+      },
+      "total_tokens": 408421,
+      "unique_decision_ids": 0,
+      "valid_token_rows": 240,
+      "workflows": {
+        "paper_demo": 240
+      }
+    },
+    "token_usage_backfill.csv": {
+      "billable_provider_tokens": null,
+      "cost_rows": 1939,
+      "currency": null,
+      "earliest_utc": "2026-05-12T02:26:21.899269+00:00",
+      "exact_duplicate_rows": 0,
+      "input_tokens": 372353,
+      "invalid_cost_rows": 0,
+      "invoiced_cost": null,
+      "issues": {},
+      "latest_utc": "2026-07-10T13:35:14.575340+00:00",
+      "logged_estimated_cost_sum": "0.0",
+      "models": {
+        "rule_based:breakout_momentum_v1": 1432,
+        "rule_based:breakout_momentum_v1_etf": 210,
+        "rule_based:breakout_momentum_v1_etf_intraday_enhanced": 6,
+        "rule_based:breakout_momentum_v1_intraday_enhanced": 86,
+        "rule_based:simple_exit_v2": 205
+      },
+      "output_tokens": 44225,
+      "parse_notes": {
+        "headers": 1
+      },
+      "parsed_rows": 1939,
+      "reported_retry_sum": 0,
+      "retry_unknown_rows": 1939,
+      "schemas": {
+        "decision_estimate": 1939
+      },
+      "telemetry_sources": {
+        "estimated_rule_based": 1939
+      },
+      "total_tokens": 416578,
+      "unique_decision_ids": 1939,
+      "valid_token_rows": 1939,
+      "workflows": {
+        "paper_demo_backfill": 1939
+      }
+    },
+    "token_usage_legacy_mixed_schema_20260801.csv": {
+      "billable_provider_tokens": null,
+      "cost_rows": 1970,
+      "currency": null,
+      "earliest_utc": "2026-05-12T02:26:21.899269+00:00",
+      "exact_duplicate_rows": 0,
+      "input_tokens": 405038,
+      "invalid_cost_rows": 0,
+      "invoiced_cost": null,
+      "issues": {},
+      "latest_utc": "2026-07-31T13:35:11.764633+00:00",
+      "logged_estimated_cost_sum": "0.0",
+      "models": {
+        "breakout_momentum_v1": 26,
+        "breakout_momentum_v1_intraday_enhanced": 5,
+        "rule_based:breakout_momentum_v1": 1432,
+        "rule_based:breakout_momentum_v1_etf": 210,
+        "rule_based:breakout_momentum_v1_etf_intraday_enhanced": 6,
+        "rule_based:breakout_momentum_v1_intraday_enhanced": 86,
+        "rule_based:simple_exit_v2": 205
+      },
+      "output_tokens": 50657,
+      "parse_notes": {
+        "comments": 3,
+        "headers": 1
+      },
+      "parsed_rows": 1970,
+      "reported_retry_sum": 0,
+      "retry_unknown_rows": 1939,
+      "schemas": {
+        "decision_estimate": 1939,
+        "runtime_summary": 31
+      },
+      "telemetry_sources": {
+        "estimated_rule_based": 1939,
+        "not_recorded": 31
+      },
+      "total_tokens": 455695,
+      "unique_decision_ids": 1939,
+      "valid_token_rows": 1970,
+      "workflows": {
+        "paper_demo": 31,
+        "paper_demo_backfill": 1939
+      }
+    }
+  },
+  "overlaps": {
+    "ai_usage.jsonl :: token_usage_backfill.csv": {
+      "shared_decision_ids": 1939,
+      "token_model_source_conflicts": 0
+    },
+    "ai_usage.jsonl :: token_usage_legacy_mixed_schema_20260801.csv": {
+      "shared_decision_ids": 1939,
+      "token_model_source_conflicts": 0
+    },
+    "token_usage_backfill.csv :: token_usage_legacy_mixed_schema_20260801.csv": {
+      "shared_decision_ids": 1939,
+      "token_model_source_conflicts": 0
+    }
+  },
+  "pricing_applied": false,
+  "reason": "Overlapping backfills, aggregate runtime summaries, and archived mixed schemas are not additive. Historical estimates and zero placeholders are not invoices."
+}

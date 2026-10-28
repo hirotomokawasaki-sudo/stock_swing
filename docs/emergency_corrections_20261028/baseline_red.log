@@ -1,0 +1,20 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_ac_ack_loss_restart_never_resends_same_reduction[emergency_sell.py-symbols0-sell] _
+tests/unit/test_emergency_reduction_regression.py:32: in test_ac_ack_loss_restart_never_resends_same_reduction
+    assert len(posts)==len(symbols),'same stable reduction intent must never resend on next process/run'
+E   AssertionError: same stable reduction intent must never resend on next process/run
+E   assert 4 == 2
+E    +  where 4 = len([{'qty': 3, 'side': 'sell', 'symbol': 'NOW', 'time_in_force': 'day', ...}, {'qty': 3, 'side': 'sell', 'symbol': 'IBM',...symbol': 'NOW', 'time_in_force': 'day', ...}, {'qty': 3, 'side': 'sell', 'symbol': 'IBM', 'time_in_force': 'day', ...}])
+E    +  and   2 = len(['NOW', 'IBM'])
+_ test_ac_ack_loss_restart_never_resends_same_reduction[close_hpe_short.py-symbols1-buy] _
+tests/unit/test_emergency_reduction_regression.py:32: in test_ac_ack_loss_restart_never_resends_same_reduction
+    assert len(posts)==len(symbols),'same stable reduction intent must never resend on next process/run'
+E   AssertionError: same stable reduction intent must never resend on next process/run
+E   assert 2 == 1
+E    +  where 2 = len([{'qty': 13, 'side': 'buy', 'symbol': 'HPE', 'time_in_force': 'day', ...}, {'qty': 13, 'side': 'buy', 'symbol': 'HPE', 'time_in_force': 'day', ...}])
+E    +  and   1 = len(['HPE'])
+=========================== short test summary info ============================
+FAILED tests/unit/test_emergency_reduction_regression.py::test_ac_ack_loss_restart_never_resends_same_reduction[emergency_sell.py-symbols0-sell]
+FAILED tests/unit/test_emergency_reduction_regression.py::test_ac_ack_loss_restart_never_resends_same_reduction[close_hpe_short.py-symbols1-buy]
+2 failed in 0.09s

@@ -1,0 +1,9 @@
+{
+  "integrity": "verified",
+  "origin": "packet only",
+  "focused_tail": "........................................................................ [ 34%]\n........................................................................ [ 68%]\n.................................................................        [100%]\n209 passed in 0.56s\n",
+  "cli_cases": 38,
+  "normalized_outcomes_match": true,
+  "unknown_first_posts": 1,
+  "production_applied": false
+}

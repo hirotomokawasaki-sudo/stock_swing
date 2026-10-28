@@ -1,0 +1,523 @@
+{
+  "closed_entry_score_readiness": {
+    "closed_valid_rows": 422,
+    "excluded": {
+      "not_closed": 1
+    },
+    "explicit_decision_id_field": 113,
+    "explicit_entry_strength_valid": 197,
+    "fixed_score_bands": [
+      {
+        "5bps_expectancy_cluster_interval_95": null,
+        "band": [
+          0.0,
+          0.4
+        ],
+        "cost_sensitivity": {
+          "0": {
+            "PF": null,
+            "mean_pnl": null,
+            "n": 0,
+            "pnl": 0
+          },
+          "10": {
+            "PF": null,
+            "mean_pnl": null,
+            "n": 0,
+            "pnl": 0
+          },
+          "15": {
+            "PF": null,
+            "mean_pnl": null,
+            "n": 0,
+            "pnl": 0
+          },
+          "2": {
+            "PF": null,
+            "mean_pnl": null,
+            "n": 0,
+            "pnl": 0
+          },
+          "5": {
+            "PF": null,
+            "mean_pnl": null,
+            "n": 0,
+            "pnl": 0
+          }
+        },
+        "count": 0,
+        "exit_week_clusters": 0
+      },
+      {
+        "5bps_expectancy_cluster_interval_95": [
+          -1500.704645,
+          -966.1379999999999
+        ],
+        "band": [
+          0.4,
+          0.6
+        ],
+        "cost_sensitivity": {
+          "0": {
+            "PF": 0.049391231756407805,
+            "mean_pnl": -1074.9560000000001,
+            "n": 10,
+            "pnl": -10749.560000000001
+          },
+          "10": {
+            "PF": 0.03753652785305614,
+            "mean_pnl": -1121.172486,
+            "n": 10,
+            "pnl": -11211.72486
+          },
+          "15": {
+            "PF": 0.03186561926350308,
+            "mean_pnl": -1144.280729,
+            "n": 10,
+            "pnl": -11442.80729
+          },
+          "2": {
+            "PF": 0.04696345182811321,
+            "mean_pnl": -1084.1992972,
+            "n": 10,
+            "pnl": -10841.992972
+          },
+          "5": {
+            "PF": 0.04337585993235355,
+            "mean_pnl": -1098.064243,
+            "n": 10,
+            "pnl": -10980.64243
+          }
+        },
+        "count": 10,
+        "exit_week_clusters": 3
+      },
+      {
+        "5bps_expectancy_cluster_interval_95": [
+          -441.31567265747947,
+          710.3398213784408
+        ],
+        "band": [
+          0.6,
+          0.8
+        ],
+        "cost_sensitivity": {
+          "0": {
+            "PF": 1.1512004498221584,
+            "mean_pnl": 133.55717948717947,
+            "n": 78,
+            "pnl": 10417.46
+          },
+          "10": {
+            "PF": 1.0796941037359797,
+            "mean_pnl": 72.50794937841026,
+            "n": 78,
+            "pnl": 5655.620051516
+          },
+          "15": {
+            "PF": 1.0454814788059343,
+            "mean_pnl": 41.98333432402564,
+            "n": 78,
+            "pnl": 3274.700077274
+          },
+          "2": {
+            "PF": 1.1365577813643393,
+            "mean_pnl": 121.34733346542565,
+            "n": 78,
+            "pnl": 9465.0920103032
+          },
+          "5": {
+            "PF": 1.1149185734091007,
+            "mean_pnl": 103.03256443279484,
+            "n": 78,
+            "pnl": 8036.540025757998
+          }
+        },
+        "count": 78,
+        "exit_week_clusters": 17
+      },
+      {
+        "5bps_expectancy_cluster_interval_95": [
+          -2462.5510334697847,
+          12.17520551501741
+        ],
+        "band": [
+          0.8,
+          1.0
+        ],
+        "cost_sensitivity": {
+          "0": {
+            "PF": 0.36960218805859585,
+            "mean_pnl": -1163.9363302752292,
+            "n": 109,
+            "pnl": -126869.06
+          },
+          "10": {
+            "PF": 0.3465054955048954,
+            "mean_pnl": -1229.7853402859448,
+            "n": 109,
+            "pnl": -134046.602091168
+          },
+          "15": {
+            "PF": 0.33546444908171996,
+            "mean_pnl": -1262.7098452913026,
+            "n": 109,
+            "pnl": -137635.373136752
+          },
+          "2": {
+            "PF": 0.36488597593324396,
+            "mean_pnl": -1177.1061322773724,
+            "n": 109,
+            "pnl": -128304.5684182336
+          },
+          "5": {
+            "PF": 0.35787831961359745,
+            "mean_pnl": -1196.860835280587,
+            "n": 109,
+            "pnl": -130457.831045584
+          }
+        },
+        "count": 109,
+        "exit_week_clusters": 16
+      }
+    ],
+    "ledger_last_updated": "2026-10-28T00:00:01.162276+00:00",
+    "limitation": "Recorded-only variable-size/variable-holding-period subset, no invented score join and no fixed-5-session signal return estimate.",
+    "missing_or_invalid_entry_strength": 225,
+    "trade_id_repeats_retained_as_possible_partial_exits": 14
+  },
+  "current_breakout_score_metadata_contract": {
+    "counts": {
+      "base_match": 2089,
+      "eligible": 2089,
+      "final_match": 2089,
+      "raw_match": 2089
+    },
+    "limitation": "Consistency with pinned current scorer is not historical full-strategy replay or point-in-time data qualification.",
+    "mismatch_examples": []
+  },
+  "decision_inventory": {
+    "actions": {
+      "buy": 3991,
+      "deny": 181,
+      "sell": 360
+    },
+    "config_hash_present": 2373,
+    "config_hashes": 1,
+    "run_ids_present": 2960,
+    "strategies": {
+      "breakout_momentum_v1": 3527,
+      "breakout_momentum_v1_etf": 465,
+      "breakout_momentum_v1_etf_intraday_enhanced": 6,
+      "breakout_momentum_v1_intraday_enhanced": 113,
+      "event_swing_v1": 61,
+      "simple_exit_v2": 360
+    },
+    "timestamps": {
+      "ET_dates": 108,
+      "aware": 4532,
+      "first_utc": "2026-05-12T02:26:21.899269+00:00",
+      "last_utc": "2026-10-27T19:55:00.279817+00:00",
+      "missing_naive_or_invalid": 0
+    }
+  },
+  "exact_snapshot_decision_join": {
+    "counts": {
+      "exact_unique": 1944,
+      "finite_score_comparable": 1944,
+      "unmatched": 345
+    },
+    "limitation": "Exact tuple correspondence is not fill/economic lineage proof; decision archive does not cover every snapshot.",
+    "signal_to_decision_actions": {
+      "buy->buy": 1838,
+      "sell->sell": 106
+    }
+  },
+  "forward_5_session_performance": {
+    "computed": false,
+    "reason": "No frozen joined, qualified decision-time price and mature outcome set established in this batch; existing CSV absent at capture. No online builder run."
+  },
+  "inputs": {
+    "capture_until": "2026-10-28T02:12:46.910151+00:00",
+    "decision_files": 4532,
+    "feature_snapshots": 2289,
+    "files": 6832,
+    "parse_failures": [],
+    "spec_sha256": "dd5ef0c6c893d07341b0ceda2b8f44ec2b038be731fbd2f0acf2135d6081cd54"
+  },
+  "qualification": {
+    "F1_started": false,
+    "S1_complete": false,
+    "S2_complete": false,
+    "S3_candidate_selected": false,
+    "S4_challenger_test_started": false,
+    "production_changed": false,
+    "qualified_forward_additions": 0
+  },
+  "same_run_percentile": {
+    "counts": {
+      "complete_size": 192,
+      "percentile_reproduced_on_complete_size": 192,
+      "with_contract": 192
+    },
+    "incomplete_examples": [],
+    "limitation": "Snapshots are after prioritization and sector exclusion; declared pre-prioritization population can be missing."
+  },
+  "scope": "exploratory_diagnostic_not_profitability_trial",
+  "snapshot_inventory": {
+    "by_strategy": {
+      "breakout_momentum_v1": {
+        "action_counts": {
+          "buy": 1792
+        },
+        "confidence": {
+          "at_one": 0,
+          "largest_exact_tie": 848,
+          "max": 0.85,
+          "min": 0.5102245782806039,
+          "missing_or_nonfinite": 0,
+          "n": 1792,
+          "outside_0_1": 0,
+          "unique": 940
+        },
+        "count": 1792,
+        "experiment_ids": 54,
+        "final_score": {
+          "at_one": 848,
+          "largest_exact_tie": 848,
+          "max": 1.0,
+          "min": 0.6002642097418869,
+          "missing_or_nonfinite": 0,
+          "n": 1792,
+          "outside_0_1": 0,
+          "unique": 940
+        },
+        "normalized_score": {
+          "at_one": 848,
+          "largest_exact_tie": 848,
+          "max": 1.0,
+          "min": 0.6002642097418869,
+          "missing_or_nonfinite": 0,
+          "n": 1792,
+          "outside_0_1": 0,
+          "unique": 940
+        },
+        "raw_score": {
+          "at_one": 0,
+          "largest_exact_tie": 2,
+          "max": 4.154958844960193,
+          "min": 0.545694736128988,
+          "missing_or_nonfinite": 0,
+          "n": 1792,
+          "outside_0_1": 711,
+          "unique": 1786
+        },
+        "run_count": 192
+      },
+      "breakout_momentum_v1_etf": {
+        "action_counts": {
+          "buy": 297
+        },
+        "confidence": {
+          "at_one": 0,
+          "largest_exact_tie": 46,
+          "max": 0.85,
+          "min": 0.5104370206014626,
+          "missing_or_nonfinite": 0,
+          "n": 297,
+          "outside_0_1": 0,
+          "unique": 250
+        },
+        "count": 297,
+        "experiment_ids": 13,
+        "final_score": {
+          "at_one": 46,
+          "largest_exact_tie": 46,
+          "max": 1.0,
+          "min": 0.6005141418840736,
+          "missing_or_nonfinite": 0,
+          "n": 297,
+          "outside_0_1": 0,
+          "unique": 250
+        },
+        "normalized_score": {
+          "at_one": 46,
+          "largest_exact_tie": 46,
+          "max": 1.0,
+          "min": 0.6005141418840736,
+          "missing_or_nonfinite": 0,
+          "n": 297,
+          "outside_0_1": 0,
+          "unique": 250
+        },
+        "raw_score": {
+          "at_one": 0,
+          "largest_exact_tie": 2,
+          "max": 1.9615112994350292,
+          "min": 0.5459219471673395,
+          "missing_or_nonfinite": 0,
+          "n": 297,
+          "outside_0_1": 17,
+          "unique": 295
+        },
+        "run_count": 45
+      },
+      "event_swing_v1": {
+        "action_counts": {
+          "buy": 82
+        },
+        "confidence": {
+          "at_one": 0,
+          "largest_exact_tie": 26,
+          "max": 0.9,
+          "min": 0.5409298212956068,
+          "missing_or_nonfinite": 0,
+          "n": 82,
+          "outside_0_1": 0,
+          "unique": 57
+        },
+        "count": 82,
+        "experiment_ids": 19,
+        "final_score": {
+          "at_one": 26,
+          "largest_exact_tie": 26,
+          "max": 1.0,
+          "min": 0.6010331347728964,
+          "missing_or_nonfinite": 0,
+          "n": 82,
+          "outside_0_1": 0,
+          "unique": 57
+        },
+        "normalized_score": {
+          "at_one": 26,
+          "largest_exact_tie": 26,
+          "max": 1.0,
+          "min": 0.6010331347728964,
+          "missing_or_nonfinite": 0,
+          "n": 82,
+          "outside_0_1": 0,
+          "unique": 57
+        },
+        "raw_score": {
+          "at_one": 0,
+          "largest_exact_tie": 1,
+          "max": 1.8946932006633501,
+          "min": 0.5237967195482661,
+          "missing_or_nonfinite": 0,
+          "n": 82,
+          "outside_0_1": 22,
+          "unique": 82
+        },
+        "run_count": 53
+      },
+      "simple_exit_v2": {
+        "action_counts": {
+          "sell": 118
+        },
+        "confidence": {
+          "at_one": 0,
+          "largest_exact_tie": 118,
+          "max": 0.9,
+          "min": 0.9,
+          "missing_or_nonfinite": 0,
+          "n": 118,
+          "outside_0_1": 0,
+          "unique": 1
+        },
+        "count": 118,
+        "experiment_ids": 30,
+        "final_score": {
+          "at_one": 38,
+          "largest_exact_tie": 65,
+          "max": 1.0,
+          "min": 0.7,
+          "missing_or_nonfinite": 0,
+          "n": 118,
+          "outside_0_1": 0,
+          "unique": 3
+        },
+        "normalized_score": {
+          "at_one": 0,
+          "largest_exact_tie": 0,
+          "max": null,
+          "min": null,
+          "missing_or_nonfinite": 118,
+          "n": 0,
+          "outside_0_1": 0,
+          "unique": 0
+        },
+        "raw_score": {
+          "at_one": 0,
+          "largest_exact_tie": 0,
+          "max": null,
+          "min": null,
+          "missing_or_nonfinite": 118,
+          "n": 0,
+          "outside_0_1": 0,
+          "unique": 0
+        },
+        "run_count": 65
+      }
+    },
+    "feature_available_at_fields_present": 0,
+    "latest_bar_end_fields_present": 0,
+    "timestamps": {
+      "ET_dates": 50,
+      "aware": 2289,
+      "first_utc": "2026-08-17T13:25:13.443818+00:00",
+      "last_utc": "2026-10-27T19:55:08.013226+00:00",
+      "missing_naive_or_invalid": 0
+    }
+  },
+  "source_contract_checks": {
+    "assertions_passed": 11,
+    "checks": [
+      "breakout known 10pct input has neutral strength .5",
+      "raw score retains magnitude beyond normalized saturation",
+      "regime adjustment distinguishes expansion and recession at unsaturated input",
+      "event timing prefers 2-to-5 days without selecting a profitable threshold",
+      "210 source-scorer fixtures monotonic and bounded for nonnegative momentum inputs",
+      "equal strengths receive the same same-run percentile",
+      "single candidate percentile is convention 1 not calibrated probability",
+      "same-run percentile stable under permutation",
+      "legacy deciles split identical scores into arbitrary PnL buckets",
+      "legacy calibration predicted field is score midpoint, not validated probability",
+      "fixed score bands preserve all and only tagged rows"
+    ],
+    "decimal_band_sum_checks": 20,
+    "legacy_equal_score_decile_net_pnl_order_A": [
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      -2.0,
+      -2.0,
+      -2.0,
+      -2.0,
+      -2.0
+    ],
+    "legacy_equal_score_decile_net_pnl_order_B": [
+      -2.0,
+      -2.0,
+      -2.0,
+      -2.0,
+      -2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0
+    ],
+    "pseudo_probability_fixture": {
+      "actual": 0.5,
+      "calibration_error": 0.3,
+      "count": 20,
+      "decile": 1,
+      "predicted": 0.8,
+      "ss_range": ".8-.8"
+    },
+    "synthetic_score_cases": 210
+  },
+  "study_id": "SIGNAL-DIAGNOSTIC-20261028-r1"
+}

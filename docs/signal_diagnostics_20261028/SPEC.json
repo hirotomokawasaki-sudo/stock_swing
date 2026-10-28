@@ -1,0 +1,52 @@
+{
+  "study_id": "SIGNAL-DIAGNOSTIC-20261028-r1",
+  "frozen_at_utc": "2026-10-28T02:12:46.006771+00:00",
+  "status": "exploratory_diagnostic_not_profitability_trial",
+  "known_history": "Prior October assessments and aggregate ledger metrics already known; no independent/OOS claim. No challenger selected or tested.",
+  "scope": "S1 current-source map plus S2 data-quality/score diagnostic subset; does not complete full S1/S2 or consume S3/S4 candidate trial",
+  "head": "8909e79c1a83e04d508715b132575625454b7856",
+  "input_cutoff": "All existing decision JSON and feature snapshot JSON/GZIP paths enumerated now, live ledger copied as recorded. No network/data refresh.",
+  "groups": [
+    "strategy_id",
+    "decision action",
+    "config_hash",
+    "experiment_id",
+    "ET decision date"
+  ],
+  "main_horizon_sessions": 5,
+  "main_horizon_use": "readiness only: no fixed-horizon forward returns calculated in this batch",
+  "diagnostics": [
+    "schema and timestamp coverage",
+    "raw/normalized/final score range, saturation and equal-score tie counts",
+    "metadata-to-current-breakout score consistency with explicit intraday boost",
+    "exact decision_id/run_id/symbol joins only; conflicts/missingness explicit",
+    "same-run percentile feasibility with recorded cross_sectional_n; no reranking incomplete sets",
+    "recorded closed trade entry_strength coverage and fixed-band outcome description if present",
+    "existing decile utility equal-score permutation sensitivity and pseudo-probability audit",
+    "source-path deterministic scorer/percentile invariants on synthetic non-profit fixtures"
+  ],
+  "fixed_score_bands": [
+    0.0,
+    0.4,
+    0.6,
+    0.8,
+    1.0
+  ],
+  "band_rule": "[0,.4),[.4,.6),[.6,.8),[.8,1]; exact ties stay together; no inferred entry_strength or nearest-time match",
+  "closed_filter": "status closed, finite pnl, not in quarantined_trades by exact trade_id; positive qty/entry/exit; valid entry<=exit; execution-leg duplicates excluded and reported",
+  "cost_assumptions_bps_per_side": [
+    0,
+    2,
+    5,
+    10,
+    15
+  ],
+  "cost_formula": "recorded pnl - qty*(entry_price+exit_price)*bps/10000; added sensitivity, not measured fees",
+  "uncertainty": "Descriptive diagnostics, no significance/edge probability or winner threshold. If score-tagged outcomes exist, exit-week cluster bootstrap 4000/seed7 for expectancy at 5bps; sparse blocks explicitly inconclusive.",
+  "constraints": [
+    "no production source/config/data/registry changes",
+    "no candidate optimization",
+    "no orders/broker/API/scheduler/service/auth/CB operations",
+    "do not complete full economic validation from score consistency or data counts"
+  ]
+}

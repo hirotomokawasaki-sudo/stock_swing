@@ -1,0 +1,7 @@
+[
+  "src/stock_swing/execution/submission_guard.py",
+  "src/stock_swing/risk/effective_config.py",
+  "tests/unit/test_effective_config_safety.py",
+  "tests/unit/test_submission_guard.py",
+  "tests/unit/test_submit_retry_boundary.py"
+]

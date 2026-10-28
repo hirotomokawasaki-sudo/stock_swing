@@ -1,0 +1,607 @@
+diff --git a/tests/fixtures/provider_contract_cli_driver.py b/tests/fixtures/provider_contract_cli_driver.py
+new file mode 100644
+index 0000000..0592a02
+--- /dev/null
++++ b/tests/fixtures/provider_contract_cli_driver.py
+@@ -0,0 +1,54 @@
++"""Actual CLI on a disposable copy; only external HTTP transports substituted."""
++from pathlib import Path
++import contextlib,io,json,sys,os,re
++from datetime import datetime,timedelta,timezone
++import httpx,urllib3
++calls=[]
++def transport(request):
++    calls.append([request.method,request.url.path])
++    if request.url.path.endswith('/account'):
++        return httpx.Response(200,json=dict(status='ACTIVE',equity='100000',cash='100000',buying_power='100000'))
++    if request.url.path.endswith('/positions'):return httpx.Response(200,json=[])
++    if request.url.path.endswith('/bars'):
++        bars=[dict(t=(datetime.now(timezone.utc)-timedelta(minutes=5*(20-i))).isoformat(),o=129,h=131,l=128,c=130,v=2000000) for i in range(20)]
++        return httpx.Response(200,json=dict(bars=bars))
++    if 'quotes' in request.url.path:return httpx.Response(200,json={'quote':{'bp':129,'ap':131}})
++    if 'orders' in request.url.path:return httpx.Response(200,json=[])
++    raise AssertionError('unexpected fixture request '+request.url.path)
++original=httpx.Client
++httpx.Client=lambda **kw:original(transport=httpx.MockTransport(transport),**kw)
++def massive_http(self,method,url,**kw):
++    from urllib.parse import urlsplit
++    path=urlsplit(url).path;calls.append([method,path])
++    if '/aggs/' in path:
++        rows=[]
++        for i in range(20):
++            dt=datetime.now(timezone.utc)-timedelta(days=20-i)
++            close=100+i*1.6
++            rows.append(dict(t=int(dt.timestamp()*1000),o=close-1,h=close+2,l=close-2,c=close,v=2000000,vw=close,n=10))
++        data=dict(results=rows,adjusted=True,request_id='controlled-request')
++    elif 'rsi' in path:data=dict(results=dict(values=[]))
++    elif 'reference/tickers' in path:data=dict(results=dict(ticker='NVDA',name='Fixture',market='stocks',currency_name='usd'))
++    else:raise AssertionError('unexpected Massive fixture request '+path)
++    return urllib3.response.HTTPResponse(body=json.dumps(data).encode(),status=200,preload_content=True)
++urllib3.PoolManager.request=massive_http
++from stock_swing.cli import paper_demo
++root=paper_demo.project_root
++buf=io.StringIO()
++with contextlib.redirect_stdout(buf),contextlib.redirect_stderr(buf):
++    sys.argv=['paper_demo','--symbols','NVDA','--dry-run','--min-momentum','0.01','--min-signal-strength','0.1','--cron-summary-json']
++    if os.environ.get('FIXTURE_RECORDING')=='1':sys.argv.append('--capture-provider-contracts')
++    try:result=paper_demo.main()
++    except BaseException as exc:print(type(exc).__name__,str(exc));result=99
++indices=list((root/'data/audits/measurement_inputs/run_manifests').glob('*.json'))
++output=dict(main_exit=result,http_calls=calls,store_exists=(root/'data/audits/measurement_inputs').exists(),
++    indices=len(indices),origin_is_copy=Path(paper_demo.__file__).is_relative_to(root),
++    business_decision_lines=re.findall(r'\[(?:PASS|SKIP)\] [^\n]+',buf.getvalue()))
++if indices:
++    from stock_swing.experiments.decision_input_capture import load_input_run
++    run=load_input_run(root,str(indices[0].relative_to(root)))
++    output['capture_complete']=run['capture_complete'];output['declared_exit_success']=run['declared_exit_success']
++    output['stage_counts']={stage:sum(o['manifest']['stage']==stage for o in run['observations']) for stage in {o['manifest']['stage'] for o in run['observations']}}
++    output['full_replay_ready']=run['full_replay_ready']
++if result:output['diagnostic_tail']=buf.getvalue()[-5000:]
++print(json.dumps(output,sort_keys=True,indent=2))
+diff --git a/tests/unit/test_decision_input_capture.py b/tests/unit/test_decision_input_capture.py
+new file mode 100644
+index 0000000..8ff9c96
+--- /dev/null
++++ b/tests/unit/test_decision_input_capture.py
+@@ -0,0 +1,103 @@
++"""Acceptance: opt-in actual arguments, durable complete IDs, no execution relabel.
++
++R22 2026-10-21: audit context was dropped by the seven-column formatter.
++"""
++from dataclasses import dataclass
++from datetime import datetime, timezone
++import json
++from pathlib import Path
++from types import SimpleNamespace
++from unittest.mock import MagicMock
++
++import pytest
++
++from stock_swing.experiments.decision_input_capture import (
++    DecisionInputRecorder,load_decision_input,capture_value)
++from stock_swing.experiments.measurement_capture import CaptureError
++from stock_swing.safety.audit_logger import AuditLogger
++
++NOW=datetime(2026,10,21,17,tzinfo=timezone.utc)
++
++
++def recorder(root,enabled=True):
++    return DecisionInputRecorder(root,enabled=enabled,run_id='test-run')
++
++
++def observe(root):
++    r=recorder(root)
++    ref=r.record('state','selection',dict(cash=10,lots=[dict(qty=2)],pending=None),observed_at=NOW)
++    return r,ref
++
++
++def test_ac_disabled_capture_is_zero_storage_io_and_accepts_uninspected_payload(tmp_path):
++    root=tmp_path/'not-created';r=recorder(root,False)
++    assert r.record(None,None,object(),observed_at=None) is None
++    assert r.observe(None,object()) is None
++    assert not root.exists(), 'default OFF must not publish empty measurement evidence'
++
++
++def test_ac_exact_typed_values_and_incomplete_contract_persist(tmp_path):
++    r,ref=observe(tmp_path);saved=load_decision_input(tmp_path,ref)
++    assert saved['payload']==dict(cash=10,lots=[dict(qty=2)],pending=None)
++    assert saved['manifest']['full_replay_ready'] is False
++    assert saved['manifest']['provider_available_at_certified'] is False
++    assert r.record('state','selection',saved['payload'],observed_at=NOW)==ref
++    with pytest.raises(CaptureError):r.record('state','selection',dict(cash=11),observed_at=NOW)
++    assert load_decision_input(tmp_path,ref)==saved
++
++
++@pytest.mark.parametrize('fault',['missing_manifest','corrupt_manifest','missing_blob','corrupt_blob','unsafe_ref','symlink_dir','symlink_blob'])
++def test_ac_missing_corrupt_or_escaped_observation_is_not_evidence(tmp_path,fault):
++    _,ref=observe(tmp_path);path=tmp_path/ref;manifest=json.loads(path.read_bytes());blob=path.parents[1]/'blobs'/manifest['payload_sha256']
++    if fault=='missing_manifest':path.unlink()
++    elif fault=='corrupt_manifest':path.write_text('{}')
++    elif fault=='missing_blob':blob.unlink()
++    elif fault=='corrupt_blob':blob.write_text('{"cash":999}')
++    elif fault=='unsafe_ref':ref='../'+ref
++    elif fault=='symlink_dir':
++        folder=path.parent;other=folder.with_name('outside');folder.rename(other);folder.symlink_to(other,target_is_directory=True)
++    else:
++        other=blob.with_suffix('.outside');blob.rename(other);blob.symlink_to(other)
++    with pytest.raises(CaptureError):load_decision_input(tmp_path,ref)
++
++
++@pytest.mark.parametrize('bad',[dict(api_key='never-write'),dict(nested=dict(authorization='never-write')),
++                              dict(x=float('nan')),dict(x=object()),dict(x=datetime(2026,1,1))])
++def test_ac_invalid_or_credential_inputs_refuse_before_storage(tmp_path,bad):
++    root=tmp_path/'new';r=recorder(root)
++    with pytest.raises(CaptureError):r.record('state','x',bad,observed_at=NOW)
++    assert not root.exists(), 'unusable input must not be serialized'
++    assert r.observe('state',bad) is None
++    assert r.failures==1 and r.committed==0
++
++
++def test_ac_symlinked_publish_directory_never_writes_outside_store(tmp_path):
++    folder=tmp_path/'data/audits/measurement_inputs/decision_manifests';folder.parent.mkdir(parents=True)
++    outside=tmp_path/'outside';outside.mkdir();folder.symlink_to(outside,target_is_directory=True)
++    with pytest.raises(CaptureError):recorder(tmp_path).record('state','x',{},observed_at=NOW)
++    assert not list(outside.iterdir())
++
++
++
++
++
++
++
++
++
++
++
++
++def test_ac_symlinked_blob_directory_refuses_publish_and_load(tmp_path):
++    _,ref=observe(tmp_path);folder=tmp_path/'data/audits/measurement_inputs/blobs'
++    outside=tmp_path/'outside';folder.rename(outside);folder.symlink_to(outside,target_is_directory=True)
++    before={p.name:p.read_bytes() for p in outside.iterdir()}
++    with pytest.raises(CaptureError):load_decision_input(tmp_path,ref)
++    with pytest.raises(CaptureError):recorder(tmp_path).record('state','other',{},observed_at=NOW)
++    assert before=={p.name:p.read_bytes() for p in outside.iterdir()}
++
++
++def test_ac_circular_input_does_not_interrupt_automatic_instrumentation(tmp_path):
++    payload={};payload['cycle']=payload;r=recorder(tmp_path)
++    assert r.observe('state',payload) is None
++    assert r.failures==1 and r.committed==0
+diff --git a/tests/unit/test_measurement_capture.py b/tests/unit/test_measurement_capture.py
+new file mode 100644
+index 0000000..8dff83d
+--- /dev/null
++++ b/tests/unit/test_measurement_capture.py
+@@ -0,0 +1,159 @@
++"""Acceptance: optional candidate capture never certifies full replay (R22 10/21).
++
++Regression baseline 777396f has no pre-filter durable candidate observation.
++Only external I/O is replaced; storage, validation and publication are real.
++"""
++from concurrent.futures import ThreadPoolExecutor
++from datetime import datetime, timezone
++import json
++from pathlib import Path
++import os
++import subprocess
++import sys
++from types import SimpleNamespace
++
++import pytest
++
++from stock_swing.experiments.measurement_capture import (
++    CaptureError, capture_candidates, load_capture,
++)
++
++
++def signal(symbol='ABC', strength=.8):
++    return SimpleNamespace(symbol=symbol, strategy_id='breakout_momentum_v1',
++                           action='buy', signal_strength=strength, confidence=.7,
++                           notes='DO_NOT_SAVE_PRIVATE_TEXT', metadata={'api_key':'DO_NOT_SAVE_SECRET'})
++
++
++def capture(root, **changes):
++    options=dict(enabled=True, run_id='fixture-run', experiment_id='fixture-exp',
++                 stage='generated_daily', observed_at=datetime(2026,10,21,14,tzinfo=timezone.utc),
++                 signals=[signal('ABC'),signal('XYZ')], stale_symbols=['XYZ'],
++                 cli_settings={'min_momentum':.05,'api_key':'DO_NOT_SAVE_SECRET'},
++                 source_revision='fixture-revision')
++    options.update(changes)
++    return capture_candidates(root, **options)
++
++
++def test_ac_disabled_is_no_io_even_with_invalid_values(tmp_path):
++    assert capture(tmp_path, enabled=False, signals=None, observed_at=None) is None
++    assert list(tmp_path.iterdir())==[], 'disabled means no directory creation'
++
++
++def test_ac_roundtrip_order_allowlist_counts_and_unknowns(tmp_path):
++    ref=capture(tmp_path); result=load_capture(tmp_path,ref)
++    assert result['payload']['candidates']==[
++        dict(ordinal=i,symbol=s,strategy_id='breakout_momentum_v1',action='buy',signal_strength=.8,confidence=.7)
++        for i,s in enumerate(['ABC','XYZ'])]
++    assert result['payload']['stale_symbols']==['XYZ']
++    assert result['payload']['cli_settings']=={'min_momentum':.05}
++    assert result['manifest']['scope']=='partial_candidate_measurement_not_F1'
++    assert result['manifest']['full_replay_ready'] is False
++    assert 'effective_config' in result['manifest']['missing_contract_sections']
++    assert result['manifest']['et_calendar_date']=='2026-10-21'
++    assert result['manifest']['exchange_session_certified'] is False
++    assert 'DO_NOT_SAVE' not in ''.join(p.read_text() for p in tmp_path.rglob('*.json'))
++
++
++def test_ac_retry_is_byte_identical_and_conflicting_identity_refused(tmp_path):
++    ref=capture(tmp_path); before={p:p.read_bytes() for p in tmp_path.rglob('*.json')}
++    assert capture(tmp_path)==ref
++    with pytest.raises(CaptureError,match='conflict'):
++        capture(tmp_path,signals=[signal('DIFFERENT')])
++    assert {p:p.read_bytes() for p in before}==before
++
++
++def test_ac_distinct_stages_and_empty_batch_are_observations(tmp_path):
++    first=capture(tmp_path)
++    second=capture(tmp_path,stage='prioritized_entry',signals=[])
++    assert first!=second
++    assert load_capture(tmp_path,second)['payload']['candidates']==[]
++
++
++@pytest.mark.parametrize('changes',[
++    {'run_id':'../../escape'}, {'run_id':''}, {'stage':'invented'},
++    {'observed_at':datetime(2026,10,21)}, {'signals':None},
++    {'signals':[signal(strength=float('nan'))]}, {'signals':[signal(strength=True)]},
++    {'signals':[signal(strength=float('inf'))]}, {'signals':[signal(strength=1.5)]},
++    {'signals':[signal('')]}, {'stale_symbols':'XYZ'},
++    {'cli_settings':{'min_momentum':float('nan')}},
++])
++def test_ac_invalid_input_never_publishes(tmp_path,changes):
++    with pytest.raises(CaptureError):capture(tmp_path,**changes)
++    assert not list(tmp_path.rglob('manifests/*.json'))
++
++
++@pytest.mark.parametrize('damage',['manifest_missing','manifest_json','blob_missing','blob_changed','traversal','unexpected_field'])
++def test_ac_missing_corrupt_or_unsafe_dependency_refused(tmp_path,damage):
++    ref=capture(tmp_path); manifest=tmp_path/ref
++    saved=json.loads(manifest.read_bytes());blob=manifest.parent.parent/'blobs'/saved['payload_sha256']
++    if damage=='manifest_missing':manifest.unlink()
++    if damage=='manifest_json':manifest.write_text('{')
++    if damage=='blob_missing':blob.unlink()
++    if damage=='blob_changed':blob.write_bytes(blob.read_bytes()+b' ')
++    if damage=='traversal':ref='../../secret'
++    if damage=='unexpected_field':
++        saved['full_replay_ready']=True;manifest.write_text(json.dumps(saved))
++    with pytest.raises(CaptureError):load_capture(tmp_path,ref)
++
++
++def test_ac_symlinked_storage_refused(tmp_path):
++    outside=tmp_path/'elsewhere';outside.mkdir()
++    folder=tmp_path/'data/audits';folder.mkdir(parents=True)
++    (folder/'measurement_inputs').symlink_to(outside,target_is_directory=True)
++    with pytest.raises(CaptureError):capture(tmp_path)
++    assert list(outside.iterdir())==[]
++
++
++def test_ac_parallel_same_identity_is_one_immutable_observation(tmp_path):
++    with ThreadPoolExecutor(max_workers=4) as pool:refs=list(pool.map(lambda _:capture(tmp_path),range(8)))
++    assert len(set(refs))==1
++    assert len(list(tmp_path.rglob('manifests/*.json')))==1
++    assert load_capture(tmp_path,refs[0])['manifest']['full_replay_ready'] is False
++
++
++def test_ac_failed_publication_leaves_no_readable_observation(tmp_path,monkeypatch):
++    import stock_swing.experiments.measurement_capture as module
++    real=module.os.link
++    def fail_manifest(source,destination):
++        if Path(destination).parent.name=='manifests':raise OSError('injected manifest publication failure')
++        return real(source,destination)
++    monkeypatch.setattr(module.os,'link',fail_manifest)
++    with pytest.raises(CaptureError):capture(tmp_path)
++    assert not list(tmp_path.rglob('manifests/*.json'))
++    monkeypatch.setattr(module.os,'link',real)
++    assert load_capture(tmp_path,capture(tmp_path))['payload']['candidates'][0]['symbol']=='ABC'
++
++
++def test_ac_process_death_after_blob_has_no_observation_then_clean_retry(tmp_path):
++    code='''
++from pathlib import Path
++import os
++from tests.unit.test_measurement_capture import capture
++import stock_swing.experiments.measurement_capture as m
++link=m.os.link
++def interrupt(src,dst):
++    if Path(dst).parent.name=='manifests':os._exit(73)
++    return link(src,dst)
++m.os.link=interrupt
++capture(Path(os.environ['CAPTURE_FIXTURE_ROOT']))
++'''
++    process=subprocess.run([sys.executable,'-c',code],env={**os.environ,'CAPTURE_FIXTURE_ROOT':str(tmp_path)},capture_output=True,timeout=15)
++    assert process.returncode==73
++    assert not list(tmp_path.rglob('manifests/*.json'))
++    result=load_capture(tmp_path,capture(tmp_path))
++    assert result['manifest']['candidate_count']==2
++
++
++def test_ac_missing_dependency_retry_refuses_instead_of_healing(tmp_path):
++    ref=capture(tmp_path);record=load_capture(tmp_path,ref)
++    (tmp_path/'data/audits/measurement_inputs/blobs'/record['manifest']['payload_sha256']).unlink()
++    with pytest.raises(CaptureError):capture(tmp_path)
++
++
++def test_ac_capture_does_not_change_caller_signals_or_trading_settings(tmp_path):
++    candidates=[signal()];settings={'min_momentum':.05,'api_key':'DO_NOT_SAVE_SECRET'}
++    prior=vars(candidates[0]).copy()
++    capture(tmp_path,signals=candidates,cli_settings=settings)
++    assert vars(candidates[0])==prior
++    assert settings=={'min_momentum':.05,'api_key':'DO_NOT_SAVE_SECRET'}
+diff --git a/tests/unit/test_provider_bar_contracts.py b/tests/unit/test_provider_bar_contracts.py
+new file mode 100644
+index 0000000..628c551
+--- /dev/null
++++ b/tests/unit/test_provider_bar_contracts.py
+@@ -0,0 +1,200 @@
++"""Regression 2026-10-23 Massive 5Min -> daily, current base fa386d1.
++Acceptance: same interval on every fallback, saved provider/price version lineage.
++Only external HTTP/SDK transport is substituted; dispatch/decoding/storage are real.
++"""
++from datetime import datetime, timezone
++import hashlib
++import json
++from pathlib import Path
++import os
++import subprocess
++import sys
++from urllib.parse import urlparse
++
++import httpx
++import pytest
++import urllib3
++from stock_swing.sources.massive_client import MassiveClient
++from stock_swing.sources.hybrid_data_fetcher import HybridDataFetcher
++from stock_swing.sources.broker_client import BrokerClient
++from stock_swing.experiments.decision_input_capture import DecisionInputRecorder, load_input_run, load_decision_input
++
++EPOCH = 1792526400000
++BAR = dict(t=EPOCH,o=100,h=102,l=99,c=101,v=1000,vw=100.5,n=42)
++
++def setup_fetcher(tmp_path, monkeypatch, *, enabled=True, massive_pages=None, yahoo=True):
++    calls=[]
++    pages=iter(massive_pages if massive_pages is not None else [dict(results=[BAR], adjusted=True,request_id='fixture-request')])
++    def massive_http(self, method, url, **kw):
++        calls.append(('massive',url,kw.get('fields',{})))
++        page=next(pages)
++        if isinstance(page,Exception): raise page
++        return urllib3.response.HTTPResponse(body=json.dumps(page).encode(),status=200,preload_content=True)
++    monkeypatch.setattr(urllib3.PoolManager,'request',massive_http)
++    class YahooResponse:
++        def __enter__(self):return self
++        def __exit__(self,*a):pass
++        def read(self):
++            return json.dumps(dict(chart=dict(result=[dict(timestamp=[EPOCH//1000] if yahoo else [],indicators=dict(quote=[dict(open=[100],high=[102],low=[99],close=[101],volume=[1000])]))]))).encode()
++    def yahoo_http(*a,**kw):
++        calls.append(('yahoo','chart',{}));return YahooResponse()
++    monkeypatch.setattr('urllib.request.urlopen',yahoo_http)
++    def broker_http(self,url,**kw):
++        calls.append(('broker',url,kw.get('params',{})))
++        b=dict(BAR,t='2026-10-20T20:00:00Z')
++        return httpx.Response(200,content=json.dumps(dict(bars=[b])).encode(),headers={'x-request-id':'broker-request'})
++    monkeypatch.setattr(httpx.Client,'get',broker_http)
++    recorder=DecisionInputRecorder(tmp_path,enabled=enabled,run_id='provider-test')
++    broker=BrokerClient(api_key='fixture',api_secret='fixture',paper_mode=True)
++    broker.measurement_recorder=recorder
++    fetcher=HybridDataFetcher(broker_client=broker,etf_symbols=set(),massive_api_key='fixture',measurement_recorder=recorder)
++    return fetcher,recorder,calls
++
++def seal(recorder):
++    recorder.observe('run_end',dict(exit_code=0,observations_before_end=recorder.committed,capture_failures=recorder.failures))
++    return recorder.seal()
++
++@pytest.mark.parametrize('frame,timespan,mult,event',[('5Min','minute',5,'bar_5min'),('1Min','minute',1,'bar_1min'),('15min','minute',15,'bar_15min'),('1Hour','minute',60,'bar_1hour'),('daily','day',1,'bar_daily'),('1Day','day',1,'bar_daily')])
++def test_ac_massive_dispatch_preserves_requested_interval(tmp_path,monkeypatch,frame,timespan,mult,event):
++    f,r,calls=setup_fetcher(tmp_path,monkeypatch)
++    records,source=f.fetch_bars('NVDA',timeframe=frame,limit=3)
++    assert source=='massive',calls
++    assert len(records)==1 and records[0].event_type==event
++    assert f'/range/{mult}/{timespan}/' in calls[0][1]
++    c=records[0].payload['bar_contract']
++    assert c['response_adjusted'] is True and c['response_request_id']=='fixture-request'
++    assert c['requested_adjustment'] is None and c['provider_final'] is None
++    assert c['provider_first_publication_at'] is None and c['research_qualified'] is False
++    run=load_input_run(tmp_path,seal(r))
++    assert run['manifest']['full_replay_ready'] is False
++    obs=load_decision_input(tmp_path,c['observation_ref'])
++    assert obs['payload']['contract']['version_sha256']==c['version_sha256']
++    assert obs['payload']['response']['results'][0]['c']==records[0].payload['close']
++
++@pytest.mark.parametrize('enabled',[True,False])
++def test_ac_minute_fallback_never_visits_yahoo_or_daily(tmp_path,monkeypatch,enabled):
++    f,r,calls=setup_fetcher(tmp_path,monkeypatch,enabled=enabled,massive_pages=[dict(results=[])])
++    records,source=f.fetch_bars('NVDA','5Min',3)
++    assert source=='broker' and records[0].event_type=='bar_5min'
++    assert [c[0] for c in calls]==['massive','broker']
++    assert calls[-1][2]['timeframe']=='5Min'
++    if enabled:
++        c=records[0].payload['bar_contract']
++        assert c['requested_feed']=='iex' and c['requested_adjustment']=='raw'
++        assert c['response_adjusted'] is None and c['response_request_id']=='broker-request'
++    else:
++        assert not (tmp_path/'data/audits/measurement_inputs').exists()
++        assert 'bar_contract' not in records[0].payload
++
++def test_ac_yahoo_contract_retains_unknown_basis(tmp_path,monkeypatch):
++    f,r,calls=setup_fetcher(tmp_path,monkeypatch,massive_pages=[dict(results=[])])
++    records,source=f.fetch_bars('NVDA','1Day',3)
++    c=records[0].payload['bar_contract']
++    assert source=='yahoo' and c['requested_interval']=='1Day'
++    assert c['requested_adjustment'] is None and c['response_adjusted'] is None
++    assert c['response_request_id'] is None and len(c['raw_sha256'])==64
++    assert [v[0] for v in calls]==['massive','yahoo']
++
++def test_ac_daily_alpaca_fallback_retains_feed_and_raw_basis(tmp_path,monkeypatch):
++    f,r,calls=setup_fetcher(tmp_path,monkeypatch,massive_pages=[dict(results=[])],yahoo=False)
++    records,source=f.fetch_bars('NVDA','1Day',3)
++    assert source=='broker' and records[0].payload['bar_contract']['requested_interval']=='1Day'
++    assert [v[0] for v in calls]==['massive','yahoo','broker']
++
++@pytest.mark.parametrize('frame',['0Min','60Min','5Day','oops','',None])
++def test_ac_unsupported_interval_refuses_before_http(tmp_path,monkeypatch,frame):
++    f,r,calls=setup_fetcher(tmp_path,monkeypatch)
++    with pytest.raises(ValueError): f.fetch_bars('NVDA',frame,3)
++    assert calls==[]
++
++def test_ac_massive_pages_keep_distinct_response_versions(tmp_path,monkeypatch):
++    pages=[dict(results=[BAR],adjusted=True,request_id='page-one',next_url='https://api.massive.com/v2/aggs/ticker/NVDA/range/5/minute/page?cursor=two'),dict(results=[dict(BAR,t=EPOCH+300000,c=102)],adjusted=False,request_id='page-two')]
++    f,r,calls=setup_fetcher(tmp_path,monkeypatch,massive_pages=pages)
++    records,source=f.fetch_bars('NVDA','5Min',3)
++    assert source=='massive' and len(records)==2 and len(calls)==2
++    contracts=[v.payload['bar_contract'] for v in records]
++    assert [v['response_request_id'] for v in contracts]==['page-one','page-two']
++    assert contracts[0]['raw_sha256']!=contracts[1]['raw_sha256']
++    assert contracts[0]['version_sha256']!=contracts[1]['version_sha256']
++    assert [v['response_adjusted'] for v in contracts]==[True,False]
++
++@pytest.mark.parametrize('body',[b'{',b'[]',b'{"results":null}',b'{"results":[{"t":null}]}'])
++def test_ac_bad_massive_response_falls_back_same_interval(tmp_path,monkeypatch,body):
++    f,r,calls=setup_fetcher(tmp_path,monkeypatch)
++    def bad(*args,**kw):return urllib3.response.HTTPResponse(body=body,status=200,preload_content=True)
++    monkeypatch.setattr(urllib3.PoolManager,'request',bad)
++    records,source=f.fetch_bars('NVDA','5Min',3)
++    assert source=='broker' and records[0].event_type=='bar_5min'
++    assert not any(v[0]=='yahoo' for v in calls)
++
++@pytest.mark.parametrize('adjusted',[True,False,None])
++def test_ac_response_flags_are_not_defaults(tmp_path,monkeypatch,adjusted):
++    page=dict(results=[BAR],request_id='flag')
++    if adjusted is not None:page['adjusted']=adjusted
++    f,r,calls=setup_fetcher(tmp_path,monkeypatch,massive_pages=[page])
++    records,_=f.fetch_bars('NVDA','1Day',3)
++    assert records[0].payload['bar_contract']['response_adjusted'] is adjusted
++
++def test_ac_recorder_failure_does_not_turn_capture_into_success(tmp_path,monkeypatch):
++    f,r,calls=setup_fetcher(tmp_path,monkeypatch)
++    folder=tmp_path/'data/audits/measurement_inputs';folder.parent.mkdir(parents=True);folder.write_text('blocked')
++    records,source=f.fetch_bars('NVDA','5Min',3)
++    assert source=='massive' and r.failures>0
++    assert records[0].payload['bar_contract']['observation_ref'] is None
++
++@pytest.mark.parametrize('tz',['UTC','Asia/Tokyo'])
++def test_ac_epoch_is_utc_independent_of_host(tmp_path,monkeypatch,tz):
++    script="from stock_swing.sources.massive_client import MassiveClient;from types import SimpleNamespace;c=object.__new__(MassiveClient);c.client=SimpleNamespace(list_aggs=lambda **kw:[SimpleNamespace(timestamp=1792526400000,open=1,high=2,low=1,close=2,volume=1)]);print(c.fetch_daily_bars('NVDA','2026-10-20','2026-10-21')[0].timestamp.isoformat())"
++    env=dict(os.environ,TZ=tz,PYTHONPATH=str(Path(__file__).resolve().parents[2]/'src'),PYTHONDONTWRITEBYTECODE='1')
++    out=subprocess.check_output([sys.executable,'-B','-c',script],env=env,text=True)
++    assert out.strip()=='2026-10-20T20:00:00+00:00'
++
++@pytest.mark.parametrize('frame,event,path_piece',[('5Min','bar_5min','/5/minute/'),('15Min','bar_15min','/15/minute/'),('1Hour','bar_1hour','/60/minute/'),('1Day','bar_daily','/1/day/')])
++def test_regression_legacy_constructor_routes_requested_interval(tmp_path,monkeypatch,frame,event,path_piece):
++    """Same real-transport test works on baseline; no new recorder API needed."""
++    seen=[]
++    def response(self,method,url,**kw):
++        seen.append(url)
++        return urllib3.response.HTTPResponse(body=json.dumps(dict(results=[BAR])).encode(),status=200,preload_content=True)
++    monkeypatch.setattr(urllib3.PoolManager,'request',response)
++    broker=BrokerClient(api_key='fixture',api_secret='fixture',paper_mode=True)
++    f=HybridDataFetcher(broker_client=broker,etf_symbols=set(),massive_api_key='fixture')
++    records,source=f.fetch_bars('NVDA',frame,3)
++    assert source=='massive' and records[0].event_type==event
++    assert len(seen)==1 and path_piece in seen[0]
++
++@pytest.mark.parametrize('link',['missing','tampered'])
++def test_ac_saved_response_dependencies_are_required(tmp_path,monkeypatch,link):
++    f,r,calls=setup_fetcher(tmp_path,monkeypatch)
++    records,_=f.fetch_bars('NVDA','1Day',3)
++    ref=seal(r);receipt=load_decision_input(tmp_path,records[0].payload['bar_contract']['observation_ref'])
++    blob=tmp_path/'data/audits/measurement_inputs/blobs'/receipt['manifest']['payload_sha256']
++    if link=='missing':blob.unlink()
++    else:blob.write_bytes(blob.read_bytes()+b' ')
++    from stock_swing.experiments.measurement_capture import CaptureError
++    with pytest.raises(CaptureError):load_input_run(tmp_path,ref)
++
++@pytest.mark.parametrize('next_url',['https://evil.invalid/v2/aggs/ticker/NVDA/range/5/minute/x','https://api.massive.com/v2/aggs/ticker/NVDA/range/5/minute/x'])
++def test_ac_unsafe_or_cyclic_pages_refuse_without_extra_provider_fetch(tmp_path,monkeypatch,next_url):
++    page=dict(results=[BAR],next_url=next_url)
++    f,r,calls=setup_fetcher(tmp_path,monkeypatch,massive_pages=[page,page])
++    records,source=f.fetch_bars('NVDA','5Min',3)
++    assert source=='broker' and records[0].event_type=='bar_5min'
++    assert sum(c[0]=='massive' for c in calls)==(1 if 'evil' in next_url else 2)
++    assert not any(c[0]=='yahoo' for c in calls)
++
++
++def test_ac_secret_response_is_not_persisted(tmp_path,monkeypatch):
++    page=dict(results=[BAR],apiKey='fixture-private-value')
++    f,r,calls=setup_fetcher(tmp_path,monkeypatch,massive_pages=[page])
++    records,source=f.fetch_bars('NVDA','5Min',3)
++    assert source=='massive' and r.failures==1
++    assert records[0].payload['bar_contract']['observation_ref'] is None
++    assert all(b'fixture-private-value' not in p.read_bytes() for p in tmp_path.rglob('*') if p.is_file())
++
++
++def test_ac_weekly_interval_bypasses_daily_providers(tmp_path,monkeypatch):
++    f,r,calls=setup_fetcher(tmp_path,monkeypatch)
++    records,source=f.fetch_bars('NVDA','1Week',3)
++    assert source=='broker' and records[0].event_type=='bar_1week'
++    assert [c[0] for c in calls]==['broker']
+diff --git a/tests/unit/test_provider_cli_copy.py b/tests/unit/test_provider_cli_copy.py
+new file mode 100644
+index 0000000..cda50cb
+--- /dev/null
++++ b/tests/unit/test_provider_cli_copy.py
+@@ -0,0 +1,61 @@
++"""Acceptance: actual opt-in CLI callsite -> persistence -> normal run reader."""
++from datetime import datetime,timezone
++import hashlib,json,os,shutil,subprocess,sys
++from pathlib import Path
++import pytest
++
++def launch_copy(source_root,root,*,enabled,zone='UTC',missing_env=False,blocked_capture=False):
++    source_root=Path(source_root);root=Path(root);root.mkdir(parents=True)
++    shutil.copytree(source_root/'src',root/'src',ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
++    driver=source_root/'tests/fixtures/provider_contract_cli_driver.py'
++    shutil.copyfile(driver,root/'driver.py')
++    for p in (source_root/'src').rglob('*.py'):
++        assert hashlib.sha256(p.read_bytes()).digest()==hashlib.sha256((root/p.relative_to(source_root)).read_bytes()).digest()
++    for name,text in {'config/runtime/current_mode.yaml':'mode: paper\n',
++        'config/guardrails/autonomous_stop.yaml':'paper_warning_only: true\nrules: {}\n'}.items():
++        path=root/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text(text)
++    path=root/'data/guardrails/day_start_snapshot.json';path.parent.mkdir(parents=True)
++    now=datetime.now(timezone.utc)
++    path.write_text(json.dumps(dict(market_date=now.date().isoformat(),captured_at=now.isoformat(),source='controlled_fixture_baseline',day_start_equity=100000.,day_start_unrealized=0.,missing_fields=[])))
++    env=dict(PATH=os.environ.get('PATH','/usr/bin:/bin'),PYTHONPATH=str(root/'src'),PYTHONDONTWRITEBYTECODE='1',
++             TZ=zone,BROKER_API_KEY='fixture',BROKER_API_SECRET='fixture',BROKER_BASE_URL='https://paper-fixture.invalid',
++             MASSIVE_API_KEY='fixture',FIXTURE_RECORDING='1' if enabled else '0')
++    if blocked_capture:
++        blocked=root/'data/audits/measurement_inputs';blocked.parent.mkdir(parents=True);blocked.write_text('blocked')
++    if missing_env:del env['BROKER_API_KEY']
++    process=subprocess.run([sys.executable,'-B',str(root/'driver.py')],env=env,cwd=root,capture_output=True,text=True,timeout=40)
++    assert process.returncode==0,process.stderr[-1500:]
++    result=json.loads(process.stdout);result['driver_exit']=process.returncode
++    return result
++
++@pytest.mark.parametrize('zone',['UTC','Asia/Tokyo'])
++def test_ac_actual_cli_off_on_same_decisions_http_and_no_trades(tmp_path,zone):
++    source=Path(__file__).resolve().parents[2]
++    off=launch_copy(source,tmp_path/'off',enabled=False,zone=zone)
++    on=launch_copy(source,tmp_path/'on',enabled=True,zone=zone)
++    assert off['main_exit']==on['main_exit']==0,(off,on)
++    assert off['http_calls']==on['http_calls']
++    assert off['business_decision_lines']==on['business_decision_lines']
++    assert all(method=='GET' for method,_ in on['http_calls'])
++    assert off['origin_is_copy'] and on['origin_is_copy']
++    assert not off['store_exists'] and on['indices']==1
++    assert on['capture_complete'] and on['declared_exit_success']
++    assert on['stage_counts']['provider_response']==2 and on['stage_counts']['canonical_provider_bars']==1
++    assert on['full_replay_ready'] is False
++
++
++def test_ac_missing_env_sealed_run_is_not_application_success(tmp_path):
++    result=launch_copy(Path(__file__).resolve().parents[2],tmp_path/'copy',enabled=True,missing_env=True)
++    assert result['driver_exit']==0 and result['main_exit']==1
++    assert result['capture_complete'] and not result['declared_exit_success']
++    assert result['http_calls']==[] and result['stage_counts']=={'run_end':1}
++
++
++def test_ac_failed_capture_keeps_business_output_but_refuses_success(tmp_path):
++    source=Path(__file__).resolve().parents[2]
++    off=launch_copy(source,tmp_path/'off',enabled=False)
++    on=launch_copy(source,tmp_path/'on',enabled=True,blocked_capture=True)
++    assert off['main_exit']==0 and on['main_exit']==1
++    assert off['http_calls']==on['http_calls']
++    assert off['business_decision_lines']==on['business_decision_lines']
++    assert on['indices']==0

@@ -1,0 +1,13 @@
+{
+  "ack_loss_restart_duplicate_prevented": true,
+  "concurrency_and_death_duplicate_prevented": true,
+  "concurrency_cases": 4,
+  "concurrency_processes": 12,
+  "default_intent_epoch_rotation": false,
+  "fractional_policy_changed": false,
+  "normal_integer_quantities_unchanged": true,
+  "real_orders": 0,
+  "scenarios": 74,
+  "separate_process_invocations": 198,
+  "version_cases": 148
+}

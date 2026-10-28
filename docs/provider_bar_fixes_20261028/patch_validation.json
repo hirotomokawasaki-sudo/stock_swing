@@ -1,0 +1,10 @@
+{
+  "base": "8909e79c1a83e04d508715b132575625454b7856",
+  "changed_files": 13,
+  "combined_application": true,
+  "main_read_only_check_exit": 0,
+  "mode_normalization": "restore recorded Git modes only after matching bytes (restrictive umask)",
+  "reverse_application": true,
+  "sequential_application": true,
+  "tested_revision": "067d23b8fff9d406e87867fc177eb1da978368c1"
+}

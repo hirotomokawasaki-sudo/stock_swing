@@ -1,0 +1,182 @@
+{
+  "base_head": "8909e79c1a83e04d508715b132575625454b7856",
+  "combined_runtime": [
+    "scripts/close_hpe_short.py",
+    "scripts/emergency_sell.py",
+    "src/stock_swing/cli/paper_demo.py",
+    "src/stock_swing/execution/paper_executor.py",
+    "src/stock_swing/execution/reduction_orders.py",
+    "src/stock_swing/execution/submission_guard.py",
+    "src/stock_swing/experiments/decision_input_capture.py",
+    "src/stock_swing/experiments/measurement_capture.py",
+    "src/stock_swing/normalization/broker_normalizer.py",
+    "src/stock_swing/reporting/console_renderer.py",
+    "src/stock_swing/reporting/console_summary.py",
+    "src/stock_swing/risk/allocation_config.py",
+    "src/stock_swing/risk/effective_config.py",
+    "src/stock_swing/risk/order_preflight.py",
+    "src/stock_swing/risk/portfolio_allocator.py",
+    "src/stock_swing/risk/risk_budget.py",
+    "src/stock_swing/sources/bar_contract.py",
+    "src/stock_swing/sources/broker_client.py",
+    "src/stock_swing/sources/broker_client_protocol.py",
+    "src/stock_swing/sources/hybrid_data_fetcher.py",
+    "src/stock_swing/sources/massive_client.py"
+  ],
+  "delta_runtime": [
+    "src/stock_swing/execution/reduction_orders.py",
+    "src/stock_swing/execution/submission_guard.py",
+    "src/stock_swing/sources/broker_client.py",
+    "scripts/emergency_sell.py",
+    "scripts/close_hpe_short.py"
+  ],
+  "pins": {
+    "scripts/close_hpe_short.py": {
+      "after_mode": 448,
+      "after_sha256": "b9ca54069d1f5dacf724b5172034e739a54c68419de668f831346f510011f43d",
+      "before_exists": true,
+      "before_mode": 448,
+      "before_sha256": "e2e6ac1ffdc95328cf13f85a515512e2f7045078940fb737b1e6bc3e6df59821"
+    },
+    "scripts/emergency_sell.py": {
+      "after_mode": 384,
+      "after_sha256": "baae8a080d26c4339266ec85fdc69e66929cfeab3014750d2669d0c4428545b6",
+      "before_exists": true,
+      "before_mode": 384,
+      "before_sha256": "56f1a75aa03436fa9017959408d8038bd317b4b229707abd7284951ba3893370"
+    },
+    "src/stock_swing/cli/paper_demo.py": {
+      "after_mode": 384,
+      "after_sha256": "6eb16517071671d403f6d24545810e252f5eec009d555fc00f77dfb04fcc3d5e",
+      "before_exists": true,
+      "before_mode": 384,
+      "before_sha256": "c826bff395b3a6d6e2e21d4d98b45f41296e96dab77ca21694a132cc82128e85"
+    },
+    "src/stock_swing/execution/paper_executor.py": {
+      "after_mode": 384,
+      "after_sha256": "7bb45eab8f713225a27fd7b139de12e27ae7ce54d4aa13778aa1e8b8870d31d4",
+      "before_exists": true,
+      "before_mode": 384,
+      "before_sha256": "4a06f308d10eb3dc6069a960680cafef0dce3452263190c1f7f07369f23636b8"
+    },
+    "src/stock_swing/execution/reduction_orders.py": {
+      "after_mode": 384,
+      "after_sha256": "adf2cfc9ac1d3880d64604757113b1dc797013dbabc1c257d857763162849aa0",
+      "before_exists": false,
+      "before_mode": null,
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "src/stock_swing/execution/submission_guard.py": {
+      "after_mode": 384,
+      "after_sha256": "1d372ba10fcff6343ae4f19b80b20635f33a331919d6e9b717b7a0605a049f86",
+      "before_exists": false,
+      "before_mode": null,
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "src/stock_swing/experiments/decision_input_capture.py": {
+      "after_mode": 420,
+      "after_sha256": "75f48bd130831a63266f52fa39d15820cde6f02b3c9cdfd53d48d44d1d972559",
+      "before_exists": false,
+      "before_mode": null,
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "src/stock_swing/experiments/measurement_capture.py": {
+      "after_mode": 420,
+      "after_sha256": "ec595328563aadf9fbb88f48c4e3057decdf5d002feb6013851fb49aa6b3463e",
+      "before_exists": false,
+      "before_mode": null,
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "src/stock_swing/normalization/broker_normalizer.py": {
+      "after_mode": 420,
+      "after_sha256": "50a13236ce85ee1b9df8b0777c02784d0c7ecb43a4ca3b6ac925136552134d4b",
+      "before_exists": true,
+      "before_mode": 384,
+      "before_sha256": "fb880d2755531089d1fb62c6a94c7f6da323c2c2eac718d79a3b374c53eac633"
+    },
+    "src/stock_swing/reporting/console_renderer.py": {
+      "after_mode": 384,
+      "after_sha256": "c7a77fd0c65133010b01b83cfe291e1a1ba33356ab4668e7f94011f168dfba91",
+      "before_exists": true,
+      "before_mode": 384,
+      "before_sha256": "3965965b416f64421ff165ad57c936a07e6e027dd98250c4f374618830a45cda"
+    },
+    "src/stock_swing/reporting/console_summary.py": {
+      "after_mode": 384,
+      "after_sha256": "46f6e8d54fca3c3ab98b61b86a94d8a9866ff6ad3c98bd6c06e48d170b902e79",
+      "before_exists": true,
+      "before_mode": 384,
+      "before_sha256": "b5e09b3dd462d8c640c4d7608c2ee1f1e68d6c9e725535be9fe884805a31500b"
+    },
+    "src/stock_swing/risk/allocation_config.py": {
+      "after_mode": 384,
+      "after_sha256": "c2fef6338f730c5cd2d72df19b924bee216dbfd25fc32374142496d2ab621f99",
+      "before_exists": true,
+      "before_mode": 384,
+      "before_sha256": "dcb2e4f21aaf01163d66859a1cde97c039ff39dffb07aade5486ff6213c2b85f"
+    },
+    "src/stock_swing/risk/effective_config.py": {
+      "after_mode": 384,
+      "after_sha256": "a746a4a964a4213fca7bde8fcb3773ceace698e664884001c64f604e988d3046",
+      "before_exists": false,
+      "before_mode": null,
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "src/stock_swing/risk/order_preflight.py": {
+      "after_mode": 384,
+      "after_sha256": "65ae99c91f2e4466d52b8c4cc24a180159aee83d5e4430361e40f128485c32cf",
+      "before_exists": false,
+      "before_mode": null,
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "src/stock_swing/risk/portfolio_allocator.py": {
+      "after_mode": 384,
+      "after_sha256": "f5b3f7e3a6dae7a7d3ff7e8a9eb83579a26f295a6b294d4ef3bb8b246a247f33",
+      "before_exists": true,
+      "before_mode": 384,
+      "before_sha256": "0a64d37e57c06c1ec031f6f5bfc7880c4cbdbc30aafa13691317c287416832f6"
+    },
+    "src/stock_swing/risk/risk_budget.py": {
+      "after_mode": 384,
+      "after_sha256": "f104f39d74b6c18951cb837d2ca3836edfb6af7d39df279effbc7f3df0e29cc8",
+      "before_exists": true,
+      "before_mode": 384,
+      "before_sha256": "8d15abbaac3adb0e9c7d239b32c9d6ccfd393a9c77e8cf8c034283f7cf8848ee"
+    },
+    "src/stock_swing/sources/bar_contract.py": {
+      "after_mode": 420,
+      "after_sha256": "8329875cb14fa17f18eb000fbcdd518cd5ad0dd628f2f400d7b3c2b2f25698dd",
+      "before_exists": false,
+      "before_mode": null,
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "src/stock_swing/sources/broker_client.py": {
+      "after_mode": 384,
+      "after_sha256": "3b70a569d00b9a7d8e231e5591602a214913b767621220bbef2ca1fc3cc454fd",
+      "before_exists": true,
+      "before_mode": 384,
+      "before_sha256": "7319c56167fbdd8f6fe6e4b446c9d2382f1bf64811301699791f3bc562aaec36"
+    },
+    "src/stock_swing/sources/broker_client_protocol.py": {
+      "after_mode": 384,
+      "after_sha256": "9cf58a479d013e223b39bf7be44fe9f49061ce7b4a35cbb48565f569e9165a61",
+      "before_exists": true,
+      "before_mode": 384,
+      "before_sha256": "6bb9e2564ab106af5c9fb86f076b0e5bcfa9fcbc0a53a507ae4483ca25a88bac"
+    },
+    "src/stock_swing/sources/hybrid_data_fetcher.py": {
+      "after_mode": 420,
+      "after_sha256": "d70c62b3a9acbb8fc9ad2cab2fb03dc0e59ceb59c430760aa0316434bf414875",
+      "before_exists": true,
+      "before_mode": 384,
+      "before_sha256": "4c7b8c66127ae872b8aef033dbb28571a220862d12d5195cc16c9b7f73cb09b8"
+    },
+    "src/stock_swing/sources/massive_client.py": {
+      "after_mode": 420,
+      "after_sha256": "9394a183ed7c36a3b79022e6da9c275334060cf79c71e03c99c40a8b090e5419",
+      "before_exists": true,
+      "before_mode": 384,
+      "before_sha256": "6ed163f73f52c963b4755363b17893c4e58e437debec9e72bf20f7789c0bd772"
+    }
+  }
+}

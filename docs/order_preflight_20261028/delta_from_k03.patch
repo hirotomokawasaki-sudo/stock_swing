@@ -1,0 +1,459 @@
+--- a/src/stock_swing/cli/paper_demo.py
++++ b/src/stock_swing/cli/paper_demo.py
+@@ -2666,6 +2666,18 @@
+         if "_reduce_size_multiplier" in dir() and _reduce_size_multiplier < 1.0
+         else dynamic_exposure_cap
+     )
++    # K02 draft: veto ambiguous BUY intents without selecting/netting strategies.
++    from stock_swing.risk.order_preflight import buy_conflicts, snapshot_from_broker
++    _order_preflight_receipts = []
++    _conflicts = buy_conflicts(actionable)
++    for _decision in actionable:
++        if _decision.decision_id in _conflicts:
++            _receipt = dict(_conflicts[_decision.decision_id], decision_id=_decision.decision_id)
++            _decision.block_reason = _receipt["reason"]
++            _decision.evidence["order_preflight"] = _receipt
++            _order_preflight_receipts.append(_receipt)
++            logger.warning("order_preflight_hold %s", json.dumps(_receipt, sort_keys=True))
++    actionable = [d for d in actionable if d.decision_id not in _conflicts]
+     actionable, preview_cache, skipped_buy_reasons, skipped_buy_symbols = _prefilter_actionable_buys_for_submission(
+         actionable,
+         executor,
+@@ -2707,6 +2719,12 @@
+         sym: dict(pos) for sym, pos in (current_positions_full or {}).items()
+     }
+     
++    # K01: one conservative run-local snapshot, including remaining open BUYs.
++    # Keep the explicit measured-cluster override, never an unknown-input override.
++    _order_preflight = snapshot_from_broker(
++        broker, current_positions_full, equity, get_mid_price,
++        cluster_caps={} if os.environ.get("PAPER_DEMO_SKIP_CLUSTER_CAP", "").lower() == "true" else None,
++    )
+     # Symbol-level position size limit.
+     # 2026-05-15 risk tightening: stocks use 6% of equity, ETFs use 70% of that cap
+     # to reduce concentration in thematic / sector products.
+@@ -2848,6 +2866,21 @@
+                     )
+                     _allocation_blocked_count += 1
+                     continue
++            if o.side == "buy":
++                _is_etf = o.symbol in ETF_SYMBOLS
++                _symbol_multiplier = float(_ALLOC_CONFIG.etf_new_buy_multiplier if _is_etf else _ALLOC_CONFIG.stock_new_buy_multiplier)
++                _receipt = _order_preflight.reserve(
++                    decision.decision_id, o.symbol, preview_qty, current_price,
++                    DEFAULT_MAX_POSITION_NOTIONAL_PCT * _symbol_multiplier,
++                    allocator=portfolio_allocator,
++                )
++                _order_preflight_receipts.append(_receipt)
++                decision.evidence["order_preflight"] = _receipt
++                if not _receipt["allowed"]:
++                    decision.block_reason = _receipt["reason"]
++                    logger.warning("order_preflight_hold %s", json.dumps(_receipt, sort_keys=True))
++                    print(f"\n  SKIP BUY {o.symbol}: {_receipt['reason']}")
++                    continue
+             preview_basis = ""
+             if preview_sizing:
+                 preview_basis = (
+@@ -2856,12 +2889,22 @@
+                     f"exposure={preview_sizing.get('shares_by_exposure')}]"
+                 )
+             print(f"\n  Submitting {o.side.upper()} {preview_qty} {o.symbol} ({o.order_type}){preview_basis} ... ", end="", flush=True)
+-            sub = executor.submit(
+-                decision,
+-                current_qty=current_positions.get(o.symbol) if o.side == "sell" else None,
+-                precomputed_qty=preview_qty,
+-                precomputed_sizing=preview_sizing,
+-            )
++            try:
++                sub = executor.submit(
++                    decision,
++                    current_qty=current_positions.get(o.symbol) if o.side == "sell" else None,
++                    precomputed_qty=preview_qty,
++                    precomputed_sizing=preview_sizing,
++                )
++            except Exception:
++                if o.side == "buy":
++                    _order_preflight.observe_submission(decision.decision_id, "unknown")
++                    _receipt["submission_status"] = "unknown"
++                raise
++            if o.side == "buy":
++                _order_preflight.observe_submission(decision.decision_id, sub.status)
++                _receipt["submission_status"] = sub.status
++                _receipt["snapshot_available_after_submit"] = _order_preflight.available
+             submissions.append(sub)
+             if sub.status == "submitted":
+                 sizing = sub.sizing_details or {}
+@@ -3284,6 +3327,14 @@
+     except Exception as _jc_exc:
+         logger.warning("P6 join_coverage report failed: %s", _jc_exc)
+ 
++    _preflight_path = project_root / "reports/order_preflight" / f"{run_context.run_id}.json"
++    _preflight_path.parent.mkdir(parents=True, exist_ok=True)
++    _preflight_path.write_text(json.dumps({
++        "policy": "draft_k01_k02_not_deployed",
++        "snapshot_available": _order_preflight.available,
++        "snapshot_reason": _order_preflight.reason,
++        "receipts": _order_preflight_receipts,
++    }, ensure_ascii=False, indent=2), encoding="utf-8")
+     _print_summary(decisions, submissions, equity, args.dry_run)
+     from stock_swing.reporting.console_summary import ConsoleSummary
+ 
+--- /dev/null
++++ b/src/stock_swing/risk/order_preflight.py
+@@ -0,0 +1,193 @@
++"""Draft run-local order preflight; not a durable or atomic order manager.
++
++K01/K02, 2026-10-28, production base 8909e79. Values are planned quote
++notionals, never a bound on market fills. Unknown snapshots block BUY only.
++"""
++from __future__ import annotations
++
++from collections import defaultdict
++from decimal import Decimal, InvalidOperation
++from typing import Any, Callable
++
++from stock_swing.risk.correlation_cluster import DEFAULT_CLUSTER_CAPS, get_cluster_for_symbol
++
++
++def _number(value: Any, *, positive: bool = False) -> Decimal:
++    if isinstance(value, bool):
++        raise ValueError("boolean_number")
++    try:
++        result = Decimal(str(value))
++    except (InvalidOperation, ValueError):
++        raise ValueError("invalid_number") from None
++    if not result.is_finite() or result < 0 or (positive and result == 0):
++        raise ValueError("invalid_number_range")
++    return result
++
++
++def _symbol(value: Any) -> str:
++    if not isinstance(value, str) or not value.strip():
++        raise ValueError("invalid_symbol")
++    return value.strip().upper()
++
++
++def buy_conflicts(decisions: list[Any]) -> dict[str, dict[str, Any]]:
++    """Draft veto only: preserve original intents; never select/net strategies."""
++    groups: dict[str, list[Any]] = defaultdict(list)
++    for decision in decisions:
++        order = decision.proposed_order
++        if order is not None:
++            groups[_symbol(order.symbol)].append(decision)
++    held: dict[str, dict[str, Any]] = {}
++    for symbol, group in groups.items():
++        buys = [d for d in group if d.proposed_order.side == "buy"]
++        sells = [d for d in group if d.proposed_order.side == "sell"]
++        if len(buys) > 1 or (buys and sells):
++            for decision in buys:
++                held[decision.decision_id] = {
++                    "allowed": False,
++                    "reason": "same_symbol_buy_sell_conflict" if sells else "same_symbol_duplicate_buy",
++                    "symbol": symbol,
++                    "related_decision_ids": [d.decision_id for d in group],
++                }
++    return held
++
++
++class OrderPreflight:
++    """A single qualified snapshot plus monotone in-run BUY reservations.
++
++    File IO/config loading remains with existing callers. No state is persisted
++    as authority, and no cancel/reject is trusted to release an attempted order.
++    """
++
++    def __init__(self, positions: Any, equity: Any, orders: Any, *,
++                 complete: bool, price_lookup: Callable[[str], Any],
++                 cluster_caps: dict[str, float] | None = None) -> None:
++        self.available = False
++        self.reason = "snapshot_unavailable"
++        self.values: dict[str, Decimal] = {}
++        self.pending_symbols: set[str] = set()
++        self.reservations: dict[str, tuple[str, Decimal]] = {}
++        self.equity = Decimal(0)
++        self.caps = DEFAULT_CLUSTER_CAPS if cluster_caps is None else cluster_caps
++        try:
++            if complete is not True or not isinstance(positions, dict) or not isinstance(orders, list):
++                raise ValueError("incomplete_or_invalid_snapshot")
++            self.equity = _number(equity, positive=True)
++            for name, cap in self.caps.items():
++                if name not in DEFAULT_CLUSTER_CAPS or _number(cap) > 1:
++                    raise ValueError("invalid_cluster_cap")
++            for key, row in positions.items():
++                symbol = _symbol(key)
++                if not isinstance(row, dict) or _symbol(row.get("symbol", key)) != symbol or symbol in self.values:
++                    raise ValueError("invalid_position")
++                qty = _number(row.get("qty", row.get("quantity")))
++                value = _number(row.get("market_value"))
++                if qty > 0 and value == 0:
++                    raise ValueError("unpriced_position")
++                self.values[symbol] = value
++            seen: set[str] = set()
++            terminal = {"filled", "canceled", "expired", "rejected", "replaced"}
++            active = {"new", "accepted", "pending_new", "partially_filled", "pending_cancel", "pending_replace", "accepted_for_bidding", "held", "done_for_day"}
++            for row in orders:
++                if not isinstance(row, dict) or not isinstance(row.get("id"), str) or not row["id"] or row["id"] in seen:
++                    raise ValueError("invalid_or_duplicate_order_id")
++                seen.add(row["id"])
++                if row.get("status") in terminal:
++                    continue
++                if row.get("status") not in active or row.get("side") not in {"buy", "sell"}:
++                    raise ValueError("unknown_order_state")
++                if row.get("order_class") not in {None, "", "simple"} or row.get("legs") or row.get("notional") is not None:
++                    raise ValueError("unsupported_order_shape")
++                symbol = _symbol(row.get("symbol"))
++                qty = _number(row.get("qty"), positive=True)
++                filled = _number(row.get("filled_qty"))
++                if qty != qty.to_integral_value() or filled != filled.to_integral_value() or filled > qty:
++                    raise ValueError("invalid_order_quantity")
++                remaining = qty - filled
++                if remaining == 0:
++                    # An active/fully-filled contradiction is not confirmed terminal.
++                    raise ValueError("active_order_without_remaining")
++                self.pending_symbols.add(symbol)
++                if row["side"] == "sell":
++                    continue  # Never credit pending SELL proceeds or capacity.
++                if row.get("type") not in {"market", "limit"}:
++                    raise ValueError("unsupported_buy_order_type")
++                price = _number(price_lookup(symbol), positive=True)
++                if row["type"] == "limit":
++                    price = max(price, _number(row.get("limit_price"), positive=True))
++                self.values[symbol] = self.values.get(symbol, Decimal(0)) + remaining * price
++            self.available = True
++            self.reason = "qualified_single_snapshot"
++        except Exception as exc:
++            self.reason = "snapshot_unavailable:" + (str(exc) if isinstance(exc, ValueError) else type(exc).__name__)
++
++    def projected_positions(self) -> dict[str, dict[str, float]]:
++        values = dict(self.values)
++        for symbol, amount in self.reservations.values():
++            values[symbol] = values.get(symbol, Decimal(0)) + amount
++        return {symbol: {"market_value": float(value)} for symbol, value in values.items()}
++
++    def reserve(self, decision_id: str, symbol: str, qty: Any, price: Any,
++                symbol_cap_pct: Any, allocator: Any = None) -> dict[str, Any]:
++        """Atomically within this Python call, check and reserve planned notional."""
++        result: dict[str, Any] = {"allowed": False, "decision_id": decision_id, "symbol": symbol}
++        try:
++            if not self.available:
++                raise ValueError(self.reason)
++            symbol = _symbol(symbol)
++            if not isinstance(decision_id, str) or not decision_id or decision_id in self.reservations:
++                raise ValueError("duplicate_or_invalid_decision_id")
++            if symbol in self.pending_symbols:
++                raise ValueError("same_symbol_open_order")
++            shares = _number(qty, positive=True)
++            if shares != shares.to_integral_value():
++                raise ValueError("fractional_quantity_unsupported")
++            amount = shares * _number(price, positive=True)
++            cap_pct = _number(symbol_cap_pct)
++            if cap_pct > 1:
++                raise ValueError("invalid_symbol_cap")
++            # Do not round inputs to cents or use an arbitrary tolerance.
++            values = dict(self.values)
++            for reserved_symbol, value in self.reservations.values():
++                values[reserved_symbol] = values.get(reserved_symbol, Decimal(0)) + value
++            result.update(planned_notional=str(amount), current_symbol_notional=str(values.get(symbol, Decimal(0))), symbol_cap=str(self.equity * cap_pct))
++            if values.get(symbol, Decimal(0)) + amount > self.equity * cap_pct:
++                raise ValueError("projected_symbol_cap_exceeded")
++            for name in get_cluster_for_symbol(symbol):
++                if name in self.caps:
++                    projected = sum((v for s, v in values.items() if name in get_cluster_for_symbol(s)), Decimal(0)) + amount
++                    if projected > self.equity * _number(self.caps[name]):
++                        result.update(cluster=name, projected_cluster_notional=str(projected), cluster_cap=str(self.equity * _number(self.caps[name])))
++                        raise ValueError("projected_cluster_cap_exceeded")
++            if allocator is not None:
++                band = allocator.check_projected_band(symbol, float(amount), self.projected_positions(), float(self.equity))
++                if not band.allowed:
++                    raise ValueError("projected_allocation_band:" + band.reason)
++            self.reservations[decision_id] = (symbol, amount)
++            result.update(allowed=True, reason="reserved_before_submit")
++        except Exception as exc:
++            result["reason"] = str(exc) if isinstance(exc, ValueError) else "preflight_unavailable:" + type(exc).__name__
++        return result
++
++    def observe_submission(self, decision_id: str, status: str) -> None:
++        """Legacy 'rejected' may be a timeout; never release on that label."""
++        if decision_id not in self.reservations or status != "submitted":
++            self.available = False
++            self.reason = "submission_outcome_unknown"
++
++
++def snapshot_from_broker(broker: Any, positions: Any, equity: Any,
++                         price_lookup: Callable[[str], Any], *,
++                         cluster_caps: dict[str, float] | None = None) -> OrderPreflight:
++    """Isolated current-adapter contract: short open-order page, not pagination.
++
++    Adapter qualification is not portable by assumption. No completeness claim
++    at the documented 500 cap, and no claim of snapshot atomicity/freshness.
++    """
++    try:
++        payload = broker.fetch_orders(status="open", limit=500).payload
++        complete = isinstance(payload, list) and len(payload) < 500
++    except Exception:
++        payload, complete = None, False
++    return OrderPreflight(positions, equity, payload, complete=complete,
++                          price_lookup=price_lookup, cluster_caps=cluster_caps)
+--- /dev/null
++++ b/tests/unit/test_order_preflight.py
+@@ -0,0 +1,160 @@
++"""K01/K02 regression: post-purchase cap/ambiguous intents, base 8909e79, 2026-10-28.
++
++Acceptance contracts use independent arithmetic, real allocator and real CLI
++separately. Broker doubles below replace external IO only. No trading evidence.
++"""
++from decimal import Decimal
++from types import SimpleNamespace as NS
++import json
++import pytest
++from stock_swing.risk.order_preflight import OrderPreflight, buy_conflicts, snapshot_from_broker
++from stock_swing.risk.portfolio_allocator import PortfolioAllocator
++
++
++def position(symbol="NOW", value=30000, qty=100):
++    return {symbol: {"symbol": symbol, "market_value": value, "qty": qty}}
++
++
++def order(**changes):
++    return dict(dict(id="external-1", symbol="CRM", side="buy", qty="10", filled_qty="0", status="new", type="market", order_class="simple"), **changes)
++
++
++def book(positions=None, orders=None, **kwargs):
++    return OrderPreflight({} if positions is None else positions, 100000, [] if orders is None else orders,
++                          complete=True, price_lookup=lambda symbol: 100, **kwargs)
++
++
++def intent(ident, symbol="MSFT", side="buy"):
++    return NS(decision_id=ident, proposed_order=NS(symbol=symbol, side=side), evidence={"strategy_id": ident})
++
++
++@pytest.mark.parametrize("holding,amount,allowed", [(30000,5000,True),(30000,5001,False),(35000,1,False),(0,1000,True)])
++def test_ac_projected_cluster_exact_and_above(holding, amount, allowed):
++    result=book(position(value=holding,qty=0 if holding==0 else 100)).reserve("d", "MSFT", 1, amount, .08)
++    assert result["allowed"] is allowed, result
++
++
++@pytest.mark.parametrize("amount,allowed", [(8000,True),(8001,False)])
++def test_ac_new_symbol_cap(amount,allowed):
++    result=book().reserve("d","MSFT",1,amount,.08)
++    assert result["allowed"] is allowed, result
++
++
++def test_ac_overlap_hyperscale_is_not_only_cloud():
++    result=book(position("AMZN",34000)).reserve("d","MSFT",20,100,.08)
++    assert result["reason"] == "projected_cluster_cap_exceeded" and result["cluster"]=="hyperscale", result
++
++
++def test_ac_batch_reservation_and_repeat_cannot_release():
++    b=book(position(value=30000))
++    assert b.reserve("a","MSFT",30,100,.08)["allowed"], "first 3k fits"
++    b.observe_submission("a","submitted")
++    assert b.reserve("a","MSFT",1,100,.08)["reason"]=="duplicate_or_invalid_decision_id", "same intent not duplicated"
++    result=b.reserve("b","CRM",30,100,.08)
++    assert not result["allowed"] and result["projected_cluster_notional"]=="36000", result
++    assert b.projected_positions()["MSFT"]["market_value"]==pytest.approx(3000), "hold accepted amount"
++
++
++@pytest.mark.parametrize("status", ["new","partially_filled","pending_cancel","pending_replace","done_for_day"])
++def test_ac_pending_remaining_and_no_cancel_credit(status):
++    b=book(position(value=33000),[order(status=status, qty="30", filled_qty="10")])
++    result=b.reserve("d","MSFT",1,100,.08)
++    assert b.values["CRM"]==Decimal("2000") and not result["allowed"], result
++
++
++@pytest.mark.parametrize("status", ["filled","canceled","expired","rejected","replaced"])
++def test_ac_confirmed_terminal_snapshot_releases_remaining(status):
++    b=book(position(value=33000),[order(status=status)])
++    assert b.reserve("d","MSFT",20,100,.08)["allowed"], "terminal does not reserve"
++
++
++def test_ac_pending_sell_never_frees_capacity():
++    b=book(position(value=35000),[order(symbol="NOW",side="sell",qty="100")])
++    assert not b.reserve("d","MSFT",1,100,.08)["allowed"], "pending SELL cannot finance new BUY"
++
++
++@pytest.mark.parametrize("side", ["buy","sell"])
++def test_ac_same_symbol_open_order_holds_new_buy(side):
++    result=book(orders=[order(symbol="MSFT",side=side)]).reserve("d","MSFT",1,100,.08)
++    assert result["reason"]=="same_symbol_open_order", result
++
++
++@pytest.mark.parametrize("changes", [dict(qty="nan"),dict(qty="1.5"),dict(filled_qty="inf"),dict(filled_qty="11"),dict(filled_qty="10"),dict(status="mystery"),dict(side="mystery"),dict(order_class="bracket"),dict(legs=[{}]),dict(notional="1000"),dict(type="stop"),dict(symbol=""),dict(id="")])
++def test_ac_malformed_pending_is_unknown(changes):
++    b=book(orders=[order(**changes)])
++    assert not b.available and not b.reserve("d","MSFT",1,100,.08)["allowed"], changes
++
++
++@pytest.mark.parametrize("value", [None,"nan","inf",-1,True,{},"bad"])
++def test_ac_invalid_position_market_value_is_not_zero(value):
++    b=book(position(value=value))
++    assert not b.available and not b.reserve("d","MSFT",1,100,.08)["allowed"], value
++
++
++@pytest.mark.parametrize("value", [None,"nan","inf",-1,0,True])
++def test_ac_bad_equity_and_price_block(value):
++    b=OrderPreflight({},value,[],complete=True,price_lookup=lambda s:100)
++    assert not b.available, value
++    assert not book().reserve("d","MSFT",1,value,.08)["allowed"], value
++
++
++def test_ac_decimal_no_money_tolerance():
++    b=book(position(value="34999.99"))
++    assert b.reserve("a","MSFT",1,"0.01",.08)["allowed"], "exact cent fits"
++    assert not b.reserve("b","CRM",1,"0.0001",.08)["allowed"], "no floating tolerance admits overage"
++
++
++@pytest.mark.parametrize("status", ["rejected","unknown","pending"])
++def test_ac_outcome_unknown_poison_retains_reservation(status):
++    b=book()
++    assert b.reserve("a","MSFT",10,100,.08)["allowed"], "reserve first"
++    b.observe_submission("a",status)
++    assert not b.reserve("b","CRM",1,100,.08)["allowed"] and "a" in b.reservations, "never release based on rejected label"
++    assert book().reserve("b","CRM",1,100,.08)["allowed"], "new verified snapshot can recover; no durable intent claim"
++
++
++def test_ac_duplicate_pending_id_and_invalid_caps():
++    assert not book(orders=[order(),order()]).available, "cannot guess dedup identity"
++    assert not book(cluster_caps={"cloud_software":"nan"}).available, "invalid config fail closed"
++    assert not book(cluster_caps={"unknown":.2}).available, "unknown cap fail closed"
++    assert book(cluster_caps={}).reserve("d","MSFT",1,100,.08)["allowed"], "explicit measured cluster override"
++
++
++def test_ac_limit_reservation_uses_larger_qualified_quote():
++    b=book(orders=[order(type="limit",limit_price="150")])
++    assert b.values["CRM"]==Decimal("1500"), "pending limit not undercounted"
++
++
++@pytest.mark.parametrize("payload", [None,{},"bad",[order(id=str(i)) for i in range(500)]])
++def test_ac_incomplete_single_page_fails_closed(payload):
++    b=snapshot_from_broker(NS(fetch_orders=lambda **k:NS(payload=payload)),{},100000,lambda s:100)
++    assert not b.available, "unknown/at-limit page not complete"
++
++
++def test_ac_broker_fetch_exception_is_unknown_then_recovers():
++    def fail(**kw): raise OSError("fixture transport failure")
++    assert not snapshot_from_broker(NS(fetch_orders=fail),{},100000,lambda s:100).available, "I/O fail closed"
++    calls=[]
++    def ok(**kw): calls.append(kw); return NS(payload=[])
++    assert snapshot_from_broker(NS(fetch_orders=ok),{},100000,lambda s:100).available, "confirmed empty orders are valid"
++    assert calls==[{"status":"open","limit":500}], calls
++
++
++def test_ac_attribution_and_sell_are_preserved_without_netting():
++    decisions=[intent("A"),intent("B"),intent("exit",side="sell"),intent("other","CRM")]
++    original=json.dumps([d.evidence for d in decisions])
++    held=buy_conflicts(decisions)
++    assert set(held)=={"A","B"}, held
++    assert held["A"]["related_decision_ids"]==["A","B","exit"], held
++    assert original==json.dumps([d.evidence for d in decisions]), "do not rewrite originals"
++    assert buy_conflicts([intent("A"),intent("B")])["A"]["reason"]=="same_symbol_duplicate_buy", "no winner"
++    assert buy_conflicts([])=={}, "empty is valid"
++    assert buy_conflicts([intent("exit",side="sell")])=={}, "SELL remains with existing checks"
++
++
++def test_ac_real_allocator_includes_pending_and_same_run():
++    allocator=PortfolioAllocator()
++    # Existing stock band maximum, not a new target. Current plus pending crosses it.
++    b=book(position("AAPL",91000),[order(symbol="CRM",qty="15")],cluster_caps={})
++    result=b.reserve("d","MSFT",1,100,.08,allocator=allocator)
++    assert not result["allowed"] and result["reason"].startswith("projected_allocation_band:"), result

@@ -1,0 +1,1264 @@
+{
+  "integrated_sell_ack_lost": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 2,
+        "printed_complete": true,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\n\ud83d\udcc9 NOW:\n   Qty: 3\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u274c Error: [broker] request timeout after 30.0s\n\n\ud83d\udcc9 IBM:\n   Qty: 2\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u274c Error: [broker] request timeout after 30.0s\n\n==================================================\n\u2705 Emergency sell complete\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 3,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 2,
+        "side": "sell",
+        "symbol": "IBM",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  },
+  "integrated_sell_ack_lost_repeat": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ],
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 2,
+        "printed_complete": true,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\n\ud83d\udcc9 NOW:\n   Qty: 3\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u274c Error: [broker] request timeout after 30.0s\n\n\ud83d\udcc9 IBM:\n   Qty: 2\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u274c Error: [broker] request timeout after 30.0s\n\n==================================================\n\u2705 Emergency sell complete\n"
+      },
+      {
+        "error": null,
+        "posts_this_run": 2,
+        "printed_complete": true,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\n\ud83d\udcc9 NOW:\n   Qty: 3\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u274c Error: [broker] request timeout after 30.0s\n\n\ud83d\udcc9 IBM:\n   Qty: 2\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u274c Error: [broker] request timeout after 30.0s\n\n==================================================\n\u2705 Emergency sell complete\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 3,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 2,
+        "side": "sell",
+        "symbol": "IBM",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 3,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 2,
+        "side": "sell",
+        "symbol": "IBM",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  },
+  "integrated_sell_bad_qty": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": "ValueError",
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n"
+      }
+    ],
+    "posts": []
+  },
+  "integrated_sell_bad_shape": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": "AttributeError",
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n"
+      }
+    ],
+    "posts": []
+  },
+  "integrated_sell_flat": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 0,
+        "printed_complete": true,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\u274c NOW: No position found\n\u274c IBM: No position found\n\n==================================================\n\u2705 Emergency sell complete\n"
+      }
+    ],
+    "posts": []
+  },
+  "integrated_sell_fractional": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 1,
+        "printed_complete": true,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\n\ud83d\udcc9 NOW:\n   Qty: 3\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u2705 Order submitted: fixture-1\n\u274c IBM: No position found\n\n==================================================\n\u2705 Emergency sell complete\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 3,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  },
+  "integrated_sell_get401": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": "SourceAuthenticationError",
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n"
+      }
+    ],
+    "posts": []
+  },
+  "integrated_sell_missing_qty": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 0,
+        "printed_complete": true,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\u274c NOW: Zero quantity\n\u274c IBM: No position found\n\n==================================================\n\u2705 Emergency sell complete\n"
+      }
+    ],
+    "posts": []
+  },
+  "integrated_sell_normal": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 2,
+        "printed_complete": true,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\n\ud83d\udcc9 NOW:\n   Qty: 3\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u2705 Order submitted: fixture-1\n\n\ud83d\udcc9 IBM:\n   Qty: 2\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u2705 Order submitted: fixture-2\n\n==================================================\n\u2705 Emergency sell complete\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 3,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 2,
+        "side": "sell",
+        "symbol": "IBM",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  },
+  "integrated_sell_rejected": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 2,
+        "printed_complete": true,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\n\ud83d\udcc9 NOW:\n   Qty: 3\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u274c Error: [broker] unexpected status code: 400\n\n\ud83d\udcc9 IBM:\n   Qty: 2\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u274c Error: [broker] unexpected status code: 400\n\n==================================================\n\u2705 Emergency sell complete\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 3,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 2,
+        "side": "sell",
+        "symbol": "IBM",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  },
+  "integrated_sell_zero_short": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 0,
+        "printed_complete": true,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\u274c NOW: Zero quantity\n\u274c IBM: Zero quantity\n\n==================================================\n\u2705 Emergency sell complete\n"
+      }
+    ],
+    "posts": []
+  },
+  "integrated_short_ack_lost": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": "SourceTimeoutError",
+        "posts_this_run": 1,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nCurrent HPE position: -13 shares\n\nClosing short position: BUY 13 HPE\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 13,
+        "side": "buy",
+        "symbol": "HPE",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  },
+  "integrated_short_ack_lost_repeat": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ],
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": "SourceTimeoutError",
+        "posts_this_run": 1,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nCurrent HPE position: -13 shares\n\nClosing short position: BUY 13 HPE\n"
+      },
+      {
+        "error": "SourceTimeoutError",
+        "posts_this_run": 1,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nCurrent HPE position: -13 shares\n\nClosing short position: BUY 13 HPE\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 13,
+        "side": "buy",
+        "symbol": "HPE",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 13,
+        "side": "buy",
+        "symbol": "HPE",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  },
+  "integrated_short_bad_qty": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": "ValueError",
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\n"
+      }
+    ],
+    "posts": []
+  },
+  "integrated_short_bad_shape": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": "AttributeError",
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\n"
+      }
+    ],
+    "posts": []
+  },
+  "integrated_short_cancel": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nCurrent HPE position: -13 shares\n\nClosing short position: BUY 13 HPE\nCancelled.\n"
+      }
+    ],
+    "posts": []
+  },
+  "integrated_short_flat": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nNo HPE position found. Already closed?\n"
+      }
+    ],
+    "posts": []
+  },
+  "integrated_short_fractional": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 1,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nCurrent HPE position: -13 shares\n\nClosing short position: BUY 13 HPE\n\nOrder submitted:\n  Order ID: fixture-1\n  Symbol: HPE\n  Side: buy\n  Qty: 13\n  Status: new\n\nShort position should be closed after order fills.\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 13,
+        "side": "buy",
+        "symbol": "HPE",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  },
+  "integrated_short_get401": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": "SourceAuthenticationError",
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\n"
+      }
+    ],
+    "posts": []
+  },
+  "integrated_short_long": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nCurrent HPE position: 13 shares\nHPE position is not short. No action needed.\n"
+      }
+    ],
+    "posts": []
+  },
+  "integrated_short_missing_qty": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nCurrent HPE position: 0 shares\nHPE position is not short. No action needed.\n"
+      }
+    ],
+    "posts": []
+  },
+  "integrated_short_normal": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 1,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nCurrent HPE position: -13 shares\n\nClosing short position: BUY 13 HPE\n\nOrder submitted:\n  Order ID: fixture-1\n  Symbol: HPE\n  Side: buy\n  Qty: 13\n  Status: new\n\nShort position should be closed after order fills.\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 13,
+        "side": "buy",
+        "symbol": "HPE",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  },
+  "integrated_short_rejected": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": "SourceResponseError",
+        "posts_this_run": 1,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nCurrent HPE position: -13 shares\n\nClosing short position: BUY 13 HPE\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 13,
+        "side": "buy",
+        "symbol": "HPE",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  },
+  "safety_sell_ack_lost": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 2,
+        "printed_complete": true,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\n\ud83d\udcc9 NOW:\n   Qty: 3\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u274c Error: [broker] request timeout after 30.0s\n\n\ud83d\udcc9 IBM:\n   Qty: 2\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u274c Error: [broker] request timeout after 30.0s\n\n==================================================\n\u2705 Emergency sell complete\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 3,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 2,
+        "side": "sell",
+        "symbol": "IBM",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  },
+  "safety_sell_ack_lost_repeat": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ],
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 2,
+        "printed_complete": true,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\n\ud83d\udcc9 NOW:\n   Qty: 3\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u274c Error: [broker] request timeout after 30.0s\n\n\ud83d\udcc9 IBM:\n   Qty: 2\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u274c Error: [broker] request timeout after 30.0s\n\n==================================================\n\u2705 Emergency sell complete\n"
+      },
+      {
+        "error": null,
+        "posts_this_run": 2,
+        "printed_complete": true,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\n\ud83d\udcc9 NOW:\n   Qty: 3\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u274c Error: [broker] request timeout after 30.0s\n\n\ud83d\udcc9 IBM:\n   Qty: 2\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u274c Error: [broker] request timeout after 30.0s\n\n==================================================\n\u2705 Emergency sell complete\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 3,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 2,
+        "side": "sell",
+        "symbol": "IBM",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 3,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 2,
+        "side": "sell",
+        "symbol": "IBM",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  },
+  "safety_sell_bad_qty": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": "ValueError",
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n"
+      }
+    ],
+    "posts": []
+  },
+  "safety_sell_bad_shape": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": "AttributeError",
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n"
+      }
+    ],
+    "posts": []
+  },
+  "safety_sell_flat": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 0,
+        "printed_complete": true,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\u274c NOW: No position found\n\u274c IBM: No position found\n\n==================================================\n\u2705 Emergency sell complete\n"
+      }
+    ],
+    "posts": []
+  },
+  "safety_sell_fractional": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 1,
+        "printed_complete": true,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\n\ud83d\udcc9 NOW:\n   Qty: 3\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u2705 Order submitted: fixture-1\n\u274c IBM: No position found\n\n==================================================\n\u2705 Emergency sell complete\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 3,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  },
+  "safety_sell_get401": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": "SourceAuthenticationError",
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n"
+      }
+    ],
+    "posts": []
+  },
+  "safety_sell_missing_qty": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 0,
+        "printed_complete": true,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\u274c NOW: Zero quantity\n\u274c IBM: No position found\n\n==================================================\n\u2705 Emergency sell complete\n"
+      }
+    ],
+    "posts": []
+  },
+  "safety_sell_normal": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 2,
+        "printed_complete": true,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\n\ud83d\udcc9 NOW:\n   Qty: 3\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u2705 Order submitted: fixture-1\n\n\ud83d\udcc9 IBM:\n   Qty: 2\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u2705 Order submitted: fixture-2\n\n==================================================\n\u2705 Emergency sell complete\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 3,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 2,
+        "side": "sell",
+        "symbol": "IBM",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  },
+  "safety_sell_rejected": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 2,
+        "printed_complete": true,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\n\ud83d\udcc9 NOW:\n   Qty: 3\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u274c Error: [broker] unexpected status code: 400\n\n\ud83d\udcc9 IBM:\n   Qty: 2\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u274c Error: [broker] unexpected status code: 400\n\n==================================================\n\u2705 Emergency sell complete\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 3,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 2,
+        "side": "sell",
+        "symbol": "IBM",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  },
+  "safety_sell_zero_short": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 0,
+        "printed_complete": true,
+        "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\u274c NOW: Zero quantity\n\u274c IBM: Zero quantity\n\n==================================================\n\u2705 Emergency sell complete\n"
+      }
+    ],
+    "posts": []
+  },
+  "safety_short_ack_lost": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": "SourceTimeoutError",
+        "posts_this_run": 1,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nCurrent HPE position: -13 shares\n\nClosing short position: BUY 13 HPE\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 13,
+        "side": "buy",
+        "symbol": "HPE",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  },
+  "safety_short_ack_lost_repeat": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ],
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": "SourceTimeoutError",
+        "posts_this_run": 1,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nCurrent HPE position: -13 shares\n\nClosing short position: BUY 13 HPE\n"
+      },
+      {
+        "error": "SourceTimeoutError",
+        "posts_this_run": 1,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nCurrent HPE position: -13 shares\n\nClosing short position: BUY 13 HPE\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 13,
+        "side": "buy",
+        "symbol": "HPE",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 13,
+        "side": "buy",
+        "symbol": "HPE",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  },
+  "safety_short_bad_qty": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": "ValueError",
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\n"
+      }
+    ],
+    "posts": []
+  },
+  "safety_short_bad_shape": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": "AttributeError",
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\n"
+      }
+    ],
+    "posts": []
+  },
+  "safety_short_cancel": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nCurrent HPE position: -13 shares\n\nClosing short position: BUY 13 HPE\nCancelled.\n"
+      }
+    ],
+    "posts": []
+  },
+  "safety_short_flat": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nNo HPE position found. Already closed?\n"
+      }
+    ],
+    "posts": []
+  },
+  "safety_short_fractional": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 1,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nCurrent HPE position: -13 shares\n\nClosing short position: BUY 13 HPE\n\nOrder submitted:\n  Order ID: fixture-1\n  Symbol: HPE\n  Side: buy\n  Qty: 13\n  Status: new\n\nShort position should be closed after order fills.\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 13,
+        "side": "buy",
+        "symbol": "HPE",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  },
+  "safety_short_get401": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": "SourceAuthenticationError",
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\n"
+      }
+    ],
+    "posts": []
+  },
+  "safety_short_long": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nCurrent HPE position: 13 shares\nHPE position is not short. No action needed.\n"
+      }
+    ],
+    "posts": []
+  },
+  "safety_short_missing_qty": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 0,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nCurrent HPE position: 0 shares\nHPE position is not short. No action needed.\n"
+      }
+    ],
+    "posts": []
+  },
+  "safety_short_normal": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": null,
+        "posts_this_run": 1,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nCurrent HPE position: -13 shares\n\nClosing short position: BUY 13 HPE\n\nOrder submitted:\n  Order ID: fixture-1\n  Symbol: HPE\n  Side: buy\n  Qty: 13\n  Status: new\n\nShort position should be closed after order fills.\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 13,
+        "side": "buy",
+        "symbol": "HPE",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  },
+  "safety_short_rejected": {
+    "http_calls": [
+      [
+        "GET",
+        "/v2/positions"
+      ],
+      [
+        "POST",
+        "/v2/orders"
+      ]
+    ],
+    "origin_is_copy": true,
+    "outcomes": [
+      {
+        "error": "SourceResponseError",
+        "posts_this_run": 1,
+        "printed_complete": false,
+        "stdout": "Checking HPE position...\nCurrent HPE position: -13 shares\n\nClosing short position: BUY 13 HPE\n"
+      }
+    ],
+    "posts": [
+      {
+        "qty": 13,
+        "side": "buy",
+        "symbol": "HPE",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ]
+  }
+}

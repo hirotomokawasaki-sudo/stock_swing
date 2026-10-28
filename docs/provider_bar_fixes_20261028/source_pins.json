@@ -1,0 +1,1594 @@
+[
+  {
+    "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+    "git_mode": "100644",
+    "path": "code/src/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_path": "src/__init__.py"
+  },
+  {
+    "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_path": "src/stock_swing/__init__.py"
+  },
+  {
+    "git_blob": "afe130faf7792118828c479228010ba586a4f2d5",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/analysis/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "6023608a5b2f926e97da6ec463b4859da74d7fa80af8d55cdaa4ca17d164a7b9",
+    "source_path": "src/stock_swing/analysis/__init__.py"
+  },
+  {
+    "git_blob": "edebf821317f52b87eb049d27c522d973f30a7cc",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/analysis/baseline_metrics.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "a015c988201d78ec861f284ad1066e36cfe91af49ac811099ffb6d025d65dea2",
+    "source_path": "src/stock_swing/analysis/baseline_metrics.py"
+  },
+  {
+    "git_blob": "ccb469ecd1ba2d761b24a57197bcdf3803829836",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/analysis/risk_calculator.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "44d68fba7da49730c586a48cf5f6704b6c3876f0f5a99dbcebad6699099ef1a2",
+    "source_path": "src/stock_swing/analysis/risk_calculator.py"
+  },
+  {
+    "git_blob": "b22f7e8b295c71cd31ade5c1f9d00d302606d69f",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/analysis/strategy_analyzer.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "c5c5081eec48aafe6759d5556013e814ab3005c44be644d07cd8d4f19b23718c",
+    "source_path": "src/stock_swing/analysis/strategy_analyzer.py"
+  },
+  {
+    "git_blob": "6e4106f0f3ae760c8a7eee0ea7746231f73f5d9f",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/backtest/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "eb89c806c6801aaa34650f9941dc9bf7ab13c80233e2115be2e7a2f7e49c6bf1",
+    "source_path": "src/stock_swing/backtest/__init__.py"
+  },
+  {
+    "git_blob": "8c0cc97e30b76ce991cfce506f6254db9c50e27c",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/backtest/data_loader.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "cc0bff7a393efe24269ca3b0f9a08092ec198fa6d36479652c463e879d394e48",
+    "source_path": "src/stock_swing/backtest/data_loader.py"
+  },
+  {
+    "git_blob": "9dd1c72190cbd58d3ea82a74c50416fd15c2b94c",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/backtest/engine.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "a18e33911cef9f675f8fe7594862f34c22cd80640a4ce389ec789abb71b85f2e",
+    "source_path": "src/stock_swing/backtest/engine.py"
+  },
+  {
+    "git_blob": "02ea1645c97d1ba175722e310ae67f4e27561aba",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/backtest/engine_v2.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "89b5f6bd2b0a05b571b2e7f9a5c73daa7cc94abfcbaa2d650183bf6542827048",
+    "source_path": "src/stock_swing/backtest/engine_v2.py"
+  },
+  {
+    "git_blob": "d6b990a17605c7641a2bc544dc28161aa6c68286",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/backtest/metrics.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "131da9d4cb44a9637c5e720d4ece0f890e38ae5463376a62877c066b063be4e8",
+    "source_path": "src/stock_swing/backtest/metrics.py"
+  },
+  {
+    "git_blob": "bbb09b779bd84686a7ad4d0c72d4138e42c1240c",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/backtest/parameter_grid.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "8bc42457aaac452a95df8c745fa7b604da53e0b24a23e20a6341becda431978a",
+    "source_path": "src/stock_swing/backtest/parameter_grid.py"
+  },
+  {
+    "git_blob": "a75e0ff4fab3bad48e6c2999c6807c7520f1bbcc",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/backtest/price_cache.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "976a128f99640f2a9fe9f0b5d6d0a6d42f3324c883b164ebc5b84ad678b312bb",
+    "source_path": "src/stock_swing/backtest/price_cache.py"
+  },
+  {
+    "git_blob": "91fb56dcc20929b25db5ca704ba0de5f7bf5bc43",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/backtest/trade_simulator.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "4193b9578725ae4d03e21f2ec83500800be61258ebaa6865837ba154d7a09e0a",
+    "source_path": "src/stock_swing/backtest/trade_simulator.py"
+  },
+  {
+    "git_blob": "e05fdd8367077a651f3b537887562564136cf92d",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/cli/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "9def6c803b2010c1540b715fbca3ebfe37d09e2895fb5e16a04da3583902601d",
+    "source_path": "src/stock_swing/cli/__init__.py"
+  },
+  {
+    "git_blob": "0dbd044c6088b5f4369007c1e1e7c9290cb02d05",
+    "git_mode": "100755",
+    "path": "code/src/stock_swing/cli/analyze_data.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "d2d501f26d1d2a2d52d3cc1dcc37abf1ea845551b9d988d5ed99c7a5202ccc49",
+    "source_path": "src/stock_swing/cli/analyze_data.py"
+  },
+  {
+    "git_blob": "9da186e671bd0243ad3d71c143ae7711318192b8",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/cli/backfill_pnl_state.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "7007498eda0cf541cc32cae832120b7063c5a56d8e97f86c036fa3933d7f593d",
+    "source_path": "src/stock_swing/cli/backfill_pnl_state.py"
+  },
+  {
+    "git_blob": "566de7ef3016ef1d27c632c8860ca828dbf9bf09",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/cli/broker_healthcheck.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "f3fc70b9ef9f5395dfa8731093ca89a8b0c9a69ff9369a6b2e1f7f3ec262b475",
+    "source_path": "src/stock_swing/cli/broker_healthcheck.py"
+  },
+  {
+    "git_blob": "eb2780708e8f34c060954f2314bf3234a0bb09d2",
+    "git_mode": "100755",
+    "path": "code/src/stock_swing/cli/collect_data.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "39a0d6662252cb910ebb1eb39aeaa66c89681f30602b62cce8a562500812aac2",
+    "source_path": "src/stock_swing/cli/collect_data.py"
+  },
+  {
+    "git_blob": "a2c55ec4d178241f307974568ed0da83e7f0133e",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/cli/cron_summary.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "41d83605902649c91905a335951f7ee25c4011180b5fb0f940655a5a93883b2d",
+    "source_path": "src/stock_swing/cli/cron_summary.py"
+  },
+  {
+    "git_blob": "e9a53cbb15c5200b76796b408c832e3fb965456e",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/cli/daily_report.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "bf91f33d2de4f5796f82181fbc017a2b2249709434a96f16c1c25b3599014e35",
+    "source_path": "src/stock_swing/cli/daily_report.py"
+  },
+  {
+    "git_blob": "c36857a7a5f6890f01299d9441b66753eff661fa",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/cli/healthcheck.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "c664fab89232e03c495850fac7e3a167077e083f33b76eaeb292e05beefd29b9",
+    "source_path": "src/stock_swing/cli/healthcheck.py"
+  },
+  {
+    "git_blob": "c424bf506bb2a4251dd01c74bc60a9c3ab1dbfbd",
+    "git_mode": "100755",
+    "path": "code/src/stock_swing/cli/market_check.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "4783ab0eb3dfa71f17d336bf2a0f4b031406322bb4077357280d5c22840058fe",
+    "source_path": "src/stock_swing/cli/market_check.py"
+  },
+  {
+    "git_blob": "7f7836f2f4f1423bf8f7694d588648c3e50b2718",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/cli/paper_demo.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "7e7fddbdc78b398fc173fc2b55c6c4e8c95b70fe2307cd089fdaeb4b62393b57",
+    "source_path": "src/stock_swing/cli/paper_demo.py"
+  },
+  {
+    "git_blob": "d86566669f2b7ebc49f440db9825a53035a2d375",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/cli/paper_demo_wrapper.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "f7d23dabf5b88a9ae22c13fd452daaf61025bb235b433263d8c747049ef62bcd",
+    "source_path": "src/stock_swing/cli/paper_demo_wrapper.py"
+  },
+  {
+    "git_blob": "201225db5fc6a7cd903ebb46b955e5d6be051244",
+    "git_mode": "100755",
+    "path": "code/src/stock_swing/cli/reconcile_buy_orders.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "9e4c6cf3733fa48ae771b7a53ba821d51270898f0de95d035a3dd9d6b4cba34f",
+    "source_path": "src/stock_swing/cli/reconcile_buy_orders.py"
+  },
+  {
+    "git_blob": "84a62d048157716a7ca5a6570deae18b5d6edf66",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/cli/reconcile_orders.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "a1565cf3d0d04149efd5173605109fd74fa8c63818e531c3bca2177b704f342f",
+    "source_path": "src/stock_swing/cli/reconcile_orders.py"
+  },
+  {
+    "git_blob": "09f6bd80dfd49dc47380ec0d97f5d073647d1a61",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/core/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "b6761055cfdba9ae5f6738d8d3f7ff0a2077d1c02a58c3122c3a04b29dbc7ded",
+    "source_path": "src/stock_swing/core/__init__.py"
+  },
+  {
+    "git_blob": "17e0fa79bdcefe9b107204e9a34e277d74d93ec1",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/core/config_loader.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "e2634a0df8a35cfa11c63af0972a898c0b6be5066621719704bd4d92816da110",
+    "source_path": "src/stock_swing/core/config_loader.py"
+  },
+  {
+    "git_blob": "5b06c8214335df0d562c602431de90d996befca2",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/core/path_manager.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "8c95063986900ff01419d7d67d67fce7f1d8968afaa8267abca78319f0c28f08",
+    "source_path": "src/stock_swing/core/path_manager.py"
+  },
+  {
+    "git_blob": "8c80472954600987875e5786a868807ddcda031a",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/core/run_context.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "f438d0d9f4b30f262889ad9a9c5001d27d0479ba17d193a236403c5768aeb599",
+    "source_path": "src/stock_swing/core/run_context.py"
+  },
+  {
+    "git_blob": "414563492b0bb95c25bcedbf112b0e8d7bd61ba4",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/core/runtime.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "e31a66bb192819f94bb4d6f244193fe74a6ab631b08d43e75a17dc3808a0dc69",
+    "source_path": "src/stock_swing/core/runtime.py"
+  },
+  {
+    "git_blob": "227b5144eb3171aa76a5ae48eca753560d86266f",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/core/types.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "1fdff9511dc51c90d92ebc0d8ab29ed9c61a00b7b076a93e5dd79a811f2d5eb1",
+    "source_path": "src/stock_swing/core/types.py"
+  },
+  {
+    "git_blob": "f83604d433c15895ccce4b1cc482958ee84050fe",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/core/types.py.bak",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "e4c99cffd5c5c1d76f43c08e488963c96e2e930ba0fbeaa5d3509c220c7c7d62",
+    "source_path": "src/stock_swing/core/types.py.bak"
+  },
+  {
+    "git_blob": "d2ea66f00c8d941a14f659cb1a32f1af7c96001a",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/decision_engine/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "39a8f2b4025917273b4a63dd390dde95222ac4032c1eab6dbed4d7b6ec68c1d0",
+    "source_path": "src/stock_swing/decision_engine/__init__.py"
+  },
+  {
+    "git_blob": "4c8d6a9a52715da489c2dbec99097dc468984056",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/decision_engine/basic_decision_engine.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "4e43566250c2cc66702b9b054edcac98296d606922543ac40ec866d155b84503",
+    "source_path": "src/stock_swing/decision_engine/basic_decision_engine.py"
+  },
+  {
+    "git_blob": "2438e57009a3ccc4c0782e81230e2557daea94fc",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/decision_engine/decision_engine.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "e308e110ba62cafc9620702ec95b0a34a9350cb47adcaa5d40ae09ac02df23bc",
+    "source_path": "src/stock_swing/decision_engine/decision_engine.py"
+  },
+  {
+    "git_blob": "c2f7f2a1906cf0a016031bd43281c86a64273920",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/decision_engine/interfaces.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "6d71f3e3baa1eaa5ba224292cd29bf374843e48c9d6d3314fd488723b9d429ec",
+    "source_path": "src/stock_swing/decision_engine/interfaces.py"
+  },
+  {
+    "git_blob": "e4b9d5894b9cd89f54bda5f34e7c90f0f32c53c0",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/decision_engine/risk_validator.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "f11f8caac3ef648492470583db1288e98193ec90b851bc261502ed78817d7ede",
+    "source_path": "src/stock_swing/decision_engine/risk_validator.py"
+  },
+  {
+    "git_blob": "bdb2ba74ed7526d0c35c2fe76edec15ac475f595",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/execution/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "9dbe6d10d68c03529cc2f731fc6b9ee9d0af7cab232cb115c9ab9423c0aaea00",
+    "source_path": "src/stock_swing/execution/__init__.py"
+  },
+  {
+    "git_blob": "90d8613b655e70d8ac0a2aaf4fc276eb4eb04949",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/execution/interfaces.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "b0d37d94e537b9860be4deaf4c5e93d1bc3bc11edb2f8393593081b6f2d87255",
+    "source_path": "src/stock_swing/execution/interfaces.py"
+  },
+  {
+    "git_blob": "8bce809f0371a90f54c147b9aadfe4548b46afa8",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/execution/live_guarded_executor.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "57bb9f98ced350afdb6e89e5eb43bf70fd5d46cc281165e1e7fb51ad11403920",
+    "source_path": "src/stock_swing/execution/live_guarded_executor.py"
+  },
+  {
+    "git_blob": "27f1018957f03b42021e4f4cf6b714a89d272bff",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/execution/paper_executor.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "4a06f308d10eb3dc6069a960680cafef0dce3452263190c1f7f07369f23636b8",
+    "source_path": "src/stock_swing/execution/paper_executor.py"
+  },
+  {
+    "git_blob": "a8e1f7e2d2e3a59538b452f4ca6b97d5bc84c84b",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/execution/production_executor.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "137b9048883df3a371d930ce31253222d53b719ade5ea05a2ec91f0af4b6ab19",
+    "source_path": "src/stock_swing/execution/production_executor.py"
+  },
+  {
+    "git_blob": "a2d906247299f2edae48feb8dcf8eda6555e679d",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/execution/reconciler.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "91cf9a908e27269a5b75e8eb5d0eed3afd2232373a57f3be251c042b6717ead2",
+    "source_path": "src/stock_swing/execution/reconciler.py"
+  },
+  {
+    "git_blob": "f8ceca5c3dc132b7f8e1943badb85f0cbb2d1f33",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/experiments/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "51d8c83dbd6d86e394a59174f8d0ebb860acdc4f8c4dfa7982ebb43585884977",
+    "source_path": "src/stock_swing/experiments/__init__.py"
+  },
+  {
+    "git_blob": "3ced6901b4196b855ede04d1840c6632def9bfd7",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/experiments/bucket_assigner.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "7a63ac465195d8d28a03fce3c142e736f9178fdc459e2725d14c3b816876480e",
+    "source_path": "src/stock_swing/experiments/bucket_assigner.py"
+  },
+  {
+    "git_blob": "25eadedd096af6290c22c632cfca00114e7d759a",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/experiments/decision_input_capture.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "75f48bd130831a63266f52fa39d15820cde6f02b3c9cdfd53d48d44d1d972559",
+    "source_path": "src/stock_swing/experiments/decision_input_capture.py"
+  },
+  {
+    "git_blob": "f2a3657477626aa038866b97a7ed7e5c771c83e3",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/experiments/experiment_context.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "5f70e6e2d9872fd2864978d2eb82f84870d3a7e84c34f7abbafb3ee9b82b9528",
+    "source_path": "src/stock_swing/experiments/experiment_context.py"
+  },
+  {
+    "git_blob": "14ef291847139d12a001b164909c858b8a0aa16a",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/experiments/experiment_registry.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "401ed07e69c4f6e997b8e133867f750ba60884fd0fa03686297314cf99961d19",
+    "source_path": "src/stock_swing/experiments/experiment_registry.py"
+  },
+  {
+    "git_blob": "fb74b7fc306c4903d1f5028644972ace14d894a9",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/experiments/feature_snapshot_store.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "9ce9d22a43179a87bd73f95f39c352643185f1be0917b0793af3bc72868a4e5f",
+    "source_path": "src/stock_swing/experiments/feature_snapshot_store.py"
+  },
+  {
+    "git_blob": "9d35e3871bed2b04bd4608e14dcb13b42aaa015d",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/experiments/measurement_capture.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "ec595328563aadf9fbb88f48c4e3057decdf5d002feb6013851fb49aa6b3463e",
+    "source_path": "src/stock_swing/experiments/measurement_capture.py"
+  },
+  {
+    "git_blob": "7e31dd3b9209b749304ef0fcdc3613026a20f652",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/experiments/prompt_registry.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "8c5cc37fb1290e74831b0707a86ae8c2f0bd29f25b513293f2a64fa6217a7c4d",
+    "source_path": "src/stock_swing/experiments/prompt_registry.py"
+  },
+  {
+    "git_blob": "1238578efef9c675806ef3a332fcf6a922367518",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/feature_engine/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "6b056ae08e18b2f0c36f6c4a68ca58830fdbdc3f397f13fff883de6cf8526060",
+    "source_path": "src/stock_swing/feature_engine/__init__.py"
+  },
+  {
+    "git_blob": "6350a0a31f347dfd323d61d7beb18d02939282b5",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/feature_engine/base_feature.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "d23f56a00101581d2ab46cdb9f839afbda7ce9cfe8181089f314d32bd911cd53",
+    "source_path": "src/stock_swing/feature_engine/base_feature.py"
+  },
+  {
+    "git_blob": "09b93aa101acd2d41bd7b81ad71ce175d2380fcf",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/feature_engine/basic_features.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "2fc77a535c84612f1d02f310e1aed228e7e5053275079c7ae64f8e060b7bbe81",
+    "source_path": "src/stock_swing/feature_engine/basic_features.py"
+  },
+  {
+    "git_blob": "6d2207dd21057b33215e001ab518459d2c6c525d",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/feature_engine/earnings_event_feature.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "291c61ca6e9fbfcb105c9cb987878e8df90f25e91cb6dbcf14fe5a4d1583bc80",
+    "source_path": "src/stock_swing/feature_engine/earnings_event_feature.py"
+  },
+  {
+    "git_blob": "6ab24f51e0286baabc50db9f2035fe78aa0bac1d",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/feature_engine/interfaces.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "d237476e7c24ef9d9b0fc4478e8242fb529970850362ee2395c25a3299208dca",
+    "source_path": "src/stock_swing/feature_engine/interfaces.py"
+  },
+  {
+    "git_blob": "27a077c972e2f28e15b29796e8e2478edb230055",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/feature_engine/intraday_momentum_feature.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "4bb695bdb8375da59cf9c5a9099ce18258ecf7921d30a5ae031271ff3d3810ac",
+    "source_path": "src/stock_swing/feature_engine/intraday_momentum_feature.py"
+  },
+  {
+    "git_blob": "9a225d1c794f35f271e9c7988e728391bf5533fd",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/feature_engine/macro_regime_feature.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "61679c7ca754a0271de11d242111486215d7d6ecf081e29ccc126a8fe5e67e6c",
+    "source_path": "src/stock_swing/feature_engine/macro_regime_feature.py"
+  },
+  {
+    "git_blob": "d80452b2df8061c6541c2e6aab8cdc7dad1f3e8f",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/feature_engine/price_momentum_feature.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "05b513327d2e52908565c86266001be56d645fe553ffcc86c44653ba919de569",
+    "source_path": "src/stock_swing/feature_engine/price_momentum_feature.py"
+  },
+  {
+    "git_blob": "25e8d5345194e67c266ea6af0517247e7a3ebe84",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/feature_engine/sector_momentum_feature.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "dfb267e48915cbcbc72fb4ae71be43b1be828b6ddc86c4804c447951bc51832a",
+    "source_path": "src/stock_swing/feature_engine/sector_momentum_feature.py"
+  },
+  {
+    "git_blob": "a6d6fb090347baa79a2a2c149a5f398d2d5aba5d",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/feature_engine/us_overnight_benchmark_feature.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "2ada82f0666d4e8c7d99eac7dd4921d291e59d605ec5257557e11ba533498f64",
+    "source_path": "src/stock_swing/feature_engine/us_overnight_benchmark_feature.py"
+  },
+  {
+    "git_blob": "dd1636ab69972b3f606355866ada319a6786b4e2",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/guardrails/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "3d86e337be3fb91253cd9b3518e143a455f59110eda30b40a706d6c885ddc8fa",
+    "source_path": "src/stock_swing/guardrails/__init__.py"
+  },
+  {
+    "git_blob": "b16654c73c50e52998b05738533822df11b90585",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/guardrails/circuit_breaker.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "d5c183c3beaa8844022ccfd095d5c9d3c39b10dbade38a08cfa6352a451a0978",
+    "source_path": "src/stock_swing/guardrails/circuit_breaker.py"
+  },
+  {
+    "git_blob": "158250393fb6a0c9aa403896c25d85805642ffc9",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/guardrails/day_start_snapshot.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "0cc5fbd71028e1e4633c25de4e02e47fed46a0bfe25c7f090e1d5b4413bcbcad",
+    "source_path": "src/stock_swing/guardrails/day_start_snapshot.py"
+  },
+  {
+    "git_blob": "e4beb4de202af81211b7b7d1ca994b9b6b0708d6",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/guardrails/economic_risk_off.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "c87130a81ea032ece09ff5251fd547357a07288407c14e3ba482f04f78ac8bb5",
+    "source_path": "src/stock_swing/guardrails/economic_risk_off.py"
+  },
+  {
+    "git_blob": "bc1f387b5a0831f6f9d9d1ad2b042f434f45c990",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/guardrails/flatten_plan.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "cbaf2879600076c4024c928370ccb6b0e6b07faaad61144121d25478c9770880",
+    "source_path": "src/stock_swing/guardrails/flatten_plan.py"
+  },
+  {
+    "git_blob": "75c588f6c83fa687ce99dfb1d2b493c8a23df958",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/guardrails/postrun_mismatch.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "30d359aa66c82b9be500d42f02aa45a7b0efe0aa76f6e9430b62c42887f07f0d",
+    "source_path": "src/stock_swing/guardrails/postrun_mismatch.py"
+  },
+  {
+    "git_blob": "060cc03a19b0d61596c4be647bc890920a6ecfb8",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/guardrails/pre_trade_check.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "7a0af208eeaa0e691f9d34607f4633971ae360e4ee01c7e038a27f95c019e80f",
+    "source_path": "src/stock_swing/guardrails/pre_trade_check.py"
+  },
+  {
+    "git_blob": "3872c239b859a04051110e927f5154f3cfe6a218",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/guardrails/risk_snapshot.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "be1c8d725df6031777de0838d1fc9f6eeaa956b03dd38bf73c347dd3af895fc6",
+    "source_path": "src/stock_swing/guardrails/risk_snapshot.py"
+  },
+  {
+    "git_blob": "ad081be23bd4af1f1cd124bd1c4241b6bf343875",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/guardrails/rule_engine.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "ada8f6ed2a4abc57bcbf26d0e7a36c312aff7b47f1493540f79ea17bb4097e1d",
+    "source_path": "src/stock_swing/guardrails/rule_engine.py"
+  },
+  {
+    "git_blob": "dfd4d2e4a8a2909ac6f3908de08e625eb967b412",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/ingestion/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "9bbae6aa5ebace7566e7f4717ccbda9ffdbb5d0ee460e8eee12a4ba24cb3d0a4",
+    "source_path": "src/stock_swing/ingestion/__init__.py"
+  },
+  {
+    "git_blob": "ca6adb4f59585d4cda358dd9f5d8758e0e77f5ad",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/ingestion/raw_ingestor.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "2ac221fb1a5aafacbc8fd38c63719bce0a789ce816701151d6b7129d301fc0c9",
+    "source_path": "src/stock_swing/ingestion/raw_ingestor.py"
+  },
+  {
+    "git_blob": "6d5aa3f4b0f3a44f56a08e9bfd2a23ca69c1a1f7",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/normalization/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "ac5e3debd7209996e06023463548599c56744fb73e961a3199fb7f731af2a88f",
+    "source_path": "src/stock_swing/normalization/__init__.py"
+  },
+  {
+    "git_blob": "7554a205c6a5d130689298219653f79f0e454912",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/normalization/broker_normalizer.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "50a13236ce85ee1b9df8b0777c02784d0c7ecb43a4ca3b6ac925136552134d4b",
+    "source_path": "src/stock_swing/normalization/broker_normalizer.py"
+  },
+  {
+    "git_blob": "9aa268ce658aac974f034d9132a74af924382c93",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/normalization/finnhub_normalizer.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "67bd2f577ee1e43fd8e7dc4e6cff69f6367cce438824f232ba899b4bad6f6f90",
+    "source_path": "src/stock_swing/normalization/finnhub_normalizer.py"
+  },
+  {
+    "git_blob": "89875fc58de1a5907b618d86e4f0011b56b73cf4",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/normalization/fred_normalizer.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "b198dec15205a0e2189f5a1baafe04058a8e69c8c8f975b13a162b7b6aae23ce",
+    "source_path": "src/stock_swing/normalization/fred_normalizer.py"
+  },
+  {
+    "git_blob": "60528c363287cadc37aa14524122a3aeb10736fd",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/normalization/interfaces.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "b79ce0cf2bfdcf8791298169b506bd34b9042136a7357109d8f6a0c2a813cb48",
+    "source_path": "src/stock_swing/normalization/interfaces.py"
+  },
+  {
+    "git_blob": "e30ed0c245874ee15e1d1bbef470f22bdb05fac7",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/normalization/normalizer.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "55afa4b23ba98c5d4f89485a312474d4b0ec51b6d30d1b73d55ec45c6b0d94cc",
+    "source_path": "src/stock_swing/normalization/normalizer.py"
+  },
+  {
+    "git_blob": "0393ad929e7f36d0fac7ff435d0b454e7fec8b73",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/normalization/sec_normalizer.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "11b5451d9834aac7a4538b38c2075dc3154e19516ed4142ff99b32692cb52604",
+    "source_path": "src/stock_swing/normalization/sec_normalizer.py"
+  },
+  {
+    "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/openclaw/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_path": "src/stock_swing/openclaw/__init__.py"
+  },
+  {
+    "git_blob": "e12a8a74101af5b9fb48d1911bcd847a6cbb5db9",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/openclaw/basic_adapter.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "b855c0c64e4d5804cdeace0dc317152ac5a8b51df8eb96e5f2a179daa0771bdf",
+    "source_path": "src/stock_swing/openclaw/basic_adapter.py"
+  },
+  {
+    "git_blob": "ea454fa4e581dce8c84f01a4b48ee61086762609",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/openclaw/interfaces.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "8062e23f529cd8e32b8394c0cc796d7c5b8f3d7d5037703ba31d8ad41c0afad4",
+    "source_path": "src/stock_swing/openclaw/interfaces.py"
+  },
+  {
+    "git_blob": "21faeb9a9fac51f908370f4042d93ae12e4c6a80",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/openclaw_adapter/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "c3e75c1a9d45b00c77f04303a2d5d19ec2686c84e070a7304355f82fb8ac5453",
+    "source_path": "src/stock_swing/openclaw_adapter/__init__.py"
+  },
+  {
+    "git_blob": "6a1c75e1c91a15349ae7eb4acf0bd54d2e00de3e",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/openclaw_adapter/decision_summarizer.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "f3da3262e4ec605701236a219b62d68d15c646a3a611c1912172b9bbfe00f195",
+    "source_path": "src/stock_swing/openclaw_adapter/decision_summarizer.py"
+  },
+  {
+    "git_blob": "0b4b00c4c001f6db1d6f27c13601301f0f61f3a3",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/openclaw_adapter/execution_summarizer.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "64bcf0842fe0df71de765849b8ec8f54097ca3d3aa41c991f852d361044c499a",
+    "source_path": "src/stock_swing/openclaw_adapter/execution_summarizer.py"
+  },
+  {
+    "git_blob": "ba1fe98630319a9ac5712b49fcd0ea55bf903199",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/openclaw_adapter/signal_summarizer.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "1b0abbdabae975f6788b0da15fe82fa80baa0ed66d3ecd126cc952fcbd800f81",
+    "source_path": "src/stock_swing/openclaw_adapter/signal_summarizer.py"
+  },
+  {
+    "git_blob": "ce6e8c1b862d55416228e28fe4531303490ced5a",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/parameter_engine/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "eae2b2b788aff08b76bee641024ebc521982f272b1876393c878b08ba58dda86",
+    "source_path": "src/stock_swing/parameter_engine/__init__.py"
+  },
+  {
+    "git_blob": "eb60ce47e9546573849fe75d7fae60f87830f1d8",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/parameter_engine/parameter_recommender.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "cd486f84f9b9841036c4d084147f9e577d263e97f31240e9288b6c10e66f0586",
+    "source_path": "src/stock_swing/parameter_engine/parameter_recommender.py"
+  },
+  {
+    "git_blob": "63ba8bf715db75d064eb5d2cff7d369c9c8c5c32",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/parameter_engine/performance_analyzer.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "352150a5a6564d48560bff638be96aa1ce9fbced1da3027f1339aca8419c6e70",
+    "source_path": "src/stock_swing/parameter_engine/performance_analyzer.py"
+  },
+  {
+    "git_blob": "e9603e841a93f76f0206baeac8285678efee05ed",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/parameter_engine/safe_ranges.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "9cda38be4a7da964abbeb6e91ca578749722144f0e1eb816c770d55833a53ffc",
+    "source_path": "src/stock_swing/parameter_engine/safe_ranges.py"
+  },
+  {
+    "git_blob": "b19107904509b564c6793da6b8007e3201db3682",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/pricing/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "1c9d50ce7a5672846273becbe1f686f795727727a69539c123b5e4b69ff75618",
+    "source_path": "src/stock_swing/pricing/__init__.py"
+  },
+  {
+    "git_blob": "3fbf7a0e545d6ac8eb25067b690b8e4d6bad8195",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/pricing/price_resolver.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "8dcef4c388bdd763a72439c6a3369a49968057d3554537252d85550821ef1438",
+    "source_path": "src/stock_swing/pricing/price_resolver.py"
+  },
+  {
+    "git_blob": "c574d0a1a7ea5ab2c95c63eed32a6bfb3d77dc79",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/reporting/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "8f9dfb92531aeb24936fbc000963f98b7fae08eaf9088a88b23d6726b4121576",
+    "source_path": "src/stock_swing/reporting/__init__.py"
+  },
+  {
+    "git_blob": "d1b781b25e04cb0b553b3aad657ef4bc061282e9",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/reporting/console_renderer.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "3965965b416f64421ff165ad57c936a07e6e027dd98250c4f374618830a45cda",
+    "source_path": "src/stock_swing/reporting/console_renderer.py"
+  },
+  {
+    "git_blob": "cd5b73dff6a0128f631b4eb5b186c4e7078ed843",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/reporting/console_summary.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "b5e09b3dd462d8c640c4d7608c2ee1f1e68d6c9e725535be9fe884805a31500b",
+    "source_path": "src/stock_swing/reporting/console_summary.py"
+  },
+  {
+    "git_blob": "60b7b79976500cf7e02bf36ead89b1212d6083f9",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/reporting/daily_summary.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "0648ff046a641a0c4cf27511c3bfde175233c4d2298466e8ba7b1a2ff5be1a73",
+    "source_path": "src/stock_swing/reporting/daily_summary.py"
+  },
+  {
+    "git_blob": "bdc2dc710c637055b917d43a1271d7ff0b3f5613",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/reporting/equity_bridge.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "b10fe9cfe2ee08fba43b20d12c2e46b09c18d0430086662dba2ea7b22d15acba",
+    "source_path": "src/stock_swing/reporting/equity_bridge.py"
+  },
+  {
+    "git_blob": "80e569473c377b6648dcfcd4cffa6923c8601857",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/reporting/equity_bridge_reconciliation.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "2c970b9ddd9f6372e9c43ee2bf118614557def74edb550046defd3543f33c610",
+    "source_path": "src/stock_swing/reporting/equity_bridge_reconciliation.py"
+  },
+  {
+    "git_blob": "1c4c3407c755d5265e533e15d7ac7486f964ae0b",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/reporting/performance_snapshot.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "29fc23a08b9a34f0355d2dab6f092fe4fee1aea2f57eb522ad421c0f3afd1131",
+    "source_path": "src/stock_swing/reporting/performance_snapshot.py"
+  },
+  {
+    "git_blob": "3257a5d5b8ec9c0c42cf21bbdecc601acd6ca452",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/reporting/recommendation_report.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "f8aed30beaf633ac047e1704237945dedc92f09f3e9fc0c7f66b6099acb4589d",
+    "source_path": "src/stock_swing/reporting/recommendation_report.py"
+  },
+  {
+    "git_blob": "9faf9a8006798cbe729f5fd0efc76bf26ddef028",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/reporting/restriction_review_alerts.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "c03fe43607bbd557d098bb787a96b8a35922bf394759e44783b0cf36cc74f189",
+    "source_path": "src/stock_swing/reporting/restriction_review_alerts.py"
+  },
+  {
+    "git_blob": "d1ffbde00b3598524296517fcdde5440c8263c36",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/research/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "3e646c83c9f3d63d4bec6642378cb60f44c20da4926d5f022da3dea307160bd4",
+    "source_path": "src/stock_swing/research/__init__.py"
+  },
+  {
+    "git_blob": "cd3f74172115801ca22b2158c7d767621d76d866",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/research/rolling_walk_forward.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "08eeeab2d1cded796f4f8ea0b6bea699c7488b5d736f7689e318a9b17089b9a6",
+    "source_path": "src/stock_swing/research/rolling_walk_forward.py"
+  },
+  {
+    "git_blob": "dc4be44f54dc5ea7f31394dd52bd6e378c9d5f6f",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/research/trial_registry.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "5dbfdba595519d0d8f35783fafe4772c7b521abeff5d76d355bc8ec087834b72",
+    "source_path": "src/stock_swing/research/trial_registry.py"
+  },
+  {
+    "git_blob": "f9836a95794d6dd698673d1a430352898996d414",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "b1c20d05ab8571addd45327656d507ee7d89edb446a77691a4a91ad00862823b",
+    "source_path": "src/stock_swing/risk/__init__.py"
+  },
+  {
+    "git_blob": "c81afc7e94c000b6d732b85fb141763d50181075",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/allocation_config.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "dcb2e4f21aaf01163d66859a1cde97c039ff39dffb07aade5486ff6213c2b85f",
+    "source_path": "src/stock_swing/risk/allocation_config.py"
+  },
+  {
+    "git_blob": "ecace8d2a6d1246018fbb01f430367c15d2a9fef",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/basic_risk.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "fa608882f0116e9dc433eb82dd327392ec5a96efbaca63cf13dd65fdfcdd9ca2",
+    "source_path": "src/stock_swing/risk/basic_risk.py"
+  },
+  {
+    "git_blob": "004e00bbeae9f9955e41c1502643b3a45d561087",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/correlation_cluster.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "4e5ef7567f3320a0e7ae64f4e16a4e808b783e959c81bafbe7b5a66b876a6cba",
+    "source_path": "src/stock_swing/risk/correlation_cluster.py"
+  },
+  {
+    "git_blob": "3b4c5e9c180d7f19a8fae82177d80ac3f2f85f84",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/distance_from_high.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "7d46dc59a73c857c8462a87d2677653ce3496a4d6420a1361e27778ad0047c15",
+    "source_path": "src/stock_swing/risk/distance_from_high.py"
+  },
+  {
+    "git_blob": "06efaed3b73a6226bf66367e452268d86b594a8e",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/earnings_proximity_shadow.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "15103891678b8cfed7b701e2267e5602db78a07ca19a14af716f13c2725113e3",
+    "source_path": "src/stock_swing/risk/earnings_proximity_shadow.py"
+  },
+  {
+    "git_blob": "9011cee967869eb9edc27a7a8cc543a51765163d",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/entry_filter.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "8bde1e1a8da52186eedfcd982a04b25f5e7d115be835251b93c6dc99e36e91cb",
+    "source_path": "src/stock_swing/risk/entry_filter.py"
+  },
+  {
+    "git_blob": "64a862f0c73569541bcbae4070a6378713876ccd",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/entry_restriction_review.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "ba9f88f78085f6f02a9fc4e36c123848b5e2eaf3421563b43cb787a150bbd7aa",
+    "source_path": "src/stock_swing/risk/entry_restriction_review.py"
+  },
+  {
+    "git_blob": "e7a3942c6c1ab34ca2ed676cd95347e039484b46",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/finnhub_metric_lookup.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "2128285e1e9eb91ee3c17d8756d749e7e40b97c12d9610a8e689c628ec76c926",
+    "source_path": "src/stock_swing/risk/finnhub_metric_lookup.py"
+  },
+  {
+    "git_blob": "a024b9cf4335c9ed43fcca82bcf36c2df6a2b49c",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/interfaces.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "68e8005500388bd2c5ef0f3a45bc674008f8fd3b005c42ad7ea043db1095c25b",
+    "source_path": "src/stock_swing/risk/interfaces.py"
+  },
+  {
+    "git_blob": "d00b5895543f3b93cb13a279c140d8fe53aa9645",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/losing_position_add_guard.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "6554422b5500bb5d5eaa5787a90b8d1810464823ea0f8c6846ad017d2d3b7524",
+    "source_path": "src/stock_swing/risk/losing_position_add_guard.py"
+  },
+  {
+    "git_blob": "72191b24d3ad2dfa8086648c0b1d2d49d9029572",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/lot_level_exit_diagnostic.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "221f7b437b47600cc25db376e5af68ae70adb33ac8b2c3226fb59c38be2b31e8",
+    "source_path": "src/stock_swing/risk/lot_level_exit_diagnostic.py"
+  },
+  {
+    "git_blob": "2d35d9eb06985176f6097f5535f2dc3d3f781046",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/market_regime_indicator.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "05bfb8137e3ca2f63f8487841dc0688b350e3ba2d1fe0ca63011e205d9bc72f4",
+    "source_path": "src/stock_swing/risk/market_regime_indicator.py"
+  },
+  {
+    "git_blob": "a5c41cfe4e1ccd706370476e8b0911ebf388dbdc",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/news_sentiment.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "5e83e9b108cfef471437e3badeb4e1562173a240a6e10c482efb82f0afe1cb96",
+    "source_path": "src/stock_swing/risk/news_sentiment.py"
+  },
+  {
+    "git_blob": "9f852a8b3fe5921b0ffe11ac6706130a328c1285",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/news_shock_hold.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "37b466fe78306f781b34c6e426f48e3f27f27c9cf53231275b8069d032d5f932",
+    "source_path": "src/stock_swing/risk/news_shock_hold.py"
+  },
+  {
+    "git_blob": "b06d70200fad3dbfeaa8357fc75b9abf8a5d22c3",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/open_shock_cooldown.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "e36833622b159ff99522de59cf9b4bd12359346848e65409dfeffc593545708e",
+    "source_path": "src/stock_swing/risk/open_shock_cooldown.py"
+  },
+  {
+    "git_blob": "830a0e0e03c14e0b00ef6ebc4a9403ada7a69cf4",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/pairwise_correlation.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "c6bb49d12f5e33b8c8592037f64ea86c855a8ccbfb423fdab7b54fccb3f274da",
+    "source_path": "src/stock_swing/risk/pairwise_correlation.py"
+  },
+  {
+    "git_blob": "685cad00cbe41dcf725f3c6eb9411c37d60abd4e",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/per_lot_time_based_exit.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "1b08a37f53a8ea0a3f2c2bd0f44dd87d21a2c51d31b22cb789a710e7d772a6d5",
+    "source_path": "src/stock_swing/risk/per_lot_time_based_exit.py"
+  },
+  {
+    "git_blob": "3221aa400742a5512d56ea1a428207f56d47065b",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/portfolio_allocator.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "0a64d37e57c06c1ec031f6f5bfc7880c4cbdbc30aafa13691317c287416832f6",
+    "source_path": "src/stock_swing/risk/portfolio_allocator.py"
+  },
+  {
+    "git_blob": "ef4e1097be2e094c7d4ce556427d14bbdc04e973",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/position_sizing.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "6a80f3417aaa191ead985755f0c580390158fcc2d7972b8bf63774c056353717",
+    "source_path": "src/stock_swing/risk/position_sizing.py"
+  },
+  {
+    "git_blob": "4c31cd6dc59f0cbffd713e938e79905da84c7c3f",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/promotion_gate.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "6e459a0e7b8a4600b3a7e54e48087c95d854fff69b779743733d325ded05fb81",
+    "source_path": "src/stock_swing/risk/promotion_gate.py"
+  },
+  {
+    "git_blob": "7b1cf74f9f30679a14eb42ac1ab1604eb39c957d",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/risk_budget.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "8d15abbaac3adb0e9c7d239b32c9d6ccfd393a9c77e8cf8c034283f7cf8848ee",
+    "source_path": "src/stock_swing/risk/risk_budget.py"
+  },
+  {
+    "git_blob": "cfd1a4393e92632cb4c7e42abf88521c5950b530",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/risk_monitor.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "8ba8da82941021ad74b70bd7f207c35cfc4c7dcebcb8bdeacc6f1a6f91d5abdf",
+    "source_path": "src/stock_swing/risk/risk_monitor.py"
+  },
+  {
+    "git_blob": "1abc9213fe47770c0dfb5653df246708d46f87a5",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/rsi_diagnostic.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "8ca1c4ffa9694356e538e19843229af165855baded34210e7c875c0a5b3d2958",
+    "source_path": "src/stock_swing/risk/rsi_diagnostic.py"
+  },
+  {
+    "git_blob": "55dde14cdb3391729296701e3c024e830a0cf9d4",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/same_symbol_cooldown.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "38623bbc00d76cf1048bd8ec086c900e4ecbf8c4cf07b2b83692f3d32cf574b5",
+    "source_path": "src/stock_swing/risk/same_symbol_cooldown.py"
+  },
+  {
+    "git_blob": "3838d3a2cf6e8036d968c94913ebdc88a4edf8b4",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/session_return_snapshot.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "187f4dbfa5939f9179239b87560f163c92c80cbaa0360f9af74c1da06b64e60e",
+    "source_path": "src/stock_swing/risk/session_return_snapshot.py"
+  },
+  {
+    "git_blob": "067d163080f4954da67d1bcef5c00765d3dfd9c2",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/shock_aware_staged_exit.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "b55dad62601c40de88a0290e0676724ac6c1e6039fff75082c68f976d1ed7385",
+    "source_path": "src/stock_swing/risk/shock_aware_staged_exit.py"
+  },
+  {
+    "git_blob": "d95f164e60f541640c8ac1a30c0b0919edfd5b13",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/volatility_gate.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "988f3f015bbb173872c72899d9ff9baaa451ec282b4cf8db00a02d022c1092f5",
+    "source_path": "src/stock_swing/risk/volatility_gate.py"
+  },
+  {
+    "git_blob": "0872fffd290825fe12b8e163df85991617eab0f4",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/risk/weekend_gap_guard.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "99004b38643e610f6c2d6781a32180194e4177ccdb739d7eaa0d0f6c0417eb2b",
+    "source_path": "src/stock_swing/risk/weekend_gap_guard.py"
+  },
+  {
+    "git_blob": "8272d576cc75dc6b4664854d4fe585a46565b5f8",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/safety/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "07cbd429dac530f51bac7761e092c536787aba5fab79221ed8cf87e0ac0e4736",
+    "source_path": "src/stock_swing/safety/__init__.py"
+  },
+  {
+    "git_blob": "d2f2b84c716028718674583c10096a7ce2e86005",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/safety/audit_logger.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "784bb5b0db8540bdce1ebbab0f6406aefec97b80c498245cf48809206ce07514",
+    "source_path": "src/stock_swing/safety/audit_logger.py"
+  },
+  {
+    "git_blob": "f76be44de9d354437246d30808cafe7f09c688b7",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/safety/kill_switch.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "52e59081ea2f2a3db8f31049d149f4f59a623e44dd5b25feefac82a774d90d99",
+    "source_path": "src/stock_swing/safety/kill_switch.py"
+  },
+  {
+    "git_blob": "7797a6575fbe54177a132a923c21dfcfd2aed371",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/sources/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "8f00a339db3691bd04055c3a90f2515bec316136d6599618c573d83ffe956960",
+    "source_path": "src/stock_swing/sources/__init__.py"
+  },
+  {
+    "git_blob": "68d7e94a2aa230e96157989d0fb5fce9432e283b",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/sources/bar_contract.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "8329875cb14fa17f18eb000fbcdd518cd5ad0dd628f2f400d7b3c2b2f25698dd",
+    "source_path": "src/stock_swing/sources/bar_contract.py"
+  },
+  {
+    "git_blob": "372735dbdb56df06edeb8d82289c2aa9e4357e13",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/sources/base.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "371e05eb77c2ef2e4dea1214ea9d73c7d1030b08a092d9ed7de0dbafd0becae9",
+    "source_path": "src/stock_swing/sources/base.py"
+  },
+  {
+    "git_blob": "6f66690fc4ede1fbb3ca9850d33c0c1e012e56db",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/sources/broker_client.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "49f59390e6f8f6582169622dd68b8674e0003ededd0483a4276bf60494e8b02e",
+    "source_path": "src/stock_swing/sources/broker_client.py"
+  },
+  {
+    "git_blob": "03fa76e790ec7736a1a83c692eab6220fb78246a",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/sources/broker_client_protocol.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "6bb9e2564ab106af5c9fb86f076b0e5bcfa9fcbc0a53a507ae4483ca25a88bac",
+    "source_path": "src/stock_swing/sources/broker_client_protocol.py"
+  },
+  {
+    "git_blob": "4a655dca716640dc701d2d6a0839de2113239d59",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/sources/errors.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "dd1fbc5a902ca186be5e3f2ae019b5e37171b76b9e4a24bfc7daa32acb5bf096",
+    "source_path": "src/stock_swing/sources/errors.py"
+  },
+  {
+    "git_blob": "2dcbb0fffbd12560912f0c958776de3730fb2026",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/sources/finnhub_client.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "ea6c91f6a827714f888178fe5d3be8bb731f5abfe0e0ead74dea98ccc6198053",
+    "source_path": "src/stock_swing/sources/finnhub_client.py"
+  },
+  {
+    "git_blob": "48ac34c7d87f5c5bd8822ab470c2a7c92bb8df4a",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/sources/fred_client.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "f1c150f3be9d452df10134074e039c19f2c8e224382c1dd9feea7a7993ade5fd",
+    "source_path": "src/stock_swing/sources/fred_client.py"
+  },
+  {
+    "git_blob": "84a007bf4670ac8fa75546bd496fe38a1dc7fb9f",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/sources/hybrid_data_fetcher.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "d70c62b3a9acbb8fc9ad2cab2fb03dc0e59ceb59c430760aa0316434bf414875",
+    "source_path": "src/stock_swing/sources/hybrid_data_fetcher.py"
+  },
+  {
+    "git_blob": "ca16a5be35c1ab7354d49e2d858a17626c4e560f",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/sources/massive_client.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "9394a183ed7c36a3b79022e6da9c275334060cf79c71e03c99c40a8b090e5419",
+    "source_path": "src/stock_swing/sources/massive_client.py"
+  },
+  {
+    "git_blob": "519cf8b2d7aa671e3fe80bc38edc0c2ddb0675f1",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/sources/retry.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "4d01772b9e6e656de3b1e7bc46058cf5488fff5d0856904774293f2e92c355a4",
+    "source_path": "src/stock_swing/sources/retry.py"
+  },
+  {
+    "git_blob": "4a46d9b69270f6842236690a0339d232b7644210",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/sources/sec_client.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "f260d86868ddda7673442c9cc6b84f09dfb0bc9c7cf6bbc8ea0cca0e41a0216f",
+    "source_path": "src/stock_swing/sources/sec_client.py"
+  },
+  {
+    "git_blob": "07e45cb346a40e556b0e09e9be7840c81ee4c292",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/storage/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "13cd5117f1c58a6dc0d66a47044168d455a69f47fad83368b802001155808de3",
+    "source_path": "src/stock_swing/storage/__init__.py"
+  },
+  {
+    "git_blob": "838ac597d74b1a59b2ac05d90e4235e9fa2f1eca",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/storage/interfaces.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "0eb57ca91c2113ba567c4de384a197bf9e530c8ba2a17ceb4f66005b8a5d0d56",
+    "source_path": "src/stock_swing/storage/interfaces.py"
+  },
+  {
+    "git_blob": "bc1d540d768d379330949cda34de35041dab4a59",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/storage/json_store.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "b914ee8052f5c6a3a467de9f6d066251fd69f071eb3226b0e290dc30f8e6be63",
+    "source_path": "src/stock_swing/storage/json_store.py"
+  },
+  {
+    "git_blob": "4602f4e63dbe1a3441cd1ff068355e805f1ba1ed",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/storage/outcome_loader.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "529b72d65221615cc8e7ad2898dafeffebdfc01a15ed960a7b96851993d8aee2",
+    "source_path": "src/stock_swing/storage/outcome_loader.py"
+  },
+  {
+    "git_blob": "5abd0fec0d1db2e83f79f51d4dcd69d11eb51792",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/storage/stage_store.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "0c7b18b6d5a0125ca48a6cd1b64efc6d5257ec7022bc4502571900a5be28a06b",
+    "source_path": "src/stock_swing/storage/stage_store.py"
+  },
+  {
+    "git_blob": "0a8303ea180e3325c493301e4df9b10c5192eff1",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/strategy_engine/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "16fff239e45ff218759a0343aa2a801f9f7582dd50eeca1a8b6002dabba62870",
+    "source_path": "src/stock_swing/strategy_engine/__init__.py"
+  },
+  {
+    "git_blob": "6bd703372f73bcabdccf00644e8ad8485102461e",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/strategy_engine/base_strategy.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "b705c2770522a53ba5cf98226c5c08dbb9081804ebfbf73a257ea97dd2b580d9",
+    "source_path": "src/stock_swing/strategy_engine/base_strategy.py"
+  },
+  {
+    "git_blob": "14b680881de95252f2d35999a4e0dd780ecf85f9",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/strategy_engine/breakout_momentum_strategy.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "9dd95fe153f219309c2f34d382acd5167919b8abe905b063bd328d0b7f67f3f7",
+    "source_path": "src/stock_swing/strategy_engine/breakout_momentum_strategy.py"
+  },
+  {
+    "git_blob": "b4c43c576b78efb34399174209100c1d161a17f4",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/strategy_engine/dip_buy_meanreversion_strategy.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "5346480496211cb93823ae72ae72016ebdaaccdfe1dc32bc6973fb98e52835a0",
+    "source_path": "src/stock_swing/strategy_engine/dip_buy_meanreversion_strategy.py"
+  },
+  {
+    "git_blob": "d11f4e91bf1ac8fa79620dcc9c99ed76f80e7077",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/strategy_engine/event_swing.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "c030a879e63c770fa6fbad3e332406f19e262d9de6ec0f52bb82aeaa14f032af",
+    "source_path": "src/stock_swing/strategy_engine/event_swing.py"
+  },
+  {
+    "git_blob": "a35eb770c5ba01beb33d0a75235487ee5ff44dc0",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/strategy_engine/event_swing_strategy.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "193c3656c7c448f277dfc5097c51356db5270395a626a90ef8957a9ec3614d1d",
+    "source_path": "src/stock_swing/strategy_engine/event_swing_strategy.py"
+  },
+  {
+    "git_blob": "772748b58f9eaba3f64f19e420669fc801195225",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/strategy_engine/interfaces.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "8265dd7b33726e6bcbaa3fb70704ebe79351dc0f520866617e65f54bc83cd25c",
+    "source_path": "src/stock_swing/strategy_engine/interfaces.py"
+  },
+  {
+    "git_blob": "8e113a3d141194152645eab6f848ae1bbff2bb88",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/strategy_engine/overnight_spillover_shadow.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "e95cc5c6027fb6b19484f4f55be7f35a80da9efa8a8f1bbbe8ae13a670a084e3",
+    "source_path": "src/stock_swing/strategy_engine/overnight_spillover_shadow.py"
+  },
+  {
+    "git_blob": "10b1fb59f6a8923db7f16ec8dbe68588b113565d",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/strategy_engine/sector_rotation_state.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "899721ed8dc2f6ad5b17fc84c92eb92bfc55e170f43896b177a6a24219ea8bc6",
+    "source_path": "src/stock_swing/strategy_engine/sector_rotation_state.py"
+  },
+  {
+    "git_blob": "cc7611bc0758c014de8057337fb00fed1534d371",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/strategy_engine/sector_rotation_strategy.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "74119544d9f6ea9cb698c82c14418377ba9e642580fd811f0b7bd51e89a84d8f",
+    "source_path": "src/stock_swing/strategy_engine/sector_rotation_strategy.py"
+  },
+  {
+    "git_blob": "a0197f690d1474c686c9f4a99d351eef55f432d4",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/strategy_engine/sector_shock_hold.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "2a0ca796f84ca3d0a1a8d43b570a57a587f645b966116225cbade7ff00d1f9ee",
+    "source_path": "src/stock_swing/strategy_engine/sector_shock_hold.py"
+  },
+  {
+    "git_blob": "ef038977ddb3dca290b09c858ee1302c16b48fea",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/strategy_engine/simple_exit_strategy.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "29ca8731853064015d22c6a15ebc036181b070c251917aa487dcd3dfb1074b24",
+    "source_path": "src/stock_swing/strategy_engine/simple_exit_strategy.py"
+  },
+  {
+    "git_blob": "3ee3929cff171c2b09c5eb3c10d8100782f36838",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/strategy_engine/simple_exit_v2_strategy.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "320ceada2b4726de98c6132ed223c6f29613bc9fd76902ff4c1636cf4a9212e9",
+    "source_path": "src/stock_swing/strategy_engine/simple_exit_v2_strategy.py"
+  },
+  {
+    "git_blob": "5e898964e2aff478ba437e2671b0bf1bc6baa05c",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/tracking/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "c8d64732ab2b1debc222e62c6cdb9490219850dd951954cd6683a26924315eec",
+    "source_path": "src/stock_swing/tracking/__init__.py"
+  },
+  {
+    "git_blob": "d903c6571dc801391e27602ced9b5e24f1cac144",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/tracking/closed_trade_validator.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "8ee27a6089a03905ae322635f5975f7467fb84effc4554a71f037209f77690c0",
+    "source_path": "src/stock_swing/tracking/closed_trade_validator.py"
+  },
+  {
+    "git_blob": "6f7384a37403c59c04b84fdcda67b0dc1d864323",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/tracking/exit_reason_store.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "ec4b8efccf72d467e09723c33576ffdda3ab67741706871ece7225364b2c6ade",
+    "source_path": "src/stock_swing/tracking/exit_reason_store.py"
+  },
+  {
+    "git_blob": "36f7be3a929582c8377e1418165884776b4bb883",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/tracking/fill_ledger.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "bfcb2c7656a05df6c70b5802150269010ff9c428133c647cbd0f4e86a4fcb168",
+    "source_path": "src/stock_swing/tracking/fill_ledger.py"
+  },
+  {
+    "git_blob": "bc5ef3650d815e918f85c2ad23c05fdb990a70e2",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/tracking/pnl_tracker.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "ba1d0cf0f03c943265d0f38372f89b7a9f7e1841361795fa29eaf4a2a194de28",
+    "source_path": "src/stock_swing/tracking/pnl_tracker.py"
+  },
+  {
+    "git_blob": "97e0982b5d575cfd081d29157a587e64b613127f",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/tracking/pnl_tracker_fix.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "abd8c5952fd7a5ff9b350023b7e80f322db1cc2f519e4ef03f9907ca51be9633",
+    "source_path": "src/stock_swing/tracking/pnl_tracker_fix.py"
+  },
+  {
+    "git_blob": "aa18cbcf529a9592dadc6ff60fe5e01c11ee462c",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/tracking/trade_event_store.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "a7f77bdef4ab3d67b176df6d67e6fb8d58d355774fc9d0f272c0e8d0d6546c17",
+    "source_path": "src/stock_swing/tracking/trade_event_store.py"
+  },
+  {
+    "git_blob": "4c86a08d21f93e416038eeec846e404ba2033def",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/utils/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "4238c42987781e012403b70cd12659f4e685de8f30fb16c64e9766c42bfa1edd",
+    "source_path": "src/stock_swing/utils/__init__.py"
+  },
+  {
+    "git_blob": "47190c09e3377542ada4953e3eaf1ac178fc7bbf",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/utils/context_budget.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "f6dd9f791e42f6e78683adf142f0502a863a27e524bc6c8208c86635ce956a88",
+    "source_path": "src/stock_swing/utils/context_budget.py"
+  },
+  {
+    "git_blob": "64c267c01b31d4aa78a0b51efb972d32c646d89a",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/utils/jpx_market_calendar.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "8530fc39f1d1888729994ac7004e9da0381af0b8d3c7ed0a5416e24d6eadc621",
+    "source_path": "src/stock_swing/utils/jpx_market_calendar.py"
+  },
+  {
+    "git_blob": "ef579d113d7ae4dad84160bbcd6c01cf4f7d7482",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/utils/latency_tracker.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "9a8214565fcfc271b450dca7709aa6e11f0aebeea9e417450bbdbdb4f8c344ed",
+    "source_path": "src/stock_swing/utils/latency_tracker.py"
+  },
+  {
+    "git_blob": "1716d514cb9920e42d07f0eca86695a905f3088c",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/utils/market_calendar.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "e529e78d09ce2438716545b31a2c8cda9374eb9920407df1fc00f94e436849f3",
+    "source_path": "src/stock_swing/utils/market_calendar.py"
+  },
+  {
+    "git_blob": "6e3b2da4898f17b26528b4d5805bc01b7c36b9af",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/utils/market_guard.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "9e73f6d909a9bceb02f181fdfa806203e22bd10602c8f312dd803e7be4efca8c",
+    "source_path": "src/stock_swing/utils/market_guard.py"
+  },
+  {
+    "git_blob": "d9f91e502003e9094b47dab678a3c217cba114f9",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/utils/mtime_cache.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "0badb35b2e27f9f1de414ffb6f28d406382e97eded341aa818f24731beb1fdfc",
+    "source_path": "src/stock_swing/utils/mtime_cache.py"
+  },
+  {
+    "git_blob": "e6cc2b19a2e07d7b5ba45c89c1700269dca8e99a",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/utils/signal_prioritization.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "7026da8881ca5ea36fdd2b46f5554697a48bcf712433419489a17c7de36f09ec",
+    "source_path": "src/stock_swing/utils/signal_prioritization.py"
+  },
+  {
+    "git_blob": "b5c88d0ab6b5880010e52ba39b793245c5671065",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/utils/stale_price.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "97d08aed9c384c9d6824be2764c084cb27893b52dc084a984edec9fbf5464eb6",
+    "source_path": "src/stock_swing/utils/stale_price.py"
+  },
+  {
+    "git_blob": "7c3ceb62621e63869915a55e189f2a03d5b888f3",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/utils/strategy_versioning.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "e10cf91a556e1f680333e591677136919c31ffba7d3380b486247902da75eed2",
+    "source_path": "src/stock_swing/utils/strategy_versioning.py"
+  },
+  {
+    "git_blob": "2179b86f1c80dc77138a27129e65efcaedff6e01",
+    "git_mode": "100644",
+    "path": "code/src/stock_swing/utils/telegram_notifier.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "c02bebfaaafef18d79fdf0f69429f7e45fe0ecba34f0952362306ed65f44519d",
+    "source_path": "src/stock_swing/utils/telegram_notifier.py"
+  },
+  {
+    "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+    "git_mode": "100644",
+    "path": "code/tests/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_path": "tests/__init__.py"
+  },
+  {
+    "git_blob": "0592a02c04ad7beb28e4e3db728aaea21bcb7d4d",
+    "git_mode": "100644",
+    "path": "code/tests/fixtures/provider_contract_cli_driver.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "e9eb389a5b5b3171d744b1f5dab49d238cea31d33be54544458cc0c4c46ca79f",
+    "source_path": "tests/fixtures/provider_contract_cli_driver.py"
+  },
+  {
+    "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+    "git_mode": "100644",
+    "path": "code/tests/unit/__init__.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_path": "tests/unit/__init__.py"
+  },
+  {
+    "git_blob": "8ff9c96b6530916f2773d34142511ea146c238fd",
+    "git_mode": "100644",
+    "path": "code/tests/unit/test_decision_input_capture.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "6e05264c1bd9083d80bb194a5415a98e3f85f5eb4aacf4ecccb073730561bc6c",
+    "source_path": "tests/unit/test_decision_input_capture.py"
+  },
+  {
+    "git_blob": "05f45f9befa435ad4cf07a69382815dfeb5532c0",
+    "git_mode": "100644",
+    "path": "code/tests/unit/test_massive_client.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "c2bd24ec3e73fd12655ee5a47d842a13a5a01c76bf3b366501ad1a8775e1a8c6",
+    "source_path": "tests/unit/test_massive_client.py"
+  },
+  {
+    "git_blob": "8dff83d08682d2b99b02fe97dfecd557190932a8",
+    "git_mode": "100644",
+    "path": "code/tests/unit/test_measurement_capture.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "28fed1030b1bb94f9047b430312c2451e4e2e37b9833d77d90e619b661161080",
+    "source_path": "tests/unit/test_measurement_capture.py"
+  },
+  {
+    "git_blob": "628c551cb3da9e42ac2c7b0c55a2baaced990e5e",
+    "git_mode": "100644",
+    "path": "code/tests/unit/test_provider_bar_contracts.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "cbd968064366b11c5543c05a4611cd5ff76e16b3dd745428e74880ccaeeb62aa",
+    "source_path": "tests/unit/test_provider_bar_contracts.py"
+  },
+  {
+    "git_blob": "cda50cb19ef1c1051fc8d87222c262e93dc13f99",
+    "git_mode": "100644",
+    "path": "code/tests/unit/test_provider_cli_copy.py",
+    "revision": "067d23b8fff9d406e87867fc177eb1da978368c1",
+    "sha256": "ae1562eda7a4693ac982797a16150d64e9f6605bca0891c3174a61ac129094db",
+    "source_path": "tests/unit/test_provider_cli_copy.py"
+  },
+  {
+    "git_blob": "a24f60c9d0e2378463c18a70f02791263027ddee",
+    "git_mode": "100644",
+    "path": "baseline/src/stock_swing/sources/hybrid_data_fetcher.py",
+    "revision": "8909e79c1a83e04d508715b132575625454b7856",
+    "sha256": "4c7b8c66127ae872b8aef033dbb28571a220862d12d5195cc16c9b7f73cb09b8",
+    "source_path": "src/stock_swing/sources/hybrid_data_fetcher.py"
+  },
+  {
+    "git_blob": "eafad4f6b10b72b477083d0194ec539da9897c8c",
+    "git_mode": "100644",
+    "path": "baseline/src/stock_swing/sources/massive_client.py",
+    "revision": "8909e79c1a83e04d508715b132575625454b7856",
+    "sha256": "6ed163f73f52c963b4755363b17893c4e58e437debec9e72bf20f7789c0bd772",
+    "source_path": "src/stock_swing/sources/massive_client.py"
+  },
+  {
+    "git_blob": "2a1629f6a4cdac8dcd0d63919affc7496258bcd4",
+    "git_mode": "100644",
+    "path": "baseline/src/stock_swing/cli/paper_demo.py",
+    "revision": "8909e79c1a83e04d508715b132575625454b7856",
+    "sha256": "c826bff395b3a6d6e2e21d4d98b45f41296e96dab77ca21694a132cc82128e85",
+    "source_path": "src/stock_swing/cli/paper_demo.py"
+  },
+  {
+    "git_blob": "f3af95336e56a710a6a80797cacdd78be7c55b51",
+    "git_mode": "100644",
+    "path": "baseline/src/stock_swing/sources/broker_client.py",
+    "revision": "8909e79c1a83e04d508715b132575625454b7856",
+    "sha256": "7319c56167fbdd8f6fe6e4b446c9d2382f1bf64811301699791f3bc562aaec36",
+    "source_path": "src/stock_swing/sources/broker_client.py"
+  },
+  {
+    "git_blob": "2dc57e5c364250a74f455eb4da136aeda2fed114",
+    "git_mode": "100644",
+    "path": "baseline/src/stock_swing/normalization/broker_normalizer.py",
+    "revision": "8909e79c1a83e04d508715b132575625454b7856",
+    "sha256": "fb880d2755531089d1fb62c6a94c7f6da323c2c2eac718d79a3b374c53eac633",
+    "source_path": "src/stock_swing/normalization/broker_normalizer.py"
+  }
+]

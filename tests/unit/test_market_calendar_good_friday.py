@@ -14,6 +14,7 @@ the Anonymous Gregorian algorithm.
 from __future__ import annotations
 
 from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 from stock_swing.utils.market_calendar import MarketCalendar
 
@@ -86,6 +87,9 @@ def test_same_month_day_different_year_not_incorrectly_flagged():
 
 
 def test_is_market_open_returns_false_on_good_friday():
-    is_open, status = MarketCalendar.is_market_open(datetime(2026, 4, 3, 12, 0))
+    # Holiday session is noon ET, not noon JST (which is still Thursday ET).
+    is_open, status = MarketCalendar.is_market_open(
+        datetime(2026, 4, 3, 12, 0, tzinfo=ZoneInfo("America/New_York"))
+    )
     assert is_open is False
     assert "Good Friday" in status

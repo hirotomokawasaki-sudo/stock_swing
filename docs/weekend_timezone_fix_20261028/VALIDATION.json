@@ -1,0 +1,93 @@
+{
+  "status": "PARTIAL",
+  "code_and_tests": "PASS",
+  "operational_scheduled_verification": "PENDING",
+  "as_of": "2026-10-28T00:24:09.637585+00:00",
+  "invariants": [
+    {
+      "name": "old_code_reproduces_incident",
+      "expected": "10 failures",
+      "actual": "10 failed, 50 passed",
+      "pass": true,
+      "evidence": ".run/weekend-timezone-fix-20261028/regression.before.log"
+    },
+    {
+      "name": "focused_suite_utc_host",
+      "expected": 152,
+      "actual": 152,
+      "pass": true,
+      "evidence": ".run/weekend-timezone-fix-20261028/focused-utc.log"
+    },
+    {
+      "name": "regression_los_angeles_host",
+      "expected": 60,
+      "actual": 60,
+      "pass": true,
+      "evidence": ".run/weekend-timezone-fix-20261028/regression-los-angeles.log"
+    },
+    {
+      "name": "complete_suite_nonoverlapping_partitions",
+      "expected": {
+        "passed": 2554,
+        "skipped": 2,
+        "failed": 0
+      },
+      "actual": {
+        "passed": 2554,
+        "skipped": 2,
+        "failed": 0
+      },
+      "pass": true,
+      "evidence": [
+        ".run/weekend-timezone-fix-20261028/full-offline-tests.log",
+        ".run/weekend-timezone-fix-20261028/loopback-test.log"
+      ]
+    },
+    {
+      "name": "historical_decisions_calendar_false_blocks",
+      "expected": {
+        "runs": 2,
+        "candidate_appearances": 8,
+        "blocked_after": 0,
+        "submitted": 0
+      },
+      "actual": {
+        "runs": 2,
+        "candidate_appearances": 8,
+        "blocked_after": 0,
+        "submitted": 0
+      },
+      "pass": true,
+      "evidence": ".run/weekend-timezone-fix-20261028/canary.json"
+    },
+    {
+      "name": "live_protected_state_unchanged",
+      "expected": {
+        "changed": [],
+        "added": []
+      },
+      "actual": {
+        "protected_files": 156,
+        "changed": [],
+        "added": [],
+        "unchanged": true
+      },
+      "pass": true,
+      "evidence": ".run/weekend-timezone-fix-20261028/protected.final.json"
+    },
+    {
+      "name": "existing_scheduler_definitions_unchanged",
+      "expected": 0,
+      "actual": 0,
+      "pass": true,
+      "evidence": ".run/weekend-timezone-fix-20261028/job-integrity.json"
+    },
+    {
+      "name": "genuine_friday_scheduled_verification",
+      "expected": "2 genuine US Friday completions after fix",
+      "actual": "pending 2026-10-31 07:10 JST review; job f2e3c444-f106-4b01-bd71-3a100fce8222 retrieved and verified",
+      "pass": null,
+      "evidence": ".run/weekend-timezone-fix-20261028/review-job.readback.json"
+    }
+  ]
+}

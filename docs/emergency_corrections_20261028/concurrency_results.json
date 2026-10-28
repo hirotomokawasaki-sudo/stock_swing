@@ -1,0 +1,362 @@
+{
+  "baseline_cover": {
+    "killed_after_acceptance": true,
+    "posts": [
+      {
+        "qty": 13,
+        "side": "buy",
+        "symbol": "HPE",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 13,
+        "side": "buy",
+        "symbol": "HPE",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 13,
+        "side": "buy",
+        "symbol": "HPE",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "restarted": {
+      "error": null,
+      "exit_code": 0,
+      "http_calls": [
+        [
+          "GET",
+          "/v2/positions"
+        ],
+        [
+          "POST",
+          "/v2/orders"
+        ]
+      ],
+      "origin_is_copy": true,
+      "posts": [
+        {
+          "qty": 13,
+          "side": "buy",
+          "symbol": "HPE",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "stdout": "Checking HPE position...\nCurrent HPE position: -13 shares\n\nClosing short position: BUY 13 HPE\n\nOrder submitted:\n  Order ID: fixture-3\n  Symbol: HPE\n  Side: buy\n  Qty: 13\n  Status: new\n\nShort position should be closed after order fills.\n",
+      "summary": null
+    },
+    "second": {
+      "error": null,
+      "exit_code": 0,
+      "http_calls": [
+        [
+          "GET",
+          "/v2/positions"
+        ],
+        [
+          "POST",
+          "/v2/orders"
+        ]
+      ],
+      "origin_is_copy": true,
+      "posts": [
+        {
+          "qty": 13,
+          "side": "buy",
+          "symbol": "HPE",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "stdout": "Checking HPE position...\nCurrent HPE position: -13 shares\n\nClosing short position: BUY 13 HPE\n\nOrder submitted:\n  Order ID: fixture-2\n  Symbol: HPE\n  Side: buy\n  Qty: 13\n  Status: new\n\nShort position should be closed after order fills.\n",
+      "summary": null
+    }
+  },
+  "baseline_sell": {
+    "killed_after_acceptance": true,
+    "posts": [
+      {
+        "qty": 3,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 3,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 3,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "restarted": {
+      "error": null,
+      "exit_code": 0,
+      "http_calls": [
+        [
+          "GET",
+          "/v2/positions"
+        ],
+        [
+          "POST",
+          "/v2/orders"
+        ]
+      ],
+      "origin_is_copy": true,
+      "posts": [
+        {
+          "qty": 3,
+          "side": "sell",
+          "symbol": "NOW",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\n\ud83d\udcc9 NOW:\n   Qty: 3\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u2705 Order submitted: fixture-3\n\u274c IBM: No position found\n\n==================================================\n\u2705 Emergency sell complete\n",
+      "summary": null
+    },
+    "second": {
+      "error": null,
+      "exit_code": 0,
+      "http_calls": [
+        [
+          "GET",
+          "/v2/positions"
+        ],
+        [
+          "POST",
+          "/v2/orders"
+        ]
+      ],
+      "origin_is_copy": true,
+      "posts": [
+        {
+          "qty": 3,
+          "side": "sell",
+          "symbol": "NOW",
+          "time_in_force": "day",
+          "type": "market"
+        }
+      ],
+      "stdout": "\ud83d\udea8 EMERGENCY SELL\n==================================================\n\n\ud83d\udcc9 NOW:\n   Qty: 3\n   P&L: $0.00 (+0.00%)\n   Submitting SELL order...\n   \u2705 Order submitted: fixture-2\n\u274c IBM: No position found\n\n==================================================\n\u2705 Emergency sell complete\n",
+      "summary": null
+    }
+  },
+  "candidate_cover": {
+    "killed_after_acceptance": true,
+    "posts": [
+      {
+        "client_order_id": "ss-cdcc2a801d4f208140b8eccdceac515d002080d4",
+        "qty": 13,
+        "side": "buy",
+        "symbol": "HPE",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "restarted": {
+      "error": null,
+      "exit_code": 1,
+      "http_calls": [
+        [
+          "GET",
+          "/v2/account"
+        ],
+        [
+          "GET",
+          "/v2/orders:by_client_order_id"
+        ]
+      ],
+      "origin_is_copy": true,
+      "posts": [],
+      "stdout": "HPE cover_short: held qty=13 broker_status=new reason=intent_already_recorded_no_resend fractional_remainder=None\nREDUCTION_SUMMARY_JSON={\"exit_code\": 1, \"results\": [{\"broker_status\": \"new\", \"client_order_id\": \"ss-cdcc2a801d4f208140b8eccdceac515d002080d4\", \"exit_code\": 1, \"fractional_remainder\": null, \"kind\": \"cover_short\", \"order_id\": \"fixture-1\", \"qty\": 13, \"reason\": \"intent_already_recorded_no_resend\", \"reserved_qty\": null, \"state\": \"held\", \"symbol\": \"HPE\"}], \"status\": \"needs_attention\"}\n",
+      "summary": {
+        "exit_code": 1,
+        "results": [
+          {
+            "broker_status": "new",
+            "client_order_id": "ss-cdcc2a801d4f208140b8eccdceac515d002080d4",
+            "exit_code": 1,
+            "fractional_remainder": null,
+            "kind": "cover_short",
+            "order_id": "fixture-1",
+            "qty": 13,
+            "reason": "intent_already_recorded_no_resend",
+            "reserved_qty": null,
+            "state": "held",
+            "symbol": "HPE"
+          }
+        ],
+        "status": "needs_attention"
+      }
+    },
+    "second": {
+      "error": null,
+      "exit_code": 1,
+      "http_calls": [
+        [
+          "GET",
+          "/v2/account"
+        ]
+      ],
+      "origin_is_copy": true,
+      "posts": [],
+      "stdout": "HPE cover_short: held qty=None broker_status=unconfirmed reason=submission_guard_busy fractional_remainder=None\nREDUCTION_SUMMARY_JSON={\"exit_code\": 1, \"results\": [{\"broker_status\": null, \"client_order_id\": \"ss-cdcc2a801d4f208140b8eccdceac515d002080d4\", \"exit_code\": 1, \"fractional_remainder\": null, \"kind\": \"cover_short\", \"order_id\": null, \"qty\": null, \"reason\": \"submission_guard_busy\", \"reserved_qty\": null, \"state\": \"held\", \"symbol\": \"HPE\"}], \"status\": \"needs_attention\"}\n",
+      "summary": {
+        "exit_code": 1,
+        "results": [
+          {
+            "broker_status": null,
+            "client_order_id": "ss-cdcc2a801d4f208140b8eccdceac515d002080d4",
+            "exit_code": 1,
+            "fractional_remainder": null,
+            "kind": "cover_short",
+            "order_id": null,
+            "qty": null,
+            "reason": "submission_guard_busy",
+            "reserved_qty": null,
+            "state": "held",
+            "symbol": "HPE"
+          }
+        ],
+        "status": "needs_attention"
+      }
+    }
+  },
+  "candidate_sell": {
+    "killed_after_acceptance": true,
+    "posts": [
+      {
+        "client_order_id": "ss-c6bed76ed52560f3587561bea8a993d8c23afefe",
+        "qty": 3,
+        "side": "sell",
+        "symbol": "NOW",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "restarted": {
+      "error": null,
+      "exit_code": 1,
+      "http_calls": [
+        [
+          "GET",
+          "/v2/account"
+        ],
+        [
+          "GET",
+          "/v2/orders:by_client_order_id"
+        ],
+        [
+          "GET",
+          "/v2/account"
+        ],
+        [
+          "GET",
+          "/v2/positions"
+        ],
+        [
+          "GET",
+          "/v2/orders"
+        ]
+      ],
+      "origin_is_copy": true,
+      "posts": [],
+      "stdout": "NOW reduce_long: held qty=3 broker_status=new reason=intent_already_recorded_no_resend fractional_remainder=None\nIBM reduce_long: flat qty=0 broker_status=unconfirmed reason=confirmed_zero_position fractional_remainder=0\nREDUCTION_SUMMARY_JSON={\"exit_code\": 1, \"results\": [{\"broker_status\": \"new\", \"client_order_id\": \"ss-c6bed76ed52560f3587561bea8a993d8c23afefe\", \"exit_code\": 1, \"fractional_remainder\": null, \"kind\": \"reduce_long\", \"order_id\": \"fixture-1\", \"qty\": 3, \"reason\": \"intent_already_recorded_no_resend\", \"reserved_qty\": null, \"state\": \"held\", \"symbol\": \"NOW\"}, {\"broker_status\": null, \"client_order_id\": \"ss-ccb72fa2739b7bbc088921b321281fdbc1f88c1c\", \"exit_code\": 0, \"fractional_remainder\": \"0\", \"kind\": \"reduce_long\", \"order_id\": null, \"qty\": 0, \"reason\": \"confirmed_zero_position\", \"reserved_qty\": \"0\", \"state\": \"flat\", \"symbol\": \"IBM\"}], \"status\": \"needs_attention\"}\n",
+      "summary": {
+        "exit_code": 1,
+        "results": [
+          {
+            "broker_status": "new",
+            "client_order_id": "ss-c6bed76ed52560f3587561bea8a993d8c23afefe",
+            "exit_code": 1,
+            "fractional_remainder": null,
+            "kind": "reduce_long",
+            "order_id": "fixture-1",
+            "qty": 3,
+            "reason": "intent_already_recorded_no_resend",
+            "reserved_qty": null,
+            "state": "held",
+            "symbol": "NOW"
+          },
+          {
+            "broker_status": null,
+            "client_order_id": "ss-ccb72fa2739b7bbc088921b321281fdbc1f88c1c",
+            "exit_code": 0,
+            "fractional_remainder": "0",
+            "kind": "reduce_long",
+            "order_id": null,
+            "qty": 0,
+            "reason": "confirmed_zero_position",
+            "reserved_qty": "0",
+            "state": "flat",
+            "symbol": "IBM"
+          }
+        ],
+        "status": "needs_attention"
+      }
+    },
+    "second": {
+      "error": null,
+      "exit_code": 1,
+      "http_calls": [
+        [
+          "GET",
+          "/v2/account"
+        ],
+        [
+          "GET",
+          "/v2/account"
+        ]
+      ],
+      "origin_is_copy": true,
+      "posts": [],
+      "stdout": "NOW reduce_long: held qty=None broker_status=unconfirmed reason=submission_guard_busy fractional_remainder=None\nIBM reduce_long: held qty=None broker_status=unconfirmed reason=submission_guard_busy fractional_remainder=None\nREDUCTION_SUMMARY_JSON={\"exit_code\": 1, \"results\": [{\"broker_status\": null, \"client_order_id\": \"ss-c6bed76ed52560f3587561bea8a993d8c23afefe\", \"exit_code\": 1, \"fractional_remainder\": null, \"kind\": \"reduce_long\", \"order_id\": null, \"qty\": null, \"reason\": \"submission_guard_busy\", \"reserved_qty\": null, \"state\": \"held\", \"symbol\": \"NOW\"}, {\"broker_status\": null, \"client_order_id\": \"ss-ccb72fa2739b7bbc088921b321281fdbc1f88c1c\", \"exit_code\": 1, \"fractional_remainder\": null, \"kind\": \"reduce_long\", \"order_id\": null, \"qty\": null, \"reason\": \"submission_guard_busy\", \"reserved_qty\": null, \"state\": \"held\", \"symbol\": \"IBM\"}], \"status\": \"needs_attention\"}\n",
+      "summary": {
+        "exit_code": 1,
+        "results": [
+          {
+            "broker_status": null,
+            "client_order_id": "ss-c6bed76ed52560f3587561bea8a993d8c23afefe",
+            "exit_code": 1,
+            "fractional_remainder": null,
+            "kind": "reduce_long",
+            "order_id": null,
+            "qty": null,
+            "reason": "submission_guard_busy",
+            "reserved_qty": null,
+            "state": "held",
+            "symbol": "NOW"
+          },
+          {
+            "broker_status": null,
+            "client_order_id": "ss-ccb72fa2739b7bbc088921b321281fdbc1f88c1c",
+            "exit_code": 1,
+            "fractional_remainder": null,
+            "kind": "reduce_long",
+            "order_id": null,
+            "qty": null,
+            "reason": "submission_guard_busy",
+            "reserved_qty": null,
+            "state": "held",
+            "symbol": "IBM"
+          }
+        ],
+        "status": "needs_attention"
+      }
+    }
+  }
+}

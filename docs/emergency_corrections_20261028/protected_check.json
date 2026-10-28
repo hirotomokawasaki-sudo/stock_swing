@@ -1,0 +1,32 @@
+{
+  "head": "8909e79c1a83e04d508715b132575625454b7856",
+  "prior_packets": {
+    "advance_all_20261028": {
+      "files": 255,
+      "manifest_sha256": "ea719eafde8b7e6d5a2ed814063aeea733735098d456624685ab8274793eb41f",
+      "verified": true
+    },
+    "functional_safety_20261028": {
+      "files": 229,
+      "manifest_sha256": "1a832140fea0c694933aea3037016ee841e108d2a35a8581f8eb52b66ca8e277",
+      "verified": true
+    },
+    "integration_ops_cost_20261028": {
+      "files": 470,
+      "manifest_sha256": "29a3466f013960a1dfadf5cf425c5f9a77341ae9f5df780cb1e7d9cf335c4cdc",
+      "verified": true
+    },
+    "order_preflight_20261028": {
+      "files": 226,
+      "manifest_sha256": "da546a2d99c3f5b7651372b95fbd3807827adeea351d52af4897ca894b021074",
+      "verified": true
+    },
+    "provider_bar_fixes_20261028": {
+      "files": 218,
+      "manifest_sha256": "506c0a905a7e80a1cc30c4eeab13d614c339ea2d9189e366a04369b62b5fe022",
+      "verified": true
+    }
+  },
+  "protected_source_files": 660,
+  "unchanged": true
+}

@@ -1,0 +1,2863 @@
+diff --git a/scripts/close_hpe_short.py b/scripts/close_hpe_short.py
+--- a/scripts/close_hpe_short.py
++++ b/scripts/close_hpe_short.py
+@@ -1,75 +1,23 @@
+-#!/usr/bin/env python3
+-"""Close HPE short position by buying back 13 shares."""
+-
+-import sys
+-import os
++"""Manual paper HPE short cover, not a new-long BUY or unconditional fill claim."""
++import os,sys
+ from pathlib import Path
+-
+-# Add src to path
+-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+-sys.path.insert(0, str(PROJECT_ROOT / "src"))
+-
+-# Load .env
+-env_file = PROJECT_ROOT / '.env'
+-if env_file.exists():
+-    for line in env_file.read_text().splitlines():
+-        line = line.strip()
+-        if line and not line.startswith('#') and '=' in line:
+-            key, value = line.split('=', 1)
+-            os.environ[key] = value
+-
++PROJECT_ROOT=Path(__file__).resolve().parents[1]
++sys.path.insert(0,str(PROJECT_ROOT/'src'))
+ from stock_swing.sources.broker_client import BrokerClient
++from stock_swing.execution.reduction_orders import ReductionResult,reduce_position,report_results
+ 
+ def main():
+-    broker = BrokerClient(
+-        api_key=os.environ['BROKER_API_KEY'],
+-        api_secret=os.environ['BROKER_API_SECRET'],
+-        paper_mode=True
+-    )
+-    
+-    print("Checking HPE position...")
+-    positions = broker.fetch_positions()
+-    broker_data = positions.payload if hasattr(positions, 'payload') else positions
+-    
+-    hpe_pos = [p for p in broker_data if p.get('symbol') == 'HPE']
+-    
+-    if not hpe_pos:
+-        print("No HPE position found. Already closed?")
+-        return
+-    
+-    qty = int(float(hpe_pos[0].get('qty', 0)))
+-    print(f"Current HPE position: {qty} shares")
+-    
+-    if qty >= 0:
+-        print("HPE position is not short. No action needed.")
+-        return
+-    
+-    # Buy back to close short
+-    shares_to_buy = abs(qty)
+-    print(f"\nClosing short position: BUY {shares_to_buy} HPE")
+-    
+-    confirm = input(f"Confirm BUY {shares_to_buy} HPE to close short? (yes/no): ")
+-    if confirm.lower() != 'yes':
+-        print("Cancelled.")
+-        return
+-    
+-    # Submit order
+-    order = broker.submit_order(
+-        symbol='HPE',
+-        side='buy',
+-        qty=shares_to_buy,
+-        order_type='market',
+-        time_in_force='day'
+-    )
+-    
+-    print(f"\nOrder submitted:")
+-    print(f"  Order ID: {order.get('id')}")
+-    print(f"  Symbol: {order.get('symbol')}")
+-    print(f"  Side: {order.get('side')}")
+-    print(f"  Qty: {order.get('qty')}")
+-    print(f"  Status: {order.get('status')}")
+-    
+-    print("\nShort position should be closed after order fills.")
+-
+-if __name__ == '__main__':
+-    main()
++    # Preserve the existing script's local environment loading; never include .env in evidence copies.
++    env_file=PROJECT_ROOT/'.env'
++    if env_file.exists():
++        for line in env_file.read_text().splitlines():
++            line=line.strip()
++            if line and not line.startswith('#') and '=' in line:
++                key,value=line.split('=',1);os.environ[key]=value
++    try:
++        broker=BrokerClient(api_key=os.environ['BROKER_API_KEY'],api_secret=os.environ['BROKER_API_SECRET'],paper_mode=True)
++    except Exception as exc:
++        return report_results([ReductionResult('HPE','cover_short',reason='broker_unavailable:'+type(exc).__name__)])
++    def confirm(qty):return input(f'Confirm BUY {qty} HPE to close short? (yes/no): ').lower()=='yes'
++    return report_results([reduce_position(broker,PROJECT_ROOT,'HPE','cover_short',confirm)])
++if __name__=='__main__':raise SystemExit(main())
+diff --git a/scripts/emergency_sell.py b/scripts/emergency_sell.py
+--- a/scripts/emergency_sell.py
++++ b/scripts/emergency_sell.py
+@@ -1,61 +1,15 @@
+-"""Emergency manual sell for NOW and IBM"""
+-import os
++"""Manual paper reductions for NOW/IBM; durable one-operation identity, no auto retry."""
++import os,sys
++from pathlib import Path
++PROJECT_ROOT=Path(__file__).resolve().parents[1]
++sys.path.insert(0,str(PROJECT_ROOT/'src'))
+ from stock_swing.sources.broker_client import BrokerClient
++from stock_swing.execution.reduction_orders import ReductionResult,reduce_position,report_results
+ 
+-broker = BrokerClient(
+-    api_key=os.getenv("BROKER_API_KEY"),
+-    api_secret=os.getenv("BROKER_API_SECRET"),
+-    paper_mode=True,
+-)
+-
+-symbols_to_sell = ['NOW', 'IBM']
+-
+-print("🚨 EMERGENCY SELL")
+-print("=" * 50)
+-
+-# Get current positions
+-positions = broker.fetch_positions()
+-pos_data = positions.payload if hasattr(positions, 'payload') else positions
+-
+-for sym in symbols_to_sell:
+-    # Find position
+-    position = None
+-    for p in pos_data:
+-        if p.get('symbol') == sym:
+-            position = p
+-            break
+-    
+-    if not position:
+-        print(f"❌ {sym}: No position found")
+-        continue
+-    
+-    qty = int(float(position.get('qty', 0)))
+-    if qty <= 0:
+-        print(f"❌ {sym}: Zero quantity")
+-        continue
+-    
+-    plpc = float(position.get('unrealized_plpc', 0)) * 100
+-    pl = float(position.get('unrealized_pl', 0))
+-    
+-    print(f"\n📉 {sym}:")
+-    print(f"   Qty: {qty}")
+-    print(f"   P&L: ${pl:,.2f} ({plpc:+.2f}%)")
+-    print(f"   Submitting SELL order...")
+-    
++def main():
+     try:
+-        order = broker.submit_order(
+-            symbol=sym,
+-            side='sell',
+-            order_type='market',
+-            qty=qty,
+-            time_in_force='day',
+-        )
+-        
+-        order_id = order.get('id')
+-        print(f"   ✅ Order submitted: {order_id}")
+-        
+-    except Exception as e:
+-        print(f"   ❌ Error: {e}")
+-
+-print("\n" + "=" * 50)
+-print("✅ Emergency sell complete")
++        broker=BrokerClient(api_key=os.getenv('BROKER_API_KEY'),api_secret=os.getenv('BROKER_API_SECRET'),paper_mode=True)
++    except Exception as exc:
++        return report_results([ReductionResult(s,'reduce_long',reason='broker_unavailable:'+type(exc).__name__) for s in ['NOW','IBM']])
++    return report_results([reduce_position(broker,PROJECT_ROOT,s,'reduce_long') for s in ['NOW','IBM']])
++if __name__=='__main__':raise SystemExit(main())
+diff --git a/src/stock_swing/cli/paper_demo.py b/src/stock_swing/cli/paper_demo.py
+--- a/src/stock_swing/cli/paper_demo.py
++++ b/src/stock_swing/cli/paper_demo.py
+@@ -321,19 +321,27 @@
+     """Block all new BUY decisions when portfolio open risk exceeds BLOCK_PCT.
+ 
+     Open risk = sum of (qty × entry_price × stop_loss_pct) for all open trades.
+-    Thresholds: WARN=5%, BLOCK=8% of equity.  Sell decisions are never blocked.
+-    Override: export PAPER_DEMO_SKIP_RISK_BUDGET=true
++    Thresholds: WARN=4%, BLOCK=6% of equity. Sell decisions are never blocked.
++    Override measured thresholds only: PAPER_DEMO_SKIP_RISK_BUDGET=true
+     """
+     import os
+-    from stock_swing.risk.risk_budget import compute_open_risk
+-
++    from stock_swing.risk.risk_budget import compute_open_risk, _unavailable_risk
++
++    try:
++        risk = compute_open_risk(project_root, equity)
++    except Exception as exc:
++        risk = _unavailable_risk("risk_calculation_failed:" + type(exc).__name__)
++
++    if risk.get("error"):
++        allowed = [d for d in decisions if d.action != "buy"]
++        blocked = [d.symbol for d in decisions if d.action == "buy"]
++        print(f"  🚫 Risk budget UNAVAILABLE ({risk['error']}) — blocked {len(blocked)} new buy(s); SELL checks unchanged")
++        return allowed, blocked, risk
++
++    # Preserve the existing operator override for measured thresholds only.
++    # Unknown inputs cannot be explicitly or accidentally interpreted as flat.
+     if os.environ.get("PAPER_DEMO_SKIP_RISK_BUDGET", "").lower() == "true":
+-        return decisions, [], {}
+-
+-    risk = compute_open_risk(project_root, equity)
+-
+-    if risk.get("error"):
+-        print(f"  ⚠️  Risk budget: could not compute ({risk['error']}) — skipping guard")
++        risk["status"] = "bypassed"
+         return decisions, [], risk
+ 
+     pct = risk["pct_of_equity"]
+@@ -344,7 +352,7 @@
+         blocked = [d.symbol for d in decisions if d.action == "buy"]
+         print(
+             f"  🚫 Risk budget BLOCK: open risk ${total:,.0f} = {pct:.1%} of equity "
+-            f"(limit {risk['block_threshold']:,.0f} / 8%) — "
++            f"(limit {risk['block_threshold']:,.0f} / 6%) — "
+             f"blocked {len(blocked)} new buy(s): {', '.join(blocked[:5])}"
+             + (f" +{len(blocked)-5} more" if len(blocked) > 5 else "")
+         )
+@@ -353,12 +361,12 @@
+     if risk["is_warn"]:
+         print(
+             f"  ⚠️  Risk budget WARN: open risk ${total:,.0f} = {pct:.1%} of equity "
+-            f"(warn at 5%, block at 8%) — buys allowed"
++            f"(warn at 4%, block at 6%) — buys allowed"
+         )
+     else:
+         print(
+             f"  ✅ Risk budget OK: open risk ${total:,.0f} = {pct:.1%} of equity "
+-            f"(warn at 5%, block at 8%)"
++            f"(warn at 4%, block at 6%)"
+         )
+ 
+     return decisions, [], risk
+@@ -522,6 +530,8 @@
+     parser.add_argument("--telegram", action="store_true", help="Send summary to Telegram")
+     parser.add_argument("--silent", action="store_true", help="Send Telegram notification silently")
+     parser.add_argument("--cron-summary-json", action="store_true", help="Emit one compact CRON_SUMMARY_JSON line at the end")
++    parser.add_argument("--capture-provider-contracts", action="store_true",
++                        help="Record partial bar-response lineage; not full replay or F1")
+     args = parser.parse_args()
+ 
+     # Configure logging so logger.info() messages (exit_signal_fired, exit_signal_generated,
+@@ -548,6 +558,7 @@
+     _final_exit_code = 0
+     _final_reason: str | None = None
+     _buy_halt_reasons: list[str] = []
++    _provider_recorder = None
+ 
+     def finish(
+         exit_code: int,
+@@ -556,6 +567,19 @@
+         equity_value: float = 0.0,
+         extra: dict | None = None,
+     ) -> int:
++        if _provider_recorder is not None:
++            exit_code = exit_code or (1 if _provider_recorder.failures else 0)
++            _provider_recorder.observe('run_end', dict(exit_code=exit_code,
++                observations_before_end=_provider_recorder.committed,
++                capture_failures=_provider_recorder.failures,
++                scheduled_execution_proven=False, full_replay_ready=False))
++            try:
++                _provider_recorder.seal()
++            except Exception:
++                logger.error('Provider contract recording not sealed')
++                exit_code = exit_code or 1
++            if _provider_recorder.failures:
++                exit_code = exit_code or 1
+         if latency_tracker is not None:
+             latency_tracker.flush()
+         if args.cron_summary_json:
+@@ -584,6 +608,10 @@
+ 
+     _banner("stock_swing Paper Trading Demo")
+     run_context = RunContext.create("paper_demo")
++    _config_receipts = []
++    if args.capture_provider_contracts:
++        from stock_swing.experiments.decision_input_capture import DecisionInputRecorder
++        _provider_recorder = DecisionInputRecorder(project_root, enabled=True, run_id=run_context.run_id)
+     experiment_context = None
+     print(f"  Symbols   : {', '.join(symbols)}")
+     print(f"  Timeframe : {args.timeframe} x {args.bar_limit} bars")
+@@ -731,6 +759,8 @@
+         paper_mode=True,
+         base_url=os.environ["BROKER_BASE_URL"],
+     )
++    if _provider_recorder is not None:
++        broker.measurement_recorder = _provider_recorder
+     latency_tracker = LatencyTracker(
+         project_root / "data" / "analysis" / "api_latency.csv"
+     )
+@@ -931,7 +961,8 @@
+     hybrid_fetcher = HybridDataFetcher(
+         broker_client=broker,
+         etf_symbols=ETF_SYMBOLS,
+-        massive_api_key=os.environ.get("MASSIVE_API_KEY")
++        massive_api_key=os.environ.get("MASSIVE_API_KEY"),
++        **({"measurement_recorder": _provider_recorder} if _provider_recorder is not None else {}),
+     )
+     
+     all_records: list[CanonicalRecord] = []
+@@ -1321,17 +1352,12 @@
+     if intraday_records:
+         # Load optimal parameters from config
+         intraday_config_path = project_root / "config" / "features" / "intraday_momentum.yaml"
+-        if intraday_config_path.exists():
+-            with open(intraday_config_path) as f:
+-                intraday_config = yaml.safe_load(f)
+-            lookback_bars = intraday_config.get('lookback_bars', 25)
+-            smoothing_window = intraday_config.get('smoothing_window', 5)
+-            vwap_threshold = intraday_config.get('vwap_threshold', 0.005)
+-        else:
+-            # Fallback to optimal defaults
+-            lookback_bars = 25
+-            smoothing_window = 5
+-            vwap_threshold = 0.005
++        from stock_swing.risk.effective_config import read_effective_config
++        intraday_config, _intraday_receipt = read_effective_config(intraday_config_path, "intraday")
++        _config_receipts.append(_intraday_receipt)
++        lookback_bars = intraday_config['lookback_bars']
++        smoothing_window = intraday_config['smoothing_window']
++        vwap_threshold = intraday_config['vwap_threshold']
+ 
+         intraday_feat = IntradayMomentumFeature(
+             lookback_bars=lookback_bars,
+@@ -1362,12 +1388,7 @@
+ 
+         # Load intraday config for thresholds
+         intraday_config_path = project_root / "config" / "features" / "intraday_momentum.yaml"
+-        if intraday_config_path.exists():
+-            with open(intraday_config_path) as f:
+-                intraday_config = yaml.safe_load(f)
+-            momentum_threshold = intraday_config.get('signal_criteria', {}).get('momentum_threshold', 0.003)
+-        else:
+-            momentum_threshold = 0.003  # 0.3% optimal threshold
++        momentum_threshold = intraday_config.get('signal_criteria', {}).get('momentum_threshold', .003)
+ 
+         enhanced_breakout_signals = []
+         for signal in breakout_signals:
+@@ -1405,46 +1426,11 @@
+     # Exit strategy for current positions (V2 with trailing stop)
+     # Load exit strategy config
+     exit_config_path = project_root / "config" / "strategy" / "simple_exit_v2.yaml"
+-    if exit_config_path.exists():
+-        with open(exit_config_path) as f:
+-            exit_config = yaml.safe_load(f)
+-        exit_strat = SimpleExitV2Strategy(
+-            stop_loss_pct=exit_config.get('stop_loss_pct', -0.07),
+-            breakeven_activation_pct=exit_config.get('breakeven_activation_pct', 0.03),
+-            trailing_activation_pct=exit_config.get('trailing_activation_pct', 0.08),
+-            trailing_stop_pct=exit_config.get('trailing_stop_pct', 0.04),
+-            max_hold_days=exit_config.get('max_hold_days', 20),
+-            staged_trailing_enabled=exit_config.get('staged_trailing_enabled', False),
+-            staged_trailing_levels=exit_config.get('staged_trailing_levels', []),
+-            # G9: min_hold guard
+-            min_hold_days=exit_config.get('min_hold_days', 1),
+-            min_hold_days_enabled=exit_config.get('min_hold_days_enabled', True),
+-            emergency_stop_bypass_pct=exit_config.get('emergency_stop_bypass_pct', -0.12),
+-            # Plan A: tiered min_hold (2026-07-27)
+-            tiered_min_hold_enabled=exit_config.get('tiered_min_hold_enabled', False),
+-            tiered_min_hold_levels=exit_config.get('tiered_min_hold_levels', []),
+-            # broker_recon graduation (改善点1 2026-07-16)
+-            broker_recon_graduation_days=exit_config.get('broker_recon_graduation_days', 5),
+-            # Staged breakeven floor (2026-08-05)
+-            staged_breakeven_enabled=exit_config.get('staged_breakeven_enabled', False),
+-            staged_breakeven_levels=exit_config.get('staged_breakeven_levels', []),
+-            # Volatility-adjusted stop loss (2026-08-14)
+-            volatility_adjusted_stop_enabled=exit_config.get('volatility_adjusted_stop_enabled', False),
+-            volatility_multiplier_min=exit_config.get('volatility_multiplier_min', 0.5),
+-            volatility_multiplier_max=exit_config.get('volatility_multiplier_max', 1.75),
+-        )
+-        # 2026-09-02 (R16 incident fix, default OFF): per-lot time_based exit.
+-        _per_lot_time_based_enabled = bool(exit_config.get('per_lot_time_based_exit_enabled', False))
+-    else:
+-        # Fallback to default values
+-        exit_strat = SimpleExitV2Strategy(
+-            stop_loss_pct=-0.07,
+-            breakeven_activation_pct=0.03,
+-            trailing_activation_pct=0.08,
+-            trailing_stop_pct=0.04,
+-            max_hold_days=20,
+-        )
+-        _per_lot_time_based_enabled = False
++    from stock_swing.risk.effective_config import read_effective_config
++    exit_config, _exit_receipt = read_effective_config(exit_config_path, "exit")
++    _config_receipts.append(_exit_receipt)
++    _per_lot_time_based_enabled = exit_config.pop('per_lot_time_based_exit_enabled')
++    exit_strat = SimpleExitV2Strategy(**exit_config)
+     exit_signals = exit_strat.generate(all_features, current_positions_full)
+ 
+     # 2026-09-02 (R16 materialized incident, flag-gated, default OFF): convert
+@@ -2264,8 +2250,8 @@
+     if blocked_etf_buys:
+         print(f"  ETF buy guardrail: blocked {len(blocked_etf_buys)} new ETF buy(s): {', '.join(blocked_etf_buys)}")
+ 
+-    # Risk budget guardrail: block all new buys when open risk >= 8% of equity
+-    # Warn at 5%. Override: export PAPER_DEMO_SKIP_RISK_BUDGET=true
++    # Risk budget guardrail: block at 6%; warn at 4%. Unknown inputs block BUY.
++    # The existing override applies only to successfully measured risk.
+     actionable, blocked_risk_budget, risk_budget_result = _filter_buys_by_risk_budget(
+         actionable, project_root, equity
+     )
+@@ -2515,6 +2501,11 @@
+                 "  🛡 Economic risk-off reduce_size: position sizing reduced to "
+                 f"{_reduce_size_multiplier:.0%}"
+             )
++    if blocked_risk_budget:
++        audit_log.log_system_event(
++            "risk_budget_blocked_buys",
++            details=f"status={risk_budget_result.get('status', 'unknown')}; symbols={blocked_risk_budget}",
++        )
+     if blocked_cluster_cap:
+         for sym, reason in blocked_cluster_cap:
+             print(f"  🚫 Cluster cap block: {sym} — {reason}")
+@@ -2536,6 +2527,32 @@
+     if alloc_status["needs_rebalance"]:
+         print(f"    ℹ️  ETF below target ({alloc_status['target_etf_pct']:.0%}): ETF buys prioritized")
+ 
++    # K04: config uncertainty holds BUY only; diagnostic and legacy fallback SELL continue.
++    from stock_swing.reporting.console_summary import ConsoleAlert
++    from dataclasses import asdict
++    import hashlib
++    def _source_receipt(path):
++        try: return dict(path=str(path.resolve()),sha256=hashlib.sha256(path.read_bytes()).hexdigest())
++        except OSError: return dict(path=str(path.resolve()),sha256=None)
++    _config_receipts.append(dict(kind='allocation', status='unavailable' if _ALLOC_CONFIG.configuration_issue else 'configured',
++        issues=[_ALLOC_CONFIG.configuration_issue] if _ALLOC_CONFIG.configuration_issue else [], effective=asdict(_ALLOC_CONFIG),**_source_receipt(_ALLOC_CONFIG_PATH)))
++    _config_receipts.append(dict(kind='registry',status='configured' if portfolio_allocator.registry else 'unavailable',
++        issues=[] if portfolio_allocator.registry else ['classification_unavailable'],symbol_count=len(portfolio_allocator.registry),
++        **_source_receipt(project_root/'config/reference/symbol_registry.yaml')))
++    _config_issues = [item for item in _config_receipts if item['status'] != 'configured']
++    _config_alerts = []
++    if _config_issues:
++        _config_alerts = [ConsoleAlert('warning','effective_config_unavailable','Invalid/missing consumed configuration: BUY held; SELL uses labeled legacy fallback',details=dict(receipts=_config_issues))]
++        for _decision in actionable:
++            if _decision.action == 'buy':
++                _decision.block_reason = 'effective_config_unavailable'
++                _decision.evidence['effective_config'] = _config_issues
++        actionable = [d for d in actionable if d.action != 'buy']
++        print("WARN: effective_config_unavailable; new BUY held; diagnostic/eligible SELL continue")
++    _receipt_path = project_root/'reports/effective_config'/f'{run_context.run_id}.json'
++    _receipt_path.parent.mkdir(parents=True,exist_ok=True)
++    _receipt_path.write_text(json.dumps(dict(run_id=run_context.run_id,receipts=_config_receipts),indent=2))
++
+     if args.dry_run:
+         print("\n  DRY RUN - would submit:")
+         for d in actionable:
+@@ -2545,6 +2562,7 @@
+         from stock_swing.reporting.console_summary import ConsoleSummary
+ 
+         console_summary = ConsoleSummary.build(
++            extra_alerts=_config_alerts, effective_config=_config_receipts,
+             run_id=run_context.run_id if "run_context" in dir() else "unknown",
+             equity=equity,
+             open_position_count=len(current_positions_full),
+@@ -2553,7 +2571,8 @@
+             decisions=decisions,
+             submissions=[],
+             cluster_blocks=[sym for sym, _ in blocked_cluster_cap] if "blocked_cluster_cap" in dir() else [],
+-            risk_budget_pct=risk_budget_result.get("pct_of_equity", 0) if "risk_budget_result" in dir() else 0,
++            risk_budget_pct=risk_budget_result.get("pct_of_equity") if "risk_budget_result" in dir() else None,
++            risk_budget_status=risk_budget_result.get("status", "unknown") if "risk_budget_result" in dir() else "unknown",
+             stale_symbols=list(stale_symbols) if "stale_symbols" in dir() else [],
+             price_sources={},
+             market_regime=regime_for_sizing if "regime_for_sizing" in dir() else "unknown",
+@@ -2592,6 +2611,7 @@
+                 "risk_denied": sum(1 for d in decisions if getattr(d, "action", "") == "deny"),
+                 "entry_blocked": len(_ef_result.blocked) if "_ef_result" in dir() else 0,
+                 "cluster_blocked": len(blocked_cluster_cap) if "blocked_cluster_cap" in dir() else 0,
++                "risk_budget_blocked": len(blocked_risk_budget),
+                 "allocation_blocked": _allocation_blocked_count if "_allocation_blocked_count" in dir() else 0,
+                 "guardrail_blocked": (
+                     len(_guardrail_blocked) + len(_economic_risk_blocked)
+@@ -2643,7 +2663,9 @@
+         )
+ 
+     # R2-v2 / H5: pass AllocationConfig so PositionSizingPolicy uses same YAML multipliers
+-    executor = PaperExecutor(runtime_mode=runtime_mode, broker_client=broker, alloc_config=_ALLOC_CONFIG)
++    from stock_swing.execution.submission_guard import SubmissionGuard
++    _guarded_broker = SubmissionGuard(broker, project_root, acct.get("id"))
++    executor = PaperExecutor(runtime_mode=runtime_mode, broker_client=_guarded_broker, alloc_config=_ALLOC_CONFIG)
+     reconciler = Reconciler(broker_client=broker)
+     # R0-v2-C: apply reduce_size multiplier to exposure cap if guardrail fired
+     _effective_exposure_cap = (
+@@ -2651,6 +2673,18 @@
+         if "_reduce_size_multiplier" in dir() and _reduce_size_multiplier < 1.0
+         else dynamic_exposure_cap
+     )
++    # K02 draft: veto ambiguous BUY intents without selecting/netting strategies.
++    from stock_swing.risk.order_preflight import buy_conflicts, snapshot_from_broker
++    _order_preflight_receipts = []
++    _conflicts = buy_conflicts(actionable)
++    for _decision in actionable:
++        if _decision.decision_id in _conflicts:
++            _receipt = dict(_conflicts[_decision.decision_id], decision_id=_decision.decision_id)
++            _decision.block_reason = _receipt["reason"]
++            _decision.evidence["order_preflight"] = _receipt
++            _order_preflight_receipts.append(_receipt)
++            logger.warning("order_preflight_hold %s", json.dumps(_receipt, sort_keys=True))
++    actionable = [d for d in actionable if d.decision_id not in _conflicts]
+     actionable, preview_cache, skipped_buy_reasons, skipped_buy_symbols = _prefilter_actionable_buys_for_submission(
+         actionable,
+         executor,
+@@ -2692,6 +2726,13 @@
+         sym: dict(pos) for sym, pos in (current_positions_full or {}).items()
+     }
+     
++    # K01: one conservative run-local snapshot, including remaining open BUYs.
++    # Keep the explicit measured-cluster override, never an unknown-input override.
++    _order_preflight = snapshot_from_broker(
++        broker, current_positions_full, equity, get_mid_price,
++        registry=portfolio_allocator.registry,
++        cluster_caps={} if os.environ.get("PAPER_DEMO_SKIP_CLUSTER_CAP", "").lower() == "true" else None,
++    )
+     # Symbol-level position size limit.
+     # 2026-05-15 risk tightening: stocks use 6% of equity, ETFs use 70% of that cap
+     # to reduce concentration in thematic / sector products.
+@@ -2833,6 +2874,21 @@
+                     )
+                     _allocation_blocked_count += 1
+                     continue
++            if o.side == "buy":
++                _is_etf = o.symbol in ETF_SYMBOLS
++                _symbol_multiplier = float(_ALLOC_CONFIG.etf_new_buy_multiplier if _is_etf else _ALLOC_CONFIG.stock_new_buy_multiplier)
++                _receipt = _order_preflight.reserve(
++                    decision.decision_id, o.symbol, preview_qty, current_price,
++                    DEFAULT_MAX_POSITION_NOTIONAL_PCT * _symbol_multiplier,
++                    allocator=portfolio_allocator,
++                )
++                _order_preflight_receipts.append(_receipt)
++                decision.evidence["order_preflight"] = _receipt
++                if not _receipt["allowed"]:
++                    decision.block_reason = _receipt["reason"]
++                    logger.warning("order_preflight_hold %s", json.dumps(_receipt, sort_keys=True))
++                    print(f"\n  SKIP BUY {o.symbol}: {_receipt['reason']}")
++                    continue
+             preview_basis = ""
+             if preview_sizing:
+                 preview_basis = (
+@@ -2841,12 +2897,22 @@
+                     f"exposure={preview_sizing.get('shares_by_exposure')}]"
+                 )
+             print(f"\n  Submitting {o.side.upper()} {preview_qty} {o.symbol} ({o.order_type}){preview_basis} ... ", end="", flush=True)
+-            sub = executor.submit(
+-                decision,
+-                current_qty=current_positions.get(o.symbol) if o.side == "sell" else None,
+-                precomputed_qty=preview_qty,
+-                precomputed_sizing=preview_sizing,
+-            )
++            try:
++                sub = executor.submit(
++                    decision,
++                    current_qty=current_positions.get(o.symbol) if o.side == "sell" else None,
++                    precomputed_qty=preview_qty,
++                    precomputed_sizing=preview_sizing,
++                )
++            except Exception:
++                if o.side == "buy":
++                    _order_preflight.observe_submission(decision.decision_id, "unknown")
++                    _receipt["submission_status"] = "unknown"
++                raise
++            if o.side == "buy":
++                _order_preflight.observe_submission(decision.decision_id, sub.status)
++                _receipt["submission_status"] = sub.status
++                _receipt["snapshot_available_after_submit"] = _order_preflight.available
+             submissions.append(sub)
+             if sub.status == "submitted":
+                 sizing = sub.sizing_details or {}
+@@ -3269,6 +3335,14 @@
+     except Exception as _jc_exc:
+         logger.warning("P6 join_coverage report failed: %s", _jc_exc)
+ 
++    _preflight_path = project_root / "reports/order_preflight" / f"{run_context.run_id}.json"
++    _preflight_path.parent.mkdir(parents=True, exist_ok=True)
++    _preflight_path.write_text(json.dumps({
++        "policy": "draft_k01_k02_not_deployed",
++        "snapshot_available": _order_preflight.available,
++        "snapshot_reason": _order_preflight.reason,
++        "receipts": _order_preflight_receipts,
++    }, ensure_ascii=False, indent=2), encoding="utf-8")
+     _print_summary(decisions, submissions, equity, args.dry_run)
+     from stock_swing.reporting.console_summary import ConsoleSummary
+ 
+@@ -3301,6 +3375,7 @@
+     )
+ 
+     console_summary = ConsoleSummary.build(
++        extra_alerts=_config_alerts, effective_config=_config_receipts,
+         run_id=run_context.run_id if "run_context" in dir() else "unknown",
+         equity=equity,
+         open_position_count=len(current_positions_full),
+@@ -3309,7 +3384,8 @@
+         decisions=decisions,
+         submissions=submissions,
+         cluster_blocks=[sym for sym, _ in blocked_cluster_cap] if "blocked_cluster_cap" in dir() else [],
+-        risk_budget_pct=risk_budget_result.get("pct_of_equity", 0) if "risk_budget_result" in dir() else 0,
++        risk_budget_pct=risk_budget_result.get("pct_of_equity") if "risk_budget_result" in dir() else None,
++        risk_budget_status=risk_budget_result.get("status", "unknown") if "risk_budget_result" in dir() else "unknown",
+         stale_symbols=list(stale_symbols) if "stale_symbols" in dir() else [],
+         price_sources=ps_sources,
+         market_regime=regime_for_sizing if "regime_for_sizing" in dir() else "unknown",
+@@ -3350,6 +3426,7 @@
+             "risk_denied": sum(1 for d in decisions if getattr(d, "action", "") == "deny"),
+             "entry_blocked": len(_ef_result.blocked) if "_ef_result" in dir() else 0,
+             "cluster_blocked": len(blocked_cluster_cap) if "blocked_cluster_cap" in dir() else 0,
++            "risk_budget_blocked": len(blocked_risk_budget),
+             "allocation_blocked": _allocation_blocked_count,
+             "guardrail_blocked": (
+                 (len(_guardrail_blocked) if "_guardrail_blocked" in dir() else 0)
+diff --git a/src/stock_swing/execution/paper_executor.py b/src/stock_swing/execution/paper_executor.py
+--- a/src/stock_swing/execution/paper_executor.py
++++ b/src/stock_swing/execution/paper_executor.py
+@@ -19,6 +19,7 @@
+ from stock_swing.risk.position_sizing import PositionSizingInputs, PositionSizingPolicy
+ from stock_swing.risk.allocation_config import AllocationConfig
+ from stock_swing.sources.broker_client_protocol import BrokerClientProtocol
++from stock_swing.execution.submission_guard import SubmissionGuard, SubmissionUncertain, SubmissionHeld
+ 
+ 
+ @dataclass
+@@ -228,17 +229,26 @@
+ 
+         try:
+             # Submit order (paper mode)
+-            broker_response = self.broker_client.submit_order(
++            submit = self.broker_client.submit_order
++            extra = {}
++            if isinstance(self.broker_client, SubmissionGuard):
++                submit = self.broker_client.submit_intent
++                extra = {"decision_id": decision.decision_id}
++            broker_response = submit(
+                 symbol=proposed.symbol,
+                 side=proposed.side,
+                 order_type=proposed.order_type,
+                 qty=sized_qty,
+                 time_in_force=proposed.time_in_force,
+                 limit_price=proposed.limit_price,
++                **extra,
+             )
+             
+             broker_order_id = broker_response.get("id")
+             status = "submitted"
++        except SubmissionUncertain as e:
++            status = "held" if isinstance(e, SubmissionHeld) else "unknown"
++            reject_reason = str(e)
+         except Exception as e:
+             status = "rejected"
+             reject_reason = str(e)
+@@ -335,27 +345,51 @@
+         if not proposed:
+             return 0, {"skip_reason": "missing_proposed_order"}
+ 
+-        account_env = self.broker_client.fetch_account()
+-        account = account_env.payload if hasattr(account_env, 'payload') else account_env
+-        equity = float(account.get("equity", 0) or 0)
+-
+-        positions_env = self.broker_client.fetch_positions()
+-        positions_resp = positions_env.payload if hasattr(positions_env, 'payload') else positions_env
+-        current_total_exposure = 0.0
+-        current_sector_exposure = 0.0
++        # K03: broker I/O failure or malformed holdings is unknown, not flat.
+         try:
++            account_env = self.broker_client.fetch_account()
++            account = account_env.payload if hasattr(account_env, 'payload') else account_env
++            equity_raw = account.get("equity")
++            if isinstance(equity_raw, bool):
++                raise ValueError("invalid equity")
++            equity = float(equity_raw)
++            if not math.isfinite(equity) or equity <= 0:
++                raise ValueError("invalid equity")
++            positions_env = self.broker_client.fetch_positions()
++            positions_resp = positions_env.payload if hasattr(positions_env, 'payload') else positions_env
++            if not isinstance(positions_resp, list):
++                raise ValueError("invalid positions schema")
++            current_total_exposure = 0.0
++            current_sector_exposure = 0.0
+             from stock_swing.risk.position_sizing import SYMBOL_SECTORS
+             current_sector = SYMBOL_SECTORS.get(proposed.symbol.upper())
+             for pos in positions_resp:
+-                qty = float(pos.get("qty", 0) or 0)
+-                price = float(pos.get("current_price", pos.get("avg_entry_price", 0)) or 0)
++                if not isinstance(pos, dict) or not isinstance(pos.get("symbol"), str) or not pos["symbol"].strip():
++                    raise ValueError("invalid position symbol")
++                raw_qty = pos.get("qty")
++                if isinstance(raw_qty, bool):
++                    raise ValueError("invalid position quantity")
++                qty = float(raw_qty)
++                if not math.isfinite(qty):
++                    raise ValueError("invalid position quantity")
++                if qty == 0:
++                    continue
++                raw_price = pos.get("current_price", pos.get("avg_entry_price"))
++                if isinstance(raw_price, bool):
++                    raise ValueError("invalid position price")
++                price = float(raw_price)
++                if not math.isfinite(price) or price <= 0:
++                    raise ValueError("invalid position price")
+                 notional = abs(qty * price)
+                 current_total_exposure += notional
+-                if current_sector and SYMBOL_SECTORS.get(str(pos.get("symbol", "")).upper()) == current_sector:
++                if not math.isfinite(current_total_exposure):
++                    raise ValueError("position exposure overflow")
++                if current_sector and SYMBOL_SECTORS.get(pos["symbol"].upper()) == current_sector:
+                     current_sector_exposure += notional
+-        except Exception:
+-            current_total_exposure = 0.0
+-            current_sector_exposure = 0.0
++        except Exception as exc:
++            return 0, {"skip_reason": "risk_inputs_unavailable", "final_shares": 0,
++                       "risk_inputs_error": type(exc).__name__,
++                       "current_total_exposure": None, "current_sector_exposure": None}
+ 
+         resolver = PriceResolver(
+             broker_client=self.broker_client,
+diff --git a/src/stock_swing/execution/reduction_orders.py b/src/stock_swing/execution/reduction_orders.py
+new file mode 100644
+--- /dev/null
++++ b/src/stock_swing/execution/reduction_orders.py
+@@ -0,0 +1,168 @@
++"""Conservative one-operation manual reduction using the existing submission journal.
++
++No epoch rotation, cancellation, new-long BUY, fractional-policy change, or fill
++claim. A new economic holding after this operation needs a separately qualified
++lifecycle; deleting state or choosing a new run ID is not such qualification.
++"""
++from __future__ import annotations
++import fcntl,json
++from dataclasses import asdict,dataclass
++from decimal import Decimal,InvalidOperation
++from pathlib import Path
++from typing import Any,Callable
++from urllib.parse import urlsplit
++from stock_swing.core.runtime import read_runtime_mode
++from stock_swing.execution.submission_guard import SubmissionGuard
++
++class _Unqualified(ValueError):
++    pass
++
++OPEN={'new','accepted','pending_new','partially_filled','pending_cancel','held','accepted_for_bidding'}
++TERMINAL={'filled','canceled','expired','rejected'}
++
++@dataclass
++class ReductionResult:
++    symbol: str
++    kind: str
++    state: str='held'
++    reason: str='unqualified'
++    qty: int|None=None
++    reserved_qty: str|None=None
++    fractional_remainder: str|None=None
++    client_order_id: str|None=None
++    order_id: str|None=None
++    broker_status: str|None=None
++    @property
++    def exit_code(self)->int:
++        return 0 if self.state in {'accepted','flat','not_applicable','cancelled'} and (self.fractional_remainder is None or Decimal(self.fractional_remainder)==0) else 1
++    def to_dict(self)->dict[str,Any]:
++        return dict(asdict(self),exit_code=self.exit_code)
++
++def _number(value:Any)->Decimal:
++    if isinstance(value,bool) or value is None:raise _Unqualified('quantity_missing_or_boolean')
++    try:n=Decimal(str(value))
++    except (InvalidOperation,ValueError):raise _Unqualified('quantity_invalid') from None
++    if not n.is_finite():raise _Unqualified('quantity_nonfinite')
++    return n
++
++def _snapshot(broker:Any,symbol:str,side:str)->tuple[Any,Decimal,Decimal,dict[str,tuple]]:
++    positions=broker.fetch_positions().payload
++    orders=broker.fetch_orders(status='open',limit=500).payload
++    if not isinstance(positions,list) or not isinstance(orders,list) or len(orders)>=500:raise _Unqualified('snapshot_shape_or_truncation')
++    position_rows={};order_rows={};remaining=Decimal(0)
++    for p in positions:
++        if not isinstance(p,dict) or not isinstance(p.get('symbol'),str) or not p['symbol'] or p['symbol'] in position_rows:raise _Unqualified('position_identity_invalid')
++        qty=_number(p.get('qty'))
++        if p.get('side') not in (None,'long' if qty>=0 else 'short'):raise _Unqualified('position_side_mismatch')
++        position_rows[p['symbol']]=qty
++    for o in orders:
++        if not isinstance(o,dict) or not isinstance(o.get('id'),str) or not o['id'] or o['id'] in order_rows:raise _Unqualified('open_order_identity_invalid')
++        if not isinstance(o.get('symbol'),str) or not o['symbol'] or o.get('side') not in {'buy','sell'} or o.get('status') not in OPEN:raise _Unqualified('open_order_fields_invalid')
++        if o.get('type') not in {'market','limit','stop','stop_limit','trailing_stop'}:raise _Unqualified('order_type_unqualified')
++        if o.get('legs') or o.get('order_class') not in (None,'','simple'):raise _Unqualified('complex_order_unqualified')
++        qty=_number(o.get('qty'));filled=_number(o.get('filled_qty'))
++        if qty<=0 or not 0<=filled<qty:raise _Unqualified('open_order_quantity_invalid')
++        if o['symbol']==symbol:
++            if o['side']!=side:raise _Unqualified('opposite_order_unqualified')
++            remaining+=qty-filled
++        order_rows[o['id']]=(o['symbol'],o['side'],qty,filled,o['status'],o.get('type'),o.get('client_order_id'),o.get('time_in_force'))
++    semantic=(tuple(sorted(position_rows.items())),tuple(sorted(order_rows.items())))
++    return semantic,position_rows.get(symbol,Decimal(0)),remaining,order_rows
++
++def _account(broker:Any)->str:
++    a=broker.fetch_account().payload
++    if not isinstance(a,dict) or not isinstance(a.get('id'),str) or not a['id'].strip() or a.get('status')!='ACTIVE' or a.get('trading_blocked') not in (None,False) or a.get('account_blocked') not in (None,False):raise _Unqualified('account_identity_or_status_unavailable')
++    return a['id']
++
++def reduce_position(broker:Any,project_root:Path,symbol:str,kind:str,confirm:Callable[[int],bool]|None=None)->ReductionResult:
++    result=ReductionResult(symbol,kind);attempted=False
++    try:
++        if kind not in {'reduce_long','cover_short'} or not isinstance(symbol,str) or not symbol:raise _Unqualified('reduction_kind_or_symbol_invalid')
++        if read_runtime_mode(project_root)!='paper' or getattr(broker,'paper_mode',None) is not True or urlsplit(broker.base_url).hostname=='api.alpaca.markets':raise _Unqualified('paper_runtime_required')
++        for rel in ['data','data/tracking','data/tracking/submission_intents']:
++            if (project_root/rel).is_symlink():raise _Unqualified('symlinked_journal_directory')
++        account=_account(broker);guard=SubmissionGuard(broker,project_root,account)
++        if not guard.qualified or guard.lock_path.is_symlink():raise _Unqualified('journal_or_account_unqualified')
++        decision_id='manual-reduction-v1:'+kind+':'+symbol
++        key=guard._client_id(decision_id);result.client_order_id=key
++        side='sell' if kind=='reduce_long' else 'buy'
++        with guard.lock_path.open('a') as lock:
++            try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
++            except BlockingIOError:result.reason='submission_guard_busy';return result
++            states=guard._load()
++            # Never mint a fresh key from a retry, quantity change, or new snapshot.
++            if key in states:
++                prior=states[key];result.qty=prior['order']['qty']
++                if prior['state']=='rejected':
++                    result.state='rejected';result.reason='intent_already_rejected';return result
++                response=guard._lookup(key,prior['order'])
++                if prior['state'] in {'prepared','unknown'}:
++                    state=guard._outcome(key,response)
++                else:state='unknown' if response is None else 'accepted'
++                result.state='unknown' if state=='unknown' else 'rejected' if state=='rejected' else 'held'
++                result.reason='intent_already_recorded_no_resend'
++                if response:result.order_id=response['id'];result.broker_status=response['status']
++                return result
++            history=[]
++            for old_key,record in states.items():
++                if record['order']['symbol']!=symbol or record['state']=='rejected':continue
++                response=guard._lookup(old_key,record['order'])
++                if record['state'] in {'prepared','unknown'}:
++                    guard._outcome(old_key,response)
++                    result.reason='other_intent_recovered_refresh_next_run' if response else 'same_symbol_intent_unknown';return result
++                if response is None:result.reason='same_symbol_intent_lookup_unavailable';return result
++                if response['status'] in OPEN:history.append(response)
++                elif record['order']['side']==side and _number(response['filled_qty'])>0:
++                    result.reason='prior_reduction_fill_requires_reconciliation';return result
++                elif response['status'] not in TERMINAL:raise _Unqualified('history_order_status_unqualified')
++            first=_snapshot(broker,symbol,side)
++            signed,remaining=first[1],first[2]
++            if signed==0:
++                if remaining:raise _Unqualified('flat_with_open_reduction_orders')
++                result.qty=0;result.reserved_qty=str(remaining);result.fractional_remainder='0'
++                result.state='flat';result.reason='confirmed_zero_position';return result
++            if (kind=='reduce_long' and signed<0) or (kind=='cover_short' and signed>0):
++                result.qty=0;result.reserved_qty=str(remaining)
++                result.state='not_applicable';result.reason='opposite_position_no_action';return result
++            for receipt in history:
++                expected=(receipt['symbol'],receipt['side'],_number(receipt['qty']),_number(receipt['filled_qty']),receipt['status'],receipt['type'],receipt['client_order_id'],receipt['time_in_force'])
++                if first[3].get(receipt['id'])!=expected:raise _Unqualified('journal_order_missing_or_mismatched_open_snapshot')
++            available=abs(signed)-remaining;result.reserved_qty=str(remaining)
++            if available<0:raise _Unqualified('pending_exceeds_position')
++            result.qty=int(available);result.fractional_remainder=str(available-result.qty)
++            if result.qty==0:result.reason='existing_orders_or_fractional_remainder';return result
++            if confirm is not None and not confirm(result.qty):
++                result.state='cancelled';result.reason='human_declined';return result
++            second=_snapshot(broker,symbol,side)
++            if second[0]!=first[0] or _account(broker)!=account:raise _Unqualified('snapshot_changed_before_submit')
++            order=dict(symbol=symbol,side=side,order_type='market',qty=result.qty,time_in_force='day',limit_price=None)
++            guard._validate_order(order)
++            guard._append('submission_intent_prepared',client_order_id=key,decision_id=decision_id,order=order)
++            explicit_rejection=None
++            try:
++                attempted=True
++                response=broker.submit_order(**order,client_order_id=key)
++                guard._validate_response(response,key,order)
++            except Exception as exc:
++                status=getattr(exc,'http_status',None)
++                if type(status) is int and status in {400,401,403,422}:explicit_rejection=status
++                response=guard._lookup(key,order)
++            if response is None and explicit_rejection is not None:
++                guard._append('submission_intent_outcome',client_order_id=key,state='rejected',response=None,http_rejection={'status':explicit_rejection})
++                result.state='rejected';result.reason='broker_http_rejected';return result
++            result.state=guard._outcome(key,response)
++            result.reason='request_accepted_not_fill_confirmation' if result.state=='accepted' else 'submission_outcome_'+result.state
++            if response:result.order_id=response['id'];result.broker_status=response['status']
++            return result
++    except Exception as exc:
++        result.state='unknown' if attempted else 'held'
++        # Only our validation codes are displayed; external exception text can contain secrets.
++        result.reason=str(exc) if type(exc) is _Unqualified else 'unavailable:'+type(exc).__name__
++        return result
++
++def report_results(results:list[ReductionResult])->int:
++    for r in results:
++        print(f'{r.symbol} {r.kind}: {r.state} qty={r.qty} broker_status={r.broker_status or "unconfirmed"} reason={r.reason} fractional_remainder={r.fractional_remainder}')
++    exit_code=max((r.exit_code for r in results),default=1)
++    print('REDUCTION_SUMMARY_JSON='+json.dumps(dict(status='requests_processed_not_fill_confirmation' if not exit_code else 'needs_attention',exit_code=exit_code,results=[r.to_dict() for r in results]),sort_keys=True))
++    return exit_code
+diff --git a/src/stock_swing/execution/submission_guard.py b/src/stock_swing/execution/submission_guard.py
+new file mode 100644
+--- /dev/null
++++ b/src/stock_swing/execution/submission_guard.py
+@@ -0,0 +1,203 @@
++"""Narrow paper submission journal over existing fsync TradeEventStore.
++
++Cooperating callers only. No automatic retry, cancellation, historical repair,
++or durable identity equivalence for a newly generated decision ID.
++"""
++from __future__ import annotations
++
++import fcntl
++import hashlib
++import json
++import math
++import os
++from datetime import datetime
++from pathlib import Path
++from typing import Any
++
++from stock_swing.tracking.trade_event_store import TradeEvent, TradeEventStore
++
++
++class SubmissionUncertain(Exception):
++    """No new send allowed without qualified resolution/snapshot."""
++
++
++class SubmissionHeld(SubmissionUncertain):
++    """Known prior intent or a cooperating caller already owns the lock."""
++
++
++class SubmissionRejected(Exception):
++    """Broker explicitly returned terminal rejected, not a transport failure."""
++
++
++class SubmissionGuard:
++    def __init__(self, broker: Any, project_root: Path, account_id: str | None):
++        self.snapshot_invalidated = False
++        self.broker = broker
++        self.account_id = account_id
++        route = getattr(broker, "base_url", None)
++        self.qualified = isinstance(account_id, str) and bool(account_id.strip()) and isinstance(route, str) and bool(route)
++        self.namespace = hashlib.sha256(json.dumps(["paper", route, account_id]).encode()).hexdigest()
++        self.store = TradeEventStore(project_root, f"data/tracking/submission_intents/{self.namespace}.jsonl")
++        self.marker = self.store.path.with_suffix(".initialized")
++        self.lock_path = self.store.path.with_suffix(".lock")
++
++    def __getattr__(self, name: str) -> Any:
++        return getattr(self.broker, name)
++
++    def _append(self, event_type: str, **payload: Any) -> None:
++        self.store.append(TradeEvent.create(event_type, payload=dict(namespace=self.namespace, **payload)))
++
++    def _load(self) -> dict[str, dict[str, Any]]:
++        path = self.store.path
++        if path.is_symlink() or self.marker.is_symlink():
++            raise ValueError("intent_symlink")
++        if not path.exists():
++            if self.marker.exists():
++                raise ValueError("intent_history_missing")
++            self._append("submission_guard_initialized")
++            with self.marker.open("x") as fh:
++                fh.write(self.namespace + "\n"); fh.flush(); os.fsync(fh.fileno())
++        if not self.marker.exists():
++            raise ValueError("intent_marker_missing")
++        if self.marker.exists() and self.marker.read_text() != self.namespace + "\n":
++            raise ValueError("intent_marker_mismatch")
++        raw = path.read_bytes()
++        if not raw.endswith(b"\n"):
++            raise ValueError("intent_partial_line")
++        states: dict[str, dict[str, Any]] = {}
++        rows = raw.decode().splitlines()
++        for index, line in enumerate(rows):
++            event = TradeEvent(**json.loads(line))
++            stamp = datetime.fromisoformat(event.created_at)
++            if stamp.tzinfo is None or event.payload.get("namespace") != self.namespace:
++                raise ValueError("intent_provenance_invalid")
++            kind, payload = event.event_type, event.payload
++            if index == 0:
++                if kind != "submission_guard_initialized":
++                    raise ValueError("intent_initialization_missing")
++                continue
++            key = payload.get("client_order_id")
++            if not isinstance(key, str) or not key:
++                raise ValueError("intent_id_invalid")
++            if kind == "submission_intent_prepared":
++                if key in states or not isinstance(payload.get("order"), dict) or not payload.get("decision_id"):
++                    raise ValueError("intent_duplicate_or_invalid_prepare")
++                expected = self._client_id(payload["decision_id"])
++                self._validate_order(payload["order"])
++                if key != expected:
++                    raise ValueError("intent_identity_mismatch")
++                states[key] = dict(payload, state="prepared")
++            elif kind == "submission_intent_outcome":
++                if key not in states or states[key]["state"] not in {"prepared", "unknown"} or payload.get("state") not in {"unknown", "accepted", "rejected"}:
++                    raise ValueError("intent_transition_invalid")
++                if payload["state"] != "unknown":
++                    if payload["state"] == "rejected" and payload.get("response") is None:
++                        proof = payload.get("http_rejection")
++                        if (not isinstance(proof, dict) or set(proof) != {"status"}
++                                or type(proof["status"]) is not int
++                                or proof["status"] not in {400, 401, 403, 422}):
++                            raise ValueError("intent_rejection_proof_invalid")
++                    else:
++                        self._validate_response(payload.get("response"), key, states[key]["order"])
++                        expected_state = "rejected" if payload["response"]["status"] == "rejected" else "accepted"
++                        if expected_state != payload["state"]:
++                            raise ValueError("intent_outcome_mismatch")
++                states[key].update(state=payload["state"], response=payload.get("response"))
++            else:
++                raise ValueError("intent_event_unknown")
++        return states
++
++    def _client_id(self, decision_id: str) -> str:
++        if not isinstance(decision_id, str) or not decision_id:
++            raise ValueError("decision_id_invalid")
++        return "ss-" + hashlib.sha256((self.namespace + ":" + decision_id).encode()).hexdigest()[:40]
++
++    @staticmethod
++    def _validate_order(order: dict[str, Any]) -> None:
++        if set(order) != {"symbol", "side", "order_type", "qty", "time_in_force", "limit_price"}:
++            raise ValueError("intent_order_shape_invalid")
++        if not isinstance(order["symbol"], str) or not order["symbol"] or order["side"] not in {"buy", "sell"} or order["order_type"] not in {"market", "limit"} or order["time_in_force"] not in {"day", "gtc", "opg", "cls", "ioc", "fok"}:
++            raise ValueError("intent_order_fields_invalid")
++        if isinstance(order["qty"], bool) or not isinstance(order["qty"], int) or order["qty"] < 1:
++            raise ValueError("intent_quantity_invalid")
++        if order["order_type"] == "limit":
++            price = order["limit_price"]
++            if isinstance(price, bool) or not isinstance(price, (int, float)) or not math.isfinite(price) or price <= 0:
++                raise ValueError("intent_limit_invalid")
++
++    @staticmethod
++    def _validate_response(response: Any, key: str, order: dict[str, Any]) -> None:
++        if not isinstance(response, dict) or not isinstance(response.get("id"), str) or not response["id"] or response.get("client_order_id") != key:
++            raise ValueError("order_lookup_identity_mismatch")
++        for field in ["symbol", "side", "time_in_force"]:
++            if response.get(field) != order[field]:
++                raise ValueError("order_lookup_payload_mismatch")
++        if response.get("type") != order["order_type"]:
++            raise ValueError("order_lookup_type_mismatch")
++        qty = float(response.get("qty"))
++        filled = float(response.get("filled_qty"))
++        if not math.isfinite(qty) or qty != order["qty"] or not math.isfinite(filled) or not 0 <= filled <= qty or not filled.is_integer():
++            raise ValueError("order_lookup_quantity_mismatch")
++        if order["order_type"] == "limit" and float(response.get("limit_price")) != float(order["limit_price"]):
++            raise ValueError("order_lookup_limit_mismatch")
++        if response.get("status") not in {"new", "accepted", "pending_new", "partially_filled", "filled", "canceled", "expired", "rejected", "replaced", "pending_cancel", "pending_replace", "accepted_for_bidding", "held", "done_for_day"}:
++            raise ValueError("order_lookup_status_unknown")
++
++    def _lookup(self, key: str, order: dict[str, Any]) -> dict[str, Any] | None:
++        try:
++            response = self.broker.fetch_order_by_client_id(key).payload
++            self._validate_response(response, key, order)
++            return response
++        except Exception:
++            # 404/malformed/timeout is not proof that the first send failed.
++            return None
++
++    def _outcome(self, key: str, response: dict[str, Any] | None) -> str:
++        state = "unknown" if response is None else ("rejected" if response["status"] == "rejected" else "accepted")
++        self._append("submission_intent_outcome", client_order_id=key, state=state, response=response)
++        return state
++
++    def submit_intent(self, decision_id: str, **order: Any) -> dict[str, Any]:
++        if not self.qualified:
++            raise SubmissionUncertain("paper_account_identity_unavailable")
++        try:
++            self._validate_order(order)
++            with self.lock_path.open("a") as lock:
++                try:
++                    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
++                except BlockingIOError:
++                    raise SubmissionHeld("submission_guard_busy") from None
++                states = self._load()
++                key = self._client_id(decision_id)
++                previous_unknown = False
++                for old_key, state in states.items():
++                    if state["state"] in {"prepared", "unknown"}:
++                        previous_unknown = True
++                        response = self._lookup(old_key, state["order"])
++                        if response is not None:
++                            state["state"] = self._outcome(old_key, response)
++                if key in states:
++                    if states[key]["order"] != order:
++                        raise SubmissionUncertain("same_intent_payload_changed")
++                    raise SubmissionHeld("intent_already_recorded:" + states[key]["state"])
++                unresolved = [s for s in states.values() if s["state"] in {"prepared", "unknown"}]
++                self.snapshot_invalidated = self.snapshot_invalidated or previous_unknown
++                if (order["side"] == "buy" and self.snapshot_invalidated) or any(s["order"]["symbol"] == order["symbol"] for s in unresolved):
++                    raise SubmissionUncertain("prior_intent_unknown_or_snapshot_refresh_required")
++                # Persist before the external side effect, under cooperating lock.
++                self._append("submission_intent_prepared", client_order_id=key, decision_id=decision_id, order=order)
++                try:
++                    response = self.broker.submit_order(**order, client_order_id=key)
++                    self._validate_response(response, key, order)
++                except Exception:
++                    response = self._lookup(key, order)
++                state = self._outcome(key, response)
++                if state == "unknown":
++                    raise SubmissionUncertain("submission_outcome_unknown:" + key)
++                if state == "rejected":
++                    raise SubmissionRejected("broker_terminal_rejected:" + key)
++                return response
++        except (SubmissionUncertain, SubmissionRejected):
++            raise
++        except Exception as exc:
++            raise SubmissionUncertain("intent_store_unavailable:" + type(exc).__name__) from exc
+diff --git a/src/stock_swing/experiments/decision_input_capture.py b/src/stock_swing/experiments/decision_input_capture.py
+new file mode 100644
+--- /dev/null
++++ b/src/stock_swing/experiments/decision_input_capture.py
+@@ -0,0 +1,242 @@
++"""Opt-in immutable actual-boundary observations; never a full-replay certificate.
++
++Reuses the existing fsynced blob/manifest publication. No environment dump,
++broker I/O, ledger mutation, policy change or automatic measurement promotion.
++"""
++from dataclasses import asdict, is_dataclass
++from datetime import datetime, timezone
++from enum import Enum
++import json
++from pathlib import Path
++import threading
++import re
++from urllib.parse import urlsplit, parse_qsl
++from uuid import uuid4
++
++from .measurement_capture import CaptureError, _encode, _sha, _token, _storage, _publish
++from .measurement_capture import _sync_directory
++
++
++def _credential_field(key):
++    canonical=re.sub('[^a-z0-9]','',key.lower())
++    return any(term in canonical for term in ('apikey','apisecret','authorization',
++        'password','accesstoken','refreshtoken','privatekey','sessiontoken'))
++
++
++def capture_value(value):
++    """Freeze typed consumer arguments; refuse unsupported objects and secrets."""
++    if is_dataclass(value): return capture_value(asdict(value))
++    if isinstance(value, Enum): return capture_value(value.value)
++    if isinstance(value, datetime):
++        if value.utcoffset() is None: raise CaptureError('naive input observation clock')
++        return value.isoformat()
++    if isinstance(value, dict):
++        result={}
++        for key,item in value.items():
++            if not isinstance(key,str): raise CaptureError('nontext input field')
++            if _credential_field(key):
++                raise CaptureError('credential field not permitted in measurement')
++            result[key]=capture_value(item)
++        return result
++    if isinstance(value,(list,tuple)): return [capture_value(v) for v in value]
++    if isinstance(value,(set,frozenset)):
++        return sorted((capture_value(v) for v in value),key=lambda v:_encode(v))
++    if isinstance(value,str) and '://' in value:
++        try:
++            parts=urlsplit(value)
++            if parts.username is not None or parts.password is not None or any(
++                    _credential_field(key) for key,_ in parse_qsl(parts.query,keep_blank_values=True)):
++                raise CaptureError('credential URL not permitted in measurement')
++        except ValueError as exc:
++            raise CaptureError('invalid input URL') from exc
++    if value is None or type(value) in (str,int,float,bool):
++        try: _encode(value)
++        except (ValueError,OverflowError): raise CaptureError('nonfinite input value') from None
++        return value
++    raise CaptureError('unsupported input value')
++
++
++class DecisionInputRecorder:
++    """A run-scoped recorder. Disabled is zero storage I/O, even for bad inputs.
++
++    record() is strict. observe() is a non-disruptive instrumentation adapter:
++    failure is retained in memory and must be surfaced by the run finalizer.
++    An observed broker ACK is not a fill; an order aggregate is not an execution.
++    """
++    def __init__(self, project_root, *, enabled, run_id):
++        if type(enabled) is not bool: raise CaptureError('invalid observation mode')
++        self.root=Path(project_root);self.enabled=enabled;self.run_id=run_id
++        self.failures=0;self.committed=0;self._lock=threading.RLock()
++        self._references=[];self._sealed_ref=None
++
++    def record(self, stage, identity, payload, *, observed_at):
++        if not self.enabled: return None
++        with self._lock:
++            if self._sealed_ref is not None:
++                raise CaptureError('input run already sealed')
++            ref=self._record(stage,identity,payload,observed_at=observed_at)
++            if ref not in self._references:
++                self._references.append(ref)
++                self.committed=len(self._references)
++            return ref
++
++    def _record(self, stage, identity, payload, *, observed_at):
++        try:
++            _token(self.run_id);_token(stage);_token(identity)
++            if not isinstance(observed_at,datetime) or observed_at.utcoffset() is None:
++                raise CaptureError('observation clock must be aware')
++            encoded=_encode(capture_value(payload))
++            envelope=dict(schema_version=1,run_id=self.run_id,stage=stage,identity=identity,
++                local_observed_at=observed_at.astimezone(timezone.utc).isoformat(),
++                payload_sha256=_sha(encoded),scope='actual_boundary_partial_inputs_not_F1',
++                provider_available_at_certified=False,full_replay_ready=False)
++            envelope['manifest_sha256']=_sha(_encode(envelope))
++            root,folder=_storage(self.root,create=True)
++            if (folder/'blobs').is_symlink(): raise CaptureError('symlinked input blob directory')
++            manifests=folder/'decision_manifests'
++            if manifests.is_symlink(): raise CaptureError('symlinked observation directory')
++            manifests.mkdir(mode=0o700,exist_ok=True)
++            _sync_directory(manifests.parent)
++            key=_sha(_encode([self.run_id,stage,identity]))
++            _publish(folder/'blobs'/envelope['payload_sha256'],encoded)
++            _publish(manifests/(key+'.json'),_encode(envelope))
++            ref=str((manifests/(key+'.json')).relative_to(root))
++            load_decision_input(root,ref)
++            return ref
++        except CaptureError: raise
++        except (ValueError,TypeError,OSError,OverflowError,RecursionError) as exc:
++            raise CaptureError('input observation not committed') from exc
++
++    def observe(self, stage, payload, *, identity=None, observed_at=None):
++        """Record one callback without changing trading flow on capture failure."""
++        if not self.enabled: return None
++        with self._lock:
++            try:
++                ref=self.record(stage,identity or str(uuid4()),payload,
++                    observed_at=observed_at or datetime.now(timezone.utc))
++                return ref
++            except CaptureError:
++                self.failures+=1
++                return None
++
++    def note_failure(self):
++        """Retain an explicit refused-input gap even if its safe receipt was saved."""
++        if self.enabled:
++            with self._lock:
++                if self._sealed_ref is not None:
++                    raise CaptureError('input run already sealed')
++                self.failures += 1
++
++    def seal(self):
++        """Publish the exact observed run set; this is not full-input readiness."""
++        if not self.enabled: return None
++        with self._lock:
++            try:
++                if self._sealed_ref is not None:
++                    load_input_run(self.root,self._sealed_ref)
++                    return self._sealed_ref
++                observed=[load_decision_input(self.root,ref) for ref in self._references]
++                ends=[o for o in observed if o['manifest']['stage']=='run_end']
++                if len(ends)!=1 or not observed or observed[-1] is not ends[0]:
++                    raise CaptureError('one terminal run_end observation required')
++                if (ends[0]['payload'].get('observations_before_end')!=len(observed)-1
++                        or ends[0]['payload'].get('capture_failures')!=self.failures):
++                    raise CaptureError('run_end counters do not match recorder')
++                root,folder=_storage(self.root,create=True)
++                target=folder/'run_manifests'
++                if target.is_symlink(): raise CaptureError('symlinked run directory')
++                target.mkdir(mode=0o700,exist_ok=True);_sync_directory(target.parent)
++                envelope=dict(schema_version=1,run_id=_token(self.run_id),
++                    observations=[dict(ref=ref,manifest_sha256=o['manifest']['manifest_sha256'])
++                                  for ref,o in zip(self._references,observed)],
++                    capture_failures=self.failures,full_replay_ready=False,
++                    scope='sealed_observed_subset_not_full_strategy_replay')
++                envelope['manifest_sha256']=_sha(_encode(envelope))
++                path=target/(_sha(_encode(self.run_id))+'.json')
++                _publish(path,_encode(envelope))
++                ref=str(path.relative_to(root));load_input_run(root,ref)
++                self._sealed_ref=ref
++                return ref
++            except CaptureError: raise
++            except (ValueError,KeyError,TypeError,OSError) as exc:
++                raise CaptureError('input run not sealed') from exc
++
++
++def load_input_run(project_root, ref):
++    """Verify run closure and every hash dependency; missing never means empty."""
++    try:
++        root,folder=_storage(project_root,create=False);path=Path(ref)
++        if (path.is_absolute() or path.parent!=Path('data/audits/measurement_inputs/run_manifests')
++                or path.suffix!='.json' or len(path.stem)!=64
++                or any(c not in '0123456789abcdef' for c in path.stem)
++                or (folder/'run_manifests').is_symlink() or (root/path).is_symlink()):
++            raise CaptureError('unsafe run reference')
++        envelope=json.loads((root/path).read_bytes());claimed=envelope.pop('manifest_sha256')
++        run_id=_token(envelope['run_id'])
++        if (_sha(_encode(envelope))!=claimed or envelope.get('schema_version')!=1
++                or envelope.get('scope')!='sealed_observed_subset_not_full_strategy_replay'
++                or envelope.get('full_replay_ready') is not False
++                or path.stem!=_sha(_encode(run_id))
++                or type(envelope['capture_failures']) is not int or envelope['capture_failures']<0):
++            raise CaptureError('invalid run manifest')
++        refs=envelope['observations']
++        if not isinstance(refs,list) or not refs or len({item['ref'] for item in refs})!=len(refs):
++            raise CaptureError('missing or duplicate run observations')
++        observations=[]
++        for item in refs:
++            o=load_decision_input(root,item['ref']);m=o['manifest']
++            _token(m['stage']);_token(m['identity'])
++            dt=datetime.fromisoformat(m['local_observed_at'])
++            if (m['run_id']!=run_id or m['manifest_sha256']!=item['manifest_sha256']
++                    or dt.utcoffset() is None or not isinstance(o['payload'],dict)):
++                raise CaptureError('input run dependency mismatch')
++            observations.append(o)
++        ends=[o for o in observations if o['manifest']['stage']=='run_end']
++        if len(ends)!=1 or observations[-1] is not ends[0]:
++            raise CaptureError('run closure missing or not terminal')
++        end=ends[0]['payload']
++        if (type(end.get('exit_code')) is not int
++                or type(end.get('observations_before_end')) is not int
++                or end['observations_before_end']!=len(observations)-1
++                or type(end.get('capture_failures')) is not int
++                or end['capture_failures']!=envelope['capture_failures']):
++            raise CaptureError('run closure counters invalid')
++        envelope['manifest_sha256']=claimed
++        return dict(manifest=envelope,observations=observations,
++            capture_complete=envelope['capture_failures']==0,
++            declared_exit_success=end['exit_code']==0,full_replay_ready=False)
++    except CaptureError: raise
++    except (ValueError,KeyError,TypeError,OSError,IndexError) as exc:
++        raise CaptureError('missing or invalid input run') from exc
++
++
++def load_decision_input(project_root, ref):
++    """Read a committed, hash-bound observation; no correction or fallback."""
++    try:
++        root,folder=_storage(project_root,create=False);path=Path(ref)
++        if (folder/'blobs').is_symlink(): raise CaptureError('symlinked input blob directory')
++        if (path.is_absolute() or path.parent != Path('data/audits/measurement_inputs/decision_manifests')
++                or len(path.stem)!=64 or any(c not in '0123456789abcdef' for c in path.stem)
++                or path.suffix!='.json' or (root/path).is_symlink()):
++            raise CaptureError('unsafe decision input reference')
++        # Check every storage ancestor, including the newly added manifest dir.
++        if (folder/'decision_manifests').is_symlink(): raise CaptureError('symlinked observation directory')
++        envelope=json.loads((root/path).read_bytes());claimed=envelope.pop('manifest_sha256')
++        if (_sha(_encode(envelope))!=claimed or envelope.get('schema_version')!=1
++                or envelope.get('scope')!='actual_boundary_partial_inputs_not_F1'
++                or envelope.get('full_replay_ready') is not False
++                or envelope.get('provider_available_at_certified') is not False
++                or path.stem!=_sha(_encode([envelope['run_id'],envelope['stage'],envelope['identity']]))):
++            raise CaptureError('corrupt or unsupported input manifest')
++        sha=envelope['payload_sha256']
++        if not isinstance(sha,str) or len(sha)!=64 or any(c not in '0123456789abcdef' for c in sha):
++            raise CaptureError('invalid input dependency hash')
++        blob=folder/'blobs'/sha
++        if blob.is_symlink(): raise CaptureError('symlinked input blob')
++        raw=blob.read_bytes()
++        if _sha(raw)!=sha: raise CaptureError('corrupt input dependency')
++        envelope['manifest_sha256']=claimed
++        return dict(manifest=envelope,payload=json.loads(raw))
++    except CaptureError: raise
++    except (ValueError,KeyError,TypeError,OSError) as exc:
++        raise CaptureError('missing or invalid decision input') from exc
+diff --git a/src/stock_swing/experiments/measurement_capture.py b/src/stock_swing/experiments/measurement_capture.py
+new file mode 100644
+--- /dev/null
++++ b/src/stock_swing/experiments/measurement_capture.py
+@@ -0,0 +1,324 @@
++"""Optional, partial candidate checkpoints, not a full strategy replay recorder.
++
++Reuse the existing audits stage and standard-library immutable publication.
++StageStore/FeatureSnapshotStore alone do not provide immutable, fsynced manifest
++publication. Blobs precede the manifest; an orphan blob is NOT an observation.
++No broker, environment-variable dump, raw/free-text metadata or ledger writes.
++"""
++from __future__ import annotations
++
++from datetime import datetime, timezone
++import hashlib
++import json
++import math
++import os
++from pathlib import Path
++import re
++import tempfile
++from types import SimpleNamespace
++from zoneinfo import ZoneInfo
++
++from stock_swing.core.path_manager import PathManager
++def _sync_directory(folder):
++    """Same fsync primitive as the existing recorder, without ledger dependencies."""
++    fd = os.open(folder, os.O_RDONLY)
++    try:
++        os.fsync(fd)
++    finally:
++        os.close(fd)
++
++
++
++class CaptureError(RuntimeError):
++    """The measurement was not committed or cannot be trusted for replay."""
++
++
++_TOKEN = re.compile(r'[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}\Z')
++_STAGES = {'generated_daily', 'prioritized_entry'}
++_CLI_TYPES = {'symbols': str, 'universe': str, 'timeframe': str, 'bar_limit': int,
++              'min_momentum': float, 'min_signal_strength': float,
++              'intraday_candidate_limit': int, 'dry_run': bool,
++              'allow_outside_hours': bool}
++_MISSING = ['complete_identity_and_decision_join', 'executed_code_and_dirty_patch',
++            'effective_config', 'complete_candidate_filter_trace',
++            'raw_market_inputs_and_availability', 'account_lots_pending_reservations',
++            'dated_classification_and_lookthrough', 'entry_exit_cost_precedence',
++            'whole_run_completion_and_replay_equality']
++
++
++def _encode(value):
++    return json.dumps(value, ensure_ascii=False, sort_keys=True,
++                      separators=(',', ':'), allow_nan=False).encode() + b'\n'
++
++
++def _sha(data):
++    return hashlib.sha256(data).hexdigest()
++
++
++def _token(value):
++    if not isinstance(value, str) or not _TOKEN.fullmatch(value):
++        raise CaptureError('invalid measurement identity')
++    return value
++
++
++def _storage(project_root, *, create):
++    root = Path(project_root).absolute()
++    folder = root/'data/audits/measurement_inputs'
++    # Reject existing symlink ancestors, including the supplied root. This is a
++    # cooperative local store, not an adversarial-filesystem isolation boundary.
++    for part in [folder, *folder.parents]:
++        if part.is_symlink():
++            raise CaptureError('symlinked measurement storage')
++    if create:
++        audits = PathManager(root).data_stage('audits')
++        for target in [audits/'measurement_inputs', folder/'blobs', folder/'manifests']:
++            target.mkdir(mode=0o700, parents=True, exist_ok=True)
++            _sync_directory(target.parent)
++    return root, folder
++
++
++def _publish(path, data):
++    """Atomic no-replace link; identical retries are allowed, conflicts refuse."""
++    if path.is_symlink():
++        raise CaptureError('symlinked measurement object')
++    if path.exists():
++        if path.read_bytes() != data:
++            raise CaptureError('immutable measurement identity conflict')
++        return
++    fd, name = tempfile.mkstemp(prefix='.capture-', dir=path.parent)
++    try:
++        with os.fdopen(fd, 'wb') as stream:
++            stream.write(data)
++            stream.flush()
++            os.fsync(stream.fileno())
++        try:
++            os.link(name, path)
++        except FileExistsError:
++            if path.is_symlink() or path.read_bytes() != data:
++                raise CaptureError('immutable measurement identity conflict')
++        _sync_directory(path.parent)
++    finally:
++        if os.path.exists(name):
++            os.unlink(name)
++
++
++def _number(value):
++    if isinstance(value, bool) or not isinstance(value, (int, float)):
++        raise CaptureError('invalid candidate numeric value')
++    try:
++        if not math.isfinite(value) or not 0 <= value <= 1:
++            raise CaptureError('nonfinite or out-of-range candidate value')
++    except OverflowError as exc:
++        raise CaptureError('overflow candidate value') from exc
++    return value
++
++
++def capture_candidates(project_root, *, enabled, run_id, experiment_id, stage,
++                       observed_at, signals, stale_symbols, cli_settings,
++                       source_revision, ranking_inputs=None):
++    """Checkpoint only the caller's exact ordered signals at the named boundary.
++
++    Disabled: zero I/O. Enabled failure: raise; never report a saved observation.
++    Identity is run+stage; retries must supply the SAME recorded timestamp/inputs.
++    CLI values are a partial allowlist, explicitly NOT effective runtime config.
++    This function does not filter, sort, mutate signals, or invoke execution.
++    """
++    if enabled is False:
++        return None
++    try:
++        if enabled is not True or stage not in _STAGES:
++            raise CaptureError('invalid capture mode or stage')
++        _token(run_id)
++        if experiment_id is not None:
++            _token(experiment_id)
++        if not isinstance(source_revision, str) or not source_revision:
++            raise CaptureError('missing recorded source revision')
++        if not isinstance(observed_at, datetime) or observed_at.utcoffset() is None:
++            raise CaptureError('measurement time must be timezone-aware')
++        if not isinstance(signals, (list, tuple)) or not isinstance(stale_symbols, (list, tuple, set)):
++            raise CaptureError('invalid candidate or stale-symbol collection')
++        if not isinstance(cli_settings, dict):
++            raise CaptureError('invalid CLI settings')
++        candidates = []
++        for i, signal in enumerate(signals):
++            action = signal.action
++            if action not in {'buy', 'sell', 'hold'}:
++                raise CaptureError('invalid candidate action')
++            candidates.append(dict(ordinal=i, symbol=_token(signal.symbol),
++                                   strategy_id=_token(signal.strategy_id), action=action,
++                                   signal_strength=_number(signal.signal_strength),
++                                   confidence=_number(signal.confidence)))
++        settings = {}
++        for key, kind in _CLI_TYPES.items():
++            if key not in cli_settings:
++                continue
++            value = cli_settings[key]
++            if kind is float:
++                if type(value) not in (float, int) or not math.isfinite(value):
++                    raise CaptureError('invalid numeric CLI setting')
++            elif type(value) is not kind:
++                raise CaptureError('invalid CLI setting type')
++            settings[key] = value
++        sources = {}
++        for path in [Path(__file__), Path(__file__).parents[1]/'cli/paper_demo.py']:
++            sources[path.name] = _sha(path.read_bytes())
++        payload = dict(candidates=candidates, stale_symbols=sorted({_token(s) for s in stale_symbols}),
++                       cli_settings=settings, cli_scope='selected_arguments_not_effective_config',
++                       source_files_on_disk=sources,
++                       source_scope='recorded_revision_and_on_disk_files_not_executed_tree_attestation')
++        if ranking_inputs is not None:
++            _validated_ranking(ranking_inputs)
++            payload['ranking_inputs'] = json.loads(_encode(ranking_inputs))
++        encoded = _encode(payload)
++        manifest = dict(schema_version=1, run_id=run_id, experiment_id=experiment_id,
++                        stage=stage, observed_at=observed_at.astimezone(timezone.utc).isoformat(),
++                        et_calendar_date=observed_at.astimezone(ZoneInfo('America/New_York')).date().isoformat(),
++                        exchange_session_certified=False, source_revision=source_revision,
++                        payload_sha256=_sha(encoded), candidate_count=len(candidates),
++                        scope='partial_candidate_measurement_not_F1', full_replay_ready=False,
++                        missing_contract_sections=list(_MISSING))
++        manifest['manifest_sha256'] = _sha(_encode(manifest))
++        identity = _sha(_encode([run_id, stage]))
++        root, folder = _storage(project_root, create=True)
++        target = folder/'manifests'/f'{identity}.json'
++        # An existing manifest must also have intact dependencies on retry.
++        if target.exists():
++            loaded = load_capture(root, str(target.relative_to(root)))
++            if loaded['manifest'] != manifest:
++                raise CaptureError('immutable measurement identity conflict')
++            return str(target.relative_to(root))
++        _publish(folder/'blobs'/manifest['payload_sha256'], encoded)
++        _publish(target, _encode(manifest))
++        ref = str(target.relative_to(root))
++        load_capture(root, ref)
++        return ref
++    except CaptureError:
++        raise
++    except (OSError, ValueError, TypeError, AttributeError, OverflowError) as exc:
++        raise CaptureError('candidate measurement not committed') from exc
++
++
++def capture_ranking_inputs(*, signals, current_positions, equity, max_sector_exposure_pct):
++    """Freeze allowlisted actual ranking arguments, not whole-account state/config.
++
++    Preserve absence and numeric strings in position fields because the consumer
++    applies its own float/default semantics. Capture the module classification
++    map as used by this function, without calling it a dated registry.
++    """
++    from stock_swing.utils.signal_prioritization import SYMBOL_SECTORS
++    try:
++        def finite(value):
++            if isinstance(value,bool) or not isinstance(value,(str,int,float)) or not math.isfinite(float(value)):
++                raise CaptureError('invalid ranking numeric input')
++            return value
++        if not isinstance(signals,(list,tuple)) or not isinstance(current_positions,dict):
++            raise CaptureError('invalid ranking collection')
++        for limit in (equity,max_sector_exposure_pct):
++            if isinstance(limit,bool) or not isinstance(limit,(int,float)):
++                raise CaptureError('ranking limits must be numeric arguments')
++            finite(limit)
++        if float(equity)<0 or not 0<=float(max_sector_exposure_pct)<=1:
++            raise CaptureError('invalid ranking limit')
++        ordered=[]
++        for signal in signals:
++            metadata=getattr(signal,'metadata',None)
++            selected={}
++            if isinstance(metadata,dict) and 'estimated_notional' in metadata:
++                value=metadata['estimated_notional']
++                if isinstance(value,bool) or not isinstance(value,(int,float)) or not math.isfinite(value) or value<0:
++                    raise CaptureError('invalid estimated notional')
++                selected['estimated_notional']=value
++            if signal.action not in {'buy','sell','hold'}:raise CaptureError('invalid ranking action')
++            ordered.append(dict(symbol=_token(signal.symbol),strategy_id=_token(signal.strategy_id),
++                                action=signal.action,signal_strength=_number(signal.signal_strength),
++                                confidence=_number(signal.confidence),metadata=selected))
++        positions={}
++        for symbol,position in current_positions.items():
++            _token(symbol)
++            if not isinstance(position,dict):raise CaptureError('invalid ranking position')
++            positions[symbol]={k:finite(position[k]) for k in ['qty','current_price','avg_entry_price'] if k in position}
++        symbols={s['symbol'].upper() for s in ordered}|{s.upper() for s in positions}
++        sources={name:_sha((Path(__file__).parents[1]/directory/name).read_bytes()) for directory,name in
++                 [('utils','signal_prioritization.py'),('risk','position_sizing.py')]}
++        return dict(scope='prioritize_buy_signals_v2_arguments_only',ordered_candidates=ordered,
++                    current_positions=positions,equity=equity,max_sector_exposure_pct=max_sector_exposure_pct,
++                    symbol_sectors={s:SYMBOL_SECTORS.get(s) for s in sorted(symbols)},
++                    classification_basis='module_mapping_not_dated_registry',source_sha256=sources)
++    except CaptureError:raise
++    except (ValueError,TypeError,AttributeError,OSError,OverflowError) as exc:
++        raise CaptureError('invalid ranking input snapshot') from exc
++
++
++def _validated_ranking(saved):
++    try:
++        regenerated=capture_ranking_inputs(
++            signals=[SimpleNamespace(**row) for row in saved['ordered_candidates']],
++            current_positions=saved['current_positions'],equity=saved['equity'],
++            max_sector_exposure_pct=saved['max_sector_exposure_pct'])
++        if regenerated!=saved:raise CaptureError('ranking source/mapping/schema conflict')
++    except (KeyError,TypeError,AttributeError) as exc:
++        raise CaptureError('missing or invalid ranking inputs') from exc
++
++
++def replay_saved_ranking(observation):
++    """Replay only prioritization with captured arguments and matching local source.
++
++    This is not feature generation, order sizing/execution, PIT certification,
++    a complete effective-config replay or an economic qualification.
++    """
++    from stock_swing.utils.signal_prioritization import prioritize_buy_signals_v2
++    try:
++        saved=observation['payload']['ranking_inputs'];_validated_ranking(saved)
++        result=prioritize_buy_signals_v2(
++            signals=[SimpleNamespace(**row) for row in saved['ordered_candidates']],
++            current_positions=saved['current_positions'],equity=saved['equity'],
++            max_sector_exposure_pct=saved['max_sector_exposure_pct'])
++        fields=['symbol','strategy_id','action','signal_strength','confidence']
++        actual=[{k:getattr(s,k) for k in fields} for s in result]
++        recorded=[{k:r[k] for k in fields} for r in observation['payload']['candidates']]
++        return dict(scope='ranking_segment_only',input_count=len(saved['ordered_candidates']),
++                    output_count=len(actual),ordered_output_matches=actual==recorded,full_replay_ready=False)
++    except (KeyError,TypeError,AttributeError,ValueError) as exc:
++        raise CaptureError('cannot replay missing/invalid ranking observation') from exc
++
++
++def load_capture(project_root, ref):
++    """Verify one committed manifest and its exact dependency without mutation."""
++    try:
++        root, folder = _storage(project_root, create=False)
++        path = Path(ref)
++        if (path.is_absolute() or path.parent != Path('data/audits/measurement_inputs/manifests')
++                or not re.fullmatch(r'[0-9a-f]{64}\.json', path.name)):
++            raise CaptureError('unsafe measurement reference')
++        target = root/path
++        if target.is_symlink():
++            raise CaptureError('symlinked measurement manifest')
++        manifest = json.loads(target.read_bytes())
++        claimed = manifest.pop('manifest_sha256')
++        if _sha(_encode(manifest)) != claimed:
++            raise CaptureError('corrupt measurement manifest')
++        if (manifest['scope'] != 'partial_candidate_measurement_not_F1'
++                or manifest['full_replay_ready'] is not False
++                or manifest['missing_contract_sections'] != _MISSING
++                or manifest['stage'] not in _STAGES or manifest['schema_version'] != 1
++                or manifest['exchange_session_certified'] is not False
++                or path.stem != _sha(_encode([manifest['run_id'],manifest['stage']]))):
++            raise CaptureError('unsupported measurement contract')
++        checksum = manifest['payload_sha256']
++        if not isinstance(checksum, str) or not re.fullmatch('[0-9a-f]{64}', checksum):
++            raise CaptureError('invalid dependency hash')
++        blob = folder/'blobs'/checksum
++        if blob.is_symlink():
++            raise CaptureError('symlinked measurement dependency')
++        data = blob.read_bytes()
++        if _sha(data) != checksum:
++            raise CaptureError('corrupt measurement dependency')
++        payload = json.loads(data)
++        if len(payload['candidates']) != manifest['candidate_count']:
++            raise CaptureError('candidate count mismatch')
++        manifest['manifest_sha256'] = claimed
++        return dict(manifest=manifest, payload=payload)
++    except CaptureError:
++        raise
++    except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
++        raise CaptureError('missing or invalid measurement observation') from exc
+diff --git a/src/stock_swing/normalization/broker_normalizer.py b/src/stock_swing/normalization/broker_normalizer.py
+--- a/src/stock_swing/normalization/broker_normalizer.py
++++ b/src/stock_swing/normalization/broker_normalizer.py
+@@ -88,6 +88,8 @@
+                     "trade_count": bar.get("n"),
+                 },
+             )
++            if raw.payload.get("_bar_contract") is not None:
++                record.payload["bar_contract"] = raw.payload["_bar_contract"]
+             records.append(record)
+         
+         return records if records else []
+diff --git a/src/stock_swing/reporting/console_renderer.py b/src/stock_swing/reporting/console_renderer.py
+--- a/src/stock_swing/reporting/console_renderer.py
++++ b/src/stock_swing/reporting/console_renderer.py
+@@ -335,6 +335,10 @@
+         lines.append(f"  regime        = {regime}")
+         if budget is not None:
+             lines.append(f"  open_risk_pct = {_fmt_pct(budget * 100)}")
++        else:
++            lines.append("  open_risk_pct = UNAVAILABLE (new BUYs held)")
++        if risk.get("risk_budget_status") == "bypassed":
++            lines.append("  risk_budget   = BYPASSED (measured-threshold override)")
+         blocks = risk.get("cluster_blocks", [])
+         if blocks:
+             lines.append(f"  cluster_blocks= {', '.join(blocks[:5])}")
+diff --git a/src/stock_swing/reporting/console_summary.py b/src/stock_swing/reporting/console_summary.py
+--- a/src/stock_swing/reporting/console_summary.py
++++ b/src/stock_swing/reporting/console_summary.py
+@@ -59,8 +59,12 @@
+     signals_deny: int
+     orders_submitted: int
+     orders_rejected: int
++    effective_config: list[dict[str, Any]] = field(default_factory=list)
++    orders_unknown: int = 0
++    orders_held: int = 0
+     cluster_blocks: list[str] = field(default_factory=list)
+-    risk_budget_pct: float = 0.0
++    risk_budget_pct: float | None = 0.0
++    risk_budget_status: str = "unknown"
+     stale_symbols: list[str] = field(default_factory=list)
+     price_sources: dict[str, int] = field(default_factory=dict)
+     market_regime: str = "unknown"
+@@ -197,6 +201,7 @@
+                 "exit_attribution_breakdown": self.exit_attribution_breakdown,
+                 "open_position_details": self.open_position_details,
+             },
++            "effective_config": self.effective_config,
+             "stop_loss_health": self.stop_loss_health,
+             "decision_funnel": {
+                 "candidates": self.signals_total,
+@@ -205,6 +210,8 @@
+                 "deny": self.signals_deny,
+                 "submitted": self.orders_submitted,
+                 "rejected": self.orders_rejected,
++                "unknown": self.orders_unknown,
++                "held": self.orders_held,
+                 "blocked": len(self.cluster_blocks),
+                 "deny_reasons": self.deny_reason_counts,
+                 "stages": self.funnel_stages,
+@@ -224,7 +231,8 @@
+             "broker_tracker_diff": self.broker_tracker_diff,
+             "risk": {
+                 "cluster_blocks": self.cluster_blocks,
+-                "risk_budget_pct": round(self.risk_budget_pct, 3),
++                "risk_budget_pct": round(self.risk_budget_pct, 3) if self.risk_budget_pct is not None else None,
++                "risk_budget_status": self.risk_budget_status,
+                 "market_regime": self.market_regime,
+             },
+             "price_integrity": self.price_integrity
+@@ -293,7 +301,8 @@
+         decisions: list | None = None,
+         submissions: list | None = None,
+         cluster_blocks: list[str] | None = None,
+-        risk_budget_pct: float = 0.0,
++        risk_budget_pct: float | None = 0.0,
++        risk_budget_status: str = "unknown",
+         stale_symbols: list[str] | None = None,
+         price_sources: dict[str, int] | None = None,
+         market_regime: str = "unknown",
+@@ -338,6 +347,7 @@
+         # AUDIT FIX (2026-08-23): dry-run provenance (see field docstring above)
+         dry_run: bool = False,
+         invocation_source: str = "unknown",
++        effective_config: list[dict[str, Any]] | None = None,
+     ) -> "ConsoleSummary":
+         decisions = decisions or []
+         submissions = submissions or []
+@@ -349,6 +359,9 @@
+         deny_dec = sum(1 for d in decisions if getattr(d, "action", "") == "deny")
+         submitted = sum(1 for s in submissions if getattr(s, "status", "") == "submitted")
+         rejected = sum(1 for s in submissions if getattr(s, "status", "") == "rejected")
++
++        unknown = sum(1 for s in submissions if getattr(s, "status", "") == "unknown")
++        held = sum(1 for s in submissions if getattr(s, "status", "") == "held")
+ 
+         # R6-D: Aggregate deny reasons from denied decisions
+         deny_reason_counts: dict[str, int] = {}
+@@ -359,11 +372,20 @@
+ 
+         # Auto-generate alerts
+         alerts: list[ConsoleAlert] = list(extra_alerts)
++        if unknown or held:
++            alerts.append(ConsoleAlert(severity="warning", code="submission_unresolved_or_held",
++                message=f"Submission unknown={unknown}, held={held}; not rejected or safe to resend"))
+         if not dry_run:
+             alerts.extend(ConsoleAlert(**alert) for alert in build_restriction_review_alerts(
+                 (entry_filter_stats or {}).get("entry_restriction_review")
+             ))
+         missing: list[str] = []
++        if risk_budget_status == "unavailable":
++            missing.append("risk_budget_pct")
++            alerts.append(ConsoleAlert(
++                severity="warning", code="risk_budget_unavailable",
++                message="Open risk unavailable; new BUYs held",
++            ))
+         if unrealized_pnl is None:
+             missing.append("unrealized_pnl")
+             alerts.append(ConsoleAlert(
+@@ -476,8 +498,10 @@
+             signals_deny=deny_dec,
+             orders_submitted=submitted,
+             orders_rejected=rejected,
++            orders_unknown=unknown, orders_held=held, effective_config=effective_config or [],
+             cluster_blocks=cluster_blocks or [],
+             risk_budget_pct=risk_budget_pct,
++            risk_budget_status=risk_budget_status,
+             stale_symbols=stale_symbols,
+             price_sources=price_sources or {},
+             market_regime=market_regime,
+diff --git a/src/stock_swing/risk/allocation_config.py b/src/stock_swing/risk/allocation_config.py
+--- a/src/stock_swing/risk/allocation_config.py
++++ b/src/stock_swing/risk/allocation_config.py
+@@ -15,6 +15,7 @@
+ from __future__ import annotations
+ 
+ import logging
++import math
+ from dataclasses import dataclass, field
+ from pathlib import Path
+ from typing import Any
+@@ -55,6 +56,7 @@
+ 
+     # --- Band enforcement ---
+     use_projected_allocation: bool = True
++    configuration_issue: str | None = None
+ 
+ 
+ def read_allocation_config(path: Path | str | None = None) -> AllocationConfig:
+@@ -69,33 +71,36 @@
+         AllocationConfig populated from YAML, or defaults on error.
+     """
+     resolved = Path(path) if path else _DEFAULT_ALLOC_PATH
+-    if not resolved.exists():
+-        logger.warning("allocation_config: %s not found – using defaults", resolved)
+-        return AllocationConfig()
+-
+     try:
+-        raw: dict[str, Any] = yaml.safe_load(resolved.read_text(encoding="utf-8")) or {}
+-    except Exception as exc:
+-        logger.warning("allocation_config: failed to parse %s (%s) – using defaults", resolved, exc)
+-        return AllocationConfig()
+-
+-    portfolio = raw.get("portfolio", {})
+-    alloc = portfolio.get("allocation", {})
+-    band = portfolio.get("allocation_band", {})
+-
+-    return AllocationConfig(
+-        stock_target=float(alloc.get("stocks", 0.85)),
+-        etf_target=float(alloc.get("ETFs", 0.15)),
+-        stock_band_min=float(band.get("stocks_min", 0.80)),
+-        stock_band_max=float(band.get("stocks_max", 0.92)),
+-        etf_band_min=float(band.get("etf_min", 0.08)),
+-        etf_band_max=float(band.get("etf_max", 0.20)),
+-        stock_new_buy_multiplier=float(raw.get("stock_new_buy_multiplier", 0.25)),
+-        etf_new_buy_multiplier=float(raw.get("etf_new_buy_multiplier", 1.0)),
+-        sector_cap_pct=float(raw.get("sector_cap_pct", 0.80)),
+-        correlated_cluster_cap_pct=float(raw.get("correlated_cluster_cap_pct", 0.40)),
+-        use_projected_allocation=bool(portfolio.get("use_projected_allocation", True)),
+-    )
++        raw = yaml.safe_load(resolved.read_text(encoding="utf-8"))
++        if not isinstance(raw, dict):
++            raise ValueError("allocation_root_not_mapping")
++        portfolio = raw.get("portfolio", {})
++        if not isinstance(portfolio, dict): raise ValueError("portfolio_not_mapping")
++        alloc = portfolio.get("allocation", {})
++        band = portfolio.get("allocation_band", {})
++        if not isinstance(alloc, dict) or not isinstance(band, dict): raise ValueError("allocation_nested_not_mapping")
++        def number(value, fraction=True):
++            if isinstance(value, bool) or not isinstance(value, (int,float)) or not math.isfinite(value) or value < 0 or (fraction and value > 1):
++                raise ValueError("allocation_invalid_number")
++            return float(value)
++        projected = portfolio.get("use_projected_allocation", True)
++        if type(projected) is not bool: raise ValueError("allocation_invalid_boolean")
++        config = AllocationConfig(
++            stock_target=number(alloc.get("stocks", .85)), etf_target=number(alloc.get("ETFs", .15)),
++            stock_band_min=number(band.get("stocks_min", .80)),stock_band_max=number(band.get("stocks_max", .92)),
++            etf_band_min=number(band.get("etf_min", .08)),etf_band_max=number(band.get("etf_max", .20)),
++            stock_new_buy_multiplier=number(raw.get("stock_new_buy_multiplier", .25),False),
++            etf_new_buy_multiplier=number(raw.get("etf_new_buy_multiplier", 1.),False),
++            sector_cap_pct=number(raw.get("sector_cap_pct", .80)),correlated_cluster_cap_pct=number(raw.get("correlated_cluster_cap_pct", .40)),
++            use_projected_allocation=projected)
++        if config.stock_band_min > config.stock_band_max or config.etf_band_min > config.etf_band_max:
++            raise ValueError("allocation_reversed_band")
++        return config
++    except (OSError, ValueError, TypeError, yaml.YAMLError) as exc:
++        issue = "allocation_config_unavailable:" + type(exc).__name__
++        logger.warning("%s at %s", issue, resolved)
++        return AllocationConfig(configuration_issue=issue)
+ 
+ 
+ # ---------------------------------------------------------------------------
+@@ -116,12 +121,18 @@
+         return {}
+ 
+     try:
+-        raw = yaml.safe_load(resolved.read_text(encoding="utf-8")) or {}
+-    except Exception as exc:
+-        logger.warning("symbol_registry: failed to parse %s (%s)", resolved, exc)
++        raw = yaml.safe_load(resolved.read_text(encoding="utf-8"))
++        symbols = raw.get("symbols") if isinstance(raw, dict) else None
++        if not isinstance(symbols, dict) or not symbols: raise ValueError("registry_not_mapping")
++        for symbol, info in symbols.items():
++            if not isinstance(symbol, str) or not symbol.strip() or not isinstance(info, dict): raise ValueError("registry_invalid_row")
++            if info.get("asset_class") not in {"stock", "etf"}: raise ValueError("registry_invalid_asset_class")
++            if "is_semiconductor_related" in info and type(info["is_semiconductor_related"]) is not bool: raise ValueError("registry_invalid_boolean")
++        if len({s.upper() for s in symbols}) != len(symbols): raise ValueError("registry_duplicate_symbol")
++        return {sym.upper(): info for sym, info in symbols.items()}
++    except (OSError, ValueError, TypeError, yaml.YAMLError) as exc:
++        logger.warning("symbol_registry unavailable at %s (%s)", resolved, type(exc).__name__)
+         return {}
+-
+-    return {sym.upper(): info for sym, info in raw.get("symbols", {}).items()}
+ 
+ 
+ def get_etf_symbols_from_registry(registry: dict[str, dict[str, Any]]) -> frozenset[str]:
+diff --git a/src/stock_swing/risk/effective_config.py b/src/stock_swing/risk/effective_config.py
+new file mode 100644
+--- /dev/null
++++ b/src/stock_swing/risk/effective_config.py
+@@ -0,0 +1,54 @@
++"""Validate only consumed settings; defaults are legacy, not a new exit policy."""
++from __future__ import annotations
++import hashlib, math
++from pathlib import Path
++from typing import Any
++import yaml
++
++EXIT_DEFAULTS = dict(stop_loss_pct=-.07,breakeven_activation_pct=.03,trailing_activation_pct=.08,
++ trailing_stop_pct=.04,max_hold_days=20,staged_trailing_enabled=False,staged_trailing_levels=[],
++ min_hold_days=1,min_hold_days_enabled=True,emergency_stop_bypass_pct=-.12,
++ tiered_min_hold_enabled=False,tiered_min_hold_levels=[],broker_recon_graduation_days=5,
++ staged_breakeven_enabled=False,staged_breakeven_levels=[],volatility_adjusted_stop_enabled=False,
++ volatility_multiplier_min=.5,volatility_multiplier_max=1.75,per_lot_time_based_exit_enabled=False)
++INTRADAY_DEFAULTS = dict(lookback_bars=25,smoothing_window=5,vwap_threshold=.005,signal_criteria=dict(momentum_threshold=.003))
++
++
++def _numeric(value: Any, *, integral=False, nonnegative=False):
++    if isinstance(value,bool) or not isinstance(value,(int,float)) or not math.isfinite(value): raise ValueError("nonfinite_or_invalid_number")
++    if integral and (type(value) is not int or value < 0): raise ValueError("invalid_integer")
++    if nonnegative and value < 0: raise ValueError("negative_parameter")
++
++
++def read_effective_config(path: Path, kind: str) -> tuple[dict, dict]:
++    defaults=EXIT_DEFAULTS if kind=="exit" else INTRADAY_DEFAULTS
++    receipt=dict(path=str(path.resolve()),kind=kind,sha256=None,status="unavailable",issues=[],unused_keys=[])
++    try:
++        data=path.read_bytes();receipt['sha256']=hashlib.sha256(data).hexdigest()
++        raw=yaml.safe_load(data)
++        if not isinstance(raw,dict): raise ValueError("root_not_mapping")
++        values=dict(defaults,**{k:v for k,v in raw.items() if k in defaults})
++        for key,value in values.items():
++            if key.endswith('_enabled'):
++                if type(value) is not bool: raise ValueError("invalid_boolean:"+key)
++            elif key.endswith('_levels'):
++                if not isinstance(value,list): raise ValueError("levels_not_list:"+key)
++                fields={'staged_trailing_levels':('activation_pct','trailing_stop_pct'),'tiered_min_hold_levels':('offset_pct','min_hold_days'),'staged_breakeven_levels':('activation_pct','floor_pct')}[key]
++                for row in value:
++                    if not isinstance(row,dict) or not all(f in row for f in fields): raise ValueError("invalid_level:"+key)
++                    for f in fields:_numeric(row[f],integral=f=='min_hold_days')
++            elif key=='signal_criteria':
++                if not isinstance(value,dict): raise ValueError("criteria_not_mapping")
++                _numeric(value.get('momentum_threshold',.003),nonnegative=True)
++            else:
++                integer=key.endswith('_days') or key in {'lookback_bars','smoothing_window'}
++                _numeric(value,integral=integer,nonnegative=key not in {'stop_loss_pct','emergency_stop_bypass_pct'})
++                if key in {'lookback_bars','smoothing_window','max_hold_days'} and value<=0: raise ValueError("nonpositive_window")
++        if kind=='exit' and values['volatility_multiplier_min']>values['volatility_multiplier_max']: raise ValueError('reversed_volatility_range')
++        receipt.update(status='configured',unused_keys=sorted(set(raw)-set(defaults)),effective=values)
++        return dict(values),receipt
++    except (OSError,ValueError,TypeError,yaml.YAMLError) as exc:
++        receipt['issues']=[str(exc) if isinstance(exc,ValueError) else type(exc).__name__]
++        receipt['fallback']='legacy_missing_file_defaults; draft, not equivalent to configured exits'
++        receipt['effective']=defaults
++        return dict(defaults),receipt
+diff --git a/src/stock_swing/risk/order_preflight.py b/src/stock_swing/risk/order_preflight.py
+new file mode 100644
+--- /dev/null
++++ b/src/stock_swing/risk/order_preflight.py
+@@ -0,0 +1,203 @@
++"""Draft run-local order preflight; not a durable or atomic order manager.
++
++K01/K02, 2026-10-28, production base 8909e79. Values are planned quote
++notionals, never a bound on market fills. Unknown snapshots block BUY only.
++"""
++from __future__ import annotations
++
++from collections import defaultdict
++from decimal import Decimal, InvalidOperation
++from typing import Any, Callable
++
++from stock_swing.risk.correlation_cluster import DEFAULT_CLUSTER_CAPS, get_cluster_for_symbol
++
++
++def _number(value: Any, *, positive: bool = False) -> Decimal:
++    if isinstance(value, bool):
++        raise ValueError("boolean_number")
++    try:
++        result = Decimal(str(value))
++    except (InvalidOperation, ValueError):
++        raise ValueError("invalid_number") from None
++    if not result.is_finite() or result < 0 or (positive and result == 0):
++        raise ValueError("invalid_number_range")
++    return result
++
++
++def _symbol(value: Any) -> str:
++    if not isinstance(value, str) or not value.strip():
++        raise ValueError("invalid_symbol")
++    return value.strip().upper()
++
++
++def buy_conflicts(decisions: list[Any]) -> dict[str, dict[str, Any]]:
++    """Draft veto only: preserve original intents; never select/net strategies."""
++    groups: dict[str, list[Any]] = defaultdict(list)
++    for decision in decisions:
++        order = decision.proposed_order
++        if order is not None:
++            groups[_symbol(order.symbol)].append(decision)
++    held: dict[str, dict[str, Any]] = {}
++    for symbol, group in groups.items():
++        buys = [d for d in group if d.proposed_order.side == "buy"]
++        sells = [d for d in group if d.proposed_order.side == "sell"]
++        if len(buys) > 1 or (buys and sells):
++            for decision in buys:
++                held[decision.decision_id] = {
++                    "allowed": False,
++                    "reason": "same_symbol_buy_sell_conflict" if sells else "same_symbol_duplicate_buy",
++                    "symbol": symbol,
++                    "related_decision_ids": [d.decision_id for d in group],
++                }
++    return held
++
++
++class OrderPreflight:
++    """A single qualified snapshot plus monotone in-run BUY reservations.
++
++    File IO/config loading remains with existing callers. No state is persisted
++    as authority, and no cancel/reject is trusted to release an attempted order.
++    """
++
++    def __init__(self, positions: Any, equity: Any, orders: Any, *,
++                 complete: bool, price_lookup: Callable[[str], Any],
++                 cluster_caps: dict[str, float] | None = None,
++                 registry: dict[str, dict[str, Any]] | None = None) -> None:
++        self.registry = registry
++        self.available = False
++        self.reason = "snapshot_unavailable"
++        self.values: dict[str, Decimal] = {}
++        self.pending_symbols: set[str] = set()
++        self.reservations: dict[str, tuple[str, Decimal]] = {}
++        self.equity = Decimal(0)
++        self.caps = DEFAULT_CLUSTER_CAPS if cluster_caps is None else cluster_caps
++        try:
++            if complete is not True or not isinstance(positions, dict) or not isinstance(orders, list):
++                raise ValueError("incomplete_or_invalid_snapshot")
++            self.equity = _number(equity, positive=True)
++            for name, cap in self.caps.items():
++                if name not in DEFAULT_CLUSTER_CAPS or _number(cap) > 1:
++                    raise ValueError("invalid_cluster_cap")
++            for key, row in positions.items():
++                symbol = _symbol(key)
++                if not isinstance(row, dict) or _symbol(row.get("symbol", key)) != symbol or symbol in self.values:
++                    raise ValueError("invalid_position")
++                qty = _number(row.get("qty", row.get("quantity")))
++                value = _number(row.get("market_value"))
++                if qty > 0 and value == 0:
++                    raise ValueError("unpriced_position")
++                self.values[symbol] = value
++            seen: set[str] = set()
++            terminal = {"filled", "canceled", "expired", "rejected", "replaced"}
++            active = {"new", "accepted", "pending_new", "partially_filled", "pending_cancel", "pending_replace", "accepted_for_bidding", "held", "done_for_day"}
++            for row in orders:
++                if not isinstance(row, dict) or not isinstance(row.get("id"), str) or not row["id"] or row["id"] in seen:
++                    raise ValueError("invalid_or_duplicate_order_id")
++                seen.add(row["id"])
++                if row.get("status") in terminal:
++                    continue
++                if row.get("status") not in active or row.get("side") not in {"buy", "sell"}:
++                    raise ValueError("unknown_order_state")
++                if row.get("order_class") not in {None, "", "simple"} or row.get("legs") or row.get("notional") is not None:
++                    raise ValueError("unsupported_order_shape")
++                symbol = _symbol(row.get("symbol"))
++                qty = _number(row.get("qty"), positive=True)
++                filled = _number(row.get("filled_qty"))
++                if qty != qty.to_integral_value() or filled != filled.to_integral_value() or filled > qty:
++                    raise ValueError("invalid_order_quantity")
++                remaining = qty - filled
++                if remaining == 0:
++                    # An active/fully-filled contradiction is not confirmed terminal.
++                    raise ValueError("active_order_without_remaining")
++                self.pending_symbols.add(symbol)
++                if row["side"] == "sell":
++                    continue  # Never credit pending SELL proceeds or capacity.
++                if row.get("type") not in {"market", "limit"}:
++                    raise ValueError("unsupported_buy_order_type")
++                price = _number(price_lookup(symbol), positive=True)
++                if row["type"] == "limit":
++                    price = max(price, _number(row.get("limit_price"), positive=True))
++                self.values[symbol] = self.values.get(symbol, Decimal(0)) + remaining * price
++            self.available = True
++            self.reason = "qualified_single_snapshot"
++        except Exception as exc:
++            self.reason = "snapshot_unavailable:" + (str(exc) if isinstance(exc, ValueError) else type(exc).__name__)
++
++    def projected_positions(self) -> dict[str, dict[str, float]]:
++        values = dict(self.values)
++        for symbol, amount in self.reservations.values():
++            values[symbol] = values.get(symbol, Decimal(0)) + amount
++        return {symbol: {"market_value": float(value)} for symbol, value in values.items()}
++
++    def reserve(self, decision_id: str, symbol: str, qty: Any, price: Any,
++                symbol_cap_pct: Any, allocator: Any = None) -> dict[str, Any]:
++        """Atomically within this Python call, check and reserve planned notional."""
++        result: dict[str, Any] = {"allowed": False, "decision_id": decision_id, "symbol": symbol}
++        try:
++            if not self.available:
++                raise ValueError(self.reason)
++            symbol = _symbol(symbol)
++            if not isinstance(decision_id, str) or not decision_id or decision_id in self.reservations:
++                raise ValueError("duplicate_or_invalid_decision_id")
++            if symbol in self.pending_symbols:
++                raise ValueError("same_symbol_open_order")
++            shares = _number(qty, positive=True)
++            if shares != shares.to_integral_value():
++                raise ValueError("fractional_quantity_unsupported")
++            amount = shares * _number(price, positive=True)
++            cap_pct = _number(symbol_cap_pct)
++            if cap_pct > 1:
++                raise ValueError("invalid_symbol_cap")
++            # Do not round inputs to cents or use an arbitrary tolerance.
++            values = dict(self.values)
++            for reserved_symbol, value in self.reservations.values():
++                values[reserved_symbol] = values.get(reserved_symbol, Decimal(0)) + value
++            result.update(planned_notional=str(amount), current_symbol_notional=str(values.get(symbol, Decimal(0))), symbol_cap=str(self.equity * cap_pct))
++            if values.get(symbol, Decimal(0)) + amount > self.equity * cap_pct:
++                raise ValueError("projected_symbol_cap_exceeded")
++            if self.registry is not None:
++                def semi(s):
++                    return self.registry.get(s, {}).get("is_semiconductor_related") is True or "semis_combined" in get_cluster_for_symbol(s)
++                gaps = sorted(s for s in set(values) | {symbol} if semi(s) and "semis_combined" not in get_cluster_for_symbol(s))
++                if semi(symbol) and gaps:
++                    result["coverage_gaps"] = gaps
++                    raise ValueError("semiconductor_cluster_coverage_gap")
++            for name in get_cluster_for_symbol(symbol):
++                if name in self.caps:
++                    projected = sum((v for s, v in values.items() if name in get_cluster_for_symbol(s)), Decimal(0)) + amount
++                    if projected > self.equity * _number(self.caps[name]):
++                        result.update(cluster=name, projected_cluster_notional=str(projected), cluster_cap=str(self.equity * _number(self.caps[name])))
++                        raise ValueError("projected_cluster_cap_exceeded")
++            if allocator is not None:
++                band = allocator.check_projected_band(symbol, float(amount), self.projected_positions(), float(self.equity))
++                if not band.allowed:
++                    raise ValueError("projected_allocation_band:" + band.reason)
++            self.reservations[decision_id] = (symbol, amount)
++            result.update(allowed=True, reason="reserved_before_submit")
++        except Exception as exc:
++            result["reason"] = str(exc) if isinstance(exc, ValueError) else "preflight_unavailable:" + type(exc).__name__
++        return result
++
++    def observe_submission(self, decision_id: str, status: str) -> None:
++        """Legacy 'rejected' may be a timeout; never release on that label."""
++        if decision_id not in self.reservations or status != "submitted":
++            self.available = False
++            self.reason = "submission_outcome_unknown"
++
++
++def snapshot_from_broker(broker: Any, positions: Any, equity: Any,
++                         price_lookup: Callable[[str], Any], *,
++                         cluster_caps: dict[str, float] | None = None,
++                         registry: dict[str, dict[str, Any]] | None = None) -> OrderPreflight:
++    """Isolated current-adapter contract: short open-order page, not pagination.
++
++    Adapter qualification is not portable by assumption. No completeness claim
++    at the documented 500 cap, and no claim of snapshot atomicity/freshness.
++    """
++    try:
++        payload = broker.fetch_orders(status="open", limit=500).payload
++        complete = isinstance(payload, list) and len(payload) < 500
++    except Exception:
++        payload, complete = None, False
++    return OrderPreflight(positions, equity, payload, complete=complete,
++                          price_lookup=price_lookup, cluster_caps=cluster_caps, registry=registry)
+diff --git a/src/stock_swing/risk/portfolio_allocator.py b/src/stock_swing/risk/portfolio_allocator.py
+--- a/src/stock_swing/risk/portfolio_allocator.py
++++ b/src/stock_swing/risk/portfolio_allocator.py
+@@ -111,6 +111,11 @@
+     # Public: projected allocation guard (core of H5)
+     # ------------------------------------------------------------------
+ 
++    @property
++    def registry(self) -> dict[str, dict[str, Any]]:
++        """Read-only-by-convention canonical classification snapshot for preflight."""
++        return self._registry
++
+     def check_projected_band(
+         self,
+         symbol: str,
+@@ -131,6 +136,8 @@
+         Returns:
+             ProjectedBandResult with allowed flag and diagnostic fields.
+         """
++        if self.config.configuration_issue:
++            return ProjectedBandResult(False, self.config.configuration_issue, 0., 0., 0., 1., "unknown")
+         if not self.config.use_projected_allocation:
+             return ProjectedBandResult(
+                 allowed=True, reason="projected_check_disabled",
+diff --git a/src/stock_swing/risk/risk_budget.py b/src/stock_swing/risk/risk_budget.py
+--- a/src/stock_swing/risk/risk_budget.py
++++ b/src/stock_swing/risk/risk_budget.py
+@@ -12,8 +12,8 @@
+ 
+ Thresholds
+ ----------
+-WARN_PCT  = 0.05 (5% of equity)  → warn but allow buys
+-BLOCK_PCT = 0.08 (8% of equity)  → deny all new buy decisions
++WARN_PCT  = 0.04 (4% of equity)  → warn but allow buys
++BLOCK_PCT = 0.06 (6% of equity)  → deny all new buy decisions
+ 
+ Sell decisions are NEVER blocked.
+ """
+@@ -21,6 +21,7 @@
+ from __future__ import annotations
+ 
+ import json
++import math
+ from pathlib import Path
+ from typing import Any
+ 
+@@ -43,88 +44,86 @@
+     return 0.05       # low conviction / conservative
+ 
+ 
++def _unavailable_risk(reason: str) -> dict[str, Any]:
++    """Unknown risk is not a measured zero and must deny new BUYs."""
++    return {
++        "status": "unavailable", "error": reason,
++        "open_trades_count": None, "total_open_risk": None,
++        "pct_of_equity": None, "warn_threshold": None, "block_threshold": None,
++        "is_warn": False, "is_blocked": True, "per_symbol": [],
++    }
++
++
++def _finite_number(value: Any) -> float:
++    if isinstance(value, bool):
++        raise ValueError("boolean is not a risk number")
++    number = float(value)
++    if not math.isfinite(number):
++        raise ValueError("non-finite risk number")
++    return number
++
++
+ def compute_open_risk(project_root: Path, equity: float) -> dict[str, Any]:
+-    """Compute current open risk from pnl_state.json.
++    """Compute the existing stop-based estimate, or return explicit unknown.
+ 
+-    Returns
+-    -------
+-    dict with keys:
+-        open_trades_count   int
+-        total_open_risk     float  — sum of (qty × entry_price × stop_loss_pct)
+-        pct_of_equity       float  — total_open_risk / equity
+-        warn_threshold      float  — WARN_PCT × equity
+-        block_threshold     float  — BLOCK_PCT × equity
+-        is_warn             bool
+-        is_blocked          bool
+-        per_symbol          list[dict]  — per-symbol breakdown
++    Confirmed empty ``trades`` is flat. Missing/malformed state, invalid open
++    lots, and invalid equity are unknown; never expose a partial sum as total.
++    This estimate is not a broker reconciliation or a guaranteed loss bound.
+     """
++    try:
++        equity = _finite_number(equity)
++        if equity <= 0:
++            raise ValueError("non-positive equity")
++    except (TypeError, ValueError, OverflowError):
++        return _unavailable_risk("invalid_equity")
++
+     state_path = project_root / "data" / "tracking" / "pnl_state.json"
++    try:
++        state = json.loads(state_path.read_text(encoding="utf-8"))
++    except (OSError, ValueError) as exc:
++        return _unavailable_risk("state_read_failed:" + type(exc).__name__)
++    if not isinstance(state, dict) or not isinstance(state.get("trades"), list):
++        return _unavailable_risk("invalid_state_schema")
+ 
+-    if not state_path.exists():
+-        # No state → no risk
+-        return {
+-            "open_trades_count": 0,
+-            "total_open_risk": 0.0,
+-            "pct_of_equity": 0.0,
+-            "warn_threshold": equity * WARN_PCT,
+-            "block_threshold": equity * BLOCK_PCT,
+-            "is_warn": False,
+-            "is_blocked": False,
+-            "per_symbol": [],
+-            "error": "pnl_state.json not found",
+-        }
++    by_symbol: dict[str, dict] = {}
++    open_count = 0
++    for t in state["trades"]:
++        if not isinstance(t, dict) or not isinstance(t.get("status"), str) or t["status"] not in {"open", "closed", "quarantined"}:
++            return _unavailable_risk("invalid_trade_status")
++        if t["status"] != "open":
++            continue
++        try:
++            sym = t.get("symbol")
++            if not isinstance(sym, str) or not sym.strip():
++                raise ValueError("missing symbol")
++            qty = _finite_number(t.get("qty"))
++            entry = _finite_number(t.get("entry_price"))
++            if qty <= 0 or entry <= 0:
++                raise ValueError("non-positive open lot")
++            sig = t.get("entry_signal_strength", t.get("signal_strength"))
++            if sig is not None:
++                sig = _finite_number(sig)
++                if not 0 <= sig <= 1:
++                    raise ValueError("invalid signal strength")
++            notional = _finite_number(qty * entry)
++            max_loss = _finite_number(notional * _stop_loss_pct(sig))
++            row = by_symbol.setdefault(sym, {"symbol": sym, "lots": 0, "max_loss": 0.0, "market_value": 0.0})
++            row["lots"] += 1
++            row["max_loss"] = _finite_number(row["max_loss"] + max_loss)
++            row["market_value"] = _finite_number(row["market_value"] + notional)
++            open_count += 1
++        except (TypeError, ValueError, OverflowError):
++            return _unavailable_risk("invalid_open_lot")
+ 
+     try:
+-        state = json.loads(state_path.read_text())
+-    except Exception as exc:
+-        return {
+-            "open_trades_count": 0,
+-            "total_open_risk": 0.0,
+-            "pct_of_equity": 0.0,
+-            "warn_threshold": equity * WARN_PCT,
+-            "block_threshold": equity * BLOCK_PCT,
+-            "is_warn": False,
+-            "is_blocked": False,
+-            "per_symbol": [],
+-            "error": str(exc),
+-        }
+-
+-    trades: list[dict] = state.get("trades", [])
+-    open_trades = [t for t in trades if t.get("status") == "open"]
+-
+-    # Aggregate per symbol
+-    by_symbol: dict[str, dict] = {}
+-    for t in open_trades:
+-        sym = t.get("symbol", "?")
+-        qty = float(t.get("qty", 0))
+-        entry = float(t.get("entry_price", 0))
+-        sig = t.get("entry_signal_strength", t.get("signal_strength", None))  # entry_signal_strength preferred; signal_strength kept for backward compat
+-        if sig is not None:
+-            try:
+-                sig = float(sig)
+-            except (TypeError, ValueError):
+-                sig = None
+-
+-        stop_pct = _stop_loss_pct(sig)
+-        max_loss = qty * entry * stop_pct
+-
+-        if sym not in by_symbol:
+-            by_symbol[sym] = {"symbol": sym, "lots": 0, "max_loss": 0.0, "market_value": 0.0}
+-        by_symbol[sym]["lots"] += 1
+-        by_symbol[sym]["max_loss"] += max_loss
+-        by_symbol[sym]["market_value"] += qty * entry
+-
+-    total_open_risk = sum(v["max_loss"] for v in by_symbol.values())
+-    pct = total_open_risk / equity if equity > 0 else 0.0
+-    per_symbol = sorted(by_symbol.values(), key=lambda x: -x["max_loss"])
+-
++        total = _finite_number(sum(v["max_loss"] for v in by_symbol.values()))
++        pct = _finite_number(total / equity)
++    except (ValueError, OverflowError):
++        return _unavailable_risk("risk_aggregation_overflow")
+     return {
+-        "open_trades_count": len(open_trades),
+-        "total_open_risk": total_open_risk,
+-        "pct_of_equity": pct,
+-        "warn_threshold": equity * WARN_PCT,
+-        "block_threshold": equity * BLOCK_PCT,
+-        "is_warn": pct >= WARN_PCT,
+-        "is_blocked": pct >= BLOCK_PCT,
+-        "per_symbol": per_symbol,
++        "status": "ok", "open_trades_count": open_count,
++        "total_open_risk": total, "pct_of_equity": pct,
++        "warn_threshold": equity * WARN_PCT, "block_threshold": equity * BLOCK_PCT,
++        "is_warn": pct >= WARN_PCT, "is_blocked": pct >= BLOCK_PCT,
++        "per_symbol": sorted(by_symbol.values(), key=lambda x: -x["max_loss"]),
+     }
+diff --git a/src/stock_swing/sources/bar_contract.py b/src/stock_swing/sources/bar_contract.py
+new file mode 100644
+--- /dev/null
++++ b/src/stock_swing/sources/bar_contract.py
+@@ -0,0 +1,70 @@
++"""Opt-in provider-response lineage, NOT completed-bar/PIT qualification.
++
++Reuses DecisionInputRecorder. No new store, broker requests or eligibility rules.
++Exact HTTP body hashes and decoded-envelope hashes are labelled separately.
++"""
++from copy import deepcopy
++from datetime import datetime, timezone
++import hashlib
++import json
++import re
++
++
++def normalize_interval(value):
++    """Canonicalize supported Alpaca intervals; refuse unknowns before I/O."""
++    if not isinstance(value, str):
++        raise ValueError('unsupported bar interval')
++    v = value.lower()
++    if v in {'day', 'daily', '1day', '1d'}:
++        return '1Day'
++    match = re.fullmatch(r'([1-9][0-9]?)(min|t|hour|h)', v)
++    if match:
++        n, unit = int(match[1]), match[2]
++        if unit in {'min', 't'} and n <= 59:
++            return f'{n}Min'
++        if unit in {'hour', 'h'} and n <= 23:
++            return f'{n}Hour'
++    if v in {'1week', '1w'}:
++        return '1Week'
++    match = re.fullmatch(r'(1|2|3|4|6|12)(month|m)', v)
++    if match:
++        return f'{int(match[1])}Month'
++    raise ValueError('unsupported bar interval')
++
++
++def record_bar_response(recorder, *, provider, request, response, received_at,
++                        raw_bytes=None, response_request_id=None):
++    """Bind a response version to the existing run recorder, preserving unknowns.
++
++    Exact raw bytes are hashed, not persisted. The decoded JSON is separately
++    persisted and validated by the existing recorder. No headers/auth URLs saved.
++    A decoded-only adapter must not claim its hash represents HTTP body bytes.
++    """
++    if recorder is None or not recorder.enabled:
++        return None
++    encoded = json.dumps(response, sort_keys=True, separators=(',', ':'),
++                         allow_nan=False).encode()
++    contract = dict(schema_version=1, provider=provider,
++        requested_interval=request['interval'],
++        requested_feed=request.get('feed'),
++        requested_adjustment=request.get('adjustment'),
++        request=deepcopy(request), response_adjusted=response.get('adjusted'),
++        response_request_id=response_request_id or response.get('request_id'),
++        received_at=received_at.astimezone(timezone.utc).isoformat(),
++        raw_sha256=hashlib.sha256(raw_bytes if raw_bytes is not None else encoded).hexdigest(),
++        raw_representation='HTTP_body_bytes' if raw_bytes is not None else 'decoded_JSON',
++        raw_body_saved=False, decoded_sha256=hashlib.sha256(encoded).hexdigest(),
++        provider_first_publication_at=None, provider_final=None,
++        bar_window_end=None, research_qualified=False)
++    contract['version_sha256'] = hashlib.sha256(json.dumps(contract, sort_keys=True,
++        separators=(',', ':'), allow_nan=False).encode()).hexdigest()
++    ref = recorder.observe('provider_response', dict(contract=contract, response=response),
++                           observed_at=received_at)
++    return dict(contract, observation_ref=ref)
++
++
++def observe_canonical_bars(recorder, records):
++    if recorder is not None and recorder.enabled:
++        recorder.observe('canonical_provider_bars', dict(records=records,
++            scope='returned_subset_not_all_candidate_or_decision_inputs',
++            research_qualified=False))
+diff --git a/src/stock_swing/sources/broker_client.py b/src/stock_swing/sources/broker_client.py
+--- a/src/stock_swing/sources/broker_client.py
++++ b/src/stock_swing/sources/broker_client.py
+@@ -136,7 +136,7 @@
+             raise SourceValidationError(self.name, "endpoint parameter is required")
+         
+         endpoint = kwargs["endpoint"]
+-        method = kwargs.get("method", "GET")
++        method = str(kwargs.get("method", "GET")).upper()
+         
+         # Build request params (excluding 'endpoint' and 'method')
+         request_params = {k: v for k, v in kwargs.items() if k not in ("endpoint", "method")}
+@@ -145,7 +145,9 @@
+         def fetch_func() -> dict[str, Any]:
+             return self._fetch_endpoint(endpoint, method, request_params)
+         
+-        payload = self._fetch_with_retry(fetch_func)
++        # CMP-C01: mutating requests may have succeeded before response loss.
++        # Never replay them through the generic read retry path.
++        payload = self._fetch_with_retry(fetch_func) if method == "GET" else fetch_func()
+         
+         return self._build_envelope(endpoint, request_params, payload)
+ 
+@@ -174,6 +176,8 @@
+         request_params: dict[str, Any] = {
+             "symbol": symbol,
+             "timeframe": timeframe,
++            "feed": "iex",
++            "adjustment": "raw",
+         }
+         api_params: dict[str, Any] = {
+             "timeframe": timeframe,
+@@ -283,9 +287,19 @@
+             if response.status_code == 204:
+                 return {}
+             try:
+-                return response.json()
++                payload = response.json()
+             except Exception as e:
+                 raise SourceResponseError(self.name, f"failed to parse JSON response: {e}", original_error=e)
++            recorder = getattr(self, 'measurement_recorder', None)
++            if path.endswith('/bars') and recorder is not None and recorder.enabled:
++                from datetime import datetime, timezone
++                from stock_swing.sources.bar_contract import record_bar_response
++                contract = record_bar_response(recorder, provider=self.name,
++                    request=dict(params, interval=params['timeframe']), response=payload,
++                    received_at=datetime.now(timezone.utc), raw_bytes=response.content,
++                    response_request_id=response.headers.get('x-request-id'))
++                payload = dict(payload, _bar_contract=contract)
++            return payload
+ 
+         return self._fetch_with_retry(fetch_func)
+ 
+@@ -496,6 +510,7 @@
+         qty: int,
+         time_in_force: str,
+         limit_price: float | None = None,
++        client_order_id: str | None = None,
+     ) -> dict[str, Any]:
+         """Submit order to broker (paper mode only).
+         
+@@ -528,10 +543,18 @@
+         
+         if order_type.lower() == "limit" and limit_price is not None:
+             order_payload["limit_price"] = limit_price
++        if client_order_id is not None:
++            if not isinstance(client_order_id, str) or not client_order_id or len(client_order_id) > 128:
++                raise SourceValidationError(self.name, "invalid client_order_id")
++            order_payload["client_order_id"] = client_order_id
+         
+         # Submit via POST
+         envelope = self.fetch(endpoint="v2/orders", method="POST", **order_payload)
+         return envelope.payload
++
++    def fetch_order_by_client_id(self, client_order_id: str) -> RawEnvelope:
++        """Read-only resolution of an uncertain submission; never resubmit."""
++        return self.fetch(endpoint="v2/orders:by_client_order_id", client_order_id=client_order_id)
+ 
+     def _fetch_endpoint(
+         self,
+@@ -640,6 +663,12 @@
+             
+             return data
+         
++        except (SourceAuthenticationError, SourceNotFoundError, SourceValidationError,
++                SourceRateLimitError, SourceServerError, SourceResponseError) as exc:
++            # Preserve exception classes/messages; attach observed HTTP status only.
++            if method == "POST" and endpoint_path == "v2/orders" and "response" in locals():
++                exc.http_status = response.status_code
++            raise
+         except httpx.TimeoutException as e:
+             raise SourceTimeoutError(
+                 self.name,
+diff --git a/src/stock_swing/sources/broker_client_protocol.py b/src/stock_swing/sources/broker_client_protocol.py
+--- a/src/stock_swing/sources/broker_client_protocol.py
++++ b/src/stock_swing/sources/broker_client_protocol.py
+@@ -96,6 +96,7 @@
+         qty: int,
+         time_in_force: str,
+         limit_price: float | None = None,
++        client_order_id: str | None = None,
+     ) -> dict[str, Any]:
+         """Submit an order and return the broker's raw response dict."""
+         ...
+@@ -118,3 +119,12 @@
+     def fetch_latest_quote(self, symbol: str) -> RawEnvelope:
+         """Return the latest bid/ask quote for a symbol."""
+         ...
++
++
++@runtime_checkable
++class ClientOrderIdentityProtocol(Protocol):
++    """Optional qualified capability; do not silently expand the migration base contract."""
++    def fetch_order_by_client_id(self, client_order_id: str) -> RawEnvelope: ...
++    def submit_order(self, symbol: str, side: str, order_type: str, qty: int,
++                     time_in_force: str, limit_price: float | None = None,
++                     client_order_id: str | None = None) -> dict[str, Any]: ...
+diff --git a/src/stock_swing/sources/hybrid_data_fetcher.py b/src/stock_swing/sources/hybrid_data_fetcher.py
+--- a/src/stock_swing/sources/hybrid_data_fetcher.py
++++ b/src/stock_swing/sources/hybrid_data_fetcher.py
+@@ -15,6 +15,7 @@
+ import logging
+ 
+ from stock_swing.core.types import CanonicalRecord
++from stock_swing.sources.bar_contract import normalize_interval, record_bar_response, observe_canonical_bars
+ from stock_swing.sources.broker_client_protocol import BrokerClientProtocol
+ 
+ logger = logging.getLogger(__name__)
+@@ -38,7 +39,8 @@
+         self,
+         broker_client: BrokerClientProtocol,
+         etf_symbols: set[str],
+-        massive_api_key: Optional[str] = None
++        massive_api_key: Optional[str] = None,
++        measurement_recorder=None,
+     ):
+         """
+         Initialize hybrid fetcher.
+@@ -49,6 +51,7 @@
+             etf_symbols: Set of ETF ticker symbols
+             massive_api_key: Massive API key (optional, defaults to env var)
+         """
++        self.measurement_recorder = measurement_recorder
+         self.broker = broker_client
+         self.etf_symbols = etf_symbols
+         
+@@ -60,6 +63,7 @@
+             try:
+                 from stock_swing.sources.massive_client import MassiveClient
+                 self.massive_client = MassiveClient(api_key=api_key)
++                self.massive_client.measurement_recorder = measurement_recorder
+                 logger.info("Massive client initialized for ETF data")
+             except Exception as exc:
+                 logger.warning(f"Failed to initialize Massive client: {exc}")
+@@ -88,11 +92,13 @@
+             Tuple of (records, source_name)
+             source_name is "massive", "broker", or "failed"
+         """
+-        # Try Massive first for ALL symbols (if available)
+-        if self.massive_client:
++        timeframe = normalize_interval(timeframe)
++        # Try Massive only for supported intervals, never substitute daily.
++        if self.massive_client and (timeframe == "1Day" or timeframe.endswith(("Min", "Hour"))):
+             try:
+-                records = self._fetch_from_massive(symbol, limit)
++                records = self._fetch_from_massive(symbol, limit, timeframe)
+                 if records:
++                    observe_canonical_bars(self.measurement_recorder, records)
+                     return (records, "massive")
+             except Exception as exc:
+                 logger.warning(f"Massive fetch failed for {symbol}: {exc}, falling back to broker")
+@@ -104,6 +110,7 @@
+                 records = self._fetch_from_yahoo(symbol, limit)
+                 if records:
+                     logger.warning(f"Using Yahoo fallback for {symbol} after Massive failure")
++                    observe_canonical_bars(self.measurement_recorder, records)
+                     return (records, "yahoo")
+             except Exception as exc:
+                 logger.warning(f"Yahoo fallback failed for {symbol}: {exc}, falling back to broker")
+@@ -112,24 +119,28 @@
+         try:
+             records = self._fetch_from_broker(symbol, timeframe, limit)
+             logger.warning(f"Using broker data for {symbol} - may be stale (Alpaca stopped 2026-04-22)")
++            expected = {"bar_" + timeframe.lower()}
++            if timeframe == "1Day": expected.add("bar_daily")
++            if any(r.event_type not in expected for r in records):
++                raise ValueError("broker returned an incompatible bar interval")
++            observe_canonical_bars(self.measurement_recorder, records)
+             return (records, "broker")
+         except Exception as exc:
+             logger.error(f"Broker fetch failed for {symbol}: {exc}")
+             return ([], "failed")
+     
+-    def _fetch_from_massive(self, symbol: str, limit: int) -> list[CanonicalRecord]:
++    def _fetch_from_massive(self, symbol: str, limit: int, timeframe: str = "1Day") -> list[CanonicalRecord]:
+         """Fetch bars from Massive API and convert to CanonicalRecord."""
+         end_date = datetime.now(timezone.utc)
+         start_date = end_date - timedelta(days=limit)
+         from_str = start_date.strftime("%Y-%m-%d")
+         to_str = end_date.strftime("%Y-%m-%d")
+         
+-        bars = self.massive_client.fetch_daily_bars(
+-            symbol,
+-            from_date=from_str,
+-            to_date=to_str,
+-            limit=limit
+-        )
++        if timeframe == "1Day":
++            bars = self.massive_client.fetch_daily_bars(symbol, from_date=from_str, to_date=to_str, limit=limit)
++        else:
++            multiplier = int(timeframe.removesuffix('Min')) if timeframe.endswith('Min') else int(timeframe.removesuffix('Hour')) * 60
++            bars = self.massive_client.fetch_minute_bars(symbol, from_date=from_str, to_date=to_str, multiplier=multiplier, limit=limit)
+         
+         if not bars:
+             return []
+@@ -144,12 +155,13 @@
+                 bar_timestamp = bar.timestamp
+             
+             record = CanonicalRecord(
+-                record_id=f"massive_{symbol}_{bar_timestamp.isoformat()}",
++                record_id=(f"massive_{symbol}_{bar_timestamp.isoformat()}" if timeframe == "1Day"
++                           else f"massive_{symbol}_{timeframe}_{bar_timestamp.isoformat()}"),
+                 schema_version="v1",
+                 source="massive",
+                 source_type="price",
+                 symbol=symbol,
+-                event_type="bar_daily",
++                event_type="bar_daily" if timeframe == "1Day" else f"bar_{timeframe.lower()}",
+                 event_time=bar_timestamp,
+                 as_of=bar_timestamp.isoformat(),
+                 ingested_at=datetime.now(timezone.utc),
+@@ -166,6 +178,8 @@
+                 },
+                 quality_flags=[]
+             )
++            if getattr(bar, "bar_contract", None) is not None:
++                record.payload["bar_contract"] = bar.bar_contract
+             records.append(record)
+         
+         logger.info(f"Fetched {len(records)} bars for {symbol} from Massive")
+@@ -176,7 +190,12 @@
+         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=1mo"
+         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+         with urllib.request.urlopen(req, timeout=10) as resp:
+-            data = json.loads(resp.read())
++            body = resp.read()
++            received = datetime.now(timezone.utc)
++            data = json.loads(body)
++        contract = record_bar_response(self.measurement_recorder, provider='yahoo',
++            request=dict(symbol=symbol, interval='1Day', provider_interval='1d', range='1mo'),
++            response=data, received_at=received, raw_bytes=body)
+ 
+         result = data.get("chart", {}).get("result", [{}])[0]
+         timestamps = result.get("timestamp", [])
+@@ -220,6 +239,9 @@
+                 )
+             )
+ 
++        if contract is not None:
++            for record in records:
++                record.payload["bar_contract"] = contract
+         if limit > 0:
+             records = records[-limit:]
+         logger.info(f"Fetched {len(records)} bars for {symbol} from Yahoo")
+diff --git a/src/stock_swing/sources/massive_client.py b/src/stock_swing/sources/massive_client.py
+--- a/src/stock_swing/sources/massive_client.py
++++ b/src/stock_swing/sources/massive_client.py
+@@ -9,7 +9,7 @@
+ """
+ 
+ from typing import Any, List, Optional
+-from datetime import datetime, timedelta
++from datetime import datetime, timedelta, timezone
+ from dataclasses import dataclass
+ import os
+ 
+@@ -34,6 +34,7 @@
+     volume: int
+     vwap: Optional[float] = None
+     transactions: Optional[int] = None
++    bar_contract: Optional[dict] = None
+ 
+ 
+ class MassiveClient:
+@@ -63,6 +64,7 @@
+                 "Install with: pip install massive"
+             )
+ 
++        self.measurement_recorder = None
+         self.client = _MassiveRESTClient(api_key=self.api_key)
+         # R7-v2 / H8: increase urllib3 connection pool maxsize to silence
+         # "Connection pool is full, discarding connection" warnings.
+@@ -82,6 +84,52 @@
+             logger.debug("Could not patch Massive pool maxsize: %s", _e)
+         logger.info("Massive client initialized")
+     
++    def _bar_items(self, **request):
++        """SDK-decoded OFF; exact raw-page receipt ON with identical HTTP queries.
++
++        The SDK raw=True returns one page, so preserve pagination explicitly.
++        Use the pinned SDK's own decoder; never add a second metadata request.
++        """
++        recorder = getattr(self, 'measurement_recorder', None)
++        if recorder is None or not recorder.enabled:
++            for agg in self.client.list_aggs(**request):
++                yield agg, None
++            return
++        from urllib.parse import urlsplit
++        from massive.rest.models import Agg
++        from stock_swing.sources.bar_contract import record_bar_response
++        response = self.client.list_aggs(**request, raw=True)
++        seen = set()
++        while True:
++            received = datetime.now(timezone.utc)
++            data = self.client._decode(response)
++            if not isinstance(data, dict) or not isinstance(data.get('results', []), list):
++                raise ValueError('invalid aggregate response')
++            interval = '1Day' if request['timespan'] == 'day' else f"{request['multiplier']}Min"
++            if request['timespan'] == 'minute' and request['multiplier'] % 60 == 0:
++                interval = f"{request['multiplier'] // 60}Hour"
++            safe_request = dict(request, interval=interval, feed=None, adjustment=None)
++            # A page cursor is neither a publication clock nor a bar interval.
++            safe_data = {k: v for k, v in data.items() if k != 'next_url'}
++            safe_request['page_index'] = len(seen)
++            contract = record_bar_response(recorder, provider='massive',
++                request=safe_request, response=safe_data, received_at=received,
++                raw_bytes=response.data)
++            for item in data.get('results', []):
++                yield Agg.from_dict(item), contract
++            if not self.client.pagination or 'next_url' not in data:
++                return
++            next_url = data['next_url']
++            parsed = urlsplit(next_url)
++            # Match SDK path-only pagination without forwarding arbitrary hosts/auth.
++            if (parsed.scheme != 'https' or parsed.hostname not in {'api.massive.com', 'api.polygon.io'}
++                    or parsed.username or parsed.password or not parsed.path.startswith('/v2/aggs/ticker/')
++                    or next_url in seen):
++                raise ValueError('invalid or cyclic aggregate pagination')
++            seen.add(next_url)
++            path = parsed.path + ('?' + parsed.query if parsed.query else '')
++            response = self.client._get(path=path, params={}, raw=True)
++
+     def fetch_minute_bars(
+         self,
+         symbol: str,
+@@ -107,7 +155,7 @@
+         
+         bars = []
+         try:
+-            for agg in self.client.list_aggs(
++            for agg, contract in self._bar_items(
+                 ticker=symbol,
+                 multiplier=multiplier,
+                 timespan="minute",
+@@ -116,14 +164,15 @@
+                 limit=limit
+             ):
+                 bars.append(MassiveBar(
+-                    timestamp=datetime.fromtimestamp(agg.timestamp / 1000),
++                    timestamp=datetime.fromtimestamp(agg.timestamp / 1000, tz=timezone.utc),
+                     open=agg.open,
+                     high=agg.high,
+                     low=agg.low,
+                     close=agg.close,
+                     volume=agg.volume,
+                     vwap=getattr(agg, 'vwap', None),
+-                    transactions=getattr(agg, 'transactions', None)
++                    transactions=getattr(agg, 'transactions', None),
++                    bar_contract=contract
+                 ))
+             
+             logger.info(f"Fetched {len(bars)} minute bars for {symbol}")
+@@ -156,7 +205,7 @@
+         
+         bars = []
+         try:
+-            for agg in self.client.list_aggs(
++            for agg, contract in self._bar_items(
+                 ticker=symbol,
+                 multiplier=1,
+                 timespan="day",
+@@ -165,14 +214,15 @@
+                 limit=limit
+             ):
+                 bars.append(MassiveBar(
+-                    timestamp=datetime.fromtimestamp(agg.timestamp / 1000),
++                    timestamp=datetime.fromtimestamp(agg.timestamp / 1000, tz=timezone.utc),
+                     open=agg.open,
+                     high=agg.high,
+                     low=agg.low,
+                     close=agg.close,
+                     volume=agg.volume,
+                     vwap=getattr(agg, 'vwap', None),
+-                    transactions=getattr(agg, 'transactions', None)
++                    transactions=getattr(agg, 'transactions', None),
++                    bar_contract=contract
+                 ))
+             
+             logger.info(f"Fetched {len(bars)} daily bars for {symbol}")

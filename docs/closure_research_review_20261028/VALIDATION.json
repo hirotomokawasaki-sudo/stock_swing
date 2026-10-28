@@ -1,0 +1,33 @@
+{
+  "all_old_plan_bytes_preserved": true,
+  "broker_calls": 0,
+  "call_candidates": 12,
+  "candidate_cli_from_env_sites": 9,
+  "canonical_rows_unchanged": 17,
+  "categories": {
+    "adapter_mutation": 2,
+    "cancel_caller": 4,
+    "http_transport": 2,
+    "order_read": 3,
+    "submit_or_delegate": 6,
+    "thread_pool": 3
+  },
+  "classified_boundaries": 20,
+  "config_classes": 9,
+  "declared_config_fields": 39,
+  "existing_result_projections_match": true,
+  "extra_http_boundaries": 8,
+  "local_links_verified": 27,
+  "new_profit_trials": 0,
+  "new_runtime_tests_run": 0,
+  "original_from_env_sites": 19,
+  "plan_documents_updated": 4,
+  "policy_adopted": false,
+  "prior_packets_unchanged": 6,
+  "production_changed": false,
+  "protected_original_files_unchanged": 660,
+  "review_dates_weekdays_verified": true,
+  "scheduler_changes": 0,
+  "source_pins_verified": 370,
+  "static_files_parsed": 344
+}

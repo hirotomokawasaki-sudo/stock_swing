@@ -185,20 +185,27 @@ class MarketCalendar:
         that carry over to the next session.
 
         Args:
-            dt: DateTime to check (defaults to now in Asia/Tokyo)
+            dt: DateTime to check (defaults to now in Asia/Tokyo).
+                Legacy naive inputs are interpreted as Asia/Tokyo, independent
+                of the host timezone. Aware inputs retain their actual instant.
 
         Returns:
             Tuple of (is_regular, status_message)
         """
+        jst = ZoneInfo("Asia/Tokyo")
         if dt is None:
-            dt = datetime.now(ZoneInfo("Asia/Tokyo"))
+            dt = datetime.now(jst)
+        elif dt.tzinfo is None:
+            # 2026-10-24: paper_demo passed naive JST, bypassing ET conversion
+            # and incorrectly blocking US Friday orders as Saturday/weekend.
+            dt = dt.replace(tzinfo=jst)
 
         # Weekend/holiday check uses ET (America/New_York): the US market calendar
         # is defined in ET, not JST.  US Friday afternoon (15:55-19:55 UTC) is
         # JST Saturday morning — using JST here caused Friday crons to be skipped.
         # Bug fixed 2026-07-25 (root cause: 2026-07-24 US Friday cron skip incident).
         et_tz = ZoneInfo("America/New_York")
-        dt_et = dt.astimezone(et_tz) if dt.tzinfo is not None else dt
+        dt_et = dt.astimezone(et_tz)
 
         is_holiday, holiday_name = MarketCalendar.is_us_holiday(dt_et)
         if is_holiday:
@@ -209,8 +216,7 @@ class MarketCalendar:
 
         # Time comparison uses JST so dt_jst.time() is comparable with
         # get_market_hours_jst() output (which expresses ET hours in JST).
-        jst = ZoneInfo("Asia/Tokyo")
-        dt_jst = dt.astimezone(jst) if dt.tzinfo is not None else dt
+        dt_jst = dt.astimezone(jst)
 
         market_hours = MarketCalendar.get_market_hours_jst(dt_jst)
         current_time = dt_jst.time()
@@ -233,20 +239,25 @@ class MarketCalendar:
         """Check if US market is currently open.
 
         Args:
-            dt: DateTime to check (defaults to now)
+            dt: DateTime to check (defaults to now in Asia/Tokyo).
+                Legacy naive inputs are interpreted as Asia/Tokyo, independent
+                of the host timezone. Aware inputs retain their actual instant.
 
         Returns:
             Tuple of (is_open, status_message)
         """
+        jst = ZoneInfo("Asia/Tokyo")
         if dt is None:
-            dt = datetime.now(ZoneInfo("Asia/Tokyo"))
+            dt = datetime.now(jst)
+        elif dt.tzinfo is None:
+            dt = dt.replace(tzinfo=jst)
 
         # Weekend/holiday check uses ET (America/New_York).
         # US Friday afternoon (15:55-19:55 UTC) is JST Saturday morning;
         # using the raw dt timezone for weekday() caused Friday crons to
         # be skipped.  Bug fixed 2026-07-25.
         et_tz = ZoneInfo("America/New_York")
-        dt_et = dt.astimezone(et_tz) if dt.tzinfo is not None else dt
+        dt_et = dt.astimezone(et_tz)
 
         # Check if holiday (use ET calendar date)
         is_holiday, holiday_name = MarketCalendar.is_us_holiday(dt_et)
@@ -259,8 +270,7 @@ class MarketCalendar:
 
         # Time comparison: convert to JST so dt_jst.time() is comparable with
         # get_market_hours_jst() output (which expresses ET hours in JST offsets).
-        jst = ZoneInfo("Asia/Tokyo")
-        dt_jst = dt.astimezone(jst) if dt.tzinfo is not None else dt
+        dt_jst = dt.astimezone(jst)
         market_hours = MarketCalendar.get_market_hours_jst(dt_jst)
         current_time = dt_jst.time()
 

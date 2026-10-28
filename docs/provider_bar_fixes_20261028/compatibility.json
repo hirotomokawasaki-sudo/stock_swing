@@ -1,0 +1,14 @@
+{
+  "current_base": "8909e79c1a83e04d508715b132575625454b7856",
+  "enabled_in_production": false,
+  "new_optional_cli_flag": "--capture-provider-contracts",
+  "not_rebased": [
+    "whole R22 accounting candidates",
+    "whole prior R14/complete-bar/U-calibration packet"
+  ],
+  "parallel_change": "8909e79 console alerts adopted intact; isolated baseline tree equals current base",
+  "production_head_at_start": "fa386d1970a6e20556d3533b8a16e2ece0aa8ead",
+  "reuse": "a322ea58 recorder storage only; directory fsync decoupled from ledger_transaction",
+  "runtime": "9cb1b757ed171614110755bc07ef30b6ed42d086",
+  "tested": "067d23b8fff9d406e87867fc177eb1da978368c1"
+}

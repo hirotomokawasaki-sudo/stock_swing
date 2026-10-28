@@ -1,0 +1,51 @@
+FFFFF.                                                                   [100%]
+=================================== FAILURES ===================================
+________________ test_ac_epoch_is_utc_independent_of_host[UTC] _________________
+tests/unit/test_provider_bar_contracts.py:150: in test_ac_epoch_is_utc_independent_of_host
+    assert out.strip()=='2026-10-20T20:00:00+00:00'
+E   AssertionError: assert '2026-10-20T20:00:00' == '2026-10-20T20:00:00+00:00'
+E     
+E     - 2026-10-20T20:00:00+00:00
+E     ?                    ------
+E     + 2026-10-20T20:00:00
+_____________ test_ac_epoch_is_utc_independent_of_host[Asia/Tokyo] _____________
+tests/unit/test_provider_bar_contracts.py:150: in test_ac_epoch_is_utc_independent_of_host
+    assert out.strip()=='2026-10-20T20:00:00+00:00'
+E   AssertionError: assert '2026-10-21T05:00:00' == '2026-10-20T20:00:00+00:00'
+E     
+E     - 2026-10-20T20:00:00+00:00
+E     + 2026-10-21T05:00:00
+_ test_regression_legacy_constructor_routes_requested_interval[5Min-bar_5min-/5/minute/] _
+tests/unit/test_provider_bar_contracts.py:163: in test_regression_legacy_constructor_routes_requested_interval
+    assert source=='massive' and records[0].event_type==event
+E   AssertionError: assert ('massive' == 'massive'
+E     
+E       massive and 'bar_daily' == 'bar_5min'
+E     
+E     - bar_5min
+E     + bar_daily)
+_ test_regression_legacy_constructor_routes_requested_interval[15Min-bar_15min-/15/minute/] _
+tests/unit/test_provider_bar_contracts.py:163: in test_regression_legacy_constructor_routes_requested_interval
+    assert source=='massive' and records[0].event_type==event
+E   AssertionError: assert ('massive' == 'massive'
+E     
+E       massive and 'bar_daily' == 'bar_15min'
+E     
+E     - bar_15min
+E     + bar_daily)
+_ test_regression_legacy_constructor_routes_requested_interval[1Hour-bar_1hour-/60/minute/] _
+tests/unit/test_provider_bar_contracts.py:163: in test_regression_legacy_constructor_routes_requested_interval
+    assert source=='massive' and records[0].event_type==event
+E   AssertionError: assert ('massive' == 'massive'
+E     
+E       massive and 'bar_daily' == 'bar_1hour'
+E     
+E     - bar_1hour
+E     + bar_daily)
+=========================== short test summary info ============================
+FAILED tests/unit/test_provider_bar_contracts.py::test_ac_epoch_is_utc_independent_of_host[UTC]
+FAILED tests/unit/test_provider_bar_contracts.py::test_ac_epoch_is_utc_independent_of_host[Asia/Tokyo]
+FAILED tests/unit/test_provider_bar_contracts.py::test_regression_legacy_constructor_routes_requested_interval[5Min-bar_5min-/5/minute/]
+FAILED tests/unit/test_provider_bar_contracts.py::test_regression_legacy_constructor_routes_requested_interval[15Min-bar_15min-/15/minute/]
+FAILED tests/unit/test_provider_bar_contracts.py::test_regression_legacy_constructor_routes_requested_interval[1Hour-bar_1hour-/60/minute/]
+5 failed, 1 passed, 31 deselected in 0.56s

@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from stock_swing.reporting.restriction_review_alerts import build_restriction_review_alerts
+
 
 @dataclass
 class ConsoleAlert:
@@ -50,7 +52,7 @@ class ConsoleSummary:
     equity: float
     open_position_count: int
     realized_pnl: float
-    unrealized_pnl: float
+    unrealized_pnl: float | None
     signals_total: int
     signals_buy: int
     signals_sell: int
@@ -187,8 +189,8 @@ class ConsoleSummary:
             "portfolio": {
                 "equity": round(self.equity, 2),
                 "realized_pnl": round(self.realized_pnl, 2),
-                "unrealized_pnl": round(self.unrealized_pnl, 2),
-                "total_pnl": round(self.realized_pnl + self.unrealized_pnl, 2),
+                "unrealized_pnl": round(self.unrealized_pnl, 2) if self.unrealized_pnl is not None else None,
+                "total_pnl": round(self.realized_pnl + self.unrealized_pnl, 2) if self.unrealized_pnl is not None else None,
                 "open_positions": self.open_position_count,
                 "asset_class_breakdown": self.asset_class_breakdown,
                 "attribution_quality_breakdown": self.attribution_quality_breakdown,
@@ -217,6 +219,7 @@ class ConsoleSummary:
                 "buy_stop_list": self.entry_filter_stats.get("buy_stop_list", []),
                 # 2026-08-05: 小サンプルウォッチリスト（可視化のみ、自動ブロックしない）
                 "small_sample_watchlist": self.entry_filter_stats.get("small_sample_watchlist", []),
+                "entry_restriction_review": self.entry_filter_stats.get("entry_restriction_review", {}),
             },
             "broker_tracker_diff": self.broker_tracker_diff,
             "risk": {
@@ -286,7 +289,7 @@ class ConsoleSummary:
         equity: float,
         open_position_count: int,
         realized_pnl: float = 0.0,
-        unrealized_pnl: float = 0.0,
+        unrealized_pnl: float | None = 0.0,
         decisions: list | None = None,
         submissions: list | None = None,
         cluster_blocks: list[str] | None = None,
@@ -356,7 +359,17 @@ class ConsoleSummary:
 
         # Auto-generate alerts
         alerts: list[ConsoleAlert] = list(extra_alerts)
+        if not dry_run:
+            alerts.extend(ConsoleAlert(**alert) for alert in build_restriction_review_alerts(
+                (entry_filter_stats or {}).get("entry_restriction_review")
+            ))
         missing: list[str] = []
+        if unrealized_pnl is None:
+            missing.append("unrealized_pnl")
+            alerts.append(ConsoleAlert(
+                severity="critical", code="unrealized_pnl_missing",
+                message="Current unrealized PnL unavailable",
+            ))
 
         if stale_symbols:
             alerts.append(

@@ -1,0 +1,10 @@
+[
+  {
+    "path": "src/stock_swing/cli/paper_demo.py",
+    "conflict": 1
+  },
+  {
+    "path": "src/stock_swing/sources/broker_client.py",
+    "conflict": 0
+  }
+]

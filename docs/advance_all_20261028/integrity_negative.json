@@ -1,0 +1,22 @@
+{
+  "bytes": {
+    "refused": true,
+    "before_execution": true,
+    "reason": "byte/mode mismatch:code/src/stock_swing/execution/submission_guard.py"
+  },
+  "mode": {
+    "refused": true,
+    "before_execution": true,
+    "reason": "byte/mode mismatch:code/src/stock_swing/execution/submission_guard.py"
+  },
+  "extra": {
+    "refused": true,
+    "before_execution": true,
+    "reason": "inventory mismatch"
+  },
+  "symlink": {
+    "refused": true,
+    "before_execution": true,
+    "reason": "symlink in packet"
+  }
+}

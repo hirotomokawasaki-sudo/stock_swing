@@ -1,0 +1,169 @@
+{
+  "base_head": "8909e79c1a83e04d508715b132575625454b7856",
+  "changed": [
+    "src/stock_swing/cli/paper_demo.py",
+    "src/stock_swing/execution/paper_executor.py",
+    "src/stock_swing/execution/submission_guard.py",
+    "src/stock_swing/experiments/decision_input_capture.py",
+    "src/stock_swing/experiments/measurement_capture.py",
+    "src/stock_swing/normalization/broker_normalizer.py",
+    "src/stock_swing/reporting/console_renderer.py",
+    "src/stock_swing/reporting/console_summary.py",
+    "src/stock_swing/risk/allocation_config.py",
+    "src/stock_swing/risk/effective_config.py",
+    "src/stock_swing/risk/order_preflight.py",
+    "src/stock_swing/risk/portfolio_allocator.py",
+    "src/stock_swing/risk/risk_budget.py",
+    "src/stock_swing/sources/bar_contract.py",
+    "src/stock_swing/sources/broker_client.py",
+    "src/stock_swing/sources/broker_client_protocol.py",
+    "src/stock_swing/sources/hybrid_data_fetcher.py",
+    "src/stock_swing/sources/massive_client.py"
+  ],
+  "delta_from_safety": [
+    "src/stock_swing/cli/paper_demo.py",
+    "src/stock_swing/experiments/decision_input_capture.py",
+    "src/stock_swing/experiments/measurement_capture.py",
+    "src/stock_swing/normalization/broker_normalizer.py",
+    "src/stock_swing/sources/bar_contract.py",
+    "src/stock_swing/sources/broker_client.py",
+    "src/stock_swing/sources/hybrid_data_fetcher.py",
+    "src/stock_swing/sources/massive_client.py"
+  ],
+  "new_files": [
+    "src/stock_swing/execution/submission_guard.py",
+    "src/stock_swing/experiments/decision_input_capture.py",
+    "src/stock_swing/experiments/measurement_capture.py",
+    "src/stock_swing/risk/effective_config.py",
+    "src/stock_swing/risk/order_preflight.py",
+    "src/stock_swing/sources/bar_contract.py"
+  ],
+  "pins": {
+    "src/stock_swing/cli/paper_demo.py": {
+      "before": "c826bff395b3a6d6e2e21d4d98b45f41296e96dab77ca21694a132cc82128e85",
+      "after": "6eb16517071671d403f6d24545810e252f5eec009d555fc00f77dfb04fcc3d5e",
+      "before_exists": true,
+      "before_mode": 384,
+      "after_mode": 384
+    },
+    "src/stock_swing/execution/paper_executor.py": {
+      "before": "4a06f308d10eb3dc6069a960680cafef0dce3452263190c1f7f07369f23636b8",
+      "after": "7bb45eab8f713225a27fd7b139de12e27ae7ce54d4aa13778aa1e8b8870d31d4",
+      "before_exists": true,
+      "before_mode": 384,
+      "after_mode": 384
+    },
+    "src/stock_swing/execution/submission_guard.py": {
+      "before": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "after": "6f8d91517c690c01b95f3d3c5a785db7c22f93acdeec4cf48dabbcb74dd5f832",
+      "before_exists": false,
+      "before_mode": null,
+      "after_mode": 384
+    },
+    "src/stock_swing/experiments/decision_input_capture.py": {
+      "before": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "after": "75f48bd130831a63266f52fa39d15820cde6f02b3c9cdfd53d48d44d1d972559",
+      "before_exists": false,
+      "before_mode": null,
+      "after_mode": 420
+    },
+    "src/stock_swing/experiments/measurement_capture.py": {
+      "before": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "after": "ec595328563aadf9fbb88f48c4e3057decdf5d002feb6013851fb49aa6b3463e",
+      "before_exists": false,
+      "before_mode": null,
+      "after_mode": 420
+    },
+    "src/stock_swing/normalization/broker_normalizer.py": {
+      "before": "fb880d2755531089d1fb62c6a94c7f6da323c2c2eac718d79a3b374c53eac633",
+      "after": "50a13236ce85ee1b9df8b0777c02784d0c7ecb43a4ca3b6ac925136552134d4b",
+      "before_exists": true,
+      "before_mode": 384,
+      "after_mode": 420
+    },
+    "src/stock_swing/reporting/console_renderer.py": {
+      "before": "3965965b416f64421ff165ad57c936a07e6e027dd98250c4f374618830a45cda",
+      "after": "c7a77fd0c65133010b01b83cfe291e1a1ba33356ab4668e7f94011f168dfba91",
+      "before_exists": true,
+      "before_mode": 384,
+      "after_mode": 384
+    },
+    "src/stock_swing/reporting/console_summary.py": {
+      "before": "b5e09b3dd462d8c640c4d7608c2ee1f1e68d6c9e725535be9fe884805a31500b",
+      "after": "46f6e8d54fca3c3ab98b61b86a94d8a9866ff6ad3c98bd6c06e48d170b902e79",
+      "before_exists": true,
+      "before_mode": 384,
+      "after_mode": 384
+    },
+    "src/stock_swing/risk/allocation_config.py": {
+      "before": "dcb2e4f21aaf01163d66859a1cde97c039ff39dffb07aade5486ff6213c2b85f",
+      "after": "c2fef6338f730c5cd2d72df19b924bee216dbfd25fc32374142496d2ab621f99",
+      "before_exists": true,
+      "before_mode": 384,
+      "after_mode": 384
+    },
+    "src/stock_swing/risk/effective_config.py": {
+      "before": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "after": "a746a4a964a4213fca7bde8fcb3773ceace698e664884001c64f604e988d3046",
+      "before_exists": false,
+      "before_mode": null,
+      "after_mode": 384
+    },
+    "src/stock_swing/risk/order_preflight.py": {
+      "before": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "after": "65ae99c91f2e4466d52b8c4cc24a180159aee83d5e4430361e40f128485c32cf",
+      "before_exists": false,
+      "before_mode": null,
+      "after_mode": 384
+    },
+    "src/stock_swing/risk/portfolio_allocator.py": {
+      "before": "0a64d37e57c06c1ec031f6f5bfc7880c4cbdbc30aafa13691317c287416832f6",
+      "after": "f5b3f7e3a6dae7a7d3ff7e8a9eb83579a26f295a6b294d4ef3bb8b246a247f33",
+      "before_exists": true,
+      "before_mode": 384,
+      "after_mode": 384
+    },
+    "src/stock_swing/risk/risk_budget.py": {
+      "before": "8d15abbaac3adb0e9c7d239b32c9d6ccfd393a9c77e8cf8c034283f7cf8848ee",
+      "after": "f104f39d74b6c18951cb837d2ca3836edfb6af7d39df279effbc7f3df0e29cc8",
+      "before_exists": true,
+      "before_mode": 384,
+      "after_mode": 384
+    },
+    "src/stock_swing/sources/bar_contract.py": {
+      "before": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "after": "8329875cb14fa17f18eb000fbcdd518cd5ad0dd628f2f400d7b3c2b2f25698dd",
+      "before_exists": false,
+      "before_mode": null,
+      "after_mode": 420
+    },
+    "src/stock_swing/sources/broker_client.py": {
+      "before": "7319c56167fbdd8f6fe6e4b446c9d2382f1bf64811301699791f3bc562aaec36",
+      "after": "2408a67f8118142791763d0748eec9003eb792d66799c514c729be03d440ab0c",
+      "before_exists": true,
+      "before_mode": 384,
+      "after_mode": 384
+    },
+    "src/stock_swing/sources/broker_client_protocol.py": {
+      "before": "6bb9e2564ab106af5c9fb86f076b0e5bcfa9fcbc0a53a507ae4483ca25a88bac",
+      "after": "9cf58a479d013e223b39bf7be44fe9f49061ce7b4a35cbb48565f569e9165a61",
+      "before_exists": true,
+      "before_mode": 384,
+      "after_mode": 384
+    },
+    "src/stock_swing/sources/hybrid_data_fetcher.py": {
+      "before": "4c7b8c66127ae872b8aef033dbb28571a220862d12d5195cc16c9b7f73cb09b8",
+      "after": "d70c62b3a9acbb8fc9ad2cab2fb03dc0e59ceb59c430760aa0316434bf414875",
+      "before_exists": true,
+      "before_mode": 384,
+      "after_mode": 420
+    },
+    "src/stock_swing/sources/massive_client.py": {
+      "before": "6ed163f73f52c963b4755363b17893c4e58e437debec9e72bf20f7789c0bd772",
+      "after": "9394a183ed7c36a3b79022e6da9c275334060cf79c71e03c99c40a8b090e5419",
+      "before_exists": true,
+      "before_mode": 384,
+      "after_mode": 420
+    }
+  }
+}

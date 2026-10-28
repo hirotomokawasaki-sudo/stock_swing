@@ -1,0 +1,390 @@
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.F                           [100%]
+=================================== FAILURES ===================================
+________ test_ac_malformed_state_is_unknown_and_blocks_only_buys[None] _________
+tests/unit/test_risk_fail_closed.py:41: in test_ac_malformed_state_is_unknown_and_blocks_only_buys
+    allowed, blocked, risk = _filter_buys_by_risk_budget(original, tmp_path, 100000)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/stock_swing/cli/paper_demo.py:333: in _filter_buys_by_risk_budget
+    risk = compute_open_risk(project_root, equity)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/stock_swing/risk/risk_budget.py:92: in compute_open_risk
+    trades: list[dict] = state.get("trades", [])
+                         ^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'get'
+_______ test_ac_malformed_state_is_unknown_and_blocks_only_buys[value1] ________
+tests/unit/test_risk_fail_closed.py:41: in test_ac_malformed_state_is_unknown_and_blocks_only_buys
+    allowed, blocked, risk = _filter_buys_by_risk_budget(original, tmp_path, 100000)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/stock_swing/cli/paper_demo.py:333: in _filter_buys_by_risk_budget
+    risk = compute_open_risk(project_root, equity)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/stock_swing/risk/risk_budget.py:92: in compute_open_risk
+    trades: list[dict] = state.get("trades", [])
+                         ^^^^^^^^^
+E   AttributeError: 'list' object has no attribute 'get'
+_______ test_ac_malformed_state_is_unknown_and_blocks_only_buys[value2] ________
+tests/unit/test_risk_fail_closed.py:42: in test_ac_malformed_state_is_unknown_and_blocks_only_buys
+    assert allowed == [original[1]], 'unknown risk must preserve SELL, not BUY'
+E   AssertionError: unknown risk must preserve SELL, not BUY
+E   assert [namespace(ac...ymbol='AAPL')] == [namespace(ac...ymbol='AAPL')]
+E     
+E     At index 0 diff: namespace(action='buy', symbol='NVDA') != namespace(action='sell', symbol='AAPL')
+E     Left contains one more item: namespace(action='sell', symbol='AAPL')
+E     Use -v to get more diff
+----------------------------- Captured stdout call -----------------------------
+  ✅ Risk budget OK: open risk $0 = 0.0% of equity (warn at 5%, block at 8%)
+_______ test_ac_malformed_state_is_unknown_and_blocks_only_buys[value3] ________
+tests/unit/test_risk_fail_closed.py:41: in test_ac_malformed_state_is_unknown_and_blocks_only_buys
+    allowed, blocked, risk = _filter_buys_by_risk_budget(original, tmp_path, 100000)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/stock_swing/cli/paper_demo.py:333: in _filter_buys_by_risk_budget
+    risk = compute_open_risk(project_root, equity)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/stock_swing/risk/risk_budget.py:93: in compute_open_risk
+    open_trades = [t for t in trades if t.get("status") == "open"]
+                              ^^^^^^
+E   TypeError: 'NoneType' object is not iterable
+_______ test_ac_malformed_state_is_unknown_and_blocks_only_buys[value4] ________
+tests/unit/test_risk_fail_closed.py:42: in test_ac_malformed_state_is_unknown_and_blocks_only_buys
+    assert allowed == [original[1]], 'unknown risk must preserve SELL, not BUY'
+E   AssertionError: unknown risk must preserve SELL, not BUY
+E   assert [namespace(ac...ymbol='AAPL')] == [namespace(ac...ymbol='AAPL')]
+E     
+E     At index 0 diff: namespace(action='buy', symbol='NVDA') != namespace(action='sell', symbol='AAPL')
+E     Left contains one more item: namespace(action='sell', symbol='AAPL')
+E     Use -v to get more diff
+----------------------------- Captured stdout call -----------------------------
+  ✅ Risk budget OK: open risk $0 = 0.0% of equity (warn at 5%, block at 8%)
+_______ test_ac_malformed_state_is_unknown_and_blocks_only_buys[value5] ________
+tests/unit/test_risk_fail_closed.py:41: in test_ac_malformed_state_is_unknown_and_blocks_only_buys
+    allowed, blocked, risk = _filter_buys_by_risk_budget(original, tmp_path, 100000)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/stock_swing/cli/paper_demo.py:333: in _filter_buys_by_risk_budget
+    risk = compute_open_risk(project_root, equity)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/stock_swing/risk/risk_budget.py:93: in compute_open_risk
+    open_trades = [t for t in trades if t.get("status") == "open"]
+                                        ^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'get'
+_______ test_ac_malformed_state_is_unknown_and_blocks_only_buys[value6] ________
+tests/unit/test_risk_fail_closed.py:42: in test_ac_malformed_state_is_unknown_and_blocks_only_buys
+    assert allowed == [original[1]], 'unknown risk must preserve SELL, not BUY'
+E   AssertionError: unknown risk must preserve SELL, not BUY
+E   assert [namespace(ac...ymbol='AAPL')] == [namespace(ac...ymbol='AAPL')]
+E     
+E     At index 0 diff: namespace(action='buy', symbol='NVDA') != namespace(action='sell', symbol='AAPL')
+E     Left contains one more item: namespace(action='sell', symbol='AAPL')
+E     Use -v to get more diff
+----------------------------- Captured stdout call -----------------------------
+  ✅ Risk budget OK: open risk $0 = 0.0% of equity (warn at 5%, block at 8%)
+_______ test_ac_malformed_state_is_unknown_and_blocks_only_buys[value7] ________
+tests/unit/test_risk_fail_closed.py:42: in test_ac_malformed_state_is_unknown_and_blocks_only_buys
+    assert allowed == [original[1]], 'unknown risk must preserve SELL, not BUY'
+E   AssertionError: unknown risk must preserve SELL, not BUY
+E   assert [namespace(ac...ymbol='AAPL')] == [namespace(ac...ymbol='AAPL')]
+E     
+E     At index 0 diff: namespace(action='buy', symbol='NVDA') != namespace(action='sell', symbol='AAPL')
+E     Left contains one more item: namespace(action='sell', symbol='AAPL')
+E     Use -v to get more diff
+----------------------------- Captured stdout call -----------------------------
+  ✅ Risk budget OK: open risk $0 = 0.0% of equity (warn at 5%, block at 8%)
+__________________ test_ac_file_failures_block_buys[missing] ___________________
+tests/unit/test_risk_fail_closed.py:56: in test_ac_file_failures_block_buys
+    assert [d.action for d in allowed] == ['sell'], 'SELL must survive file failures'
+E   AssertionError: SELL must survive file failures
+E   assert ['buy', 'sell'] == ['sell']
+E     
+E     At index 0 diff: 'buy' != 'sell'
+E     Left contains one more item: 'sell'
+E     Use -v to get more diff
+----------------------------- Captured stdout call -----------------------------
+  ⚠️  Risk budget: could not compute (pnl_state.json not found) — skipping guard
+___________________ test_ac_file_failures_block_buys[broken] ___________________
+tests/unit/test_risk_fail_closed.py:56: in test_ac_file_failures_block_buys
+    assert [d.action for d in allowed] == ['sell'], 'SELL must survive file failures'
+E   AssertionError: SELL must survive file failures
+E   assert ['buy', 'sell'] == ['sell']
+E     
+E     At index 0 diff: 'buy' != 'sell'
+E     Left contains one more item: 'sell'
+E     Use -v to get more diff
+----------------------------- Captured stdout call -----------------------------
+  ⚠️  Risk budget: could not compute (Expecting property name enclosed in double quotes: line 1 column 2 (char 1)) — skipping guard
+_________________ test_ac_file_failures_block_buys[unreadable] _________________
+tests/unit/test_risk_fail_closed.py:56: in test_ac_file_failures_block_buys
+    assert [d.action for d in allowed] == ['sell'], 'SELL must survive file failures'
+E   AssertionError: SELL must survive file failures
+E   assert ['buy', 'sell'] == ['sell']
+E     
+E     At index 0 diff: 'buy' != 'sell'
+E     Left contains one more item: 'sell'
+E     Use -v to get more diff
+----------------------------- Captured stdout call -----------------------------
+  ⚠️  Risk budget: could not compute ([Errno 21] Is a directory: '/private/tmp/pytest-of-hirotomookawasaki/pytest-19/test_ac_file_failures_block_bu2/data/tracking/pnl_state.json') — skipping guard
+________ test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[qty-None] _________
+tests/unit/test_risk_fail_closed.py:70: in test_ac_invalid_open_lot_cannot_reduce_risk_to_zero
+    risk = compute_open_risk(tmp_path, 100000)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/stock_swing/risk/risk_budget.py:99: in compute_open_risk
+    qty = float(t.get("qty", 0))
+          ^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: float() argument must be a string or a real number, not 'NoneType'
+________ test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[qty-oops] _________
+tests/unit/test_risk_fail_closed.py:70: in test_ac_invalid_open_lot_cannot_reduce_risk_to_zero
+    risk = compute_open_risk(tmp_path, 100000)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/stock_swing/risk/risk_budget.py:99: in compute_open_risk
+    qty = float(t.get("qty", 0))
+          ^^^^^^^^^^^^^^^^^^^^^^
+E   ValueError: could not convert string to float: 'oops'
+_________ test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[qty--1] __________
+tests/unit/test_risk_fail_closed.py:71: in test_ac_invalid_open_lot_cannot_reduce_risk_to_zero
+    assert risk.get('error') and risk['is_blocked'], 'invalid open lot must fail closed'
+E   AssertionError: invalid open lot must fail closed
+E   assert (None)
+E    +  where None = <built-in method get of dict object at 0x10b9fff00>('error')
+E    +    where <built-in method get of dict object at 0x10b9fff00> = {'block_threshold': 6000.0, 'is_blocked': False, 'is_warn': False, 'open_trades_count': 1, ...}.get
+__________ test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[qty-0] __________
+tests/unit/test_risk_fail_closed.py:71: in test_ac_invalid_open_lot_cannot_reduce_risk_to_zero
+    assert risk.get('error') and risk['is_blocked'], 'invalid open lot must fail closed'
+E   AssertionError: invalid open lot must fail closed
+E   assert (None)
+E    +  where None = <built-in method get of dict object at 0x10ba2f8c0>('error')
+E    +    where <built-in method get of dict object at 0x10ba2f8c0> = {'block_threshold': 6000.0, 'is_blocked': False, 'is_warn': False, 'open_trades_count': 1, ...}.get
+_________ test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[qty-nan] _________
+tests/unit/test_risk_fail_closed.py:71: in test_ac_invalid_open_lot_cannot_reduce_risk_to_zero
+    assert risk.get('error') and risk['is_blocked'], 'invalid open lot must fail closed'
+E   AssertionError: invalid open lot must fail closed
+E   assert (None)
+E    +  where None = <built-in method get of dict object at 0x10b9ff640>('error')
+E    +    where <built-in method get of dict object at 0x10b9ff640> = {'block_threshold': 6000.0, 'is_blocked': False, 'is_warn': False, 'open_trades_count': 1, ...}.get
+_________ test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[qty-inf] _________
+tests/unit/test_risk_fail_closed.py:71: in test_ac_invalid_open_lot_cannot_reduce_risk_to_zero
+    assert risk.get('error') and risk['is_blocked'], 'invalid open lot must fail closed'
+E   AssertionError: invalid open lot must fail closed
+E   assert (None)
+E    +  where None = <built-in method get of dict object at 0x10ba464c0>('error')
+E    +    where <built-in method get of dict object at 0x10ba464c0> = {'block_threshold': 6000.0, 'is_blocked': True, 'is_warn': True, 'open_trades_count': 1, ...}.get
+________ test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[qty-True] _________
+tests/unit/test_risk_fail_closed.py:71: in test_ac_invalid_open_lot_cannot_reduce_risk_to_zero
+    assert risk.get('error') and risk['is_blocked'], 'invalid open lot must fail closed'
+E   AssertionError: invalid open lot must fail closed
+E   assert (None)
+E    +  where None = <built-in method get of dict object at 0x10ba2da00>('error')
+E    +    where <built-in method get of dict object at 0x10ba2da00> = {'block_threshold': 6000.0, 'is_blocked': False, 'is_warn': False, 'open_trades_count': 1, ...}.get
+______ test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[entry_price-0] ______
+tests/unit/test_risk_fail_closed.py:71: in test_ac_invalid_open_lot_cannot_reduce_risk_to_zero
+    assert risk.get('error') and risk['is_blocked'], 'invalid open lot must fail closed'
+E   AssertionError: invalid open lot must fail closed
+E   assert (None)
+E    +  where None = <built-in method get of dict object at 0x10baa0b00>('error')
+E    +    where <built-in method get of dict object at 0x10baa0b00> = {'block_threshold': 6000.0, 'is_blocked': False, 'is_warn': False, 'open_trades_count': 1, ...}.get
+_____ test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[entry_price-bad] _____
+tests/unit/test_risk_fail_closed.py:70: in test_ac_invalid_open_lot_cannot_reduce_risk_to_zero
+    risk = compute_open_risk(tmp_path, 100000)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/stock_swing/risk/risk_budget.py:100: in compute_open_risk
+    entry = float(t.get("entry_price", 0))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ValueError: could not convert string to float: 'bad'
+_____ test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[entry_price-inf] _____
+tests/unit/test_risk_fail_closed.py:71: in test_ac_invalid_open_lot_cannot_reduce_risk_to_zero
+    assert risk.get('error') and risk['is_blocked'], 'invalid open lot must fail closed'
+E   AssertionError: invalid open lot must fail closed
+E   assert (None)
+E    +  where None = <built-in method get of dict object at 0x10bbfa440>('error')
+E    +    where <built-in method get of dict object at 0x10bbfa440> = {'block_threshold': 6000.0, 'is_blocked': True, 'is_warn': True, 'open_trades_count': 1, ...}.get
+_____ test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[entry_price-nan] _____
+tests/unit/test_risk_fail_closed.py:71: in test_ac_invalid_open_lot_cannot_reduce_risk_to_zero
+    assert risk.get('error') and risk['is_blocked'], 'invalid open lot must fail closed'
+E   AssertionError: invalid open lot must fail closed
+E   assert (None)
+E    +  where None = <built-in method get of dict object at 0x10ba19800>('error')
+E    +    where <built-in method get of dict object at 0x10ba19800> = {'block_threshold': 6000.0, 'is_blocked': False, 'is_warn': False, 'open_trades_count': 1, ...}.get
+_ test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[entry_signal_strength-bad] _
+tests/unit/test_risk_fail_closed.py:71: in test_ac_invalid_open_lot_cannot_reduce_risk_to_zero
+    assert risk.get('error') and risk['is_blocked'], 'invalid open lot must fail closed'
+E   AssertionError: invalid open lot must fail closed
+E   assert (None)
+E    +  where None = <built-in method get of dict object at 0x10ba54a80>('error')
+E    +    where <built-in method get of dict object at 0x10ba54a80> = {'block_threshold': 6000.0, 'is_blocked': False, 'is_warn': False, 'open_trades_count': 1, ...}.get
+_ test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[entry_signal_strength-nan] _
+tests/unit/test_risk_fail_closed.py:71: in test_ac_invalid_open_lot_cannot_reduce_risk_to_zero
+    assert risk.get('error') and risk['is_blocked'], 'invalid open lot must fail closed'
+E   AssertionError: invalid open lot must fail closed
+E   assert (None)
+E    +  where None = <built-in method get of dict object at 0x10bb7a380>('error')
+E    +    where <built-in method get of dict object at 0x10bb7a380> = {'block_threshold': 6000.0, 'is_blocked': False, 'is_warn': False, 'open_trades_count': 1, ...}.get
+_ test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[entry_signal_strength-1.1] _
+tests/unit/test_risk_fail_closed.py:71: in test_ac_invalid_open_lot_cannot_reduce_risk_to_zero
+    assert risk.get('error') and risk['is_blocked'], 'invalid open lot must fail closed'
+E   AssertionError: invalid open lot must fail closed
+E   assert (None)
+E    +  where None = <built-in method get of dict object at 0x10bbf8bc0>('error')
+E    +    where <built-in method get of dict object at 0x10bbf8bc0> = {'block_threshold': 6000.0, 'is_blocked': False, 'is_warn': False, 'open_trades_count': 1, ...}.get
+_________ test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[symbol-] _________
+tests/unit/test_risk_fail_closed.py:71: in test_ac_invalid_open_lot_cannot_reduce_risk_to_zero
+    assert risk.get('error') and risk['is_blocked'], 'invalid open lot must fail closed'
+E   AssertionError: invalid open lot must fail closed
+E   assert (None)
+E    +  where None = <built-in method get of dict object at 0x10ba2fa80>('error')
+E    +    where <built-in method get of dict object at 0x10ba2fa80> = {'block_threshold': 6000.0, 'is_blocked': False, 'is_warn': False, 'open_trades_count': 1, ...}.get
+_____________________ test_ac_invalid_equity_is_unknown[0] _____________________
+tests/unit/test_risk_fail_closed.py:79: in test_ac_invalid_equity_is_unknown
+    assert result['is_blocked'] and result['pct_of_equity'] is None, 'bad equity is not zero risk'
+E   AssertionError: bad equity is not zero risk
+E   assert (False)
+____________________ test_ac_invalid_equity_is_unknown[-1] _____________________
+tests/unit/test_risk_fail_closed.py:79: in test_ac_invalid_equity_is_unknown
+    assert result['is_blocked'] and result['pct_of_equity'] is None, 'bad equity is not zero risk'
+E   AssertionError: bad equity is not zero risk
+E   assert (False)
+___________________ test_ac_invalid_equity_is_unknown[None] ____________________
+tests/unit/test_risk_fail_closed.py:78: in test_ac_invalid_equity_is_unknown
+    result = compute_open_risk(tmp_path, equity)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/stock_swing/risk/risk_budget.py:118: in compute_open_risk
+    pct = total_open_risk / equity if equity > 0 else 0.0
+                                      ^^^^^^^^^^
+E   TypeError: '>' not supported between instances of 'NoneType' and 'int'
+____________________ test_ac_invalid_equity_is_unknown[bad] ____________________
+tests/unit/test_risk_fail_closed.py:78: in test_ac_invalid_equity_is_unknown
+    result = compute_open_risk(tmp_path, equity)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/stock_swing/risk/risk_budget.py:118: in compute_open_risk
+    pct = total_open_risk / equity if equity > 0 else 0.0
+                                      ^^^^^^^^^^
+E   TypeError: '>' not supported between instances of 'str' and 'int'
+___________________ test_ac_invalid_equity_is_unknown[True] ____________________
+tests/unit/test_risk_fail_closed.py:79: in test_ac_invalid_equity_is_unknown
+    assert result['is_blocked'] and result['pct_of_equity'] is None, 'bad equity is not zero risk'
+E   AssertionError: bad equity is not zero risk
+E   assert (False)
+____________________ test_ac_invalid_equity_is_unknown[nan] ____________________
+tests/unit/test_risk_fail_closed.py:79: in test_ac_invalid_equity_is_unknown
+    assert result['is_blocked'] and result['pct_of_equity'] is None, 'bad equity is not zero risk'
+E   AssertionError: bad equity is not zero risk
+E   assert (False)
+____________________ test_ac_invalid_equity_is_unknown[inf] ____________________
+tests/unit/test_risk_fail_closed.py:79: in test_ac_invalid_equity_is_unknown
+    assert result['is_blocked'] and result['pct_of_equity'] is None, 'bad equity is not zero risk'
+E   AssertionError: bad equity is not zero risk
+E   assert (False)
+___________ test_ac_confirmed_empty_recovery_and_threshold_override ____________
+tests/unit/test_risk_fail_closed.py:84: in test_ac_confirmed_empty_recovery_and_threshold_override
+    assert _filter_buys_by_risk_budget(decisions(), tmp_path, 100000)[1] == ['NVDA'], 'override must not bypass unknown'
+E   AssertionError: override must not bypass unknown
+E   assert [] == ['NVDA']
+E     
+E     Right contains one more item: 'NVDA'
+E     Use -v to get more diff
+____ test_ac_actual_executor_rejects_unknown_exposure_without_submit[None] _____
+tests/unit/test_risk_fail_closed.py:121: in test_ac_actual_executor_rejects_unknown_exposure_without_submit
+    assert qty == 0 and details['skip_reason']=='risk_inputs_unavailable', 'malformed holdings must not size as flat'
+E   AssertionError: malformed holdings must not size as flat
+E   assert (40 == 0)
+_ test_ac_actual_executor_rejects_unknown_exposure_without_submit[positions1] __
+tests/unit/test_risk_fail_closed.py:121: in test_ac_actual_executor_rejects_unknown_exposure_without_submit
+    assert qty == 0 and details['skip_reason']=='risk_inputs_unavailable', 'malformed holdings must not size as flat'
+E   AssertionError: malformed holdings must not size as flat
+E   assert (40 == 0)
+_ test_ac_actual_executor_rejects_unknown_exposure_without_submit[positions2] __
+tests/unit/test_risk_fail_closed.py:121: in test_ac_actual_executor_rejects_unknown_exposure_without_submit
+    assert qty == 0 and details['skip_reason']=='risk_inputs_unavailable', 'malformed holdings must not size as flat'
+E   AssertionError: malformed holdings must not size as flat
+E   assert (40 == 0)
+_ test_ac_actual_executor_rejects_unknown_exposure_without_submit[positions3] __
+tests/unit/test_risk_fail_closed.py:121: in test_ac_actual_executor_rejects_unknown_exposure_without_submit
+    assert qty == 0 and details['skip_reason']=='risk_inputs_unavailable', 'malformed holdings must not size as flat'
+E   AssertionError: malformed holdings must not size as flat
+E   assert (40 == 0)
+_ test_ac_actual_executor_rejects_unknown_exposure_without_submit[positions4] __
+tests/unit/test_risk_fail_closed.py:121: in test_ac_actual_executor_rejects_unknown_exposure_without_submit
+    assert qty == 0 and details['skip_reason']=='risk_inputs_unavailable', 'malformed holdings must not size as flat'
+E   AssertionError: malformed holdings must not size as flat
+E   assert (40 == 0)
+_ test_ac_actual_executor_rejects_unknown_exposure_without_submit[positions5] __
+tests/unit/test_risk_fail_closed.py:121: in test_ac_actual_executor_rejects_unknown_exposure_without_submit
+    assert qty == 0 and details['skip_reason']=='risk_inputs_unavailable', 'malformed holdings must not size as flat'
+E   AssertionError: malformed holdings must not size as flat
+E   assert (40 == 0)
+_ test_ac_actual_executor_rejects_unknown_exposure_without_submit[positions6] __
+tests/unit/test_risk_fail_closed.py:121: in test_ac_actual_executor_rejects_unknown_exposure_without_submit
+    assert qty == 0 and details['skip_reason']=='risk_inputs_unavailable', 'malformed holdings must not size as flat'
+E   AssertionError: malformed holdings must not size as flat
+E   assert (40 == 0)
+_ test_ac_actual_executor_rejects_unknown_exposure_without_submit[positions7] __
+tests/unit/test_risk_fail_closed.py:120: in test_ac_actual_executor_rejects_unknown_exposure_without_submit
+    qty, details=executor._calculate_position_size(decision())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/stock_swing/execution/paper_executor.py:393: in _calculate_position_size
+    result = self.position_sizing.size(PositionSizingInputs(
+src/stock_swing/risk/position_sizing.py:315: in size
+    shares_by_exposure = max(floor(max(remaining_capacity, 0.0) / price), 0)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ValueError: cannot convert float NaN to integer
+_ test_ac_actual_executor_rejects_unknown_exposure_without_submit[positions8] __
+tests/unit/test_risk_fail_closed.py:121: in test_ac_actual_executor_rejects_unknown_exposure_without_submit
+    assert qty == 0 and details['skip_reason']=='risk_inputs_unavailable', 'malformed holdings must not size as flat'
+E   AssertionError: malformed holdings must not size as flat
+E   assert (0 == 0 and 'insufficient...ning_exposure' == 'risk_inputs_unavailable'
+E     
+E     - risk_inputs_unavailable
+E     + insufficient_remaining_exposure)
+_ test_ac_actual_executor_rejects_unknown_exposure_without_submit[positions9] __
+tests/unit/test_risk_fail_closed.py:121: in test_ac_actual_executor_rejects_unknown_exposure_without_submit
+    assert qty == 0 and details['skip_reason']=='risk_inputs_unavailable', 'malformed holdings must not size as flat'
+E   AssertionError: malformed holdings must not size as flat
+E   assert (40 == 0)
+________________ test_ac_unknown_survives_summary_and_renderer _________________
+tests/unit/test_risk_fail_closed.py:137: in test_ac_unknown_survives_summary_and_renderer
+    risk_budget_pct=risk['pct_of_equity'],risk_budget_status=risk['status'])
+                                                             ^^^^^^^^^^^^^^
+E   KeyError: 'status'
+=========================== short test summary info ============================
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_malformed_state_is_unknown_and_blocks_only_buys[None]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_malformed_state_is_unknown_and_blocks_only_buys[value1]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_malformed_state_is_unknown_and_blocks_only_buys[value2]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_malformed_state_is_unknown_and_blocks_only_buys[value3]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_malformed_state_is_unknown_and_blocks_only_buys[value4]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_malformed_state_is_unknown_and_blocks_only_buys[value5]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_malformed_state_is_unknown_and_blocks_only_buys[value6]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_malformed_state_is_unknown_and_blocks_only_buys[value7]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_file_failures_block_buys[missing]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_file_failures_block_buys[broken]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_file_failures_block_buys[unreadable]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[qty-None]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[qty-oops]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[qty--1]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[qty-0]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[qty-nan]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[qty-inf]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[qty-True]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[entry_price-0]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[entry_price-bad]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[entry_price-inf]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[entry_price-nan]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[entry_signal_strength-bad]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[entry_signal_strength-nan]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[entry_signal_strength-1.1]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_open_lot_cannot_reduce_risk_to_zero[symbol-]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_equity_is_unknown[0]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_equity_is_unknown[-1]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_equity_is_unknown[None]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_equity_is_unknown[bad]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_equity_is_unknown[True]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_equity_is_unknown[nan]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_invalid_equity_is_unknown[inf]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_confirmed_empty_recovery_and_threshold_override
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_actual_executor_rejects_unknown_exposure_without_submit[None]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_actual_executor_rejects_unknown_exposure_without_submit[positions1]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_actual_executor_rejects_unknown_exposure_without_submit[positions2]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_actual_executor_rejects_unknown_exposure_without_submit[positions3]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_actual_executor_rejects_unknown_exposure_without_submit[positions4]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_actual_executor_rejects_unknown_exposure_without_submit[positions5]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_actual_executor_rejects_unknown_exposure_without_submit[positions6]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_actual_executor_rejects_unknown_exposure_without_submit[positions7]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_actual_executor_rejects_unknown_exposure_without_submit[positions8]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_actual_executor_rejects_unknown_exposure_without_submit[positions9]
+FAILED tests/unit/test_risk_fail_closed.py::test_ac_unknown_survives_summary_and_renderer
+45 failed, 1 passed in 0.65s

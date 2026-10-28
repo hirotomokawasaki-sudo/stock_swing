@@ -1,0 +1,12 @@
+{
+  "SPEC.json": "dd5ef0c6c893d07341b0ceda2b8f44ec2b038be731fbd2f0acf2135d6081cd54",
+  "input_manifest.json": "91c492ecfe553a1fbe7c617ac3124e37a3d46e529fe6aa352e02bc3283082794",
+  "results.json": "7a2eb2c75d6256db2eb4f314cd3231ea4a0ec287a982cf30e24da5d7843d40a4",
+  "README.md": "5e372af913de05ae45e05c10d4a897c11a1956a71a1209564f144348048211b9",
+  "diagnose.py": "ed7b890a05667b664c24adabf0d3f52d9fafd9c0c348da20da3fba8aa175e005",
+  "verify_negative.py": "f6338828bbee78a1820c13af244f287ecb0816c5fe1470d7f4f0a36c18f3a392",
+  "inputs.zip": "2afeb5c24770599b54394045cd4104271bb6d1f0043cc30883350f73b5566ebe",
+  "VALIDATION.json": "993e1f7947ed2fed498bf9a7d9610beb501a0eeb3918aca8a9e2d1c551b0c394",
+  "verify_independent.py": "b1aced78ffbd5a7a347de1bc2d00b79759cb85d7cc388c491b9e9224a6d85aa0",
+  "SOURCE_MAP.md": "ca7a33d057666cc0f61a89d7c21fc8131c13da0157e0ef6de7bba0638c557c87"
+}

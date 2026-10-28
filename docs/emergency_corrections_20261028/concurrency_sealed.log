@@ -1,0 +1,4 @@
+{"version": "baseline", "script": "sell", "posts": 3, "concurrent_exit": 0, "restart_exit": 0}
+{"version": "baseline", "script": "cover", "posts": 3, "concurrent_exit": 0, "restart_exit": 0}
+{"version": "candidate", "script": "sell", "posts": 1, "concurrent_exit": 1, "restart_exit": 1}
+{"version": "candidate", "script": "cover", "posts": 1, "concurrent_exit": 1, "restart_exit": 1}

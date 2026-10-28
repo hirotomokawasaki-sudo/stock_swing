@@ -711,8 +711,8 @@ def main() -> int:  # noqa: C901
 
     # 3. Market hours
     _section("3. Market Hours")
-    now_local = datetime.now()
-    is_open, market_status = MarketCalendar.is_market_open(now_local)
+    now_market = datetime.now(timezone.utc)
+    is_open, market_status = MarketCalendar.is_market_open(now_market)
     print(f"  {'OK' if is_open else 'WARN'}: {market_status}")
     if not is_open and not args.allow_outside_hours and not args.dry_run:
         print("  Use --allow-outside-hours to queue orders, or --dry-run to preview")
@@ -1113,10 +1113,15 @@ def main() -> int:  # noqa: C901
     # First, get current positions for exit strategy
     current_positions_full: dict[str, dict] = {}
     current_positions: dict[str, int] = {}
+    # A failed fetch is unknown, not flat. Keep raw broker evidence separate
+    # from the long-only exit map (which also omits short/fractional holdings).
+    from stock_swing.guardrails.day_start_snapshot import broker_positions_unrealized
+    _current_unrealized_for_capture: float | None = None
     try:
         with latency_tracker.track("broker.fetch_positions"):
             pos_env = broker.fetch_positions()
         pos_data = pos_env.payload
+        _current_unrealized_for_capture = broker_positions_unrealized(pos_data)
         position_prices: dict[str, float] = {}
         if isinstance(pos_data, list):
             for pos in pos_data:
@@ -1186,16 +1191,7 @@ def main() -> int:  # noqa: C901
     _day_start_missing_metrics: list[str] = []
     try:
         from stock_swing.guardrails.day_start_snapshot import get_prev_unrealized_for_guardrail
-        # Compute current unrealized for capture if no snapshot exists yet today
-        _current_unrealized_for_capture: float | None = None
-        if current_positions_full:
-            try:
-                _current_unrealized_for_capture = sum(
-                    float(pos.get("unrealized_pl", 0) or 0)
-                    for pos in current_positions_full.values()
-                )
-            except Exception:
-                pass
+        # A confirmed empty list supplies 0; failed/malformed evidence stays None.
         # FIX: reuse already-fetched equity (broker.get_account() does not exist;
         # the correct method is fetch_account(), already called above at startup).
         _broker_equity_for_capture: float | None = equity if equity and equity > 0 else None
@@ -1205,6 +1201,9 @@ def main() -> int:  # noqa: C901
             unrealized_pnl=_current_unrealized_for_capture,
             source="broker_api" if _broker_equity_for_capture is not None else "tracker_estimate",
         )
+        # A valid saved baseline cannot substitute for unavailable current PnL.
+        if _current_unrealized_for_capture is None:
+            _day_start_missing_metrics.append("unrealized_pnl")
         if _day_start_missing_metrics:
             print(
                 f"  ERROR [FIX-GUARDRAIL-2]: day-start snapshot missing fields: "
@@ -1858,7 +1857,7 @@ def main() -> int:  # noqa: C901
     # Calculate portfolio metrics
     if current_positions_full:
         total_position_value = sum(float(p.get('market_value', 0)) for p in current_positions_full.values())
-        total_unrealized_pl = sum(float(p.get('unrealized_pl', 0)) for p in current_positions_full.values())
+        total_unrealized_pl = _current_unrealized_for_capture
         exposure_pct = (total_position_value / equity * 100) if equity > 0 else 0
         
         # Dynamic exposure cap (signal-count × regime hybrid)
@@ -1878,7 +1877,10 @@ def main() -> int:  # noqa: C901
         print("  Portfolio Summary:")
         print(f"    Total Positions:      {len(current_positions_full)}")
         print(f"    Total Value:          ${total_position_value:>12,.2f}")
-        print(f"    Total Unrealized P&L: ${total_unrealized_pl:>12,.2f}")
+        if total_unrealized_pl is None:
+            print("    Total Unrealized P&L: UNAVAILABLE (BUYs halted)")
+        else:
+            print(f"    Total Unrealized P&L: ${total_unrealized_pl:>12,.2f}")
         _cap_detail = f"base 68%+{int((_bonus)*100)}% ({_strong_buy_count} strong signals, {price_based_regime})"
         print(f"    Exposure:             {exposure_pct:>12.1f}% (max: {max_exposure_pct:.0f}% [{_cap_detail}])")
         print(f"    Available Capacity:   ${available_capacity:>12,.2f} ({available_capacity/equity*100:.1f}%)")
@@ -1903,12 +1905,13 @@ def main() -> int:  # noqa: C901
             qty = int(float(pos_data.get('qty', 0)))
             avg_entry = float(pos_data.get('avg_entry_price', 0))
             current = float(pos_data.get('current_price', 0))
-            unreal_pl = float(pos_data.get('unrealized_pl', 0))
+            unreal_pl = float(pos_data['unrealized_pl']) if total_unrealized_pl is not None else None
             unreal_plpc = float(pos_data.get('unrealized_plpc', 0))
-            print(f"    {sym:6} {qty:>6} ${avg_entry:>9.2f} ${current:>9.2f} ${unreal_pl:>9.2f} {unreal_plpc*100:>7.2f}%")
-            if unreal_pl > 0:
+            _unreal_pl_text = f"${unreal_pl:>9.2f}" if unreal_pl is not None else f"{'N/A':>10}"
+            print(f"    {sym:6} {qty:>6} ${avg_entry:>9.2f} ${current:>9.2f} {_unreal_pl_text} {unreal_plpc*100:>7.2f}%")
+            if unreal_pl is not None and unreal_pl > 0:
                 winners += 1
-            elif unreal_pl < 0:
+            elif unreal_pl is not None and unreal_pl < 0:
                 losers += 1
         print(f"    {'─'*6} {'─'*6} {'─'*10} {'─'*10} {'─'*10} {'─'*8}")
         print(f"    Total: {len(current_positions_full)} positions ({winners}W / {losers}L)")
@@ -2234,7 +2237,7 @@ def main() -> int:  # noqa: C901
     # (9:30-16:00 ET). Market orders with extended_hours=False cannot fill during
     # pre-market or after-hours, creating phantom accepted orders (2026-06-03 incident).
     # Override: export PAPER_DEMO_ALLOW_OFFHOURS_BUYS=true
-    now_for_filter = datetime.now()
+    now_for_filter = datetime.now(timezone.utc)
     actionable, blocked_offhours_buys = _filter_buys_outside_regular_hours(actionable, now_for_filter)
     if blocked_offhours_buys:
         _, offhours_status = MarketCalendar.is_regular_market_hours(now_for_filter)
@@ -2301,6 +2304,38 @@ def main() -> int:  # noqa: C901
         etf_symbols=set(ETF_SYMBOLS),
     )
     _ef_result.stats["small_sample_watchlist"] = _small_sample_watchlist
+    # Observer only: capture the actual PF boundary before replacing actionable.
+    # No additional price API calls, execution overrides, or trading-ledger writes.
+    from stock_swing.risk.entry_restriction_review import observe_restricted_entries
+    _restriction_review = observe_restricted_entries(
+        root=project_root,
+        decisions=actionable,
+        blocked=_ef_result.blocked,
+        stop_list=_buy_stop_list,
+        records_by_symbol=_records_by_symbol,
+        entry_config=_ef_config,
+        run_id=run_context.run_id,
+        config_hash=experiment_context.config_hash if experiment_context is not None else "unknown",
+        observed_at=datetime.now(timezone.utc),
+        dry_run=args.dry_run,
+        signal_config={
+            "symbols": sorted(symbols), "timeframe": args.timeframe,
+            "bar_limit": args.bar_limit, "min_momentum": args.min_momentum,
+            "min_signal_strength": args.min_signal_strength,
+            "intraday_candidate_limit": args.intraday_candidate_limit,
+            "allow_outside_hours": args.allow_outside_hours,
+            "entry_runtime_flags": {
+                key: os.environ.get(key, "") for key in (
+                    "PAPER_DEMO_ALLOW_OFFHOURS_BUYS", "PAPER_DEMO_ALLOW_ETF_BUYS",
+                    "PAPER_DEMO_SKIP_RISK_BUDGET", "PAPER_DEMO_SKIP_CLUSTER_CAP",
+                    "PAPER_DEMO_USE_INTRADAY", "PAPER_DEMO_EXIT_ONLY",
+                )
+            },
+        },
+    )
+    _ef_result.stats["entry_restriction_review"] = _restriction_review
+    if _restriction_review["status"] == "error":
+        print("  ⚠️ 購入停止の観測を保留（既存の購入制限は変更なし）")
     actionable = _ef_result.passed
     if _ef_result.blocked:
         _vol_n = len(_ef_result.stats.get("volume_blocked", []))
@@ -2411,8 +2446,7 @@ def main() -> int:  # noqa: C901
         _prebuy_snapshot = build_risk_snapshot(
             trades=pnl_tracker.state.trades,
             equity=equity,
-            unrealized_pnl=sum(float(p.get("unrealized_pl", 0) or 0)
-                               for p in current_positions_full.values()) if current_positions_full else 0.0,
+            unrealized_pnl=_current_unrealized_for_capture,
             prev_unrealized_pnl=_day_start_unrealized,
             stale_price_event_count=len(stale_symbols) if "stale_symbols" in dir() else 0,
             broker_tracker_mismatch_count=_bt_diff_prebuy["mismatch_count"],
@@ -2515,10 +2549,7 @@ def main() -> int:  # noqa: C901
             equity=equity,
             open_position_count=len(current_positions_full),
             realized_pnl=float(pnl_tracker.state.cumulative_realized_pnl or 0),
-            unrealized_pnl=(
-                sum(float(p.get("unrealized_pl", 0) or 0) for p in current_positions_full.values())
-                if current_positions_full else 0.0
-            ),
+            unrealized_pnl=_current_unrealized_for_capture,
             decisions=decisions,
             submissions=[],
             cluster_blocks=[sym for sym, _ in blocked_cluster_cap] if "blocked_cluster_cap" in dir() else [],
@@ -2553,11 +2584,7 @@ def main() -> int:  # noqa: C901
             equity_bridge=_build_equity_bridge(
                 broker_equity=equity,
                 pnl_tracker=pnl_tracker,
-                unrealized_pnl=(
-                    sum(float(p.get("unrealized_pl", 0) or 0)
-                        for p in current_positions_full.values())
-                    if current_positions_full else 0.0
-                ),
+                unrealized_pnl=_current_unrealized_for_capture,
             ),
             # R6-v2: funnel stages (dry-run has no submissions/reconciliation)
             funnel_stages={
@@ -3049,6 +3076,7 @@ def main() -> int:  # noqa: C901
 
     if _guard_engine is not None and _breaker_store is not None and post_run_update is not None:
         try:
+            _postrun_unrealized = _current_unrealized_for_capture
             # G1 fix: if new orders were submitted, wait briefly so broker API reflects fills
             # before computing broker/tracker diff (prevents race-condition false HALT).
             _new_submissions = [
@@ -3063,9 +3091,18 @@ def main() -> int:  # noqa: C901
                 # Re-fetch fresh positions after wait
                 try:
                     _fresh_positions_env = broker.fetch_positions()
+                    _postrun_unrealized = broker_positions_unrealized(_fresh_positions_env.payload)
                     _fresh_positions_list = _fresh_positions_env.payload if isinstance(_fresh_positions_env.payload, list) else []
-                    _positions_for_diff = _fresh_positions_list
+                    # Invalid raw rows must reach the missing-metric HALT,
+                    # not crash the diagnostic mismatch renderer first.
+                    _positions_for_diff = (
+                        _fresh_positions_list if _postrun_unrealized is not None
+                        else list(current_positions_full.values())
+                    )
                 except Exception as _fe:
+                    # Retain positions only for diagnostics; stale data cannot
+                    # certify a clean run or recovery after a failed fresh fetch.
+                    _postrun_unrealized = None
                     logger.warning("Re-fetch positions after submission failed (using stale): %s", _fe)
                     _positions_for_diff = list(current_positions_full.values()) if current_positions_full else []
             else:
@@ -3122,8 +3159,7 @@ def main() -> int:  # noqa: C901
             _postrun_snapshot = build_risk_snapshot(
                 trades=pnl_tracker.state.trades,
                 equity=equity,
-                unrealized_pnl=sum(float(p.get("unrealized_pl", 0) or 0)
-                                   for p in (_positions_for_diff if "_positions_for_diff" in dir() else [])),
+                unrealized_pnl=_postrun_unrealized,
                 prev_unrealized_pnl=_day_start_unrealized,
                 stale_price_event_count=len(stale_symbols) if "stale_symbols" in dir() else 0,
                 broker_tracker_mismatch_count=_adjusted_mismatch,
@@ -3236,10 +3272,7 @@ def main() -> int:  # noqa: C901
     _print_summary(decisions, submissions, equity, args.dry_run)
     from stock_swing.reporting.console_summary import ConsoleSummary
 
-    unrealized = (
-        sum(float(p.get("unrealized_pl", 0) or 0) for p in current_positions_full.values())
-        if current_positions_full else 0.0
-    )
+    unrealized = _postrun_unrealized if "_postrun_unrealized" in dir() else _current_unrealized_for_capture
     ps_sources: dict[str, int] = {}
     for s in submissions:
         src = (s.sizing_details or {}).get("price_source", "unknown")
@@ -3383,6 +3416,7 @@ def main() -> int:  # noqa: C901
             breaker_state=_breaker_state if "_breaker_state" in dir() else None,
             ledger_gate_status=_ledger_gate_status if "_ledger_gate_status" in dir() else "UNKNOWN",
             exit_strat=exit_strat if "exit_strat" in dir() else None,
+            entry_restriction_review=_restriction_review,
         )
 
     return finish(
@@ -3398,7 +3432,7 @@ def _build_equity_bridge(
     *,
     broker_equity: float,
     pnl_tracker,
-    unrealized_pnl: float,
+    unrealized_pnl: float | None,
 ) -> dict:
     """R0-v2-B: Build equity bridge dict for ConsoleSummary.
 
@@ -3409,6 +3443,8 @@ def _build_equity_bridge(
     verified broker cash-flow adjustment and cumulative fees without mutating
     the strategy trade ledger.
     """
+    if unrealized_pnl is None:
+        return {}  # An unknown PnL must not manufacture a reconciled bridge.
     try:
         import json as _json
         import yaml as _yaml
@@ -3851,6 +3887,7 @@ def _send_telegram_summary(
     breaker_state=None,
     ledger_gate_status: str = "UNKNOWN",
     exit_strat=None,
+    entry_restriction_review: dict | None = None,
 ) -> None:
     """取引時間中の Telegram サマリーを送信する（改善版 2026-07-27）。
 
@@ -3980,6 +4017,12 @@ def _send_telegram_summary(
     parts.append(f"<b>{mode_tag} - Stock Swing</b>")
     parts.append(f"🗓 {jst_time}")
     parts.append("")
+    # Place actionable review notices before long positions/trade sections so
+    # the existing message length cap cannot silently truncate the notice.
+    from stock_swing.risk.entry_restriction_review import format_review_candidates
+    _review_notice = format_review_candidates(entry_restriction_review or {}, telegram=True)
+    if _review_notice:
+        parts.extend([_review_notice, ""])
 
     # システム状態
     ledger_icon = "✅" if ledger_gate_status == "VALID" else ("❌" if ledger_gate_status == "INVALID" else "❓")

@@ -1,0 +1,14 @@
+{
+  "delta.patch": {
+    "files": 15,
+    "lines": 1110,
+    "apply_matches": true,
+    "reverse_matches": true
+  },
+  "combined.patch": {
+    "files": 20,
+    "lines": 2111,
+    "apply_matches": true,
+    "reverse_matches": true
+  }
+}

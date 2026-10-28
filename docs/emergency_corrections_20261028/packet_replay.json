@@ -1,0 +1,14 @@
+{
+  "cli_cases": 40,
+  "concurrency_cases": 4,
+  "concurrency_processes": 12,
+  "focused_passed": 355,
+  "full_suite_repeated": false,
+  "global_idempotence_claim": false,
+  "integrity": "verified",
+  "normalized_outcomes_match": true,
+  "production_applied": false,
+  "resolved_copy_origins": true,
+  "script_version_cases": 148,
+  "separate_script_processes": 198
+}

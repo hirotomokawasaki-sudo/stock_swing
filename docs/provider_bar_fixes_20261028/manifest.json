@@ -1,0 +1,876 @@
+{
+  "files": {
+    "CLAIMS.md": {
+      "mode": 420,
+      "sha256": "75f1ae265e181b5fb67afab88da1a7182f1556afa9760bab8f4cb3bbede630a2"
+    },
+    "README.md": {
+      "mode": 420,
+      "sha256": "3d76b097c3c395ebf78a15e0b12de5b357cc94881bf1723c58bdf213bd1d9df0"
+    },
+    "TEST_CHECKLIST.md": {
+      "mode": 420,
+      "sha256": "81ca5eabf30f74c4e8dbb2e790ff4085da68075d0abfc9f13eded7f819de1934"
+    },
+    "VALIDATION.json": {
+      "mode": 420,
+      "sha256": "e54f995099d5b1e18cb2d1d5df9a35ff39e389e4d04dcf80ee0af096daba76f7"
+    },
+    "baseline/src/stock_swing/cli/paper_demo.py": {
+      "mode": 420,
+      "sha256": "c826bff395b3a6d6e2e21d4d98b45f41296e96dab77ca21694a132cc82128e85"
+    },
+    "baseline/src/stock_swing/normalization/broker_normalizer.py": {
+      "mode": 420,
+      "sha256": "fb880d2755531089d1fb62c6a94c7f6da323c2c2eac718d79a3b374c53eac633"
+    },
+    "baseline/src/stock_swing/sources/broker_client.py": {
+      "mode": 420,
+      "sha256": "7319c56167fbdd8f6fe6e4b446c9d2382f1bf64811301699791f3bc562aaec36"
+    },
+    "baseline/src/stock_swing/sources/hybrid_data_fetcher.py": {
+      "mode": 420,
+      "sha256": "4c7b8c66127ae872b8aef033dbb28571a220862d12d5195cc16c9b7f73cb09b8"
+    },
+    "baseline/src/stock_swing/sources/massive_client.py": {
+      "mode": 420,
+      "sha256": "6ed163f73f52c963b4755363b17893c4e58e437debec9e72bf20f7789c0bd772"
+    },
+    "baseline_regression.log": {
+      "mode": 420,
+      "sha256": "3227dcf9db48c7aa329a138bbe5448a222dce66119402fe251ad924a8a3810c7"
+    },
+    "code/src/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "code/src/stock_swing/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "code/src/stock_swing/analysis/__init__.py": {
+      "mode": 420,
+      "sha256": "6023608a5b2f926e97da6ec463b4859da74d7fa80af8d55cdaa4ca17d164a7b9"
+    },
+    "code/src/stock_swing/analysis/baseline_metrics.py": {
+      "mode": 420,
+      "sha256": "a015c988201d78ec861f284ad1066e36cfe91af49ac811099ffb6d025d65dea2"
+    },
+    "code/src/stock_swing/analysis/risk_calculator.py": {
+      "mode": 420,
+      "sha256": "44d68fba7da49730c586a48cf5f6704b6c3876f0f5a99dbcebad6699099ef1a2"
+    },
+    "code/src/stock_swing/analysis/strategy_analyzer.py": {
+      "mode": 420,
+      "sha256": "c5c5081eec48aafe6759d5556013e814ab3005c44be644d07cd8d4f19b23718c"
+    },
+    "code/src/stock_swing/backtest/__init__.py": {
+      "mode": 420,
+      "sha256": "eb89c806c6801aaa34650f9941dc9bf7ab13c80233e2115be2e7a2f7e49c6bf1"
+    },
+    "code/src/stock_swing/backtest/data_loader.py": {
+      "mode": 420,
+      "sha256": "cc0bff7a393efe24269ca3b0f9a08092ec198fa6d36479652c463e879d394e48"
+    },
+    "code/src/stock_swing/backtest/engine.py": {
+      "mode": 420,
+      "sha256": "a18e33911cef9f675f8fe7594862f34c22cd80640a4ce389ec789abb71b85f2e"
+    },
+    "code/src/stock_swing/backtest/engine_v2.py": {
+      "mode": 420,
+      "sha256": "89b5f6bd2b0a05b571b2e7f9a5c73daa7cc94abfcbaa2d650183bf6542827048"
+    },
+    "code/src/stock_swing/backtest/metrics.py": {
+      "mode": 420,
+      "sha256": "131da9d4cb44a9637c5e720d4ece0f890e38ae5463376a62877c066b063be4e8"
+    },
+    "code/src/stock_swing/backtest/parameter_grid.py": {
+      "mode": 420,
+      "sha256": "8bc42457aaac452a95df8c745fa7b604da53e0b24a23e20a6341becda431978a"
+    },
+    "code/src/stock_swing/backtest/price_cache.py": {
+      "mode": 420,
+      "sha256": "976a128f99640f2a9fe9f0b5d6d0a6d42f3324c883b164ebc5b84ad678b312bb"
+    },
+    "code/src/stock_swing/backtest/trade_simulator.py": {
+      "mode": 420,
+      "sha256": "4193b9578725ae4d03e21f2ec83500800be61258ebaa6865837ba154d7a09e0a"
+    },
+    "code/src/stock_swing/cli/__init__.py": {
+      "mode": 420,
+      "sha256": "9def6c803b2010c1540b715fbca3ebfe37d09e2895fb5e16a04da3583902601d"
+    },
+    "code/src/stock_swing/cli/analyze_data.py": {
+      "mode": 420,
+      "sha256": "d2d501f26d1d2a2d52d3cc1dcc37abf1ea845551b9d988d5ed99c7a5202ccc49"
+    },
+    "code/src/stock_swing/cli/backfill_pnl_state.py": {
+      "mode": 420,
+      "sha256": "7007498eda0cf541cc32cae832120b7063c5a56d8e97f86c036fa3933d7f593d"
+    },
+    "code/src/stock_swing/cli/broker_healthcheck.py": {
+      "mode": 420,
+      "sha256": "f3fc70b9ef9f5395dfa8731093ca89a8b0c9a69ff9369a6b2e1f7f3ec262b475"
+    },
+    "code/src/stock_swing/cli/collect_data.py": {
+      "mode": 420,
+      "sha256": "39a0d6662252cb910ebb1eb39aeaa66c89681f30602b62cce8a562500812aac2"
+    },
+    "code/src/stock_swing/cli/cron_summary.py": {
+      "mode": 420,
+      "sha256": "41d83605902649c91905a335951f7ee25c4011180b5fb0f940655a5a93883b2d"
+    },
+    "code/src/stock_swing/cli/daily_report.py": {
+      "mode": 420,
+      "sha256": "bf91f33d2de4f5796f82181fbc017a2b2249709434a96f16c1c25b3599014e35"
+    },
+    "code/src/stock_swing/cli/healthcheck.py": {
+      "mode": 420,
+      "sha256": "c664fab89232e03c495850fac7e3a167077e083f33b76eaeb292e05beefd29b9"
+    },
+    "code/src/stock_swing/cli/market_check.py": {
+      "mode": 420,
+      "sha256": "4783ab0eb3dfa71f17d336bf2a0f4b031406322bb4077357280d5c22840058fe"
+    },
+    "code/src/stock_swing/cli/paper_demo.py": {
+      "mode": 420,
+      "sha256": "7e7fddbdc78b398fc173fc2b55c6c4e8c95b70fe2307cd089fdaeb4b62393b57"
+    },
+    "code/src/stock_swing/cli/paper_demo_wrapper.py": {
+      "mode": 420,
+      "sha256": "f7d23dabf5b88a9ae22c13fd452daaf61025bb235b433263d8c747049ef62bcd"
+    },
+    "code/src/stock_swing/cli/reconcile_buy_orders.py": {
+      "mode": 420,
+      "sha256": "9e4c6cf3733fa48ae771b7a53ba821d51270898f0de95d035a3dd9d6b4cba34f"
+    },
+    "code/src/stock_swing/cli/reconcile_orders.py": {
+      "mode": 420,
+      "sha256": "a1565cf3d0d04149efd5173605109fd74fa8c63818e531c3bca2177b704f342f"
+    },
+    "code/src/stock_swing/core/__init__.py": {
+      "mode": 420,
+      "sha256": "b6761055cfdba9ae5f6738d8d3f7ff0a2077d1c02a58c3122c3a04b29dbc7ded"
+    },
+    "code/src/stock_swing/core/config_loader.py": {
+      "mode": 420,
+      "sha256": "e2634a0df8a35cfa11c63af0972a898c0b6be5066621719704bd4d92816da110"
+    },
+    "code/src/stock_swing/core/path_manager.py": {
+      "mode": 420,
+      "sha256": "8c95063986900ff01419d7d67d67fce7f1d8968afaa8267abca78319f0c28f08"
+    },
+    "code/src/stock_swing/core/run_context.py": {
+      "mode": 420,
+      "sha256": "f438d0d9f4b30f262889ad9a9c5001d27d0479ba17d193a236403c5768aeb599"
+    },
+    "code/src/stock_swing/core/runtime.py": {
+      "mode": 420,
+      "sha256": "e31a66bb192819f94bb4d6f244193fe74a6ab631b08d43e75a17dc3808a0dc69"
+    },
+    "code/src/stock_swing/core/types.py": {
+      "mode": 420,
+      "sha256": "1fdff9511dc51c90d92ebc0d8ab29ed9c61a00b7b076a93e5dd79a811f2d5eb1"
+    },
+    "code/src/stock_swing/core/types.py.bak": {
+      "mode": 420,
+      "sha256": "e4c99cffd5c5c1d76f43c08e488963c96e2e930ba0fbeaa5d3509c220c7c7d62"
+    },
+    "code/src/stock_swing/decision_engine/__init__.py": {
+      "mode": 420,
+      "sha256": "39a8f2b4025917273b4a63dd390dde95222ac4032c1eab6dbed4d7b6ec68c1d0"
+    },
+    "code/src/stock_swing/decision_engine/basic_decision_engine.py": {
+      "mode": 420,
+      "sha256": "4e43566250c2cc66702b9b054edcac98296d606922543ac40ec866d155b84503"
+    },
+    "code/src/stock_swing/decision_engine/decision_engine.py": {
+      "mode": 420,
+      "sha256": "e308e110ba62cafc9620702ec95b0a34a9350cb47adcaa5d40ae09ac02df23bc"
+    },
+    "code/src/stock_swing/decision_engine/interfaces.py": {
+      "mode": 420,
+      "sha256": "6d71f3e3baa1eaa5ba224292cd29bf374843e48c9d6d3314fd488723b9d429ec"
+    },
+    "code/src/stock_swing/decision_engine/risk_validator.py": {
+      "mode": 420,
+      "sha256": "f11f8caac3ef648492470583db1288e98193ec90b851bc261502ed78817d7ede"
+    },
+    "code/src/stock_swing/execution/__init__.py": {
+      "mode": 420,
+      "sha256": "9dbe6d10d68c03529cc2f731fc6b9ee9d0af7cab232cb115c9ab9423c0aaea00"
+    },
+    "code/src/stock_swing/execution/interfaces.py": {
+      "mode": 420,
+      "sha256": "b0d37d94e537b9860be4deaf4c5e93d1bc3bc11edb2f8393593081b6f2d87255"
+    },
+    "code/src/stock_swing/execution/live_guarded_executor.py": {
+      "mode": 420,
+      "sha256": "57bb9f98ced350afdb6e89e5eb43bf70fd5d46cc281165e1e7fb51ad11403920"
+    },
+    "code/src/stock_swing/execution/paper_executor.py": {
+      "mode": 420,
+      "sha256": "4a06f308d10eb3dc6069a960680cafef0dce3452263190c1f7f07369f23636b8"
+    },
+    "code/src/stock_swing/execution/production_executor.py": {
+      "mode": 420,
+      "sha256": "137b9048883df3a371d930ce31253222d53b719ade5ea05a2ec91f0af4b6ab19"
+    },
+    "code/src/stock_swing/execution/reconciler.py": {
+      "mode": 420,
+      "sha256": "91cf9a908e27269a5b75e8eb5d0eed3afd2232373a57f3be251c042b6717ead2"
+    },
+    "code/src/stock_swing/experiments/__init__.py": {
+      "mode": 420,
+      "sha256": "51d8c83dbd6d86e394a59174f8d0ebb860acdc4f8c4dfa7982ebb43585884977"
+    },
+    "code/src/stock_swing/experiments/bucket_assigner.py": {
+      "mode": 420,
+      "sha256": "7a63ac465195d8d28a03fce3c142e736f9178fdc459e2725d14c3b816876480e"
+    },
+    "code/src/stock_swing/experiments/decision_input_capture.py": {
+      "mode": 420,
+      "sha256": "75f48bd130831a63266f52fa39d15820cde6f02b3c9cdfd53d48d44d1d972559"
+    },
+    "code/src/stock_swing/experiments/experiment_context.py": {
+      "mode": 420,
+      "sha256": "5f70e6e2d9872fd2864978d2eb82f84870d3a7e84c34f7abbafb3ee9b82b9528"
+    },
+    "code/src/stock_swing/experiments/experiment_registry.py": {
+      "mode": 420,
+      "sha256": "401ed07e69c4f6e997b8e133867f750ba60884fd0fa03686297314cf99961d19"
+    },
+    "code/src/stock_swing/experiments/feature_snapshot_store.py": {
+      "mode": 420,
+      "sha256": "9ce9d22a43179a87bd73f95f39c352643185f1be0917b0793af3bc72868a4e5f"
+    },
+    "code/src/stock_swing/experiments/measurement_capture.py": {
+      "mode": 420,
+      "sha256": "ec595328563aadf9fbb88f48c4e3057decdf5d002feb6013851fb49aa6b3463e"
+    },
+    "code/src/stock_swing/experiments/prompt_registry.py": {
+      "mode": 420,
+      "sha256": "8c5cc37fb1290e74831b0707a86ae8c2f0bd29f25b513293f2a64fa6217a7c4d"
+    },
+    "code/src/stock_swing/feature_engine/__init__.py": {
+      "mode": 420,
+      "sha256": "6b056ae08e18b2f0c36f6c4a68ca58830fdbdc3f397f13fff883de6cf8526060"
+    },
+    "code/src/stock_swing/feature_engine/base_feature.py": {
+      "mode": 420,
+      "sha256": "d23f56a00101581d2ab46cdb9f839afbda7ce9cfe8181089f314d32bd911cd53"
+    },
+    "code/src/stock_swing/feature_engine/basic_features.py": {
+      "mode": 420,
+      "sha256": "2fc77a535c84612f1d02f310e1aed228e7e5053275079c7ae64f8e060b7bbe81"
+    },
+    "code/src/stock_swing/feature_engine/earnings_event_feature.py": {
+      "mode": 420,
+      "sha256": "291c61ca6e9fbfcb105c9cb987878e8df90f25e91cb6dbcf14fe5a4d1583bc80"
+    },
+    "code/src/stock_swing/feature_engine/interfaces.py": {
+      "mode": 420,
+      "sha256": "d237476e7c24ef9d9b0fc4478e8242fb529970850362ee2395c25a3299208dca"
+    },
+    "code/src/stock_swing/feature_engine/intraday_momentum_feature.py": {
+      "mode": 420,
+      "sha256": "4bb695bdb8375da59cf9c5a9099ce18258ecf7921d30a5ae031271ff3d3810ac"
+    },
+    "code/src/stock_swing/feature_engine/macro_regime_feature.py": {
+      "mode": 420,
+      "sha256": "61679c7ca754a0271de11d242111486215d7d6ecf081e29ccc126a8fe5e67e6c"
+    },
+    "code/src/stock_swing/feature_engine/price_momentum_feature.py": {
+      "mode": 420,
+      "sha256": "05b513327d2e52908565c86266001be56d645fe553ffcc86c44653ba919de569"
+    },
+    "code/src/stock_swing/feature_engine/sector_momentum_feature.py": {
+      "mode": 420,
+      "sha256": "dfb267e48915cbcbc72fb4ae71be43b1be828b6ddc86c4804c447951bc51832a"
+    },
+    "code/src/stock_swing/feature_engine/us_overnight_benchmark_feature.py": {
+      "mode": 420,
+      "sha256": "2ada82f0666d4e8c7d99eac7dd4921d291e59d605ec5257557e11ba533498f64"
+    },
+    "code/src/stock_swing/guardrails/__init__.py": {
+      "mode": 420,
+      "sha256": "3d86e337be3fb91253cd9b3518e143a455f59110eda30b40a706d6c885ddc8fa"
+    },
+    "code/src/stock_swing/guardrails/circuit_breaker.py": {
+      "mode": 420,
+      "sha256": "d5c183c3beaa8844022ccfd095d5c9d3c39b10dbade38a08cfa6352a451a0978"
+    },
+    "code/src/stock_swing/guardrails/day_start_snapshot.py": {
+      "mode": 420,
+      "sha256": "0cc5fbd71028e1e4633c25de4e02e47fed46a0bfe25c7f090e1d5b4413bcbcad"
+    },
+    "code/src/stock_swing/guardrails/economic_risk_off.py": {
+      "mode": 420,
+      "sha256": "c87130a81ea032ece09ff5251fd547357a07288407c14e3ba482f04f78ac8bb5"
+    },
+    "code/src/stock_swing/guardrails/flatten_plan.py": {
+      "mode": 420,
+      "sha256": "cbaf2879600076c4024c928370ccb6b0e6b07faaad61144121d25478c9770880"
+    },
+    "code/src/stock_swing/guardrails/postrun_mismatch.py": {
+      "mode": 420,
+      "sha256": "30d359aa66c82b9be500d42f02aa45a7b0efe0aa76f6e9430b62c42887f07f0d"
+    },
+    "code/src/stock_swing/guardrails/pre_trade_check.py": {
+      "mode": 420,
+      "sha256": "7a0af208eeaa0e691f9d34607f4633971ae360e4ee01c7e038a27f95c019e80f"
+    },
+    "code/src/stock_swing/guardrails/risk_snapshot.py": {
+      "mode": 420,
+      "sha256": "be1c8d725df6031777de0838d1fc9f6eeaa956b03dd38bf73c347dd3af895fc6"
+    },
+    "code/src/stock_swing/guardrails/rule_engine.py": {
+      "mode": 420,
+      "sha256": "ada8f6ed2a4abc57bcbf26d0e7a36c312aff7b47f1493540f79ea17bb4097e1d"
+    },
+    "code/src/stock_swing/ingestion/__init__.py": {
+      "mode": 420,
+      "sha256": "9bbae6aa5ebace7566e7f4717ccbda9ffdbb5d0ee460e8eee12a4ba24cb3d0a4"
+    },
+    "code/src/stock_swing/ingestion/raw_ingestor.py": {
+      "mode": 420,
+      "sha256": "2ac221fb1a5aafacbc8fd38c63719bce0a789ce816701151d6b7129d301fc0c9"
+    },
+    "code/src/stock_swing/normalization/__init__.py": {
+      "mode": 420,
+      "sha256": "ac5e3debd7209996e06023463548599c56744fb73e961a3199fb7f731af2a88f"
+    },
+    "code/src/stock_swing/normalization/broker_normalizer.py": {
+      "mode": 420,
+      "sha256": "50a13236ce85ee1b9df8b0777c02784d0c7ecb43a4ca3b6ac925136552134d4b"
+    },
+    "code/src/stock_swing/normalization/finnhub_normalizer.py": {
+      "mode": 420,
+      "sha256": "67bd2f577ee1e43fd8e7dc4e6cff69f6367cce438824f232ba899b4bad6f6f90"
+    },
+    "code/src/stock_swing/normalization/fred_normalizer.py": {
+      "mode": 420,
+      "sha256": "b198dec15205a0e2189f5a1baafe04058a8e69c8c8f975b13a162b7b6aae23ce"
+    },
+    "code/src/stock_swing/normalization/interfaces.py": {
+      "mode": 420,
+      "sha256": "b79ce0cf2bfdcf8791298169b506bd34b9042136a7357109d8f6a0c2a813cb48"
+    },
+    "code/src/stock_swing/normalization/normalizer.py": {
+      "mode": 420,
+      "sha256": "55afa4b23ba98c5d4f89485a312474d4b0ec51b6d30d1b73d55ec45c6b0d94cc"
+    },
+    "code/src/stock_swing/normalization/sec_normalizer.py": {
+      "mode": 420,
+      "sha256": "11b5451d9834aac7a4538b38c2075dc3154e19516ed4142ff99b32692cb52604"
+    },
+    "code/src/stock_swing/openclaw/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "code/src/stock_swing/openclaw/basic_adapter.py": {
+      "mode": 420,
+      "sha256": "b855c0c64e4d5804cdeace0dc317152ac5a8b51df8eb96e5f2a179daa0771bdf"
+    },
+    "code/src/stock_swing/openclaw/interfaces.py": {
+      "mode": 420,
+      "sha256": "8062e23f529cd8e32b8394c0cc796d7c5b8f3d7d5037703ba31d8ad41c0afad4"
+    },
+    "code/src/stock_swing/openclaw_adapter/__init__.py": {
+      "mode": 420,
+      "sha256": "c3e75c1a9d45b00c77f04303a2d5d19ec2686c84e070a7304355f82fb8ac5453"
+    },
+    "code/src/stock_swing/openclaw_adapter/decision_summarizer.py": {
+      "mode": 420,
+      "sha256": "f3da3262e4ec605701236a219b62d68d15c646a3a611c1912172b9bbfe00f195"
+    },
+    "code/src/stock_swing/openclaw_adapter/execution_summarizer.py": {
+      "mode": 420,
+      "sha256": "64bcf0842fe0df71de765849b8ec8f54097ca3d3aa41c991f852d361044c499a"
+    },
+    "code/src/stock_swing/openclaw_adapter/signal_summarizer.py": {
+      "mode": 420,
+      "sha256": "1b0abbdabae975f6788b0da15fe82fa80baa0ed66d3ecd126cc952fcbd800f81"
+    },
+    "code/src/stock_swing/parameter_engine/__init__.py": {
+      "mode": 420,
+      "sha256": "eae2b2b788aff08b76bee641024ebc521982f272b1876393c878b08ba58dda86"
+    },
+    "code/src/stock_swing/parameter_engine/parameter_recommender.py": {
+      "mode": 420,
+      "sha256": "cd486f84f9b9841036c4d084147f9e577d263e97f31240e9288b6c10e66f0586"
+    },
+    "code/src/stock_swing/parameter_engine/performance_analyzer.py": {
+      "mode": 420,
+      "sha256": "352150a5a6564d48560bff638be96aa1ce9fbced1da3027f1339aca8419c6e70"
+    },
+    "code/src/stock_swing/parameter_engine/safe_ranges.py": {
+      "mode": 420,
+      "sha256": "9cda38be4a7da964abbeb6e91ca578749722144f0e1eb816c770d55833a53ffc"
+    },
+    "code/src/stock_swing/pricing/__init__.py": {
+      "mode": 420,
+      "sha256": "1c9d50ce7a5672846273becbe1f686f795727727a69539c123b5e4b69ff75618"
+    },
+    "code/src/stock_swing/pricing/price_resolver.py": {
+      "mode": 420,
+      "sha256": "8dcef4c388bdd763a72439c6a3369a49968057d3554537252d85550821ef1438"
+    },
+    "code/src/stock_swing/reporting/__init__.py": {
+      "mode": 420,
+      "sha256": "8f9dfb92531aeb24936fbc000963f98b7fae08eaf9088a88b23d6726b4121576"
+    },
+    "code/src/stock_swing/reporting/console_renderer.py": {
+      "mode": 420,
+      "sha256": "3965965b416f64421ff165ad57c936a07e6e027dd98250c4f374618830a45cda"
+    },
+    "code/src/stock_swing/reporting/console_summary.py": {
+      "mode": 420,
+      "sha256": "b5e09b3dd462d8c640c4d7608c2ee1f1e68d6c9e725535be9fe884805a31500b"
+    },
+    "code/src/stock_swing/reporting/daily_summary.py": {
+      "mode": 420,
+      "sha256": "0648ff046a641a0c4cf27511c3bfde175233c4d2298466e8ba7b1a2ff5be1a73"
+    },
+    "code/src/stock_swing/reporting/equity_bridge.py": {
+      "mode": 420,
+      "sha256": "b10fe9cfe2ee08fba43b20d12c2e46b09c18d0430086662dba2ea7b22d15acba"
+    },
+    "code/src/stock_swing/reporting/equity_bridge_reconciliation.py": {
+      "mode": 420,
+      "sha256": "2c970b9ddd9f6372e9c43ee2bf118614557def74edb550046defd3543f33c610"
+    },
+    "code/src/stock_swing/reporting/performance_snapshot.py": {
+      "mode": 420,
+      "sha256": "29fc23a08b9a34f0355d2dab6f092fe4fee1aea2f57eb522ad421c0f3afd1131"
+    },
+    "code/src/stock_swing/reporting/recommendation_report.py": {
+      "mode": 420,
+      "sha256": "f8aed30beaf633ac047e1704237945dedc92f09f3e9fc0c7f66b6099acb4589d"
+    },
+    "code/src/stock_swing/reporting/restriction_review_alerts.py": {
+      "mode": 420,
+      "sha256": "c03fe43607bbd557d098bb787a96b8a35922bf394759e44783b0cf36cc74f189"
+    },
+    "code/src/stock_swing/research/__init__.py": {
+      "mode": 420,
+      "sha256": "3e646c83c9f3d63d4bec6642378cb60f44c20da4926d5f022da3dea307160bd4"
+    },
+    "code/src/stock_swing/research/rolling_walk_forward.py": {
+      "mode": 420,
+      "sha256": "08eeeab2d1cded796f4f8ea0b6bea699c7488b5d736f7689e318a9b17089b9a6"
+    },
+    "code/src/stock_swing/research/trial_registry.py": {
+      "mode": 420,
+      "sha256": "5dbfdba595519d0d8f35783fafe4772c7b521abeff5d76d355bc8ec087834b72"
+    },
+    "code/src/stock_swing/risk/__init__.py": {
+      "mode": 420,
+      "sha256": "b1c20d05ab8571addd45327656d507ee7d89edb446a77691a4a91ad00862823b"
+    },
+    "code/src/stock_swing/risk/allocation_config.py": {
+      "mode": 420,
+      "sha256": "dcb2e4f21aaf01163d66859a1cde97c039ff39dffb07aade5486ff6213c2b85f"
+    },
+    "code/src/stock_swing/risk/basic_risk.py": {
+      "mode": 420,
+      "sha256": "fa608882f0116e9dc433eb82dd327392ec5a96efbaca63cf13dd65fdfcdd9ca2"
+    },
+    "code/src/stock_swing/risk/correlation_cluster.py": {
+      "mode": 420,
+      "sha256": "4e5ef7567f3320a0e7ae64f4e16a4e808b783e959c81bafbe7b5a66b876a6cba"
+    },
+    "code/src/stock_swing/risk/distance_from_high.py": {
+      "mode": 420,
+      "sha256": "7d46dc59a73c857c8462a87d2677653ce3496a4d6420a1361e27778ad0047c15"
+    },
+    "code/src/stock_swing/risk/earnings_proximity_shadow.py": {
+      "mode": 420,
+      "sha256": "15103891678b8cfed7b701e2267e5602db78a07ca19a14af716f13c2725113e3"
+    },
+    "code/src/stock_swing/risk/entry_filter.py": {
+      "mode": 420,
+      "sha256": "8bde1e1a8da52186eedfcd982a04b25f5e7d115be835251b93c6dc99e36e91cb"
+    },
+    "code/src/stock_swing/risk/entry_restriction_review.py": {
+      "mode": 420,
+      "sha256": "ba9f88f78085f6f02a9fc4e36c123848b5e2eaf3421563b43cb787a150bbd7aa"
+    },
+    "code/src/stock_swing/risk/finnhub_metric_lookup.py": {
+      "mode": 420,
+      "sha256": "2128285e1e9eb91ee3c17d8756d749e7e40b97c12d9610a8e689c628ec76c926"
+    },
+    "code/src/stock_swing/risk/interfaces.py": {
+      "mode": 420,
+      "sha256": "68e8005500388bd2c5ef0f3a45bc674008f8fd3b005c42ad7ea043db1095c25b"
+    },
+    "code/src/stock_swing/risk/losing_position_add_guard.py": {
+      "mode": 420,
+      "sha256": "6554422b5500bb5d5eaa5787a90b8d1810464823ea0f8c6846ad017d2d3b7524"
+    },
+    "code/src/stock_swing/risk/lot_level_exit_diagnostic.py": {
+      "mode": 420,
+      "sha256": "221f7b437b47600cc25db376e5af68ae70adb33ac8b2c3226fb59c38be2b31e8"
+    },
+    "code/src/stock_swing/risk/market_regime_indicator.py": {
+      "mode": 420,
+      "sha256": "05bfb8137e3ca2f63f8487841dc0688b350e3ba2d1fe0ca63011e205d9bc72f4"
+    },
+    "code/src/stock_swing/risk/news_sentiment.py": {
+      "mode": 420,
+      "sha256": "5e83e9b108cfef471437e3badeb4e1562173a240a6e10c482efb82f0afe1cb96"
+    },
+    "code/src/stock_swing/risk/news_shock_hold.py": {
+      "mode": 420,
+      "sha256": "37b466fe78306f781b34c6e426f48e3f27f27c9cf53231275b8069d032d5f932"
+    },
+    "code/src/stock_swing/risk/open_shock_cooldown.py": {
+      "mode": 420,
+      "sha256": "e36833622b159ff99522de59cf9b4bd12359346848e65409dfeffc593545708e"
+    },
+    "code/src/stock_swing/risk/pairwise_correlation.py": {
+      "mode": 420,
+      "sha256": "c6bb49d12f5e33b8c8592037f64ea86c855a8ccbfb423fdab7b54fccb3f274da"
+    },
+    "code/src/stock_swing/risk/per_lot_time_based_exit.py": {
+      "mode": 420,
+      "sha256": "1b08a37f53a8ea0a3f2c2bd0f44dd87d21a2c51d31b22cb789a710e7d772a6d5"
+    },
+    "code/src/stock_swing/risk/portfolio_allocator.py": {
+      "mode": 420,
+      "sha256": "0a64d37e57c06c1ec031f6f5bfc7880c4cbdbc30aafa13691317c287416832f6"
+    },
+    "code/src/stock_swing/risk/position_sizing.py": {
+      "mode": 420,
+      "sha256": "6a80f3417aaa191ead985755f0c580390158fcc2d7972b8bf63774c056353717"
+    },
+    "code/src/stock_swing/risk/promotion_gate.py": {
+      "mode": 420,
+      "sha256": "6e459a0e7b8a4600b3a7e54e48087c95d854fff69b779743733d325ded05fb81"
+    },
+    "code/src/stock_swing/risk/risk_budget.py": {
+      "mode": 420,
+      "sha256": "8d15abbaac3adb0e9c7d239b32c9d6ccfd393a9c77e8cf8c034283f7cf8848ee"
+    },
+    "code/src/stock_swing/risk/risk_monitor.py": {
+      "mode": 420,
+      "sha256": "8ba8da82941021ad74b70bd7f207c35cfc4c7dcebcb8bdeacc6f1a6f91d5abdf"
+    },
+    "code/src/stock_swing/risk/rsi_diagnostic.py": {
+      "mode": 420,
+      "sha256": "8ca1c4ffa9694356e538e19843229af165855baded34210e7c875c0a5b3d2958"
+    },
+    "code/src/stock_swing/risk/same_symbol_cooldown.py": {
+      "mode": 420,
+      "sha256": "38623bbc00d76cf1048bd8ec086c900e4ecbf8c4cf07b2b83692f3d32cf574b5"
+    },
+    "code/src/stock_swing/risk/session_return_snapshot.py": {
+      "mode": 420,
+      "sha256": "187f4dbfa5939f9179239b87560f163c92c80cbaa0360f9af74c1da06b64e60e"
+    },
+    "code/src/stock_swing/risk/shock_aware_staged_exit.py": {
+      "mode": 420,
+      "sha256": "b55dad62601c40de88a0290e0676724ac6c1e6039fff75082c68f976d1ed7385"
+    },
+    "code/src/stock_swing/risk/volatility_gate.py": {
+      "mode": 420,
+      "sha256": "988f3f015bbb173872c72899d9ff9baaa451ec282b4cf8db00a02d022c1092f5"
+    },
+    "code/src/stock_swing/risk/weekend_gap_guard.py": {
+      "mode": 420,
+      "sha256": "99004b38643e610f6c2d6781a32180194e4177ccdb739d7eaa0d0f6c0417eb2b"
+    },
+    "code/src/stock_swing/safety/__init__.py": {
+      "mode": 420,
+      "sha256": "07cbd429dac530f51bac7761e092c536787aba5fab79221ed8cf87e0ac0e4736"
+    },
+    "code/src/stock_swing/safety/audit_logger.py": {
+      "mode": 420,
+      "sha256": "784bb5b0db8540bdce1ebbab0f6406aefec97b80c498245cf48809206ce07514"
+    },
+    "code/src/stock_swing/safety/kill_switch.py": {
+      "mode": 420,
+      "sha256": "52e59081ea2f2a3db8f31049d149f4f59a623e44dd5b25feefac82a774d90d99"
+    },
+    "code/src/stock_swing/sources/__init__.py": {
+      "mode": 420,
+      "sha256": "8f00a339db3691bd04055c3a90f2515bec316136d6599618c573d83ffe956960"
+    },
+    "code/src/stock_swing/sources/bar_contract.py": {
+      "mode": 420,
+      "sha256": "8329875cb14fa17f18eb000fbcdd518cd5ad0dd628f2f400d7b3c2b2f25698dd"
+    },
+    "code/src/stock_swing/sources/base.py": {
+      "mode": 420,
+      "sha256": "371e05eb77c2ef2e4dea1214ea9d73c7d1030b08a092d9ed7de0dbafd0becae9"
+    },
+    "code/src/stock_swing/sources/broker_client.py": {
+      "mode": 420,
+      "sha256": "49f59390e6f8f6582169622dd68b8674e0003ededd0483a4276bf60494e8b02e"
+    },
+    "code/src/stock_swing/sources/broker_client_protocol.py": {
+      "mode": 420,
+      "sha256": "6bb9e2564ab106af5c9fb86f076b0e5bcfa9fcbc0a53a507ae4483ca25a88bac"
+    },
+    "code/src/stock_swing/sources/errors.py": {
+      "mode": 420,
+      "sha256": "dd1fbc5a902ca186be5e3f2ae019b5e37171b76b9e4a24bfc7daa32acb5bf096"
+    },
+    "code/src/stock_swing/sources/finnhub_client.py": {
+      "mode": 420,
+      "sha256": "ea6c91f6a827714f888178fe5d3be8bb731f5abfe0e0ead74dea98ccc6198053"
+    },
+    "code/src/stock_swing/sources/fred_client.py": {
+      "mode": 420,
+      "sha256": "f1c150f3be9d452df10134074e039c19f2c8e224382c1dd9feea7a7993ade5fd"
+    },
+    "code/src/stock_swing/sources/hybrid_data_fetcher.py": {
+      "mode": 420,
+      "sha256": "d70c62b3a9acbb8fc9ad2cab2fb03dc0e59ceb59c430760aa0316434bf414875"
+    },
+    "code/src/stock_swing/sources/massive_client.py": {
+      "mode": 420,
+      "sha256": "9394a183ed7c36a3b79022e6da9c275334060cf79c71e03c99c40a8b090e5419"
+    },
+    "code/src/stock_swing/sources/retry.py": {
+      "mode": 420,
+      "sha256": "4d01772b9e6e656de3b1e7bc46058cf5488fff5d0856904774293f2e92c355a4"
+    },
+    "code/src/stock_swing/sources/sec_client.py": {
+      "mode": 420,
+      "sha256": "f260d86868ddda7673442c9cc6b84f09dfb0bc9c7cf6bbc8ea0cca0e41a0216f"
+    },
+    "code/src/stock_swing/storage/__init__.py": {
+      "mode": 420,
+      "sha256": "13cd5117f1c58a6dc0d66a47044168d455a69f47fad83368b802001155808de3"
+    },
+    "code/src/stock_swing/storage/interfaces.py": {
+      "mode": 420,
+      "sha256": "0eb57ca91c2113ba567c4de384a197bf9e530c8ba2a17ceb4f66005b8a5d0d56"
+    },
+    "code/src/stock_swing/storage/json_store.py": {
+      "mode": 420,
+      "sha256": "b914ee8052f5c6a3a467de9f6d066251fd69f071eb3226b0e290dc30f8e6be63"
+    },
+    "code/src/stock_swing/storage/outcome_loader.py": {
+      "mode": 420,
+      "sha256": "529b72d65221615cc8e7ad2898dafeffebdfc01a15ed960a7b96851993d8aee2"
+    },
+    "code/src/stock_swing/storage/stage_store.py": {
+      "mode": 420,
+      "sha256": "0c7b18b6d5a0125ca48a6cd1b64efc6d5257ec7022bc4502571900a5be28a06b"
+    },
+    "code/src/stock_swing/strategy_engine/__init__.py": {
+      "mode": 420,
+      "sha256": "16fff239e45ff218759a0343aa2a801f9f7582dd50eeca1a8b6002dabba62870"
+    },
+    "code/src/stock_swing/strategy_engine/base_strategy.py": {
+      "mode": 420,
+      "sha256": "b705c2770522a53ba5cf98226c5c08dbb9081804ebfbf73a257ea97dd2b580d9"
+    },
+    "code/src/stock_swing/strategy_engine/breakout_momentum_strategy.py": {
+      "mode": 420,
+      "sha256": "9dd95fe153f219309c2f34d382acd5167919b8abe905b063bd328d0b7f67f3f7"
+    },
+    "code/src/stock_swing/strategy_engine/dip_buy_meanreversion_strategy.py": {
+      "mode": 420,
+      "sha256": "5346480496211cb93823ae72ae72016ebdaaccdfe1dc32bc6973fb98e52835a0"
+    },
+    "code/src/stock_swing/strategy_engine/event_swing.py": {
+      "mode": 420,
+      "sha256": "c030a879e63c770fa6fbad3e332406f19e262d9de6ec0f52bb82aeaa14f032af"
+    },
+    "code/src/stock_swing/strategy_engine/event_swing_strategy.py": {
+      "mode": 420,
+      "sha256": "193c3656c7c448f277dfc5097c51356db5270395a626a90ef8957a9ec3614d1d"
+    },
+    "code/src/stock_swing/strategy_engine/interfaces.py": {
+      "mode": 420,
+      "sha256": "8265dd7b33726e6bcbaa3fb70704ebe79351dc0f520866617e65f54bc83cd25c"
+    },
+    "code/src/stock_swing/strategy_engine/overnight_spillover_shadow.py": {
+      "mode": 420,
+      "sha256": "e95cc5c6027fb6b19484f4f55be7f35a80da9efa8a8f1bbbe8ae13a670a084e3"
+    },
+    "code/src/stock_swing/strategy_engine/sector_rotation_state.py": {
+      "mode": 420,
+      "sha256": "899721ed8dc2f6ad5b17fc84c92eb92bfc55e170f43896b177a6a24219ea8bc6"
+    },
+    "code/src/stock_swing/strategy_engine/sector_rotation_strategy.py": {
+      "mode": 420,
+      "sha256": "74119544d9f6ea9cb698c82c14418377ba9e642580fd811f0b7bd51e89a84d8f"
+    },
+    "code/src/stock_swing/strategy_engine/sector_shock_hold.py": {
+      "mode": 420,
+      "sha256": "2a0ca796f84ca3d0a1a8d43b570a57a587f645b966116225cbade7ff00d1f9ee"
+    },
+    "code/src/stock_swing/strategy_engine/simple_exit_strategy.py": {
+      "mode": 420,
+      "sha256": "29ca8731853064015d22c6a15ebc036181b070c251917aa487dcd3dfb1074b24"
+    },
+    "code/src/stock_swing/strategy_engine/simple_exit_v2_strategy.py": {
+      "mode": 420,
+      "sha256": "320ceada2b4726de98c6132ed223c6f29613bc9fd76902ff4c1636cf4a9212e9"
+    },
+    "code/src/stock_swing/tracking/__init__.py": {
+      "mode": 420,
+      "sha256": "c8d64732ab2b1debc222e62c6cdb9490219850dd951954cd6683a26924315eec"
+    },
+    "code/src/stock_swing/tracking/closed_trade_validator.py": {
+      "mode": 420,
+      "sha256": "8ee27a6089a03905ae322635f5975f7467fb84effc4554a71f037209f77690c0"
+    },
+    "code/src/stock_swing/tracking/exit_reason_store.py": {
+      "mode": 420,
+      "sha256": "ec4b8efccf72d467e09723c33576ffdda3ab67741706871ece7225364b2c6ade"
+    },
+    "code/src/stock_swing/tracking/fill_ledger.py": {
+      "mode": 420,
+      "sha256": "bfcb2c7656a05df6c70b5802150269010ff9c428133c647cbd0f4e86a4fcb168"
+    },
+    "code/src/stock_swing/tracking/pnl_tracker.py": {
+      "mode": 420,
+      "sha256": "ba1d0cf0f03c943265d0f38372f89b7a9f7e1841361795fa29eaf4a2a194de28"
+    },
+    "code/src/stock_swing/tracking/pnl_tracker_fix.py": {
+      "mode": 420,
+      "sha256": "abd8c5952fd7a5ff9b350023b7e80f322db1cc2f519e4ef03f9907ca51be9633"
+    },
+    "code/src/stock_swing/tracking/trade_event_store.py": {
+      "mode": 420,
+      "sha256": "a7f77bdef4ab3d67b176df6d67e6fb8d58d355774fc9d0f272c0e8d0d6546c17"
+    },
+    "code/src/stock_swing/utils/__init__.py": {
+      "mode": 420,
+      "sha256": "4238c42987781e012403b70cd12659f4e685de8f30fb16c64e9766c42bfa1edd"
+    },
+    "code/src/stock_swing/utils/context_budget.py": {
+      "mode": 420,
+      "sha256": "f6dd9f791e42f6e78683adf142f0502a863a27e524bc6c8208c86635ce956a88"
+    },
+    "code/src/stock_swing/utils/jpx_market_calendar.py": {
+      "mode": 420,
+      "sha256": "8530fc39f1d1888729994ac7004e9da0381af0b8d3c7ed0a5416e24d6eadc621"
+    },
+    "code/src/stock_swing/utils/latency_tracker.py": {
+      "mode": 420,
+      "sha256": "9a8214565fcfc271b450dca7709aa6e11f0aebeea9e417450bbdbdb4f8c344ed"
+    },
+    "code/src/stock_swing/utils/market_calendar.py": {
+      "mode": 420,
+      "sha256": "e529e78d09ce2438716545b31a2c8cda9374eb9920407df1fc00f94e436849f3"
+    },
+    "code/src/stock_swing/utils/market_guard.py": {
+      "mode": 420,
+      "sha256": "9e73f6d909a9bceb02f181fdfa806203e22bd10602c8f312dd803e7be4efca8c"
+    },
+    "code/src/stock_swing/utils/mtime_cache.py": {
+      "mode": 420,
+      "sha256": "0badb35b2e27f9f1de414ffb6f28d406382e97eded341aa818f24731beb1fdfc"
+    },
+    "code/src/stock_swing/utils/signal_prioritization.py": {
+      "mode": 420,
+      "sha256": "7026da8881ca5ea36fdd2b46f5554697a48bcf712433419489a17c7de36f09ec"
+    },
+    "code/src/stock_swing/utils/stale_price.py": {
+      "mode": 420,
+      "sha256": "97d08aed9c384c9d6824be2764c084cb27893b52dc084a984edec9fbf5464eb6"
+    },
+    "code/src/stock_swing/utils/strategy_versioning.py": {
+      "mode": 420,
+      "sha256": "e10cf91a556e1f680333e591677136919c31ffba7d3380b486247902da75eed2"
+    },
+    "code/src/stock_swing/utils/telegram_notifier.py": {
+      "mode": 420,
+      "sha256": "c02bebfaaafef18d79fdf0f69429f7e45fe0ecba34f0952362306ed65f44519d"
+    },
+    "code/tests/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "code/tests/fixtures/provider_contract_cli_driver.py": {
+      "mode": 420,
+      "sha256": "e9eb389a5b5b3171d744b1f5dab49d238cea31d33be54544458cc0c4c46ca79f"
+    },
+    "code/tests/unit/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "code/tests/unit/test_decision_input_capture.py": {
+      "mode": 420,
+      "sha256": "6e05264c1bd9083d80bb194a5415a98e3f85f5eb4aacf4ecccb073730561bc6c"
+    },
+    "code/tests/unit/test_massive_client.py": {
+      "mode": 420,
+      "sha256": "c2bd24ec3e73fd12655ee5a47d842a13a5a01c76bf3b366501ad1a8775e1a8c6"
+    },
+    "code/tests/unit/test_measurement_capture.py": {
+      "mode": 420,
+      "sha256": "28fed1030b1bb94f9047b430312c2451e4e2e37b9833d77d90e619b661161080"
+    },
+    "code/tests/unit/test_provider_bar_contracts.py": {
+      "mode": 420,
+      "sha256": "cbd968064366b11c5543c05a4611cd5ff76e16b3dd745428e74880ccaeeb62aa"
+    },
+    "code/tests/unit/test_provider_cli_copy.py": {
+      "mode": 420,
+      "sha256": "ae1562eda7a4693ac982797a16150d64e9f6605bca0891c3174a61ac129094db"
+    },
+    "combined.patch": {
+      "mode": 420,
+      "sha256": "a26cea429c85c7812add7f4e8e0ce5ef8d890be8c083f9ef1e02de7a264c3c08"
+    },
+    "compatibility.json": {
+      "mode": 420,
+      "sha256": "f401cbd9a98f5015f8c9a560f356498128461d809bc6edcbbfa4317b04f71d4e"
+    },
+    "deny.sb": {
+      "mode": 420,
+      "sha256": "bea55363ba1e8bb3b57ceacb093c1c2b0c00936de322b5ee729db09a91c574b4"
+    },
+    "environment.json": {
+      "mode": 420,
+      "sha256": "a41a6d6a2fae48cae9f4e135b53395899f352caea2f91a930ddab1e844ae07cd"
+    },
+    "expected.json": {
+      "mode": 420,
+      "sha256": "6ac27f520eea261b03efb524f8151d04bfcede0ed883dab9d99135f606266ffc"
+    },
+    "full_suite.log": {
+      "mode": 420,
+      "sha256": "5f92bc00b3e07d4bf8a8533749f17684671ed21343d00710ab42cfc119ce087c"
+    },
+    "integrity_negative.json": {
+      "mode": 420,
+      "sha256": "6f55dfd2942b8eebaf9a2cb68dd4451cd700f6763fc7dff2e919c9e9bfc68705"
+    },
+    "loopback_test.log": {
+      "mode": 420,
+      "sha256": "63203b4ec2b29e7ab8c45616e4d500960794bb60488784fb13fb7fe05b0386bf"
+    },
+    "patch_validation.json": {
+      "mode": 420,
+      "sha256": "cd22d956073e2715aac0f5405b481dc982423ecc42f9a8efe108b99ff1e1bc58"
+    },
+    "protected_check.json": {
+      "mode": 420,
+      "sha256": "28fba452f6e0c03cd834db61204bf4e735355fc1201a981cfe4dd5554a4c588a"
+    },
+    "runtime.patch": {
+      "mode": 420,
+      "sha256": "a17b452e89697693eed877901c4595dafe7796dd7df311ba628a4ba9d00902b2"
+    },
+    "source_pins.json": {
+      "mode": 420,
+      "sha256": "8defb7dcc29453959cbf30a8124aebf34bcab240c2ed6e8501bef0c246b713a6"
+    },
+    "tests.patch": {
+      "mode": 420,
+      "sha256": "bb6953905920b8e91fef6caf199569541fa91695bb9b392ba8d4a4e96c79c0e9"
+    },
+    "verify.py": {
+      "mode": 493,
+      "sha256": "fb7294085ddf5ca2c6d2ed180aed45ecfa86a1204cd3fd3756fc220566660877"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "cases": 46,
+  "integration_outcomes_unchanged": true,
+  "single_attempt_per_submit": true,
+  "repeat_business_intent_prevention": false,
+  "sell_ack_loss_prints_complete": true,
+  "fractional_close_supported": false,
+  "production_orders": 0
+}

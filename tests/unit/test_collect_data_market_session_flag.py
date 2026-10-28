@@ -61,23 +61,28 @@ class TestRequireMarketSessionFlagWiring:
         mock_day_guard.assert_not_called()
         assert "Outside trading hours" in captured.out
 
-    def test_flag_proceeds_when_session_active(self, monkeypatch, capsys):
+    def test_flag_proceeds_when_session_active(self, monkeypatch, capsys, tmp_path):
         """When should_skip_outside_market_hours says don't skip, main() must
         proceed past the guard (not short-circuit with skip status)."""
+        # CLI guard test, not a real provider collection or live-status write.
+        monkeypatch.setattr(collect_data, "project_root", tmp_path)
+        monkeypatch.setenv("FRED_API_KEY", "")
         with patch.object(
             collect_data,
             "should_skip_outside_market_hours",
             return_value=(False, "Market open: Regular hours"),
-        ), patch.object(collect_data, "PathManager"), patch.object(
+        ) as mock_session_guard, patch.object(collect_data, "PathManager"), patch.object(
             collect_data, "StageStore"
         ):
             rc, captured = _run_main_with_args(
-                ["--sources", "fred", "--cron-summary-json"] + ["--require-market-session"],
+                ["--sources", "fred", "--cron-summary-json", "--require-market-session"],
                 monkeypatch,
                 capsys,
             )
         # Should not print the skip line; proceeds to collection summary instead.
+        mock_session_guard.assert_called_once()
         assert "skipping collect_data run" not in captured.out
+        assert (tmp_path / "data/audits/fred_collection_status.json").exists()
 
     def test_flag_absent_defaults_to_false(self):
         """argparse default for --require-market-session must be False."""

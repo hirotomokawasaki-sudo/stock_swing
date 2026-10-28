@@ -80,6 +80,16 @@ git add -A && git diff --cached --stat
 git commit -m "<phase>: <1行の説明>\n\n<詳細>"
 ```
 
+### Consoleサービスの反映確認（2026-10-28）
+
+- ツール実行内の `console/manage.sh restart` が成功しても、呼出し終了時にbackground子プロセスが
+  終了する場合がある。起動メッセージだけで反映完了とせず、別の呼出しでstatus/health/APIを確認する。
+- このホストでは既存launchd `com.hirotomookawasaki.stock_swing.console.watchdog` がサービス所有者。
+  plist/現在状態を確認し、必要時は既存labelの `launchctl kickstart -k gui/<uid>/<label>` 経由で
+  再起動する。新しいservice/schedulerや設定変更は不要。OpenClaw Gatewayは再起動しない。
+- post-commitの非同期restartと二重反映しない。明示反映する場合はcommit単位でhookを抑止し、
+  上記の独立した応答確認を必ず行う。
+
 ---
 
 ## 現在のフォーカス（2026-07-22）

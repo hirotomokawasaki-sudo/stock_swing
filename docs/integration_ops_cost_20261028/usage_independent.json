@@ -1,0 +1,33 @@
+{
+  "archived_runtime_rows_repeated_in_current": 31,
+  "datasets": {
+    "ai_usage.jsonl": {
+      "input": 372353,
+      "output": 44225,
+      "rows": 1939,
+      "total": 416578
+    },
+    "token_usage.csv": {
+      "input": 345709,
+      "output": 62712,
+      "rows": 240,
+      "total": 408421
+    },
+    "token_usage_backfill.csv": {
+      "input": 372353,
+      "output": 44225,
+      "rows": 1939,
+      "total": 416578
+    },
+    "token_usage_legacy_mixed_schema_20260801.csv": {
+      "input": 405038,
+      "output": 50657,
+      "rows": 1970,
+      "total": 455695
+    }
+  },
+  "independent_method": "raw CSV/JSON + in-memory SQLite sums/join",
+  "latency_rows": 1399,
+  "matches": true,
+  "shared_decision_ids": 1939
+}

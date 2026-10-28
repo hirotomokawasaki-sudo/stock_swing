@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import tempfile
 from dataclasses import asdict, dataclass, field
@@ -15,6 +16,43 @@ _SNAPSHOT_RELATIVE = Path("data/guardrails/day_start_snapshot.json")
 
 class DayStartMissingError(RuntimeError):
     """Raised when day-start baseline is unavailable or stale."""
+
+
+def broker_positions_unrealized(payload: object) -> float | None:
+    """Sum complete broker evidence, including short/fractional holdings.
+
+    Only a successfully fetched list (including an empty list) proves a total.
+    Never infer flat holdings from the filtered long-only exit-strategy map.
+    Unknown, incomplete or nonfinite financial evidence remains unavailable.
+    """
+    if not isinstance(payload, list):
+        return None
+    values: list[float] = []
+    symbols: set[str] = set()
+    for position in payload:
+        if not isinstance(position, dict):
+            return None
+        symbol = position.get("symbol")
+        if not isinstance(symbol, str) or not symbol.strip() or symbol in symbols:
+            return None
+        symbols.add(symbol)
+        qty = position.get("qty")
+        unrealized = position.get("unrealized_pl")
+        if isinstance(qty, bool) or isinstance(unrealized, bool):
+            return None
+        try:
+            quantity = float(qty)
+            value = float(unrealized)
+        except (TypeError, ValueError, OverflowError):
+            return None
+        if not math.isfinite(quantity) or quantity == 0 or not math.isfinite(value):
+            return None
+        values.append(value)
+    try:
+        total = math.fsum(values)
+    except OverflowError:
+        return None
+    return total if math.isfinite(total) else None
 
 
 def current_market_date() -> str:
