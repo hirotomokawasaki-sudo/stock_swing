@@ -1,0 +1,80 @@
+{
+  "full_suite_scope": "previous isolated candidate plus current correction; concurrent Console changes not integrated",
+  "initial_index_bytes_match": true,
+  "mutable_operational_data_universally_frozen": false,
+  "new_push": false,
+  "original_head": "8909e79c1a83e04d508715b132575625454b7856",
+  "prior_sealed_packet_integrity": {
+    "advance_all_20261028": 255,
+    "cancel_config_closure_20261028": 509,
+    "closure_research_review_20261028": 12,
+    "emergency_corrections_20261028": 512,
+    "functional_safety_20261028": 229,
+    "integration_ops_cost_20261028": 470,
+    "order_preflight_20261028": 226,
+    "provider_bar_fixes_20261028": 218
+  },
+  "private_full_suite_fixture_pins_match": true,
+  "production_applied_by_this_task": false,
+  "protected_files": 668,
+  "staged_paths_unchanged": true,
+  "unchanged_files": 663,
+  "unrelated_console_drift_detected": [
+    {
+      "before": {
+        "mode": 448,
+        "sha256": "4e192ccdf0e23276b9f561856f96df39b24dba2af33e906be0ea133e32764ed2"
+      },
+      "now": {
+        "mode": 448,
+        "sha256": "30f0bdd7f0c55419072b093cb996bb356f911c4eaf072cc6807c8144d0ab2dcd"
+      },
+      "path": "console/app.py"
+    },
+    {
+      "before": {
+        "mode": 384,
+        "sha256": "6559c5266c69d3298d230d1273bc96fb42df4861f45ad180a39dcd1d598edb20"
+      },
+      "now": {
+        "mode": 384,
+        "sha256": "9f301664fa031579db1b46818e6445cd974925e620b0195425b8c344de12a940"
+      },
+      "path": "console/services/dashboard_service.py"
+    },
+    {
+      "before": {
+        "mode": 384,
+        "sha256": "1937af6095634939920edfe50fd7f8255dfa762e3c5f1848bb5646c2a8fd13fa"
+      },
+      "now": {
+        "mode": 384,
+        "sha256": "ae4ffa447fb7cc94ea08c9ad7c4de079c471b06c40a7da64558d457ea505130b"
+      },
+      "path": "console/ui/app.js"
+    },
+    {
+      "before": {
+        "mode": 384,
+        "sha256": "fac46c8ef3350fdac1e6b486f8d3f573faae0436d81347d4b1e055e7e7717c62"
+      },
+      "now": {
+        "mode": 384,
+        "sha256": "c85a84f36da55724344b98bb154dcced5a2ca234e38cf7b161cd921d997c6bb5"
+      },
+      "path": "console/ui/index.html"
+    },
+    {
+      "before": {
+        "mode": 384,
+        "sha256": "781492601c99c3fb5cf7e525f4f5af76e8ce0df0fc284111d8603a5b7219271e"
+      },
+      "now": {
+        "mode": 384,
+        "sha256": "aa73cfaccf2270de4496f1ef61f2227737662f93a663e6d64a16876d3258ce7b"
+      },
+      "path": "console/ui/style.css"
+    }
+  ],
+  "unrelated_drift_preserved_not_overwritten": true
+}

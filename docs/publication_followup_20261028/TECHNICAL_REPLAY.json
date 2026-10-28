@@ -1,0 +1,68 @@
+{
+  "actual_CLI_cases": 44,
+  "browser": {
+    "actual_HTML_JS_CSS": true,
+    "audit_fractional_qty": 3.7,
+    "blocked_hosts": [],
+    "cancel_unconfirmed_not_terminal": true,
+    "completed_not_success": true,
+    "external_requests_sent": 0,
+    "isolated_browser": true,
+    "missing_DD_unknown": true,
+    "mobile": {
+      "viewport": 390,
+      "width": 390
+    },
+    "page_errors": [],
+    "production_deployed": false,
+    "real_service_or_broker_qualified": false,
+    "reload": 1,
+    "synthetic_API_from_actual_service": true,
+    "tab_roundtrips": 2
+  },
+  "combined_focused_tests": 567,
+  "decimal_cells_repeated": 0,
+  "full_private_suite_repeated": false,
+  "integration": {
+    "cancel_to_serialized_service_to_JS": [
+      {
+        "broker_state": "pending_cancel",
+        "delete_attempts": 1,
+        "guard_state": "requested",
+        "serialized_to_actual_JS": true,
+        "service_acquisition": "ok"
+      },
+      {
+        "broker_state": "canceled",
+        "delete_attempts": 1,
+        "guard_state": "terminal",
+        "serialized_to_actual_JS": true,
+        "service_acquisition": "ok"
+      },
+      {
+        "broker_state": "partially_filled",
+        "delete_attempts": 1,
+        "guard_state": "requested",
+        "serialized_to_actual_JS": true,
+        "service_acquisition": "ok"
+      },
+      {
+        "broker_state": "404",
+        "delete_attempts": 1,
+        "guard_state": "unknown",
+        "serialized_to_actual_JS": true,
+        "service_acquisition": "error"
+      }
+    ],
+    "config_summary_text_renderer": true,
+    "evidence_snapshot_status": "stale",
+    "latest_Console_preserved_except_audit_quantity_display_fix": true,
+    "web_config_receipts_note": "Web Console does not yet consume effective_config; CLI JSON/text receipt view only. No new web panel claimed.",
+    "web_config_receipts_panel_present": false
+  },
+  "integrity": "verified",
+  "private_research_outcome_repeated": false,
+  "production_applied": false,
+  "push": false,
+  "research_tests": 24
+}

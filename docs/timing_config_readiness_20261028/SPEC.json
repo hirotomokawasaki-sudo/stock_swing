@@ -1,0 +1,25 @@
+{
+  "config_contract": [
+    "default OFF, nine families only",
+    "preserve original constructor failure and optional branch behavior",
+    "not_reached does not instantiate or represent effective config",
+    "endpoint change observation, not full dynamic provenance",
+    "no raw env or exception values in durable receipts"
+  ],
+  "excluded": [
+    "production/deployment",
+    "Push/merge",
+    "new policy/threshold/economic trial",
+    "financial data repair",
+    "scheduler/auth/CB changes"
+  ],
+  "previous_packet": "cancel_config_closure_20261028",
+  "scope": "user-authorized three follow-ups; isolated only; same correction batch",
+  "source_head": "8909e79c1a83e04d508715b132575625454b7856",
+  "timing_contract": [
+    "latest qualified session open, not yesterday calendar open",
+    "ET regular-close to 20:00 selection, exact age >=30min",
+    "strict aware timestamps, future/unsupported calendar held",
+    "scheduled cash equity 2026-2028; existing MarketCalendar + explicit early closes"
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "scope": "isolated candidate and same existing fixed diagnostic extension",
+  "full_tests": {
+    "passed": 3156,
+    "skipped": 2,
+    "normal_passed": 3155,
+    "disjoint_localhost_passed": 1,
+    "existing_collection_warnings": 1
+  },
+  "research": {
+    "proxy_events": 1901,
+    "signal_days": 53,
+    "groups": 16,
+    "decimal_cells": 19010,
+    "tests": 24,
+    "qualified_forward_additions": 0
+  },
+  "config": {
+    "families": 11,
+    "fields": 51,
+    "regressions_before": {
+      "failed": 5,
+      "passed": 5
+    },
+    "CLI_cases": 44,
+    "orders_and_quantities_preserved": true
+  },
+  "console": {
+    "regressions_before": {
+      "failed": 5,
+      "passed": 1
+    },
+    "guard_service_JS_states": 4,
+    "actual_browser": true,
+    "mobile_width": 390,
+    "page_errors": 0,
+    "web_individual_receipt_panel": false
+  },
+  "focused": 567,
+  "parents_reverified": [
+    "timing_config_readiness inventory and dependencies",
+    "signal_diagnostics original reproduction"
+  ],
+  "P4_complete": false,
+  "T0_set": false,
+  "F1_started": false,
+  "S3_consumed": false,
+  "S4_started": false,
+  "production_applied": false,
+  "Push": false,
+  "packet_only_replay_completed": true,
+  "six_integrity_rejections_passed": true
+}

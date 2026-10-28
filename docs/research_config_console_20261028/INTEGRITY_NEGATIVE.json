@@ -1,0 +1,32 @@
+{
+  "byte": {
+    "rejected_before_test_execution": true,
+    "exit": 1,
+    "reason": "ValueError: byte/mode drift:code/src/stock_swing/risk/config_instance_specs.py"
+  },
+  "missing": {
+    "rejected_before_test_execution": true,
+    "exit": 1,
+    "reason": "ValueError: inventory drift"
+  },
+  "extra": {
+    "rejected_before_test_execution": true,
+    "exit": 1,
+    "reason": "ValueError: inventory drift"
+  },
+  "manifest": {
+    "rejected_before_test_execution": true,
+    "exit": 1,
+    "reason": "ValueError: manifest shape"
+  },
+  "mode": {
+    "rejected_before_test_execution": true,
+    "exit": 1,
+    "reason": "ValueError: byte/mode drift:code/src/stock_swing/risk/config_instance_specs.py"
+  },
+  "symlink": {
+    "rejected_before_test_execution": true,
+    "exit": 1,
+    "reason": "ValueError: symlink refused"
+  }
+}

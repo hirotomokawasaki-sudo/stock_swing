@@ -1,0 +1,30 @@
+{
+  "docs/console_improvement_tasks.md": {
+    "after_sha256": "1aff7dac59de3dced46204bbb81a09174392d6fd2822aaed9ac9370f9b8ba8f5",
+    "before_sha256": "7cf2ff7eccc65582387006d489cb045f6f5b57ccfbba819b868fb19662c0dec4",
+    "canonical_ps_rows": 11,
+    "old_bytes_preserved_after_removing_amendment": true,
+    "rows_unchanged": true
+  },
+  "docs/p4_advance_review_20261028.md": {
+    "after_sha256": "9ce85a5c7644577163fa5d157d8eb7607056a74767edd5096f15b5d91ec4b95c",
+    "before_sha256": "0111c3b1d612b64614717834df33fff362c22bc7c99e3ddd1a7f8134f5df4e82",
+    "canonical_ps_rows": 0,
+    "old_bytes_preserved_after_removing_amendment": true,
+    "rows_unchanged": true
+  },
+  "docs/signal_evaluation_improvement_plan_20261028.md": {
+    "after_sha256": "5c3e040cfc8ce2d0a1b1c42225ebd2fae3149211441444d4cf6d0893a147c153",
+    "before_sha256": "09f9a555221e1d86baa29b224ebb7b43d7c9e8f76c8e40477129c77cb1137c23",
+    "canonical_ps_rows": 6,
+    "old_bytes_preserved_after_removing_amendment": true,
+    "rows_unchanged": true
+  },
+  "docs/strategy_improvement_validation_plan_20261020.md": {
+    "after_sha256": "0d70a919e575a3376b41c7e8dc36572b12374e2f99e241c079884800bf9216c4",
+    "before_sha256": "d26d1472d33c4e3b4a75edcc884e3746abccac5a76d443acb6707570fd23cd44",
+    "canonical_ps_rows": 17,
+    "old_bytes_preserved_after_removing_amendment": true,
+    "rows_unchanged": true
+  }
+}

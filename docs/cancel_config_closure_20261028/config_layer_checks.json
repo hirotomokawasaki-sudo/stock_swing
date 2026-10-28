@@ -1,0 +1,32 @@
+{
+  "nonfinite": {
+    "observed_families": 9,
+    "recorded": 8,
+    "summary_renderer_matches": true
+  },
+  "normal": {
+    "observed_families": 9,
+    "recorded": 9,
+    "summary_renderer_matches": true
+  },
+  "override": {
+    "observed_families": 9,
+    "recorded": 9,
+    "summary_renderer_matches": true
+  },
+  "refused_mode": {
+    "observed_families": 9,
+    "recorded": 8,
+    "summary_renderer_matches": true
+  },
+  "sell_and_buy": {
+    "observed_families": 9,
+    "recorded": 9,
+    "summary_renderer_matches": true
+  },
+  "write_blocked": {
+    "observed_families": 9,
+    "recorded": 0,
+    "summary_renderer_matches": true
+  }
+}

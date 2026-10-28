@@ -1,0 +1,16 @@
+{
+  "earningsCalendar": [
+    {
+      "date": "2026-04-01",
+      "epsActual": null,
+      "epsEstimate": 1.52,
+      "hour": "amc",
+      "quarter": 2,
+      "revenueActual": null,
+      "revenueEstimate": 94500000000,
+      "symbol": "AAPL",
+      "year": 2026
+    }
+  ],
+  "note": "Sample Finnhub earnings calendar response"
+}

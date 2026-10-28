@@ -1,0 +1,7 @@
+{
+  "classification": "current registry only; not historical PIT",
+  "new_network_requests": 0,
+  "parent_archive_sha256": "2afeb5c24770599b54394045cd4104271bb6d1f0043cc30883350f73b5566ebe",
+  "parent_spec_sha256": "dd5ef0c6c893d07341b0ceda2b8f44ec2b038be731fbd2f0acf2135d6081cd54",
+  "registry_sha256": "aac5bab3a0ee16fd935f9ae541dd9566835fc49de21d98e31bae40c288057e4e"
+}

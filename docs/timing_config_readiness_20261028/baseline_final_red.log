@@ -1,0 +1,372 @@
+..F...FF.F.F.F..FFF.FFF....FFF...FF.F.F.F....FFFFF....FFFFFFFFFFFFF...FF [ 96%]
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+_ test_ac_real_selector_time_boundaries[buy-2026-01-08T09:15:00-05:00-2026-01-08T08:00:00-05:00-False] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-01-08T09:15:00-05:00', '2026-01-08T08:00:00-05:00', [{'broker_status': 'canceled', 'cancelled': True, 'd..., 'GET /v2/orders/fixture-order', 'DELETE /v2/orders/fixture-order', 'GET /v2/orders/fixture-order', 'GET /v2/orders'])
+E   assert 1 == 0
+E    +  where 1 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x109671f20>)
+E    +  and   0 = int(False)
+----------------------------- Captured stderr call -----------------------------
+INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled
+_ test_ac_real_selector_time_boundaries[buy-2026-07-11T12:00:00-04:00-2026-07-10T10:00:00-04:00-False] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-07-11T12:00:00-04:00', '2026-07-10T10:00:00-04:00', [{'broker_status': 'canceled', 'cancelled': True, 'd..., 'GET /v2/orders/fixture-order', 'DELETE /v2/orders/fixture-order', 'GET /v2/orders/fixture-order', 'GET /v2/orders'])
+E   assert 1 == 0
+E    +  where 1 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1095b6810>)
+E    +  and   0 = int(False)
+----------------------------- Captured stderr call -----------------------------
+INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled
+_ test_ac_real_selector_time_boundaries[buy-2026-07-13T09:29:59-04:00-2026-07-10T10:00:00-04:00-False] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-07-13T09:29:59-04:00', '2026-07-10T10:00:00-04:00', [{'broker_status': 'canceled', 'cancelled': True, 'd..., 'GET /v2/orders/fixture-order', 'DELETE /v2/orders/fixture-order', 'GET /v2/orders/fixture-order', 'GET /v2/orders'])
+E   assert 1 == 0
+E    +  where 1 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1095d0520>)
+E    +  and   0 = int(False)
+----------------------------- Captured stderr call -----------------------------
+INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled
+_ test_ac_real_selector_time_boundaries[buy-2026-09-07T12:00:00-04:00-2026-09-04T10:00:00-04:00-False] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-09-07T12:00:00-04:00', '2026-09-04T10:00:00-04:00', [{'broker_status': 'canceled', 'cancelled': True, 'd..., 'GET /v2/orders/fixture-order', 'DELETE /v2/orders/fixture-order', 'GET /v2/orders/fixture-order', 'GET /v2/orders'])
+E   assert 1 == 0
+E    +  where 1 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1096731d0>)
+E    +  and   0 = int(False)
+----------------------------- Captured stderr call -----------------------------
+INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled
+_ test_ac_real_selector_time_boundaries[buy-2026-03-09T09:29:59-04:00-2026-03-06T10:00:00-05:00-False] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-03-09T09:29:59-04:00', '2026-03-06T10:00:00-05:00', [{'broker_status': 'canceled', 'cancelled': True, 'd..., 'GET /v2/orders/fixture-order', 'DELETE /v2/orders/fixture-order', 'GET /v2/orders/fixture-order', 'GET /v2/orders'])
+E   assert 1 == 0
+E    +  where 1 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1095b7920>)
+E    +  and   0 = int(False)
+----------------------------- Captured stderr call -----------------------------
+INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled
+_ test_ac_real_selector_time_boundaries[buy-2026-11-02T09:29:59-05:00-2026-10-30T10:00:00-04:00-False] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-11-02T09:29:59-05:00', '2026-10-30T10:00:00-04:00', [{'broker_status': 'canceled', 'cancelled': True, 'd..., 'GET /v2/orders/fixture-order', 'DELETE /v2/orders/fixture-order', 'GET /v2/orders/fixture-order', 'GET /v2/orders'])
+E   assert 1 == 0
+E    +  where 1 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1095d1560>)
+E    +  and   0 = int(False)
+----------------------------- Captured stderr call -----------------------------
+INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled
+_ test_ac_real_selector_time_boundaries[buy-2026-07-08T16:30:00-04:00-2026-07-08T16:00:00-04:00-True] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-07-08T16:30:00-04:00', '2026-07-08T16:00:00-04:00', [], ['GET /v2/orders', 'GET /v2/orders'])
+E   assert 0 == 1
+E    +  where 0 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x109673e00>)
+E    +  and   1 = int(True)
+_ test_ac_real_selector_time_boundaries[buy-2026-01-08T16:30:00-05:00-2026-01-08T16:00:00-05:00-True] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-01-08T16:30:00-05:00', '2026-01-08T16:00:00-05:00', [], ['GET /v2/orders', 'GET /v2/orders'])
+E   assert 0 == 1
+E    +  where 0 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1095d18a0>)
+E    +  and   1 = int(True)
+_ test_ac_real_selector_time_boundaries[buy-2026-07-08T21:00:00-04:00-2026-07-08T20:00:00-04:00-False] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-07-08T21:00:00-04:00', '2026-07-08T20:00:00-04:00', [{'broker_status': 'canceled', 'cancelled': True, 'd... 'GET /v2/account', 'GET /v2/orders/fixture-order', 'DELETE /v2/orders/fixture-order', 'GET /v2/orders/fixture-order'])
+E   assert 1 == 0
+E    +  where 1 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1095b72a0>)
+E    +  and   0 = int(False)
+----------------------------- Captured stderr call -----------------------------
+INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled
+_ test_ac_real_selector_time_boundaries[buy-2026-11-27T13:30:00-05:00-2026-11-27T13:00:00-05:00-True] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-11-27T13:30:00-05:00', '2026-11-27T13:00:00-05:00', [], ['GET /v2/orders', 'GET /v2/orders'])
+E   assert 0 == 1
+E    +  where 0 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1095d2810>)
+E    +  and   1 = int(True)
+_ test_ac_real_selector_time_boundaries[buy-2026-12-24T13:30:00-05:00-2026-12-24T13:00:00-05:00-True] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-12-24T13:30:00-05:00', '2026-12-24T13:00:00-05:00', [], ['GET /v2/orders', 'GET /v2/orders'])
+E   assert 0 == 1
+E    +  where 0 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1095b5be0>)
+E    +  and   1 = int(True)
+_ test_ac_real_selector_time_boundaries[sell-2026-11-27T13:30:00-05:00-2026-11-27T13:00:00-05:00-True] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('sell', '2026-11-27T13:30:00-05:00', '2026-11-27T13:00:00-05:00', [], ['GET /v2/orders'])
+E   assert 0 == 1
+E    +  where 0 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x109673920>)
+E    +  and   1 = int(True)
+_ test_ac_real_selector_time_boundaries[buy-2026-07-08T15:45:00-04:00-2026-07-08T19:00:00+00:00-False] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-07-08T15:45:00-04:00', '2026-07-08T19:00:00+00:00', [{'broker_status': 'canceled', 'cancelled': True, 'd... 'GET /v2/account', 'GET /v2/orders/fixture-order', 'DELETE /v2/orders/fixture-order', 'GET /v2/orders/fixture-order'])
+E   assert 1 == 0
+E    +  where 1 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1095d2c20>)
+E    +  and   0 = int(False)
+----------------------------- Captured stderr call -----------------------------
+INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled
+_ test_ac_real_selector_time_boundaries[buy-2026-01-08T15:45:00-05:00-2026-01-08T19:00:00+00:00-False] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-01-08T15:45:00-05:00', '2026-01-08T19:00:00+00:00', [{'broker_status': 'canceled', 'cancelled': True, 'd... 'GET /v2/account', 'GET /v2/orders/fixture-order', 'DELETE /v2/orders/fixture-order', 'GET /v2/orders/fixture-order'])
+E   assert 1 == 0
+E    +  where 1 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x109672400>)
+E    +  and   0 = int(False)
+----------------------------- Captured stderr call -----------------------------
+INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled
+_ test_ac_real_selector_time_boundaries[buy-2026-01-08T09:15:00-05:00-2026-01-08T13:00:00+00:00-False] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-01-08T09:15:00-05:00', '2026-01-08T13:00:00+00:00', [{'broker_status': 'canceled', 'cancelled': True, 'd..., 'GET /v2/orders/fixture-order', 'DELETE /v2/orders/fixture-order', 'GET /v2/orders/fixture-order', 'GET /v2/orders'])
+E   assert 1 == 0
+E    +  where 1 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1095d36b0>)
+E    +  and   0 = int(False)
+----------------------------- Captured stderr call -----------------------------
+INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled
+_ test_ac_real_selector_time_boundaries[buy-2026-07-11T12:00:00-04:00-2026-07-10T14:00:00+00:00-False] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-07-11T12:00:00-04:00', '2026-07-10T14:00:00+00:00', [{'broker_status': 'canceled', 'cancelled': True, 'd..., 'GET /v2/orders/fixture-order', 'DELETE /v2/orders/fixture-order', 'GET /v2/orders/fixture-order', 'GET /v2/orders'])
+E   assert 1 == 0
+E    +  where 1 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1095b5cb0>)
+E    +  and   0 = int(False)
+----------------------------- Captured stderr call -----------------------------
+INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled
+_ test_ac_real_selector_time_boundaries[buy-2026-07-13T09:29:59-04:00-2026-07-10T14:00:00+00:00-False] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-07-13T09:29:59-04:00', '2026-07-10T14:00:00+00:00', [{'broker_status': 'canceled', 'cancelled': True, 'd..., 'GET /v2/orders/fixture-order', 'DELETE /v2/orders/fixture-order', 'GET /v2/orders/fixture-order', 'GET /v2/orders'])
+E   assert 1 == 0
+E    +  where 1 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1096bc930>)
+E    +  and   0 = int(False)
+----------------------------- Captured stderr call -----------------------------
+INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled
+_ test_ac_real_selector_time_boundaries[buy-2026-09-07T12:00:00-04:00-2026-09-04T14:00:00+00:00-False] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-09-07T12:00:00-04:00', '2026-09-04T14:00:00+00:00', [{'broker_status': 'canceled', 'cancelled': True, 'd..., 'GET /v2/orders/fixture-order', 'DELETE /v2/orders/fixture-order', 'GET /v2/orders/fixture-order', 'GET /v2/orders'])
+E   assert 1 == 0
+E    +  where 1 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1096bcc70>)
+E    +  and   0 = int(False)
+----------------------------- Captured stderr call -----------------------------
+INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled
+_ test_ac_real_selector_time_boundaries[buy-2026-03-09T09:29:59-04:00-2026-03-06T15:00:00+00:00-False] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-03-09T09:29:59-04:00', '2026-03-06T15:00:00+00:00', [{'broker_status': 'canceled', 'cancelled': True, 'd..., 'GET /v2/orders/fixture-order', 'DELETE /v2/orders/fixture-order', 'GET /v2/orders/fixture-order', 'GET /v2/orders'])
+E   assert 1 == 0
+E    +  where 1 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1096bde50>)
+E    +  and   0 = int(False)
+----------------------------- Captured stderr call -----------------------------
+INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled
+_ test_ac_real_selector_time_boundaries[buy-2026-11-02T09:29:59-05:00-2026-10-30T14:00:00+00:00-False] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-11-02T09:29:59-05:00', '2026-10-30T14:00:00+00:00', [{'broker_status': 'canceled', 'cancelled': True, 'd..., 'GET /v2/orders/fixture-order', 'DELETE /v2/orders/fixture-order', 'GET /v2/orders/fixture-order', 'GET /v2/orders'])
+E   assert 1 == 0
+E    +  where 1 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1096be810>)
+E    +  and   0 = int(False)
+----------------------------- Captured stderr call -----------------------------
+INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled
+_ test_ac_real_selector_time_boundaries[buy-2026-07-08T21:00:00-04:00-2026-07-09T00:00:00+00:00-False] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-07-08T21:00:00-04:00', '2026-07-09T00:00:00+00:00', [{'broker_status': 'canceled', 'cancelled': True, 'd... 'GET /v2/account', 'GET /v2/orders/fixture-order', 'DELETE /v2/orders/fixture-order', 'GET /v2/orders/fixture-order'])
+E   assert 1 == 0
+E    +  where 1 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1096bc450>)
+E    +  and   0 = int(False)
+----------------------------- Captured stderr call -----------------------------
+INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled
+_ test_ac_real_selector_time_boundaries[buy-2026-07-11T18:00:00-04:00-2026-07-11T20:00:00+00:00-False] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-07-11T18:00:00-04:00', '2026-07-11T20:00:00+00:00', [{'broker_status': 'canceled', 'cancelled': True, 'd... 'GET /v2/account', 'GET /v2/orders/fixture-order', 'DELETE /v2/orders/fixture-order', 'GET /v2/orders/fixture-order'])
+E   assert 1 == 0
+E    +  where 1 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1096bd970>)
+E    +  and   0 = int(False)
+----------------------------- Captured stderr call -----------------------------
+INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled
+_ test_ac_real_selector_time_boundaries[buy-2026-11-27T13:30:00-05:00-2026-11-27T18:00:00+00:00-True] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-11-27T13:30:00-05:00', '2026-11-27T18:00:00+00:00', [], ['GET /v2/orders', 'GET /v2/orders'])
+E   assert 0 == 1
+E    +  where 0 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x109671cb0>)
+E    +  and   1 = int(True)
+_ test_ac_real_selector_time_boundaries[buy-2026-12-24T13:30:00-05:00-2026-12-24T18:00:00+00:00-True] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('buy', '2026-12-24T13:30:00-05:00', '2026-12-24T18:00:00+00:00', [], ['GET /v2/orders', 'GET /v2/orders'])
+E   assert 0 == 1
+E    +  where 0 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1095b57d0>)
+E    +  and   1 = int(True)
+_ test_ac_real_selector_time_boundaries[sell-2026-11-27T13:30:00-05:00-2026-11-27T18:00:00+00:00-True] _
+tests/unit/test_cancellation_timing.py:67: in test_ac_real_selector_time_boundaries
+    assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
+E   AssertionError: ('sell', '2026-11-27T13:30:00-05:00', '2026-11-27T18:00:00+00:00', [], ['GET /v2/orders'])
+E   assert 0 == 1
+E    +  where 0 = sum(<generator object test_ac_real_selector_time_boundaries.<locals>.<genexpr> at 0x1095d3ac0>)
+E    +  and   1 = int(True)
+_ test_ac_unqualified_time_is_held_not_delete_or_crash[buy-2026-07-08T16:00:00] _
+tests/unit/test_cancellation_timing.py:74: in test_ac_unqualified_time_is_held_not_delete_or_crash
+    result,calls=exercise(tmp_path,monkeypatch,side,'2026-07-08T17:00:00Z',submitted)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_cancellation_timing.py:61: in exercise
+    result=module.cancel_stale_buy_orders(broker) if side=='buy' else module.cancel_stale_sell_orders(broker,tmp_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/stock_swing/cli/reconcile_orders.py:593: in cancel_stale_buy_orders
+    if submitted_at >= market_open_today:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: can't compare offset-naive and offset-aware datetimes
+_______ test_ac_unqualified_time_is_held_not_delete_or_crash[buy-broken] _______
+tests/unit/test_cancellation_timing.py:76: in test_ac_unqualified_time_is_held_not_delete_or_crash
+    assert any(r.get('state')=='held' for r in result),result
+E   AssertionError: []
+E   assert False
+E    +  where False = any(<generator object test_ac_unqualified_time_is_held_not_delete_or_crash.<locals>.<genexpr> at 0x1095d0d40>)
+_ test_ac_unqualified_time_is_held_not_delete_or_crash[buy-2026-07-09T16:00:00Z] _
+tests/unit/test_cancellation_timing.py:76: in test_ac_unqualified_time_is_held_not_delete_or_crash
+    assert any(r.get('state')=='held' for r in result),result
+E   AssertionError: []
+E   assert False
+E    +  where False = any(<generator object test_ac_unqualified_time_is_held_not_delete_or_crash.<locals>.<genexpr> at 0x109695970>)
+_ test_ac_unqualified_time_is_held_not_delete_or_crash[sell-2026-07-08T16:00:00] _
+tests/unit/test_cancellation_timing.py:74: in test_ac_unqualified_time_is_held_not_delete_or_crash
+    result,calls=exercise(tmp_path,monkeypatch,side,'2026-07-08T17:00:00Z',submitted)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_cancellation_timing.py:61: in exercise
+    result=module.cancel_stale_buy_orders(broker) if side=='buy' else module.cancel_stale_sell_orders(broker,tmp_path)
+                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/stock_swing/cli/reconcile_orders.py:716: in cancel_stale_sell_orders
+    age_minutes = (now_utc - submitted_at).total_seconds() / 60
+                   ^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: can't subtract offset-naive and offset-aware datetimes
+______ test_ac_unqualified_time_is_held_not_delete_or_crash[sell-broken] _______
+tests/unit/test_cancellation_timing.py:76: in test_ac_unqualified_time_is_held_not_delete_or_crash
+    assert any(r.get('state')=='held' for r in result),result
+E   AssertionError: []
+E   assert False
+E    +  where False = any(<generator object test_ac_unqualified_time_is_held_not_delete_or_crash.<locals>.<genexpr> at 0x109696260>)
+_ test_ac_unqualified_time_is_held_not_delete_or_crash[sell-2026-07-09T16:00:00Z] _
+tests/unit/test_cancellation_timing.py:76: in test_ac_unqualified_time_is_held_not_delete_or_crash
+    assert any(r.get('state')=='held' for r in result),result
+E   AssertionError: []
+E   assert False
+E    +  where False = any(<generator object test_ac_unqualified_time_is_held_not_delete_or_crash.<locals>.<genexpr> at 0x109696cf0>)
+_________________ test_ac_offset_equivalent_and_host_zone[UTC] _________________
+tests/unit/test_cancellation_timing.py:84: in test_ac_offset_equivalent_and_host_zone
+    assert sum(c.startswith('DELETE') for c in calls)==1,(result,calls)
+E   AssertionError: ([], ['GET /v2/orders', 'GET /v2/orders'])
+E   assert 0 == 1
+E    +  where 0 = sum(<generator object test_ac_offset_equivalent_and_host_zone.<locals>.<genexpr> at 0x109697920>)
+_____________ test_ac_offset_equivalent_and_host_zone[Asia/Tokyo] ______________
+tests/unit/test_cancellation_timing.py:84: in test_ac_offset_equivalent_and_host_zone
+    assert sum(c.startswith('DELETE') for c in calls)==1,(result,calls)
+E   AssertionError: ([], ['GET /v2/orders', 'GET /v2/orders'])
+E   assert 0 == 1
+E    +  where 0 = sum(<generator object test_ac_offset_equivalent_and_host_zone.<locals>.<genexpr> at 0x1095d2810>)
+_________ test_ac_offset_equivalent_and_host_zone[America/Los_Angeles] _________
+tests/unit/test_cancellation_timing.py:84: in test_ac_offset_equivalent_and_host_zone
+    assert sum(c.startswith('DELETE') for c in calls)==1,(result,calls)
+E   AssertionError: ([], ['GET /v2/orders', 'GET /v2/orders'])
+E   assert 0 == 1
+E    +  where 0 = sum(<generator object test_ac_offset_equivalent_and_host_zone.<locals>.<genexpr> at 0x1095b5cb0>)
+_ test_ac_unsupported_calendar_is_explicitly_held[2029-01-08T17:00:00Z-2029-01-08T16:00:00Z-buy] _
+tests/unit/test_cancellation_timing.py:97: in test_ac_unsupported_calendar_is_explicitly_held
+    assert any(x.get('state')=='held' for x in result),result
+E   AssertionError: []
+E   assert False
+E    +  where False = any(<generator object test_ac_unsupported_calendar_is_explicitly_held.<locals>.<genexpr> at 0x1096bfd30>)
+_ test_ac_unsupported_calendar_is_explicitly_held[2029-01-08T17:00:00Z-2029-01-08T16:00:00Z-sell] _
+tests/unit/test_cancellation_timing.py:97: in test_ac_unsupported_calendar_is_explicitly_held
+    assert any(x.get('state')=='held' for x in result),result
+E   AssertionError: []
+E   assert False
+E    +  where False = any(<generator object test_ac_unsupported_calendar_is_explicitly_held.<locals>.<genexpr> at 0x109673780>)
+_ test_ac_unsupported_calendar_is_explicitly_held[2026-01-01T17:00:00Z-2025-12-31T20:00:00Z-buy] _
+tests/unit/test_cancellation_timing.py:96: in test_ac_unsupported_calendar_is_explicitly_held
+    assert not any(c.startswith('DELETE') for c in calls),calls
+E   AssertionError: ['GET /v2/orders', 'GET /v2/account', 'GET /v2/orders/fixture-order', 'DELETE /v2/orders/fixture-order', 'GET /v2/orders/fixture-order', 'GET /v2/orders']
+E   assert not True
+E    +  where True = any(<generator object test_ac_unsupported_calendar_is_explicitly_held.<locals>.<genexpr> at 0x1096953c0>)
+----------------------------- Captured stderr call -----------------------------
+INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled
+_ test_ac_unsupported_calendar_is_explicitly_held[2026-01-01T17:00:00Z-2025-12-31T20:00:00Z-sell] _
+tests/unit/test_cancellation_timing.py:97: in test_ac_unsupported_calendar_is_explicitly_held
+    assert any(x.get('state')=='held' for x in result),result
+E   AssertionError: []
+E   assert False
+E    +  where False = any(<generator object test_ac_unsupported_calendar_is_explicitly_held.<locals>.<genexpr> at 0x1096941e0>)
+__________ test_ac_constructor_failure_persisted_without_error_value ___________
+tests/unit/test_config_instance_coverage.py:20: in test_ac_constructor_failure_persisted_without_error_value
+    r.construct(VolatilityGateConfig,factory=fail)
+    ^^^^^^^^^^^
+E   AttributeError: 'ConfigInstanceRecorder' object has no attribute 'construct'
+___________ test_ac_finalize_records_unreached_without_instantiating ___________
+tests/unit/test_config_instance_coverage.py:27: in test_ac_finalize_records_unreached_without_instantiating
+    r=ConfigInstanceRecorder(tmp_path,'fixture-run');r.construct(VolatilityGateConfig);r.finalize()
+                                                     ^^^^^^^^^^^
+E   AttributeError: 'ConfigInstanceRecorder' object has no attribute 'construct'
+________ test_ac_mutation_detected_without_changing_effective_instance _________
+tests/unit/test_config_instance_coverage.py:35: in test_ac_mutation_detected_without_changing_effective_instance
+    r=ConfigInstanceRecorder(tmp_path,'fixture-run');cfg=r.construct(VolatilityGateConfig)
+                                                         ^^^^^^^^^^^
+E   AttributeError: 'ConfigInstanceRecorder' object has no attribute 'construct'
+________________ test_ac_secret_like_mutation_never_serialized _________________
+tests/unit/test_config_instance_coverage.py:43: in test_ac_secret_like_mutation_never_serialized
+    r=ConfigInstanceRecorder(tmp_path,'fixture-run');cfg=r.construct(VolatilityGateConfig)
+                                                         ^^^^^^^^^^^
+E   AttributeError: 'ConfigInstanceRecorder' object has no attribute 'construct'
+__________ test_ac_failed_write_preserves_original_constructor_error ___________
+tests/unit/test_config_instance_coverage.py:52: in test_ac_failed_write_preserves_original_constructor_error
+    with pytest.raises(KeyError):r.construct(VolatilityGateConfig,factory=fail)
+                                 ^^^^^^^^^^^
+E   AttributeError: 'ConfigInstanceRecorder' object has no attribute 'construct'
+=========================== short test summary info ============================
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-01-08T09:15:00-05:00-2026-01-08T08:00:00-05:00-False]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-07-11T12:00:00-04:00-2026-07-10T10:00:00-04:00-False]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-07-13T09:29:59-04:00-2026-07-10T10:00:00-04:00-False]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-09-07T12:00:00-04:00-2026-09-04T10:00:00-04:00-False]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-03-09T09:29:59-04:00-2026-03-06T10:00:00-05:00-False]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-11-02T09:29:59-05:00-2026-10-30T10:00:00-04:00-False]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-07-08T16:30:00-04:00-2026-07-08T16:00:00-04:00-True]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-01-08T16:30:00-05:00-2026-01-08T16:00:00-05:00-True]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-07-08T21:00:00-04:00-2026-07-08T20:00:00-04:00-False]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-11-27T13:30:00-05:00-2026-11-27T13:00:00-05:00-True]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-12-24T13:30:00-05:00-2026-12-24T13:00:00-05:00-True]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[sell-2026-11-27T13:30:00-05:00-2026-11-27T13:00:00-05:00-True]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-07-08T15:45:00-04:00-2026-07-08T19:00:00+00:00-False]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-01-08T15:45:00-05:00-2026-01-08T19:00:00+00:00-False]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-01-08T09:15:00-05:00-2026-01-08T13:00:00+00:00-False]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-07-11T12:00:00-04:00-2026-07-10T14:00:00+00:00-False]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-07-13T09:29:59-04:00-2026-07-10T14:00:00+00:00-False]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-09-07T12:00:00-04:00-2026-09-04T14:00:00+00:00-False]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-03-09T09:29:59-04:00-2026-03-06T15:00:00+00:00-False]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-11-02T09:29:59-05:00-2026-10-30T14:00:00+00:00-False]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-07-08T21:00:00-04:00-2026-07-09T00:00:00+00:00-False]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-07-11T18:00:00-04:00-2026-07-11T20:00:00+00:00-False]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-11-27T13:30:00-05:00-2026-11-27T18:00:00+00:00-True]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[buy-2026-12-24T13:30:00-05:00-2026-12-24T18:00:00+00:00-True]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_real_selector_time_boundaries[sell-2026-11-27T13:30:00-05:00-2026-11-27T18:00:00+00:00-True]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_unqualified_time_is_held_not_delete_or_crash[buy-2026-07-08T16:00:00]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_unqualified_time_is_held_not_delete_or_crash[buy-broken]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_unqualified_time_is_held_not_delete_or_crash[buy-2026-07-09T16:00:00Z]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_unqualified_time_is_held_not_delete_or_crash[sell-2026-07-08T16:00:00]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_unqualified_time_is_held_not_delete_or_crash[sell-broken]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_unqualified_time_is_held_not_delete_or_crash[sell-2026-07-09T16:00:00Z]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_offset_equivalent_and_host_zone[UTC]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_offset_equivalent_and_host_zone[Asia/Tokyo]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_offset_equivalent_and_host_zone[America/Los_Angeles]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_unsupported_calendar_is_explicitly_held[2029-01-08T17:00:00Z-2029-01-08T16:00:00Z-buy]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_unsupported_calendar_is_explicitly_held[2029-01-08T17:00:00Z-2029-01-08T16:00:00Z-sell]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_unsupported_calendar_is_explicitly_held[2026-01-01T17:00:00Z-2025-12-31T20:00:00Z-buy]
+FAILED tests/unit/test_cancellation_timing.py::test_ac_unsupported_calendar_is_explicitly_held[2026-01-01T17:00:00Z-2025-12-31T20:00:00Z-sell]
+FAILED tests/unit/test_config_instance_coverage.py::test_ac_constructor_failure_persisted_without_error_value
+FAILED tests/unit/test_config_instance_coverage.py::test_ac_finalize_records_unreached_without_instantiating
+FAILED tests/unit/test_config_instance_coverage.py::test_ac_mutation_detected_without_changing_effective_instance
+FAILED tests/unit/test_config_instance_coverage.py::test_ac_secret_like_mutation_never_serialized
+FAILED tests/unit/test_config_instance_coverage.py::test_ac_failed_write_preserves_original_constructor_error
+43 failed, 32 passed in 0.51s

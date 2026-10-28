@@ -1,0 +1,27 @@
+{
+  "decision_id": "dec1",
+  "schema_version": "v1",
+  "generated_at": "2026-03-06T00:00:00Z",
+  "mode": "paper",
+  "strategy_id": "event_swing_v1",
+  "symbol": "QQQ",
+  "action": "review",
+  "confidence": 0.6,
+  "signal_strength": 0.6,
+  "risk_state": "pass",
+  "deny_reasons": [],
+  "requires_operator_approval": false,
+  "time_horizon": "1d",
+  "evidence": {
+    "feature_refs": [],
+    "raw_refs": [],
+    "notes": []
+  },
+  "proposed_order": {
+    "symbol": "QQQ",
+    "side": "buy",
+    "order_type": "market",
+    "qty": 1,
+    "time_in_force": "day"
+  }
+}

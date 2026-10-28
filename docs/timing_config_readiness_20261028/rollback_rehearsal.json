@@ -1,0 +1,32 @@
+{
+  "manual_canceled_0": {
+    "delete_after": 1,
+    "delete_before": 1,
+    "financial_json_bytes_unchanged": true,
+    "journal_deleted": false,
+    "lookup_404_stops_before_journal": false,
+    "old_code_read_new_journal": true,
+    "process_exit": 0,
+    "result": 0
+  },
+  "manual_lost_restart": {
+    "delete_after": 1,
+    "delete_before": 1,
+    "financial_json_bytes_unchanged": true,
+    "journal_deleted": false,
+    "lookup_404_stops_before_journal": true,
+    "old_code_read_new_journal": false,
+    "process_exit": 1,
+    "result": null
+  },
+  "manual_pending_cancel_0": {
+    "delete_after": 1,
+    "delete_before": 1,
+    "financial_json_bytes_unchanged": true,
+    "journal_deleted": false,
+    "lookup_404_stops_before_journal": false,
+    "old_code_read_new_journal": true,
+    "process_exit": 0,
+    "result": 0
+  }
+}

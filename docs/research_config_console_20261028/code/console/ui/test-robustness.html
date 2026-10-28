@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robustness Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+        }
+        .test-result {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .pass {
+            color: #00ff00;
+        }
+        .fail {
+            color: #ff0000;
+        }
+        .warn {
+            color: #ffaa00;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Stock Swing Console - Robustness Test</h1>
+    
+    <div class="test-section">
+        <h2>Phase 1: Utility Functions</h2>
+        <div id="utils-tests"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Phase 2: Data Validation</h2>
+        <div id="validator-tests"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Phase 3: API Client</h2>
+        <div id="api-tests"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Phase 4: Error Handler</h2>
+        <div id="error-tests"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Phase 5: State Manager</h2>
+        <div id="state-tests"></div>
+    </div>
+    
+    <!-- Load all modules -->
+    <script src="/ui/utils.js"></script>
+    <script src="/ui/validators.js"></script>
+    <script src="/ui/api-client.js"></script>
+    <script src="/ui/error-handler.js"></script>
+    <script src="/ui/state-manager.js"></script>
+    
+    <script>
+        // Test utilities
+        function assert(condition, message) {
+            const result = document.createElement('div');
+            result.className = 'test-result ' + (condition ? 'pass' : 'fail');
+            result.textContent = (condition ? '✅ ' : '❌ ') + message;
+            return result;
+        }
+        
+        function warn(message) {
+            const result = document.createElement('div');
+            result.className = 'test-result warn';
+            result.textContent = '⚠️  ' + message;
+            return result;
+        }
+        
+        // Phase 1: Utility Functions Test
+        function testUtils() {
+            const container = document.getElementById('utils-tests');
+            
+            // Test safeGet
+            const obj = { a: { b: { c: 123 } } };
+            container.appendChild(assert(
+                safeGet(obj, 'a.b.c') === 123,
+                'safeGet: should get nested value'
+            ));
+            container.appendChild(assert(
+                safeGet(obj, 'a.b.d', 'default') === 'default',
+                'safeGet: should return default for missing path'
+            ));
+            container.appendChild(assert(
+                safeGet(null, 'a.b', 'default') === 'default',
+                'safeGet: should handle null object'
+            ));
+            
+            // Test safeNumber
+            container.appendChild(assert(
+                safeNumber('123.45') === 123.45,
+                'safeNumber: should convert string to number'
+            ));
+            container.appendChild(assert(
+                safeNumber(null, 10) === 10,
+                'safeNumber: should return default for null'
+            ));
+            container.appendChild(assert(
+                safeNumber('invalid', 0) === 0,
+                'safeNumber: should return default for invalid string'
+            ));
+            
+            // Test safePercent
+            container.appendChild(assert(
+                safePercent(0.1234, 2) === '12.34%',
+                'safePercent: should format percentage'
+            ));
+            
+            // Test safeCurrency
+            container.appendChild(assert(
+                safeCurrency(1234.56) === '$1,234.56',
+                'safeCurrency: should format currency'
+            ));
+            
+            // Test safeArray
+            container.appendChild(assert(
+                Array.isArray(safeArray(null)),
+                'safeArray: should return empty array for null'
+            ));
+            container.appendChild(assert(
+                safeArray([1, 2, 3]).length === 3,
+                'safeArray: should return original array'
+            ));
+            
+            // Test escapeHtml
+            container.appendChild(assert(
+                escapeHtml('<script>') === '&lt;script&gt;',
+                'escapeHtml: should escape HTML'
+            ));
+            container.appendChild(assert(
+                escapeHtml(null) === '',
+                'escapeHtml: should handle null'
+            ));
+        }
+        
+        // Phase 2: Data Validation Test
+        function testValidators() {
+            const container = document.getElementById('validator-tests');
+            
+            // Test with null data
+            const nullResult = dataValidator.validate(null);
+            container.appendChild(assert(
+                nullResult !== null && typeof nullResult === 'object',
+                'Validator: should handle null data gracefully'
+            ));
+            
+            // Test with valid data
+            const testData = {
+                positions: {
+                    summary: {
+                        position_count: 10,
+                        portfolio_value: 100000
+                    },
+                    positions: [
+                        { symbol: 'AAPL', qty: 100, market_value: 15000 }
+                    ]
+                }
+            };
+            
+            const validResult = dataValidator.validate(testData);
+            container.appendChild(assert(
+                validResult.positions.summary.position_count === 10,
+                'Validator: should preserve valid data'
+            ));
+            container.appendChild(assert(
+                validResult.positions.positions.length === 1,
+                'Validator: should preserve arrays'
+            ));
+            
+            // Test with missing paths
+            const partialData = {
+                positions: {}
+            };
+            
+            const partialResult = dataValidator.validate(partialData);
+            container.appendChild(assert(
+                partialResult.positions.summary.position_count === 0,
+                'Validator: should provide default values for missing data'
+            ));
+        }
+        
+        // Phase 3: API Client Test
+        async function testAPIClient() {
+            const container = document.getElementById('api-tests');
+            
+            try {
+                const result = await apiClient.getDashboard();
+                
+                container.appendChild(assert(
+                    result !== null && typeof result === 'object',
+                    'API Client: should return an object'
+                ));
+                
+                container.appendChild(assert(
+                    result.hasOwnProperty('success'),
+                    'API Client: should have success property'
+                ));
+                
+                container.appendChild(assert(
+                    result.hasOwnProperty('data'),
+                    'API Client: should have data property'
+                ));
+                
+                if (result.success) {
+                    container.appendChild(assert(
+                        result.data !== null,
+                        'API Client: should have valid data when successful'
+                    ));
+                } else {
+                    container.appendChild(warn(
+                        'API Client: request failed but handled gracefully - ' + result.error
+                    ));
+                }
+            } catch (error) {
+                container.appendChild(assert(
+                    false,
+                    'API Client: should not throw errors - ' + error.message
+                ));
+            }
+        }
+        
+        // Phase 4: Error Handler Test
+        function testErrorHandler() {
+            const container = document.getElementById('error-tests');
+            
+            container.appendChild(assert(
+                typeof errorHandler === 'object',
+                'Error Handler: should be initialized'
+            ));
+            
+            container.appendChild(assert(
+                document.getElementById('error-toast-container') !== null,
+                'Error Handler: should create toast container'
+            ));
+            
+            // Test showing error
+            errorHandler.showError('Test error', 2000);
+            container.appendChild(assert(
+                true,
+                'Error Handler: showError() executed without error'
+            ));
+            
+            // Test showing success
+            setTimeout(() => {
+                errorHandler.showSuccess('Test success', 2000);
+            }, 2500);
+            
+            container.appendChild(assert(
+                true,
+                'Error Handler: multiple toast types work'
+            ));
+        }
+        
+        // Phase 5: State Manager Test
+        async function testStateManager() {
+            const container = document.getElementById('state-tests');
+            
+            container.appendChild(assert(
+                typeof appState === 'object',
+                'State Manager: should be initialized'
+            ));
+            
+            // Test subscribe
+            let callbackCalled = false;
+            const unsubscribe = appState.subscribe((state) => {
+                callbackCalled = true;
+            });
+            
+            container.appendChild(assert(
+                callbackCalled === true,
+                'State Manager: should call subscriber immediately'
+            ));
+            
+            unsubscribe();
+            
+            // Test data update
+            try {
+                await appState.updateData();
+                
+                container.appendChild(assert(
+                    appState.getState().lastUpdate !== null,
+                    'State Manager: should update lastUpdate after updateData()'
+                ));
+                
+                container.appendChild(assert(
+                    appState.getState().data !== null,
+                    'State Manager: should have data after updateData()'
+                ));
+            } catch (error) {
+                container.appendChild(assert(
+                    false,
+                    'State Manager: updateData() failed - ' + error.message
+                ));
+            }
+        }
+        
+        // Run all tests
+        async function runAllTests() {
+            console.log('🧪 Starting robustness tests...');
+            
+            testUtils();
+            testValidators();
+            await testAPIClient();
+            testErrorHandler();
+            await testStateManager();
+            
+            console.log('✅ All tests completed!');
+        }
+        
+        // Run tests when page loads
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 100);
+        });
+    </script>
+</body>
+</html>

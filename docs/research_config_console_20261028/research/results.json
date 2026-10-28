@@ -1,0 +1,649 @@
+{
+  "F1_started": false,
+  "S1_complete": false,
+  "S2_complete": false,
+  "S3_consumed": false,
+  "S4_started": false,
+  "coverage": {
+    "missing_or_invalid_five_session_path": 2090,
+    "not_stored_buy": 541,
+    "proxy_computable": 1901
+  },
+  "first_signal_day": "2026-05-11",
+  "full_candidate_denominator_known": false,
+  "groups": [
+    {
+      "asset_class": "etf",
+      "costs": {
+        "0": {
+          "SPY_excess": 0.0676844940254964,
+          "net_price_return": 0.07744316102777733
+        },
+        "10": {
+          "SPY_excess": 0.06754926027119976,
+          "net_price_return": 0.07529042743931039
+        },
+        "15": {
+          "SPY_excess": 0.06748174466745697,
+          "net_price_return": 0.07421567277707011
+        },
+        "2": {
+          "SPY_excess": 0.06765742564156293,
+          "net_price_return": 0.07701226994158353
+        },
+        "5": {
+          "SPY_excess": 0.06761684335680526,
+          "net_price_return": 0.07636625631910406
+        }
+      },
+      "event_count": 6,
+      "excess_5bps_block_interval": {
+        "block_sessions": 20,
+        "expected_session_span": 10,
+        "high": null,
+        "low": null,
+        "resamples": 0,
+        "sparse_or_fewer_than_five_blocks": true,
+        "status": "insufficient_20_session_blocks"
+      },
+      "score_band": ".4-.6",
+      "signal_days": 5,
+      "strategy": "breakout_momentum_v1",
+      "symbols": 4
+    },
+    {
+      "asset_class": "etf",
+      "costs": {
+        "0": {
+          "SPY_excess": 0.046067019863500466,
+          "net_price_return": 0.05754068567854493
+        },
+        "10": {
+          "SPY_excess": 0.04597497786577124,
+          "net_price_return": 0.05542771727559095
+        },
+        "15": {
+          "SPY_excess": 0.04592902579501265,
+          "net_price_return": 0.05437281542688678
+        },
+        "2": {
+          "SPY_excess": 0.04604859674017966,
+          "net_price_return": 0.05711775399061112
+        },
+        "5": {
+          "SPY_excess": 0.0460209758656359,
+          "net_price_return": 0.056483673498956326
+        }
+      },
+      "event_count": 22,
+      "excess_5bps_block_interval": {
+        "block_sessions": 20,
+        "expected_session_span": 10,
+        "high": null,
+        "low": null,
+        "resamples": 0,
+        "sparse_or_fewer_than_five_blocks": true,
+        "status": "insufficient_20_session_blocks"
+      },
+      "score_band": ".6-.8",
+      "signal_days": 6,
+      "strategy": "breakout_momentum_v1",
+      "symbols": 8
+    },
+    {
+      "asset_class": "etf",
+      "costs": {
+        "0": {
+          "SPY_excess": 0.03763067686925756,
+          "net_price_return": 0.047644349605472786
+        },
+        "10": {
+          "SPY_excess": 0.03755549070168659,
+          "net_price_return": 0.04555115410176564
+        },
+        "15": {
+          "SPY_excess": 0.03751795392306902,
+          "net_price_return": 0.044506123895221725
+        },
+        "2": {
+          "SPY_excess": 0.03761562760836199,
+          "net_price_return": 0.04722537566041965
+        },
+        "5": {
+          "SPY_excess": 0.037593064998323725,
+          "net_price_return": 0.046597228816262
+        }
+      },
+      "event_count": 96,
+      "excess_5bps_block_interval": {
+        "block_sessions": 20,
+        "expected_session_span": 10,
+        "high": null,
+        "low": null,
+        "resamples": 0,
+        "sparse_or_fewer_than_five_blocks": true,
+        "status": "insufficient_20_session_blocks"
+      },
+      "score_band": ".8-1",
+      "signal_days": 7,
+      "strategy": "breakout_momentum_v1",
+      "symbols": 9
+    },
+    {
+      "asset_class": "stock",
+      "costs": {
+        "0": {
+          "SPY_excess": 0.0171263953081117,
+          "net_price_return": 0.020931506880538697
+        },
+        "10": {
+          "SPY_excess": 0.017092176736067492,
+          "net_price_return": 0.01889168368996828
+        },
+        "15": {
+          "SPY_excess": 0.017075093075536212,
+          "net_price_return": 0.017873299670711804
+        },
+        "2": {
+          "SPY_excess": 0.01711954611982609,
+          "net_price_return": 0.020523215935975427
+        },
+        "5": {
+          "SPY_excess": 0.017109277471721748,
+          "net_price_return": 0.019911085584306352
+        }
+      },
+      "event_count": 80,
+      "excess_5bps_block_interval": {
+        "block_sessions": 20,
+        "empty_draws_excluded": 74,
+        "expected_session_span": 48,
+        "high": 0.04463764075961629,
+        "low": 0.002295425309745247,
+        "resamples": 4000,
+        "sparse_or_fewer_than_five_blocks": true,
+        "status": "exploratory_block_sensitivity"
+      },
+      "score_band": ".4-.6",
+      "signal_days": 23,
+      "strategy": "breakout_momentum_v1",
+      "symbols": 28
+    },
+    {
+      "asset_class": "stock",
+      "costs": {
+        "0": {
+          "SPY_excess": 0.0002491777239417408,
+          "net_price_return": 0.0037101817181399797
+        },
+        "10": {
+          "SPY_excess": 0.0002486798663514615,
+          "net_price_return": 0.0017047667696523027
+        },
+        "15": {
+          "SPY_excess": 0.0002484313103902509,
+          "net_price_return": 0.0007035611039069061
+        },
+        "2": {
+          "SPY_excess": 0.00024907807278239406,
+          "net_price_return": 0.003308777926211148
+        },
+        "5": {
+          "SPY_excess": 0.0002489286707444009,
+          "net_price_return": 0.002706973140710669
+        }
+      },
+      "event_count": 254,
+      "excess_5bps_block_interval": {
+        "block_sessions": 20,
+        "empty_draws_excluded": 0,
+        "expected_session_span": 56,
+        "high": 0.00013455901432879924,
+        "low": -0.02244769546569867,
+        "resamples": 4000,
+        "sparse_or_fewer_than_five_blocks": true,
+        "status": "exploratory_block_sensitivity"
+      },
+      "score_band": ".6-.8",
+      "signal_days": 44,
+      "strategy": "breakout_momentum_v1",
+      "symbols": 40
+    },
+    {
+      "asset_class": "stock",
+      "costs": {
+        "0": {
+          "SPY_excess": 0.007744146211205692,
+          "net_price_return": 0.011082781406126677
+        },
+        "10": {
+          "SPY_excess": 0.007728673391602886,
+          "net_price_return": 0.009062635988731927
+        },
+        "15": {
+          "SPY_excess": 0.00772094856903533,
+          "net_price_return": 0.008054076119837729
+        },
+        "2": {
+          "SPY_excess": 0.007741049172129043,
+          "net_price_return": 0.0106784291640127
+        },
+        "5": {
+          "SPY_excess": 0.00773640593513252,
+          "net_price_return": 0.010072203913466991
+        }
+      },
+      "event_count": 1120,
+      "excess_5bps_block_interval": {
+        "block_sessions": 20,
+        "empty_draws_excluded": 0,
+        "expected_session_span": 62,
+        "high": 0.02951272422274914,
+        "low": -0.038935730756993206,
+        "resamples": 4000,
+        "sparse_or_fewer_than_five_blocks": true,
+        "status": "exploratory_block_sensitivity"
+      },
+      "score_band": ".8-1",
+      "signal_days": 44,
+      "strategy": "breakout_momentum_v1",
+      "symbols": 43
+    },
+    {
+      "asset_class": "etf",
+      "costs": {
+        "0": {
+          "SPY_excess": -0.01859638908264377,
+          "net_price_return": -0.028249909149170027
+        },
+        "10": {
+          "SPY_excess": -0.01855923346010102,
+          "net_price_return": -0.03019146777224846
+        },
+        "15": {
+          "SPY_excess": -0.01854068347380894,
+          "net_price_return": -0.031160793095802497
+        },
+        "2": {
+          "SPY_excess": -0.018588952014424454,
+          "net_price_return": -0.028638531461048056
+        },
+        "5": {
+          "SPY_excess": -0.018577801987108955,
+          "net_price_return": -0.029221173607791473
+        }
+      },
+      "event_count": 2,
+      "excess_5bps_block_interval": {
+        "block_sessions": 20,
+        "expected_session_span": 4,
+        "high": null,
+        "low": null,
+        "resamples": 0,
+        "sparse_or_fewer_than_five_blocks": true,
+        "status": "insufficient_20_session_blocks"
+      },
+      "score_band": ".4-.6",
+      "signal_days": 2,
+      "strategy": "breakout_momentum_v1_etf",
+      "symbols": 1
+    },
+    {
+      "asset_class": "etf",
+      "costs": {
+        "0": {
+          "SPY_excess": -0.0022636158295877788,
+          "net_price_return": -0.0052887842184082354
+        },
+        "10": {
+          "SPY_excess": -0.0022590931206375236,
+          "net_price_return": -0.007276219214974732
+        },
+        "15": {
+          "SPY_excess": -0.0022568351531137183,
+          "net_price_return": -0.008268448369526327
+        },
+        "2": {
+          "SPY_excess": -0.0022627105643089765,
+          "net_price_return": -0.005686589143735738
+        },
+        "5": {
+          "SPY_excess": -0.0022613533450005045,
+          "net_price_return": -0.006282998327135376
+        }
+      },
+      "event_count": 51,
+      "excess_5bps_block_interval": {
+        "block_sessions": 20,
+        "empty_draws_excluded": 7,
+        "expected_session_span": 50,
+        "high": 0.01843888247989302,
+        "low": -0.06008700237713473,
+        "resamples": 4000,
+        "sparse_or_fewer_than_five_blocks": true,
+        "status": "exploratory_block_sensitivity"
+      },
+      "score_band": ".6-.8",
+      "signal_days": 16,
+      "strategy": "breakout_momentum_v1_etf",
+      "symbols": 14
+    },
+    {
+      "asset_class": "etf",
+      "costs": {
+        "0": {
+          "SPY_excess": -0.027156831353696193,
+          "net_price_return": -0.032699981661983665
+        },
+        "10": {
+          "SPY_excess": -0.027102571950392094,
+          "net_price_return": -0.03463264903129029
+        },
+        "15": {
+          "SPY_excess": -0.027075482882342124,
+          "net_price_return": -0.03559753538641108
+        },
+        "2": {
+          "SPY_excess": -0.02714597079326681,
+          "net_price_return": -0.03308682430079109
+        },
+        "5": {
+          "SPY_excess": -0.027129688093972367,
+          "net_price_return": -0.03366679827201656
+        }
+      },
+      "event_count": 162,
+      "excess_5bps_block_interval": {
+        "block_sessions": 20,
+        "expected_session_span": 23,
+        "high": null,
+        "low": null,
+        "resamples": 0,
+        "sparse_or_fewer_than_five_blocks": true,
+        "status": "insufficient_20_session_blocks"
+      },
+      "score_band": ".8-1",
+      "signal_days": 12,
+      "strategy": "breakout_momentum_v1_etf",
+      "symbols": 16
+    },
+    {
+      "asset_class": "etf",
+      "costs": {
+        "0": {
+          "SPY_excess": -0.04589363607154079,
+          "net_price_return": -0.03013645098663492
+        },
+        "10": {
+          "SPY_excess": -0.04580194049497436,
+          "net_price_return": -0.03207424029535281
+        },
+        "15": {
+          "SPY_excess": -0.04575616137537042,
+          "net_price_return": -0.03304168378447825
+        },
+        "2": {
+          "SPY_excess": -0.045875282287869114,
+          "net_price_return": -0.030524318832671073
+        },
+        "5": {
+          "SPY_excess": -0.0458477653708196,
+          "net_price_return": -0.031105829846218368
+        }
+      },
+      "event_count": 5,
+      "excess_5bps_block_interval": {
+        "block_sessions": 20,
+        "expected_session_span": 4,
+        "high": null,
+        "low": null,
+        "resamples": 0,
+        "sparse_or_fewer_than_five_blocks": true,
+        "status": "insufficient_20_session_blocks"
+      },
+      "score_band": ".8-1",
+      "signal_days": 2,
+      "strategy": "breakout_momentum_v1_etf_intraday_enhanced",
+      "symbols": 4
+    },
+    {
+      "asset_class": "etf",
+      "costs": {
+        "0": {
+          "SPY_excess": 0.007199701880844567,
+          "net_price_return": 0.0062128803092643126
+        },
+        "10": {
+          "SPY_excess": 0.007185316862101647,
+          "net_price_return": 0.004202464963991163
+        },
+        "15": {
+          "SPY_excess": 0.007178135125335217,
+          "net_price_return": 0.003198762844533576
+        },
+        "2": {
+          "SPY_excess": 0.007196822575953314,
+          "net_price_return": 0.005810475638074945
+        },
+        "5": {
+          "SPY_excess": 0.00719250577701569,
+          "net_price_return": 0.005207170283967888
+        }
+      },
+      "event_count": 5,
+      "excess_5bps_block_interval": {
+        "block_sessions": 20,
+        "expected_session_span": 2,
+        "high": null,
+        "low": null,
+        "resamples": 0,
+        "sparse_or_fewer_than_five_blocks": true,
+        "status": "insufficient_20_session_blocks"
+      },
+      "score_band": ".6-.8",
+      "signal_days": 2,
+      "strategy": "breakout_momentum_v1_intraday_enhanced",
+      "symbols": 2
+    },
+    {
+      "asset_class": "etf",
+      "costs": {
+        "0": {
+          "SPY_excess": 0.022037950645602246,
+          "net_price_return": 0.02806295622416943
+        },
+        "10": {
+          "SPY_excess": 0.021993918776180427,
+          "net_price_return": 0.026008884383561814
+        },
+        "15": {
+          "SPY_excess": 0.021971935815909945,
+          "net_price_return": 0.02498338670976855
+        },
+        "2": {
+          "SPY_excess": 0.02202913722802751,
+          "net_price_return": 0.027651813270270564
+        },
+        "5": {
+          "SPY_excess": 0.022015923708425224,
+          "net_price_return": 0.02703540704253621
+        }
+      },
+      "event_count": 17,
+      "excess_5bps_block_interval": {
+        "block_sessions": 20,
+        "expected_session_span": 5,
+        "high": null,
+        "low": null,
+        "resamples": 0,
+        "sparse_or_fewer_than_five_blocks": true,
+        "status": "insufficient_20_session_blocks"
+      },
+      "score_band": ".8-1",
+      "signal_days": 3,
+      "strategy": "breakout_momentum_v1_intraday_enhanced",
+      "symbols": 8
+    },
+    {
+      "asset_class": "stock",
+      "costs": {
+        "0": {
+          "SPY_excess": -0.04351992747589889,
+          "net_price_return": -0.05202053158694003
+        },
+        "10": {
+          "SPY_excess": -0.04343297457384909,
+          "net_price_return": -0.053914596458894015
+        },
+        "15": {
+          "SPY_excess": -0.04338956323982529,
+          "net_price_return": -0.054860210473848814
+        },
+        "2": {
+          "SPY_excess": -0.04350252298580648,
+          "net_price_return": -0.05239964755111237
+        },
+        "5": {
+          "SPY_excess": -0.043476429297512276,
+          "net_price_return": -0.052968037302495274
+        }
+      },
+      "event_count": 2,
+      "excess_5bps_block_interval": {
+        "block_sessions": 20,
+        "expected_session_span": 4,
+        "high": null,
+        "low": null,
+        "resamples": 0,
+        "sparse_or_fewer_than_five_blocks": true,
+        "status": "insufficient_20_session_blocks"
+      },
+      "score_band": ".4-.6",
+      "signal_days": 2,
+      "strategy": "breakout_momentum_v1_intraday_enhanced",
+      "symbols": 2
+    },
+    {
+      "asset_class": "stock",
+      "costs": {
+        "0": {
+          "SPY_excess": -0.011660787266766563,
+          "net_price_return": -0.015088657114116864
+        },
+        "10": {
+          "SPY_excess": -0.011637488990509297,
+          "net_price_return": -0.017056511945057567
+        },
+        "15": {
+          "SPY_excess": -0.011625857299916529,
+          "net_price_return": -0.01803896567992579
+        },
+        "2": {
+          "SPY_excess": -0.011656123884536282,
+          "net_price_return": -0.015482542874119154
+        },
+        "5": {
+          "SPY_excess": -0.01164913230697973,
+          "net_price_return": -0.016073076247435984
+        }
+      },
+      "event_count": 15,
+      "excess_5bps_block_interval": {
+        "block_sessions": 20,
+        "empty_draws_excluded": 1183,
+        "expected_session_span": 49,
+        "high": 0.048832448336092016,
+        "low": -0.020289358113132837,
+        "resamples": 4000,
+        "sparse_or_fewer_than_five_blocks": true,
+        "status": "exploratory_block_sensitivity"
+      },
+      "score_band": ".6-.8",
+      "signal_days": 8,
+      "strategy": "breakout_momentum_v1_intraday_enhanced",
+      "symbols": 12
+    },
+    {
+      "asset_class": "stock",
+      "costs": {
+        "0": {
+          "SPY_excess": -0.006085653187469152,
+          "net_price_return": -0.0033463156385019352
+        },
+        "10": {
+          "SPY_excess": -0.0060734940402414755,
+          "net_price_return": -0.005337631691172145
+        },
+        "15": {
+          "SPY_excess": -0.0060674235723294605,
+          "net_price_return": -0.00633179846734315
+        },
+        "2": {
+          "SPY_excess": -0.006083219412949055,
+          "net_price_return": -0.003744897395894997
+        },
+        "5": {
+          "SPY_excess": -0.006079570575587621,
+          "net_price_return": -0.004342471245060019
+        }
+      },
+      "event_count": 63,
+      "excess_5bps_block_interval": {
+        "block_sessions": 20,
+        "empty_draws_excluded": 8,
+        "expected_session_span": 51,
+        "high": 0.04100040994305071,
+        "low": -0.025536388769921887,
+        "resamples": 4000,
+        "sparse_or_fewer_than_five_blocks": true,
+        "status": "exploratory_block_sensitivity"
+      },
+      "score_band": ".8-1",
+      "signal_days": 17,
+      "strategy": "breakout_momentum_v1_intraday_enhanced",
+      "symbols": 32
+    },
+    {
+      "asset_class": "stock",
+      "costs": {
+        "0": {
+          "SPY_excess": 0.24015914094787405,
+          "net_price_return": 0.24500000476837158
+        },
+        "10": {
+          "SPY_excess": 0.2396793025044217,
+          "net_price_return": 0.24251249227133198
+        },
+        "15": {
+          "SPY_excess": 0.23943974262251855,
+          "net_price_return": 0.24127059886292468
+        },
+        "2": {
+          "SPY_excess": 0.2400630965003845,
+          "net_price_return": 0.24450210434654873
+        },
+        "5": {
+          "SPY_excess": 0.239919101826487,
+          "net_price_return": 0.2437556269525114
+        }
+      },
+      "event_count": 1,
+      "excess_5bps_block_interval": null,
+      "score_band": ".8-1",
+      "signal_days": 1,
+      "strategy": "event_swing_v1",
+      "symbols": 1
+    }
+  ],
+  "input_decisions": 4532,
+  "last_outcome_day": "2026-08-14",
+  "last_signal_day": "2026-08-07",
+  "portfolio_metrics_computed": false,
+  "price_basis_qualified": false,
+  "production_applied": false,
+  "proxy_event_count": 1901,
+  "proxy_signal_days": 53,
+  "qualified_forward_additions": 0,
+  "repeat_symbol_day_additional_rows": 971,
+  "study_id": "SIGNAL-DIAGNOSTIC-20261028-r1-forward-extension"
+}

@@ -1,0 +1,186 @@
+diff --git a/console/services/dashboard_service.py b/console/services/dashboard_service.py
+index 6271cdd..a2738ce 100644
+--- a/console/services/dashboard_service.py
++++ b/console/services/dashboard_service.py
+@@ -1688,11 +1688,21 @@ class DashboardService:
+             order_id = str(evt.get("order_id") or evt.get("subject") or "")
+             order = by_id.get(order_id)
+             parsed = self._parse_submission_details(str(evt.get("details") or ""))
++            # Audit-only display: legacy parser coerces bad/fractional qty to 0.
++            # Keep that shared parser's unrelated consumers unchanged.
++            detail = str(evt.get("details") or "").split(":", 1)[-1].strip()
++            parts = detail.split()
++            audit_qty = None
++            if len(parts) >= 3 and parts[0].lower() in {"buy", "sell"}:
++                raw_qty = parts[1]
++                if (len(raw_qty) <= 24 and re.fullmatch(r"[0-9]+(?:\.[0-9]+)?", raw_qty)
++                        and any(c in "123456789" for c in raw_qty)):
++                    audit_qty = int(raw_qty) if raw_qty.isdecimal() else raw_qty
+             result.append({
+                 "ts": evt.get("ts"), "order_id": order_id or None,
+                 "symbol": order.get("symbol") if order else parsed.get("symbol"),
+                 "side": order.get("side") if order else parsed.get("side"),
+-                "qty": order.get("qty") if order else parsed.get("qty"),
++                "qty": order.get("qty") if order else audit_qty,
+                 "status": str(order.get("status") or "unknown") if order else "unconfirmed",
+                 "broker_status": order.get("status") if order else None,
+                 "broker_filled_qty": order.get("filled_qty") if order else None,
+diff --git a/src/stock_swing/cli/paper_demo.py b/src/stock_swing/cli/paper_demo.py
+index b747401..f11c72a 100644
+--- a/src/stock_swing/cli/paper_demo.py
++++ b/src/stock_swing/cli/paper_demo.py
+@@ -533,7 +533,7 @@ def main() -> int:  # noqa: C901
+     parser.add_argument("--capture-provider-contracts", action="store_true",
+                         help="Record partial bar-response lineage; not full replay or F1")
+     parser.add_argument("--capture-config-instances", action="store_true",
+-                        help="Record nine reached CLI config constructors; observations only")
++                        help="Record allowlisted reached CLI config constructors; observations only")
+     args = parser.parse_args()
+ 
+     # Configure logging so logger.info() messages (exit_signal_fired, exit_signal_generated,
+@@ -2279,7 +2279,7 @@ def main() -> int:  # noqa: C901
+         _sym = getattr(_rec, "symbol", None) or ""
+         if _sym:
+             _records_by_symbol.setdefault(_sym, []).append(_rec)
+-    _ef_config = EntryFilterConfig.from_env()
++    _ef_config = _construct_config(EntryFilterConfig)
+     _entry_filter = EntryFilterEngine(_ef_config)
+     _ef_result = _entry_filter.filter(
+         decisions=actionable,
+@@ -2356,7 +2356,7 @@ def main() -> int:  # noqa: C901
+     # existing 24h cooldown allowed a second lot after the timer expired even
+     # though the first lot was already roughly -10%. Record the counterfactual
+     # block here, but do not remove or mutate any actionable decision.
+-    _losing_add_config = LosingPositionAddGuardConfig.from_env()
++    _losing_add_config = _construct_config(LosingPositionAddGuardConfig)
+     _losing_add_observations = evaluate_losing_position_adds(
+         actionable,
+         current_positions_full,
+diff --git a/src/stock_swing/risk/config_instance_specs.py b/src/stock_swing/risk/config_instance_specs.py
+index 124ad8c..a82d47f 100644
+--- a/src/stock_swing/risk/config_instance_specs.py
++++ b/src/stock_swing/risk/config_instance_specs.py
+@@ -1,4 +1,4 @@
+-"""Allowlisted nine CLI config families, not the complete configuration schema."""
++"""Allowlisted eleven CLI config families, not the complete configuration schema."""
+ SPECS = {'DipBuySignalConfig': {'environment_keys': ['DIP_BUY_MIN_MOMENTUM_DROP',
+                                              'DIP_BUY_MIN_SIGNAL_STRENGTH',
+                                              'DIP_BUY_SHADOW_DISABLED'],
+@@ -81,3 +81,20 @@ SPECS = {'DipBuySignalConfig': {'environment_keys': ['DIP_BUY_MIN_MOMENTUM_DROP'
+  'VolatilityGateConfig': {'environment_keys': ['VOLATILITY_GATE_MAX_3M_STD_PCT', 'VOLATILITY_GATE_MODE'],
+                           'fields': {'max_3m_return_std_pct': 'float', 'mode': 'str'},
+                           'module': 'stock_swing.risk.volatility_gate'}}
++SPECS.update({
++ 'EntryFilterConfig': {
++  'module':'stock_swing.risk.entry_filter',
++  'fields':{'min_volume':'float','min_adr_pct':'float','rolling_pf_gate':'float',
++   'min_trades_for_gate':'int','disabled':'bool','stock_reduced_mode':'bool',
++   'stock_reduced_pf_gate':'float','stock_reduced_min_trades':'int',
++   'pf_gate_skip_symbols':'list[str]','purchase_restricted_symbols':'list[str]'},
++  'environment_keys':['ENTRY_FILTER_MIN_VOLUME','ENTRY_FILTER_MIN_ADR_PCT',
++   'ENTRY_FILTER_ROLLING_PF_GATE','ENTRY_FILTER_MIN_TRADES_FOR_GATE',
++   'ENTRY_FILTER_DISABLED','ENTRY_FILTER_STOCK_REDUCED','ENTRY_FILTER_STOCK_REDUCED_PF_GATE',
++   'ENTRY_FILTER_STOCK_REDUCED_MIN_TRADES','ENTRY_FILTER_PF_GATE_SKIP_SYMBOLS',
++   'ENTRY_FILTER_PURCHASE_RESTRICTED_SYMBOLS']},
++ 'LosingPositionAddGuardConfig': {
++  'module':'stock_swing.risk.losing_position_add_guard',
++  'fields':{'mode':'str','max_existing_loss_pct':'float'},
++  'environment_keys':['LOSING_POSITION_ADD_GUARD_MODE','LOSING_POSITION_ADD_GUARD_MAX_LOSS_PCT']}
++})
+diff --git a/tests/unit/test_config_instance_coverage.py b/tests/unit/test_config_instance_coverage.py
+index 7494d8d..7cd6ebd 100644
+--- a/tests/unit/test_config_instance_coverage.py
++++ b/tests/unit/test_config_instance_coverage.py
+@@ -25,9 +25,9 @@ def test_ac_constructor_failure_persisted_without_error_value(tmp_path):
+ 
+ def test_ac_finalize_records_unreached_without_instantiating(tmp_path):
+  r=ConfigInstanceRecorder(tmp_path,'fixture-run');r.construct(VolatilityGateConfig);r.finalize()
+- assert len(r.receipts)==9,r.receipts
++ assert len(r.receipts)==11,r.receipts
+  skipped=[x for x in r.receipts if x['status']=='not_reached']
+- assert len(skipped)==8 and all(x['effective'] is None for x in skipped),r.receipts
++ assert len(skipped)==10 and all(x['effective'] is None for x in skipped),r.receipts
+  assert r.failures==0,r.receipts
+  before=events(tmp_path);r.finalize();assert events(tmp_path)==before,'finalization must be idempotent'
+ 
+diff --git a/tests/unit/test_config_remaining_paths.py b/tests/unit/test_config_remaining_paths.py
+new file mode 100644
+index 0000000..046debe
+--- /dev/null
++++ b/tests/unit/test_config_remaining_paths.py
+@@ -0,0 +1,51 @@
++"""Regression 2026-10-28/8909e79+timing candidate: gate configs unobserved."""
++from dataclasses import asdict
++import json
++import pytest
++from stock_swing.risk.config_instance_receipts import ConfigInstanceRecorder,instance_receipt
++from stock_swing.risk.entry_filter import EntryFilterConfig,EntryFilterEngine,get_permanent_block_summary,get_small_sample_watchlist
++from stock_swing.risk.losing_position_add_guard import LosingPositionAddGuardConfig
++
++@pytest.mark.parametrize('cls',[EntryFilterConfig,LosingPositionAddGuardConfig])
++def test_ac_consumed_gate_config_is_allowlisted_without_policy_change(tmp_path,cls):
++ cfg=cls.from_env();before=asdict(cfg)
++ receipt=instance_receipt(cfg,'paper_demo:'+cls.__name__)
++ assert receipt['status']=='observed',receipt
++ assert receipt['effective']==before,'record actual constructed values, not environment guesses'
++ assert asdict(cfg)==before,'observation never changes gate policy'
++
++def test_ac_entry_constructor_error_still_original_and_value_not_leaked(tmp_path,monkeypatch):
++ monkeypatch.setenv('ENTRY_FILTER_MIN_VOLUME','PRIVATE-CANARY')
++ r=ConfigInstanceRecorder(tmp_path,'fixture-run')
++ with pytest.raises(ValueError,match='PRIVATE-CANARY'):r.construct(EntryFilterConfig)
++ assert r.receipts[0]['status']=='construction_failed',r.receipts
++ assert 'PRIVATE-CANARY' not in json.dumps(r.receipts),'persist exception type only'
++
++def test_ac_entry_config_alias_and_lists_detected_without_reverting(tmp_path):
++ r=ConfigInstanceRecorder(tmp_path,'fixture-run');cfg=r.construct(EntryFilterConfig)
++ engine=EntryFilterEngine(cfg)
++ assert engine.config is cfg,'filter consumes the exact same observed object'
++ alias=engine.config;alias.pf_gate_skip_symbols.append('MSFT');alias.min_volume=123
++ r.finalize();changed=[x for x in r.receipts if x['status']=='changed_since_capture']
++ assert len(changed)==1 and changed[0]['effective']['pf_gate_skip_symbols']==['MSFT'],changed
++ assert cfg.min_volume==123,'observer must not reverse consumer mutation'
++
++@pytest.mark.parametrize('value',[['PRIVATE-CANARY-WITH-SECRET'],[True],['MSFT']*65,'MSFT'])
++def test_ac_unsafe_entry_symbol_lists_not_recorded(value):
++ receipt=instance_receipt(EntryFilterConfig(purchase_restricted_symbols=value),'paper_demo:EntryFilterConfig')
++ assert receipt['status']=='unavailable' and receipt['effective'] is None,receipt
++ assert 'PRIVATE-CANARY' not in json.dumps(receipt),'refused values never serialized'
++
++def test_ac_losing_guard_records_effective_fallback_not_bad_environment(tmp_path,monkeypatch):
++ monkeypatch.setenv('LOSING_POSITION_ADD_GUARD_MAX_LOSS_PCT','PRIVATE-CANARY')
++ cfg=ConfigInstanceRecorder(tmp_path,'fixture-run').construct(LosingPositionAddGuardConfig)
++ receipt=instance_receipt(cfg,'paper_demo:LosingPositionAddGuardConfig')
++ assert receipt['effective']['max_existing_loss_pct']==-.03,'preserve existing fallback'
++ assert 'PRIVATE-CANARY' not in json.dumps(receipt),'only effective safe scalar is observed'
++
++def test_ac_entry_helpers_explicit_config_equals_existing_fallback(monkeypatch):
++ for name in ['ENTRY_FILTER_STOCK_REDUCED','ENTRY_FILTER_DISABLED','ENTRY_FILTER_PF_GATE_SKIP_SYMBOLS']:
++  monkeypatch.delenv(name,raising=False)
++ cfg=EntryFilterConfig.from_env()
++ for helper in [get_permanent_block_summary,get_small_sample_watchlist]:
++  assert helper([],config=cfg)==helper([]),'explicit CLI config and helper default preserve behavior'
+diff --git a/tests/unit/test_console_cancel_integration.py b/tests/unit/test_console_cancel_integration.py
+new file mode 100644
+index 0000000..523cc06
+--- /dev/null
++++ b/tests/unit/test_console_cancel_integration.py
+@@ -0,0 +1,18 @@
++"""Regression 2026-10-28: combined cancel+Console audit-only qty became 0."""
++import importlib.util
++from pathlib import Path
++import pytest
++root=Path(__file__).resolve().parents[2]
++spec=importlib.util.spec_from_file_location('console_fixture_helpers',root/'tests/unit/test_console_evidence_20261028.py')
++helpers=importlib.util.module_from_spec(spec);spec.loader.exec_module(helpers)
++
++@pytest.mark.parametrize('details,expected',[('sell 3.7 AMD','3.7'),('sell 3 AMD',3),('',None),('sell PRIVATE-CANARY AMD',None),('sell NaN AMD',None),('sell -3 AMD',None)])
++def test_ac_failed_broker_audit_quantity_preserved_or_unknown(tmp_path,details,expected):
++ svc=helpers.service(tmp_path,error=True)
++ rows=svc._fetch_broker_pending_orders([dict(subject='fixture-order',details=details)],[])
++ assert rows[0]['qty']==expected,'audit-only missing/fractional qty must not become zero'
++ assert rows[0]['status']=='unconfirmed' and rows[0]['source']=='audit_only','quantity parsing cannot confirm order state'
++ html=helpers.js('renderPendingOrdersTable',{'args':[rows,svc._broker_orders_evidence]})
++ assert '取得未確認' in html and '取消確認済' not in html,'failure warning survives populated rows'
++ assert (str(expected) if expected is not None else '未取得') in html,'quantity propagates service -> real renderer'
++ assert 'PRIVATE-CANARY' not in html,'raw detail/error not exposed'

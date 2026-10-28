@@ -1,0 +1,18 @@
+{
+  "combined": {
+    "apply_check": true,
+    "all_candidate_bytes_and_executable_bits_match": true,
+    "reverse_check": true,
+    "reverse_clean": true
+  },
+  "delta": {
+    "apply_check": true,
+    "all_candidate_bytes_and_executable_bits_match": true,
+    "reverse_check": true,
+    "reverse_clean": true
+  },
+  "main_read_only_apply_check": true,
+  "new_delta_whitespace_clean": true,
+  "full_permission_modes": "separate manifest; Git preserves executable bit only",
+  "runtime_deployed": false
+}

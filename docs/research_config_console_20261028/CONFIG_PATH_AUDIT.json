@@ -1,0 +1,360 @@
+{
+  "config_imports": [
+    {
+      "alias": null,
+      "kind": "EntryFilterConfig",
+      "line": 58,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "alias": null,
+      "kind": "LosingPositionAddGuardConfig",
+      "line": 66,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "alias": null,
+      "kind": "ShockAwareStagedExitConfig",
+      "line": 75,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "alias": null,
+      "kind": "SectorShockHoldConfig",
+      "line": 100,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "alias": null,
+      "kind": "VolatilityGateConfig",
+      "line": 1936,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "alias": null,
+      "kind": "DistanceFromHighConfig",
+      "line": 1937,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "alias": null,
+      "kind": "NewsSentimentConfig",
+      "line": 1944,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "alias": null,
+      "kind": "RsiDiagnosticConfig",
+      "line": 1950,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "alias": null,
+      "kind": "DipBuySignalConfig",
+      "line": 1297,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "alias": null,
+      "kind": "LotLevelExitDiagnosticConfig",
+      "line": 1518,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "alias": null,
+      "kind": "NewsShockHoldConfig",
+      "line": 2138,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "alias": null,
+      "kind": "NewsSentimentConfig",
+      "line": 65,
+      "path": "src/stock_swing/risk/news_shock_hold.py"
+    },
+    {
+      "alias": null,
+      "kind": "VolatilityGateConfig",
+      "line": 63,
+      "path": "scripts/backfill_planb_planc_historical.py"
+    },
+    {
+      "alias": null,
+      "kind": "DistanceFromHighConfig",
+      "line": 67,
+      "path": "scripts/backfill_planb_planc_historical.py"
+    },
+    {
+      "alias": null,
+      "kind": "SectorShockHoldConfig",
+      "line": 50,
+      "path": "scripts/sector_shock_historical_replay.py"
+    },
+    {
+      "alias": null,
+      "kind": "EntryFilterConfig",
+      "line": 2322,
+      "path": "console/services/dashboard_service.py"
+    },
+    {
+      "alias": null,
+      "kind": "EntryFilterConfig",
+      "line": 2363,
+      "path": "console/services/dashboard_service.py"
+    }
+  ],
+  "constructor_sites": [
+    {
+      "call": "_construct_config",
+      "classification": "wrapped_CLI_constructor",
+      "kind": "SectorShockHoldConfig",
+      "line": 1552,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "call": "_construct_config",
+      "classification": "wrapped_CLI_constructor",
+      "kind": "ShockAwareStagedExitConfig",
+      "line": 1554,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "call": "_construct_config",
+      "classification": "wrapped_CLI_constructor",
+      "kind": "VolatilityGateConfig",
+      "line": 1953,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "call": "_construct_config",
+      "classification": "wrapped_CLI_constructor",
+      "kind": "DistanceFromHighConfig",
+      "line": 1954,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "call": "_construct_config",
+      "classification": "wrapped_CLI_constructor",
+      "kind": "NewsSentimentConfig",
+      "line": 1955,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "call": "_construct_config",
+      "classification": "wrapped_CLI_constructor",
+      "kind": "RsiDiagnosticConfig",
+      "line": 1956,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "call": "_construct_config",
+      "classification": "wrapped_CLI_constructor",
+      "kind": "EntryFilterConfig",
+      "line": 2282,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "call": "_construct_config",
+      "classification": "wrapped_CLI_constructor",
+      "kind": "LosingPositionAddGuardConfig",
+      "line": 2359,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "call": "_construct_config",
+      "classification": "wrapped_CLI_constructor",
+      "kind": "DipBuySignalConfig",
+      "line": 1302,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "call": "_construct_config",
+      "classification": "wrapped_CLI_constructor",
+      "kind": "LotLevelExitDiagnosticConfig",
+      "line": 1523,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "call": "_construct_config",
+      "classification": "wrapped_CLI_constructor",
+      "kind": "NewsShockHoldConfig",
+      "line": 2143,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "call": "DistanceFromHighConfig.from_env",
+      "classification": "implicit_or_non_CLI_from_env",
+      "kind": "DistanceFromHighConfig",
+      "line": 151,
+      "path": "src/stock_swing/risk/distance_from_high.py"
+    },
+    {
+      "call": "EntryFilterConfig.from_env",
+      "classification": "implicit_or_non_CLI_from_env",
+      "kind": "EntryFilterConfig",
+      "line": 406,
+      "path": "src/stock_swing/risk/entry_filter.py"
+    },
+    {
+      "call": "EntryFilterConfig.from_env",
+      "classification": "implicit_or_non_CLI_from_env",
+      "kind": "EntryFilterConfig",
+      "line": 514,
+      "path": "src/stock_swing/risk/entry_filter.py"
+    },
+    {
+      "call": "EntryFilterConfig.from_env",
+      "classification": "implicit_or_non_CLI_from_env",
+      "kind": "EntryFilterConfig",
+      "line": 223,
+      "path": "src/stock_swing/risk/entry_filter.py"
+    },
+    {
+      "call": "LotLevelExitDiagnosticConfig.from_env",
+      "classification": "implicit_or_non_CLI_from_env",
+      "kind": "LotLevelExitDiagnosticConfig",
+      "line": 286,
+      "path": "src/stock_swing/risk/lot_level_exit_diagnostic.py"
+    },
+    {
+      "call": "NewsSentimentConfig.from_env",
+      "classification": "implicit_or_non_CLI_from_env",
+      "kind": "NewsSentimentConfig",
+      "line": 462,
+      "path": "src/stock_swing/risk/news_sentiment.py"
+    },
+    {
+      "call": "NewsShockHoldConfig.from_env",
+      "classification": "implicit_or_non_CLI_from_env",
+      "kind": "NewsShockHoldConfig",
+      "line": 179,
+      "path": "src/stock_swing/risk/news_shock_hold.py"
+    },
+    {
+      "call": "RsiDiagnosticConfig.from_env",
+      "classification": "implicit_or_non_CLI_from_env",
+      "kind": "RsiDiagnosticConfig",
+      "line": 157,
+      "path": "src/stock_swing/risk/rsi_diagnostic.py"
+    },
+    {
+      "call": "VolatilityGateConfig.from_env",
+      "classification": "implicit_or_non_CLI_from_env",
+      "kind": "VolatilityGateConfig",
+      "line": 123,
+      "path": "src/stock_swing/risk/volatility_gate.py"
+    },
+    {
+      "call": "DipBuySignalConfig.from_env",
+      "classification": "implicit_or_non_CLI_from_env",
+      "kind": "DipBuySignalConfig",
+      "line": 131,
+      "path": "src/stock_swing/strategy_engine/dip_buy_meanreversion_strategy.py"
+    },
+    {
+      "call": "VolatilityGateConfig.from_env",
+      "classification": "implicit_or_non_CLI_from_env",
+      "kind": "VolatilityGateConfig",
+      "line": 145,
+      "path": "scripts/backfill_planb_planc_historical.py"
+    },
+    {
+      "call": "DistanceFromHighConfig.from_env",
+      "classification": "implicit_or_non_CLI_from_env",
+      "kind": "DistanceFromHighConfig",
+      "line": 146,
+      "path": "scripts/backfill_planb_planc_historical.py"
+    },
+    {
+      "call": "SectorShockHoldConfig.from_env",
+      "classification": "implicit_or_non_CLI_from_env",
+      "kind": "SectorShockHoldConfig",
+      "line": 201,
+      "path": "scripts/sector_shock_historical_replay.py"
+    },
+    {
+      "call": "EntryFilterConfig.from_env",
+      "classification": "implicit_or_non_CLI_from_env",
+      "kind": "EntryFilterConfig",
+      "line": 2342,
+      "path": "console/services/dashboard_service.py"
+    },
+    {
+      "call": "EntryFilterConfig.from_env",
+      "classification": "implicit_or_non_CLI_from_env",
+      "kind": "EntryFilterConfig",
+      "line": 2382,
+      "path": "console/services/dashboard_service.py"
+    }
+  ],
+  "entry_direct_aliases": [
+    {
+      "line": 236,
+      "path": "src/stock_swing/risk/entry_filter.py",
+      "targets": [
+        "cfg"
+      ],
+      "value": "self.config"
+    }
+  ],
+  "explicit_CLI_consumer_config_arguments": [
+    {
+      "argument": "_ef_config",
+      "call": "get_permanent_block_summary",
+      "keyword": "config",
+      "line": 2291,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "argument": "_ef_config",
+      "call": "get_small_sample_watchlist",
+      "keyword": "config",
+      "line": 2301,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "argument": "_ef_config",
+      "call": "observe_restricted_entries",
+      "keyword": "entry_config",
+      "line": 2310,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "argument": "_losing_add_config",
+      "call": "evaluate_losing_position_adds",
+      "keyword": "config",
+      "line": 2360,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "argument": "cooldown_config",
+      "call": "apply_open_shock_cooldown",
+      "keyword": "config",
+      "line": 1716,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "argument": "_lot_diag_config",
+      "call": "evaluate_lot_level_discrepancies",
+      "keyword": "config",
+      "line": 1534,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "argument": "_staged_exit_config",
+      "call": "build_shock_aware_staged_exit_plan",
+      "keyword": "config",
+      "line": 1682,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    }
+  ],
+  "families": 11,
+  "fields": 51,
+  "findings": [
+    "EntryFilter CLI exact _ef_config is passed to Engine and both helpers and restriction observer; helper fallback remains available outside this CLI.",
+    "Seven previous optional helper from_env fallbacks remain outside recorder; do not instantiate skipped settings.",
+    "LosingPositionAddGuard fallback is recorded after factory normalization; raw invalid environment is not persisted.",
+    "Endpoint detects persistent mutation through engine.config and nested list alias; transient mutate-and-revert and uncooperative callers remain unobserved."
+  ],
+  "scope": "all explicit Python source/scripts/Console syntax in isolated candidate; import aliases resolved. Not interprocedural dynamic/reflective/custom caller closure."
+}

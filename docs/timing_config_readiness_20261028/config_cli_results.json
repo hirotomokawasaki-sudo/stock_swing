@@ -1,0 +1,2345 @@
+{
+  "baseline_dry_run_unreached": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 0,
+      "unknown": 0
+    },
+    "posts": [],
+    "recording_alert": false
+  },
+  "baseline_mandatory_constructor_failure": {
+    "business": [],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 99,
+    "orders": {
+      "held": null,
+      "rejected": null,
+      "submitted": null,
+      "unknown": null
+    },
+    "posts": [],
+    "recording_alert": false
+  },
+  "baseline_nonfinite": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "baseline_normal": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "baseline_optional_dip_failure": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "baseline_optional_lot_failure": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "baseline_optional_news_failure": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "baseline_override": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "baseline_refused_mode": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "baseline_sell_and_buy": {
+    "business": [
+      "[PASS] MSFT: action=buy risk=pass conf=0.85",
+      "[PASS] NVDA: action=buy risk=pass conf=0.85",
+      "[PASS] NVDA: action=sell risk=pass conf=0.90"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 2,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 1,
+        "side": "sell",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "MSFT",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "baseline_write_blocked": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "candidate_off_dry_run_unreached": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 0,
+      "unknown": 0
+    },
+    "posts": [],
+    "recording_alert": false
+  },
+  "candidate_off_mandatory_constructor_failure": {
+    "business": [],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 99,
+    "orders": {
+      "held": null,
+      "rejected": null,
+      "submitted": null,
+      "unknown": null
+    },
+    "posts": [],
+    "recording_alert": false
+  },
+  "candidate_off_nonfinite": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "candidate_off_normal": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "candidate_off_optional_dip_failure": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "candidate_off_optional_lot_failure": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "candidate_off_optional_news_failure": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "candidate_off_override": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "candidate_off_refused_mode": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "candidate_off_sell_and_buy": {
+    "business": [
+      "[PASS] MSFT: action=buy risk=pass conf=0.85",
+      "[PASS] NVDA: action=buy risk=pass conf=0.85",
+      "[PASS] NVDA: action=sell risk=pass conf=0.90"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 2,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 1,
+        "side": "sell",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "MSFT",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "candidate_off_write_blocked": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 0,
+    "instances": [],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "candidate_on_dry_run_unreached": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 9,
+    "instances": [
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "benchmark_symbols": [
+            "SMH",
+            "SOXX"
+          ],
+          "hard_loss_cap_pct": -15.0,
+          "max_hold_days_10": 10,
+          "max_hold_days_3": 3,
+          "max_hold_days_5": 5,
+          "mode": "shadow",
+          "relative_weakness_max": 2.0,
+          "sector_shock_breadth_min": 0.5,
+          "sector_shock_min_benchmarks": 2,
+          "sector_shock_rolling_days": 3,
+          "sector_shock_rolling_threshold_pct": -5.0,
+          "sector_shock_threshold_pct": -3.0
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:SectorShockHoldConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.strategy_engine.sector_shock_hold",
+        "source_sha256": "2a0ca796f84ca3d0a1a8d43b570a57a587f645b966116225cbade7ff00d1f9ee",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "confirmation_sessions": 1,
+          "mode": "shadow",
+          "partial_fraction": 0.3333333333333333,
+          "treatment_hard_cap_pct": -0.15
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:ShockAwareStagedExitConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.shock_aware_staged_exit",
+        "source_sha256": "b55dad62601c40de88a0290e0676724ac6c1e6039fff75082c68f976d1ed7385",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "max_3m_return_std_pct": 120.0,
+          "mode": "shadow"
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:VolatilityGateConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.volatility_gate",
+        "source_sha256": "988f3f015bbb173872c72899d9ff9baaa451ec282b4cf8db00a02d022c1092f5",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_bounce_momentum_pct": 10.0,
+          "min_distance_from_high_pct": -20.0
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:DistanceFromHighConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.distance_from_high",
+        "source_sha256": "7d46dc59a73c857c8462a87d2677653ce3496a4d6420a1361e27778ad0047c15",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "max_article_age_days": 3,
+          "min_articles_for_signal": 2,
+          "negative_score_threshold": -0.34,
+          "relevance_filter_enabled": true,
+          "source_weighting_enabled": true
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:NewsSentimentConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.news_sentiment",
+        "source_sha256": "5e83e9b108cfef471437e3badeb4e1562173a240a6e10c482efb82f0afe1cb96",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "overbought_threshold": 75.0,
+          "window": 14
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:RsiDiagnosticConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.rsi_diagnostic",
+        "source_sha256": "8ca1c4ffa9694356e538e19843229af165855baded34210e7c875c0a5b3d2958",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": null,
+        "issues": [],
+        "kind": "instance:DipBuySignalConfig",
+        "recorded": true,
+        "source": "run_boundary",
+        "status": "not_reached"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": null,
+        "issues": [],
+        "kind": "instance:LotLevelExitDiagnosticConfig",
+        "recorded": true,
+        "source": "run_boundary",
+        "status": "not_reached"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": null,
+        "issues": [],
+        "kind": "instance:NewsShockHoldConfig",
+        "recorded": true,
+        "source": "run_boundary",
+        "status": "not_reached"
+      }
+    ],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 0,
+      "unknown": 0
+    },
+    "posts": [],
+    "recording_alert": false
+  },
+  "candidate_on_mandatory_constructor_failure": {
+    "business": [],
+    "event_count": 5,
+    "instances": [],
+    "main_exit": 99,
+    "orders": {
+      "held": null,
+      "rejected": null,
+      "submitted": null,
+      "unknown": null
+    },
+    "posts": [],
+    "recording_alert": false
+  },
+  "candidate_on_nonfinite": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 9,
+    "instances": [
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_momentum_drop": 0.05,
+          "min_signal_strength": 0.4
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:DipBuySignalConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.strategy_engine.dip_buy_meanreversion_strategy",
+        "source_sha256": "5346480496211cb93823ae72ae72016ebdaaccdfe1dc32bc6973fb98e52835a0",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_lots": 2
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:LotLevelExitDiagnosticConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.lot_level_exit_diagnostic",
+        "source_sha256": "221f7b437b47600cc25db376e5af68ae70adb33ac8b2c3226fb59c38be2b31e8",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "benchmark_symbols": [
+            "SMH",
+            "SOXX"
+          ],
+          "hard_loss_cap_pct": -15.0,
+          "max_hold_days_10": 10,
+          "max_hold_days_3": 3,
+          "max_hold_days_5": 5,
+          "mode": "shadow",
+          "relative_weakness_max": 2.0,
+          "sector_shock_breadth_min": 0.5,
+          "sector_shock_min_benchmarks": 2,
+          "sector_shock_rolling_days": 3,
+          "sector_shock_rolling_threshold_pct": -5.0,
+          "sector_shock_threshold_pct": -3.0
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:SectorShockHoldConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.strategy_engine.sector_shock_hold",
+        "source_sha256": "2a0ca796f84ca3d0a1a8d43b570a57a587f645b966116225cbade7ff00d1f9ee",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "confirmation_sessions": 1,
+          "mode": "shadow",
+          "partial_fraction": 0.3333333333333333,
+          "treatment_hard_cap_pct": -0.15
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:ShockAwareStagedExitConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.shock_aware_staged_exit",
+        "source_sha256": "b55dad62601c40de88a0290e0676724ac6c1e6039fff75082c68f976d1ed7385",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": null,
+        "issues": [
+          "config_observation_unavailable:ValueError"
+        ],
+        "kind": "instance:VolatilityGateConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "status": "unavailable"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_bounce_momentum_pct": 10.0,
+          "min_distance_from_high_pct": -20.0
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:DistanceFromHighConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.distance_from_high",
+        "source_sha256": "7d46dc59a73c857c8462a87d2677653ce3496a4d6420a1361e27778ad0047c15",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "max_article_age_days": 3,
+          "min_articles_for_signal": 2,
+          "negative_score_threshold": -0.34,
+          "relevance_filter_enabled": true,
+          "source_weighting_enabled": true
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:NewsSentimentConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.news_sentiment",
+        "source_sha256": "5e83e9b108cfef471437e3badeb4e1562173a240a6e10c482efb82f0afe1cb96",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "overbought_threshold": 75.0,
+          "window": 14
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:RsiDiagnosticConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.rsi_diagnostic",
+        "source_sha256": "8ca1c4ffa9694356e538e19843229af165855baded34210e7c875c0a5b3d2958",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "max_article_age_days": 1,
+          "min_articles_for_signal": 2,
+          "negative_score_threshold": -0.25
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:NewsShockHoldConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.news_shock_hold",
+        "source_sha256": "37b466fe78306f781b34c6e426f48e3f27f27c9cf53231275b8069d032d5f932",
+        "status": "observed"
+      }
+    ],
+    "main_exit": 1,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": true
+  },
+  "candidate_on_normal": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 9,
+    "instances": [
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_momentum_drop": 0.05,
+          "min_signal_strength": 0.4
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:DipBuySignalConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.strategy_engine.dip_buy_meanreversion_strategy",
+        "source_sha256": "5346480496211cb93823ae72ae72016ebdaaccdfe1dc32bc6973fb98e52835a0",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_lots": 2
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:LotLevelExitDiagnosticConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.lot_level_exit_diagnostic",
+        "source_sha256": "221f7b437b47600cc25db376e5af68ae70adb33ac8b2c3226fb59c38be2b31e8",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "benchmark_symbols": [
+            "SMH",
+            "SOXX"
+          ],
+          "hard_loss_cap_pct": -15.0,
+          "max_hold_days_10": 10,
+          "max_hold_days_3": 3,
+          "max_hold_days_5": 5,
+          "mode": "shadow",
+          "relative_weakness_max": 2.0,
+          "sector_shock_breadth_min": 0.5,
+          "sector_shock_min_benchmarks": 2,
+          "sector_shock_rolling_days": 3,
+          "sector_shock_rolling_threshold_pct": -5.0,
+          "sector_shock_threshold_pct": -3.0
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:SectorShockHoldConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.strategy_engine.sector_shock_hold",
+        "source_sha256": "2a0ca796f84ca3d0a1a8d43b570a57a587f645b966116225cbade7ff00d1f9ee",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "confirmation_sessions": 1,
+          "mode": "shadow",
+          "partial_fraction": 0.3333333333333333,
+          "treatment_hard_cap_pct": -0.15
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:ShockAwareStagedExitConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.shock_aware_staged_exit",
+        "source_sha256": "b55dad62601c40de88a0290e0676724ac6c1e6039fff75082c68f976d1ed7385",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "max_3m_return_std_pct": 120.0,
+          "mode": "shadow"
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:VolatilityGateConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.volatility_gate",
+        "source_sha256": "988f3f015bbb173872c72899d9ff9baaa451ec282b4cf8db00a02d022c1092f5",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_bounce_momentum_pct": 10.0,
+          "min_distance_from_high_pct": -20.0
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:DistanceFromHighConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.distance_from_high",
+        "source_sha256": "7d46dc59a73c857c8462a87d2677653ce3496a4d6420a1361e27778ad0047c15",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "max_article_age_days": 3,
+          "min_articles_for_signal": 2,
+          "negative_score_threshold": -0.34,
+          "relevance_filter_enabled": true,
+          "source_weighting_enabled": true
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:NewsSentimentConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.news_sentiment",
+        "source_sha256": "5e83e9b108cfef471437e3badeb4e1562173a240a6e10c482efb82f0afe1cb96",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "overbought_threshold": 75.0,
+          "window": 14
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:RsiDiagnosticConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.rsi_diagnostic",
+        "source_sha256": "8ca1c4ffa9694356e538e19843229af165855baded34210e7c875c0a5b3d2958",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "max_article_age_days": 1,
+          "min_articles_for_signal": 2,
+          "negative_score_threshold": -0.25
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:NewsShockHoldConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.news_shock_hold",
+        "source_sha256": "37b466fe78306f781b34c6e426f48e3f27f27c9cf53231275b8069d032d5f932",
+        "status": "observed"
+      }
+    ],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "candidate_on_optional_dip_failure": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 9,
+    "instances": [
+      {
+        "consumer": "paper_demo",
+        "effective": null,
+        "issues": [
+          "config_construction_failed:ValueError"
+        ],
+        "kind": "instance:DipBuySignalConfig",
+        "recorded": true,
+        "source": "from_env_attempt",
+        "status": "construction_failed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_lots": 2
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:LotLevelExitDiagnosticConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.lot_level_exit_diagnostic",
+        "source_sha256": "221f7b437b47600cc25db376e5af68ae70adb33ac8b2c3226fb59c38be2b31e8",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "benchmark_symbols": [
+            "SMH",
+            "SOXX"
+          ],
+          "hard_loss_cap_pct": -15.0,
+          "max_hold_days_10": 10,
+          "max_hold_days_3": 3,
+          "max_hold_days_5": 5,
+          "mode": "shadow",
+          "relative_weakness_max": 2.0,
+          "sector_shock_breadth_min": 0.5,
+          "sector_shock_min_benchmarks": 2,
+          "sector_shock_rolling_days": 3,
+          "sector_shock_rolling_threshold_pct": -5.0,
+          "sector_shock_threshold_pct": -3.0
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:SectorShockHoldConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.strategy_engine.sector_shock_hold",
+        "source_sha256": "2a0ca796f84ca3d0a1a8d43b570a57a587f645b966116225cbade7ff00d1f9ee",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "confirmation_sessions": 1,
+          "mode": "shadow",
+          "partial_fraction": 0.3333333333333333,
+          "treatment_hard_cap_pct": -0.15
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:ShockAwareStagedExitConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.shock_aware_staged_exit",
+        "source_sha256": "b55dad62601c40de88a0290e0676724ac6c1e6039fff75082c68f976d1ed7385",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "max_3m_return_std_pct": 120.0,
+          "mode": "shadow"
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:VolatilityGateConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.volatility_gate",
+        "source_sha256": "988f3f015bbb173872c72899d9ff9baaa451ec282b4cf8db00a02d022c1092f5",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_bounce_momentum_pct": 10.0,
+          "min_distance_from_high_pct": -20.0
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:DistanceFromHighConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.distance_from_high",
+        "source_sha256": "7d46dc59a73c857c8462a87d2677653ce3496a4d6420a1361e27778ad0047c15",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "max_article_age_days": 3,
+          "min_articles_for_signal": 2,
+          "negative_score_threshold": -0.34,
+          "relevance_filter_enabled": true,
+          "source_weighting_enabled": true
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:NewsSentimentConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.news_sentiment",
+        "source_sha256": "5e83e9b108cfef471437e3badeb4e1562173a240a6e10c482efb82f0afe1cb96",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "overbought_threshold": 75.0,
+          "window": 14
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:RsiDiagnosticConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.rsi_diagnostic",
+        "source_sha256": "8ca1c4ffa9694356e538e19843229af165855baded34210e7c875c0a5b3d2958",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "max_article_age_days": 1,
+          "min_articles_for_signal": 2,
+          "negative_score_threshold": -0.25
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:NewsShockHoldConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.news_shock_hold",
+        "source_sha256": "37b466fe78306f781b34c6e426f48e3f27f27c9cf53231275b8069d032d5f932",
+        "status": "observed"
+      }
+    ],
+    "main_exit": 1,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": true
+  },
+  "candidate_on_optional_lot_failure": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 9,
+    "instances": [
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_momentum_drop": 0.05,
+          "min_signal_strength": 0.4
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:DipBuySignalConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.strategy_engine.dip_buy_meanreversion_strategy",
+        "source_sha256": "5346480496211cb93823ae72ae72016ebdaaccdfe1dc32bc6973fb98e52835a0",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": null,
+        "issues": [
+          "config_construction_failed:ValueError"
+        ],
+        "kind": "instance:LotLevelExitDiagnosticConfig",
+        "recorded": true,
+        "source": "from_env_attempt",
+        "status": "construction_failed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "benchmark_symbols": [
+            "SMH",
+            "SOXX"
+          ],
+          "hard_loss_cap_pct": -15.0,
+          "max_hold_days_10": 10,
+          "max_hold_days_3": 3,
+          "max_hold_days_5": 5,
+          "mode": "shadow",
+          "relative_weakness_max": 2.0,
+          "sector_shock_breadth_min": 0.5,
+          "sector_shock_min_benchmarks": 2,
+          "sector_shock_rolling_days": 3,
+          "sector_shock_rolling_threshold_pct": -5.0,
+          "sector_shock_threshold_pct": -3.0
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:SectorShockHoldConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.strategy_engine.sector_shock_hold",
+        "source_sha256": "2a0ca796f84ca3d0a1a8d43b570a57a587f645b966116225cbade7ff00d1f9ee",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "confirmation_sessions": 1,
+          "mode": "shadow",
+          "partial_fraction": 0.3333333333333333,
+          "treatment_hard_cap_pct": -0.15
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:ShockAwareStagedExitConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.shock_aware_staged_exit",
+        "source_sha256": "b55dad62601c40de88a0290e0676724ac6c1e6039fff75082c68f976d1ed7385",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "max_3m_return_std_pct": 120.0,
+          "mode": "shadow"
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:VolatilityGateConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.volatility_gate",
+        "source_sha256": "988f3f015bbb173872c72899d9ff9baaa451ec282b4cf8db00a02d022c1092f5",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_bounce_momentum_pct": 10.0,
+          "min_distance_from_high_pct": -20.0
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:DistanceFromHighConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.distance_from_high",
+        "source_sha256": "7d46dc59a73c857c8462a87d2677653ce3496a4d6420a1361e27778ad0047c15",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "max_article_age_days": 3,
+          "min_articles_for_signal": 2,
+          "negative_score_threshold": -0.34,
+          "relevance_filter_enabled": true,
+          "source_weighting_enabled": true
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:NewsSentimentConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.news_sentiment",
+        "source_sha256": "5e83e9b108cfef471437e3badeb4e1562173a240a6e10c482efb82f0afe1cb96",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "overbought_threshold": 75.0,
+          "window": 14
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:RsiDiagnosticConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.rsi_diagnostic",
+        "source_sha256": "8ca1c4ffa9694356e538e19843229af165855baded34210e7c875c0a5b3d2958",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "max_article_age_days": 1,
+          "min_articles_for_signal": 2,
+          "negative_score_threshold": -0.25
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:NewsShockHoldConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.news_shock_hold",
+        "source_sha256": "37b466fe78306f781b34c6e426f48e3f27f27c9cf53231275b8069d032d5f932",
+        "status": "observed"
+      }
+    ],
+    "main_exit": 1,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": true
+  },
+  "candidate_on_optional_news_failure": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 9,
+    "instances": [
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_momentum_drop": 0.05,
+          "min_signal_strength": 0.4
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:DipBuySignalConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.strategy_engine.dip_buy_meanreversion_strategy",
+        "source_sha256": "5346480496211cb93823ae72ae72016ebdaaccdfe1dc32bc6973fb98e52835a0",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_lots": 2
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:LotLevelExitDiagnosticConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.lot_level_exit_diagnostic",
+        "source_sha256": "221f7b437b47600cc25db376e5af68ae70adb33ac8b2c3226fb59c38be2b31e8",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "benchmark_symbols": [
+            "SMH",
+            "SOXX"
+          ],
+          "hard_loss_cap_pct": -15.0,
+          "max_hold_days_10": 10,
+          "max_hold_days_3": 3,
+          "max_hold_days_5": 5,
+          "mode": "shadow",
+          "relative_weakness_max": 2.0,
+          "sector_shock_breadth_min": 0.5,
+          "sector_shock_min_benchmarks": 2,
+          "sector_shock_rolling_days": 3,
+          "sector_shock_rolling_threshold_pct": -5.0,
+          "sector_shock_threshold_pct": -3.0
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:SectorShockHoldConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.strategy_engine.sector_shock_hold",
+        "source_sha256": "2a0ca796f84ca3d0a1a8d43b570a57a587f645b966116225cbade7ff00d1f9ee",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "confirmation_sessions": 1,
+          "mode": "shadow",
+          "partial_fraction": 0.3333333333333333,
+          "treatment_hard_cap_pct": -0.15
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:ShockAwareStagedExitConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.shock_aware_staged_exit",
+        "source_sha256": "b55dad62601c40de88a0290e0676724ac6c1e6039fff75082c68f976d1ed7385",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "max_3m_return_std_pct": 120.0,
+          "mode": "shadow"
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:VolatilityGateConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.volatility_gate",
+        "source_sha256": "988f3f015bbb173872c72899d9ff9baaa451ec282b4cf8db00a02d022c1092f5",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_bounce_momentum_pct": 10.0,
+          "min_distance_from_high_pct": -20.0
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:DistanceFromHighConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.distance_from_high",
+        "source_sha256": "7d46dc59a73c857c8462a87d2677653ce3496a4d6420a1361e27778ad0047c15",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "max_article_age_days": 3,
+          "min_articles_for_signal": 2,
+          "negative_score_threshold": -0.34,
+          "relevance_filter_enabled": true,
+          "source_weighting_enabled": true
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:NewsSentimentConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.news_sentiment",
+        "source_sha256": "5e83e9b108cfef471437e3badeb4e1562173a240a6e10c482efb82f0afe1cb96",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "overbought_threshold": 75.0,
+          "window": 14
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:RsiDiagnosticConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.rsi_diagnostic",
+        "source_sha256": "8ca1c4ffa9694356e538e19843229af165855baded34210e7c875c0a5b3d2958",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": null,
+        "issues": [
+          "config_construction_failed:ValueError"
+        ],
+        "kind": "instance:NewsShockHoldConfig",
+        "recorded": true,
+        "source": "from_env_attempt",
+        "status": "construction_failed"
+      }
+    ],
+    "main_exit": 1,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": true
+  },
+  "candidate_on_override": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 9,
+    "instances": [
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_momentum_drop": 0.05,
+          "min_signal_strength": 0.4
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:DipBuySignalConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.strategy_engine.dip_buy_meanreversion_strategy",
+        "source_sha256": "5346480496211cb93823ae72ae72016ebdaaccdfe1dc32bc6973fb98e52835a0",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_lots": 2
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:LotLevelExitDiagnosticConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.lot_level_exit_diagnostic",
+        "source_sha256": "221f7b437b47600cc25db376e5af68ae70adb33ac8b2c3226fb59c38be2b31e8",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "benchmark_symbols": [
+            "SMH",
+            "SOXX"
+          ],
+          "hard_loss_cap_pct": -15.0,
+          "max_hold_days_10": 10,
+          "max_hold_days_3": 3,
+          "max_hold_days_5": 5,
+          "mode": "shadow",
+          "relative_weakness_max": 2.0,
+          "sector_shock_breadth_min": 0.5,
+          "sector_shock_min_benchmarks": 2,
+          "sector_shock_rolling_days": 3,
+          "sector_shock_rolling_threshold_pct": -5.0,
+          "sector_shock_threshold_pct": -3.0
+        },
+        "environment_keys_present": [
+          "SECTOR_SHOCK_BENCHMARK_SYMBOLS"
+        ],
+        "issues": [],
+        "kind": "instance:SectorShockHoldConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.strategy_engine.sector_shock_hold",
+        "source_sha256": "2a0ca796f84ca3d0a1a8d43b570a57a587f645b966116225cbade7ff00d1f9ee",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "confirmation_sessions": 1,
+          "mode": "shadow",
+          "partial_fraction": 0.3333333333333333,
+          "treatment_hard_cap_pct": -0.15
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:ShockAwareStagedExitConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.shock_aware_staged_exit",
+        "source_sha256": "b55dad62601c40de88a0290e0676724ac6c1e6039fff75082c68f976d1ed7385",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "max_3m_return_std_pct": 3.25,
+          "mode": "shadow"
+        },
+        "environment_keys_present": [
+          "VOLATILITY_GATE_MAX_3M_STD_PCT"
+        ],
+        "issues": [],
+        "kind": "instance:VolatilityGateConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.volatility_gate",
+        "source_sha256": "988f3f015bbb173872c72899d9ff9baaa451ec282b4cf8db00a02d022c1092f5",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_bounce_momentum_pct": 10.0,
+          "min_distance_from_high_pct": -20.0
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:DistanceFromHighConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.distance_from_high",
+        "source_sha256": "7d46dc59a73c857c8462a87d2677653ce3496a4d6420a1361e27778ad0047c15",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "max_article_age_days": 3,
+          "min_articles_for_signal": 2,
+          "negative_score_threshold": -0.34,
+          "relevance_filter_enabled": true,
+          "source_weighting_enabled": true
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:NewsSentimentConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.news_sentiment",
+        "source_sha256": "5e83e9b108cfef471437e3badeb4e1562173a240a6e10c482efb82f0afe1cb96",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "overbought_threshold": 75.0,
+          "window": 14
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:RsiDiagnosticConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.rsi_diagnostic",
+        "source_sha256": "8ca1c4ffa9694356e538e19843229af165855baded34210e7c875c0a5b3d2958",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "max_article_age_days": 1,
+          "min_articles_for_signal": 2,
+          "negative_score_threshold": -0.25
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:NewsShockHoldConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.news_shock_hold",
+        "source_sha256": "37b466fe78306f781b34c6e426f48e3f27f27c9cf53231275b8069d032d5f932",
+        "status": "observed"
+      }
+    ],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "candidate_on_refused_mode": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 9,
+    "instances": [
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_momentum_drop": 0.05,
+          "min_signal_strength": 0.4
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:DipBuySignalConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.strategy_engine.dip_buy_meanreversion_strategy",
+        "source_sha256": "5346480496211cb93823ae72ae72016ebdaaccdfe1dc32bc6973fb98e52835a0",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_lots": 2
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:LotLevelExitDiagnosticConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.lot_level_exit_diagnostic",
+        "source_sha256": "221f7b437b47600cc25db376e5af68ae70adb33ac8b2c3226fb59c38be2b31e8",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "benchmark_symbols": [
+            "SMH",
+            "SOXX"
+          ],
+          "hard_loss_cap_pct": -15.0,
+          "max_hold_days_10": 10,
+          "max_hold_days_3": 3,
+          "max_hold_days_5": 5,
+          "mode": "shadow",
+          "relative_weakness_max": 2.0,
+          "sector_shock_breadth_min": 0.5,
+          "sector_shock_min_benchmarks": 2,
+          "sector_shock_rolling_days": 3,
+          "sector_shock_rolling_threshold_pct": -5.0,
+          "sector_shock_threshold_pct": -3.0
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:SectorShockHoldConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.strategy_engine.sector_shock_hold",
+        "source_sha256": "2a0ca796f84ca3d0a1a8d43b570a57a587f645b966116225cbade7ff00d1f9ee",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "confirmation_sessions": 1,
+          "mode": "shadow",
+          "partial_fraction": 0.3333333333333333,
+          "treatment_hard_cap_pct": -0.15
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:ShockAwareStagedExitConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.shock_aware_staged_exit",
+        "source_sha256": "b55dad62601c40de88a0290e0676724ac6c1e6039fff75082c68f976d1ed7385",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": null,
+        "issues": [
+          "config_observation_unavailable:ValueError"
+        ],
+        "kind": "instance:VolatilityGateConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "status": "unavailable"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_bounce_momentum_pct": 10.0,
+          "min_distance_from_high_pct": -20.0
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:DistanceFromHighConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.distance_from_high",
+        "source_sha256": "7d46dc59a73c857c8462a87d2677653ce3496a4d6420a1361e27778ad0047c15",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "max_article_age_days": 3,
+          "min_articles_for_signal": 2,
+          "negative_score_threshold": -0.34,
+          "relevance_filter_enabled": true,
+          "source_weighting_enabled": true
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:NewsSentimentConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.news_sentiment",
+        "source_sha256": "5e83e9b108cfef471437e3badeb4e1562173a240a6e10c482efb82f0afe1cb96",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "overbought_threshold": 75.0,
+          "window": 14
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:RsiDiagnosticConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.rsi_diagnostic",
+        "source_sha256": "8ca1c4ffa9694356e538e19843229af165855baded34210e7c875c0a5b3d2958",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "max_article_age_days": 1,
+          "min_articles_for_signal": 2,
+          "negative_score_threshold": -0.25
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:NewsShockHoldConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.news_shock_hold",
+        "source_sha256": "37b466fe78306f781b34c6e426f48e3f27f27c9cf53231275b8069d032d5f932",
+        "status": "observed"
+      }
+    ],
+    "main_exit": 1,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": true
+  },
+  "candidate_on_sell_and_buy": {
+    "business": [
+      "[PASS] MSFT: action=buy risk=pass conf=0.85",
+      "[PASS] NVDA: action=buy risk=pass conf=0.85",
+      "[PASS] NVDA: action=sell risk=pass conf=0.90"
+    ],
+    "event_count": 9,
+    "instances": [
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_momentum_drop": 0.05,
+          "min_signal_strength": 0.4
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:DipBuySignalConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.strategy_engine.dip_buy_meanreversion_strategy",
+        "source_sha256": "5346480496211cb93823ae72ae72016ebdaaccdfe1dc32bc6973fb98e52835a0",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_lots": 2
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:LotLevelExitDiagnosticConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.lot_level_exit_diagnostic",
+        "source_sha256": "221f7b437b47600cc25db376e5af68ae70adb33ac8b2c3226fb59c38be2b31e8",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "benchmark_symbols": [
+            "SMH",
+            "SOXX"
+          ],
+          "hard_loss_cap_pct": -15.0,
+          "max_hold_days_10": 10,
+          "max_hold_days_3": 3,
+          "max_hold_days_5": 5,
+          "mode": "shadow",
+          "relative_weakness_max": 2.0,
+          "sector_shock_breadth_min": 0.5,
+          "sector_shock_min_benchmarks": 2,
+          "sector_shock_rolling_days": 3,
+          "sector_shock_rolling_threshold_pct": -5.0,
+          "sector_shock_threshold_pct": -3.0
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:SectorShockHoldConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.strategy_engine.sector_shock_hold",
+        "source_sha256": "2a0ca796f84ca3d0a1a8d43b570a57a587f645b966116225cbade7ff00d1f9ee",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "confirmation_sessions": 1,
+          "mode": "shadow",
+          "partial_fraction": 0.3333333333333333,
+          "treatment_hard_cap_pct": -0.15
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:ShockAwareStagedExitConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.shock_aware_staged_exit",
+        "source_sha256": "b55dad62601c40de88a0290e0676724ac6c1e6039fff75082c68f976d1ed7385",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "max_3m_return_std_pct": 120.0,
+          "mode": "shadow"
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:VolatilityGateConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.volatility_gate",
+        "source_sha256": "988f3f015bbb173872c72899d9ff9baaa451ec282b4cf8db00a02d022c1092f5",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_bounce_momentum_pct": 10.0,
+          "min_distance_from_high_pct": -20.0
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:DistanceFromHighConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.distance_from_high",
+        "source_sha256": "7d46dc59a73c857c8462a87d2677653ce3496a4d6420a1361e27778ad0047c15",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "max_article_age_days": 3,
+          "min_articles_for_signal": 2,
+          "negative_score_threshold": -0.34,
+          "relevance_filter_enabled": true,
+          "source_weighting_enabled": true
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:NewsSentimentConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.news_sentiment",
+        "source_sha256": "5e83e9b108cfef471437e3badeb4e1562173a240a6e10c482efb82f0afe1cb96",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "overbought_threshold": 75.0,
+          "window": 14
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:RsiDiagnosticConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.rsi_diagnostic",
+        "source_sha256": "8ca1c4ffa9694356e538e19843229af165855baded34210e7c875c0a5b3d2958",
+        "status": "observed"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "max_article_age_days": 1,
+          "min_articles_for_signal": 2,
+          "negative_score_threshold": -0.25
+        },
+        "environment_keys_present": [],
+        "issues": [],
+        "kind": "instance:NewsShockHoldConfig",
+        "recorded": true,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.news_shock_hold",
+        "source_sha256": "37b466fe78306f781b34c6e426f48e3f27f27c9cf53231275b8069d032d5f932",
+        "status": "observed"
+      }
+    ],
+    "main_exit": 0,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 2,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 1,
+        "side": "sell",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      },
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "MSFT",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": false
+  },
+  "candidate_on_write_blocked": {
+    "business": [
+      "[PASS] NVDA: action=buy risk=pass conf=0.85"
+    ],
+    "event_count": 0,
+    "instances": [
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_momentum_drop": 0.05,
+          "min_signal_strength": 0.4
+        },
+        "environment_keys_present": [],
+        "issues": [
+          "config_receipt_not_recorded:FileExistsError"
+        ],
+        "kind": "instance:DipBuySignalConfig",
+        "recorded": false,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.strategy_engine.dip_buy_meanreversion_strategy",
+        "source_sha256": "5346480496211cb93823ae72ae72016ebdaaccdfe1dc32bc6973fb98e52835a0",
+        "status": "unavailable"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_lots": 2
+        },
+        "environment_keys_present": [],
+        "issues": [
+          "config_receipt_not_recorded:FileExistsError"
+        ],
+        "kind": "instance:LotLevelExitDiagnosticConfig",
+        "recorded": false,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.lot_level_exit_diagnostic",
+        "source_sha256": "221f7b437b47600cc25db376e5af68ae70adb33ac8b2c3226fb59c38be2b31e8",
+        "status": "unavailable"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "benchmark_symbols": [
+            "SMH",
+            "SOXX"
+          ],
+          "hard_loss_cap_pct": -15.0,
+          "max_hold_days_10": 10,
+          "max_hold_days_3": 3,
+          "max_hold_days_5": 5,
+          "mode": "shadow",
+          "relative_weakness_max": 2.0,
+          "sector_shock_breadth_min": 0.5,
+          "sector_shock_min_benchmarks": 2,
+          "sector_shock_rolling_days": 3,
+          "sector_shock_rolling_threshold_pct": -5.0,
+          "sector_shock_threshold_pct": -3.0
+        },
+        "environment_keys_present": [],
+        "issues": [
+          "config_receipt_not_recorded:FileExistsError"
+        ],
+        "kind": "instance:SectorShockHoldConfig",
+        "recorded": false,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.strategy_engine.sector_shock_hold",
+        "source_sha256": "2a0ca796f84ca3d0a1a8d43b570a57a587f645b966116225cbade7ff00d1f9ee",
+        "status": "unavailable"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "confirmation_sessions": 1,
+          "mode": "shadow",
+          "partial_fraction": 0.3333333333333333,
+          "treatment_hard_cap_pct": -0.15
+        },
+        "environment_keys_present": [],
+        "issues": [
+          "config_receipt_not_recorded:FileExistsError"
+        ],
+        "kind": "instance:ShockAwareStagedExitConfig",
+        "recorded": false,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.shock_aware_staged_exit",
+        "source_sha256": "b55dad62601c40de88a0290e0676724ac6c1e6039fff75082c68f976d1ed7385",
+        "status": "unavailable"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "max_3m_return_std_pct": 120.0,
+          "mode": "shadow"
+        },
+        "environment_keys_present": [],
+        "issues": [
+          "config_receipt_not_recorded:FileExistsError"
+        ],
+        "kind": "instance:VolatilityGateConfig",
+        "recorded": false,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.volatility_gate",
+        "source_sha256": "988f3f015bbb173872c72899d9ff9baaa451ec282b4cf8db00a02d022c1092f5",
+        "status": "unavailable"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "min_bounce_momentum_pct": 10.0,
+          "min_distance_from_high_pct": -20.0
+        },
+        "environment_keys_present": [],
+        "issues": [
+          "config_receipt_not_recorded:FileExistsError"
+        ],
+        "kind": "instance:DistanceFromHighConfig",
+        "recorded": false,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.distance_from_high",
+        "source_sha256": "7d46dc59a73c857c8462a87d2677653ce3496a4d6420a1361e27778ad0047c15",
+        "status": "unavailable"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "max_article_age_days": 3,
+          "min_articles_for_signal": 2,
+          "negative_score_threshold": -0.34,
+          "relevance_filter_enabled": true,
+          "source_weighting_enabled": true
+        },
+        "environment_keys_present": [],
+        "issues": [
+          "config_receipt_not_recorded:FileExistsError"
+        ],
+        "kind": "instance:NewsSentimentConfig",
+        "recorded": false,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.news_sentiment",
+        "source_sha256": "5e83e9b108cfef471437e3badeb4e1562173a240a6e10c482efb82f0afe1cb96",
+        "status": "unavailable"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "overbought_threshold": 75.0,
+          "window": 14
+        },
+        "environment_keys_present": [],
+        "issues": [
+          "config_receipt_not_recorded:FileExistsError"
+        ],
+        "kind": "instance:RsiDiagnosticConfig",
+        "recorded": false,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.rsi_diagnostic",
+        "source_sha256": "8ca1c4ffa9694356e538e19843229af165855baded34210e7c875c0a5b3d2958",
+        "status": "unavailable"
+      },
+      {
+        "consumer": "paper_demo",
+        "effective": {
+          "disabled": false,
+          "max_article_age_days": 1,
+          "min_articles_for_signal": 2,
+          "negative_score_threshold": -0.25
+        },
+        "environment_keys_present": [],
+        "issues": [
+          "config_receipt_not_recorded:FileExistsError"
+        ],
+        "kind": "instance:NewsShockHoldConfig",
+        "recorded": false,
+        "source": "constructed_from_env_result",
+        "source_module": "stock_swing.risk.news_shock_hold",
+        "source_sha256": "37b466fe78306f781b34c6e426f48e3f27f27c9cf53231275b8069d032d5f932",
+        "status": "unavailable"
+      }
+    ],
+    "main_exit": 1,
+    "orders": {
+      "held": 0,
+      "rejected": 0,
+      "submitted": 1,
+      "unknown": 0
+    },
+    "posts": [
+      {
+        "qty": 61,
+        "side": "buy",
+        "symbol": "NVDA",
+        "time_in_force": "day",
+        "type": "market"
+      }
+    ],
+    "recording_alert": true
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "cancel_fresh_processes": 42,
+  "cancel_version_cases": 38,
+  "canonical_main_ps_rows_unchanged": 17,
+  "config_cli_cases": 18,
+  "disjoint_loopback": {
+    "log": "loopback_final.log",
+    "passed": 1
+  },
+  "focused_packet_replay_passed": 427,
+  "full_private_suite_packet_only": false,
+  "full_suite": {
+    "deselected_loopback": 1,
+    "existing_collection_warnings": 1,
+    "log": "full_suite_final.log",
+    "passed": 3014,
+    "skipped": 3
+  },
+  "full_union_passed": 3015,
+  "full_union_skipped": 3,
+  "initial_failed_attempts_excluded_from_success_counts": true,
+  "integrity_baseline_dependencies_verified": true,
+  "integrity_negative_checks": 6,
+  "new_profit_trial": false,
+  "new_public_push": false,
+  "normal_cli_cases": 40,
+  "original_protected_bytes_modes_unchanged": true,
+  "original_protected_file_count": 659,
+  "packet_only_replay": "packet_replay.json",
+  "prior_packets_unchanged": 7,
+  "private_fixture_pins_match_full_suite_copy": true,
+  "production_applied": false,
+  "public_clone_replay_applies_to": "previous public candidate e2d98ee, not new isolated candidate",
+  "public_clone_replay_passed": true,
+  "public_manifest_mode_restorations": 595,
+  "real_orders_or_cancellations": false,
+  "recording_enabled_in_production": false,
+  "source_changes": {
+    "cumulative_runtime": 26,
+    "cumulative_test_fixture": 18,
+    "delta_runtime": 9,
+    "delta_test": 3
+  },
+  "status": "complete: isolated candidate and packet-only replay verified"
+}

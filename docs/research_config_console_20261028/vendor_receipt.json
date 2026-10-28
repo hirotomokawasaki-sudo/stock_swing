@@ -1,0 +1,12 @@
+{
+  "chart.js": {
+    "url": "https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js",
+    "sha256": "321e3a3fa98da4aaa957d10be57cbb514de0989eed8f9d726b5d05902cd01904",
+    "bytes": 204948
+  },
+  "zoom.js": {
+    "url": "https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js",
+    "sha256": "503c709802be285c676afe0369bf5f72066d0b0c23929188c3158f35c0327a9c",
+    "bytes": 12854
+  }
+}

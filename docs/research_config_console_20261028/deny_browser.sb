@@ -1,0 +1,5 @@
+(version 1)
+(allow default)
+(deny network-outbound (remote ip "*:*"))
+(deny network-bind (local ip "*:*"))
+(deny file-write* (subpath "/Users/hirotomookawasaki/stock_swing"))

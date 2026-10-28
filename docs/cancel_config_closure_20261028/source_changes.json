@@ -1,0 +1,66 @@
+{
+  "delta_paths": [
+    "src/stock_swing/execution/cancellation_guard.py",
+    "src/stock_swing/execution/submission_guard.py",
+    "src/stock_swing/execution/reduction_orders.py",
+    "src/stock_swing/cli/reconcile_orders.py",
+    "scripts/cancel_broker_orders.py",
+    "src/stock_swing/risk/config_instance_receipts.py",
+    "src/stock_swing/risk/config_instance_specs.py",
+    "src/stock_swing/cli/paper_demo.py",
+    "src/stock_swing/reporting/console_renderer.py",
+    "tests/unit/test_cancellation_safety.py",
+    "tests/unit/test_config_instance_receipts.py",
+    "tests/unit/test_reconcile_orders.py"
+  ],
+  "code_pins": {
+    "src/stock_swing/execution/cancellation_guard.py": {
+      "sha256": "c9ebc1821a07f44814f7f3513b1b76c4577c13d4dde291352ea96b8934df2276",
+      "mode": 384
+    },
+    "src/stock_swing/execution/submission_guard.py": {
+      "sha256": "63b7c18ad6175c819bce1cf9d2a14390ed4086aa74d1bd98009018baa43f8611",
+      "mode": 384
+    },
+    "src/stock_swing/execution/reduction_orders.py": {
+      "sha256": "61efed1913862f95548758e6a12ac5dcad690b53435e618fbc6d4358667a66f6",
+      "mode": 384
+    },
+    "src/stock_swing/cli/reconcile_orders.py": {
+      "sha256": "0dd0fe0b59a3318ecdc5fba07db76138a7c14ab32cdb9d58315aec09ef6a7ab1",
+      "mode": 384
+    },
+    "scripts/cancel_broker_orders.py": {
+      "sha256": "66b235e9df88958482d3468a63114463d79a1e7d6dd3aedd1f781fc9cfd499b2",
+      "mode": 420
+    },
+    "src/stock_swing/risk/config_instance_receipts.py": {
+      "sha256": "7adaeebda653d1ad625733493fa8bf537cdd0cda1e6e53f34268e7cd8c32d07c",
+      "mode": 384
+    },
+    "src/stock_swing/risk/config_instance_specs.py": {
+      "sha256": "25cb5fe7444926c3b36fa94a2d193058a64efb254ad01bdcde7cb0028f5c77c1",
+      "mode": 384
+    },
+    "src/stock_swing/cli/paper_demo.py": {
+      "sha256": "c99455a4e296b23fb8ad9ed66c3b380b550ddf4e227bf1501a66446a3ef6f340",
+      "mode": 384
+    },
+    "src/stock_swing/reporting/console_renderer.py": {
+      "sha256": "e015a5981f0ab2979f5c4c6713e6d6c00951a19d62c85006b275988a3027466c",
+      "mode": 384
+    },
+    "tests/unit/test_cancellation_safety.py": {
+      "sha256": "4b998347140d347ada4511c36cf4a1c9dc436a6715bb5f581d869885024250af",
+      "mode": 384
+    },
+    "tests/unit/test_config_instance_receipts.py": {
+      "sha256": "85ee219e165a54bd92b2e552d37d007f6376f59fb795e86dc0548768f497aa59",
+      "mode": 384
+    },
+    "tests/unit/test_reconcile_orders.py": {
+      "sha256": "e2d0a2d5b263d233aa6c25df17270fd7133806db27dea95bf9ec7f373c78799b",
+      "mode": 420
+    }
+  }
+}

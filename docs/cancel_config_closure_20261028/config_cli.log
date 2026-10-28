@@ -1,0 +1,6 @@
+normal 3 versions: policy/quantity invariant, observation status verified
+sell_and_buy 3 versions: policy/quantity invariant, observation status verified
+override 3 versions: policy/quantity invariant, observation status verified
+write_blocked 3 versions: policy/quantity invariant, observation status verified
+refused_mode 3 versions: policy/quantity invariant, observation status verified
+nonfinite 3 versions: policy/quantity invariant, observation status verified

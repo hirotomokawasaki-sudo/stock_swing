@@ -1,0 +1,30 @@
+{
+  "src/stock_swing/cli/paper_demo.py": {
+    "mode": 384,
+    "sha256": "4c8a618ffada92bfa1bba4e047fc1bbcb6f77ebb1c244335edf900fa28113b5e"
+  },
+  "src/stock_swing/cli/reconcile_orders.py": {
+    "mode": 384,
+    "sha256": "34520a0e2ced806ce682fde7f3d3cbbe5b2d9337862a24af9ace84669d1096dc"
+  },
+  "src/stock_swing/execution/cancellation_timing.py": {
+    "mode": 384,
+    "sha256": "97e309398821960c148564ba99282e6d69510adcd90a23c3e4b73b05ed3cec07"
+  },
+  "src/stock_swing/reporting/console_renderer.py": {
+    "mode": 384,
+    "sha256": "95e211d29bbb84d8180cb85f5c5db5181d765cef34ebfcea021f169a4368169d"
+  },
+  "src/stock_swing/risk/config_instance_receipts.py": {
+    "mode": 384,
+    "sha256": "954ba8c61a7bcba8bb2d68bfc4861c9af54ebcc5c7dc72802e0dd967a2fa6a92"
+  },
+  "tests/unit/test_cancellation_timing.py": {
+    "mode": 384,
+    "sha256": "2938e9c16ae59883447206506ce4e56ec35920cede57829865b8d9ef3a6df461"
+  },
+  "tests/unit/test_config_instance_coverage.py": {
+    "mode": 384,
+    "sha256": "1338897873e90a745fbcf8a8694a414c6e54a707bff90ecf48e101534f36b5cf"
+  }
+}

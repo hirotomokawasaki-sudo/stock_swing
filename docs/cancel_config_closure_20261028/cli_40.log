@@ -1,0 +1,40 @@
+{"version": "integrated_off", "case": "normal", "exit": 0, "posts": [["buy", "NVDA", 61]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_off", "case": "sell_and_buy", "exit": 0, "posts": [["sell", "NVDA", 1], ["buy", "MSFT", 61]], "orders": {"held": 0, "rejected": 0, "submitted": 2, "unknown": 0}, "tail": ""}
+{"version": "integrated_off", "case": "lost_not_found", "exit": 0, "posts": [["buy", "MSFT", 61]], "orders": {"held": 0, "rejected": 0, "submitted": 0, "unknown": 1}, "tail": ""}
+{"version": "integrated_off", "case": "lost_found", "exit": 0, "posts": [["buy", "MSFT", 61], ["buy", "CRM", 61]], "orders": {"held": 0, "rejected": 0, "submitted": 2, "unknown": 0}, "tail": ""}
+{"version": "integrated_off", "case": "gap_candidate", "exit": 0, "posts": [], "orders": {"held": 0, "rejected": 0, "submitted": 0, "unknown": 0}, "tail": ""}
+{"version": "integrated_off", "case": "gap_holding", "exit": 0, "posts": [["buy", "MSFT", 61]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_off", "case": "gap_pending", "exit": 0, "posts": [["buy", "MSFT", 61]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_off", "case": "exit_null", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_off", "case": "exit_list", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_off", "case": "exit_broken", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_off", "case": "exit_nan", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_off", "case": "exit_bad_bool", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_off", "case": "exit_missing", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_off", "case": "alloc_null", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_off", "case": "alloc_list", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_off", "case": "alloc_nan", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_off", "case": "alloc_bad_bool", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_off", "case": "registry_list", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_off", "case": "intraday_null", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_on", "case": "normal", "exit": 0, "posts": [["buy", "NVDA", 61]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_on", "case": "sell_and_buy", "exit": 0, "posts": [["sell", "NVDA", 1], ["buy", "MSFT", 61]], "orders": {"held": 0, "rejected": 0, "submitted": 2, "unknown": 0}, "tail": ""}
+{"version": "integrated_on", "case": "lost_not_found", "exit": 0, "posts": [["buy", "MSFT", 61]], "orders": {"held": 0, "rejected": 0, "submitted": 0, "unknown": 1}, "tail": ""}
+{"version": "integrated_on", "case": "lost_found", "exit": 0, "posts": [["buy", "MSFT", 61], ["buy", "CRM", 61]], "orders": {"held": 0, "rejected": 0, "submitted": 2, "unknown": 0}, "tail": ""}
+{"version": "integrated_on", "case": "gap_candidate", "exit": 0, "posts": [], "orders": {"held": 0, "rejected": 0, "submitted": 0, "unknown": 0}, "tail": ""}
+{"version": "integrated_on", "case": "gap_holding", "exit": 0, "posts": [["buy", "MSFT", 61]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_on", "case": "gap_pending", "exit": 0, "posts": [["buy", "MSFT", 61]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_on", "case": "exit_null", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_on", "case": "exit_list", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_on", "case": "exit_broken", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_on", "case": "exit_nan", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_on", "case": "exit_bad_bool", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_on", "case": "exit_missing", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_on", "case": "alloc_null", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_on", "case": "alloc_list", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_on", "case": "alloc_nan", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_on", "case": "alloc_bad_bool", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_on", "case": "registry_list", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "integrated_on", "case": "intraday_null", "exit": 0, "posts": [["sell", "NVDA", 1]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": ""}
+{"version": "blocked_capture", "case": "normal", "exit": 1, "posts": [["buy", "NVDA", 61]], "orders": {"held": 0, "rejected": 0, "submitted": 1, "unknown": 0}, "tail": "_JSON={\"job\":\"paper_demo\",\"status\":\"error\",\"exit_code\":1,\"dry_run\":false,\"symbols\":1,\"decisions\":1,\"actionable\":1,\"denied\":0,\"held\":0,\"submitted_orders\":1,\"attempted_submissions\":1,\"equity\":100000.0}\n"}
+{"version": "blocked_capture", "case": "sell_and_buy", "exit": 1, "posts": [["sell", "NVDA", 1], ["buy", "MSFT", 61]], "orders": {"held": 0, "rejected": 0, "submitted": 2, "unknown": 0}, "tail": "_JSON={\"job\":\"paper_demo\",\"status\":\"error\",\"exit_code\":1,\"dry_run\":false,\"symbols\":2,\"decisions\":3,\"actionable\":3,\"denied\":0,\"held\":0,\"submitted_orders\":2,\"attempted_submissions\":2,\"equity\":100000.0}\n"}

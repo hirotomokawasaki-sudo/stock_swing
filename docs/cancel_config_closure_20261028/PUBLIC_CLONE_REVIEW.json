@@ -1,0 +1,62 @@
+{
+  "public_commit": "e2d98eed3c2cdf19dd6621d1cec29297f6eb2e61",
+  "transport": "fresh HTTPS git clone",
+  "packets": {
+    "functional_safety_20261028": {
+      "files": 230,
+      "all_bytes_match": true,
+      "permission_restorations_required": 49
+    },
+    "order_preflight_20261028": {
+      "files": 227,
+      "all_bytes_match": true,
+      "permission_restorations_required": 49
+    },
+    "provider_bar_fixes_20261028": {
+      "files": 219,
+      "all_bytes_match": true,
+      "permission_restorations_required": 218
+    },
+    "advance_all_20261028": {
+      "files": 256,
+      "all_bytes_match": true,
+      "permission_restorations_required": 50
+    },
+    "integration_ops_cost_20261028": {
+      "files": 471,
+      "all_bytes_match": true,
+      "permission_restorations_required": 104
+    },
+    "emergency_corrections_20261028": {
+      "files": 513,
+      "all_bytes_match": true,
+      "permission_restorations_required": 125
+    },
+    "closure_research_review_20261028": {
+      "files": 13,
+      "all_bytes_match": true,
+      "permission_restorations_required": 0
+    }
+  },
+  "signal_private_omissions": [
+    "inputs.zip",
+    "input_manifest.json"
+  ],
+  "original_clone_mode_sensitive_replay": "fails before restoring manifest modes; succeeds afterwards",
+  "original_clone_mode_sensitive_exit": 1,
+  "after_permission_restoration": {
+    "cli_cases": 40,
+    "concurrency_cases": 4,
+    "concurrency_processes": 12,
+    "focused_passed": 355,
+    "full_suite_repeated": false,
+    "global_idempotence_claim": false,
+    "integrity": "verified",
+    "normalized_outcomes_match": true,
+    "production_applied": false,
+    "resolved_copy_origins": true,
+    "script_version_cases": 148,
+    "separate_script_processes": 198
+  },
+  "full_private_suite_rerun": false
+}

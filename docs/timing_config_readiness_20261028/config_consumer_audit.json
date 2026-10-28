@@ -1,0 +1,106 @@
+{
+  "config_families": 9,
+  "constructor_sites": [
+    {
+      "classification": "wrapped_CLI_constructor",
+      "kind": "SectorShockHoldConfig",
+      "line": 1552,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "classification": "wrapped_CLI_constructor",
+      "kind": "ShockAwareStagedExitConfig",
+      "line": 1554,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "classification": "wrapped_CLI_constructor",
+      "kind": "VolatilityGateConfig",
+      "line": 1953,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "classification": "wrapped_CLI_constructor",
+      "kind": "DistanceFromHighConfig",
+      "line": 1954,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "classification": "wrapped_CLI_constructor",
+      "kind": "NewsSentimentConfig",
+      "line": 1955,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "classification": "wrapped_CLI_constructor",
+      "kind": "RsiDiagnosticConfig",
+      "line": 1956,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "classification": "wrapped_CLI_constructor",
+      "kind": "DipBuySignalConfig",
+      "line": 1302,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "classification": "wrapped_CLI_constructor",
+      "kind": "LotLevelExitDiagnosticConfig",
+      "line": 1523,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "classification": "wrapped_CLI_constructor",
+      "kind": "NewsShockHoldConfig",
+      "line": 2143,
+      "path": "src/stock_swing/cli/paper_demo.py"
+    },
+    {
+      "classification": "implicit_helper_or_optional_config_fallback",
+      "kind": "DistanceFromHighConfig",
+      "line": 151,
+      "path": "src/stock_swing/risk/distance_from_high.py"
+    },
+    {
+      "classification": "implicit_helper_or_optional_config_fallback",
+      "kind": "LotLevelExitDiagnosticConfig",
+      "line": 286,
+      "path": "src/stock_swing/risk/lot_level_exit_diagnostic.py"
+    },
+    {
+      "classification": "implicit_helper_or_optional_config_fallback",
+      "kind": "NewsSentimentConfig",
+      "line": 462,
+      "path": "src/stock_swing/risk/news_sentiment.py"
+    },
+    {
+      "classification": "implicit_helper_or_optional_config_fallback",
+      "kind": "NewsShockHoldConfig",
+      "line": 179,
+      "path": "src/stock_swing/risk/news_shock_hold.py"
+    },
+    {
+      "classification": "implicit_helper_or_optional_config_fallback",
+      "kind": "RsiDiagnosticConfig",
+      "line": 157,
+      "path": "src/stock_swing/risk/rsi_diagnostic.py"
+    },
+    {
+      "classification": "implicit_helper_or_optional_config_fallback",
+      "kind": "VolatilityGateConfig",
+      "line": 123,
+      "path": "src/stock_swing/risk/volatility_gate.py"
+    },
+    {
+      "classification": "implicit_helper_or_optional_config_fallback",
+      "kind": "DipBuySignalConfig",
+      "line": 131,
+      "path": "src/stock_swing/strategy_engine/dip_buy_meanreversion_strategy.py"
+    }
+  ],
+  "declared_fields": 39,
+  "field_attribute_assignment_candidates": [],
+  "raw_environment_values_read_by_audit": false,
+  "runtime_mutation_observation": "endpoint comparison only; transient mutate-and-revert and external/custom consumers not covered",
+  "scope": "nine spec families, their modules and paper_demo only; bounded syntax audit, not global alias analysis"
+}

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>グラフ診断</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #1a1a1a; color: #fff; }
+        .box { border: 1px solid #444; padding: 15px; margin: 10px 0; background: #2a2a2a; }
+        .mini-chart { border: 1px solid #555; padding: 10px; background: #333; }
+        .mini-bars { display: flex; gap: 2px; height: 100px; align-items: flex-end; background: #222; }
+        .mini-bar { flex: 1; background: #3b82f6; min-height: 2px; }
+        pre { background: #000; padding: 10px; overflow-x: auto; }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+    </style>
+</head>
+<body>
+    <h1>📊 グラフ表示診断</h1>
+    
+    <div class="box">
+        <h2>1. データ取得テスト</h2>
+        <div id="data-test">テスト中...</div>
+    </div>
+    
+    <div class="box">
+        <h2>2. 関数テスト</h2>
+        <div id="function-test">テスト中...</div>
+    </div>
+    
+    <div class="box">
+        <h2>3. レンダリングテスト</h2>
+        <div id="render-test"></div>
+    </div>
+    
+    <div class="box">
+        <h2>4. 実際のデータでテスト</h2>
+        <div id="real-data-test">データ読み込み中...</div>
+    </div>
+    
+    <script>
+        const fmt = {
+            usd: (v) => v == null ? '—' : `$${Number(v).toLocaleString('en-US', {minimumFractionDigits: 2})}`,
+            pct: (v) => v == null ? '—' : `${(Number(v) * 100).toFixed(2)}%`,
+        };
+        
+        // Test 1: データ取得
+        fetch('/api/dashboard')
+            .then(r => r.json())
+            .then(data => {
+                const charts = data.charts?.overview;
+                const equity = charts?.equity || [];
+                
+                document.getElementById('data-test').innerHTML = `
+                    <div class="success">✅ データ取得成功</div>
+                    <pre>Equity data points: ${equity.length}
+First: ${JSON.stringify(equity[0], null, 2)}
+Last: ${JSON.stringify(equity[equity.length - 1], null, 2)}</pre>
+                `;
+                
+                // Test 4: 実際のデータでレンダリング
+                if (equity.length > 0) {
+                    const html = renderMiniBarsWithDates(equity, 'value', 'usd');
+                    document.getElementById('real-data-test').innerHTML = html;
+                }
+            })
+            .catch(e => {
+                document.getElementById('data-test').innerHTML = `<div class="error">❌ エラー: ${e}</div>`;
+            });
+        
+        // Test 2: 関数存在確認
+        function renderMiniBarsWithDates(series = [], key = 'value', type = 'count') {
+            if (!series.length) return '<p class="error">データなし</p>';
+            const vals = series.map(d => d[key]).filter(v => v != null);
+            if (!vals.length) return '<p class="error">値なし</p>';
+            const max = Math.max(...vals);
+            const min = Math.min(...vals);
+            const range = max - min || 1;
+            
+            const firstDate = series[0]?.ts ? new Date(series[0].ts).toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'}) : '';
+            const lastDate = series[series.length - 1]?.ts ? new Date(series[series.length - 1].ts).toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'}) : '';
+            
+            return `
+            <div class="mini-chart">
+                <div class="mini-bars">
+                    ${series.map((d, i) => {
+                        const v = d[key];
+                        if (v == null) return '<div class="mini-bar" style="height:2px;background:#444"></div>';
+                        const pct = ((v - min) / range) * 100;
+                        const fmtVal = type === 'usd' ? fmt.usd(v) : type === 'pct' ? fmt.pct(v) : v;
+                        return `<div class="mini-bar" style="height:${Math.max(pct, 2)}%" title="${fmtVal}"></div>`;
+                    }).join('')}
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;margin-top:4px;">
+                    <span>${firstDate}</span>
+                    <span>${lastDate}</span>
+                </div>
+                <div style="margin-top:4px;font-size:12px;color:#999;">最小: ${type === 'usd' ? fmt.usd(min) : type === 'pct' ? fmt.pct(min) : min} / 最大: ${type === 'usd' ? fmt.usd(max) : type === 'pct' ? fmt.pct(max) : max}</div>
+            </div>`;
+        }
+        
+        document.getElementById('function-test').innerHTML = '<div class="success">✅ 関数定義OK</div>';
+        
+        // Test 3: サンプルデータでレンダリング
+        const sampleData = [
+            {ts: '2026-04-15T00:00:00', value: 99015.87},
+            {ts: '2026-04-20T00:00:00', value: 102000},
+            {ts: '2026-04-23T00:00:00', value: 104189.07}
+        ];
+        
+        const html = renderMiniBarsWithDates(sampleData, 'value', 'usd');
+        document.getElementById('render-test').innerHTML = html;
+    </script>
+</body>
+</html>

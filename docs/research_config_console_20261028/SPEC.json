@@ -1,0 +1,26 @@
+{
+  "authorization": "user \u3059\u3059\u3081\u3066; all three offered tasks",
+  "base": {
+    "captured_main_head": "8909e79c1a83e04d508715b132575625454b7856",
+    "captured_worktree_commit": "56850674b92650205ba61058588301c92b5ebe5c",
+    "previous_safe_with_latest_Console": "3c95f9bdd25a44f9ef2f3df5c0fe2352eba8a17e",
+    "candidate_commit": "468a16f2041535da2ee1a34b50a00641d15ccd11",
+    "delta_paths": [
+      "console/services/dashboard_service.py",
+      "src/stock_swing/cli/paper_demo.py",
+      "src/stock_swing/risk/config_instance_specs.py",
+      "tests/unit/test_config_instance_coverage.py",
+      "tests/unit/test_config_remaining_paths.py",
+      "tests/unit/test_console_cancel_integration.py"
+    ]
+  },
+  "scope": [
+    "existing fixed signal diagnostic uncomputed outcome component",
+    "remaining gate config observation",
+    "isolated integration latest Console"
+  ],
+  "no_new_profit_trials": true,
+  "no_production_application": true,
+  "no_network_prices_or_broker": true,
+  "policy_budgets_unchanged": true
+}

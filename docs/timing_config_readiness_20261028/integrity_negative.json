@@ -1,0 +1,30 @@
+{
+  "baseline_passed": true,
+  "independent_copies": true,
+  "rejections": {
+    "bad_manifest_shape": {
+      "error": "manifest shape",
+      "rejected": true
+    },
+    "byte_change": {
+      "error": "byte/mode mismatch:README.md",
+      "rejected": true
+    },
+    "extra_file": {
+      "error": "inventory mismatch",
+      "rejected": true
+    },
+    "missing_file": {
+      "error": "inventory mismatch",
+      "rejected": true
+    },
+    "mode_change": {
+      "error": "byte/mode mismatch:README.md",
+      "rejected": true
+    },
+    "symlink": {
+      "error": "symlink in packet",
+      "rejected": true
+    }
+  }
+}

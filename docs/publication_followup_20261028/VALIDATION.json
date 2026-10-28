@@ -1,0 +1,216 @@
+{
+  "CI_completed": false,
+  "historical_only_full_suite": {
+    "passed": 3156,
+    "skipped": 2
+  },
+  "main_merged": false,
+  "privacy_review": {
+    "all_literals_reviewed_synthetic": true,
+    "heuristic_findings": [
+      {
+        "line": 23,
+        "line_sha256": "2874cb114ea037379d5d5d50077609cf5dd644841eed6cd0d5f36fdedb9c871e",
+        "path": "docs/cancel_config_closure_20261028/baseline_code/tests/unit/test_emergency_reduction_regression.py",
+        "previously_reviewed": true
+      },
+      {
+        "line": 21,
+        "line_sha256": "5a44bc80aa3c9b99811df34ab73f12959dfde40adb386710ae34a773b3945fdf",
+        "path": "docs/cancel_config_closure_20261028/baseline_code/tests/unit/test_provider_cli_copy.py",
+        "previously_reviewed": true
+      },
+      {
+        "line": 23,
+        "line_sha256": "2874cb114ea037379d5d5d50077609cf5dd644841eed6cd0d5f36fdedb9c871e",
+        "path": "docs/cancel_config_closure_20261028/code/tests/unit/test_emergency_reduction_regression.py",
+        "previously_reviewed": true
+      },
+      {
+        "line": 21,
+        "line_sha256": "5a44bc80aa3c9b99811df34ab73f12959dfde40adb386710ae34a773b3945fdf",
+        "path": "docs/cancel_config_closure_20261028/code/tests/unit/test_provider_cli_copy.py",
+        "previously_reviewed": true
+      },
+      {
+        "line": 4119,
+        "line_sha256": "d3894fd83fa3cfc90930489e90088d6056d1c95e4abdd5a17d5efcc320c9a89a",
+        "path": "docs/cancel_config_closure_20261028/combined.patch",
+        "previously_reviewed": true
+      },
+      {
+        "line": 4738,
+        "line_sha256": "c4e25c17f57169212e0afca322b12f3dd470b9f144ebeaa32a52ba4ba02c3c48",
+        "path": "docs/cancel_config_closure_20261028/combined.patch",
+        "previously_reviewed": true
+      },
+      {
+        "line": 23,
+        "line_sha256": "46a089a3b41d067b84ee5643f158507fbd3bcf6c2240bda2ad7ea9131802d1a2",
+        "path": "docs/cancel_config_closure_20261028/run_cancel_paths.py",
+        "previously_reviewed": true
+      },
+      {
+        "line": 28,
+        "line_sha256": "7e96bf0116e960b3387af9e312c7928faf318f9d6998d3da55db0fc4097df7d9",
+        "path": "docs/cancel_config_closure_20261028/run_config_cli.py",
+        "previously_reviewed": true
+      },
+      {
+        "line": 23,
+        "line_sha256": "2874cb114ea037379d5d5d50077609cf5dd644841eed6cd0d5f36fdedb9c871e",
+        "path": "docs/research_config_console_20261028/code/tests/unit/test_emergency_reduction_regression.py",
+        "previously_reviewed": true
+      },
+      {
+        "line": 21,
+        "line_sha256": "5a44bc80aa3c9b99811df34ab73f12959dfde40adb386710ae34a773b3945fdf",
+        "path": "docs/research_config_console_20261028/code/tests/unit/test_provider_cli_copy.py",
+        "previously_reviewed": true
+      },
+      {
+        "line": 24,
+        "line_sha256": "a24636029540d4bc2b8eb959a3c79305d6bccbcbbe4b57fbfcc0aecfc697daf2",
+        "path": "docs/research_config_console_20261028/code/tests/unit/test_secret_scan.py",
+        "previously_reviewed": false,
+        "resolution": "reviewed synthetic alphabet/digit literal, empty secret or fixture literal; not a credential"
+      },
+      {
+        "line": 33,
+        "line_sha256": "7eda72a6e90ee64aae50ee0767f8f61c28e7491ae9a3faa42a631876ecb70340",
+        "path": "docs/research_config_console_20261028/code/tests/unit/test_secret_scan.py",
+        "previously_reviewed": false,
+        "resolution": "reviewed synthetic alphabet/digit literal, empty secret or fixture literal; not a credential"
+      },
+      {
+        "line": 4648,
+        "line_sha256": "d3894fd83fa3cfc90930489e90088d6056d1c95e4abdd5a17d5efcc320c9a89a",
+        "path": "docs/research_config_console_20261028/combined.patch",
+        "previously_reviewed": true
+      },
+      {
+        "line": 5267,
+        "line_sha256": "c4e25c17f57169212e0afca322b12f3dd470b9f144ebeaa32a52ba4ba02c3c48",
+        "path": "docs/research_config_console_20261028/combined.patch",
+        "previously_reviewed": true
+      },
+      {
+        "line": 31,
+        "line_sha256": "9fa4a50e486c9a4a12280dad6955c937c0330ea8bcb52c36a1be883a974aedb8",
+        "path": "docs/research_config_console_20261028/run_remaining_cli.py",
+        "previously_reviewed": false,
+        "resolution": "reviewed synthetic alphabet/digit literal, empty secret or fixture literal; not a credential"
+      },
+      {
+        "line": 23,
+        "line_sha256": "2874cb114ea037379d5d5d50077609cf5dd644841eed6cd0d5f36fdedb9c871e",
+        "path": "docs/timing_config_readiness_20261028/baseline_code/tests/unit/test_emergency_reduction_regression.py",
+        "previously_reviewed": true
+      },
+      {
+        "line": 21,
+        "line_sha256": "5a44bc80aa3c9b99811df34ab73f12959dfde40adb386710ae34a773b3945fdf",
+        "path": "docs/timing_config_readiness_20261028/baseline_code/tests/unit/test_provider_cli_copy.py",
+        "previously_reviewed": true
+      },
+      {
+        "line": 23,
+        "line_sha256": "2874cb114ea037379d5d5d50077609cf5dd644841eed6cd0d5f36fdedb9c871e",
+        "path": "docs/timing_config_readiness_20261028/code/tests/unit/test_emergency_reduction_regression.py",
+        "previously_reviewed": true
+      },
+      {
+        "line": 21,
+        "line_sha256": "5a44bc80aa3c9b99811df34ab73f12959dfde40adb386710ae34a773b3945fdf",
+        "path": "docs/timing_config_readiness_20261028/code/tests/unit/test_provider_cli_copy.py",
+        "previously_reviewed": true
+      },
+      {
+        "line": 4505,
+        "line_sha256": "d3894fd83fa3cfc90930489e90088d6056d1c95e4abdd5a17d5efcc320c9a89a",
+        "path": "docs/timing_config_readiness_20261028/combined.patch",
+        "previously_reviewed": true
+      },
+      {
+        "line": 5124,
+        "line_sha256": "c4e25c17f57169212e0afca322b12f3dd470b9f144ebeaa32a52ba4ba02c3c48",
+        "path": "docs/timing_config_readiness_20261028/combined.patch",
+        "previously_reviewed": true
+      },
+      {
+        "line": 23,
+        "line_sha256": "46a089a3b41d067b84ee5643f158507fbd3bcf6c2240bda2ad7ea9131802d1a2",
+        "path": "docs/timing_config_readiness_20261028/run_cancel_paths.py",
+        "previously_reviewed": true
+      },
+      {
+        "line": 33,
+        "line_sha256": "7e96bf0116e960b3387af9e312c7928faf318f9d6998d3da55db0fc4097df7d9",
+        "path": "docs/timing_config_readiness_20261028/run_config_cli.py",
+        "previously_reviewed": true
+      },
+      {
+        "line": 12,
+        "line_sha256": "0628c6d3b3115becfc029b48c88bc0d47983718a5ad5845b71de16c06fb834af",
+        "path": "docs/timing_config_readiness_20261028/run_rollback.py",
+        "previously_reviewed": true
+      },
+      {
+        "line": 17,
+        "line_sha256": "833e3132989c7480107939935363d7977e77e19475621d078e0332ece3df3d05",
+        "path": "docs/timing_config_readiness_20261028/run_timing_paths.py",
+        "previously_reviewed": true
+      }
+    ],
+    "individual_activity_json_schemas": 0,
+    "omitted_private_inputs": true,
+    "scanner_exit": 1,
+    "supplemental_credential_findings": 0
+  },
+  "private_ancestors_inherited": false,
+  "production_applied": false,
+  "public_base": "e2d98eed3c2cdf19dd6621d1cec29297f6eb2e61",
+  "publication_tests": {
+    "actual_CLI_cases": 44,
+    "browser": {
+      "actual_HTML_JS_CSS": true,
+      "audit_fractional_qty": 3.7,
+      "blocked_hosts": [],
+      "cancel_unconfirmed_not_terminal": true,
+      "completed_not_success": true,
+      "external_requests_sent": 0,
+      "isolated_browser": true,
+      "missing_DD_unknown": true,
+      "mobile": {
+        "viewport": 390,
+        "width": 390
+      },
+      "page_errors": [],
+      "production_deployed": false,
+      "real_service_or_broker_qualified": false,
+      "reload": 1,
+      "synthetic_API_from_actual_service": true,
+      "tab_roundtrips": 2
+    },
+    "focused_combined": 567,
+    "full_private_suite_repeated": false,
+    "guard_service_JS_states": 4,
+    "private_research_outcome_repeated": false,
+    "skipped": 0,
+    "synthetic_research_contracts": 24
+  },
+  "remote_main": "ee2acac4f7579188938d1265671d3146c91c0295",
+  "scope": "docs-only isolated candidates and four projected plans through 3.47",
+  "selected_file_count": 2000,
+  "service_restarted": false,
+  "source_head_index_and_protected_files_unchanged": true,
+  "source_protected_count": 2742,
+  "unperformed": [
+    "private research outcome/19010-cell replay",
+    "private full-suite replay",
+    "real broker/service qualification",
+    "main merge/deployment",
+    "CI completion"
+  ],
+  "whitespace": "Inherited sealed logs/patch whitespace retained; logical new delta previously clean; staged scope results recorded separately."
+}

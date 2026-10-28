@@ -1,0 +1,20 @@
+{
+  "kind": "privacy-reviewed public projection, not original sealed packet",
+  "original_manifest_sha256": "e84612f3d62a25a1fa4ff4270e81ef073ec3e001795e33bc1ba717d4f9c7d9d3",
+  "original_private_sealed_commit": "0b146aa6624b07d63cbdedccc388844aa96d45ea",
+  "omitted": [
+    "research/decisions.json",
+    "research/events.json",
+    "research/prices/",
+    "research/classification.json",
+    "research/input_manifest.json",
+    "parent raw-input archive",
+    "private financial suite inputs",
+    "private screenshots and per-case logs"
+  ],
+  "aggregate_result_bytes_unchanged": true,
+  "synthetic_research_contracts_replayable": true,
+  "private_research_outcome_replay_available": false,
+  "full_historical_suite_repeated_for_publication": false,
+  "root_runtime_source_changed": false
+}

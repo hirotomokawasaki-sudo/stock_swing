@@ -1,0 +1,593 @@
+{
+  "baseline_buy_404_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": [
+          {
+            "order_id": "fixture-order",
+            "reason": "previous_session",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_buy_canceled_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": [
+          {
+            "order_id": "fixture-order",
+            "reason": "previous_session",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_buy_canceled_2": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": [
+          {
+            "order_id": "fixture-order",
+            "reason": "previous_session",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_buy_filled_5": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": [
+          {
+            "order_id": "fixture-order",
+            "reason": "previous_session",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_buy_pending_cancel_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": [
+          {
+            "order_id": "fixture-order",
+            "reason": "previous_session",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_main_pending": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": false,
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_manual_404_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_manual_canceled_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_manual_canceled_2": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_manual_death_restart": {
+    "delete_count": 2,
+    "outcomes": [
+      {
+        "process_exit": 77
+      },
+      {
+        "exit_reason_present": true,
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_manual_filled_5": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_manual_lost_restart": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "process_exit": 1
+      },
+      {
+        "process_exit": 1
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_manual_pending_cancel_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_manual_preview": {
+    "delete_count": 0,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_sell_404_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": false,
+        "result": [
+          {
+            "order_id": "fixture-order",
+            "reason": "offhours_moderate_sell",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_sell_canceled_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": false,
+        "result": [
+          {
+            "order_id": "fixture-order",
+            "reason": "offhours_moderate_sell",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_sell_canceled_2": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": false,
+        "result": [
+          {
+            "order_id": "fixture-order",
+            "reason": "offhours_moderate_sell",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_sell_filled_5": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": false,
+        "result": [
+          {
+            "order_id": "fixture-order",
+            "reason": "offhours_moderate_sell",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_sell_pending_cancel_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": false,
+        "result": [
+          {
+            "order_id": "fixture-order",
+            "reason": "offhours_moderate_sell",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_buy_404_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": [
+          {
+            "broker_status": null,
+            "cancelled": false,
+            "delete_attempted": true,
+            "filled_qty": null,
+            "order_id": "fixture-order",
+            "reason": "cancel_not_terminal_reservation_retained",
+            "reason_code": "previous_session",
+            "state": "unknown",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_buy_canceled_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": false,
+        "result": [
+          {
+            "broker_status": "canceled",
+            "cancelled": true,
+            "delete_attempted": true,
+            "filled_qty": "0",
+            "order_id": "fixture-order",
+            "reason": "qualified_readback_not_fill_accounting",
+            "reason_code": "previous_session",
+            "state": "terminal",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_buy_canceled_2": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": [
+          {
+            "broker_status": "canceled",
+            "cancelled": true,
+            "delete_attempted": true,
+            "filled_qty": "2",
+            "order_id": "fixture-order",
+            "reason": "qualified_readback_not_fill_accounting",
+            "reason_code": "previous_session",
+            "state": "terminal",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_buy_filled_5": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": [
+          {
+            "broker_status": "filled",
+            "cancelled": false,
+            "delete_attempted": true,
+            "filled_qty": "5",
+            "order_id": "fixture-order",
+            "reason": "qualified_readback_not_fill_accounting",
+            "reason_code": "previous_session",
+            "state": "terminal",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_buy_pending_cancel_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": [
+          {
+            "broker_status": "pending_cancel",
+            "cancelled": false,
+            "delete_attempted": true,
+            "filled_qty": "0",
+            "order_id": "fixture-order",
+            "reason": "cancel_not_terminal_reservation_retained",
+            "reason_code": "previous_session",
+            "state": "requested",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_main_pending": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": 1
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_manual_404_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": 1
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_manual_canceled_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_manual_canceled_2": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_manual_death_restart": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "process_exit": 77
+      },
+      {
+        "exit_reason_present": true,
+        "result": 1
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_manual_filled_5": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_manual_lost_restart": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": 1
+      },
+      {
+        "process_exit": 1
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_manual_pending_cancel_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": 1
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_manual_preview": {
+    "delete_count": 0,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_sell_404_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": [
+          {
+            "broker_status": null,
+            "cancelled": false,
+            "delete_attempted": true,
+            "filled_qty": null,
+            "order_id": "fixture-order",
+            "reason": "cancel_not_terminal_reservation_retained",
+            "reason_code": "offhours_moderate_sell",
+            "state": "unknown",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_sell_canceled_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": false,
+        "result": [
+          {
+            "broker_status": "canceled",
+            "cancelled": true,
+            "delete_attempted": true,
+            "filled_qty": "0",
+            "order_id": "fixture-order",
+            "reason": "qualified_readback_not_fill_accounting",
+            "reason_code": "offhours_moderate_sell",
+            "state": "terminal",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_sell_canceled_2": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": [
+          {
+            "broker_status": "canceled",
+            "cancelled": true,
+            "delete_attempted": true,
+            "filled_qty": "2",
+            "order_id": "fixture-order",
+            "reason": "qualified_readback_not_fill_accounting",
+            "reason_code": "offhours_moderate_sell",
+            "state": "terminal",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_sell_filled_5": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": [
+          {
+            "broker_status": "filled",
+            "cancelled": false,
+            "delete_attempted": true,
+            "filled_qty": "5",
+            "order_id": "fixture-order",
+            "reason": "qualified_readback_not_fill_accounting",
+            "reason_code": "offhours_moderate_sell",
+            "state": "terminal",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_sell_pending_cancel_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "exit_reason_present": true,
+        "result": [
+          {
+            "broker_status": "pending_cancel",
+            "cancelled": false,
+            "delete_attempted": true,
+            "filled_qty": "0",
+            "order_id": "fixture-order",
+            "reason": "cancel_not_terminal_reservation_retained",
+            "reason_code": "offhours_moderate_sell",
+            "state": "requested",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  }
+}

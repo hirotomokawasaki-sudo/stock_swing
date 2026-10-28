@@ -1,0 +1,57 @@
+{
+  "all_bytes_modes_match_start": true,
+  "index_initial_byte_pin_available": false,
+  "json_files_parsed_before_final_receipts": 16,
+  "local_links_checked": 7,
+  "mutable_operational_data_universally_frozen": false,
+  "new_commit_push": false,
+  "original_head": "8909e79c1a83e04d508715b132575625454b7856",
+  "original_staged_paths": [],
+  "plan_hashes_and_canonical_rows_verified": true,
+  "preexisting_runtime_config_pin_unchanged": true,
+  "prior_sealed_packets": {
+    "advance_all_20261028": {
+      "inventory_bytes_modes_match": true,
+      "manifest_entries": 255,
+      "manifest_sha256": "ea719eafde8b7e6d5a2ed814063aeea733735098d456624685ab8274793eb41f"
+    },
+    "closure_research_review_20261028": {
+      "inventory_bytes_modes_match": true,
+      "manifest_entries": 12,
+      "manifest_sha256": "c1fb5f2f8cd2ba01665ae45e185ebc2e6f94a48fd8838a38b845b0d44d80dcd2"
+    },
+    "emergency_corrections_20261028": {
+      "inventory_bytes_modes_match": true,
+      "manifest_entries": 512,
+      "manifest_sha256": "8012390df21936f75126a5514b302f9a034b26ea916cbce0cc570f2c418ed8e3"
+    },
+    "functional_safety_20261028": {
+      "inventory_bytes_modes_match": true,
+      "manifest_entries": 229,
+      "manifest_sha256": "1a832140fea0c694933aea3037016ee841e108d2a35a8581f8eb52b66ca8e277"
+    },
+    "integration_ops_cost_20261028": {
+      "inventory_bytes_modes_match": true,
+      "manifest_entries": 470,
+      "manifest_sha256": "29a3466f013960a1dfadf5cf425c5f9a77341ae9f5df780cb1e7d9cf335c4cdc"
+    },
+    "order_preflight_20261028": {
+      "inventory_bytes_modes_match": true,
+      "manifest_entries": 226,
+      "manifest_sha256": "da546a2d99c3f5b7651372b95fbd3807827adeea351d52af4897ca894b021074"
+    },
+    "provider_bar_fixes_20261028": {
+      "inventory_bytes_modes_match": true,
+      "manifest_entries": 218,
+      "manifest_sha256": "506c0a905a7e80a1cc30c4eeab13d614c339ea2d9189e366a04369b62b5fe022"
+    }
+  },
+  "production_applied": false,
+  "protected_original_files": 659,
+  "public_checkout_git_clean": true,
+  "public_checkout_head": "e2d98eed3c2cdf19dd6621d1cec29297f6eb2e61",
+  "python_ast_parsed": 438,
+  "runtime_diff_vs_HEAD": [
+    "config/runtime/current_mode.yaml"
+  ]
+}

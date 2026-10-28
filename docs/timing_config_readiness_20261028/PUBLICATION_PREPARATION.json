@@ -1,0 +1,139 @@
+{
+  "base_public_commit": "e2d98eed3c2cdf19dd6621d1cec29297f6eb2e61",
+  "commit_created": false,
+  "concurrent_console_sources_included": false,
+  "console_plan_is_public_projection": true,
+  "console_plan_projection_reason": "public base plus only \u00a73.45 and \u00a73.46 appendices; excludes concurrent operational Console report",
+  "destination_visibility": "PUBLIC",
+  "heuristic_findings_reviewed": 18,
+  "heuristic_scan_exit": 1,
+  "json_parsed_at_review": 39,
+  "merge_performed": false,
+  "mode_restoration_required_after_git": true,
+  "private_source_ancestors_inherited": false,
+  "production_applied": false,
+  "push_performed": false,
+  "python_ast_parsed": 888,
+  "raw_financial_fixtures_archives_operational_env_included": false,
+  "reviewed_findings": [
+    {
+      "line": 23,
+      "line_sha256": "2874cb114ea037379d5d5d50077609cf5dd644841eed6cd0d5f36fdedb9c871e",
+      "path": "docs/cancel_config_closure_20261028/baseline_code/tests/unit/test_emergency_reduction_regression.py",
+      "resolution": "reviewed exact synthetic fixture literal; no scanner suppression"
+    },
+    {
+      "line": 21,
+      "line_sha256": "5a44bc80aa3c9b99811df34ab73f12959dfde40adb386710ae34a773b3945fdf",
+      "path": "docs/cancel_config_closure_20261028/baseline_code/tests/unit/test_provider_cli_copy.py",
+      "resolution": "reviewed exact synthetic fixture literal; no scanner suppression"
+    },
+    {
+      "line": 23,
+      "line_sha256": "2874cb114ea037379d5d5d50077609cf5dd644841eed6cd0d5f36fdedb9c871e",
+      "path": "docs/cancel_config_closure_20261028/code/tests/unit/test_emergency_reduction_regression.py",
+      "resolution": "reviewed exact synthetic fixture literal; no scanner suppression"
+    },
+    {
+      "line": 21,
+      "line_sha256": "5a44bc80aa3c9b99811df34ab73f12959dfde40adb386710ae34a773b3945fdf",
+      "path": "docs/cancel_config_closure_20261028/code/tests/unit/test_provider_cli_copy.py",
+      "resolution": "reviewed exact synthetic fixture literal; no scanner suppression"
+    },
+    {
+      "line": 4119,
+      "line_sha256": "d3894fd83fa3cfc90930489e90088d6056d1c95e4abdd5a17d5efcc320c9a89a",
+      "path": "docs/cancel_config_closure_20261028/combined.patch",
+      "resolution": "reviewed exact synthetic fixture literal; no scanner suppression"
+    },
+    {
+      "line": 4738,
+      "line_sha256": "c4e25c17f57169212e0afca322b12f3dd470b9f144ebeaa32a52ba4ba02c3c48",
+      "path": "docs/cancel_config_closure_20261028/combined.patch",
+      "resolution": "reviewed exact synthetic fixture literal; no scanner suppression"
+    },
+    {
+      "line": 23,
+      "line_sha256": "46a089a3b41d067b84ee5643f158507fbd3bcf6c2240bda2ad7ea9131802d1a2",
+      "path": "docs/cancel_config_closure_20261028/run_cancel_paths.py",
+      "resolution": "reviewed exact synthetic fixture literal; no scanner suppression"
+    },
+    {
+      "line": 28,
+      "line_sha256": "7e96bf0116e960b3387af9e312c7928faf318f9d6998d3da55db0fc4097df7d9",
+      "path": "docs/cancel_config_closure_20261028/run_config_cli.py",
+      "resolution": "reviewed exact synthetic fixture literal; no scanner suppression"
+    },
+    {
+      "line": 23,
+      "line_sha256": "2874cb114ea037379d5d5d50077609cf5dd644841eed6cd0d5f36fdedb9c871e",
+      "path": "docs/timing_config_readiness_20261028/baseline_code/tests/unit/test_emergency_reduction_regression.py",
+      "resolution": "reviewed exact synthetic fixture literal; no scanner suppression"
+    },
+    {
+      "line": 21,
+      "line_sha256": "5a44bc80aa3c9b99811df34ab73f12959dfde40adb386710ae34a773b3945fdf",
+      "path": "docs/timing_config_readiness_20261028/baseline_code/tests/unit/test_provider_cli_copy.py",
+      "resolution": "reviewed exact synthetic fixture literal; no scanner suppression"
+    },
+    {
+      "line": 23,
+      "line_sha256": "2874cb114ea037379d5d5d50077609cf5dd644841eed6cd0d5f36fdedb9c871e",
+      "path": "docs/timing_config_readiness_20261028/code/tests/unit/test_emergency_reduction_regression.py",
+      "resolution": "reviewed exact synthetic fixture literal; no scanner suppression"
+    },
+    {
+      "line": 21,
+      "line_sha256": "5a44bc80aa3c9b99811df34ab73f12959dfde40adb386710ae34a773b3945fdf",
+      "path": "docs/timing_config_readiness_20261028/code/tests/unit/test_provider_cli_copy.py",
+      "resolution": "reviewed exact synthetic fixture literal; no scanner suppression"
+    },
+    {
+      "line": 4505,
+      "line_sha256": "d3894fd83fa3cfc90930489e90088d6056d1c95e4abdd5a17d5efcc320c9a89a",
+      "path": "docs/timing_config_readiness_20261028/combined.patch",
+      "resolution": "reviewed exact synthetic fixture literal; no scanner suppression"
+    },
+    {
+      "line": 5124,
+      "line_sha256": "c4e25c17f57169212e0afca322b12f3dd470b9f144ebeaa32a52ba4ba02c3c48",
+      "path": "docs/timing_config_readiness_20261028/combined.patch",
+      "resolution": "reviewed exact synthetic fixture literal; no scanner suppression"
+    },
+    {
+      "line": 23,
+      "line_sha256": "46a089a3b41d067b84ee5643f158507fbd3bcf6c2240bda2ad7ea9131802d1a2",
+      "path": "docs/timing_config_readiness_20261028/run_cancel_paths.py",
+      "resolution": "reviewed exact synthetic fixture literal; no scanner suppression"
+    },
+    {
+      "line": 33,
+      "line_sha256": "7e96bf0116e960b3387af9e312c7928faf318f9d6998d3da55db0fc4097df7d9",
+      "path": "docs/timing_config_readiness_20261028/run_config_cli.py",
+      "resolution": "reviewed exact synthetic fixture literal; no scanner suppression"
+    },
+    {
+      "line": 12,
+      "line_sha256": "0628c6d3b3115becfc029b48c88bc0d47983718a5ad5845b71de16c06fb834af",
+      "path": "docs/timing_config_readiness_20261028/run_rollback.py",
+      "resolution": "reviewed exact synthetic fixture literal; no scanner suppression"
+    },
+    {
+      "line": 17,
+      "line_sha256": "833e3132989c7480107939935363d7977e77e19475621d078e0332ece3df3d05",
+      "path": "docs/timing_config_readiness_20261028/run_timing_paths.py",
+      "resolution": "reviewed exact synthetic fixture literal; no scanner suppression"
+    }
+  ],
+  "scope": "isolated packets + four plan docs, no operational runtime or raw financial inputs",
+  "selected_roots": [
+    "docs/cancel_config_closure_20261028",
+    "docs/timing_config_readiness_20261028",
+    "docs/strategy_improvement_validation_plan_20261020.md",
+    "docs/console_improvement_tasks.md",
+    "docs/p4_advance_review_20261028.md",
+    "docs/signal_evaluation_improvement_plan_20261028.md"
+  ],
+  "staging_scope": "exact final allowlist, complete packet inventories including ignored logs; private final receipt records tree proof",
+  "supplemental_credential_findings": 0
+}

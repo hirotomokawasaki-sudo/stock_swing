@@ -1,0 +1,37 @@
+{
+  "cancel_to_serialized_service_to_JS": [
+    {
+      "broker_state": "pending_cancel",
+      "guard_state": "requested",
+      "service_acquisition": "ok",
+      "serialized_to_actual_JS": true,
+      "delete_attempts": 1
+    },
+    {
+      "broker_state": "canceled",
+      "guard_state": "terminal",
+      "service_acquisition": "ok",
+      "serialized_to_actual_JS": true,
+      "delete_attempts": 1
+    },
+    {
+      "broker_state": "partially_filled",
+      "guard_state": "requested",
+      "service_acquisition": "ok",
+      "serialized_to_actual_JS": true,
+      "delete_attempts": 1
+    },
+    {
+      "broker_state": "404",
+      "guard_state": "unknown",
+      "service_acquisition": "error",
+      "serialized_to_actual_JS": true,
+      "delete_attempts": 1
+    }
+  ],
+  "config_summary_text_renderer": true,
+  "web_config_receipts_panel_present": false,
+  "web_config_receipts_note": "Web Console does not yet consume effective_config; CLI JSON/text receipt view only. No new web panel claimed.",
+  "evidence_snapshot_status": "stale",
+  "latest_Console_preserved_except_audit_quantity_display_fix": true
+}

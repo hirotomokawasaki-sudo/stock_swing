@@ -1,0 +1,662 @@
+import json
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+import pytest
+
+from console.services.dashboard_service import DashboardService
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+class _StubService(DashboardService):
+    """Minimal DashboardService stub that avoids real broker/tracker I/O."""
+    def __init__(self, project_root: Path) -> None:  # type: ignore[override]
+        self.project_root = project_root
+        self._broker = None
+        self._tracker = None
+
+
+def _write_symbol_registry(tmp_path: Path, symbols: dict) -> Path:
+    reg_path = tmp_path / "config" / "reference" / "symbol_registry.yaml"
+    reg_path.parent.mkdir(parents=True, exist_ok=True)
+    import yaml
+    reg_path.write_text(yaml.safe_dump({"symbols": symbols}))
+    return reg_path
+
+
+def _write_pnl_state(tmp_path: Path, trades: list[dict]) -> Path:
+    state_path = tmp_path / "data" / "tracking" / "pnl_state.json"
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(json.dumps({"trades": trades}))
+    return state_path
+
+
+def _open_trade(symbol: str, qty: float, ess: float | None) -> dict:
+    return {
+        "symbol": symbol,
+        "status": "open",
+        "qty": qty,
+        "entry_signal_strength": ess,
+    }
+
+
+def _make_trade(symbol: str, hours_ago: float) -> dict:
+    ts = (datetime.now(timezone.utc) - timedelta(hours=hours_ago)).isoformat()
+    return {
+        "symbol": symbol,
+        "status": "closed",
+        "entry_time": ts,
+        "exit_time": ts,
+        "qty": 1,
+        "entry_price": 100.0,
+        "exit_price": 101.0,
+        "pnl": 1.0,
+        "return_pct": 0.01,
+    }
+
+
+class TestGetChartsOpenPositions:
+    """Bug fix 2026-08-13: Open Positions chart previously stamped every
+    historical point with the *current live* position count instead of the
+    count recorded at snapshot time, producing a flat line equal to today's
+    count across the whole chart.
+    """
+
+    def test_uses_per_snapshot_recorded_value_not_live_count(self, tmp_path):
+        svc = _StubService(tmp_path)
+        trading = {
+            "daily_snapshots": [
+                {"date": "2026-08-01", "equity": 1000000.0, "open_position_count": 3},
+                {"date": "2026-08-02", "equity": 1001000.0, "open_position_count": 5},
+                {"date": "2026-08-03", "equity": 1002000.0, "open_position_count": 2},
+            ],
+            "summary": {"peak_equity": 1002000.0},
+        }
+        # Live count (e.g. from broker) is deliberately different from every
+        # historical snapshot value to prove it is NOT substituted in.
+        positions = {"count": 28}
+
+        charts = svc.get_charts(trading=trading, positions=positions, period="all")
+        values = [p["value"] for p in charts["overview"]["open_positions"]]
+
+        assert values == [3, 5, 2]
+
+    def test_most_recent_snapshot_falls_back_to_live_count_when_missing(self, tmp_path):
+        svc = _StubService(tmp_path)
+        trading = {
+            "daily_snapshots": [
+                {"date": "2026-08-01", "equity": 1000000.0, "open_position_count": 3},
+                {"date": "2026-08-02", "equity": 1001000.0},  # not yet recorded (pre-fix data)
+            ],
+            "summary": {"peak_equity": 1001000.0},
+        }
+        positions = {"count": 7}
+
+        charts = svc.get_charts(trading=trading, positions=positions, period="all")
+        values = [p["value"] for p in charts["overview"]["open_positions"]]
+
+        assert values == [3, 7]
+
+    def test_older_snapshots_missing_value_surface_as_none_not_live_count(self, tmp_path):
+        svc = _StubService(tmp_path)
+        trading = {
+            "daily_snapshots": [
+                {"date": "2026-08-01", "equity": 1000000.0},  # pre-fix, no recorded value
+                {"date": "2026-08-02", "equity": 1001000.0},  # pre-fix, no recorded value
+                {"date": "2026-08-03", "equity": 1002000.0, "open_position_count": 4},
+            ],
+            "summary": {"peak_equity": 1002000.0},
+        }
+        positions = {"count": 99}
+
+        charts = svc.get_charts(trading=trading, positions=positions, period="all")
+        values = [p["value"] for p in charts["overview"]["open_positions"]]
+
+        # Only the last point is allowed to fall back to live count; the two
+        # earlier gaps must not be silently filled with 99.
+        assert values == [None, None, 4]
+
+    def test_empty_snapshots_returns_empty_chart(self, tmp_path):
+        svc = _StubService(tmp_path)
+        trading = {"daily_snapshots": [], "summary": {}}
+        positions = {"count": 5}
+
+        charts = svc.get_charts(trading=trading, positions=positions, period="all")
+
+        assert charts["overview"]["open_positions"] == []
+
+
+def test_select_recent_closed_trades_prefers_last_48_hours():
+    trades = [_make_trade(f"RECENT{i}", i % 24) for i in range(60)]
+    trades += [_make_trade(f"OLD{i}", 72 + i) for i in range(10)]
+
+    selected = DashboardService._select_recent_closed_trades(trades)
+
+    assert len(selected) == 60
+    assert all(t["symbol"].startswith("RECENT") for t in selected)
+
+
+def test_select_recent_closed_trades_falls_back_to_minimum_count():
+    trades = [_make_trade(f"RECENT{i}", i % 12) for i in range(5)]
+    trades += [_make_trade(f"OLD{i}", 72 + i) for i in range(60)]
+
+    selected = DashboardService._select_recent_closed_trades(trades)
+
+    assert len(selected) == DashboardService.RECENT_TRADES_MIN_COUNT
+    assert sum(1 for t in selected if t["symbol"].startswith("RECENT")) == 5
+
+
+# ---------------------------------------------------------------------------
+# _get_entry_signal_strength_for_symbol
+# ---------------------------------------------------------------------------
+
+class TestGetEntrySignalStrengthForSymbol:
+    """Unit tests for DashboardService._get_entry_signal_strength_for_symbol().
+
+    testing_standards.md: 1-A (normal / boundary / missing-file / corrupt).
+    """
+
+    def test_single_lot_returns_ess(self, tmp_path):
+        """Normal: single open trade → returns that trade's ESS."""
+        _write_pnl_state(tmp_path, [_open_trade("AAPL", qty=100, ess=0.9918)])
+        svc = _StubService(tmp_path)
+        result = svc._get_entry_signal_strength_for_symbol("AAPL")
+        assert result == pytest.approx(0.9918, abs=1e-4), (
+            f"Expected ~0.9918, got {result}"
+        )
+
+    def test_multi_lot_returns_qty_weighted_avg(self, tmp_path):
+        """Normal: two lots with different ESS → qty-weighted average."""
+        _write_pnl_state(tmp_path, [
+            _open_trade("MSFT", qty=50, ess=0.60),
+            _open_trade("MSFT", qty=50, ess=0.40),
+        ])
+        svc = _StubService(tmp_path)
+        result = svc._get_entry_signal_strength_for_symbol("MSFT")
+        assert result == pytest.approx(0.50, abs=1e-4), (
+            "Weighted avg of (50×0.60 + 50×0.40) / 100 should be 0.50"
+        )
+
+    def test_ess_none_on_trade_is_excluded_from_avg(self, tmp_path):
+        """Boundary: lot without ESS is excluded; remaining lots still averaged."""
+        _write_pnl_state(tmp_path, [
+            _open_trade("GOOG", qty=100, ess=0.80),
+            _open_trade("GOOG", qty=100, ess=None),  # no ESS
+        ])
+        svc = _StubService(tmp_path)
+        result = svc._get_entry_signal_strength_for_symbol("GOOG")
+        assert result == pytest.approx(0.80, abs=1e-4), (
+            "Only the lot with ESS should contribute"
+        )
+
+    def test_all_lots_missing_ess_returns_none(self, tmp_path):
+        """Boundary: no lot has ESS → returns None (not 0)."""
+        _write_pnl_state(tmp_path, [_open_trade("NVDA", qty=10, ess=None)])
+        svc = _StubService(tmp_path)
+        result = svc._get_entry_signal_strength_for_symbol("NVDA")
+        assert result is None, "Should return None when no ESS data is available"
+
+    def test_symbol_not_found_returns_none(self, tmp_path):
+        """Boundary: symbol not in pnl_state → returns None."""
+        _write_pnl_state(tmp_path, [_open_trade("AAPL", qty=100, ess=0.75)])
+        svc = _StubService(tmp_path)
+        result = svc._get_entry_signal_strength_for_symbol("TSLA")
+        assert result is None, "Unknown symbol should return None"
+
+    def test_closed_trades_are_ignored(self, tmp_path):
+        """Boundary: only open trades count; closed ones are skipped."""
+        _write_pnl_state(tmp_path, [
+            {**_open_trade("META", qty=100, ess=0.90), "status": "closed"},
+            _open_trade("META", qty=50, ess=0.60),
+        ])
+        svc = _StubService(tmp_path)
+        result = svc._get_entry_signal_strength_for_symbol("META")
+        assert result == pytest.approx(0.60, abs=1e-4), (
+            "Closed trade ESS should not be included"
+        )
+
+    def test_missing_pnl_state_file_returns_none(self, tmp_path):
+        """File-missing: pnl_state.json does not exist → returns None (no crash)."""
+        svc = _StubService(tmp_path)  # no pnl_state written
+        result = svc._get_entry_signal_strength_for_symbol("AAPL")
+        assert result is None, "Missing file should return None, not raise"
+
+    def test_corrupt_pnl_state_returns_none(self, tmp_path):
+        """Corrupt: invalid JSON → returns None (no crash)."""
+        state_path = tmp_path / "data" / "tracking" / "pnl_state.json"
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        state_path.write_text("NOT_VALID_JSON{{{")
+        svc = _StubService(tmp_path)
+        result = svc._get_entry_signal_strength_for_symbol("AAPL")
+        assert result is None, "Corrupt JSON should return None, not raise"
+
+    def test_weighted_avg_unequal_lots(self, tmp_path):
+        """Normal: unequal lot sizes → correct weighted average."""
+        # 200 shares @ 0.90, 100 shares @ 0.60 → (200*0.90 + 100*0.60) / 300 = 0.80
+        _write_pnl_state(tmp_path, [
+            _open_trade("HPE", qty=200, ess=0.90),
+            _open_trade("HPE", qty=100, ess=0.60),
+        ])
+        svc = _StubService(tmp_path)
+        result = svc._get_entry_signal_strength_for_symbol("HPE")
+        assert result == pytest.approx(0.80, abs=1e-4), (
+            "(200×0.90 + 100×0.60) / 300 = 0.80"
+        )
+
+
+# ---------------------------------------------------------------------------
+# _enrich_broker_position: entry_signal_strength propagation
+# ---------------------------------------------------------------------------
+
+class TestEnrichBrokerPositionEssField:
+    """Verify entry_signal_strength is included in _enrich_broker_position() output.
+
+    testing_standards.md: 1-C (layer propagation: pnl_state → service → dict).
+    """
+
+    def _minimal_broker_pos(self, symbol: str) -> dict:
+        return {
+            "symbol": symbol,
+            "qty": "100",
+            "avg_entry_price": "50.00",
+            "current_price": "52.00",
+        }
+
+    def test_ess_in_enriched_dict_when_present(self, tmp_path):
+        """Layer propagation: ESS from pnl_state appears in enriched position dict."""
+        _write_pnl_state(tmp_path, [_open_trade("ANET", qty=100, ess=0.9918)])
+        svc = _StubService(tmp_path)
+        # Stub out methods that need real broker/tracker I/O
+        svc._apply_price_override = lambda sym, price: price
+        svc._get_position_entry_context = lambda sym, qty: (None, None)
+        svc._get_latest_decision_for_symbol = lambda sym: None
+        svc._derive_position_decision_status = lambda dec, holding_days=None: "unknown"
+        svc._get_asset_class_for_symbol = lambda sym: "stock"
+        svc._get_peak_price_for_symbol = lambda sym, fallback: fallback
+
+        result = svc._enrich_broker_position(self._minimal_broker_pos("ANET"))
+
+        assert "entry_signal_strength" in result, (
+            "_enrich_broker_position must include entry_signal_strength key"
+        )
+        assert result["entry_signal_strength"] == pytest.approx(0.9918, abs=1e-4)
+
+    def test_ess_is_none_when_no_pnl_state(self, tmp_path):
+        """Layer propagation: missing pnl_state → entry_signal_strength is None (no crash)."""
+        svc = _StubService(tmp_path)
+        svc._apply_price_override = lambda sym, price: price
+        svc._get_position_entry_context = lambda sym, qty: (None, None)
+        svc._get_latest_decision_for_symbol = lambda sym: None
+        svc._derive_position_decision_status = lambda dec, holding_days=None: "unknown"
+        svc._get_asset_class_for_symbol = lambda sym: "stock"
+        svc._get_peak_price_for_symbol = lambda sym, fallback: fallback
+
+        result = svc._enrich_broker_position(self._minimal_broker_pos("AAPL"))
+
+        assert "entry_signal_strength" in result, (
+            "Key must be present even when value is None"
+        )
+        assert result["entry_signal_strength"] is None
+
+
+# ---------------------------------------------------------------------------
+# _get_buy_stop_list
+# ---------------------------------------------------------------------------
+
+class TestGetBuyStopList:
+    """Unit tests for DashboardService._get_buy_stop_list().
+
+    testing_standards.md: 1-A (normal / boundary / file-missing / corrupt).
+    """
+
+    def _write_pnl_with_closed(self, tmp_path: Path, trades: list[dict]) -> None:
+        state_path = tmp_path / "data" / "tracking" / "pnl_state.json"
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        state_path.write_text(json.dumps({"trades": trades}))
+
+    def _closed_trade(self, symbol: str, pnl: float) -> dict:
+        return {"symbol": symbol, "status": "closed", "qty": 100,
+                "entry_price": 100.0, "exit_price": 100.0 + pnl / 100,
+                "pnl": pnl, "return_pct": pnl / 10000}
+
+    def test_returns_list_type(self, tmp_path):
+        """Normal: always returns a list (never None)."""
+        self._write_pnl_with_closed(tmp_path, [])
+        svc = _StubService(tmp_path)
+        result = svc._get_buy_stop_list()
+        assert isinstance(result, list), "Must return a list"
+
+    def test_missing_pnl_state_returns_empty(self, tmp_path):
+        """File-missing: no pnl_state.json → empty list (no crash)."""
+        svc = _StubService(tmp_path)
+        result = svc._get_buy_stop_list()
+        assert result == [], "Missing file should return []"
+
+    def test_corrupt_pnl_state_returns_empty(self, tmp_path):
+        """Corrupt: invalid JSON → empty list (no crash)."""
+        state_path = tmp_path / "data" / "tracking" / "pnl_state.json"
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        state_path.write_text("INVALID{{{")
+        svc = _StubService(tmp_path)
+        result = svc._get_buy_stop_list()
+        assert result == [], "Corrupt JSON should return []"
+
+    def test_blocked_symbol_appears_in_result(self, tmp_path):
+        """Normal: symbol with enough losses is included in stop list."""
+        # 6 losing trades for BADCO → should be blocked (PF<1.0, n≥5)
+        trades = [self._closed_trade("BADCO", pnl=-100) for _ in range(6)]
+        self._write_pnl_with_closed(tmp_path, trades)
+        svc = _StubService(tmp_path)
+        result = svc._get_buy_stop_list()
+        symbols = [r["symbol"] for r in result]
+        assert "BADCO" in symbols, f"BADCO should be blocked; got {symbols}"
+
+    def test_result_entries_have_required_fields(self, tmp_path):
+        """Normal: each entry has symbol, n_trades, profit_factor, reason."""
+        trades = [self._closed_trade("BADCO", pnl=-100) for _ in range(6)]
+        self._write_pnl_with_closed(tmp_path, trades)
+        svc = _StubService(tmp_path)
+        result = svc._get_buy_stop_list()
+        if result:
+            entry = result[0]
+            for field in ("symbol", "n_trades", "profit_factor", "reason"):
+                assert field in entry, f"Missing field: {field}"
+
+    def test_insufficient_trades_not_blocked(self, tmp_path):
+        """Boundary: fewer than min_trades (5) → not blocked even if PF=0."""
+        trades = [self._closed_trade("NEWCO", pnl=-100) for _ in range(3)]
+        self._write_pnl_with_closed(tmp_path, trades)
+        svc = _StubService(tmp_path)
+        result = svc._get_buy_stop_list()
+        symbols = [r["symbol"] for r in result]
+        assert "NEWCO" not in symbols, "Under min_trades threshold should not be blocked"
+
+
+# ---------------------------------------------------------------------------
+# _get_small_sample_watchlist
+# ---------------------------------------------------------------------------
+
+class TestGetSmallSampleWatchlist:
+    """Unit tests for DashboardService._get_small_sample_watchlist().
+
+    2026-08-06: added web-dashboard wiring for the small_sample_watchlist
+    feature (2026-08-05, entry_filter.get_small_sample_watchlist) which had
+    only been exposed via the CLI console summary until now.
+
+    testing_standards.md: 1-A (normal / boundary / file-missing / corrupt).
+    """
+
+    def _write_pnl_with_closed(self, tmp_path: Path, trades: list[dict]) -> None:
+        state_path = tmp_path / "data" / "tracking" / "pnl_state.json"
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        state_path.write_text(json.dumps({"trades": trades}))
+
+    def _closed_trade(self, symbol: str, pnl: float) -> dict:
+        return {"symbol": symbol, "status": "closed", "qty": 100,
+                "entry_price": 100.0, "exit_price": 100.0 + pnl / 100,
+                "pnl": pnl, "return_pct": pnl / 10000}
+
+    def test_returns_list_type(self, tmp_path):
+        """Normal: always returns a list (never None)."""
+        self._write_pnl_with_closed(tmp_path, [])
+        svc = _StubService(tmp_path)
+        result = svc._get_small_sample_watchlist()
+        assert isinstance(result, list), "Must return a list"
+
+    def test_missing_pnl_state_returns_empty(self, tmp_path):
+        """File-missing: no pnl_state.json → empty list (no crash)."""
+        svc = _StubService(tmp_path)
+        result = svc._get_small_sample_watchlist()
+        assert result == [], "Missing file should return []"
+
+    def test_corrupt_pnl_state_returns_empty(self, tmp_path):
+        """Corrupt: invalid JSON → empty list (no crash)."""
+        state_path = tmp_path / "data" / "tracking" / "pnl_state.json"
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        state_path.write_text("INVALID{{{")
+        svc = _StubService(tmp_path)
+        result = svc._get_small_sample_watchlist()
+        assert result == [], "Corrupt JSON should return []"
+
+    def test_small_sample_negative_pnl_symbol_appears(self, tmp_path):
+        """Normal: n=3 (< min_n=5), net PnL<0 → appears on watchlist."""
+        trades = [self._closed_trade("IBM", pnl=-2000) for _ in range(3)]
+        self._write_pnl_with_closed(tmp_path, trades)
+        svc = _StubService(tmp_path)
+        result = svc._get_small_sample_watchlist()
+        symbols = [r["symbol"] for r in result]
+        assert "IBM" in symbols, f"IBM (n=3, net_pnl<0) should be on watchlist; got {symbols}"
+
+    def test_result_entries_have_required_fields(self, tmp_path):
+        """Normal: each entry has symbol, n_trades, net_pnl, win_rate, note."""
+        trades = [self._closed_trade("IBM", pnl=-2000) for _ in range(3)]
+        self._write_pnl_with_closed(tmp_path, trades)
+        svc = _StubService(tmp_path)
+        result = svc._get_small_sample_watchlist()
+        if result:
+            entry = result[0]
+            for field in ("symbol", "n_trades", "net_pnl", "win_rate", "note"):
+                assert field in entry, f"Missing field: {field}"
+
+    def test_enough_trades_for_stock_reduced_gate_excluded(self, tmp_path):
+        """Boundary: n=5 (== min_n for stock_reduced gate) → not on this
+        watchlist; that symbol belongs to the auto-block (buy_stop_list)
+        path instead, not the small-sample observability path."""
+        trades = [self._closed_trade("BADCO", pnl=-100) for _ in range(5)]
+        self._write_pnl_with_closed(tmp_path, trades)
+        svc = _StubService(tmp_path)
+        result = svc._get_small_sample_watchlist()
+        symbols = [r["symbol"] for r in result]
+        assert "BADCO" not in symbols, "n>=min_n should not appear on small-sample watchlist"
+
+    def test_positive_pnl_symbol_excluded(self, tmp_path):
+        """Boundary: small sample but net PnL>=0 → not on watchlist (not a loser)."""
+        trades = [self._closed_trade("WINCO", pnl=500) for _ in range(3)]
+        self._write_pnl_with_closed(tmp_path, trades)
+        svc = _StubService(tmp_path)
+        result = svc._get_small_sample_watchlist()
+        symbols = [r["symbol"] for r in result]
+        assert "WINCO" not in symbols, "Positive net PnL should not appear on loss watchlist"
+
+
+class TestGetMarketRegimeIndicator:
+    """R11 follow-up (2026-08-15): _get_market_regime_indicator() dashboard
+    wiring. Core scoring logic is tested independently in
+    tests/unit/test_market_regime_indicator.py; these tests only cover the
+    dashboard_service.py wiring (correct dict shape, error/missing-data
+    handling, benchmark_dir resolution).
+    """
+
+    def _write_benchmark(self, tmp_path: Path, symbol: str, closes: list[float]) -> None:
+        bench_dir = tmp_path / "data" / "benchmarks"
+        bench_dir.mkdir(parents=True, exist_ok=True)
+        start = datetime(2026, 1, 1)
+        bars = [
+            {"date": (start + timedelta(days=i)).strftime("%Y-%m-%d"), "close": c}
+            for i, c in enumerate(closes)
+        ]
+        (bench_dir / f"{symbol}_daily.json").write_text(json.dumps(bars))
+
+    def test_returns_expected_dict_shape(self, tmp_path):
+        self._write_benchmark(tmp_path, "SPY", [100.0 + i * 0.5 for i in range(80)])
+        svc = _StubService(tmp_path)
+        result = svc._get_market_regime_indicator()
+        for field in ("regime_symbol", "latest_close", "sma_short", "above_sma",
+                      "sma_rising", "range_width_pct", "chop_score", "regime_label",
+                      "insufficient_data"):
+            assert field in result, f"Missing field: {field}"
+        assert result["insufficient_data"] is False
+        assert result["regime_symbol"] == "SPY"
+
+    def test_missing_benchmark_data_returns_insufficient_data_not_exception(self, tmp_path):
+        """No data/benchmarks/SPY_daily.json at all -> must not raise, must
+        report insufficient_data so the dashboard payload never fails
+        because of this panel (mirrors _get_cluster_exposure's try/except
+        pattern)."""
+        svc = _StubService(tmp_path)
+        result = svc._get_market_regime_indicator()
+        assert result["insufficient_data"] is True
+
+    def test_never_blocks_or_resizes(self, tmp_path):
+        """Observability-only contract: the returned dict must not contain
+        any block/deny/resize-style keys, distinguishing this from an
+        active gate (Plan A) rather than a shadow diagnostic (Plan B-E)."""
+        self._write_benchmark(tmp_path, "SPY", [100.0 + i * 0.5 for i in range(80)])
+        svc = _StubService(tmp_path)
+        result = svc._get_market_regime_indicator()
+        for forbidden_key in ("blocked", "denied", "action", "multiplier"):
+            assert forbidden_key not in result, (
+                f"market_regime indicator must stay observability-only; "
+                f"unexpected key '{forbidden_key}' suggests it may be wired "
+                f"into a blocking/resizing decision"
+            )
+
+
+class TestYamlConfigCache:
+    """H9 (2026-08-17, config hash cache): _load_yaml_cached() correctness.
+
+    Verifies the mtime-based YAML cache used for symbol_registry.yaml reads
+    (via _get_asset_class_for_symbol / _get_buy_stop_list / _get_small_
+    sample_watchlist) actually caches and correctly invalidates on file
+    change -- the same contract _load_json_cached already has for
+    pnl_state.json.
+    """
+
+    def test_get_asset_class_reads_from_registry(self, tmp_path):
+        _write_symbol_registry(tmp_path, {"SMH": {"asset_class": "etf"}, "AAPL": {"asset_class": "stock"}})
+        svc = _StubService(tmp_path)
+        assert svc._get_asset_class_for_symbol("SMH") == "etf"
+        assert svc._get_asset_class_for_symbol("AAPL") == "stock"
+
+    def test_unknown_symbol_falls_back_to_stock(self, tmp_path):
+        _write_symbol_registry(tmp_path, {"SMH": {"asset_class": "etf"}})
+        svc = _StubService(tmp_path)
+        assert svc._get_asset_class_for_symbol("UNKNOWN") == "stock"
+
+    def test_missing_registry_file_falls_back_to_stock(self, tmp_path):
+        svc = _StubService(tmp_path)
+        assert svc._get_asset_class_for_symbol("AAPL") == "stock"
+
+    def test_cache_reflects_file_update_after_mtime_change(self, tmp_path):
+        """Key regression: a cached YAML read must not go stale forever --
+        once the file's mtime/size changes, the next read must reflect the
+        new content (mirrors the JSON mtime cache's invalidation contract).
+        """
+        reg_path = _write_symbol_registry(tmp_path, {"AAPL": {"asset_class": "stock"}})
+        svc = _StubService(tmp_path)
+        assert svc._get_asset_class_for_symbol("AAPL") == "stock"
+
+        # Force a distinct mtime/size so the cache detects the change.
+        import time
+        time.sleep(0.01)
+        import yaml
+        reg_path.write_text(yaml.safe_dump({"symbols": {"AAPL": {"asset_class": "etf"}}}))
+        os_stat_workaround = reg_path.stat()
+        # Ensure size differs too, in case mtime resolution is coarse on
+        # this filesystem (belt-and-suspenders, mirrors MtimeFileCache's
+        # own mtime+size change-detection).
+        if os_stat_workaround.st_size == len(yaml.safe_dump({"symbols": {"AAPL": {"asset_class": "stock"}}})):
+            reg_path.write_text(yaml.safe_dump({"symbols": {"AAPL": {"asset_class": "etf"}}}) + "\n")
+
+        assert svc._get_asset_class_for_symbol("AAPL") == "etf"
+
+    def test_buy_stop_list_uses_cached_yaml_for_etf_exemption(self, tmp_path):
+        """_get_buy_stop_list's ETF-exemption lookup must go through the
+        same cached YAML path, not a fresh yaml.safe_load per call."""
+        _write_symbol_registry(tmp_path, {"SMH": {"asset_class": "etf"}})
+        _write_pnl_state(tmp_path, [
+            {"symbol": "SMH", "status": "closed", "pnl": -100.0},
+        ])
+        svc = _StubService(tmp_path)
+        # Must not raise even though entry_filter internals are exercised
+        # through the real (cached) yaml read path.
+        result = svc._get_buy_stop_list()
+        assert isinstance(result, list)
+
+
+# ---------------------------------------------------------------------------
+# _news_ticker_aliases (2026-08-22): registry-driven alias derivation for
+# news relevance/other-ticker-mention checks in _link_news_to_decisions,
+# replacing the previous hardcoded 10-symbol dict.
+# ---------------------------------------------------------------------------
+
+class TestNewsTickerAliases:
+    def test_derives_alias_from_description(self, tmp_path):
+        _write_symbol_registry(tmp_path, {
+            "MSFT": {"asset_class": "stock", "description": "Microsoft Corporation"},
+        })
+        svc = _StubService(tmp_path)
+        aliases = svc._news_ticker_aliases()
+        assert aliases["MSFT"] == ["microsoft"]
+
+    def test_strips_parenthetical_annotation(self, tmp_path):
+        # Real registry entries for JP expansion symbols carry a
+        # parenthetical annotation, e.g. "Advantest Corporation (JP, test
+        # equipment)" -- this must not leak into the alias.
+        _write_symbol_registry(tmp_path, {
+            "6857.T": {
+                "asset_class": "stock",
+                "description": "Advantest Corporation (JP, test equipment)",
+            },
+        })
+        svc = _StubService(tmp_path)
+        aliases = svc._news_ticker_aliases()
+        assert aliases["6857.T"] == ["advantest"]
+
+    def test_covers_symbols_beyond_old_hardcoded_ten(self, tmp_path):
+        # Regression guard for the 2026-08-22 fix: LRCX was never in the
+        # old hardcoded ticker_aliases dict (only 10 symbols were), so an
+        # LRCX-mentioning article used to get zero other-ticker-mention
+        # penalty when scored against a different symbol's news feed.
+        _write_symbol_registry(tmp_path, {
+            "LRCX": {"asset_class": "stock", "description": "Lam Research Corporation"},
+        })
+        svc = _StubService(tmp_path)
+        aliases = svc._news_ticker_aliases()
+        assert aliases["LRCX"] == ["lam research"]
+
+    def test_missing_description_returns_empty_alias_list(self, tmp_path):
+        _write_symbol_registry(tmp_path, {"XYZ": {"asset_class": "stock"}})
+        svc = _StubService(tmp_path)
+        aliases = svc._news_ticker_aliases()
+        assert aliases["XYZ"] == []
+
+    def test_missing_registry_file_returns_empty_dict(self, tmp_path):
+        svc = _StubService(tmp_path)  # no registry file written
+        assert svc._news_ticker_aliases() == {}
+
+    def test_link_news_to_decisions_penalizes_other_ticker_mention_beyond_old_ten(self, tmp_path):
+        """End-to-end: an LRCX-focused article scored against MSFT should be
+        penalized via the other-ticker-mention path, which previously only
+        worked for the 10 hardcoded symbols."""
+        _write_symbol_registry(tmp_path, {
+            "MSFT": {"asset_class": "stock", "description": "Microsoft Corporation"},
+            "LRCX": {"asset_class": "stock", "description": "Lam Research Corporation"},
+        })
+        svc = _StubService(tmp_path)
+        news_items = [{
+            "symbol": "MSFT",
+            "headline": "Lam Research posts strong quarter",
+            "snippet": "",
+            "published_at": "2026-08-22T00:00:00+00:00",
+            "related": "MSFT",
+            "source_reliability": 0.6,
+            "influence_score": 0.0,
+        }]
+        decisions = [{
+            "symbol": "MSFT",
+            "published_at": "2026-08-22T00:00:00+00:00",
+            "rationale": [],
+            "decision_refs": ["dec_1"],
+            "strategy_refs": ["breakout_momentum_v1"],
+        }]
+        linked = svc._link_news_to_decisions(news_items, decisions)
+        assert len(linked) == 1
+        # The other-ticker penalty (0.35, headline mentions Lam Research in
+        # the first 120 chars) should keep this well below the 0.6 match
+        # threshold used in _link_news_to_decisions, so it should not be
+        # linked to the MSFT decision.
+        assert linked[0]["used_in_decision"] is False

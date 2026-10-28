@@ -1,0 +1,8 @@
+{
+  "protected_files": 666,
+  "all_bytes_modes_match": true,
+  "head_unchanged": true,
+  "index_bytes_unchanged": true,
+  "mutating_operations_on_production": false,
+  "only_owned_4_plan_appendices": true
+}

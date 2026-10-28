@@ -1,0 +1,561 @@
+diff --git a/src/stock_swing/cli/paper_demo.py b/src/stock_swing/cli/paper_demo.py
+index f18b08521bfffdeadb28041d3c823271b17e4c03..b74740162af32912db9a604209811a6a8dbf20cf 100644
+--- a/src/stock_swing/cli/paper_demo.py
++++ b/src/stock_swing/cli/paper_demo.py
+@@ -570,8 +570,10 @@ def main() -> int:  # noqa: C901
+         equity_value: float = 0.0,
+         extra: dict | None = None,
+     ) -> int:
+-        if _config_instance_recorder is not None and _config_instance_recorder.failures:
+-            exit_code = exit_code or 1
++        if _config_instance_recorder is not None:
++            _config_instance_recorder.finalize()
++            if _config_instance_recorder.failures:
++                exit_code = exit_code or 1
+         if _provider_recorder is not None:
+             exit_code = exit_code or (1 if _provider_recorder.failures else 0)
+             _provider_recorder.observe('run_end', dict(exit_code=exit_code,
+@@ -617,9 +619,10 @@ def main() -> int:  # noqa: C901
+     if args.capture_config_instances:
+         from stock_swing.risk.config_instance_receipts import ConfigInstanceRecorder
+         _config_instance_recorder = ConfigInstanceRecorder(project_root, run_context.run_id)
+-    def _observe_config(instance):
++    def _construct_config(config_type):
+         if _config_instance_recorder is not None:
+-            _config_instance_recorder.capture(instance, "paper_demo:"+type(instance).__name__)
++            return _config_instance_recorder.construct(config_type)
++        return config_type.from_env()
+     if args.capture_provider_contracts:
+         from stock_swing.experiments.decision_input_capture import DecisionInputRecorder
+         _provider_recorder = DecisionInputRecorder(project_root, enabled=True, run_id=run_context.run_id)
+@@ -1296,8 +1299,7 @@ def main() -> int:  # noqa: C901
+                 DipBuySignalConfig,
+                 log_shadow as log_dip_buy_shadow,
+             )
+-            _dip_buy_config = DipBuySignalConfig.from_env()
+-            _observe_config(_dip_buy_config)
++            _dip_buy_config = _construct_config(DipBuySignalConfig)
+             if not _dip_buy_config.disabled:
+                 _dip_buy_strat = DipBuyMeanReversionStrategy(_dip_buy_config)
+                 _dip_buy_signals = _dip_buy_strat.generate(daily_features)
+@@ -1518,8 +1520,7 @@ def main() -> int:  # noqa: C901
+                 evaluate_lot_level_discrepancies,
+                 log_shadow as log_lot_level_shadow,
+             )
+-            _lot_diag_config = LotLevelExitDiagnosticConfig.from_env()
+-            _observe_config(_lot_diag_config)
++            _lot_diag_config = _construct_config(LotLevelExitDiagnosticConfig)
+             if _lot_diag_config.is_enabled():
+                 _lot_diag_log_path = project_root / "data" / "lot_level_exit_shadow_log.jsonl"
+                 # Recompute the same atr_pct_map / universe_avg_atr_pct basis
+@@ -1548,11 +1549,9 @@ def main() -> int:  # noqa: C901
+             )
+ 
+     # F7: sector_shock_hold shadow analysis — annotate exit signals with regime context
+-    _ssh_config = SectorShockHoldConfig.from_env()
+-    _observe_config(_ssh_config)
++    _ssh_config = _construct_config(SectorShockHoldConfig)
+     _ssh_analyzer = SectorShockAnalyzer(_ssh_config)
+-    _staged_exit_config = ShockAwareStagedExitConfig.from_env()
+-    _observe_config(_staged_exit_config)
++    _staged_exit_config = _construct_config(ShockAwareStagedExitConfig)
+     _ssh_shadow_count = 0
+     if _ssh_analyzer.is_enabled() and exit_signals:
+         # Build returns for ALL benchmark symbols used across the entire registry
+@@ -1951,15 +1950,10 @@ def main() -> int:  # noqa: C901
+     from stock_swing.risk.rsi_diagnostic import RsiDiagnosticConfig, classify_rsi_overbought, fetch_latest_rsi, log_shadow as log_rsi_shadow
+     from stock_swing.risk.earnings_proximity_shadow import classify_earnings_proximity, log_observation as log_earnings_proximity
+ 
+-    _vol_gate_config = VolatilityGateConfig.from_env()
+-
+-    _observe_config(_vol_gate_config)
+-    _dfh_config = DistanceFromHighConfig.from_env()
+-    _observe_config(_dfh_config)
+-    _news_sentiment_config = NewsSentimentConfig.from_env()
+-    _observe_config(_news_sentiment_config)
+-    _rsi_diag_config = RsiDiagnosticConfig.from_env()
+-    _observe_config(_rsi_diag_config)
++    _vol_gate_config = _construct_config(VolatilityGateConfig)
++    _dfh_config = _construct_config(DistanceFromHighConfig)
++    _news_sentiment_config = _construct_config(NewsSentimentConfig)
++    _rsi_diag_config = _construct_config(RsiDiagnosticConfig)
+     _finnhub_raw_dir = project_root / "data" / "raw" / "finnhub"
+     _vol_shadow_log_path = project_root / "data" / "volatility_gate_shadow_log.jsonl"
+     _dfh_log_path = project_root / "data" / "distance_from_high_log.jsonl"
+@@ -2146,8 +2140,7 @@ def main() -> int:  # noqa: C901
+                 classify_news_shock,
+                 log_shadow as log_news_shock_hold,
+             )
+-            _news_shock_config = NewsShockHoldConfig.from_env()
+-            _observe_config(_news_shock_config)
++            _news_shock_config = _construct_config(NewsShockHoldConfig)
+             if _news_shock_config.is_enabled() and current_positions_full:
+                 _news_shock_log_path = project_root / "data" / "news_shock_hold_shadow_log.jsonl"
+                 for _held_symbol, _held_pos in current_positions_full.items():
+@@ -2571,6 +2564,7 @@ def main() -> int:  # noqa: C901
+         actionable = [d for d in actionable if d.action != 'buy']
+         print("WARN: effective_config_unavailable; new BUY held; diagnostic/eligible SELL continue")
+     if _config_instance_recorder is not None:
++        _config_instance_recorder.finalize()
+         _config_receipts.extend(_config_instance_recorder.receipts)
+         if _config_instance_recorder.failures:
+             _config_alerts.append(ConsoleAlert('warning', 'config_instance_recording_unavailable',
+diff --git a/src/stock_swing/cli/reconcile_orders.py b/src/stock_swing/cli/reconcile_orders.py
+index e6b544871dc047a795f822b87f02b911564fe0be..813cfc1b4d002084cc47d242de77fdf26c4e8ca0 100644
+--- a/src/stock_swing/cli/reconcile_orders.py
++++ b/src/stock_swing/cli/reconcile_orders.py
+@@ -525,6 +525,12 @@ def _cancel_checked(broker, root, order, reason):
+     return result
+ 
+ 
++def _cancel_time_issue(order, error):
++    return dict(state="held", cancelled=False, order_id=order.get("id"),
++                reason=str(error) if str(error) in {"order_time_unqualified", "order_time_in_future",
++                    "cancel_calendar_year_unqualified", "cancel_session_unavailable"} else "cancel_time_unavailable")
++
++
+ def cancel_stale_buy_orders(broker: BrokerClient) -> list[dict]:
+     """Detect and cancel stale open buy orders.
+ 
+@@ -534,15 +540,14 @@ def cancel_stale_buy_orders(broker: BrokerClient) -> list[dict]:
+     - side == 'buy'
+     - status in {accepted, new, pending_new, held}
+     - time_in_force == 'day'
+-    - submitted_at is before today's market open (09:30 ET = 13:30 UTC)
++    - submitted_at is before the latest actual session open (09:30 ET, DST-aware)
+ 
+     Case B — after-hours zero-fill orders (new, 2026-06-03 incident):
+     - side == 'buy' OR sell
+     - status in {accepted, new, pending_new, held}
+     - filled_qty == 0
+     - extended_hours == False
+-    - submitted_at falls inside the after-hours window (16:00–20:00 ET = UTC+3/4h)
+-      i.e., 19:00–23:00 UTC (standard time) or 20:00–00:00 UTC (DST)
++    - submitted_at falls after the session close and before 20:00 ET
+     - The order is older than 30 minutes (avoids cancelling freshly submitted orders
+       that might still be routing)
+ 
+@@ -562,12 +567,11 @@ def cancel_stale_buy_orders(broker: BrokerClient) -> list[dict]:
+         return [dict(state="held",cancelled=False,reason="cancel_order_list_limit")]
+ 
+     now_utc = datetime.now(timezone.utc)
+-    # Market open = 13:30 UTC (09:30 ET). Use today's date; if before open, use yesterday.
+-    market_open_today = now_utc.replace(hour=13, minute=30, second=0, microsecond=0)
+-    if now_utc < market_open_today:
+-        # Before today's open → cutoff is yesterday's open
+-        from datetime import timedelta
+-        market_open_today -= timedelta(days=1)
++    from stock_swing.execution.cancellation_timing import last_open, submitted_time, after_hours
++    try:
++        market_open_today = last_open(now_utc)
++    except Exception as exc:
++        return [_cancel_time_issue({}, exc)]
+ 
+     stale_statuses = {"accepted", "new", "pending_new", "held"}
+     cancelled = []
+@@ -586,8 +590,9 @@ def cancel_stale_buy_orders(broker: BrokerClient) -> list[dict]:
+             continue
+ 
+         try:
+-            submitted_at = datetime.fromisoformat(submitted_at_str.replace("Z", "+00:00"))
+-        except ValueError:
++            submitted_at = submitted_time(submitted_at_str, now_utc)
++        except (ValueError, TypeError, OverflowError) as exc:
++            cancelled.append(_cancel_time_issue(order, exc))
+             continue
+ 
+         if submitted_at >= market_open_today:
+@@ -595,18 +600,8 @@ def cancel_stale_buy_orders(broker: BrokerClient) -> list[dict]:
+ 
+         cancelled.append(_cancel_checked(broker, project_root, order, "previous_session"))
+ 
+-    # --- Case B: after-hours zero-fill orders (extended_hours=False) ---
+-    # These were submitted after the regular close (16:00 ET) but before midnight ET.
+-    # With extended_hours=False they cannot fill and will carry over to the next
+-    # regular session, causing phantom accepted orders in the PnL tracker.
+-    #
+-    # After-hours window in UTC:
+-    #   DST  (Mar–Nov): 20:00–00:00 UTC  (16:00–20:00 ET + 4h)
+-    #   Standard (Nov–Mar): 21:00–01:00 UTC  (16:00–20:00 ET + 5h)
+-    # We use a conservative range: submitted between 19:00–01:00 UTC is a candidate.
+-    #
+-    # Guard: only cancel if the order is older than 30 minutes to avoid
+-    # cancelling freshly submitted orders still being routed by the broker.
++    # Case B: zero-fill, non-extended DAY orders submitted after the actual
++    # regular close and before 20:00 ET; retain the existing 30-minute threshold.
+     try:
+         orders_env_all = broker.fetch_orders(status="open", limit=500)
+         orders_all = orders_env_all.payload if hasattr(orders_env_all, "payload") else orders_env_all
+@@ -639,22 +634,24 @@ def cancel_stale_buy_orders(broker: BrokerClient) -> list[dict]:
+         if not submitted_at_str or not order_id:
+             continue
+         # Skip already-cancelled orders from Case A
+-        if any(c["order_id"] == order_id for c in cancelled):
++        if any(c.get("order_id") == order_id for c in cancelled):
+             continue
+ 
+         try:
+-            submitted_at = datetime.fromisoformat(submitted_at_str.replace("Z", "+00:00"))
+-        except ValueError:
++            submitted_at = submitted_time(submitted_at_str, now_utc)
++        except (ValueError, TypeError, OverflowError) as exc:
++            cancelled.append(_cancel_time_issue(order, exc))
+             continue
+ 
+         age_minutes = (now_utc - submitted_at).total_seconds() / 60
+         if age_minutes < MIN_AGE_MINUTES:
+             continue  # too fresh — may still be routing
+ 
+-        # Check if submitted during after-hours UTC window (19:00–01:00 UTC next day)
+-        # We accept any hour from 19 to 23 or 0 (midnight) as after-hours-candidate.
+-        submitted_hour_utc = submitted_at.hour
+-        in_after_hours_window = submitted_hour_utc >= 19 or submitted_hour_utc == 0
++        try:
++            in_after_hours_window = after_hours(submitted_at)
++        except ValueError as exc:
++            cancelled.append(_cancel_time_issue(order, exc))
++            continue
+         if not in_after_hours_window:
+             continue
+ 
+@@ -686,6 +683,7 @@ def cancel_stale_sell_orders(
+     if len(orders) >= 500:
+         return [dict(state="held",cancelled=False,reason="cancel_order_list_limit")]
+ 
++    from stock_swing.execution.cancellation_timing import submitted_time, regular_hours
+     stale_statuses = {"accepted", "new", "pending_new", "held"}
+     now_utc = datetime.now(timezone.utc)
+     cancelled: list[dict] = []
+@@ -705,11 +703,16 @@ def cancel_stale_sell_orders(
+             continue
+ 
+         try:
+-            submitted_at = datetime.fromisoformat(submitted_at_str.replace("Z", "+00:00"))
+-        except ValueError:
++            submitted_at = submitted_time(submitted_at_str, now_utc)
++        except (ValueError, TypeError, OverflowError) as exc:
++            cancelled.append(_cancel_time_issue(order, exc))
+             continue
+ 
+-        is_regular_submission, _ = MarketCalendar.is_regular_market_hours(submitted_at)
++        try:
++            is_regular_submission = regular_hours(submitted_at)
++        except ValueError as exc:
++            cancelled.append(_cancel_time_issue(order, exc))
++            continue
+         if is_regular_submission:
+             continue
+ 
+diff --git a/src/stock_swing/execution/cancellation_timing.py b/src/stock_swing/execution/cancellation_timing.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..259febb10bd525ee3750469508481a9851c48c0b
+--- /dev/null
++++ b/src/stock_swing/execution/cancellation_timing.py
+@@ -0,0 +1,48 @@
++"""Bounded equity cancellation-time qualification, not a broker-hours authority.
++
++Reuses MarketCalendar holidays and zoneinfo. Early closes are pinned to the
++NYSE 2026–2028 release (2025-12-23); outside that reviewed range refuse selection.
++No shared MarketCalendar behavior or cancellation policy/age threshold is changed.
++"""
++from datetime import datetime, time, timedelta, timezone
++from zoneinfo import ZoneInfo
++from stock_swing.utils.market_calendar import MarketCalendar
++
++ET = ZoneInfo('America/New_York')
++EARLY_CLOSES = frozenset({'2026-11-27','2026-12-24','2027-11-26','2028-07-03','2028-11-24'})
++
++def aware_utc(value):
++    if not isinstance(value,datetime) or value.tzinfo is None or value.utcoffset() is None:
++        raise ValueError('order_time_unqualified')
++    return value.astimezone(timezone.utc)
++
++def session_bounds(day):
++    if day.year not in {2026,2027,2028}:raise ValueError('cancel_calendar_year_unqualified')
++    probe=datetime.combine(day,time(12),ET)
++    if day.weekday()>=5 or MarketCalendar.is_us_holiday(probe)[0]:return None
++    close=time(13) if day.isoformat() in EARLY_CLOSES else MarketCalendar.REGULAR_END
++    return datetime.combine(day,MarketCalendar.REGULAR_START,ET),datetime.combine(day,close,ET)
++
++def last_open(now):
++    now=aware_utc(now);day=now.astimezone(ET).date()
++    for _ in range(10):
++        bounds=session_bounds(day)
++        if bounds and bounds[0]<=now:return bounds[0].astimezone(timezone.utc)
++        day-=timedelta(days=1)
++    raise ValueError('cancel_session_unavailable')
++
++def submitted_time(value,now):
++    if not isinstance(value,str):raise ValueError('order_time_unqualified')
++    try:dt=aware_utc(datetime.fromisoformat(value.replace('Z','+00:00')))
++    except (ValueError,TypeError,OverflowError):raise ValueError('order_time_unqualified') from None
++    if dt>aware_utc(now):raise ValueError('order_time_in_future')
++    return dt
++
++def after_hours(dt):
++    dt=aware_utc(dt).astimezone(ET);bounds=session_bounds(dt.date())
++    # Existing selector's after-close-to-20:00 ET policy, not all broker sessions.
++    return bool(bounds and bounds[1]<=dt<datetime.combine(dt.date(),MarketCalendar.AFTER_HOURS_END,ET))
++
++def regular_hours(dt):
++    dt=aware_utc(dt).astimezone(ET);bounds=session_bounds(dt.date())
++    return bool(bounds and bounds[0]<=dt<bounds[1])
+diff --git a/src/stock_swing/reporting/console_renderer.py b/src/stock_swing/reporting/console_renderer.py
+index 53120ad19f3f1a312611e937b4438702bf7d2e9c..cb1b876b75a1c52f8e135e1d217000010eaac058 100644
+--- a/src/stock_swing/reporting/console_renderer.py
++++ b/src/stock_swing/reporting/console_renderer.py
+@@ -194,9 +194,13 @@ class ConsoleRenderer:
+         receipts = [r for r in d.get("effective_config", []) if r.get("kind", "").startswith("instance:")]
+         if not receipts:
+             return ""
+-        recorded = sum(r.get("recorded") is True for r in receipts)
++        recorded = sum(r.get("recorded") is True and r.get("status")=="observed" for r in receipts)
++        skipped = sum(r.get("status")=="not_reached" for r in receipts)
++        changed = sum(r.get("status")=="changed_since_capture" for r in receipts)
++        failed = sum(r.get("status") in {"construction_failed","unavailable"} for r in receipts)
+         return (f"CONFIG INSTANCE RECEIPTS  recorded={recorded}/{len(receipts)}\n"
+-                "  scope = reached CLI constructors only; not all settings\n"
++                f"  not_reached={skipped} changed={changed} unavailable={failed}\n"
++                "  scope = CLI constructors and endpoint check; not all settings\n"
+                 + "\n".join(f"  {r['kind'].split(':', 1)[1]}: {r['status']}" for r in receipts))
+ 
+     def _alerts(self, d: dict) -> str:
+diff --git a/src/stock_swing/risk/config_instance_receipts.py b/src/stock_swing/risk/config_instance_receipts.py
+index 5f7d1e75ba4700ff63137b5b0dac100bd5c0385f..8617332056d1dfbe96f11236a7db7b550cff80db 100644
+--- a/src/stock_swing/risk/config_instance_receipts.py
++++ b/src/stock_swing/risk/config_instance_receipts.py
+@@ -47,18 +47,58 @@ class ConfigInstanceRecorder:
+     def __init__(self, root: Path, run_id: str):
+         if not re.fullmatch(r'[A-Za-z0-9_-]{1,180}',run_id):raise ValueError('unsafe_run_id')
+         self.root=root;self.run_id=run_id;self.receipts=[];self.failures=0
++        self._instances={};self._seen=set();self._finalized=False
+ 
+-    def capture(self, instance, consumer: str) -> None:
+-        receipt=instance_receipt(instance,consumer)
++    def _persist(self, receipt, event_type='config_instance_consumed'):
+         receipt['recorded']=False
++        problem=receipt['status'] not in {'observed','not_reached'}
+         try:
+             path=self.root/'reports/config_instances'/f'{self.run_id}.jsonl'
+             if any(p.is_symlink() for p in [self.root/'reports',path.parent,path]):raise ValueError('receipt_symlink')
+             store=TradeEventStore(self.root,str(path.relative_to(self.root)))
+-            if receipt['status']!='observed':raise ValueError('receipt_refused')
+-            store.append(TradeEvent.create('config_instance_consumed',run_id=self.run_id,payload=dict(receipt,recorded=True)))
++            store.append(TradeEvent.create(event_type,run_id=self.run_id,payload=dict(receipt,recorded=True)))
+             receipt['recorded']=True
+         except Exception as exc:
+             receipt.update(status='unavailable',issues=receipt['issues']+['config_receipt_not_recorded:'+type(exc).__name__])
+-            self.failures+=1
++            problem=True
++        if problem:self.failures+=1
+         self.receipts.append(receipt)
++
++    def capture(self, instance, consumer: str) -> None:
++        receipt=instance_receipt(instance,consumer)
++        kind=type(instance).__name__
++        self._seen.add(kind)
++        if receipt['status']=='observed':self._instances[kind]=(instance,receipt['effective'])
++        self._persist(receipt)
++
++    def construct(self, config_type, *, factory=None):
++        """Record a failed attempt then re-raise the original error unchanged."""
++        kind=config_type.__name__
++        if kind not in SPECS or config_type.__module__!=SPECS[kind]['module']:
++            raise ValueError('config_constructor_identity_unqualified')
++        self._seen.add(kind)
++        try:
++            instance=(factory or config_type.from_env)()
++        except Exception as exc:
++            self._persist(dict(kind='instance:'+kind,status='construction_failed',
++                effective=None,source='from_env_attempt',consumer='paper_demo',
++                issues=['config_construction_failed:'+type(exc).__name__]),
++                'config_instance_construction_failed')
++            raise
++        self.capture(instance,'paper_demo:'+kind)
++        return instance
++
++    def finalize(self):
++        """Report unvisited families and endpoint drift; never instantiate/restore."""
++        if self._finalized:return
++        self._finalized=True
++        for kind,(instance,before) in self._instances.items():
++            current=instance_receipt(instance,'paper_demo:'+kind)
++            if current['status']!='observed' or current['effective']!=before:
++                current['status']='changed_since_capture' if current['status']=='observed' else 'unavailable'
++                current['issues']+=['config_endpoint_changed_or_unavailable']
++                self._persist(current,'config_instance_endpoint_changed')
++        for kind in sorted(set(SPECS)-self._seen):
++            self._persist(dict(kind='instance:'+kind,status='not_reached',effective=None,
++                source='run_boundary',consumer='paper_demo',issues=[]),
++                'config_instance_not_reached')
+diff --git a/tests/unit/test_cancellation_timing.py b/tests/unit/test_cancellation_timing.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..dd70b02a03aad87ebb9d4cc67cce128e4467578c
+--- /dev/null
++++ b/tests/unit/test_cancellation_timing.py
+@@ -0,0 +1,106 @@
++"""Regression 2026-10-28/8909e79: fixed UTC windows select valid RTH orders."""
++from datetime import datetime, timezone
++import json
++import httpx
++import pytest
++from stock_swing.cli import reconcile_orders as module
++from stock_swing.sources.broker_client import BrokerClient
++from stock_swing.tracking.exit_reason_store import write_exit_reason, read_exit_reason
++
++# Explicit ET instants, not derived from the candidate's selection helper.
++CASES = [
++ ('buy','2026-07-08T15:45:00-04:00','2026-07-08T15:00:00-04:00',False),
++ ('buy','2026-01-08T15:45:00-05:00','2026-01-08T14:00:00-05:00',False),
++ ('buy','2026-01-08T09:15:00-05:00','2026-01-08T08:00:00-05:00',False),
++ ('buy','2026-07-08T09:29:59-04:00','2026-07-07T10:00:00-04:00',False),
++ ('buy','2026-07-08T09:30:00-04:00','2026-07-07T10:00:00-04:00',True),
++ ('buy','2026-01-08T09:30:00-05:00','2026-01-07T10:00:00-05:00',True),
++ ('buy','2026-07-11T12:00:00-04:00','2026-07-10T10:00:00-04:00',False),
++ ('buy','2026-07-13T09:29:59-04:00','2026-07-10T10:00:00-04:00',False),
++ ('buy','2026-07-13T09:30:00-04:00','2026-07-10T10:00:00-04:00',True),
++ ('buy','2026-09-07T12:00:00-04:00','2026-09-04T10:00:00-04:00',False),
++ ('buy','2026-09-08T09:30:00-04:00','2026-09-04T10:00:00-04:00',True),
++ ('buy','2026-03-09T09:29:59-04:00','2026-03-06T10:00:00-05:00',False),
++ ('buy','2026-03-09T09:30:00-04:00','2026-03-06T10:00:00-05:00',True),
++ ('buy','2026-11-02T09:29:59-05:00','2026-10-30T10:00:00-04:00',False),
++ ('buy','2026-11-02T09:30:00-05:00','2026-10-30T10:00:00-04:00',True),
++ ('buy','2026-07-08T16:29:59-04:00','2026-07-08T16:00:00-04:00',False),
++ ('buy','2026-07-08T16:30:00-04:00','2026-07-08T16:00:00-04:00',True),
++ ('buy','2026-01-08T16:30:00-05:00','2026-01-08T16:00:00-05:00',True),
++ ('buy','2026-07-08T21:00:00-04:00','2026-07-08T20:00:00-04:00',False),
++ ('buy','2026-07-11T18:00:00-04:00','2026-07-11T16:00:00-04:00',False),
++ ('buy','2026-11-27T13:30:00-05:00','2026-11-27T13:00:00-05:00',True),
++ ('buy','2026-12-24T13:30:00-05:00','2026-12-24T13:00:00-05:00',True),
++ ('sell','2026-11-27T13:30:00-05:00','2026-11-27T13:00:00-05:00',True),
++ ('sell','2026-07-08T16:15:00-04:00','2026-07-08T15:00:00-04:00',False),
++ ('sell','2026-07-11T16:30:00-04:00','2026-07-11T16:00:00-04:00',True),
++ ('sell','2026-01-08T16:29:59-05:00','2026-01-08T16:00:00-05:00',False),
++ ('sell','2026-01-08T16:30:00-05:00','2026-01-08T16:00:00-05:00',True),
++]
++
++def exercise(tmp_path,monkeypatch,side,now,submitted,**changes):
++ fixed=datetime.fromisoformat(now)
++ class Clock(datetime):
++  @classmethod
++  def now(cls,tz=None):return fixed.astimezone(tz) if tz else fixed.replace(tzinfo=None)
++ monkeypatch.setattr(module,'datetime',Clock);monkeypatch.setattr(module,'project_root',tmp_path)
++ (tmp_path/'config/runtime').mkdir(parents=True);(tmp_path/'config/runtime/current_mode.yaml').write_text('mode: paper\n')
++ order=dict(id='fixture-order',symbol='AMD',side=side,type='market',time_in_force='day',qty='5',filled_qty='0',status='new',submitted_at=submitted,extended_hours=False)
++ order.update(changes)
++ calls=[]
++ def transport(request):
++  calls.append(request.method+' '+request.url.path)
++  if request.url.path.endswith('/account'):return httpx.Response(200,json=dict(id='account-fixture',status='ACTIVE'))
++  if request.url.path.endswith('/orders'):return httpx.Response(200,json=[order])
++  if request.method=='DELETE':return httpx.Response(204)
++  if request.url.path.endswith('/fixture-order'):return httpx.Response(200,json=dict(order,status='canceled') if any(x.startswith('DELETE') for x in calls) else order)
++  raise AssertionError(str(request.url))
++ original=httpx.Client;monkeypatch.setattr(httpx,'Client',lambda **kw:original(transport=httpx.MockTransport(transport),**kw))
++ broker=BrokerClient(api_key='fixture',api_secret='fixture',paper_mode=True)
++ write_exit_reason(tmp_path,'fixture-order','AMD','fixture','stop_loss',{'return_pct':-.07})
++ result=module.cancel_stale_buy_orders(broker) if side=='buy' else module.cancel_stale_sell_orders(broker,tmp_path)
++ return result,calls
++
++@pytest.mark.parametrize('side,now,submitted,expected',CASES+[(s,n,datetime.fromisoformat(t).astimezone(timezone.utc).isoformat(),e) for s,n,t,e in CASES])
++def test_ac_real_selector_time_boundaries(tmp_path,monkeypatch,side,now,submitted,expected):
++ result,calls=exercise(tmp_path,monkeypatch,side,now,submitted)
++ assert sum(c.startswith('DELETE') for c in calls)==int(expected),(side,now,submitted,result,calls)
++ assert not any(c.startswith('POST') for c in calls),calls
++ assert (read_exit_reason(tmp_path,'fixture-order') is None)==expected,result
++
++@pytest.mark.parametrize('submitted',['2026-07-08T16:00:00','broken','2026-07-09T16:00:00Z'])
++@pytest.mark.parametrize('side',['buy','sell'])
++def test_ac_unqualified_time_is_held_not_delete_or_crash(tmp_path,monkeypatch,submitted,side):
++ result,calls=exercise(tmp_path,monkeypatch,side,'2026-07-08T17:00:00Z',submitted)
++ assert not any(c.startswith('DELETE') for c in calls),calls
++ assert any(r.get('state')=='held' for r in result),result
++
++@pytest.mark.parametrize('zone',['UTC','Asia/Tokyo','America/Los_Angeles'])
++def test_ac_offset_equivalent_and_host_zone(tmp_path,monkeypatch,zone):
++ import os,time
++ prior=os.environ.get('TZ');os.environ['TZ']=zone;time.tzset()
++ try:
++  result,calls=exercise(tmp_path,monkeypatch,'buy','2026-01-08T21:30:00Z','2026-01-09T06:00:00+09:00')
++  assert sum(c.startswith('DELETE') for c in calls)==1,(result,calls)
++ finally:
++  if prior is None:os.environ.pop('TZ',None)
++  else:os.environ['TZ']=prior
++  time.tzset()
++
++@pytest.mark.parametrize('side',['buy','sell'])
++@pytest.mark.parametrize('now,submitted',[
++ ('2029-01-08T17:00:00Z','2029-01-08T16:00:00Z'),
++ ('2026-01-01T17:00:00Z','2025-12-31T20:00:00Z')])
++def test_ac_unsupported_calendar_is_explicitly_held(tmp_path,monkeypatch,side,now,submitted):
++ result,calls=exercise(tmp_path,monkeypatch,side,now,submitted)
++ assert not any(c.startswith('DELETE') for c in calls),calls
++ assert any(x.get('state')=='held' for x in result),result
++
++@pytest.mark.parametrize('side',['buy','sell'])
++def test_ac_partial_fill_selection_does_not_expand(tmp_path,monkeypatch,side):
++ result,calls=exercise(tmp_path,monkeypatch,side,'2026-07-08T21:00:00Z','2026-07-08T20:00:00Z',filled_qty='1')
++ assert not any(c.startswith('DELETE') for c in calls),calls
++
++def test_ac_extended_hours_order_is_not_after_hours_candidate(tmp_path,monkeypatch):
++ result,calls=exercise(tmp_path,monkeypatch,'buy','2026-07-08T21:00:00Z','2026-07-08T20:00:00Z',extended_hours=True)
++ assert not any(c.startswith('DELETE') for c in calls),calls
+diff --git a/tests/unit/test_config_instance_coverage.py b/tests/unit/test_config_instance_coverage.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..7494d8daa4e9741f2b47d1908759a692a5e882d0
+--- /dev/null
++++ b/tests/unit/test_config_instance_coverage.py
+@@ -0,0 +1,53 @@
++"""Regression 2026-10-28/8909e79: failed/skipped constructors were invisible."""
++import json
++from dataclasses import FrozenInstanceError
++import pytest
++from stock_swing.risk.config_instance_receipts import ConfigInstanceRecorder
++from stock_swing.risk.volatility_gate import VolatilityGateConfig
++from stock_swing.risk.config_instance_specs import SPECS
++
++def events(root):
++ p=root/'reports/config_instances/fixture-run.jsonl'
++ return [json.loads(x) for x in p.read_text().splitlines()] if p.exists() else []
++
++def test_ac_constructor_failure_persisted_without_error_value(tmp_path):
++ r=ConfigInstanceRecorder(tmp_path,'fixture-run')
++ class Failure(VolatilityGateConfig):
++  pass
++ # Real factory error is an external constructor test seam, not an altered CLI policy.
++ def fail():raise ValueError('PRIVATE-CANARY-DO-NOT-RECORD')
++ with pytest.raises(ValueError,match='PRIVATE-CANARY'):
++  r.construct(VolatilityGateConfig,factory=fail)
++ assert r.failures==1,r.receipts
++ assert r.receipts[0]['status']=='construction_failed',r.receipts
++ assert r.receipts[0]['recorded'] is True,r.receipts
++ assert 'PRIVATE-CANARY' not in json.dumps(events(tmp_path)),events(tmp_path)
++
++def test_ac_finalize_records_unreached_without_instantiating(tmp_path):
++ r=ConfigInstanceRecorder(tmp_path,'fixture-run');r.construct(VolatilityGateConfig);r.finalize()
++ assert len(r.receipts)==9,r.receipts
++ skipped=[x for x in r.receipts if x['status']=='not_reached']
++ assert len(skipped)==8 and all(x['effective'] is None for x in skipped),r.receipts
++ assert r.failures==0,r.receipts
++ before=events(tmp_path);r.finalize();assert events(tmp_path)==before,'finalization must be idempotent'
++
++def test_ac_mutation_detected_without_changing_effective_instance(tmp_path):
++ r=ConfigInstanceRecorder(tmp_path,'fixture-run');cfg=r.construct(VolatilityGateConfig)
++ object.__setattr__(cfg,'max_3m_return_std_pct',4.25)
++ r.finalize();changed=[x for x in r.receipts if x['status']=='changed_since_capture']
++ assert len(changed)==1 and changed[0]['effective']['max_3m_return_std_pct']==4.25,r.receipts
++ assert cfg.max_3m_return_std_pct==4.25,'observer must not undo override'
++ assert r.failures==1,r.receipts
++
++def test_ac_secret_like_mutation_never_serialized(tmp_path):
++ r=ConfigInstanceRecorder(tmp_path,'fixture-run');cfg=r.construct(VolatilityGateConfig)
++ object.__setattr__(cfg,'mode','PRIVATE-CANARY-DO-NOT-RECORD');r.finalize()
++ assert r.failures==1,r.receipts
++ assert 'PRIVATE-CANARY' not in json.dumps(events(tmp_path)),events(tmp_path)
++
++def test_ac_failed_write_preserves_original_constructor_error(tmp_path):
++ (tmp_path/'reports').write_text('blocked')
++ r=ConfigInstanceRecorder(tmp_path,'fixture-run')
++ def fail():raise KeyError('private-value')
++ with pytest.raises(KeyError):r.construct(VolatilityGateConfig,factory=fail)
++ assert r.failures>=1 and r.receipts[0]['recorded'] is False,r.receipts

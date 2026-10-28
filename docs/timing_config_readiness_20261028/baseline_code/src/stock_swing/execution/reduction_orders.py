@@ -1,0 +1,171 @@
+"""Conservative one-operation manual reduction using the existing submission journal.
+
+No epoch rotation, cancellation, new-long BUY, fractional-policy change, or fill
+claim. A new economic holding after this operation needs a separately qualified
+lifecycle; deleting state or choosing a new run ID is not such qualification.
+"""
+from __future__ import annotations
+import fcntl,json
+from dataclasses import asdict,dataclass
+from decimal import Decimal,InvalidOperation
+from pathlib import Path
+from typing import Any,Callable
+from urllib.parse import urlsplit
+from stock_swing.core.runtime import read_runtime_mode
+from stock_swing.execution.submission_guard import SubmissionGuard
+
+class _Unqualified(ValueError):
+    pass
+
+OPEN={'new','accepted','pending_new','partially_filled','pending_cancel','held','accepted_for_bidding'}
+TERMINAL={'filled','canceled','expired','rejected'}
+
+@dataclass
+class ReductionResult:
+    symbol: str
+    kind: str
+    state: str='held'
+    reason: str='unqualified'
+    qty: int|None=None
+    reserved_qty: str|None=None
+    fractional_remainder: str|None=None
+    client_order_id: str|None=None
+    order_id: str|None=None
+    broker_status: str|None=None
+    @property
+    def exit_code(self)->int:
+        return 0 if self.state in {'accepted','flat','not_applicable','cancelled'} and (self.fractional_remainder is None or Decimal(self.fractional_remainder)==0) else 1
+    def to_dict(self)->dict[str,Any]:
+        return dict(asdict(self),exit_code=self.exit_code)
+
+def _number(value:Any)->Decimal:
+    if isinstance(value,bool) or value is None:raise _Unqualified('quantity_missing_or_boolean')
+    try:n=Decimal(str(value))
+    except (InvalidOperation,ValueError):raise _Unqualified('quantity_invalid') from None
+    if not n.is_finite():raise _Unqualified('quantity_nonfinite')
+    return n
+
+def _snapshot(broker:Any,symbol:str,side:str)->tuple[Any,Decimal,Decimal,dict[str,tuple]]:
+    positions=broker.fetch_positions().payload
+    orders=broker.fetch_orders(status='open',limit=500).payload
+    if not isinstance(positions,list) or not isinstance(orders,list) or len(orders)>=500:raise _Unqualified('snapshot_shape_or_truncation')
+    position_rows={};order_rows={};remaining=Decimal(0)
+    for p in positions:
+        if not isinstance(p,dict) or not isinstance(p.get('symbol'),str) or not p['symbol'] or p['symbol'] in position_rows:raise _Unqualified('position_identity_invalid')
+        qty=_number(p.get('qty'))
+        if p.get('side') not in (None,'long' if qty>=0 else 'short'):raise _Unqualified('position_side_mismatch')
+        position_rows[p['symbol']]=qty
+    for o in orders:
+        if not isinstance(o,dict) or not isinstance(o.get('id'),str) or not o['id'] or o['id'] in order_rows:raise _Unqualified('open_order_identity_invalid')
+        if not isinstance(o.get('symbol'),str) or not o['symbol'] or o.get('side') not in {'buy','sell'} or o.get('status') not in OPEN:raise _Unqualified('open_order_fields_invalid')
+        if o.get('type') not in {'market','limit','stop','stop_limit','trailing_stop'}:raise _Unqualified('order_type_unqualified')
+        if o.get('legs') or o.get('order_class') not in (None,'','simple'):raise _Unqualified('complex_order_unqualified')
+        qty=_number(o.get('qty'));filled=_number(o.get('filled_qty'))
+        if qty<=0 or not 0<=filled<qty:raise _Unqualified('open_order_quantity_invalid')
+        if o['symbol']==symbol:
+            if o['side']!=side:raise _Unqualified('opposite_order_unqualified')
+            remaining+=qty-filled
+        order_rows[o['id']]=(o['symbol'],o['side'],qty,filled,o['status'],o.get('type'),o.get('client_order_id'),o.get('time_in_force'))
+    semantic=(tuple(sorted(position_rows.items())),tuple(sorted(order_rows.items())))
+    return semantic,position_rows.get(symbol,Decimal(0)),remaining,order_rows
+
+def _account(broker:Any)->str:
+    a=broker.fetch_account().payload
+    if not isinstance(a,dict) or not isinstance(a.get('id'),str) or not a['id'].strip() or a.get('status')!='ACTIVE' or a.get('trading_blocked') not in (None,False) or a.get('account_blocked') not in (None,False):raise _Unqualified('account_identity_or_status_unavailable')
+    return a['id']
+
+def reduce_position(broker:Any,project_root:Path,symbol:str,kind:str,confirm:Callable[[int],bool]|None=None)->ReductionResult:
+    result=ReductionResult(symbol,kind);attempted=False
+    try:
+        if kind not in {'reduce_long','cover_short'} or not isinstance(symbol,str) or not symbol:raise _Unqualified('reduction_kind_or_symbol_invalid')
+        if read_runtime_mode(project_root)!='paper' or getattr(broker,'paper_mode',None) is not True or urlsplit(broker.base_url).hostname=='api.alpaca.markets':raise _Unqualified('paper_runtime_required')
+        for rel in ['data','data/tracking','data/tracking/submission_intents']:
+            if (project_root/rel).is_symlink():raise _Unqualified('symlinked_journal_directory')
+        account=_account(broker);guard=SubmissionGuard(broker,project_root,account)
+        if not guard.qualified or guard.lock_path.is_symlink():raise _Unqualified('journal_or_account_unqualified')
+        decision_id='manual-reduction-v1:'+kind+':'+symbol
+        key=guard._client_id(decision_id);result.client_order_id=key
+        side='sell' if kind=='reduce_long' else 'buy'
+        with guard.lock_path.open('a') as lock:
+            try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            except BlockingIOError:result.reason='submission_guard_busy';return result
+            from stock_swing.execution.cancellation_guard import pending_cancellations
+            if any(r['order']['symbol']==symbol for r in pending_cancellations(guard)):
+                result.reason='cancellation_unresolved_reservation_retained';return result
+            states=guard._load()
+            # Never mint a fresh key from a retry, quantity change, or new snapshot.
+            if key in states:
+                prior=states[key];result.qty=prior['order']['qty']
+                if prior['state']=='rejected':
+                    result.state='rejected';result.reason='intent_already_rejected';return result
+                response=guard._lookup(key,prior['order'])
+                if prior['state'] in {'prepared','unknown'}:
+                    state=guard._outcome(key,response)
+                else:state='unknown' if response is None else 'accepted'
+                result.state='unknown' if state=='unknown' else 'rejected' if state=='rejected' else 'held'
+                result.reason='intent_already_recorded_no_resend'
+                if response:result.order_id=response['id'];result.broker_status=response['status']
+                return result
+            history=[]
+            for old_key,record in states.items():
+                if record['order']['symbol']!=symbol or record['state']=='rejected':continue
+                response=guard._lookup(old_key,record['order'])
+                if record['state'] in {'prepared','unknown'}:
+                    guard._outcome(old_key,response)
+                    result.reason='other_intent_recovered_refresh_next_run' if response else 'same_symbol_intent_unknown';return result
+                if response is None:result.reason='same_symbol_intent_lookup_unavailable';return result
+                if response['status'] in OPEN:history.append(response)
+                elif record['order']['side']==side and _number(response['filled_qty'])>0:
+                    result.reason='prior_reduction_fill_requires_reconciliation';return result
+                elif response['status'] not in TERMINAL:raise _Unqualified('history_order_status_unqualified')
+            first=_snapshot(broker,symbol,side)
+            signed,remaining=first[1],first[2]
+            if signed==0:
+                if remaining:raise _Unqualified('flat_with_open_reduction_orders')
+                result.qty=0;result.reserved_qty=str(remaining);result.fractional_remainder='0'
+                result.state='flat';result.reason='confirmed_zero_position';return result
+            if (kind=='reduce_long' and signed<0) or (kind=='cover_short' and signed>0):
+                result.qty=0;result.reserved_qty=str(remaining)
+                result.state='not_applicable';result.reason='opposite_position_no_action';return result
+            for receipt in history:
+                expected=(receipt['symbol'],receipt['side'],_number(receipt['qty']),_number(receipt['filled_qty']),receipt['status'],receipt['type'],receipt['client_order_id'],receipt['time_in_force'])
+                if first[3].get(receipt['id'])!=expected:raise _Unqualified('journal_order_missing_or_mismatched_open_snapshot')
+            available=abs(signed)-remaining;result.reserved_qty=str(remaining)
+            if available<0:raise _Unqualified('pending_exceeds_position')
+            result.qty=int(available);result.fractional_remainder=str(available-result.qty)
+            if result.qty==0:result.reason='existing_orders_or_fractional_remainder';return result
+            if confirm is not None and not confirm(result.qty):
+                result.state='cancelled';result.reason='human_declined';return result
+            second=_snapshot(broker,symbol,side)
+            if second[0]!=first[0] or _account(broker)!=account:raise _Unqualified('snapshot_changed_before_submit')
+            order=dict(symbol=symbol,side=side,order_type='market',qty=result.qty,time_in_force='day',limit_price=None)
+            guard._validate_order(order)
+            guard._append('submission_intent_prepared',client_order_id=key,decision_id=decision_id,order=order)
+            explicit_rejection=None
+            try:
+                attempted=True
+                response=broker.submit_order(**order,client_order_id=key)
+                guard._validate_response(response,key,order)
+            except Exception as exc:
+                status=getattr(exc,'http_status',None)
+                if type(status) is int and status in {400,401,403,422}:explicit_rejection=status
+                response=guard._lookup(key,order)
+            if response is None and explicit_rejection is not None:
+                guard._append('submission_intent_outcome',client_order_id=key,state='rejected',response=None,http_rejection={'status':explicit_rejection})
+                result.state='rejected';result.reason='broker_http_rejected';return result
+            result.state=guard._outcome(key,response)
+            result.reason='request_accepted_not_fill_confirmation' if result.state=='accepted' else 'submission_outcome_'+result.state
+            if response:result.order_id=response['id'];result.broker_status=response['status']
+            return result
+    except Exception as exc:
+        result.state='unknown' if attempted else 'held'
+        # Only our validation codes are displayed; external exception text can contain secrets.
+        result.reason=str(exc) if type(exc) is _Unqualified else 'unavailable:'+type(exc).__name__
+        return result
+
+def report_results(results:list[ReductionResult])->int:
+    for r in results:
+        print(f'{r.symbol} {r.kind}: {r.state} qty={r.qty} broker_status={r.broker_status or "unconfirmed"} reason={r.reason} fractional_remainder={r.fractional_remainder}')
+    exit_code=max((r.exit_code for r in results),default=1)
+    print('REDUCTION_SUMMARY_JSON='+json.dumps(dict(status='requests_processed_not_fill_confirmation' if not exit_code else 'needs_attention',exit_code=exit_code,results=[r.to_dict() for r in results]),sort_keys=True))
+    return exit_code

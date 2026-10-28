@@ -1,0 +1,22 @@
+{
+  "record_id": "660e8400-e29b-41d4-a716-446655440000",
+  "schema_version": "v1",
+  "source": "fred",
+  "source_type": "macro",
+  "symbol": null,
+  "event_type": "macro_release",
+  "event_time": "2026-02-01T00:00:00+00:00",
+  "as_of": "2026-02-01",
+  "ingested_at": "2026-03-06T14:30:00+00:00",
+  "timezone": "UTC",
+  "payload_version": null,
+  "quality_flags": [],
+  "payload": {
+    "series_id": "CPIAUCSL",
+    "value": 319.456,
+    "release_name": "Consumer Price Index",
+    "period": "2026-02-01",
+    "units": "Index 1982-1984=100"
+  },
+  "note": "Sample canonical record for FRED macro data"
+}

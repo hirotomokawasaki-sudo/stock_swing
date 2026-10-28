@@ -1,0 +1,1568 @@
+{
+  "baseline_buy_404_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "INFO: CANCEL_UNKNOWN fixture-order AMD broker_status=None\n",
+        "result": [
+          {
+            "broker_status": null,
+            "cancelled": false,
+            "delete_attempted": true,
+            "filled_qty": null,
+            "order_id": "fixture-order",
+            "reason": "cancel_not_terminal_reservation_retained",
+            "reason_code": "previous_session",
+            "state": "unknown",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_buy_canceled_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders"
+          ]
+        ],
+        "exit_reason_present": false,
+        "output": "INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled\n",
+        "result": [
+          {
+            "broker_status": "canceled",
+            "cancelled": true,
+            "delete_attempted": true,
+            "filled_qty": "0",
+            "order_id": "fixture-order",
+            "reason": "qualified_readback_not_fill_accounting",
+            "reason_code": "previous_session",
+            "state": "terminal",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_buy_canceled_2": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled\n",
+        "result": [
+          {
+            "broker_status": "canceled",
+            "cancelled": true,
+            "delete_attempted": true,
+            "filled_qty": "2",
+            "order_id": "fixture-order",
+            "reason": "qualified_readback_not_fill_accounting",
+            "reason_code": "previous_session",
+            "state": "terminal",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_buy_filled_5": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "INFO: CANCEL_TERMINAL fixture-order AMD broker_status=filled\n",
+        "result": [
+          {
+            "broker_status": "filled",
+            "cancelled": false,
+            "delete_attempted": true,
+            "filled_qty": "5",
+            "order_id": "fixture-order",
+            "reason": "qualified_readback_not_fill_accounting",
+            "reason_code": "previous_session",
+            "state": "terminal",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_buy_pending_cancel_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "INFO: CANCEL_REQUESTED fixture-order AMD broker_status=pending_cancel\n",
+        "result": [
+          {
+            "broker_status": "pending_cancel",
+            "cancelled": false,
+            "delete_attempted": true,
+            "filled_qty": "0",
+            "order_id": "fixture-order",
+            "reason": "cancel_not_terminal_reservation_retained",
+            "reason_code": "previous_session",
+            "state": "requested",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_main_pending": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/positions"
+          ],
+          [
+            "GET",
+            "/v2/positions"
+          ],
+          [
+            "GET",
+            "/v2/positions"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "INFO: CANCEL_REQUESTED fixture-order AMD broker_status=pending_cancel\n{\n  \"cancelled_stale_buy_orders\": 0,\n  \"cancelled_stale_sell_orders\": 0,\n  \"cancelled_stale_details\": [],\n  \"cancellation_results\": [\n    {\n      \"order_id\": \"fixture-order\",\n      \"state\": \"requested\",\n      \"broker_status\": \"pending_cancel\",\n      \"cancelled\": false,\n      \"filled_qty\": \"0\",\n      \"reason\": \"cancel_not_terminal_reservation_retained\",\n      \"delete_attempted\": true,\n      \"symbol\": \"AMD\",\n      \"submitted_at\": \"2026-06-07T01:34:06+00:00\",\n      \"reason_code\": \"offhours_moderate_sell\"\n    }\n  ],\n  \"cancellation_unresolved\": 1,\n  \"newly_recorded_buys\": 0,\n  \"checked_sell_submissions\": 0,\n  \"filled_exits_recorded\": 0,\n  \"summary\": {\n    \"total_trades\": 0,\n    \"all_trade_records\": 0,\n    \"closed_trades\": 0,\n    \"open_trades\": 0,\n    \"reconciled_removed_trades\": 0,\n    \"winning_trades\": 0,\n    \"losing_trades\": 0,\n    \"flat_trades\": 0,\n    \"win_rate\": 0.0,\n    \"cumulative_realized_pnl\": 0.0,\n    \"avg_return_per_trade\": null,\n    \"avg_pnl_per_trade\": 0.0,\n    \"valid_return_trade_count\": 0,\n    \"max_drawdown_pct\": 0.0,\n    \"peak_equity\": 100000.0,\n    \"trading_days\": 0,\n    \"tracking_context\": {\n      \"broker_account_id\": \"legacy_account\",\n      \"baseline_date\": \"2026-10-28\",\n      \"baseline_equity\": 100000.0,\n      \"tracking_label\": \"alpaca_account_epoch_2026-10-28\",\n      \"performance_scope\": \"current_account_since_baseline\",\n      \"archived_from_account_id\": null,\n      \"archive_path\": null,\n      \"migration_note_path\": null\n    }\n  }\n}\nCRON_SUMMARY_JSON={\"job\":\"reconcile_orders\",\"status\":\"degraded\",\"cancellation_unresolved\":1,\"cancelled_stale_orders\":0,\"newly_recorded_buys\":0,\"checked_sell_submissions\":0,\"filled_exits_recorded\":0,\"total_trades\":0,\"open_trades\":0,\"closed_trades\":0}\n",
+        "result": 1
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_manual_404_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "MODE: EXECUTE\nTARGET_COUNT: 1\nAMD\tfixture-order\tstatus=new\tqty=5\tfilled_qty=0\tsubmitted_at=2026-06-07T01:34:06+00:00\texpires_at=None\textended_hours=False\nCANCELABLE_COUNT: 1\nCANCEL_UNKNOWN: AMD fixture-order broker_status=None\nCANCELLATION_SUMMARY_JSON={\"results\": [{\"broker_status\": null, \"cancelled\": false, \"delete_attempted\": true, \"filled_qty\": null, \"order_id\": \"fixture-order\", \"reason\": \"cancel_not_terminal_reservation_retained\", \"state\": \"unknown\"}], \"unresolved\": 1}\n",
+        "result": 1
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_manual_canceled_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "MODE: EXECUTE\nTARGET_COUNT: 1\nAMD\tfixture-order\tstatus=new\tqty=5\tfilled_qty=0\tsubmitted_at=2026-06-07T01:34:06+00:00\texpires_at=None\textended_hours=False\nCANCELABLE_COUNT: 1\nCANCEL_TERMINAL: AMD fixture-order broker_status=canceled\nCANCELLATION_SUMMARY_JSON={\"results\": [{\"broker_status\": \"canceled\", \"cancelled\": true, \"delete_attempted\": true, \"filled_qty\": \"0\", \"order_id\": \"fixture-order\", \"reason\": \"qualified_readback_not_fill_accounting\", \"state\": \"terminal\"}], \"unresolved\": 0}\n",
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_manual_canceled_2": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "MODE: EXECUTE\nTARGET_COUNT: 1\nAMD\tfixture-order\tstatus=new\tqty=5\tfilled_qty=0\tsubmitted_at=2026-06-07T01:34:06+00:00\texpires_at=None\textended_hours=False\nCANCELABLE_COUNT: 1\nCANCEL_TERMINAL: AMD fixture-order broker_status=canceled\nCANCELLATION_SUMMARY_JSON={\"results\": [{\"broker_status\": \"canceled\", \"cancelled\": true, \"delete_attempted\": true, \"filled_qty\": \"2\", \"order_id\": \"fixture-order\", \"reason\": \"qualified_readback_not_fill_accounting\", \"state\": \"terminal\"}], \"unresolved\": 0}\n",
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_manual_death_restart": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "process_exit": 77
+      },
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "MODE: EXECUTE\nTARGET_COUNT: 1\nAMD\tfixture-order\tstatus=new\tqty=5\tfilled_qty=0\tsubmitted_at=2026-06-07T01:34:06+00:00\texpires_at=None\textended_hours=False\nCANCELABLE_COUNT: 1\nCANCEL_UNKNOWN: AMD fixture-order broker_status=new\nCANCELLATION_SUMMARY_JSON={\"results\": [{\"broker_status\": \"new\", \"cancelled\": false, \"delete_attempted\": false, \"filled_qty\": \"0\", \"order_id\": \"fixture-order\", \"reason\": \"cancel_not_terminal_reservation_retained\", \"state\": \"unknown\"}], \"unresolved\": 1}\n",
+        "result": 1
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_manual_filled_5": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "MODE: EXECUTE\nTARGET_COUNT: 1\nAMD\tfixture-order\tstatus=new\tqty=5\tfilled_qty=0\tsubmitted_at=2026-06-07T01:34:06+00:00\texpires_at=None\textended_hours=False\nCANCELABLE_COUNT: 1\nCANCEL_TERMINAL: AMD fixture-order broker_status=filled\nCANCELLATION_SUMMARY_JSON={\"results\": [{\"broker_status\": \"filled\", \"cancelled\": false, \"delete_attempted\": true, \"filled_qty\": \"5\", \"order_id\": \"fixture-order\", \"reason\": \"qualified_readback_not_fill_accounting\", \"state\": \"terminal\"}], \"unresolved\": 0}\n",
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_manual_lost_restart": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "MODE: EXECUTE\nTARGET_COUNT: 1\nAMD\tfixture-order\tstatus=new\tqty=5\tfilled_qty=0\tsubmitted_at=2026-06-07T01:34:06+00:00\texpires_at=None\textended_hours=False\nCANCELABLE_COUNT: 1\nCANCEL_UNKNOWN: AMD fixture-order broker_status=None\nCANCELLATION_SUMMARY_JSON={\"results\": [{\"broker_status\": null, \"cancelled\": false, \"delete_attempted\": true, \"filled_qty\": null, \"order_id\": \"fixture-order\", \"reason\": \"cancel_not_terminal_reservation_retained\", \"state\": \"unknown\"}], \"unresolved\": 1}\n",
+        "result": 1
+      },
+      {
+        "process_exit": 1
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_manual_pending_cancel_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "MODE: EXECUTE\nTARGET_COUNT: 1\nAMD\tfixture-order\tstatus=new\tqty=5\tfilled_qty=0\tsubmitted_at=2026-06-07T01:34:06+00:00\texpires_at=None\textended_hours=False\nCANCELABLE_COUNT: 1\nCANCEL_REQUESTED: AMD fixture-order broker_status=pending_cancel\nCANCELLATION_SUMMARY_JSON={\"results\": [{\"broker_status\": \"pending_cancel\", \"cancelled\": false, \"delete_attempted\": true, \"filled_qty\": \"0\", \"order_id\": \"fixture-order\", \"reason\": \"cancel_not_terminal_reservation_retained\", \"state\": \"requested\"}], \"unresolved\": 1}\n",
+        "result": 1
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_manual_preview": {
+    "delete_count": 0,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "MODE: PREVIEW\nTARGET_COUNT: 1\nAMD\tfixture-order\tstatus=new\tqty=5\tfilled_qty=0\tsubmitted_at=2026-06-07T01:34:06+00:00\texpires_at=None\textended_hours=False\nCANCELABLE_COUNT: 1\nPreview only. Re-run with --execute to submit DELETE requests.\n",
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_sell_404_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "INFO: CANCEL_UNKNOWN fixture-order AMD broker_status=None\n",
+        "result": [
+          {
+            "broker_status": null,
+            "cancelled": false,
+            "delete_attempted": true,
+            "filled_qty": null,
+            "order_id": "fixture-order",
+            "reason": "cancel_not_terminal_reservation_retained",
+            "reason_code": "offhours_moderate_sell",
+            "state": "unknown",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_sell_canceled_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": false,
+        "output": "INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled\n",
+        "result": [
+          {
+            "broker_status": "canceled",
+            "cancelled": true,
+            "delete_attempted": true,
+            "filled_qty": "0",
+            "order_id": "fixture-order",
+            "reason": "qualified_readback_not_fill_accounting",
+            "reason_code": "offhours_moderate_sell",
+            "state": "terminal",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_sell_canceled_2": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled\n",
+        "result": [
+          {
+            "broker_status": "canceled",
+            "cancelled": true,
+            "delete_attempted": true,
+            "filled_qty": "2",
+            "order_id": "fixture-order",
+            "reason": "qualified_readback_not_fill_accounting",
+            "reason_code": "offhours_moderate_sell",
+            "state": "terminal",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_sell_filled_5": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "INFO: CANCEL_TERMINAL fixture-order AMD broker_status=filled\n",
+        "result": [
+          {
+            "broker_status": "filled",
+            "cancelled": false,
+            "delete_attempted": true,
+            "filled_qty": "5",
+            "order_id": "fixture-order",
+            "reason": "qualified_readback_not_fill_accounting",
+            "reason_code": "offhours_moderate_sell",
+            "state": "terminal",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "baseline_sell_pending_cancel_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "INFO: CANCEL_REQUESTED fixture-order AMD broker_status=pending_cancel\n",
+        "result": [
+          {
+            "broker_status": "pending_cancel",
+            "cancelled": false,
+            "delete_attempted": true,
+            "filled_qty": "0",
+            "order_id": "fixture-order",
+            "reason": "cancel_not_terminal_reservation_retained",
+            "reason_code": "offhours_moderate_sell",
+            "state": "requested",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_buy_404_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "INFO: CANCEL_UNKNOWN fixture-order AMD broker_status=None\n",
+        "result": [
+          {
+            "broker_status": null,
+            "cancelled": false,
+            "delete_attempted": true,
+            "filled_qty": null,
+            "order_id": "fixture-order",
+            "reason": "cancel_not_terminal_reservation_retained",
+            "reason_code": "previous_session",
+            "state": "unknown",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_buy_canceled_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders"
+          ]
+        ],
+        "exit_reason_present": false,
+        "output": "INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled\n",
+        "result": [
+          {
+            "broker_status": "canceled",
+            "cancelled": true,
+            "delete_attempted": true,
+            "filled_qty": "0",
+            "order_id": "fixture-order",
+            "reason": "qualified_readback_not_fill_accounting",
+            "reason_code": "previous_session",
+            "state": "terminal",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_buy_canceled_2": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled\n",
+        "result": [
+          {
+            "broker_status": "canceled",
+            "cancelled": true,
+            "delete_attempted": true,
+            "filled_qty": "2",
+            "order_id": "fixture-order",
+            "reason": "qualified_readback_not_fill_accounting",
+            "reason_code": "previous_session",
+            "state": "terminal",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_buy_filled_5": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "INFO: CANCEL_TERMINAL fixture-order AMD broker_status=filled\n",
+        "result": [
+          {
+            "broker_status": "filled",
+            "cancelled": false,
+            "delete_attempted": true,
+            "filled_qty": "5",
+            "order_id": "fixture-order",
+            "reason": "qualified_readback_not_fill_accounting",
+            "reason_code": "previous_session",
+            "state": "terminal",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_buy_pending_cancel_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "INFO: CANCEL_REQUESTED fixture-order AMD broker_status=pending_cancel\n",
+        "result": [
+          {
+            "broker_status": "pending_cancel",
+            "cancelled": false,
+            "delete_attempted": true,
+            "filled_qty": "0",
+            "order_id": "fixture-order",
+            "reason": "cancel_not_terminal_reservation_retained",
+            "reason_code": "previous_session",
+            "state": "requested",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_main_pending": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/positions"
+          ],
+          [
+            "GET",
+            "/v2/positions"
+          ],
+          [
+            "GET",
+            "/v2/positions"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "INFO: CANCEL_REQUESTED fixture-order AMD broker_status=pending_cancel\n{\n  \"cancelled_stale_buy_orders\": 0,\n  \"cancelled_stale_sell_orders\": 0,\n  \"cancelled_stale_details\": [],\n  \"cancellation_results\": [\n    {\n      \"order_id\": \"fixture-order\",\n      \"state\": \"requested\",\n      \"broker_status\": \"pending_cancel\",\n      \"cancelled\": false,\n      \"filled_qty\": \"0\",\n      \"reason\": \"cancel_not_terminal_reservation_retained\",\n      \"delete_attempted\": true,\n      \"symbol\": \"AMD\",\n      \"submitted_at\": \"2026-06-07T01:34:06+00:00\",\n      \"reason_code\": \"offhours_moderate_sell\"\n    }\n  ],\n  \"cancellation_unresolved\": 1,\n  \"newly_recorded_buys\": 0,\n  \"checked_sell_submissions\": 0,\n  \"filled_exits_recorded\": 0,\n  \"summary\": {\n    \"total_trades\": 0,\n    \"all_trade_records\": 0,\n    \"closed_trades\": 0,\n    \"open_trades\": 0,\n    \"reconciled_removed_trades\": 0,\n    \"winning_trades\": 0,\n    \"losing_trades\": 0,\n    \"flat_trades\": 0,\n    \"win_rate\": 0.0,\n    \"cumulative_realized_pnl\": 0.0,\n    \"avg_return_per_trade\": null,\n    \"avg_pnl_per_trade\": 0.0,\n    \"valid_return_trade_count\": 0,\n    \"max_drawdown_pct\": 0.0,\n    \"peak_equity\": 100000.0,\n    \"trading_days\": 0,\n    \"tracking_context\": {\n      \"broker_account_id\": \"legacy_account\",\n      \"baseline_date\": \"2026-10-28\",\n      \"baseline_equity\": 100000.0,\n      \"tracking_label\": \"alpaca_account_epoch_2026-10-28\",\n      \"performance_scope\": \"current_account_since_baseline\",\n      \"archived_from_account_id\": null,\n      \"archive_path\": null,\n      \"migration_note_path\": null\n    }\n  }\n}\nCRON_SUMMARY_JSON={\"job\":\"reconcile_orders\",\"status\":\"degraded\",\"cancellation_unresolved\":1,\"cancelled_stale_orders\":0,\"newly_recorded_buys\":0,\"checked_sell_submissions\":0,\"filled_exits_recorded\":0,\"total_trades\":0,\"open_trades\":0,\"closed_trades\":0}\n",
+        "result": 1
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_manual_404_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "MODE: EXECUTE\nTARGET_COUNT: 1\nAMD\tfixture-order\tstatus=new\tqty=5\tfilled_qty=0\tsubmitted_at=2026-06-07T01:34:06+00:00\texpires_at=None\textended_hours=False\nCANCELABLE_COUNT: 1\nCANCEL_UNKNOWN: AMD fixture-order broker_status=None\nCANCELLATION_SUMMARY_JSON={\"results\": [{\"broker_status\": null, \"cancelled\": false, \"delete_attempted\": true, \"filled_qty\": null, \"order_id\": \"fixture-order\", \"reason\": \"cancel_not_terminal_reservation_retained\", \"state\": \"unknown\"}], \"unresolved\": 1}\n",
+        "result": 1
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_manual_canceled_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "MODE: EXECUTE\nTARGET_COUNT: 1\nAMD\tfixture-order\tstatus=new\tqty=5\tfilled_qty=0\tsubmitted_at=2026-06-07T01:34:06+00:00\texpires_at=None\textended_hours=False\nCANCELABLE_COUNT: 1\nCANCEL_TERMINAL: AMD fixture-order broker_status=canceled\nCANCELLATION_SUMMARY_JSON={\"results\": [{\"broker_status\": \"canceled\", \"cancelled\": true, \"delete_attempted\": true, \"filled_qty\": \"0\", \"order_id\": \"fixture-order\", \"reason\": \"qualified_readback_not_fill_accounting\", \"state\": \"terminal\"}], \"unresolved\": 0}\n",
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_manual_canceled_2": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "MODE: EXECUTE\nTARGET_COUNT: 1\nAMD\tfixture-order\tstatus=new\tqty=5\tfilled_qty=0\tsubmitted_at=2026-06-07T01:34:06+00:00\texpires_at=None\textended_hours=False\nCANCELABLE_COUNT: 1\nCANCEL_TERMINAL: AMD fixture-order broker_status=canceled\nCANCELLATION_SUMMARY_JSON={\"results\": [{\"broker_status\": \"canceled\", \"cancelled\": true, \"delete_attempted\": true, \"filled_qty\": \"2\", \"order_id\": \"fixture-order\", \"reason\": \"qualified_readback_not_fill_accounting\", \"state\": \"terminal\"}], \"unresolved\": 0}\n",
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_manual_death_restart": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "process_exit": 77
+      },
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "MODE: EXECUTE\nTARGET_COUNT: 1\nAMD\tfixture-order\tstatus=new\tqty=5\tfilled_qty=0\tsubmitted_at=2026-06-07T01:34:06+00:00\texpires_at=None\textended_hours=False\nCANCELABLE_COUNT: 1\nCANCEL_UNKNOWN: AMD fixture-order broker_status=new\nCANCELLATION_SUMMARY_JSON={\"results\": [{\"broker_status\": \"new\", \"cancelled\": false, \"delete_attempted\": false, \"filled_qty\": \"0\", \"order_id\": \"fixture-order\", \"reason\": \"cancel_not_terminal_reservation_retained\", \"state\": \"unknown\"}], \"unresolved\": 1}\n",
+        "result": 1
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_manual_filled_5": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "MODE: EXECUTE\nTARGET_COUNT: 1\nAMD\tfixture-order\tstatus=new\tqty=5\tfilled_qty=0\tsubmitted_at=2026-06-07T01:34:06+00:00\texpires_at=None\textended_hours=False\nCANCELABLE_COUNT: 1\nCANCEL_TERMINAL: AMD fixture-order broker_status=filled\nCANCELLATION_SUMMARY_JSON={\"results\": [{\"broker_status\": \"filled\", \"cancelled\": false, \"delete_attempted\": true, \"filled_qty\": \"5\", \"order_id\": \"fixture-order\", \"reason\": \"qualified_readback_not_fill_accounting\", \"state\": \"terminal\"}], \"unresolved\": 0}\n",
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_manual_lost_restart": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "MODE: EXECUTE\nTARGET_COUNT: 1\nAMD\tfixture-order\tstatus=new\tqty=5\tfilled_qty=0\tsubmitted_at=2026-06-07T01:34:06+00:00\texpires_at=None\textended_hours=False\nCANCELABLE_COUNT: 1\nCANCEL_UNKNOWN: AMD fixture-order broker_status=None\nCANCELLATION_SUMMARY_JSON={\"results\": [{\"broker_status\": null, \"cancelled\": false, \"delete_attempted\": true, \"filled_qty\": null, \"order_id\": \"fixture-order\", \"reason\": \"cancel_not_terminal_reservation_retained\", \"state\": \"unknown\"}], \"unresolved\": 1}\n",
+        "result": 1
+      },
+      {
+        "process_exit": 1
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_manual_pending_cancel_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "MODE: EXECUTE\nTARGET_COUNT: 1\nAMD\tfixture-order\tstatus=new\tqty=5\tfilled_qty=0\tsubmitted_at=2026-06-07T01:34:06+00:00\texpires_at=None\textended_hours=False\nCANCELABLE_COUNT: 1\nCANCEL_REQUESTED: AMD fixture-order broker_status=pending_cancel\nCANCELLATION_SUMMARY_JSON={\"results\": [{\"broker_status\": \"pending_cancel\", \"cancelled\": false, \"delete_attempted\": true, \"filled_qty\": \"0\", \"order_id\": \"fixture-order\", \"reason\": \"cancel_not_terminal_reservation_retained\", \"state\": \"requested\"}], \"unresolved\": 1}\n",
+        "result": 1
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_manual_preview": {
+    "delete_count": 0,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "MODE: PREVIEW\nTARGET_COUNT: 1\nAMD\tfixture-order\tstatus=new\tqty=5\tfilled_qty=0\tsubmitted_at=2026-06-07T01:34:06+00:00\texpires_at=None\textended_hours=False\nCANCELABLE_COUNT: 1\nPreview only. Re-run with --execute to submit DELETE requests.\n",
+        "result": 0
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_sell_404_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "INFO: CANCEL_UNKNOWN fixture-order AMD broker_status=None\n",
+        "result": [
+          {
+            "broker_status": null,
+            "cancelled": false,
+            "delete_attempted": true,
+            "filled_qty": null,
+            "order_id": "fixture-order",
+            "reason": "cancel_not_terminal_reservation_retained",
+            "reason_code": "offhours_moderate_sell",
+            "state": "unknown",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_sell_canceled_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": false,
+        "output": "INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled\n",
+        "result": [
+          {
+            "broker_status": "canceled",
+            "cancelled": true,
+            "delete_attempted": true,
+            "filled_qty": "0",
+            "order_id": "fixture-order",
+            "reason": "qualified_readback_not_fill_accounting",
+            "reason_code": "offhours_moderate_sell",
+            "state": "terminal",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_sell_canceled_2": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "INFO: CANCEL_CONFIRMED fixture-order AMD broker_status=canceled\n",
+        "result": [
+          {
+            "broker_status": "canceled",
+            "cancelled": true,
+            "delete_attempted": true,
+            "filled_qty": "2",
+            "order_id": "fixture-order",
+            "reason": "qualified_readback_not_fill_accounting",
+            "reason_code": "offhours_moderate_sell",
+            "state": "terminal",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_sell_filled_5": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "INFO: CANCEL_TERMINAL fixture-order AMD broker_status=filled\n",
+        "result": [
+          {
+            "broker_status": "filled",
+            "cancelled": false,
+            "delete_attempted": true,
+            "filled_qty": "5",
+            "order_id": "fixture-order",
+            "reason": "qualified_readback_not_fill_accounting",
+            "reason_code": "offhours_moderate_sell",
+            "state": "terminal",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  },
+  "candidate_sell_pending_cancel_0": {
+    "delete_count": 1,
+    "outcomes": [
+      {
+        "calls": [
+          [
+            "GET",
+            "/v2/orders"
+          ],
+          [
+            "GET",
+            "/v2/account"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "DELETE",
+            "/v2/orders/fixture-order"
+          ],
+          [
+            "GET",
+            "/v2/orders/fixture-order"
+          ]
+        ],
+        "exit_reason_present": true,
+        "output": "INFO: CANCEL_REQUESTED fixture-order AMD broker_status=pending_cancel\n",
+        "result": [
+          {
+            "broker_status": "pending_cancel",
+            "cancelled": false,
+            "delete_attempted": true,
+            "filled_qty": "0",
+            "order_id": "fixture-order",
+            "reason": "cancel_not_terminal_reservation_retained",
+            "reason_code": "offhours_moderate_sell",
+            "state": "requested",
+            "submitted_at": "2026-06-07T01:34:06+00:00",
+            "symbol": "AMD"
+          }
+        ]
+      }
+    ],
+    "post_count": 0
+  }
+}

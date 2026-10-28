@@ -1,0 +1,210 @@
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF                                           [100%]
+=================================== FAILURES ===================================
+__ test_ac_cancel_states_are_observed_not_inferred[pending_cancel-requested] ___
+tests/unit/test_cancellation_safety.py:59: in test_ac_cancel_states_are_observed_not_inferred
+    result=run_cancel(broker,tmp_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_cancellation_safety.py:49: in run_cancel
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+________ test_ac_cancel_states_are_observed_not_inferred[new-requested] ________
+tests/unit/test_cancellation_safety.py:59: in test_ac_cancel_states_are_observed_not_inferred
+    result=run_cancel(broker,tmp_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_cancellation_safety.py:49: in run_cancel
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+_ test_ac_cancel_states_are_observed_not_inferred[partially_filled-requested] __
+tests/unit/test_cancellation_safety.py:59: in test_ac_cancel_states_are_observed_not_inferred
+    result=run_cancel(broker,tmp_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_cancellation_safety.py:49: in run_cancel
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+_________ test_ac_cancel_states_are_observed_not_inferred[404-unknown] _________
+tests/unit/test_cancellation_safety.py:59: in test_ac_cancel_states_are_observed_not_inferred
+    result=run_cancel(broker,tmp_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_cancellation_safety.py:49: in run_cancel
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+______ test_ac_cancel_states_are_observed_not_inferred[canceled-terminal] ______
+tests/unit/test_cancellation_safety.py:59: in test_ac_cancel_states_are_observed_not_inferred
+    result=run_cancel(broker,tmp_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_cancellation_safety.py:49: in run_cancel
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+______ test_ac_cancel_states_are_observed_not_inferred[expired-terminal] _______
+tests/unit/test_cancellation_safety.py:59: in test_ac_cancel_states_are_observed_not_inferred
+    result=run_cancel(broker,tmp_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_cancellation_safety.py:49: in run_cancel
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+______ test_ac_cancel_states_are_observed_not_inferred[rejected-terminal] ______
+tests/unit/test_cancellation_safety.py:59: in test_ac_cancel_states_are_observed_not_inferred
+    result=run_cancel(broker,tmp_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_cancellation_safety.py:49: in run_cancel
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+_______ test_ac_cancel_states_are_observed_not_inferred[filled-terminal] _______
+tests/unit/test_cancellation_safety.py:59: in test_ac_cancel_states_are_observed_not_inferred
+    result=run_cancel(broker,tmp_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_cancellation_safety.py:49: in run_cancel
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+_____________ test_ac_retry_does_not_repeat_delete[pending_cancel] _____________
+tests/unit/test_cancellation_safety.py:68: in test_ac_retry_does_not_repeat_delete
+    first=run_cancel(broker,tmp_path);second=run_cancel(broker,tmp_path)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_cancellation_safety.py:49: in run_cancel
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+__________________ test_ac_retry_does_not_repeat_delete[404] ___________________
+tests/unit/test_cancellation_safety.py:68: in test_ac_retry_does_not_repeat_delete
+    first=run_cancel(broker,tmp_path);second=run_cancel(broker,tmp_path)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_cancellation_safety.py:49: in run_cancel
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+________________ test_ac_retry_does_not_repeat_delete[canceled] ________________
+tests/unit/test_cancellation_safety.py:68: in test_ac_retry_does_not_repeat_delete
+    first=run_cancel(broker,tmp_path);second=run_cancel(broker,tmp_path)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_cancellation_safety.py:49: in run_cancel
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+_________________ test_ac_retry_does_not_repeat_delete[filled] _________________
+tests/unit/test_cancellation_safety.py:68: in test_ac_retry_does_not_repeat_delete
+    first=run_cancel(broker,tmp_path);second=run_cancel(broker,tmp_path)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_cancellation_safety.py:49: in run_cancel
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+__________________ test_ac_mismatched_lookup_remains_unknown ___________________
+tests/unit/test_cancellation_safety.py:76: in test_ac_mismatched_lookup_remains_unknown
+    result=run_cancel(broker,tmp_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_cancellation_safety.py:49: in run_cancel
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+___________________ test_ac_corrupt_journal_refuses_mutation ___________________
+tests/unit/test_cancellation_safety.py:83: in test_ac_corrupt_journal_refuses_mutation
+    run_cancel(broker,tmp_path)
+tests/unit/test_cancellation_safety.py:49: in run_cancel
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+_______________ test_ac_pending_sell_cancel_retains_exit_reason ________________
+tests/unit/test_cancellation_safety.py:103: in test_ac_pending_sell_cancel_retains_exit_reason
+    assert read_exit_reason(tmp_path,'fixture-order') is not None,'ACK must not erase reason'
+E   AssertionError: ACK must not erase reason
+E   assert None is not None
+E    +  where None = <function read_exit_reason at 0x10814f6a0>(PosixPath('/private/tmp/pytest-of-hirotomookawasaki/pytest-66/test_ac_pending_sell_cancel_re0'), 'fixture-order')
+----------------------------- Captured stderr call -----------------------------
+INFO: Cancelled queued off-hours sell order fixture-order AMD submitted 2026-06-07T01:34:06+00:00 (non-catastrophic carry-over)
+___________________ test_ac_prior_cancellation_holds_new_buy ___________________
+tests/unit/test_cancellation_safety.py:110: in test_ac_prior_cancellation_holds_new_buy
+    run_cancel(broker,tmp_path)
+tests/unit/test_cancellation_safety.py:49: in run_cancel
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+_______________ test_ac_unqualified_order_never_deletes[qty-NaN] _______________
+tests/unit/test_cancellation_safety.py:121: in test_ac_unqualified_order_never_deletes
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+________________ test_ac_unqualified_order_never_deletes[qty-0] ________________
+tests/unit/test_cancellation_safety.py:121: in test_ac_unqualified_order_never_deletes
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+______________ test_ac_unqualified_order_never_deletes[qty-True] _______________
+tests/unit/test_cancellation_safety.py:121: in test_ac_unqualified_order_never_deletes
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+____________ test_ac_unqualified_order_never_deletes[filled_qty-6] _____________
+tests/unit/test_cancellation_safety.py:121: in test_ac_unqualified_order_never_deletes
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+____________ test_ac_unqualified_order_never_deletes[filled_qty--1] ____________
+tests/unit/test_cancellation_safety.py:121: in test_ac_unqualified_order_never_deletes
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+_______ test_ac_unqualified_order_never_deletes[status-pending_replace] ________
+tests/unit/test_cancellation_safety.py:121: in test_ac_unqualified_order_never_deletes
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+_________________ test_ac_unqualified_order_never_deletes[id-] _________________
+tests/unit/test_cancellation_safety.py:121: in test_ac_unqualified_order_never_deletes
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+______________ test_ac_unqualified_order_never_deletes[type-None] ______________
+tests/unit/test_cancellation_safety.py:121: in test_ac_unqualified_order_never_deletes
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+_________ test_ac_unqualified_order_never_deletes[order_class-bracket] _________
+tests/unit/test_cancellation_safety.py:121: in test_ac_unqualified_order_never_deletes
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+___________ test_ac_missing_initialized_history_never_deletes_again ____________
+tests/unit/test_cancellation_safety.py:129: in test_ac_missing_initialized_history_never_deletes_again
+    broker,calls=setup(tmp_path);run_cancel(broker,tmp_path)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_cancellation_safety.py:49: in run_cancel
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+_____________ test_ac_write_blocked_before_prepare_means_no_delete _____________
+tests/unit/test_cancellation_safety.py:140: in test_ac_write_blocked_before_prepare_means_no_delete
+    result=run_cancel(broker,tmp_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_cancellation_safety.py:49: in run_cancel
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+_____________ test_ac_other_process_submission_lock_blocks_cancel ______________
+tests/unit/test_cancellation_safety.py:154: in test_ac_other_process_submission_lock_blocks_cancel
+    result=run_cancel(broker,tmp_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_cancellation_safety.py:49: in run_cancel
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+E   ModuleNotFoundError: No module named 'stock_swing.execution.cancellation_guard'
+_______ test_ac_terminal_cancel_preserves_any_fill_attribution[0-False] ________
+tests/unit/test_cancellation_safety.py:163: in test_ac_terminal_cancel_preserves_any_fill_attribution
+    from stock_swing.cli.reconcile_orders import _cancel_checked
+E   ImportError: cannot import name '_cancel_checked' from 'stock_swing.cli.reconcile_orders' (/Users/hirotomookawasaki/.openclaw/tmp/stock-swing-cancel-config-20261028-y4e47js4/baseline/src/stock_swing/cli/reconcile_orders.py)
+________ test_ac_terminal_cancel_preserves_any_fill_attribution[2-True] ________
+tests/unit/test_cancellation_safety.py:163: in test_ac_terminal_cancel_preserves_any_fill_attribution
+    from stock_swing.cli.reconcile_orders import _cancel_checked
+E   ImportError: cannot import name '_cancel_checked' from 'stock_swing.cli.reconcile_orders' (/Users/hirotomookawasaki/.openclaw/tmp/stock-swing-cancel-config-20261028-y4e47js4/baseline/src/stock_swing/cli/reconcile_orders.py)
+=========================== short test summary info ============================
+FAILED tests/unit/test_cancellation_safety.py::test_ac_cancel_states_are_observed_not_inferred[pending_cancel-requested]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_cancel_states_are_observed_not_inferred[new-requested]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_cancel_states_are_observed_not_inferred[partially_filled-requested]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_cancel_states_are_observed_not_inferred[404-unknown]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_cancel_states_are_observed_not_inferred[canceled-terminal]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_cancel_states_are_observed_not_inferred[expired-terminal]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_cancel_states_are_observed_not_inferred[rejected-terminal]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_cancel_states_are_observed_not_inferred[filled-terminal]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_retry_does_not_repeat_delete[pending_cancel]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_retry_does_not_repeat_delete[404]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_retry_does_not_repeat_delete[canceled]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_retry_does_not_repeat_delete[filled]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_mismatched_lookup_remains_unknown
+FAILED tests/unit/test_cancellation_safety.py::test_ac_corrupt_journal_refuses_mutation
+FAILED tests/unit/test_cancellation_safety.py::test_ac_pending_sell_cancel_retains_exit_reason
+FAILED tests/unit/test_cancellation_safety.py::test_ac_prior_cancellation_holds_new_buy
+FAILED tests/unit/test_cancellation_safety.py::test_ac_unqualified_order_never_deletes[qty-NaN]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_unqualified_order_never_deletes[qty-0]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_unqualified_order_never_deletes[qty-True]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_unqualified_order_never_deletes[filled_qty-6]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_unqualified_order_never_deletes[filled_qty--1]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_unqualified_order_never_deletes[status-pending_replace]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_unqualified_order_never_deletes[id-]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_unqualified_order_never_deletes[type-None]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_unqualified_order_never_deletes[order_class-bracket]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_missing_initialized_history_never_deletes_again
+FAILED tests/unit/test_cancellation_safety.py::test_ac_write_blocked_before_prepare_means_no_delete
+FAILED tests/unit/test_cancellation_safety.py::test_ac_other_process_submission_lock_blocks_cancel
+FAILED tests/unit/test_cancellation_safety.py::test_ac_terminal_cancel_preserves_any_fill_attribution[0-False]
+FAILED tests/unit/test_cancellation_safety.py::test_ac_terminal_cancel_preserves_any_fill_attribution[2-True]
+30 failed in 0.37s

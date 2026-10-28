@@ -1,0 +1,44 @@
+{
+  "aggregation": "Within each group, equal weight decision events per ET decision day, then equal weight observed days; repeated symbol/day signals retained and separately counted. Not portfolio PnL/PF/DD.",
+  "benchmark": "SPY same entry/exit sessions",
+  "cost_formula": "exit_close*(1-c)/(entry_open*(1+c))-1; same cost for SPY; assumptions not measured fees",
+  "costs_bps_per_side": [
+    0,
+    2,
+    5,
+    10,
+    15
+  ],
+  "frozen_at": "2026-10-28T11:51:27.323012+00:00",
+  "groups": [
+    "strategy_id",
+    "current_registry_asset_class",
+    "fixed_score_band"
+  ],
+  "known_results": "Prior fixed-band realized PnL and score saturation known; not independent/OOS and no challenger.",
+  "limits": [
+    "no inferred missing scores",
+    "no full no-signal denominator",
+    "no threshold search",
+    "no candidate selection or S3/S4 batch",
+    "qualified forward additions remain zero",
+    "no production source/config/data writes or network"
+  ],
+  "main_horizon_sessions": 5,
+  "outcome": "next-session OPEN to CLOSE of fifth expected session after decision date (entry session inclusive). All five OHLCV bars and SPY bars required; do not compress missing sessions.",
+  "parent": "SIGNAL-DIAGNOSTIC-20261028-r1",
+  "population": "All frozen archived decisions; count all exclusions. Numeric finite score 0..1 and action BUY only. Unique decision_id; duplicate conflicts rejected as a group.",
+  "price_basis": "Frozen r11 cache from prior study. Adjustment/revision/availability unqualified. Price-only, no dividend/FX. Diagnostic proxy only.",
+  "score_bands": [
+    0,
+    0.4,
+    0.6,
+    0.8,
+    1
+  ],
+  "status": "same_diagnostic_uncomputed_forward_component_exploratory",
+  "study_id": "SIGNAL-DIAGNOSTIC-20261028-r1-forward-extension",
+  "ties": "keep identical scores together",
+  "time": "decision_time if explicit otherwise generated_at; timezone-aware only. Next ET calendar session strictly after decision ET date. This is an observed timestamp proxy, not proof of creation or availability.",
+  "uncertainty": "5bps same-day SPY excess; 20 expected-session moving blocks including days without eligible rows; 4000 draws seed7; sparse/overlapping sample sensitivity only, not edge probability."
+}

@@ -768,6 +768,30 @@ P1〜P3と§3.33の完了範囲を保持し、P4全体未完・T0未設定/F1未
 - Agentの次の既存確認は10/30 18:00 JSTの残条件/政策・是正枠適合、11/06 18:00の不足込み一次結論、11/13 18:00の限定技術受入/固定比較または未完。実時点入力、正式U/epsilon/rho/delta/標本、将来観測、実provider/口座、本人選好、実請求額は未充足を保持。
 - 今回は文書/静的点検のみ。前回隔離候補2,960成功/3skipを保持するが再実行/加算せず、今回の取消/全設定合格へ転用しない。**17canonical P/S行・全既存日時、是正1バッチ・主C11対U/Required/P0/cap30%・S3最大1案未消費/S4固定1バッチ、P4全体未完/T0未設定/F1未開始は不変**。本番source/config/金融原本/記録ON/scheduler/認証/CB/実注文・取消/commit/push変更なし。
 
+### 3.45 取消状態の隔離是正・CLI設定記録・公開版の新規取得追試（2026-10-28）
+
+ユーザー「すすめて」に基づき、§3.44の取消/設定の未実装だった限定案と公開物の再現範囲を前倒しした。[新候補と検証](cancel_config_closure_20261028/README.md)。**本番未適用・実注文/取消なし・追加Push/mergeなし**。既存是正1バッチの拡張で、利益試行は追加していない。§3.44の「未実装」は今回の対象だけ本節の隔離実装済みへ更新し、全閉包/配備済みとはしない。
+
+- 取消APIのACKと終端状態を分離。実selector/手動script/reconcile mainを合成HTTP19条件×2版＝38対照、別process再実行込み42起動で確認。preparedを永続化して1DELETE、再起動後は同ID再照会だけ。既存のaccount-route lock/TradeEventStoreを再利用し、協調guardは未解決取消があれば新規BUY/同銘柄解消を保留。理由はcanceled/zero-fillの確認前に消さず、partial/filledの帰属を保持。未解決は表示/JSON/終了コードへ伝播。
+- 設定記録は明示opt-in、通常OFF。CLIで到達した9config instance/39fieldの適用値・許可した環境キーの存在だけを記録し、raw env/秘密は保存しない。6条件×前回/今回OFF/ON＝18実CLIで判断/注文数量/対象SELLを維持し、記録失敗・拒否値は警告/非ゼロへ。暗黙helper、生成失敗/未到達分岐、下流override、全設定閉包は未認定。
+- 全体3,014成功/3skip＋分離localhost1成功＝重複なし3,015成功、既存collection warning1。通常CLI40は前回期待値と一致。重点/保存先追試を全体に加算しない。累積26runtime＋18test/fixtureと追加9runtime＋3testのpatch、保護原本不変、復帰/残条件をpacketへ記録。
+- 前回公開e2d98eeをHTTPSから新規cloneし、7packetのinventory/hash一致を確認。Gitが保持しない595fileのmodeをbyte一致後だけ復元し、**前回候補**の重点355・scripts148・並行4・CLI40を再現。新候補427重点とは別。公開signalのraw inputs.zip/input_manifest.jsonは意図的に未配布で、その生入力追試は不能のまま。
+- 残る実provider/口座/鮮度/atomic snapshot、非協調caller/電源断、fill会計/実資金解放、旧取消時刻規則、全設定/暗黙消費者、別保有/小数政策、実時点入力/正式U/epsilon/rho/delta/標本/将来観測は未充足。L0/F0を保持し、自動ID切替/小数対応を採用しない。**既存17P/S行・全日時、是正1バッチ、主C11対U/Required/P0/cap30%、S3最大1案未消費/S4固定1バッチ、P4全体未完/T0未設定/F1未開始は不変**。
+- 次の既存確認は10/30 18:00 JSTに残条件/政策、11/06 18:00に不足込み一次結論、11/13 18:00に限定技術受入/固定比較または未完。稼働source/config/金融原本/記録ON/scheduler/認証/CBに変更なし。追加成果物はローカル保存し、Push済みは前回e2d98eeだけ。
+
+
+### 3.46 2026-10-28追補：取消時刻・設定生成/未到達・反映準備（隔離）
+
+ユーザー「すすめて」により[残差是正候補](timing_config_readiness_20261028/README.md)を既存是正1バッチ内で追加。UTC固定の取消選定をETの実営業日・DST・regular close/20:00境界へ是正。既存MarketCalendarを再利用し、NYSE2026–2028公表の1,096暦日/休場29/早引け5と一致。範囲外/年初lookback不明はheld。時刻58実入口対照、旧版12件のDELETE対象不一致を候補0へ、naive/未来時刻はmain非ゼロ保持。30分・状態/extended条件・破局SELL保護は変更なし。共有calendarの他caller/臨時休場/実broker時間資格は未認定。
+
+9config/39fieldは生成成功だけでなくconstruction_failed/not_reached/終点変更を観測。例外値/生envを保存せず元例外を維持し、未到達を実行しない。CLI構築9/helper fallback7を静的分類、対象field直接代入候補0（完全alias解析ではない）。設定33CLIで売買判断/対象数量を維持。全体3,089成功/3skip＋localhost1＝3,090成功、重点147/通常CLI40/既存取消38対照42起動を保持。追加75契約は旧43失敗/32成功・候補75成功。利益の改善や実事故43件の証明ではない。
+
+コード切戻しコピー3条件で追加DELETE0とjournal/金融JSON保持。unknown404はjournal読取前に非ゼロ停止、成功読取へ加算しない。差分は追加5runtime/2test、累積27runtime/20test・fixture。公開用は既公開e2d98eeから旧§3.45packet/今回packet/更新4計画だけを分離準備し、私有祖先を継がず、まだcommit/Push/mergeしない。本番適用/recording ON/サービス再起動/認証/scheduler/CB/金融原本/実注文/取消なし。
+
+L0/F0、既存17工程と全日時、主C11対U/Required/P0/cap30%、是正1バッチ、S3最大1未消費/S4固定1を維持。P4全体未完・T0未設定・F1未開始。次の既存確認10/30・11/06・11/13各18:00JSTは維持し、自動予約を追加しない。適格実入力/較正・判定値/標本/別保有/小数政策/将来観測は未完のまま。全K/全legacy完成を探索の一律前提には戻さない。
+
+本作業とは別にConsole5ファイルの差分を検出し保全。今回の公開準備/全体回帰には取り込まず、最新Consoleとの差分統合は未認定。
+
 ## 4. Phase 2 — 実績再現と乖離分解（旧B1を再設計）
 
 ### 比較する3種類を分ける
@@ -1062,3 +1086,12 @@ F1で候補選択・再調整した場合は、別の未使用期間F2が必要�
 新規169を含む全体2,912 passed/2 skipped、関連248。金融4原本・稼働コード/config/CB/registry等384保護対象と関連29job定義は不変。コピーの423 closed・隔離4・gross−$76,453.96は既報と同じ。**資産区分6行は未確定で市場監査exit1**。市場期間/分割basisとexport producer未対応のため、分類やテスト成功だけで実再開可とはしない。
 
 次の有界作業は[6分類・帰属保留3キーの証拠追跡と他の不足](r22_reader_lineage_20261021_7ce9a4/GAP_MATRIX.md)。本番適用・実writer drain・全app復元・genuine post-cutover run・KLAC等の金融認定は別途必要。G-M未通過、G-R/Phase 2/F1未開始、期待年率・利益改善幅は推定保留を維持する。既存比較bookの技術検証とも合算して成績実証としない。
+
+
+### 2026-10-28追補：5session診断・残設定・最新Console統合（詳細計画§3.47）
+
+[成果・差分・追試](research_config_console_20261028/README.md)。既存固定診断の未計算分として4,532保存decision中1,901 BUY/53判断日を既存価格の5session outcome・同窓SPYへ接続し、16区分/19,010算術セルを独立照合。価格/時点資格は未認定のproxyで、適格前向き追加0・S1/S2全体未完、S3最大1案未消費/S4未開始。帯ごとの構成差を選別効果や勝つ閾値にしない。
+
+設定の既存opt-inをEntryFilter/losing-addへ拡張（11family/51field）。11条件×前回/今回OFF/ON=44実CLIで注文対象/数量を維持。最新Consoleとの同一コピー統合で、取得失敗時audit小数qtyの0化を表示経路だけ是正。取消4状態をguard→service→JSON→実JS、11familyをsummary→textへ確認。Web個別receipt panelは未接続。全体3,156成功/2skip（localhost1を分離）、重点567、研究契約24、実Chromeのタブ往復/reload/mobileを確認。文書snapshotは要再確認を保持。
+
+今回追加は隔離候補のみ、本番配備・記録ON・実注文/取消・金融原本修復・service/scheduler/認証/CB変更・Pushなし。既存Console稼働反映と今回追加fixを区別。旧17工程/全日時、是正1バッチ、L0/F0・主C11対U/Required/P0/cap30%、P4全体未完/T0未設定/F1未開始を保持。10/30・11/06・11/13各18:00JSTを維持し、新通知/定期実行を登録しない。

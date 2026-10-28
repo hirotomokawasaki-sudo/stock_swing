@@ -1,0 +1,35 @@
+{
+  "scope": "existing correction batch; isolated only",
+  "source_head": "8909e79c1a83e04d508715b132575625454b7856",
+  "previous_packet": "emergency_corrections_20261028",
+  "cancellation": [
+    "request is not terminal",
+    "qualified ID/symbol/side/type/TIF/quantity readback",
+    "prepare before one DELETE; restart readback only",
+    "retain all partial-fill attribution; erase only canceled zero-fill reason",
+    "cooperating submission and reduction lock/veto",
+    "surface unknown/requested/held and nonzero final reconcile/manual exit"
+  ],
+  "config": [
+    "explicit opt-in default OFF",
+    "nine reached CLI constructors/39 fields; no implicit-helper coverage claim",
+    "effective instance values only; allowlisted environment-key presence, no raw environment",
+    "record failure does not alter order/quantity/eligible SELL",
+    "summary JSON/renderer warning plus nonzero capture exit"
+  ],
+  "public": [
+    "fresh HTTPS clone at exact public commit",
+    "all seven packet inventories/hash checked",
+    "restore only hash-matching manifest modes",
+    "replay latest original public candidate; not new private candidate",
+    "signal raw inputs deliberately absent"
+  ],
+  "excluded": [
+    "production application",
+    "new order/cancel/account requests",
+    "new policy/holding epoch/fractional support",
+    "economic trial/annual forecast",
+    "new SDK/DB",
+    "automatic Push/merge"
+  ]
+}

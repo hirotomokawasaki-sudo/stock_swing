@@ -1,0 +1,26 @@
+{
+  "docs/console_improvement_tasks.md": {
+    "prior_bytes_preserved": true,
+    "canonical_PS_rows_preserved": true,
+    "rows": 26,
+    "sha256": "eee453346b93ec56fe267c6dd2d8f62a71f0a70f0131aa46800ab6634d8cf7eb"
+  },
+  "docs/strategy_improvement_validation_plan_20261020.md": {
+    "prior_bytes_preserved": true,
+    "canonical_PS_rows_preserved": true,
+    "rows": 24,
+    "sha256": "dd2053d9f283adeab5431f279d571e7dc1a865ac70a2fdd978018a8220c960d5"
+  },
+  "docs/signal_evaluation_improvement_plan_20261028.md": {
+    "prior_bytes_preserved": true,
+    "canonical_PS_rows_preserved": true,
+    "rows": 6,
+    "sha256": "d28c14f5968456deb0ea85a20627cf8001d8eb775adb4e0a1384d6e3c055f60e"
+  },
+  "docs/p4_advance_review_20261028.md": {
+    "prior_bytes_preserved": true,
+    "canonical_PS_rows_preserved": true,
+    "rows": 0,
+    "sha256": "2641847bcdfdca3658eaa0ad4775f31ecf72b452f0966751c9a6c7e37fc3cca4"
+  }
+}

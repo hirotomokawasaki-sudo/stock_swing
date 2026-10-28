@@ -1,0 +1,18 @@
+{
+  "record_id": "sample1",
+  "schema_version": "v1",
+  "source": "finnhub",
+  "source_type": "fundamentals",
+  "symbol": "NVDA",
+  "event_type": "basic_financials",
+  "event_time": "2026-03-06T00:00:00Z",
+  "as_of": "2026-03-06",
+  "ingested_at": "2026-03-06T00:00:02Z",
+  "timezone": "UTC",
+  "payload_version": null,
+  "quality_flags": [],
+  "payload": {
+    "market_cap": 2800000000000,
+    "pe_ttm": 31.2
+  }
+}

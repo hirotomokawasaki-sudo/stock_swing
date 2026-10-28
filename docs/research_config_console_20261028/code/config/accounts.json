@@ -1,0 +1,35 @@
+{
+  "_comment": "Multi-account config. Credentials stored in .env (see BROKER_API_KEY_1/2/3). Updated 2026-07-10.",
+  "accounts": [
+    {
+      "label": "PP-10-口座1",
+      "account_number": "PA3GHN8V3NKP",
+      "env_key": "BROKER_API_KEY_1",
+      "env_secret": "BROKER_API_SECRET_1",
+      "env_account_id": "BROKER_ACCOUNT_ID_1",
+      "base_url": "https://paper-api.alpaca.markets/v2",
+      "role": "sub",
+      "note": "口座1 — 個別株中心ポートフォリオ"
+    },
+    {
+      "label": "PP-10-口座2（main）",
+      "account_number": "PA3SEQKOZ91C",
+      "env_key": "BROKER_API_KEY",
+      "env_secret": "BROKER_API_SECRET",
+      "env_account_id": "BROKER_ACCOUNT_ID",
+      "base_url": "https://paper-api.alpaca.markets/v2",
+      "role": "main",
+      "note": "既存メイン口座 — stock_swing paper_demo で使用中"
+    },
+    {
+      "label": "PP-10-口座3",
+      "account_number": "PA3KNNM0LJMC",
+      "env_key": "BROKER_API_KEY_3",
+      "env_secret": "BROKER_API_SECRET_3",
+      "env_account_id": "BROKER_ACCOUNT_ID_3",
+      "base_url": "https://paper-api.alpaca.markets/v2",
+      "role": "sub",
+      "note": "口座3 — 現在ポジションなし（キャッシュ待機中）"
+    }
+  ]
+}
