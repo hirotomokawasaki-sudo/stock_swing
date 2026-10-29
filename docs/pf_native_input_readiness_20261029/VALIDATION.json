@@ -1,0 +1,25 @@
+{
+  "actual_native_CLI_cases": 27,
+  "deployment": false,
+  "engineering_oracle_checkpoints": 10,
+  "exact_loopback_test_passed": 1,
+  "financial_qualification": false,
+  "focused_subset_passed": 47,
+  "full_external_network_denied": {
+    "localhost_deselected": 1,
+    "passed": 3529,
+    "skipped": 2
+  },
+  "integrity_rejection_boundaries": 6,
+  "nonoverlapping_total_passed": 3530,
+  "orders": false,
+  "profit_batches": 0,
+  "push": false,
+  "recording_ON": false,
+  "saved_input_and_oracle_summaries_byte_equal": true,
+  "saved_tested_source_all_bytes_equal": true,
+  "skipped": 2,
+  "standalone_input_contracts_passed": 11,
+  "status": "PASS_technical_only",
+  "whole_continuous_replay_qualified": false
+}

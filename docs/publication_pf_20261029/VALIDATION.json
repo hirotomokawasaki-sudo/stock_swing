@@ -1,0 +1,48 @@
+{
+  "CI_completion_claimed": false,
+  "deployed": false,
+  "economic_AB_batches": 0,
+  "external_network_denied": true,
+  "heuristic_secret_scan": {
+    "exit": 1,
+    "findings": 1,
+    "line_sha256": "7f56c9373c04aedfbe947ef63507f4bf1c92d694210592ee744fa871bbc82ab7",
+    "resolved_as": "literal fixture string in run_native.py; not a credential"
+  },
+  "historical_private_full_suite": {
+    "passed": 3530,
+    "repeated_for_publication": false,
+    "skipped": 2
+  },
+  "initial_public_attempt": "missing mandatory paper runtime fixture; failed closed before orders; corrected using NEW synthetic paper-only fixture and rerun successfully",
+  "latest_verifier_manifest_duplicate_key_hardening": "six rejection boundaries tested after technical replay; candidate code/test/driver bytes unchanged",
+  "merged": false,
+  "nested_aggregate_activity_rows": 0,
+  "original_repository_writes_denied": true,
+  "origins_confined_to_disposable_copy": true,
+  "private_input_audit_repeated": false,
+  "public_base": "4014504e9f447183caf55cab0e1d0c4fae37fc95",
+  "publication_parses": {
+    "JSON": 13,
+    "python_AST": 204
+  },
+  "publication_tests": {
+    "engineering_checkpoints": 10,
+    "focused": 47,
+    "input_audit_synthetic_contracts": 11,
+    "native_CLI_cases": 27,
+    "public_integrity_rejections": 6,
+    "skipped": 0
+  },
+  "root_runtime_changed": false,
+  "source_main_private_ancestors_excluded": true,
+  "source_private_manifest_sha256": "55ac54fd1d576acbec990776180c06736354d8e3518fb7517c03d130129527d8",
+  "staged_whitespace": {
+    "exit": 2,
+    "new_public_logic_plans_receipts_exit": 0,
+    "scope": "preserved candidate snapshot and research patch whitespace; not rewritten"
+  },
+  "status": "PASS_public_technical_projection",
+  "supplemental_secret_findings": 0,
+  "synthetic_summaries_byte_equal": true
+}

@@ -1,0 +1,97 @@
+{
+  "archive_files": 6832,
+  "decision_counts": {
+    "action_buy": 3991,
+    "action_deny": 181,
+    "action_sell": 360,
+    "clock_explicit": 2373,
+    "clock_generated_proxy": 2159,
+    "missing_run_id": 1572
+  },
+  "decision_rows": 4532,
+  "denominator": {
+    "full_historical_denominator_qualified": false,
+    "missing_or_not_yet_observed_checks": 480,
+    "no_signal_records_identifiable": 0,
+    "observed_future_decision_rows": 0,
+    "planned_future_checks": 480,
+    "qualified_future_checks": 0,
+    "reason": "decision-only archive is not all configured symbol-slots; historical run universe and explicit no-signal absent"
+  },
+  "historical_distinct_recorded_run_ids": 263,
+  "historical_first_date": "2026-05-12",
+  "historical_last_date": "2026-10-27",
+  "prices": {
+    "counts": {
+      "daily_rows": 33501,
+      "missing_adjustment_basis": 33501,
+      "missing_available_at": 33501,
+      "missing_corporate_actions": 33501,
+      "missing_known_at": 33501,
+      "symbols": 69,
+      "universe_symbols_with_any_cache": 60
+    },
+    "first_date": "2024-08-15",
+    "last_date": "2026-08-14",
+    "prospective_symbol_session_rows": 0,
+    "qualified_bidask_quotes": 0,
+    "qualified_corporate_action_paths": 0,
+    "qualified_for_execution": false,
+    "qualified_immediate_prior_minute_volumes": 0
+  },
+  "profit_trials": 0,
+  "readiness": {
+    "AB_profit_batches": 0,
+    "F1_started": false,
+    "complete_candidate_stream": false,
+    "qualified_asof_prices": false,
+    "seed_economically_qualified": false
+  },
+  "rule": "Future Nov2-5 absence on Oct29 is not a capture failure. Legacy data remains exploratory; no PnL/PF outcomes calculated.",
+  "seed": {
+    "counts": {
+      "all_consumed_rows": 423,
+      "closed_missing_execution_leg_id": 408,
+      "closed_missing_leg_known_at": 422,
+      "closed_strict_2cent_formula_disagreement": 196,
+      "duplicate_nonempty_leg_ids": 0,
+      "formula_disagreement_possible_2dp_rounding": 196,
+      "inline_quarantine_matching_separate_id": 1,
+      "separate_quarantine_rows": 6,
+      "status_closed": 422,
+      "status_quarantined": 1
+    },
+    "economic_qualified": false,
+    "loader": {
+      "copy_input_bytes_unchanged": true,
+      "raw_ordered_trades_equal": true,
+      "rows": 423
+    },
+    "prewindow_snapshot_known_before_first_session": true,
+    "role": "policy-memory seed only, never opening NAV; per-leg historical availability and canonical execution/CA qualification not established"
+  },
+  "snapshots": {
+    "all": 2289
+  },
+  "spec_id": "PF-AB-INPUT-QUALIFICATION-20261029-v1",
+  "storage": {
+    "PF_history": {
+      "directory_exists": false,
+      "json_files": 0,
+      "observed_at": "2026-10-29T08:21:53.741308+00:00",
+      "path": "data/audits/pf_history"
+    },
+    "decision_inputs": {
+      "directory_exists": false,
+      "json_files": 0,
+      "observed_at": "2026-10-29T08:21:53.741332+00:00",
+      "path": "data/audits/measurement_inputs/decision_manifests"
+    },
+    "run_inputs": {
+      "directory_exists": false,
+      "json_files": 0,
+      "observed_at": "2026-10-29T08:21:53.741322+00:00",
+      "path": "data/audits/measurement_inputs/run_manifests"
+    }
+  }
+}

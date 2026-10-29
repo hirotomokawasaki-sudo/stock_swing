@@ -5089,3 +5089,11 @@ R22 r2文書の更新とは別件であり、その実装を今回一括で開�
 設定の既存opt-inをEntryFilter/losing-addへ拡張（11family/51field）。11条件×前回/今回OFF/ON=44実CLIで注文対象/数量を維持。最新Consoleとの同一コピー統合で、取得失敗時audit小数qtyの0化を表示経路だけ是正。取消4状態をguard→service→JSON→実JS、11familyをsummary→textへ確認。Web個別receipt panelは未接続。全体3,156成功/2skip（localhost1を分離）、重点567、研究契約24、実Chromeのタブ往復/reload/mobileを確認。文書snapshotは要再確認を保持。
 
 今回追加は隔離候補のみ、本番配備・記録ON・実注文/取消・金融原本修復・service/scheduler/認証/CB変更・Pushなし。既存Console稼働反映と今回追加fixを区別。旧17工程/全日時、是正1バッチ、L0/F0・主C11対U/Required/P0/cap30%、P4全体未完/T0未設定/F1未開始を保持。10/30・11/06・11/13各18:00JSTを維持し、新通知/定期実行を登録しない。
+
+
+### 2026-10-29 公開追補：PF比較native接続（私有計画§3.55の投影）
+
+**10/29・PF比較native接続と入力資格点検（§3.55）**：[成果・追試・残条件](pf_native_input_readiness_20261029/README.md)。既存数量/Exit/filter/guardを実CLI27対照へ接続し、仮想約定を隔離実装。保存先全体3,530成功/2skip、重点47/入力契約11/独立算術10。全候補・as-of価格・PF seed/全slotの経済資格は未完、利益batch0/1。P4/S1/S2全体未完/T0未設定/F1未開始と既存日程/枠を維持。本番適用/追加記録ON/実注文・取消/PF解除なし。公開版は私有入力を除外した技術投影。
+
+
+> 公開範囲注記：上記は元の私有検証時点の記録。3,530成功/2skipは私有版全体suiteであり、公開版の追試件数ではない。§3.48〜3.54と私有入力は本Pushへ含めない。公開版の技術追試・除外は[公開記録](publication_pf_20261029/README.md)を参照。Pushなし/変更0は元時点の記録。

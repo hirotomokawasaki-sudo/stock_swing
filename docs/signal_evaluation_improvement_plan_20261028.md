@@ -133,3 +133,19 @@
 設定の既存opt-inをEntryFilter/losing-addへ拡張（11family/51field）。11条件×前回/今回OFF/ON=44実CLIで注文対象/数量を維持。最新Consoleとの同一コピー統合で、取得失敗時audit小数qtyの0化を表示経路だけ是正。取消4状態をguard→service→JSON→実JS、11familyをsummary→textへ確認。Web個別receipt panelは未接続。全体3,156成功/2skip（localhost1を分離）、重点567、研究契約24、実Chromeのタブ往復/reload/mobileを確認。文書snapshotは要再確認を保持。
 
 今回追加は隔離候補のみ、本番配備・記録ON・実注文/取消・金融原本修復・service/scheduler/認証/CB変更・Pushなし。既存Console稼働反映と今回追加fixを区別。旧17工程/全日時、是正1バッチ、L0/F0・主C11対U/Required/P0/cap30%、P4全体未完/T0未設定/F1未開始を保持。10/30・11/06・11/13各18:00JSTを維持し、新通知/定期実行を登録しない。
+
+
+### 3.55 10/29：PF比較のnative接続・仮想約定・入力資格点検
+
+成果は[PF比較の隔離接続と入力点検](pf_native_input_readiness_20261029/README.md)。§3.53の封印累積sourceを基礎に既存ComparisonBookを再利用し、原子event/arm別cash・lot・pending・予約・PF履歴と、既知の直前完了1分出来高1%/bid-ask/availability/元limit・TIFの仮想約定を接続。Aは原filter、BはPF成績Gate3/4だけの明示除去でdisabled=Falseと非PF条件を保持。実paper_demo27対照（nativeA/adapterA/B×9条件）でAの注文/数量/全HTTP trace一致、Bでも購入禁止・低出来高・HALT/口座不明のBUY停止・SELLを維持した。元数量/Exit/guard設定を置換しない。引け前execution/引け後arrivalのTIF2回帰を修正し、明示失効後の遅延通知はevent-watermark未認定として拒否する。全provider/連続経済リプレイの資格ではない。
+
+最終保存先から全体3,529成功/2skip/localhost1除外＋当該localhost1成功＝**3,530成功/2skip**。重点47は部分集合、入力監査11契約と同作者別実装の算術10checkpointも成功。以前の3,483等へ加算しない。保存先全体回帰に必要な既存緊急解消script2本を旧封印版/元検証候補と照合して補完し、HEAD由来の旧テスト専用履歴2本も別固定した。前のpacketや稼働コードを修正せず、新source閉包だけを補う。
+
+入力は既存archive4,532判断・価格33,501日次行/69銘柄をcount-only点検。全無信号分母と適格bid/ask/直前1分volume/利用可能時計/企業行動は不足。cacheは8/14までで、未来11/2〜5の480予定を実観測/独立標本としない。実loaderの423行=raw順序（closed422/inline隔離1、別6は重複1IDを含む）。closed408はexecution_leg_id欠損、196件の厳密2cent式差は全て2桁価格丸めで説明可能な範囲だが、原約定未確認のためPnL誤り/修復/許容差拡大/経済認定とはしない。seedをclean viewへ交換せず、旧PnLを仮想初期NAVへ足さない。
+
+native部品・synthetic fillは隔離実装/技術確認へ進展したが、全候補/as-of価格/PF seed/全slot連続stateの経済資格は未完。A/B利益batch0/1、新利益試行0、S3最大1案未消費/S4未開始、P4/S1/S2全体未完/T0未設定/F1未開始。主C11対露出整合U/Required/ATR P0/cap30%、L0/F0・是正枠、本人資本/許容値nullと既存17P/S/全日時を保全。10/30・11/06・11/13各18:00 JST、11/06不足込み一次結論は維持。30観測/全legacy/IBKR完了を独立研究の待ち条件にしない。
+
+今回変更は私有packetと既存4計画追補のみ。本番source/config/Console/金融原本/停止/旧観測/recordingON/service/scheduler/認証/CB/通知/Push変更0。並行§3.54と既存読取予約を保持し、新規予約/記録ON/実注文・取消/PF解除なし。文書根拠の古化をmetadata自動更新で隠さない。
+
+
+> 公開範囲注記：上記は元の私有検証時点の記録。3,530成功/2skipは私有版全体suiteであり、公開版の追試件数ではない。§3.48〜3.54と私有入力は本Pushへ含めない。公開版の技術追試・除外は[公開記録](publication_pf_20261029/README.md)を参照。Pushなし/変更0は元時点の記録。

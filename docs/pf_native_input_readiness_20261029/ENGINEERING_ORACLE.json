@@ -1,0 +1,58 @@
+{
+  "all_equal": true,
+  "checkpoints": 10,
+  "checks": [
+    {
+      "cash_qty_PnL_pending_oracle_equal": true,
+      "index": 0,
+      "restart_equal": true
+    },
+    {
+      "cash_qty_PnL_pending_oracle_equal": true,
+      "index": 1,
+      "restart_equal": true
+    },
+    {
+      "cash_qty_PnL_pending_oracle_equal": true,
+      "index": 2,
+      "restart_equal": true
+    },
+    {
+      "cash_qty_PnL_pending_oracle_equal": true,
+      "index": 3,
+      "restart_equal": true
+    },
+    {
+      "cash_qty_PnL_pending_oracle_equal": true,
+      "index": 4,
+      "restart_equal": true
+    },
+    {
+      "cash_qty_PnL_pending_oracle_equal": true,
+      "index": 5,
+      "restart_equal": true
+    },
+    {
+      "cash_qty_PnL_pending_oracle_equal": true,
+      "index": 6,
+      "restart_equal": true
+    },
+    {
+      "cash_qty_PnL_pending_oracle_equal": true,
+      "index": 7,
+      "restart_equal": true
+    },
+    {
+      "cash_qty_PnL_pending_oracle_equal": true,
+      "index": 8,
+      "restart_equal": true
+    },
+    {
+      "cash_qty_PnL_pending_oracle_equal": true,
+      "index": 9,
+      "restart_equal": true
+    }
+  ],
+  "classification": "synthetic engineering arithmetic, not economic A/B batch",
+  "same_author_independent_arithmetic": true
+}

@@ -1,0 +1,17 @@
+{
+  "all_checks": true,
+  "checks": {
+    "action_counts": true,
+    "cache_dates": true,
+    "clocks": true,
+    "closed": true,
+    "decision_total": true,
+    "missing_execution_leg": true,
+    "missing_run_id": true,
+    "price_rows": true,
+    "price_symbols": true,
+    "quantization_only_diagnostic": true,
+    "strict_formula": true
+  },
+  "independence": "same author, distinct loops and Decimal notional arithmetic; not independent reviewer"
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "privacy-reviewed public technical projection, NOT original sealed packet",
+  "original_manifest_sha256": "55ac54fd1d576acbec990776180c06736354d8e3518fb7517c03d130129527d8",
+  "public_base": "4014504e9f447183caf55cab0e1d0c4fae37fc95",
+  "omitted": [
+    "private audit_inputs/archive.zip, archive manifest, policy seed, prices and original input pins",
+    "original observed entry_restriction_review_v1.json",
+    "test_data: private historical ledger and incident fixtures",
+    "original reviewed_plans and private source/context inventories",
+    "per-case logs, original all-results NATIVE.json and private replay receipts",
+    "unrelated Console/operational work and plan sections 3.48 through 3.54",
+    "full source closure scripts/Console and unrelated tests; latest src compatibility snapshot retained under docs only",
+    "operational account/runtime/environment/AI config and backup allocation config"
+  ],
+  "synthetic_replacements": [
+    "audit_inputs/seed.json and PINS.json for corrupt-input contract tests only",
+    "inputs/entry_restriction_review_v1.json immutable empty sentinel; recorder disabled",
+    "code/config/runtime/current_mode.yaml: minimal paper-only fixture, not operational ledger status"
+  ],
+  "private_input_replay_available": false,
+  "full_historical_suite_repeated_for_publication": false,
+  "root_runtime_changed": false,
+  "deployed": false
+}

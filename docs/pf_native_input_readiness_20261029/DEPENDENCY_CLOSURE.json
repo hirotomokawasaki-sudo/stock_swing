@@ -1,0 +1,16 @@
+{
+  "emergency_sell.py": {
+    "source": "docs/timing_config_readiness_20261028/code/scripts/emergency_sell.py",
+    "sha256": "baae8a080d26c4339266ec85fdc69e66929cfeab3014750d2669d0c4428545b6",
+    "source_manifest_sha256": "bc129a9ab0e4deeff2e37396fd9fd688952d60fa0732eb1245cad4b7497b54d2",
+    "original_previous_tested_candidate_equal": true,
+    "main_runtime_unchanged": true
+  },
+  "close_hpe_short.py": {
+    "source": "docs/timing_config_readiness_20261028/code/scripts/close_hpe_short.py",
+    "sha256": "b9ca54069d1f5dacf724b5172034e739a54c68419de668f831346f510011f43d",
+    "source_manifest_sha256": "bc129a9ab0e4deeff2e37396fd9fd688952d60fa0732eb1245cad4b7497b54d2",
+    "original_previous_tested_candidate_equal": true,
+    "main_runtime_unchanged": true
+  }
+}

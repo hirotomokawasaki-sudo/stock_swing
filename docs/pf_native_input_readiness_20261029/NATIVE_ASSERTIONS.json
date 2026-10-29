@@ -1,0 +1,20 @@
+{
+  "A_native_business_HTTP_identical": true,
+  "PF_only_changes": [
+    "pf_blocked",
+    "reduced_skip"
+  ],
+  "all_scenarios_expected": true,
+  "cases": 27,
+  "controls_preserved": [
+    "restricted",
+    "volume",
+    "halt",
+    "unknown_account",
+    "dry",
+    "sell"
+  ],
+  "guard_configuration_unmodified": true,
+  "normal_native_quantity": 615,
+  "sell_native_quantity": 10
+}
