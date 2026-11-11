@@ -223,7 +223,8 @@ def _exit_attribution_from_tracker(root: Path) -> dict[str, dict]:
     if not state_path.exists():
         return {}
     try:
-        state = json.loads(state_path.read_text(encoding="utf-8"))
+        from stock_swing.tracking.compatibility import read_tracking_state
+        state = read_tracking_state(state_path)
     except Exception:
         return {}
 

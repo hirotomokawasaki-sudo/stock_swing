@@ -1,0 +1,78 @@
+{
+  "kind": "current on-disk source-code snapshot, not an application deployment",
+  "source_head": "8909e79c1a83e04d508715b132575625454b7856",
+  "public_parent": "1a588994338b9382162d1d7a92586c628e928a7a",
+  "branch": "publish/20261111-current-code",
+  "source_files": 791,
+  "included_roots": [
+    "src",
+    "console",
+    "scripts",
+    "tests",
+    "config",
+    "dashboard",
+    "openclaw",
+    "ops",
+    "prompts",
+    ".github"
+  ],
+  "omitted_individual_files": {
+    "config/strategy/portfolio_allocation.yaml.bak_20260721": "obsolete configuration backup",
+    "tests/fixtures/incidents/klac_20260624_stale_price.json": "private historical incident input"
+  },
+  "omitted_families": [
+    ".env and .env backups, account config and credentials",
+    "data, reports, logs, .run, memory, cron backups, caches and prior export bundles",
+    "private research packets, raw broker evidence, decision/price histories and financial test inputs",
+    "most planning/research documents: this is a code-only snapshot, not the complete research archive"
+  ],
+  "history": "only previously public ancestors; seven private local commits are not ancestors",
+  "removed_from_snapshot_tip": "unreviewed historical data, exports and environment backups inherited from the public base; retained on their existing branches",
+  "git_permissions": "Git preserves executable bits, not private local 0600/0700 modes; inventory pins source modes separately",
+  "production_changed": false,
+  "main_merged": false,
+  "live_or_paper_orders_sent": false,
+  "private_fixture_full_suite_claim": "results recorded separately; omitted inputs are not reproducible from this public snapshot",
+  "privacy_projections": {
+    "scripts/backfill_entry_signal_strength.py": {
+      "credential_literals": 0,
+      "financial_identity_literals": 1
+    },
+    "scripts/g1_investigate_mismatch.py": {
+      "credential_literals": 0,
+      "financial_identity_literals": 2
+    },
+    "scripts/investigate_klac_split_anomaly.py": {
+      "credential_literals": 0,
+      "financial_identity_literals": 2
+    },
+    "scripts/rf8b_recover_attribution.py": {
+      "credential_literals": 0,
+      "financial_identity_literals": 6
+    },
+    "scripts/test_massive_ws_connection.sh": {
+      "credential_literals": 1,
+      "financial_identity_literals": 0
+    },
+    "scripts/verify_rebuild_integrity.py": {
+      "credential_literals": 0,
+      "financial_identity_literals": 1
+    },
+    "tests/unit/test_per_lot_time_based_exit.py": {
+      "credential_literals": 0,
+      "financial_identity_literals": 7
+    },
+    "tests/unit/test_reconcile_orders.py": {
+      "credential_literals": 0,
+      "financial_identity_literals": 4
+    },
+    "tests/unit/test_verify_rebuild_integrity.py": {
+      "credential_literals": 0,
+      "financial_identity_literals": 3
+    }
+  },
+  "privacy_projection_meaning": "Only public copies replace a hard-coded manual-auth example and historical financial IDs with explicit placeholders; source originals unchanged.",
+  "formatting_projection": {
+    "tests/unit/test_check_quarantine_trend.py": "one trailing space removed; no logic change"
+  }
+}

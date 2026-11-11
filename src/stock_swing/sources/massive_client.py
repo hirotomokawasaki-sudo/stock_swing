@@ -9,7 +9,7 @@ Provides access to:
 """
 
 from typing import Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass
 import os
 
@@ -34,6 +34,7 @@ class MassiveBar:
     volume: int
     vwap: Optional[float] = None
     transactions: Optional[int] = None
+    bar_contract: Optional[dict] = None
 
 
 class MassiveClient:
@@ -63,6 +64,7 @@ class MassiveClient:
                 "Install with: pip install massive"
             )
 
+        self.measurement_recorder = None
         self.client = _MassiveRESTClient(api_key=self.api_key)
         # R7-v2 / H8: increase urllib3 connection pool maxsize to silence
         # "Connection pool is full, discarding connection" warnings.
@@ -82,6 +84,57 @@ class MassiveClient:
             logger.debug("Could not patch Massive pool maxsize: %s", _e)
         logger.info("Massive client initialized")
     
+    def _bar_items(self, **request):
+        """SDK-decoded OFF; exact raw-page receipt ON with identical HTTP queries.
+
+        The SDK raw=True returns one page, so preserve pagination explicitly.
+        Use the pinned SDK's own decoder; never add a second metadata request.
+        """
+        recorder = getattr(self, 'measurement_recorder', None)
+        if recorder is None or not recorder.enabled:
+            for agg in self.client.list_aggs(**request):
+                yield agg, None
+            return
+        from urllib.parse import urlsplit
+        from massive.rest.models import Agg
+        from stock_swing.sources.bar_contract import record_bar_response
+        response = self.client.list_aggs(**request, raw=True)
+        seen = set()
+        while True:
+            received = datetime.now(timezone.utc)
+            data = self.client._decode(response)
+            if not isinstance(data, dict) or not isinstance(data.get('results', []), list):
+                raise ValueError('invalid aggregate response')
+            interval = '1Day' if request['timespan'] == 'day' else f"{request['multiplier']}Min"
+            if request['timespan'] == 'minute' and request['multiplier'] % 60 == 0:
+                interval = f"{request['multiplier'] // 60}Hour"
+            safe_request = dict(request, interval=interval, feed=None, adjustment=None)
+            # A page cursor is neither a publication clock nor a bar interval.
+            safe_data = {k: v for k, v in data.items() if k != 'next_url'}
+            safe_request['page_index'] = len(seen)
+            contract = None
+            try:
+                contract = record_bar_response(recorder, provider='massive',
+                    request=safe_request, response=safe_data, received_at=received,
+                    raw_bytes=response.data)
+            except Exception:
+                recorder.note_failure()
+            for item in data.get('results', []):
+                yield Agg.from_dict(item), contract
+            if not self.client.pagination or 'next_url' not in data:
+                return
+            next_url = data['next_url']
+            parsed = urlsplit(next_url)
+            # Match SDK path-only pagination without forwarding arbitrary hosts/auth.
+            if (parsed.scheme != 'https' or parsed.hostname not in {'api.massive.com', 'api.polygon.io'}
+                    or parsed.username or parsed.password or not parsed.path.startswith('/v2/aggs/ticker/')
+                    or next_url in seen):
+                raise ValueError('invalid or cyclic aggregate pagination')
+            seen.add(next_url)
+            path = parsed.path + ('?' + parsed.query if parsed.query else '')
+            response = self.client._get(path=path, params={}, raw=True)
+
+
     def fetch_minute_bars(
         self,
         symbol: str,
@@ -107,7 +160,7 @@ class MassiveClient:
         
         bars = []
         try:
-            for agg in self.client.list_aggs(
+            for agg, contract in self._bar_items(
                 ticker=symbol,
                 multiplier=multiplier,
                 timespan="minute",
@@ -116,14 +169,15 @@ class MassiveClient:
                 limit=limit
             ):
                 bars.append(MassiveBar(
-                    timestamp=datetime.fromtimestamp(agg.timestamp / 1000),
+                    timestamp=datetime.fromtimestamp(agg.timestamp / 1000, tz=timezone.utc),
                     open=agg.open,
                     high=agg.high,
                     low=agg.low,
                     close=agg.close,
                     volume=agg.volume,
                     vwap=getattr(agg, 'vwap', None),
-                    transactions=getattr(agg, 'transactions', None)
+                    transactions=getattr(agg, 'transactions', None),
+                    bar_contract=contract
                 ))
             
             logger.info(f"Fetched {len(bars)} minute bars for {symbol}")
@@ -156,7 +210,7 @@ class MassiveClient:
         
         bars = []
         try:
-            for agg in self.client.list_aggs(
+            for agg, contract in self._bar_items(
                 ticker=symbol,
                 multiplier=1,
                 timespan="day",
@@ -165,14 +219,15 @@ class MassiveClient:
                 limit=limit
             ):
                 bars.append(MassiveBar(
-                    timestamp=datetime.fromtimestamp(agg.timestamp / 1000),
+                    timestamp=datetime.fromtimestamp(agg.timestamp / 1000, tz=timezone.utc),
                     open=agg.open,
                     high=agg.high,
                     low=agg.low,
                     close=agg.close,
                     volume=agg.volume,
                     vwap=getattr(agg, 'vwap', None),
-                    transactions=getattr(agg, 'transactions', None)
+                    transactions=getattr(agg, 'transactions', None),
+                    bar_contract=contract
                 ))
             
             logger.info(f"Fetched {len(bars)} daily bars for {symbol}")

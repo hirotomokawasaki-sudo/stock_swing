@@ -7,7 +7,7 @@ import os
 import shutil
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
+from datetime import datetime, time, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -131,6 +131,28 @@ def _current_market_date() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 
+def _scheduled_context(now: datetime):
+    # One existing schedule/calendar policy, including completion grace and DST.
+    # Missing policy/import is an evidence failure, never an all-green fallback.
+    from scripts.check_operational_recovery import expected_run_at
+    if now.utcoffset() is None:
+        raise ValueError("aware health clock required")
+    due = expected_run_at(now)
+    et = ZoneInfo("America/New_York")
+    first = datetime.combine(due.astimezone(et).date(), time(9, 25), et)
+    return due, first, et
+
+
+def _scheduled_stamp(value, earliest: datetime, now: datetime):
+    try:
+        stamp = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        if stamp.utcoffset() is None:
+            return None
+        return stamp if earliest <= stamp <= now else None
+    except (ValueError, TypeError):
+        return None
+
+
 class SystemAdapter:
     """Read system health and configuration."""
 
@@ -213,65 +235,62 @@ class SystemAdapter:
         except Exception as exc:
             return {"critical": True, "ok": False, "error": str(exc)}
 
-    def _check_guardrail_freshness(self) -> dict[str, Any]:
-        cb_path = self.project_root / "data" / "guardrails" / "circuit_breaker.json"
-        day_start_path = self.project_root / "data" / "guardrails" / "day_start_snapshot.json"
+    def _check_guardrail_freshness(self, *, now: datetime | None = None) -> dict[str, Any]:
+        now = now or datetime.now(timezone.utc)
+        cb_path = self.project_root / "data/guardrails/circuit_breaker.json"
+        day_start_path = self.project_root / "data/guardrails/day_start_snapshot.json"
         try:
-            cb = json.loads(cb_path.read_text(encoding="utf-8")) if cb_path.exists() else {}
-            day_start = json.loads(day_start_path.read_text(encoding="utf-8")) if day_start_path.exists() else {}
+            due, first, et = _scheduled_context(now)
+            cb = json.loads(cb_path.read_text()) if cb_path.exists() else {}
+            day_start = json.loads(day_start_path.read_text()) if day_start_path.exists() else {}
+            if not isinstance(cb, dict) or not isinstance(day_start, dict):
+                raise ValueError("guardrail objects required")
+            # Preserve the legacy timestamp fallback, but label its provenance.
+            cb_as_of = cb.get("last_evaluated_at") or cb.get("cleared_at") or cb.get("triggered_at")
+            cb_stamp = _scheduled_stamp(cb_as_of, due, now)
+            captured = day_start.get("captured_at")
+            day_stamp = _scheduled_stamp(captured, first, now)
+            market_date = day_start.get("market_date")
+            day_start_missing = day_start.get("missing_fields", [])
+            if not isinstance(day_start_missing, list):
+                raise ValueError("missing_fields list required")
+            problems = []
+            if not cb_path.exists(): problems.append("missing_circuit_breaker")
+            if cb_stamp is None: problems.append("stale_circuit_breaker")
+            if not day_start_path.exists(): problems.append("missing_day_start_snapshot")
+            # A new session snapshot may already exist inside the next slot's
+            # completion grace. Never require it to regress to Friday's state.
+            if (day_stamp is None or market_date != day_stamp.astimezone(et).date().isoformat()
+                    or not due.astimezone(et).date().isoformat() <= str(market_date) <= now.astimezone(et).date().isoformat()
+                    or day_stamp.astimezone(et).weekday() >= 5
+                    or MarketCalendar.is_us_holiday(day_stamp)[0]):
+                problems.append("market_date_mismatch")
+            if not captured: problems.append("missing_captured_at")
+            if not day_start.get("source"): problems.append("missing_source")
+            if day_stamp is None: problems.append("stale_day_start_snapshot")
+            if day_start_missing: problems.append("missing_day_start_metrics")
+            metrics_fresh = not problems
+            cb_status = str(cb.get("status") or "unknown")
+            if cb_status != "ok": problems.append("cb_" + cb_status)
+            def age(value):
+                try:
+                    stamp = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+                    return round((now - stamp).total_seconds()) if stamp.utcoffset() is not None else None
+                except (ValueError, TypeError): return None
+            return {
+                "critical": True, "ok": not problems, "metrics_fresh": metrics_fresh,
+                "cb_status": cb_status, "cb_reason": cb.get("reason"),
+                "cb_as_of": cb_as_of, "cb_age_seconds": age(cb_as_of),
+                "cb_timestamp_source": "last_evaluated_at" if cb.get("last_evaluated_at") else "legacy_transition",
+                "market_date": market_date, "expected_market_date": due.astimezone(et).date().isoformat(),
+                "expected_run_at": due.isoformat(), "completion_grace_seconds": 600,
+                "captured_at": captured, "captured_age_seconds": age(captured),
+                "source": day_start.get("source"), "missing_fields": day_start_missing,
+                "problems": problems,
+                "detail": "data/guardrails/circuit_breaker.json + day_start_snapshot.json",
+            }
         except Exception as exc:
-            return {"critical": True, "ok": False, "error": str(exc)}
-
-        market_date = _current_market_date()
-        # Prefer last_evaluated_at (heartbeat stamp written on every guardrail
-        # evaluation, even when status is unchanged 'ok'; added 2026-08-07).
-        # Fall back to cleared_at/triggered_at for older circuit_breaker.json
-        # files written before that field existed, so a long stretch of
-        # healthy 'ok' status doesn't look falsely stale.
-        cb_as_of = cb.get("last_evaluated_at") or cb.get("cleared_at") or cb.get("triggered_at")
-        cb_age = _age_seconds(cb_as_of)
-        cb_status = str(cb.get("status") or "unknown")
-        day_start_missing = list(day_start.get("missing_fields") or [])
-        day_start_age = _age_seconds(day_start.get("captured_at"))
-        problems: list[str] = []
-        if not cb_path.exists():
-            problems.append("missing_circuit_breaker")
-        if cb_age is None or cb_age > _GUARDRAIL_STALENESS_S:
-            problems.append("stale_circuit_breaker")
-        if not day_start_path.exists():
-            problems.append("missing_day_start_snapshot")
-        if day_start.get("market_date") != market_date:
-            problems.append("market_date_mismatch")
-        if not day_start.get("captured_at"):
-            problems.append("missing_captured_at")
-        if not day_start.get("source"):
-            problems.append("missing_source")
-        if day_start_age is None or day_start_age > _GUARDRAIL_STALENESS_S:
-            problems.append("stale_day_start_snapshot")
-        if day_start_missing:
-            problems.append("missing_day_start_metrics")
-
-        # recovery_pending = circuit breaker was manually cleared but a clean run has
-        # not yet confirmed broker/tracker parity.  Surface as a non-blocking warning
-        # (not ok) so the operator knows a clean scheduled run is still required.
-        if cb_status == "recovery_pending" and not problems:
-            problems.append("cb_recovery_pending")
-
-        return {
-            "critical": True,
-            "ok": not problems and cb_status in {"ok"},
-            "cb_status": cb_status,
-            "cb_as_of": cb_as_of,
-            "cb_age_seconds": None if cb_age is None else round(cb_age),
-            "market_date": day_start.get("market_date"),
-            "expected_market_date": market_date,
-            "captured_at": day_start.get("captured_at"),
-            "captured_age_seconds": None if day_start_age is None else round(day_start_age),
-            "source": day_start.get("source"),
-            "missing_fields": day_start_missing,
-            "problems": problems,
-            "detail": "data/guardrails/circuit_breaker.json + day_start_snapshot.json",
-        }
+            return {"critical": True, "ok": False, "metrics_fresh": False, "error": str(exc)}
 
     def _check_broker_tracker_freshness(self) -> dict[str, Any]:
         audit_path = self.project_root / "data" / "audits" / "reconcile_status.json"
@@ -299,20 +318,27 @@ class SystemAdapter:
         except Exception as exc:
             return {"critical": True, "ok": False, "error": str(exc)}
 
-    def _check_console_summary_freshness(self) -> dict[str, Any]:
+    def _check_console_summary_freshness(self, *, now: datetime | None = None) -> dict[str, Any]:
         summary_path = self.project_root / _CURRENT_CONSOLE_SUMMARY
+        now = now or datetime.now(timezone.utc)
         try:
-            age = _mtime_age_seconds(summary_path)
-            stale = age is None or age > _CONSOLE_STALENESS_S
+            due, _, _ = _scheduled_context(now)
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            run = summary.get("run")
+            if not isinstance(run, dict): raise ValueError("summary run object required")
+            genuine = run.get("dry_run") is False and run.get("invocation_source") == "paper_demo_scheduled"
+            stamp = _scheduled_stamp(run.get("timestamp"), due, now)
+            stale = stamp is None
+            problems = ([] if genuine else ["not_genuine_scheduled_run"]) + (["stale_or_invalid_run_timestamp"] if stale else [])
             return {
-                "critical": True,
-                "ok": not stale,
-                "age_seconds": None if age is None else round(age),
-                "stale": stale,
+                "critical": True, "ok": not problems, "genuine": genuine,
+                "timestamp": run.get("timestamp"), "expected_run_at": due.isoformat(),
+                "age_seconds": round((now-stamp).total_seconds()) if stamp else None,
+                "stale": stale, "problems": problems, "completion_grace_seconds": 600,
                 "detail": str(_CURRENT_CONSOLE_SUMMARY),
             }
         except Exception as exc:
-            return {"critical": True, "ok": False, "error": str(exc)}
+            return {"critical": True, "ok": False, "stale": True, "error": str(exc)}
 
     def _check_source_sla(self) -> dict[str, Any]:
         sources_dir = self.project_root / "config" / "sources"

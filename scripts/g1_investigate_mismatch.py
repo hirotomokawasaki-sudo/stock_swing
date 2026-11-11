@@ -9,12 +9,13 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
 PROJECT_ROOT = Path(__file__).parent.parent
 
 
 def main():
-    with open(PROJECT_ROOT / "data/tracking/pnl_state.json", encoding="utf-8") as f:
-        state = json.load(f)
+    state = legacy_analytical_state(PROJECT_ROOT / "data/tracking/pnl_state.json")
     with open(PROJECT_ROOT / "data/guardrails/circuit_breaker.json", encoding="utf-8") as f:
         cb = json.load(f)
 
@@ -60,8 +61,8 @@ def main():
 
     print("\n--- Resolution Path ---")
     print("  1. Verify broker order status via Alpaca API:")
-    print("     GET /v2/orders/adc2721b-28d2-401d-aca8-ded0d9fbe090  (SKYY)")
-    print("     GET /v2/orders/ff2b3a4f-c144-4979-a95e-f24eaf0a29a8  (META Lot2)")
+    print("     GET /v2/orders/public-fixture-1497  (SKYY)")
+    print("     GET /v2/orders/public-fixture-4026  (META Lot2)")
     print("  2. If status=canceled/rejected/expired: quarantine phantom trades")
     print("  3. Run scripts/clear_circuit_breaker.py with mismatch_count=0 confirmed")
     print(

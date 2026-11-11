@@ -103,6 +103,7 @@ from stock_swing.strategy_engine.sector_shock_hold import (
     get_symbol_sector_returns,
 )
 from stock_swing.tracking.exit_reason_store import (
+    build_exit_lineage,
     delete_exit_reason,
     read_recent_pending_exit_symbols,
     write_exit_reason,
@@ -110,6 +111,8 @@ from stock_swing.tracking.exit_reason_store import (
 from stock_swing.tracking.trade_event_store import TradeEvent
 from stock_swing.tracking.pnl_tracker import PnLTracker
 from stock_swing.tracking.fill_ledger import FillLedger, FillAlreadyConsumedError, FillQuarantinedError
+from stock_swing.tracking.settle_sell import settle_sell
+from stock_swing.tracking.execution_cost import incremental_sell_fill, ExecutionCostError
 from stock_swing.guardrails.risk_snapshot import build_risk_snapshot
 from stock_swing.reporting.equity_bridge import compute_equity_bridge
 from stock_swing.utils.context_budget import (
@@ -321,19 +324,27 @@ def _filter_buys_by_risk_budget(
     """Block all new BUY decisions when portfolio open risk exceeds BLOCK_PCT.
 
     Open risk = sum of (qty × entry_price × stop_loss_pct) for all open trades.
-    Thresholds: WARN=5%, BLOCK=8% of equity.  Sell decisions are never blocked.
-    Override: export PAPER_DEMO_SKIP_RISK_BUDGET=true
+    Thresholds: WARN=4%, BLOCK=6% of equity. Sell decisions are never blocked.
+    Override measured thresholds only: PAPER_DEMO_SKIP_RISK_BUDGET=true
     """
     import os
-    from stock_swing.risk.risk_budget import compute_open_risk
+    from stock_swing.risk.risk_budget import compute_open_risk, _unavailable_risk
 
-    if os.environ.get("PAPER_DEMO_SKIP_RISK_BUDGET", "").lower() == "true":
-        return decisions, [], {}
-
-    risk = compute_open_risk(project_root, equity)
+    try:
+        risk = compute_open_risk(project_root, equity)
+    except Exception as exc:
+        risk = _unavailable_risk("risk_calculation_failed:" + type(exc).__name__)
 
     if risk.get("error"):
-        print(f"  ⚠️  Risk budget: could not compute ({risk['error']}) — skipping guard")
+        allowed = [d for d in decisions if d.action != "buy"]
+        blocked = [d.symbol for d in decisions if d.action == "buy"]
+        print(f"  🚫 Risk budget UNAVAILABLE ({risk['error']}) — blocked {len(blocked)} new buy(s); SELL checks unchanged")
+        return allowed, blocked, risk
+
+    # Preserve the existing operator override for measured thresholds only.
+    # Unknown inputs cannot be explicitly or accidentally interpreted as flat.
+    if os.environ.get("PAPER_DEMO_SKIP_RISK_BUDGET", "").lower() == "true":
+        risk["status"] = "bypassed"
         return decisions, [], risk
 
     pct = risk["pct_of_equity"]
@@ -344,7 +355,7 @@ def _filter_buys_by_risk_budget(
         blocked = [d.symbol for d in decisions if d.action == "buy"]
         print(
             f"  🚫 Risk budget BLOCK: open risk ${total:,.0f} = {pct:.1%} of equity "
-            f"(limit {risk['block_threshold']:,.0f} / 8%) — "
+            f"(limit {risk['block_threshold']:,.0f} / 6%) — "
             f"blocked {len(blocked)} new buy(s): {', '.join(blocked[:5])}"
             + (f" +{len(blocked)-5} more" if len(blocked) > 5 else "")
         )
@@ -353,12 +364,12 @@ def _filter_buys_by_risk_budget(
     if risk["is_warn"]:
         print(
             f"  ⚠️  Risk budget WARN: open risk ${total:,.0f} = {pct:.1%} of equity "
-            f"(warn at 5%, block at 8%) — buys allowed"
+            f"(warn at 4%, block at 6%) — buys allowed"
         )
     else:
         print(
             f"  ✅ Risk budget OK: open risk ${total:,.0f} = {pct:.1%} of equity "
-            f"(warn at 5%, block at 8%)"
+            f"(warn at 4%, block at 6%)"
         )
 
     return decisions, [], risk
@@ -504,6 +515,12 @@ ETF_SYMBOLS: frozenset[str] = _ETF_SYMBOLS_FROM_REGISTRY if _ETF_SYMBOLS_FROM_RE
 
 def main() -> int:  # noqa: C901
     parser = argparse.ArgumentParser(description="stock_swing paper trading demo")
+    parser.add_argument("--capture-config-instances", action="store_true",
+                        help="Record constructed settings only; never change policy")
+    parser.add_argument("--capture-pf-history", action="store_true",
+                        help="Record the actual ordered PF input; no new broker calls")
+    parser.add_argument("--capture-provider-contracts", action="store_true",
+                        help="Opt-in recording only; no new provider requests")
     parser.add_argument("--symbols", type=str, default=",".join(DEFAULT_SYMBOLS),
                         help="Comma-separated symbols (overrides --universe)")
     parser.add_argument("--universe", type=str, choices=["default", "full"], default="default",
@@ -544,6 +561,10 @@ def main() -> int:  # noqa: C901
     else:
         symbols = DEFAULT_SYMBOLS
 
+    _provider_recorder = None
+    _candidate_capture = None
+    _config_instance_recorder = None
+    _pf_recording_failed = False
     latency_tracker: LatencyTracker | None = None
     _final_exit_code = 0
     _final_reason: str | None = None
@@ -556,6 +577,28 @@ def main() -> int:  # noqa: C901
         equity_value: float = 0.0,
         extra: dict | None = None,
     ) -> int:
+        if _config_instance_recorder is not None:
+            _config_instance_recorder.finalize()
+            exit_code = exit_code or (1 if _config_instance_recorder.failures else 0)
+            if _provider_recorder is not None:
+                _provider_recorder.observe('consumed_config_instances', dict(
+                    receipts=_config_instance_recorder.receipts,
+                    all_effective_verified=False))
+        exit_code = exit_code or (1 if _pf_recording_failed else 0)
+        if _provider_recorder is not None:
+            if _candidate_capture is not None:
+                _candidate_capture.finalize()
+            exit_code = exit_code or (1 if _provider_recorder.failures else 0)
+            _provider_recorder.observe('run_end', dict(exit_code=exit_code,
+                observations_before_end=_provider_recorder.committed,
+                capture_failures=_provider_recorder.failures,
+                full_replay_ready=False))
+            try:
+                _provider_recorder.seal()
+            except Exception:
+                _provider_recorder.note_failure()
+            if _provider_recorder.failures:
+                exit_code = exit_code or 1
         if latency_tracker is not None:
             latency_tracker.flush()
         if args.cron_summary_json:
@@ -584,6 +627,20 @@ def main() -> int:  # noqa: C901
 
     _banner("stock_swing Paper Trading Demo")
     run_context = RunContext.create("paper_demo")
+    if args.capture_config_instances and not args.dry_run:
+        from stock_swing.risk.config_instance_receipts import ConfigInstanceRecorder
+        _config_instance_recorder = ConfigInstanceRecorder(project_root, run_context.run_id)
+    def _construct_config(config_type):
+        if _config_instance_recorder is not None:
+            return _config_instance_recorder.construct(config_type)
+        return config_type.from_env()
+    if args.capture_provider_contracts:
+        from stock_swing.experiments.decision_input_capture import DecisionInputRecorder
+        from stock_swing.experiments.candidate_input_capture import CandidateInputCapture
+        _provider_recorder = DecisionInputRecorder(project_root, enabled=True, run_id=run_context.run_id)
+        _candidate_capture = CandidateInputCapture(_provider_recorder, symbols,
+            arguments=dict(timeframe=args.timeframe, bar_limit=args.bar_limit,
+                min_momentum=args.min_momentum, min_signal_strength=args.min_signal_strength))
     experiment_context = None
     print(f"  Symbols   : {', '.join(symbols)}")
     print(f"  Timeframe : {args.timeframe} x {args.bar_limit} bars")
@@ -731,6 +788,8 @@ def main() -> int:  # noqa: C901
         paper_mode=True,
         base_url=os.environ["BROKER_BASE_URL"],
     )
+    if _provider_recorder is not None:
+        broker.measurement_recorder = _provider_recorder
     latency_tracker = LatencyTracker(
         project_root / "data" / "analysis" / "api_latency.csv"
     )
@@ -860,6 +919,7 @@ def main() -> int:  # noqa: C901
             _economic_external_cash_flow = load_cumulative_external_cash_flow(
                 project_root / "data" / "audits" / "equity_bridge_reconciliation.json",
                 expected_account_id=str(acct.get("account_number") or "") or None,
+                project_root=project_root, currency=acct.get("currency"),
             )
             _economic_risk_store = EconomicRiskStore(
                 project_root / "data" / "guardrails" / "economic_risk_off.json"
@@ -931,7 +991,8 @@ def main() -> int:  # noqa: C901
     hybrid_fetcher = HybridDataFetcher(
         broker_client=broker,
         etf_symbols=ETF_SYMBOLS,
-        massive_api_key=os.environ.get("MASSIVE_API_KEY")
+        massive_api_key=os.environ.get("MASSIVE_API_KEY"),
+        **({"measurement_recorder": _provider_recorder} if _provider_recorder is not None else {}),
     )
     
     all_records: list[CanonicalRecord] = []
@@ -957,6 +1018,8 @@ def main() -> int:  # noqa: C901
         source_counts = {"massive": 0, "yahoo": 0, "broker": 0, "failed": 0}
         for future in as_completed(futures):
             symbol, records, bar_count, error, source = future.result()
+            if _candidate_capture is not None:
+                _candidate_capture.fetched(symbol, bar_count, source, failed=bool(error))
             source_counts.setdefault(source, 0)
             source_counts[source] += 1
             if error:
@@ -1238,6 +1301,9 @@ def main() -> int:  # noqa: C901
             details=f"{','.join(sorted(stale_symbols))}"
         )
 
+    if _candidate_capture is not None:
+        _candidate_capture.generation(daily_features, stale_symbols, breakout_signals + event_signals)
+
     # R14 (2026-08-25): dip-buy / mean-reversion SHADOW-ONLY signal generation.
     # Mirror image of breakout_momentum_v1 (see dip_buy_meanreversion_strategy.py
     # module docstring + docs/r14_dip_buy_meanreversion_phase1_20260825/README.md
@@ -1254,7 +1320,7 @@ def main() -> int:  # noqa: C901
                 DipBuySignalConfig,
                 log_shadow as log_dip_buy_shadow,
             )
-            _dip_buy_config = DipBuySignalConfig.from_env()
+            _dip_buy_config = _construct_config(DipBuySignalConfig)
             if not _dip_buy_config.disabled:
                 _dip_buy_strat = DipBuyMeanReversionStrategy(_dip_buy_config)
                 _dip_buy_signals = _dip_buy_strat.generate(daily_features)
@@ -1520,7 +1586,7 @@ def main() -> int:  # noqa: C901
                 evaluate_lot_level_discrepancies,
                 log_shadow as log_lot_level_shadow,
             )
-            _lot_diag_config = LotLevelExitDiagnosticConfig.from_env()
+            _lot_diag_config = _construct_config(LotLevelExitDiagnosticConfig)
             if _lot_diag_config.is_enabled():
                 _lot_diag_log_path = project_root / "data" / "lot_level_exit_shadow_log.jsonl"
                 # Recompute the same atr_pct_map / universe_avg_atr_pct basis
@@ -1549,9 +1615,14 @@ def main() -> int:  # noqa: C901
             )
 
     # F7: sector_shock_hold shadow analysis — annotate exit signals with regime context
-    _ssh_config = SectorShockHoldConfig.from_env()
-    _ssh_analyzer = SectorShockAnalyzer(_ssh_config)
-    _staged_exit_config = ShockAwareStagedExitConfig.from_env()
+    try:
+        _ssh_config = _construct_config(SectorShockHoldConfig)
+        _ssh_analyzer = SectorShockAnalyzer(_ssh_config)
+        _staged_exit_config = _construct_config(ShockAwareStagedExitConfig)
+    except Exception:
+        if _config_instance_recorder is not None:
+            _config_instance_recorder.finalize()
+        raise
     _ssh_shadow_count = 0
     if _ssh_analyzer.is_enabled() and exit_signals:
         # Build returns for ALL benchmark symbols used across the entire registry
@@ -1718,7 +1789,7 @@ def main() -> int:  # noqa: C901
             features=all_features,
             get_mid_price=get_mid_price,
             now_utc=datetime.now(timezone.utc),
-            config=cooldown_config,
+            config=dict(cooldown_config, force_sell_return_pct=exit_strat.emergency_stop_bypass_pct),
         )
         exit_signals = cooldown_result.filtered_signals
     
@@ -1735,6 +1806,8 @@ def main() -> int:  # noqa: C901
         equity=equity,
         max_sector_exposure_pct=0.80,  # 80% sector cap
     )
+    if _candidate_capture is not None:
+        _candidate_capture.prioritized(prioritized_entry)
     all_signals = prioritized_entry + exit_signals
 
     # --- Dynamic Exposure Cap (signal-count × regime hybrid) ---
@@ -1950,10 +2023,15 @@ def main() -> int:  # noqa: C901
     from stock_swing.risk.rsi_diagnostic import RsiDiagnosticConfig, classify_rsi_overbought, fetch_latest_rsi, log_shadow as log_rsi_shadow
     from stock_swing.risk.earnings_proximity_shadow import classify_earnings_proximity, log_observation as log_earnings_proximity
 
-    _vol_gate_config = VolatilityGateConfig.from_env()
-    _dfh_config = DistanceFromHighConfig.from_env()
-    _news_sentiment_config = NewsSentimentConfig.from_env()
-    _rsi_diag_config = RsiDiagnosticConfig.from_env()
+    try:
+        _vol_gate_config = _construct_config(VolatilityGateConfig)
+        _dfh_config = _construct_config(DistanceFromHighConfig)
+        _news_sentiment_config = _construct_config(NewsSentimentConfig)
+        _rsi_diag_config = _construct_config(RsiDiagnosticConfig)
+    except Exception:
+        if _config_instance_recorder is not None:
+            _config_instance_recorder.finalize()
+        raise
     _finnhub_raw_dir = project_root / "data" / "raw" / "finnhub"
     _vol_shadow_log_path = project_root / "data" / "volatility_gate_shadow_log.jsonl"
     _dfh_log_path = project_root / "data" / "distance_from_high_log.jsonl"
@@ -2005,6 +2083,20 @@ def main() -> int:  # noqa: C901
 
     for signal in all_signals:
         decision = decision_engine.process(signal, current_positions=current_positions)
+        # Bind the actual engine decision before snapshotting. attach_run_context
+        # otherwise supplies run-start time, which is not a decision clock.
+        if getattr(decision, "decision_time", None) is None:
+            decision.decision_time = decision.generated_at.isoformat()
+        attach_run_context([decision], run_context)
+        if experiment_context is not None:
+            decision.experiment_id = decision.experiment_id or experiment_context.experiment_id
+            decision.config_hash = decision.config_hash or experiment_context.config_hash
+            if isinstance(decision.evidence, dict):
+                decision.evidence.setdefault("experiment_id", decision.experiment_id)
+                decision.evidence.setdefault("config_hash", decision.config_hash)
+        if _candidate_capture is not None:
+            _candidate_capture.decision_result(signal, current_positions, decision,
+                runtime_mode=runtime_mode.value, validator=risk_validator)
         if isinstance(decision.evidence, dict):
             decision.evidence["market_regime"] = regime_for_sizing
             decision.evidence["macro_regime_raw"] = detected_regime
@@ -2030,32 +2122,32 @@ def main() -> int:  # noqa: C901
                 if _feature_snapshot_store is None:
                     from stock_swing.experiments.feature_snapshot_store import FeatureSnapshotStore
                     _feature_snapshot_store = FeatureSnapshotStore(project_root / "data" / "feature_snapshots")
-                _snapshot_features = {
-                    "strategy_id": signal.strategy_id,
-                    "action": signal.action,
-                    "signal_strength": signal.signal_strength,
-                    "confidence": signal.confidence,
-                    "time_horizon": signal.time_horizon,
-                    "feature_refs": list(signal.feature_refs or []),
-                    "metadata": dict(signal.metadata or {}),
-                }
-                if isinstance(decision.evidence, dict):
-                    _snapshot_features["evidence"] = {
-                        k: v for k, v in decision.evidence.items()
-                        if k not in ("notes",)  # notes are free-text reasoning, not feature values
-                    }
-                _feature_snapshot_store.save(
+                from stock_swing.experiments.feature_snapshot_store import decision_snapshot_features
+                _snapshot_ref = _feature_snapshot_store.save(
                     experiment_id=_feature_snapshot_experiment_id,
                     run_id=run_context.run_id,
                     decision_id=decision.decision_id,
                     symbol=decision.symbol,
-                    features=_snapshot_features,
-                    schema_version="r11e-v1",
+                    features=decision_snapshot_features(signal, decision),
+                    schema_version="r11e-v2",
                 )
+                decision.evidence["feature_snapshot_ref"] = {
+                    "path": str(Path(_snapshot_ref.path).relative_to(project_root)),
+                    "sha256": _snapshot_ref.sha256,
+                    "decision_id": decision.decision_id,
+                    "run_id": decision.run_id,
+                    "experiment_id": _feature_snapshot_experiment_id,
+                    "decision_stage": "decision_engine",
+                }
+                decision.evidence["feature_snapshot_status"] = "recorded"
             except Exception as _snapshot_exc:
+                decision.evidence.pop("feature_snapshot_ref", None)
+                decision.evidence["feature_snapshot_status"] = "failed"
+                if _provider_recorder is not None:
+                    _provider_recorder.note_failure()
                 logger.warning(
-                    "R11-E feature_snapshot_store.save failed for %s (non-fatal): %s",
-                    decision.symbol, _snapshot_exc,
+                    "R11-E feature snapshot unavailable for %s: %s",
+                    decision.symbol, type(_snapshot_exc).__name__,
                 )
 
         # 2026-08-07 fix: dry-run smoke tests were silently polluting the
@@ -2140,7 +2232,7 @@ def main() -> int:  # noqa: C901
                 classify_news_shock,
                 log_shadow as log_news_shock_hold,
             )
-            _news_shock_config = NewsShockHoldConfig.from_env()
+            _news_shock_config = _construct_config(NewsShockHoldConfig)
             if _news_shock_config.is_enabled() and current_positions_full:
                 _news_shock_log_path = project_root / "data" / "news_shock_hold_shadow_log.jsonl"
                 for _held_symbol, _held_pos in current_positions_full.items():
@@ -2245,7 +2337,9 @@ def main() -> int:  # noqa: C901
         sample = ", ".join(sym for sym, _ in blocked_offhours_buys[:5])
         print(f"    blocked: {sample}{' ...' if len(blocked_offhours_buys) > 5 else ''}")
 
-    actionable, deferred_offhours_sells = _filter_sells_outside_regular_hours(actionable, now_for_filter)
+    actionable, deferred_offhours_sells = _filter_sells_outside_regular_hours(
+        actionable, now_for_filter, force_sell_return_pct=exit_strat.emergency_stop_bypass_pct
+    )
     if deferred_offhours_sells:
         _, offhours_status = MarketCalendar.is_regular_market_hours(now_for_filter)
         print(
@@ -2264,11 +2358,15 @@ def main() -> int:  # noqa: C901
     if blocked_etf_buys:
         print(f"  ETF buy guardrail: blocked {len(blocked_etf_buys)} new ETF buy(s): {', '.join(blocked_etf_buys)}")
 
-    # Risk budget guardrail: block all new buys when open risk >= 8% of equity
-    # Warn at 5%. Override: export PAPER_DEMO_SKIP_RISK_BUDGET=true
+    # Risk budget guardrail: block at 6%; warn at 4%. Unknown inputs block BUY.
+    # The existing override applies only to successfully measured risk.
     actionable, blocked_risk_budget, risk_budget_result = _filter_buys_by_risk_budget(
         actionable, project_root, equity
     )
+    if risk_budget_result.get("error"):
+        _final_exit_code = 1
+        _final_reason = _final_reason or "risk_inputs_unavailable"
+
     actionable, blocked_cluster_cap = _filter_buys_by_cluster_cap(
         actionable, current_positions_full, equity
     )
@@ -2279,14 +2377,42 @@ def main() -> int:  # noqa: C901
         _sym = getattr(_rec, "symbol", None) or ""
         if _sym:
             _records_by_symbol.setdefault(_sym, []).append(_rec)
-    _ef_config = EntryFilterConfig.from_env()
+    try:
+        _ef_config = _construct_config(EntryFilterConfig)
+    except Exception:
+        if _config_instance_recorder is not None:
+            _config_instance_recorder.finalize()
+        raise
     _entry_filter = EntryFilterEngine(_ef_config)
+    _pf_input_trades = pnl_tracker.state.trades
+    _pf_history_capture = None
+    if args.capture_pf_history:
+        from stock_swing.risk.pf_history_receipt import PFHistoryCapture
+        _pf_history_capture = PFHistoryCapture(
+            root=project_root, run_id=run_context.run_id,
+            experiment_config_hash=experiment_context.config_hash if experiment_context is not None else "unknown",
+            decisions=actionable, closed_trades=_pf_input_trades,
+            entry_config=_ef_config, etf_symbols=set(ETF_SYMBOLS),
+            observed_at=datetime.now(timezone.utc), dry_run=args.dry_run,
+        )
     _ef_result = _entry_filter.filter(
         decisions=actionable,
         records_by_symbol=_records_by_symbol,
-        closed_trades=pnl_tracker.state.trades,
+        closed_trades=_pf_input_trades,
         etf_symbols=set(ETF_SYMBOLS),
     )
+    if _pf_history_capture is not None:
+        _pf_history_ref = _pf_history_capture.finish(_ef_result)
+        _pf_recording_failed = _pf_history_ref['status'] == 'unavailable'
+        _ef_result.stats["pf_history_receipt"] = _pf_history_ref
+        for _d in actionable:
+            _d.evidence["pf_history_receipt"] = dict(_pf_history_ref, decision_id=_d.decision_id)
+        if _provider_recorder is not None:
+            _provider_recorder.observe('entry_filter_result', dict(
+                inputs=[dict(decision_id=d.decision_id,symbol=d.symbol) for d in actionable],
+                passed_ids=[d.decision_id for d in _ef_result.passed],
+                blocked=_ef_result.blocked, pf_history_receipt=_pf_history_ref,
+                scope='actual_entry_filter_boundary_not_whole_execution_lineage'))
     # BUY STOP LIST: compute once after filter (run-independent, from full PF history)
     _buy_stop_list = get_permanent_block_summary(
         closed_trades=pnl_tracker.get_clean_closed_trades(),
@@ -2309,6 +2435,7 @@ def main() -> int:  # noqa: C901
     from stock_swing.risk.entry_restriction_review import observe_restricted_entries
     _restriction_review = observe_restricted_entries(
         root=project_root,
+        pf_history_receipt=_pf_history_ref if _pf_history_capture is not None else None,
         decisions=actionable,
         blocked=_ef_result.blocked,
         stop_list=_buy_stop_list,
@@ -2334,6 +2461,19 @@ def main() -> int:  # noqa: C901
         },
     )
     _ef_result.stats["entry_restriction_review"] = _restriction_review
+    # Record the actual removed objects, not a second filter evaluation. The
+    # immutable snapshot remains engine-stage BUY; this linked document records
+    # the later entry-filter refusal without changing action or eligibility.
+    _ef_passed_ids = {id(d) for d in _ef_result.passed}
+    _ef_reasons = dict(_ef_result.blocked)
+    for _d in actionable:
+        if id(_d) not in _ef_passed_ids and _d.symbol in _ef_reasons:
+            _d.block_reason = _d.block_reason or _ef_reasons[_d.symbol]
+            _d.evidence.setdefault("filter_outcomes", []).append({
+                "stage": "entry_filter", "status": "blocked",
+                "reason": _ef_reasons[_d.symbol],
+                "observed_at": datetime.now(timezone.utc).isoformat(),
+            })
     if _restriction_review["status"] == "error":
         print("  ⚠️ 購入停止の観測を保留（既存の購入制限は変更なし）")
     actionable = _ef_result.passed
@@ -2356,7 +2496,12 @@ def main() -> int:  # noqa: C901
     # existing 24h cooldown allowed a second lot after the timer expired even
     # though the first lot was already roughly -10%. Record the counterfactual
     # block here, but do not remove or mutate any actionable decision.
-    _losing_add_config = LosingPositionAddGuardConfig.from_env()
+    try:
+        _losing_add_config = _construct_config(LosingPositionAddGuardConfig)
+    except Exception:
+        if _config_instance_recorder is not None:
+            _config_instance_recorder.finalize()
+        raise
     _losing_add_observations = evaluate_losing_position_adds(
         actionable,
         current_positions_full,
@@ -2515,6 +2660,11 @@ def main() -> int:  # noqa: C901
                 "  🛡 Economic risk-off reduce_size: position sizing reduced to "
                 f"{_reduce_size_multiplier:.0%}"
             )
+    if blocked_risk_budget:
+        audit_log.log_system_event(
+            "risk_budget_blocked_buys",
+            details=f"status={risk_budget_result.get('status', 'unknown')}; symbols={blocked_risk_budget}",
+        )
     if blocked_cluster_cap:
         for sym, reason in blocked_cluster_cap:
             print(f"  🚫 Cluster cap block: {sym} — {reason}")
@@ -2553,7 +2703,8 @@ def main() -> int:  # noqa: C901
             decisions=decisions,
             submissions=[],
             cluster_blocks=[sym for sym, _ in blocked_cluster_cap] if "blocked_cluster_cap" in dir() else [],
-            risk_budget_pct=risk_budget_result.get("pct_of_equity", 0) if "risk_budget_result" in dir() else 0,
+            risk_budget_pct=risk_budget_result.get("pct_of_equity") if "risk_budget_result" in dir() else None,
+            risk_budget_status=risk_budget_result.get("status", "unknown") if "risk_budget_result" in dir() else "unknown",
             stale_symbols=list(stale_symbols) if "stale_symbols" in dir() else [],
             price_sources={},
             market_regime=regime_for_sizing if "regime_for_sizing" in dir() else "unknown",
@@ -2585,6 +2736,8 @@ def main() -> int:  # noqa: C901
                 broker_equity=equity,
                 pnl_tracker=pnl_tracker,
                 unrealized_pnl=_current_unrealized_for_capture,
+                broker_currency=acct.get("currency"),
+                broker_account_id=acct.get("account_number"),
             ),
             # R6-v2: funnel stages (dry-run has no submissions/reconciliation)
             funnel_stages={
@@ -2592,6 +2745,7 @@ def main() -> int:  # noqa: C901
                 "risk_denied": sum(1 for d in decisions if getattr(d, "action", "") == "deny"),
                 "entry_blocked": len(_ef_result.blocked) if "_ef_result" in dir() else 0,
                 "cluster_blocked": len(blocked_cluster_cap) if "blocked_cluster_cap" in dir() else 0,
+                "risk_budget_blocked": len(blocked_risk_budget),
                 "allocation_blocked": _allocation_blocked_count if "_allocation_blocked_count" in dir() else 0,
                 "guardrail_blocked": (
                     len(_guardrail_blocked) + len(_economic_risk_blocked)
@@ -2634,6 +2788,9 @@ def main() -> int:  # noqa: C901
             dry_run=True,
             invocation_source="paper_demo_dry_run",
         )
+        if _config_instance_recorder is not None:
+            _config_instance_recorder.finalize()
+            console_summary.effective_config = _config_instance_recorder.receipts
         console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
         return finish(
             _final_exit_code,
@@ -2643,7 +2800,9 @@ def main() -> int:  # noqa: C901
         )
 
     # R2-v2 / H5: pass AllocationConfig so PositionSizingPolicy uses same YAML multipliers
-    executor = PaperExecutor(runtime_mode=runtime_mode, broker_client=broker, alloc_config=_ALLOC_CONFIG)
+    from stock_swing.execution.submission_guard import SubmissionGuard
+    _guarded_broker = SubmissionGuard(broker, project_root, acct.get("id"))
+    executor = PaperExecutor(runtime_mode=runtime_mode, broker_client=_guarded_broker, alloc_config=_ALLOC_CONFIG)
     reconciler = Reconciler(broker_client=broker)
     # R0-v2-C: apply reduce_size multiplier to exposure cap if guardrail fired
     _effective_exposure_cap = (
@@ -2651,11 +2810,20 @@ def main() -> int:  # noqa: C901
         if "_reduce_size_multiplier" in dir() and _reduce_size_multiplier < 1.0
         else dynamic_exposure_cap
     )
+    from stock_swing.risk.order_preflight import snapshot_from_broker
+    _order_preflight_receipts = []
+    _order_preflight_failed = False
     actionable, preview_cache, skipped_buy_reasons, skipped_buy_symbols = _prefilter_actionable_buys_for_submission(
         actionable,
         executor,
         exposure_cap_override=_effective_exposure_cap,
     )
+    _risk_input_unavailable_symbols = [
+        symbol for symbol, reason in skipped_buy_symbols if reason == "risk_inputs_unavailable"
+    ]
+    if _risk_input_unavailable_symbols:
+        _final_exit_code = 1
+        _final_reason = _final_reason or "risk_inputs_unavailable"
 
     _section("9. Paper Order Submission")
     print(f"  Actionable: {len(actionable)}  Denied/held: {len(decisions) - len(actionable)}")
@@ -2692,6 +2860,12 @@ def main() -> int:  # noqa: C901
         sym: dict(pos) for sym, pos in (current_positions_full or {}).items()
     }
     
+    # K01: one conservative run-local snapshot, including remaining open BUYs.
+    # Keep the explicit measured-cluster override, never an unknown-input override.
+    _order_preflight = snapshot_from_broker(
+        broker, current_positions_full, equity, get_mid_price,
+        cluster_caps={} if os.environ.get("PAPER_DEMO_SKIP_CLUSTER_CAP", "").lower() == "true" else None,
+    )
     # Symbol-level position size limit.
     # 2026-05-15 risk tightening: stocks use 6% of equity, ETFs use 70% of that cap
     # to reduce concentration in thematic / sector products.
@@ -2833,6 +3007,26 @@ def main() -> int:  # noqa: C901
                     )
                     _allocation_blocked_count += 1
                     continue
+            if o.side == "buy":
+                _is_etf = o.symbol in ETF_SYMBOLS
+                _symbol_multiplier = float(_ALLOC_CONFIG.etf_new_buy_multiplier if _is_etf else _ALLOC_CONFIG.stock_new_buy_multiplier)
+                _receipt = _order_preflight.reserve(
+                    decision.decision_id, o.symbol, preview_qty, current_price,
+                    DEFAULT_MAX_POSITION_NOTIONAL_PCT * _symbol_multiplier,
+                    allocator=portfolio_allocator,
+                )
+                _order_preflight_receipts.append(_receipt)
+                decision.evidence["order_preflight"] = _receipt
+                if not _receipt["allowed"]:
+                    _allocation_blocked_count += 1
+                    if not _order_preflight.available:
+                        _order_preflight_failed = True
+                        _final_exit_code = 1
+                        _final_reason = _final_reason or "order_preflight_unavailable"
+                    decision.block_reason = _receipt["reason"]
+                    logger.warning("order_preflight_hold %s", json.dumps(_receipt, sort_keys=True))
+                    print(f"\n  SKIP BUY {o.symbol}: {_receipt['reason']}")
+                    continue
             preview_basis = ""
             if preview_sizing:
                 preview_basis = (
@@ -2841,12 +3035,32 @@ def main() -> int:  # noqa: C901
                     f"exposure={preview_sizing.get('shares_by_exposure')}]"
                 )
             print(f"\n  Submitting {o.side.upper()} {preview_qty} {o.symbol} ({o.order_type}){preview_basis} ... ", end="", flush=True)
-            sub = executor.submit(
-                decision,
-                current_qty=current_positions.get(o.symbol) if o.side == "sell" else None,
-                precomputed_qty=preview_qty,
-                precomputed_sizing=preview_sizing,
-            )
+            try:
+                sub = executor.submit(
+                    decision,
+                    current_qty=current_positions.get(o.symbol) if o.side == "sell" else None,
+                    precomputed_qty=preview_qty,
+                    precomputed_sizing=preview_sizing,
+                )
+            except Exception:
+                if o.side == "buy":
+                    _order_preflight.observe_submission(decision.decision_id, "unknown")
+                    _order_preflight_failed = True
+                    _final_exit_code = 1
+                    _final_reason = _final_reason or "order_preflight_unavailable"
+                    _receipt["submission_status"] = "unknown"
+                raise
+            if o.side == "buy":
+                _order_preflight.observe_submission(decision.decision_id, sub.status)
+                _receipt["submission_status"] = sub.status
+                _receipt["snapshot_available_after_submit"] = _order_preflight.available
+                if not _order_preflight.available:
+                    _order_preflight_failed = True
+                    _final_exit_code = 1
+                    _final_reason = _final_reason or (
+                        "submission_outcome_unresolved" if sub.status in {"unknown", "held"}
+                        else "order_preflight_unavailable"
+                    )
             submissions.append(sub)
             if sub.status == "submitted":
                 sizing = sub.sizing_details or {}
@@ -2862,6 +3076,10 @@ def main() -> int:  # noqa: C901
                 # Persist exit reason for sell orders so reconcile_orders can
                 # retrieve it when the fill is detected later.
                 if o.side == "sell" and sub.broker_order_id:
+                    _exit_lineage = build_exit_lineage(decision, sub)
+                    decision.evidence["exit_lineage_status"] = "recorded" if _exit_lineage else "unavailable"
+                    if _exit_lineage:
+                        decision.evidence["exit_lineage"] = _exit_lineage
                     notes = " ".join((decision.evidence or {}).get("notes") or [])
                     _exit_trigger, _exit_reason = _classify_exit_reason_from_notes(notes)
                     write_exit_reason(
@@ -2871,6 +3089,7 @@ def main() -> int:  # noqa: C901
                         exit_trigger=_exit_trigger,
                         exit_reason=_exit_reason,
                         metadata={
+                            "exit_lineage": _exit_lineage,
                             "signal_strength": getattr(decision, "signal_strength", None),
                             "return_pct": decision.evidence.get("return_pct") if isinstance(decision.evidence, dict) else None,
                         },
@@ -2888,6 +3107,7 @@ def main() -> int:  # noqa: C901
                             "signal_strength": getattr(decision, "signal_strength", None),
                             "return_pct": decision.evidence.get("return_pct") if isinstance(decision.evidence, dict) else None,
                             "source": "SimpleExitV2",
+                            **_exit_lineage,
                         },
                     ))
                     logger.info(
@@ -2959,6 +3179,10 @@ def main() -> int:  # noqa: C901
         except Exception as exc:
             print(f"ERROR: {exc}")
             audit_log.log_system_event("submission_error", AuditLevel.ERROR, details=f"{decision.symbol}: {exc}")
+            if str(exc).startswith("risk_inputs_unavailable"):
+                _risk_input_unavailable_symbols.append(decision.symbol)
+                _final_exit_code = 1
+                _final_reason = _final_reason or "risk_inputs_unavailable"
 
     _save_decisions(
         decisions,
@@ -2977,6 +3201,10 @@ def main() -> int:  # noqa: C901
                 signals_generated=len(all_signals),
                 orders_submitted=len([s for s in submissions if s.status == "submitted"]),
                 decisions_generated=len(decisions),
+                equity_observed_at=account_env.fetched_at,
+                equity_source="broker:/v2/account",
+                environment_id="paper" if broker.paper_mode else "unknown",
+                run_id=run_context.run_id,
             )
             print("  ✓ Daily snapshot recorded")
     except Exception as e:
@@ -3007,67 +3235,34 @@ def main() -> int:  # noqa: C901
                         try:
                             fill = result.fills_detected[0]
                             exit_price = float(fill.get('avg_price') or 0)
-                            exit_qty = int(float(fill.get('qty') or 0))
+                            exit_qty = float(fill.get('qty') or 0)
                         except Exception:
                             exit_price = None
                             exit_qty = None
                     
                     # Only record if we have actual fill data
                     if exit_price and exit_price > 0:
-                        # FIX-LEDGER-RACE (2026-07-31): ingest+consume this fill through
-                        # FillLedger BEFORE recording the exit. This makes the inline
-                        # reconciler participate in the same exactly-once ledger used by
-                        # reconcile_orders.py cron, so a fill cannot be silently
-                        # double-consumed (or have its consumption_events overwritten)
-                        # by the two independent reconcile paths racing on the same
-                        # broker fill within the 15-minute cron window.
-                        _fill_already_consumed = False
-                        _fill_quarantined = False
-                        if sub.broker_order_id:
-                            try:
-                                _fk = fill_ledger.ingest(
-                                    {
-                                        "id": sub.broker_order_id,
-                                        "order_id": sub.broker_order_id,
-                                        "symbol": sub.symbol,
-                                        "side": "sell",
-                                        "qty": exit_qty,
-                                        "filled_avg_price": exit_price,
-                                        "filled_at": datetime.now(timezone.utc).isoformat(),
-                                    },
-                                    quarantine_on_missing=True,
-                                )
-                                fill_ledger.consume(
-                                    _fk,
-                                    trade_id=f"inline_reconcile:{sub.submission_id}",
-                                    qty=exit_qty,
-                                )
-                            except FillQuarantinedError as _fq_exc:
-                                _fill_quarantined = True
-                                print(f"  WARN: {sub.symbol} fill quarantined, skipping exit record: {_fq_exc}")
-                            except FillAlreadyConsumedError as _fac_exc:
-                                _fill_already_consumed = True
-                                print(f"  INFO: {sub.symbol} fill already consumed (race with cron reconcile?): {_fac_exc}")
-
-                        if not _fill_already_consumed and not _fill_quarantined:
-                            # Use the correct decision for THIS submission (not outer-scope variable)
-                            decision_for_sub = decision_by_id.get(sub.decision_id)
-                            notes_text = " ".join(
-                                (getattr(decision_for_sub, 'evidence', None) or {}).get("notes") or []
-                            ) if decision_for_sub else ""
-                            _exit_trigger, exit_reason = _classify_exit_reason_from_notes(notes_text)
-                            pnl_tracker.record_exit(
-                                symbol=sub.symbol,
-                                exit_price=exit_price,
-                                exit_qty=exit_qty,
-                                broker_order_id=sub.broker_order_id,
-                                exit_strategy_id=getattr(decision_for_sub, 'strategy_id', 'unknown'),
-                                exit_reason=exit_reason,
-                            )
-                            # R1-B: inline reconcile consumed this fill; remove from
-                            # pending_exit_reasons so cron reconcile doesn't re-process.
-                            if sub.broker_order_id:
-                                delete_exit_reason(project_root, sub.broker_order_id)
+                        # R22 N2: one shared settlement boundary for inline and cron.
+                        if not sub.broker_order_id:
+                            raise ExecutionCostError("sell observation has no order identity")
+                        _order_snapshot = {
+                            "id": sub.broker_order_id, "order_id": sub.broker_order_id,
+                            "symbol": sub.symbol, "side": "sell", "filled_qty": exit_qty,
+                            "filled_avg_price": exit_price, "filled_at": fill.get("filled_at"),
+                        }
+                        decision_for_sub = decision_by_id.get(sub.decision_id)
+                        notes_text = " ".join(
+                            (getattr(decision_for_sub, 'evidence', None) or {}).get("notes") or []
+                        ) if decision_for_sub else ""
+                        _exit_trigger, exit_reason = _classify_exit_reason_from_notes(notes_text)
+                        _settled = settle_sell(
+                            project_root, _order_snapshot,
+                            exit_strategy_id=getattr(decision_for_sub, 'strategy_id', 'unknown'),
+                            exit_reason=exit_reason,
+                        )
+                        pnl_tracker.state = pnl_tracker._load_state()
+                        if _settled is not None:
+                            delete_exit_reason(project_root, sub.broker_order_id)
 
                 audit_log.log_reconciliation(sub.submission_id, sub.broker_order_id, result.status_matched, result.discrepancies)
                 _reconciled_count = _reconciled_count + 1 if "_reconciled_count" in dir() else 1
@@ -3189,7 +3384,9 @@ def main() -> int:  # noqa: C901
                 _post_state = post_run_update(_post_metrics, _guard_engine, _breaker_store)
 
             # R0-v2-A: recovery_pending → ok 遷移（clean scheduled run 検証）
-            if _post_state.status == "recovery_pending" and _adjusted_mismatch == 0:
+            if (_post_state.status == "recovery_pending" and _adjusted_mismatch == 0
+                    and _final_exit_code == 0
+                    and not any(s.status in {"unknown", "held"} for s in submissions)):
                 _post_state = _breaker_store.mark_clean_run_complete()
                 if _post_state.status == "ok":
                     logger.info("circuit_breaker: recovery_pending → ok (clean scheduled run verified)")
@@ -3269,8 +3466,22 @@ def main() -> int:  # noqa: C901
     except Exception as _jc_exc:
         logger.warning("P6 join_coverage report failed: %s", _jc_exc)
 
+    # FIX-02 / 2026-11-03: a completed process is not a resolved submission.
+    # Preserve prior error reasons; never relabel unknown as broker rejection.
+    _submission_unresolved = any(s.status in {"unknown", "held"} for s in submissions)
+    if _submission_unresolved:
+        _final_exit_code = 1
+        _final_reason = _final_reason or "submission_outcome_unresolved"
+    _preflight_path = project_root / "reports/order_preflight" / f"{run_context.run_id}.json"
+    _preflight_path.parent.mkdir(parents=True, exist_ok=True)
+    _preflight_path.write_text(json.dumps({
+        "policy": "k01_existing_caps_only_not_deployed",
+        "snapshot_available": _order_preflight.available,
+        "snapshot_reason": _order_preflight.reason,
+        "receipts": _order_preflight_receipts,
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
     _print_summary(decisions, submissions, equity, args.dry_run)
-    from stock_swing.reporting.console_summary import ConsoleSummary
+    from stock_swing.reporting.console_summary import ConsoleAlert, ConsoleSummary
 
     unrealized = _postrun_unrealized if "_postrun_unrealized" in dir() else _current_unrealized_for_capture
     ps_sources: dict[str, int] = {}
@@ -3309,11 +3520,23 @@ def main() -> int:  # noqa: C901
         decisions=decisions,
         submissions=submissions,
         cluster_blocks=[sym for sym, _ in blocked_cluster_cap] if "blocked_cluster_cap" in dir() else [],
-        risk_budget_pct=risk_budget_result.get("pct_of_equity", 0) if "risk_budget_result" in dir() else 0,
+        risk_budget_pct=risk_budget_result.get("pct_of_equity") if "risk_budget_result" in dir() else None,
+        risk_budget_status=risk_budget_result.get("status", "unknown") if "risk_budget_result" in dir() else "unknown",
         stale_symbols=list(stale_symbols) if "stale_symbols" in dir() else [],
         price_sources=ps_sources,
         market_regime=regime_for_sizing if "regime_for_sizing" in dir() else "unknown",
-        warnings=[],
+        warnings=(
+            (["risk_inputs_unavailable: " + ", ".join(sorted(set(_risk_input_unavailable_symbols)))] if _risk_input_unavailable_symbols else [])
+            + (["order_preflight_unavailable: " + _order_preflight.reason] if _order_preflight_failed else [])
+        ),
+        extra_alerts=(
+            ([ConsoleAlert(severity="warning", code="risk_inputs_unavailable",
+                message="Position exposure unavailable; BUY submission held",
+                details={"symbols": sorted(set(_risk_input_unavailable_symbols))})] if _risk_input_unavailable_symbols else [])
+            + ([ConsoleAlert(severity="warning", code="order_preflight_unavailable",
+                message="Open-order exposure or submission outcome unavailable; BUY held",
+                details={"reason": _order_preflight.reason})] if _order_preflight_failed else [])
+        ),
         experiment_id=experiment_context.experiment_id if experiment_context is not None else "unknown",
         guardrail_status=_final_breaker_status,
         api_metrics=_build_api_metrics(latency_tracker),
@@ -3343,6 +3566,8 @@ def main() -> int:  # noqa: C901
             broker_equity=equity,
             pnl_tracker=pnl_tracker,
             unrealized_pnl=unrealized,
+            broker_currency=acct.get("currency"),
+            broker_account_id=acct.get("account_number"),
         ),
         # R6-v2: full 7-stage funnel (now 8 stages with allocation_blocked)
         funnel_stages={
@@ -3350,6 +3575,7 @@ def main() -> int:  # noqa: C901
             "risk_denied": sum(1 for d in decisions if getattr(d, "action", "") == "deny"),
             "entry_blocked": len(_ef_result.blocked) if "_ef_result" in dir() else 0,
             "cluster_blocked": len(blocked_cluster_cap) if "blocked_cluster_cap" in dir() else 0,
+            "risk_budget_blocked": len(blocked_risk_budget),
             "allocation_blocked": _allocation_blocked_count,
             "guardrail_blocked": (
                 (len(_guardrail_blocked) if "_guardrail_blocked" in dir() else 0)
@@ -3385,6 +3611,9 @@ def main() -> int:  # noqa: C901
         dry_run=False,
         invocation_source="paper_demo_scheduled",
     )
+    if _config_instance_recorder is not None:
+        _config_instance_recorder.finalize()
+        console_summary.effective_config = _config_instance_recorder.receipts
     console_summary.emit(save_path=project_root / "reports/console/latest_console_summary.json")
 
     # RF-5b: flush token usage to CSV
@@ -3433,6 +3662,8 @@ def _build_equity_bridge(
     broker_equity: float,
     pnl_tracker,
     unrealized_pnl: float | None,
+    broker_currency: str | None = None,
+    broker_account_id: str | None = None,
 ) -> dict:
     """R0-v2-B: Build equity bridge dict for ConsoleSummary.
 
@@ -3457,12 +3688,21 @@ def _build_equity_bridge(
         realized = float(state.cumulative_realized_pnl or 0)
         quarantined_pnl = sum(float(t.get("pnl") or 0) for t in pnl_tracker.get_quarantined_trades())
 
-        reconciliation = load_reconciliation_snapshot(
-            pnl_tracker.project_root / "data" / "audits" / "equity_bridge_reconciliation.json",
-            expected_baseline_equity=baseline,
-            expected_account_id=getattr(state, "broker_account_id", None),
-            current_trades=getattr(state, "trades", []),
-        )
+        _selected = bool(os.environ.get('EQUITY_BRIDGE_LEDGER_REVISION') or os.environ.get('EQUITY_BRIDGE_ARTIFACT_SHA256'))
+        if getattr(state, 'measurement_lineage', None) or _selected:
+            from stock_swing.reporting.versioned_bridge import load_selected_reconciliation
+            reconciliation = load_selected_reconciliation(pnl_tracker.project_root,
+                expected_account_id=broker_account_id,
+                currency=broker_currency, current_trades=getattr(state, 'trades', []))
+            if reconciliation is None:
+                return {}  # Unknown historical adjustment is not zero.
+        else:
+            reconciliation = load_reconciliation_snapshot(
+                pnl_tracker.project_root / "data" / "audits" / "equity_bridge_reconciliation.json",
+                expected_baseline_equity=baseline,
+                expected_account_id=getattr(state, "broker_account_id", None),
+                current_trades=getattr(state, "trades", []),
+            )
         realized_adjustment = 0.0
         fees = 0.0
         external_cash_adjustment = 0.0
@@ -3500,6 +3740,10 @@ def _build_equity_bridge(
         if reconciliation:
             payload["reconciliation_as_of"] = reconciliation.get("generated_at")
             payload["reconciliation_method"] = reconciliation.get("method")
+            if reconciliation.get("reconciliation_artifact_sha256"):
+                payload["reconciliation_artifact_sha256"] = reconciliation["reconciliation_artifact_sha256"]
+                payload["reconciliation_ledger_revision"] = reconciliation["ledger_revision"]
+                payload["current_account_freshness_qualified"] = False
         return payload
     except Exception as exc:
         import logging as _logging

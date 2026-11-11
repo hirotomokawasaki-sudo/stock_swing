@@ -24,26 +24,27 @@ class SummaryService:
         
         # PnL summary
         try:
-            from stock_swing.tracking.pnl_tracker import PnLTracker
-            tracker = PnLTracker(self.project_root)
+            from stock_swing.tracking.compatibility import read_tracking_state
+            state = read_tracking_state(self.project_root / "data/tracking/pnl_state.json")
             
-            today_closed = [t for t in tracker.state.trades 
+            today_closed = [t for t in state.get("trades", [])
                            if t.get("status") == "closed" and 
                            (t.get("exit_time", "")[:10] == today)]
             
             today_pnl = sum(t.get("pnl", 0) for t in today_closed)
             
             pnl_summary = {
+                "measurement_lineage": state.get("measurement_lineage", {}),
                 "today_pnl": round(today_pnl, 2),
                 "today_trades": len(today_closed),
-                "cumulative_pnl": tracker.state.cumulative_realized_pnl,
-                "total_trades": tracker.state.total_trades,
+                "cumulative_pnl": state.get("cumulative_realized_pnl", 0),
+                "total_trades": state.get("total_trades", 0),
             }
             
             # Get open positions for alerts
-            open_positions = tracker.get_open_positions()
-        except:
-            pnl_summary = {}
+            open_positions = [t for t in state.get("trades", []) if t.get("status") == "open"]
+        except Exception as exc:
+            pnl_summary = {"available": False, "error": str(exc)}
             open_positions = []
         
         unresolved_mismatches = self._get_unresolved_mismatches()
@@ -77,6 +78,8 @@ class SummaryService:
         - low: Informational (opportunities, minor notes)
         """
         alerts = []
+        if pnl_summary.get("measurement_lineage") or pnl_summary.get("available") is False:
+            alerts.append({"severity": "high", "code": "historical_correction_unqualified", "title": "会計履歴の検証が未完了", "description": "未検証、または確認不能です。成績評価には使用できません。"})
         unresolved_mismatches = unresolved_mismatches or {}
         stale_positions = stale_positions or {}
         strategy_health = strategy_health or {}
@@ -131,9 +134,9 @@ class SummaryService:
         
         # Alert: Consecutive losing days
         try:
-            from stock_swing.tracking.pnl_tracker import PnLTracker
-            tracker = PnLTracker(self.project_root)
-            recent_snapshots = sorted(tracker.state.daily_snapshots, key=lambda x: x.get('date', ''), reverse=True)[:5]
+            from stock_swing.tracking.compatibility import read_tracking_state
+            state = read_tracking_state(self.project_root / "data/tracking/pnl_state.json")
+            recent_snapshots = sorted([] if state.get("measurement_lineage") else state.get("daily_snapshots", []), key=lambda x: x.get('date', ''), reverse=True)[:5]
             consecutive_losses = 0
             for snap in recent_snapshots:
                 daily_pnl = snap.get('daily_realized_pnl', 0)
@@ -391,9 +394,9 @@ class SummaryService:
             closes: Dict[str, int] = {}
             open_positions: Dict[str, int] = {}
             try:
-                from stock_swing.tracking.pnl_tracker import PnLTracker
-                tracker = PnLTracker(self.project_root)
-                for trade in tracker.state.trades:
+                from stock_swing.tracking.compatibility import read_tracking_state
+                state = read_tracking_state(self.project_root / "data/tracking/pnl_state.json")
+                for trade in state.get("trades", []):
                     strategy_id = trade.get("strategy_id") or "unknown"
                     if trade.get("status") == "closed":
                         closes[strategy_id] = closes.get(strategy_id, 0) + 1
@@ -572,10 +575,13 @@ class SummaryService:
     
     def generate_weekly_summary(self, weeks: int = 1) -> Dict[str, Any]:
         """Generate weekly summary for the last N weeks."""
-        from stock_swing.tracking.pnl_tracker import PnLTracker
+        from stock_swing.tracking.compatibility import read_tracking_state
         
         try:
-            tracker = PnLTracker(self.project_root)
+            state = read_tracking_state(self.project_root / "data/tracking/pnl_state.json")
+
+            if state.get("measurement_lineage"):
+                return {"available": False, "error": "historical_correction_unqualified", "measurement_lineage": state["measurement_lineage"]}
             
             # Get date range
             end_date = datetime.now()
@@ -583,7 +589,7 @@ class SummaryService:
             
             # Filter trades in this period
             period_trades = [
-                t for t in tracker.state.trades
+                t for t in state.get("trades", [])
                 if t.get("status") == "closed" and
                 t.get("exit_time") and
                 self._parse_datetime(t.get("exit_time")) >= start_date
@@ -654,7 +660,7 @@ class SummaryService:
             )[:10]
             
             # Weekly equity progression (from snapshots)
-            daily_snapshots = list(tracker.state.daily_snapshots)
+            daily_snapshots = list(state.get("daily_snapshots", []))
             weekly_snapshots = [
                 snap for snap in daily_snapshots
                 if self._parse_datetime(snap.get("date")) >= start_date

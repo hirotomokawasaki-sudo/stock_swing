@@ -125,7 +125,7 @@ class ConsoleRenderer:
         lines += [
             _SEP,
             "  resolve:",
-            "    1. python scripts/g1_investigate_mismatch.py",
+            "    1. python scripts/build_broker_tracker_reconciliation.py",
             "    2. Verify mismatch=0 from fresh broker fetch",
             "    3. python scripts/clear_circuit_breaker.py",
             _HALT_SEP,
@@ -335,6 +335,10 @@ class ConsoleRenderer:
         lines.append(f"  regime        = {regime}")
         if budget is not None:
             lines.append(f"  open_risk_pct = {_fmt_pct(budget * 100)}")
+        else:
+            lines.append("  open_risk_pct = UNAVAILABLE (new BUYs held)")
+        if risk.get("risk_budget_status") == "bypassed":
+            lines.append("  risk_budget   = BYPASSED (measured-threshold override)")
         blocks = risk.get("cluster_blocks", [])
         if blocks:
             lines.append(f"  cluster_blocks= {', '.join(blocks[:5])}")

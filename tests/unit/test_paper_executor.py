@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 """Tests for paper executor."""
 
 from datetime import datetime, timezone
@@ -216,8 +217,10 @@ def test_paper_executor_no_proposed_order() -> None:
 
 
 def test_paper_executor_submit_reuses_precomputed_sizing() -> None:
-    """Test precomputed sizing avoids recalculating broker-dependent inputs."""
+    """Acceptance K03: reuse quantity/price, but confirm readable risk inputs."""
     broker = MagicMock()
+    broker.fetch_account.return_value = SimpleNamespace(payload={"equity": "100000"})
+    broker.fetch_positions.return_value = SimpleNamespace(payload=[])
     broker.submit_order.return_value = {"id": "broker-order-123", "status": "accepted"}
 
     executor = PaperExecutor(
@@ -246,8 +249,8 @@ def test_paper_executor_submit_reuses_precomputed_sizing() -> None:
         time_in_force="day",
         limit_price=None,
     )
-    broker.fetch_account.assert_not_called()
-    broker.fetch_positions.assert_not_called()
+    broker.fetch_account.assert_called_once_with()
+    broker.fetch_positions.assert_called_once_with()
     broker.fetch_bars.assert_not_called()
 
 

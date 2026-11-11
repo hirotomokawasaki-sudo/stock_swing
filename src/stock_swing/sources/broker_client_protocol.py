@@ -96,6 +96,7 @@ class BrokerClientProtocol(Protocol):
         qty: int,
         time_in_force: str,
         limit_price: float | None = None,
+        client_order_id: str | None = None,
     ) -> dict[str, Any]:
         """Submit an order and return the broker's raw response dict."""
         ...
@@ -118,3 +119,12 @@ class BrokerClientProtocol(Protocol):
     def fetch_latest_quote(self, symbol: str) -> RawEnvelope:
         """Return the latest bid/ask quote for a symbol."""
         ...
+
+
+@runtime_checkable
+class ClientOrderIdentityProtocol(Protocol):
+    """Optional qualified capability; do not silently expand the migration base contract."""
+    def fetch_order_by_client_id(self, client_order_id: str) -> RawEnvelope: ...
+    def submit_order(self, symbol: str, side: str, order_type: str, qty: int,
+                     time_in_force: str, limit_price: float | None = None,
+                     client_order_id: str | None = None) -> dict[str, Any]: ...

@@ -1396,3 +1396,28 @@ table td strong {
     color: #6b7280;
     font-size: 12px;
 }
+
+/* FIX-CONSOLE-EVIDENCE-20261028: wrap evidence, retain local horizontal scroll on phones. */
+#console-evidence summary { cursor: pointer; }
+#console-evidence .table-wrap { overflow-x: auto; }
+#console-evidence table { width: 100%; min-width: 640px; table-layout: fixed; }
+#console-evidence th, #console-evidence td { white-space: normal; overflow-wrap: anywhere; vertical-align: top; font-weight: 400; }
+#console-evidence th { font-weight: 600; }
+#console-evidence th:first-child { width: 18%; }
+#console-evidence th:nth-child(2) { width: 24%; }
+#console-evidence td:nth-child(2) { font-weight: 600; }
+#console-evidence a { color: #7dd3fc; }
+
+@media (max-width: 768px) {
+    #content .grid, #content .grid > .card { min-width: 0; }
+    #content .grid > .card { grid-column: 1 / -1 !important; }
+    #console-evidence { min-width: 0; max-width: 100%; }
+    #status-bar { flex-wrap: wrap; gap: 8px; }
+}
+
+/* Operational evidence is read-only; long fingerprints stay inside cards. */
+.ops-evidence { margin-bottom: 16px; min-width: 0; }
+.ops-evidence p, .ops-evidence td, .ops-qualification p { white-space: normal; overflow-wrap: anywhere; }
+.ops-evidence details { margin-top: 10px; }
+.ops-evidence table { min-width: 540px; }
+.ops-qualification { margin: 12px 0; padding: 10px; border-left: 3px solid var(--warning, #f59e0b); }

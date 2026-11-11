@@ -17,6 +17,8 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
@@ -45,8 +47,7 @@ VARIANTS = (
 
 
 def load_state(path: Path = STATE_PATH) -> dict[str, Any]:
-    with path.open(encoding="utf-8") as fh:
-        state = json.load(fh)
+    state = legacy_analytical_state(path)
     equity = state.get("baseline_equity")
     if not isinstance(equity, (int, float)) or equity <= 0:
         raise ValueError("baseline_equity must be a positive number (fail-closed)")

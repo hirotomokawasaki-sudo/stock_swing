@@ -315,6 +315,8 @@ def _closed_with_provenance(
     decision_id=None, run_id=None, experiment_id=None,
 ):
     trade = _closed(symbol, exit_reason, exit_broker_order_id, exit_time, pnl)
+    trade['broker_order_id'] = 'synthetic-buy-' + symbol
+    trade['entry_time'] = '2026-05-31T14:00:00Z'
     trade["strategy_id"] = strategy_id
     trade["original_strategy_id"] = original_strategy_id
     if decision_id is not None:
@@ -326,17 +328,33 @@ def _closed_with_provenance(
     return trade
 
 
+def _write_provenance_state(tmp_path, state):
+    """R22: genuine entry origin requires pre-entry decision evidence too."""
+    tracking = tmp_path / 'data/tracking'
+    tracking.mkdir(parents=True)
+    directory = tmp_path / 'data/decisions'
+    directory.mkdir()
+    for index, trade in enumerate(state['trades']):
+        if not trade.get('decision_id'):
+            continue
+        record = {k: trade[k] for k in ('decision_id', 'symbol', 'run_id', 'experiment_id') if k in trade}
+        record.update(strategy_id=trade['original_strategy_id'], action='buy',
+                      generated_at='2026-05-31T13:59:00Z')
+        (directory / f'{index}.json').write_text(json.dumps(record))
+    return _write_state(str(tracking), state)
+
+
 class TestProvenancePreservation:
-    def test_load_existing_attribution_indexes_real_provenance_by_exit_order_id(self, tmp_path):
+    def test_load_existing_attribution_indexes_real_provenance_by_entry_order_id(self, tmp_path):
         state = _make_state([
             _closed_with_provenance(
                 "AMZN", "stop_loss", "breakout_momentum_v1", "breakout_momentum_v1",
                 exit_broker_order_id="eid-real", decision_id="dec-123", run_id="run-456",
             ),
         ])
-        f = _write_state(str(tmp_path), state)
+        f = _write_provenance_state(tmp_path, state)
         attr = load_existing_attribution(f)
-        prov = attr["provenance_by_exit_order_id"]["eid-real"]
+        prov = attr['provenance_by_entry_key'][('AMZN', 'synthetic-buy-AMZN')]['fields']
         assert prov["strategy_id"] == "breakout_momentum_v1"
         assert prov["original_strategy_id"] == "breakout_momentum_v1"
         assert prov["decision_id"] == "dec-123"
@@ -356,7 +374,7 @@ class TestProvenancePreservation:
         ])
         f = _write_state(str(tmp_path), state)
         attr = load_existing_attribution(f)
-        assert "eid-synth" not in attr["provenance_by_exit_order_id"]
+        assert attr['provenance_by_entry_key'] == {}
 
     def test_load_existing_attribution_indexes_real_provenance_even_with_broker_fill_exit_reason(self, tmp_path):
         """A real-strategy-origin trade whose EXIT was never specifically
@@ -365,12 +383,12 @@ class TestProvenancePreservation:
         state = _make_state([
             _closed_with_provenance(
                 "NVDA", "broker_fill", "event_swing_v1", "event_swing_v1",
-                exit_broker_order_id="eid-partial",
+                exit_broker_order_id="eid-partial", decision_id='synthetic-decision',
             ),
         ])
-        f = _write_state(str(tmp_path), state)
+        f = _write_provenance_state(tmp_path, state)
         attr = load_existing_attribution(f)
-        assert "eid-partial" in attr["provenance_by_exit_order_id"]
+        assert ('NVDA', 'synthetic-buy-NVDA') in attr['provenance_by_entry_key']
 
     def test_apply_attribution_restores_provenance_fields_onto_rebuilt_trade(self):
         """THE core regression test: a freshly-rebuilt trade (strategy_id=
@@ -387,13 +405,13 @@ class TestProvenancePreservation:
             "by_exit_order_id": {},
             "by_key": {},
             "quarantined_trades": [],
-            "provenance_by_exit_order_id": {
-                "eid-real": {
+            'provenance_by_entry_key': {
+                ('AMZN', 'synthetic-buy-AMZN'): {'decision_generated_at': '2026-05-31T13:59:00Z', 'fields': {
                     "strategy_id": "breakout_momentum_v2_threshold_tuned",
                     "original_strategy_id": "breakout_momentum_v1",
                     "decision_id": "fced5063-1321-710b-972c-6e431534f337",
                     "run_id": "paper_demo-20260803T133503Z-0e593286",
-                },
+                }},
             },
             "provenance_by_key": {},
         }
@@ -405,7 +423,7 @@ class TestProvenancePreservation:
         assert trade["run_id"] == "paper_demo-20260803T133503Z-0e593286"
         assert stats["provenance_restored"] == 1
 
-    def test_apply_attribution_falls_back_to_key_when_exit_order_id_not_indexed(self):
+    def test_apply_attribution_never_uses_approximate_exit_key_for_entry(self):
         pnl_state = _make_state([
             _closed_with_provenance(
                 "MSFT", "trailing_stop", "broker_reconstructed", "broker_reconstructed",
@@ -422,8 +440,8 @@ class TestProvenancePreservation:
             },
         }
         stats = apply_attribution(pnl_state, attribution)
-        assert pnl_state["trades"][0]["strategy_id"] == "breakout_momentum_v1"
-        assert stats["provenance_restored"] == 1
+        assert pnl_state["trades"][0]["strategy_id"] == "broker_reconstructed"
+        assert stats["provenance_restored"] == 0
 
     def test_apply_attribution_does_not_touch_trades_with_no_saved_provenance(self):
         """A genuinely rebuild-only trade (no matching provenance entry)
@@ -461,7 +479,7 @@ class TestProvenancePreservation:
                 exit_broker_order_id="eid-2", exit_time="2026-06-01T10:00:00", pnl=-500.0,
             ),
         ])
-        f = _write_state(str(tmp_path), original)
+        f = _write_provenance_state(tmp_path, original)
         attr = load_existing_attribution(f)
 
         # Simulate what a real rebuild produces: strategy_id/original_

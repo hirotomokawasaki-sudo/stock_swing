@@ -41,6 +41,8 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
@@ -119,8 +121,7 @@ REPLAY_EXIT_REASONS = ("stop_loss", "breakeven_stop")
 
 def load_stop_loss_trades() -> list[dict]:
     state_path = ROOT / "data" / "tracking" / "pnl_state.json"
-    with open(state_path) as f:
-        state = json.load(f)
+    state = legacy_analytical_state(state_path)
     trades = state.get("trades", [])
     return [
         t for t in trades

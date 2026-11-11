@@ -12,10 +12,22 @@ from console.services.benchmark_service import BenchmarkService
 from console.services.dashboard_service import DashboardService
 
 
+@pytest.fixture(autouse=True)
+def service_root(tmp_path, monkeypatch):
+    import json
+    folder = tmp_path / 'data/tracking'
+    folder.mkdir(parents=True)
+    (folder / 'pnl_state.json').write_text(json.dumps({'last_updated': '2026-08-02T15:00:00+00:00', 'trades': [], 'quarantined_trades': []}))
+    (folder / 'trade_events.jsonl').write_text('')
+    monkeypatch.setitem(globals(), 'PROJECT_ROOT', tmp_path)
+    return tmp_path
+
+
 class TestSummaryService:
     """Test Summary Service."""
     
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup_method(self, service_root):
         """Setup test fixtures."""
         self.service = SummaryService(PROJECT_ROOT)
     
@@ -52,7 +64,8 @@ class TestSummaryService:
 class TestBenchmarkService:
     """Test Benchmark Service."""
     
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup_method(self, service_root):
         """Setup test fixtures."""
         self.service = BenchmarkService(PROJECT_ROOT)
     

@@ -11,12 +11,13 @@ Usage:
 
 import argparse
 import json
+import math
 import os
 import shutil
 import sys
 import urllib.request
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +27,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 from stock_swing.sources.broker_client import BrokerClient
 from stock_swing.risk.allocation_config import read_symbol_registry
 from stock_swing.tracking.pnl_tracker import PnLTracker
+from stock_swing.tracking.execution_cost import decimal_value, whole_quantity
 
 # Reuse the single source of truth for "this strategy_id means the trade's
 # real origin is unknown / rebuild-synthesized" -- do not duplicate this
@@ -124,6 +126,9 @@ def load_existing_tracking_metadata(state_file: Path) -> dict[str, Any]:
     except Exception:
         return {}
 
+    if not isinstance(data, dict):
+        return {}
+
     return {
         'created_at': data.get('created_at'),
         'baseline_date': data.get('baseline_date'),
@@ -136,7 +141,56 @@ def load_existing_tracking_metadata(state_file: Path) -> dict[str, Any]:
         # Preserve chart history — do NOT reset on rebuild
         'daily_snapshots': data.get('daily_snapshots', []),
         'strategy_daily_snapshots': data.get('strategy_daily_snapshots', []),
+        'peak_equity': data.get('peak_equity'),
+        'max_drawdown_pct': data.get('max_drawdown_pct'),
     }
+
+
+def validate_rebuild_risk_history(metadata: dict[str, Any]) -> tuple[float, float]:
+    """Preserve known risk fields; never manufacture zero DD from realized PnL.
+
+    R22 (2026-10-20): date-only snapshots give consistency bounds, not a
+    canonical cash-flow-adjusted/session-close curve. If saved fields conflict
+    with those bounds, stop for an explicit historical repair, not auto-repair.
+    """
+    def number(value: Any, name: str) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            raise ValueError(f'risk history: missing/invalid {name}; audited metadata required')
+        return float(value)
+
+    peak = number(metadata.get('peak_equity'), 'peak_equity')
+    dd = number(metadata.get('max_drawdown_pct'), 'max_drawdown_pct')
+    baseline = number(metadata.get('baseline_equity'), 'baseline_equity')
+    if peak <= 0 or baseline <= 0 or not 0 <= dd <= 1:
+        raise ValueError('risk history: invalid peak, baseline or DD range')
+    try:
+        baseline_day = date.fromisoformat(metadata['baseline_date'])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError('risk history: baseline_date is unknown') from exc
+    snapshots = metadata.get('daily_snapshots')
+    if not isinstance(snapshots, list):
+        raise ValueError('risk history: daily_snapshots must be a list')
+    curve = []
+    for index, row in enumerate(snapshots):
+        if not isinstance(row, dict):
+            raise ValueError('risk history: malformed snapshot')
+        try:
+            day = date.fromisoformat(row['date'])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError('risk history: snapshot date is unknown') from exc
+        equity = number(row.get('equity'), 'snapshot equity')
+        if day < baseline_day or equity <= 0:
+            raise ValueError('risk history: snapshot is outside epoch or has invalid equity')
+        curve.append((day, index, equity))
+    observed_peak, observed_dd = baseline, 0.
+    for _, _, equity in sorted(curve):
+        observed_peak = max(observed_peak, equity)
+        observed_dd = max(observed_dd, 1 - equity / observed_peak)
+    # Stored DD is rounded to four decimal places by PnLTracker.
+    if peak + .01 < observed_peak or dd + .000050000001 < observed_dd:
+        raise ValueError('risk history: saved peak/DD contradict retained snapshots; '
+                         'resolve valuation history before rebuilding')
+    return peak, dd
 
 
 # AUDIT FIX (2026-08-23, provenance-loss incident -- see docs/equity_bridge_
@@ -156,7 +210,6 @@ def load_existing_tracking_metadata(state_file: Path) -> dict[str, Any]:
 PROVENANCE_FIELDS = (
     'strategy_id',
     'original_strategy_id',
-    'exit_strategy_id',
     'strategy_version_id',
     'decision_id',
     'run_id',
@@ -166,26 +219,94 @@ PROVENANCE_FIELDS = (
 )
 
 
-def load_existing_attribution(state_file: Path) -> dict[str, Any]:
+def _aware_time(value: Any) -> datetime | None:
+    try:
+        parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
+        return parsed if parsed.utcoffset() is not None else None
+    except (AttributeError, TypeError, ValueError):
+        return None
+
+
+def _decision_precedes_entry(generated_at: Any, entry_time: Any) -> bool:
+    decision_time, entry = _aware_time(generated_at), _aware_time(entry_time)
+    return decision_time is not None and entry is not None and decision_time <= entry
+
+
+def _load_entry_provenance(trades: list[dict], decisions_dir: Path) -> tuple[dict, dict]:
+    """Use same-buy identity plus unique, matching, pre-entry decision evidence.
+
+    This is a conservative preservation check, not proof of original execution
+    causality or a substitute for a full fill/event replay. Conflicting or already
+    contaminated source rows must not be propagated by last-write-wins.
+    """
+    decisions: dict[str, list[dict]] = defaultdict(list)
+    diagnostics = {'real_origin_source_rows': 0, 'rejected_source_rows': 0,
+                   'ambiguous_entry_keys': 0, 'withheld_tainted_entry_keys': 0,
+                   'unreadable_decision_files': 0}
+    for path in sorted(decisions_dir.glob('*.json')):
+        try:
+            record = json.loads(path.read_text(encoding='utf-8'))
+            if not isinstance(record, dict) or not isinstance(record.get('decision_id'), str):
+                raise ValueError('invalid decision record')
+            decisions[record['decision_id']].append(record)
+        except (OSError, ValueError):
+            diagnostics['unreadable_decision_files'] += 1
+    result, rejected, conflicts = {}, set(), set()
+    for trade in trades:
+        origin = trade.get('original_strategy_id') or trade.get('strategy_id') or ''
+        if not isinstance(origin, str) or not origin or origin in UNTRACKED_ORIGIN_STRATEGY_IDS:
+            continue
+        diagnostics['real_origin_source_rows'] += 1
+        key = (trade.get('symbol'), trade.get('broker_order_id'))
+        if not all(isinstance(x, str) and x.strip() for x in key):
+            diagnostics['rejected_source_rows'] += 1
+            continue
+        decision_id = trade.get('decision_id')
+        records = decisions.get(decision_id, []) if isinstance(decision_id, str) else []
+        record = records[0] if len(records) == 1 else {}
+        valid = (record.get('symbol') == key[0] and record.get('action') == 'buy'
+                 and origin in (record.get('strategy_id'), record.get('strategy_version_id'))
+                 and _decision_precedes_entry(record.get('generated_at'), trade.get('entry_time')))
+        for field in ('strategy_version_id', 'run_id', 'experiment_id', 'config_hash', 'prompt_version'):
+            if trade.get(field) is not None and trade[field] != record.get(field):
+                valid = False
+        if not valid:
+            diagnostics['rejected_source_rows'] += 1
+            rejected.add(key)
+            continue
+        candidate = {'fields': {f: trade[f] for f in PROVENANCE_FIELDS if trade.get(f) is not None},
+                     'decision_generated_at': record['generated_at']}
+        if key in result and result[key] != candidate:
+            conflicts.add(key)
+        else:
+            result[key] = candidate
+    diagnostics['withheld_tainted_entry_keys'] = len(rejected & result.keys())
+    for key in rejected | conflicts:
+        result.pop(key, None)
+    diagnostics['ambiguous_entry_keys'] = len(conflicts)
+    return result, diagnostics
+
+
+def load_existing_attribution(state_file: Path, *, decisions_dir: Path | None = None) -> dict[str, Any]:
     """Extract exit_reason attribution and quarantined_trades from current pnl_state.
 
     Returns a dict with:
       'by_exit_order_id'  : exit_broker_order_id -> exit_reason   (highest priority)
       'by_key'            : (symbol, exit_time[:19], pnl_int) -> exit_reason  (fallback)
       'quarantined_trades': list of quarantined trade dicts
-      'provenance_by_exit_order_id' : exit_broker_order_id -> {PROVENANCE_FIELDS} dict
-      'provenance_by_key'           : (symbol, exit_time[:19], pnl_int) -> {PROVENANCE_FIELDS} dict
+      'provenance_by_entry_key' : (symbol, buy order ID) -> validated entry evidence
+      'exit_strategy_by_pair'  : (symbol, buy order ID, sell order ID) -> exit strategy
+      'provenance_diagnostics' : counts of rejected/ambiguous source evidence
 
     Only non-broker_fill reasons are indexed (broker_fill is the rebuild default)
-    for exit_reason. Provenance fields are indexed for ANY closed trade whose
-    strategy_id is not the rebuild's own 'broker_reconstructed'/
-    'reconciled_from_broker' placeholder -- i.e. any trade with real,
-    non-rebuild-synthesized strategy attribution, regardless of its exit_reason.
-    Added 2026-07-17 (exit_reason/quarantine); extended 2026-08-23 (provenance).
+    for exit_reason. Entry provenance is independent of exit attribution and may
+    be preserved for open or closed trades. R22: never infer entry origin from a
+    shared sell or approximate PnL key. Missing/conflicting evidence stays unknown.
     """
     empty = {
         'by_exit_order_id': {}, 'by_key': {}, 'quarantined_trades': [],
-        'provenance_by_exit_order_id': {}, 'provenance_by_key': {},
+        'provenance_by_entry_key': {}, 'exit_strategy_by_pair': {},
+        'provenance_diagnostics': {},
     }
     if not state_file.exists():
         return empty
@@ -194,15 +315,20 @@ def load_existing_attribution(state_file: Path) -> dict[str, Any]:
     except Exception:
         return empty
 
+    if not isinstance(data, dict) or not isinstance(data.get('trades', []), list):
+        return empty
+    trades = [t for t in data.get('trades', []) if isinstance(t, dict)]
+    provenance, diagnostics = _load_entry_provenance(
+        trades, decisions_dir if decisions_dir is not None else state_file.parent.parent / 'decisions')
+
     by_exit_order_id: dict[str, str] = {}
     by_key: dict[tuple, str] = {}
     collisions: set = set()
-    provenance_by_exit_order_id: dict[str, dict[str, Any]] = {}
-    provenance_by_key: dict[tuple, dict[str, Any]] = {}
+    exit_strategy_by_pair, exit_strategy_conflicts = {}, set()
     # entry_signal_strength: keyed by broker_order_id (buy order)
     ess_by_order_id: dict[str, float] = {}
 
-    for trade in data.get('trades', []):
+    for trade in trades:
         # entry_signal_strength: preserve for both open and closed trades
         ess = trade.get('entry_signal_strength')
         bid = trade.get('broker_order_id', '')
@@ -215,19 +341,14 @@ def load_existing_attribution(state_file: Path) -> dict[str, Any]:
         if trade.get('status') == 'open':
             continue
 
-        # Provenance: index any closed trade whose origin is real (not a
-        # rebuild-synthesized placeholder), independent of exit_reason.
-        origin = trade.get('original_strategy_id') or trade.get('strategy_id') or ''
-        if origin and origin not in UNTRACKED_ORIGIN_STRATEGY_IDS:
-            provenance = {f: trade.get(f) for f in PROVENANCE_FIELDS if trade.get(f) is not None}
-            if provenance:
-                eid_p = trade.get('exit_broker_order_id', '')
-                if eid_p:
-                    provenance_by_exit_order_id[eid_p] = provenance
-                sym_p = trade.get('symbol', '')
-                et_p = str(trade.get('exit_time', ''))[:19]
-                pnl_i_p = int(round(float(trade.get('pnl', 0) or 0)))
-                provenance_by_key[(sym_p, et_p, pnl_i_p)] = provenance
+        # Preserve exit metadata separately, only on the identical order pair.
+        pair = (trade.get('symbol'), bid, trade.get('exit_broker_order_id'))
+        exit_strategy = trade.get('exit_strategy_id')
+        if all(pair) and exit_strategy is not None:
+            if pair in exit_strategy_by_pair and exit_strategy_by_pair[pair] != exit_strategy:
+                exit_strategy_conflicts.add(pair)
+            else:
+                exit_strategy_by_pair[pair] = exit_strategy
 
         reason = trade.get('exit_reason', '')
         if not reason or reason == 'broker_fill':
@@ -251,6 +372,8 @@ def load_existing_attribution(state_file: Path) -> dict[str, Any]:
     # Remove ambiguous keys
     for k in collisions:
         by_key.pop(k, None)
+    for pair in exit_strategy_conflicts:
+        exit_strategy_by_pair.pop(pair, None)
 
     # Also load ESS from trade_events.jsonl (fallback for trades where pnl_state had None)
     events_file = state_file.parent / "trade_events.jsonl"
@@ -261,8 +384,9 @@ def load_existing_attribution(state_file: Path) -> dict[str, Any]:
         'by_key': by_key,
         'quarantined_trades': data.get('quarantined_trades', []),
         'ess_by_order_id': ess_by_order_id,
-        'provenance_by_exit_order_id': provenance_by_exit_order_id,
-        'provenance_by_key': provenance_by_key,
+        'provenance_by_entry_key': provenance,
+        'exit_strategy_by_pair': exit_strategy_by_pair,
+        'provenance_diagnostics': diagnostics,
     }
 
 
@@ -312,7 +436,7 @@ def apply_attribution(pnl_state: dict, attribution: dict[str, Any]) -> dict[str,
 
     Mutates pnl_state['trades'] in-place and sets pnl_state['quarantined_trades'].
     Returns stats dict: {'by_exit_order': N, 'by_key': N, 'kept_broker_fill': N,
-    'ess_restored': N, 'provenance_restored': N}.
+    'ess_restored': N, 'provenance_restored': N, 'provenance_unresolved': N}.
     Added 2026-07-17 (exit_reason/quarantine); extended 2026-08-23 (provenance --
     see PROVENANCE_FIELDS / load_existing_attribution()'s docstring for the
     incident this closes: a rebuild previously overwrote strategy_id/
@@ -323,13 +447,13 @@ def apply_attribution(pnl_state: dict, attribution: dict[str, Any]) -> dict[str,
     by_exit_order_id = attribution.get('by_exit_order_id', {})
     by_key = attribution.get('by_key', {})
     quarantined = attribution.get('quarantined_trades', [])
-    provenance_by_exit_order_id = attribution.get('provenance_by_exit_order_id', {})
-    provenance_by_key = attribution.get('provenance_by_key', {})
+    provenance_by_entry_key = attribution.get('provenance_by_entry_key', {})
+    exit_strategy_by_pair = attribution.get('exit_strategy_by_pair', {})
 
     ess_by_order_id = attribution.get('ess_by_order_id', {})
     stats = {
         'by_exit_order': 0, 'by_key': 0, 'kept_broker_fill': 0,
-        'ess_restored': 0, 'provenance_restored': 0,
+        'ess_restored': 0, 'provenance_restored': 0, 'provenance_unresolved': 0,
     }
 
     for trade in pnl_state.get('trades', []):
@@ -340,29 +464,23 @@ def apply_attribution(pnl_state: dict, attribution: dict[str, Any]) -> dict[str,
             trade['entry_signal_strength'] = ess_by_order_id[bid]
             stats['ess_restored'] += 1
 
+        # Source and destination must both pass chronology. A FIFO rebuild can
+        # change lot boundaries, so validating only the old entry is insufficient.
+        entry_key = (trade.get('symbol'), bid)
+        evidence = provenance_by_entry_key.get(entry_key)
+        if evidence and _decision_precedes_entry(evidence.get('decision_generated_at'), trade.get('entry_time')):
+            for field, value in evidence['fields'].items():
+                if field in PROVENANCE_FIELDS:
+                    trade[field] = value
+            stats['provenance_restored'] += 1
+        else:
+            stats['provenance_unresolved'] += 1
+
         if trade.get('status') == 'open':
             continue
-
-        # Restore provenance fields (strategy_id, original_strategy_id,
-        # decision_id, run_id, experiment_id, etc.) for closed trades whose
-        # PREVIOUS state had real (non-rebuild-synthesized) attribution --
-        # independent of exit_reason, since a real-origin trade may still
-        # have exit_reason=='broker_fill' if its exit wasn't attributed.
-        # Matched the same way as exit_reason (exit_broker_order_id first,
-        # then (symbol, exit_time, pnl) fallback) so a single lookup pass
-        # covers both fields consistently.
-        eid_prov = trade.get('exit_broker_order_id', '')
-        sym_prov = trade.get('symbol', '')
-        et_prov = str(trade.get('exit_time', ''))[:19]
-        pnl_i_prov = int(round(float(trade.get('pnl', 0) or 0)))
-        key_prov = (sym_prov, et_prov, pnl_i_prov)
-        provenance = provenance_by_exit_order_id.get(eid_prov) if eid_prov else None
-        if provenance is None:
-            provenance = provenance_by_key.get(key_prov)
-        if provenance:
-            for field, value in provenance.items():
-                trade[field] = value
-            stats['provenance_restored'] += 1
+        pair = (*entry_key, trade.get('exit_broker_order_id'))
+        if pair in exit_strategy_by_pair:
+            trade['exit_strategy_id'] = exit_strategy_by_pair[pair]
 
         if trade.get('exit_reason') != 'broker_fill':
             continue
@@ -576,7 +694,7 @@ def resolve_tracking_metadata(args: argparse.Namespace, existing: dict[str, Any]
         or existing.get('performance_scope')
         or 'current_account_since_baseline'
     )
-    return {
+    resolved = {
         'created_at': created_at,
         'baseline_date': baseline_date,
         'baseline_equity': float(baseline_equity),
@@ -586,6 +704,16 @@ def resolve_tracking_metadata(args: argparse.Namespace, existing: dict[str, Any]
         'archive_path': args.archive_path or existing.get('archive_path'),
         'migration_note_path': args.migration_note_path or existing.get('migration_note_path'),
     }
+    # R22: the old resolver dropped histories loaded immediately above it.
+    # Never silently carry old risk fields into a different capital/time epoch.
+    if 'peak_equity' in existing or 'max_drawdown_pct' in existing:
+        for key in ('baseline_date', 'baseline_equity', 'performance_scope'):
+            if existing.get(key) is not None and resolved[key] != existing[key]:
+                raise ValueError(f'risk history: changing {key} requires a separate epoch migration')
+    for key in ('peak_equity', 'max_drawdown_pct', 'daily_snapshots', 'strategy_daily_snapshots'):
+        if key in existing:
+            resolved[key] = existing[key]
+    return resolved
 
 
 def fetch_all_filled_orders(broker: BrokerClient) -> list:
@@ -637,11 +765,7 @@ def fetch_all_filled_orders(broker: BrokerClient) -> list:
     payload = orders_env.payload if hasattr(orders_env, 'payload') else orders_env
     orders = payload.get('orders', []) if isinstance(payload, dict) else payload
     if isinstance(payload, dict) and payload.get('truncated'):
-        print(
-            "  WARNING: fetch_all_orders() hit its max_pages safety cap before "
-            "completing -- order history may still be incomplete. Re-run with a "
-            "higher max_pages if this occurs."
-        )
+        raise ValueError("truncated broker order history; cannot reconstruct complete inventory")
     if isinstance(payload, dict):
         print(f"  Fetched {len(orders)} total orders across {payload.get('page_count')} page(s)")
 
@@ -662,39 +786,25 @@ def fetch_all_filled_orders(broker: BrokerClient) -> list:
 
 
 def fetch_broker_open_positions(broker: BrokerClient) -> dict[str, dict]:
-    """Fetch current open positions from broker.
-    
-    Returns:
-        Dictionary mapping symbol -> position info with qty and avg_entry_price.
-    """
-    print("Fetching current open positions from broker...")
+    """A failed/incomplete fetch is not evidence of an empty portfolio."""
     try:
-        positions_env = broker.fetch_positions()
-        positions = positions_env.payload if hasattr(positions_env, 'payload') else positions_env
-        
+        response = broker.fetch_positions()
+        positions = response.payload if hasattr(response, "payload") else response
         if not isinstance(positions, list):
-            print("  WARN: broker.fetch_positions() did not return a list")
-            return {}
-        
-        position_map = {}
+            raise ValueError("expected position list")
+        result = {}
         for pos in positions:
-            symbol = pos.get('symbol')
-            qty = float(pos.get('qty', 0) or 0)
-            avg_price = float(pos.get('avg_entry_price', 0) or 0)
-            
-            if symbol and qty > 0 and avg_price > 0:
-                position_map[symbol] = {
-                    'qty': qty,
-                    'avg_entry_price': avg_price,
-                    'asset_id': pos.get('asset_id'),
-                }
-        
-        print(f"  Found {len(position_map)} open positions at broker")
-        return position_map
-        
-    except Exception as e:
-        print(f"  WARN: Failed to fetch broker positions: {e}")
-        return {}
+            symbol = pos.get("symbol")
+            if not symbol or symbol in result:
+                raise ValueError("missing/duplicate position identity")
+            result[symbol] = {
+                "qty": whole_quantity(pos.get("qty"), "broker position quantity"),
+                "avg_entry_price": float(decimal_value(pos.get("avg_entry_price"), "broker position price")),
+                "asset_id": pos.get("asset_id"),
+            }
+        return result
+    except Exception as exc:
+        raise ValueError("broker position evidence unavailable or unsupported") from exc
 
 
 def load_corporate_actions(project_root: Path) -> list[dict]:
@@ -747,148 +857,21 @@ def apply_split_adjustment(
 def match_buy_sell_orders(
     filled_orders: list,
     corporate_actions: list[dict] | None = None,
+    *,
+    split_activities: list[dict] | None = None,
+    split_date_overrides: dict[str, str] | None = None,
 ) -> tuple[list, list]:
-    """Match buy and sell orders to create closed trades.
-    
-    Uses FIFO (First In, First Out) matching.
-    Corporate actions (splits) are applied when buy/sell straddle an ex_date.
-    Returns tuple of (closed_trades, open_positions_from_fills).
+    """Offline chronological order-VWAP FIFO; never infer economics from market bars.
+
+    Split activities must prove removed/added inventory. An explicit registry
+    date mapping is needed if broker effective date differs from the registry.
+    This accounting replay is not point-in-time strategy evidence.
     """
-    if corporate_actions is None:
-        corporate_actions = []
-    by_symbol = defaultdict(lambda: {'buy': [], 'sell': []})
-    market_cache: dict[str, dict[str, tuple[float, float, float]]] = {}
-    
-    for order in filled_orders:
-        symbol = order.get('symbol')
-        side = order.get('side')
-        filled_qty = float(order.get('filled_qty', 0))
-        raw_filled_price = float(order.get('filled_avg_price', 0))
-        filled_at = order.get('filled_at', '')
-        order_id = order.get('id')
-
-        filled_price, correction_factor = maybe_correct_scaled_price(
-            symbol,
-            raw_filled_price,
-            filled_at,
-            market_cache,
-        )
-        if correction_factor:
-            print(
-                f"  ↺ {symbol:6} corrected {side} fill price "
-                f"${raw_filled_price:.4f} -> ${filled_price:.4f} (/ {correction_factor})"
-            )
-
-        if filled_qty > 0 and filled_price > 0:
-            by_symbol[symbol][side].append({
-                'qty': filled_qty,
-                'price': filled_price,
-                'time': filled_at,
-                'order_id': order_id,
-            })
-    
-    # Sort by time
-    for symbol in by_symbol:
-        by_symbol[symbol]['buy'].sort(key=lambda x: x['time'])
-        by_symbol[symbol]['sell'].sort(key=lambda x: x['time'])
-    
-    # Match buy/sell orders
-    print("\nMatching buy/sell orders (FIFO)...")
-    trades = []
-    trade_num = 0
-    open_positions = []
-    
-    for symbol in sorted(by_symbol.keys()):
-        buys = by_symbol[symbol]['buy'][:]
-        sells = by_symbol[symbol]['sell'][:]
-        
-        while buys and sells:
-            buy = buys[0]
-            sell = sells[0]
-            
-            qty = min(buy['qty'], sell['qty'])
-            
-            entry_price = buy['price']
-            exit_price = sell['price']
-
-            # Apply split adjustment when buy/sell straddle a split ex_date
-            adjusted_entry, split_ratio = apply_split_adjustment(
-                symbol, entry_price, buy['time'], sell['time'], corporate_actions
-            )
-            if split_ratio is not None:
-                print(
-                    f"  ✂ {symbol:6} split {split_ratio:.0f}:1 adjusted entry "
-                    f"${entry_price:.2f} -> ${adjusted_entry:.2f} (ex_date straddle)"
-                )
-                entry_price = adjusted_entry
-
-            pnl = (exit_price - entry_price) * qty
-            return_pct = (exit_price - entry_price) / entry_price if entry_price else 0.0
-            
-            trade_num += 1
-            trade = {
-                'trade_id': f"broker_match_{trade_num:04d}_{symbol}",
-                'symbol': symbol,
-                'strategy_id': 'broker_reconstructed',
-                'side': 'buy',
-                'qty': int(qty),
-                'entry_price': round(entry_price, 2),
-                'exit_price': round(exit_price, 2),
-                'entry_time': buy['time'],
-                'exit_time': sell['time'],
-                'pnl': round(pnl, 2),
-                'return_pct': round(return_pct, 4),
-                'status': 'closed',
-                'account_id': None,
-                'strategy_version_id': 'broker_reconstructed',
-                'broker_order_id': buy['order_id'],
-                'exit_broker_order_id': sell['order_id'],
-                'original_strategy_id': 'broker_reconstructed',
-                'exit_strategy_id': 'broker_reconstructed',
-                'exit_reason': 'broker_fill',
-            }
-            
-            trades.append(trade)
-            
-            sign = '+' if pnl >= 0 else ''
-            print(f"  {symbol:6} {int(qty):>4}株 ${entry_price:>7.2f}→${exit_price:>7.2f} = {sign}${pnl:>9.2f} ({return_pct*100:+.2f}%)")
-            
-            buy['qty'] -= qty
-            sell['qty'] -= qty
-            
-            if buy['qty'] <= 0.01:
-                buys.pop(0)
-            if sell['qty'] <= 0.01:
-                sells.pop(0)
-        
-        # Remaining buys are open positions
-        for buy in buys:
-            if buy['qty'] > 0.01:
-                trade_num += 1
-                open_trade = {
-                    'trade_id': f"broker_open_{trade_num:04d}_{symbol}",
-                    'symbol': symbol,
-                    'strategy_id': 'broker_reconstructed',
-                    'side': 'buy',
-                    'qty': int(buy['qty']),
-                    'entry_price': round(buy['price'], 2),
-                    'exit_price': None,
-                    'entry_time': buy['time'],
-                    'exit_time': None,
-                    'pnl': None,
-                    'return_pct': None,
-                    'status': 'open',
-                    'account_id': None,
-                    'strategy_version_id': 'broker_reconstructed',
-                    'broker_order_id': buy['order_id'],
-                    'original_strategy_id': 'broker_reconstructed',
-                    'exit_strategy_id': None,
-                    'exit_reason': None,
-                }
-                open_positions.append(open_trade)
-                print(f"  {symbol:6} {int(buy['qty']):>4}株 open @ ${buy['price']:.2f}")
-    
-    return trades, open_positions
+    from stock_swing.tracking.execution_fifo import match_order_completion_fifo
+    return match_order_completion_fifo(
+        filled_orders, corporate_actions, split_activities=split_activities,
+        split_date_overrides=split_date_overrides,
+    )
 
 
 def reconcile_open_positions(
@@ -896,107 +879,20 @@ def reconcile_open_positions(
     broker_positions: dict[str, dict],
     trade_num_offset: int,
 ) -> list:
-    """Reconcile open positions from filled orders with broker truth.
-    
-    Broker positions are the source of truth. This function:
-    1. Uses broker positions as baseline
-    2. Enriches with order metadata from fills when available
-    3. Creates new entries for broker positions not in fills
-    
-    Args:
-        open_from_fills: Open positions calculated from filled orders.
-        broker_positions: Current open positions from broker API.
-        trade_num_offset: Starting trade number for new broker-only positions.
-    
-    Returns:
-        Reconciled list of open position trades.
+    """Verify inventory; do not overwrite missing history with position averages.
+
+    Order history and positions are not an atomic snapshot. A mismatch requires
+    a new consistent observation, not dropping a lot or inventing a new basis.
+    trade_num_offset remains accepted for caller compatibility.
     """
-    print("\nReconciling open positions with broker truth...")
-    
-    # Map fills by symbol
-    fills_by_symbol = {}
-    for pos in open_from_fills:
-        symbol = pos['symbol']
-        if symbol not in fills_by_symbol:
-            fills_by_symbol[symbol] = []
-        fills_by_symbol[symbol].append(pos)
-    
-    reconciled = []
-    trade_num = trade_num_offset
-    
-    # Process each broker position
-    for symbol in sorted(broker_positions.keys()):
-        broker_pos = broker_positions[symbol]
-        broker_qty = broker_pos['qty']
-        broker_price = broker_pos['avg_entry_price']
-        
-        fills = fills_by_symbol.get(symbol, [])
-        
-        if fills:
-            # Have fill history for this symbol - use it but verify qty
-            total_fill_qty = sum(f['qty'] for f in fills)
-            
-            if abs(total_fill_qty - broker_qty) < 0.01:
-                # Quantities match - use fill history as-is
-                print(f"  ✓ {symbol:6} {int(broker_qty):>4}株 matched from fills")
-                reconciled.extend(fills)
-            else:
-                # Quantity mismatch - trust broker and create new entry
-                print(f"  ⚠ {symbol:6} qty mismatch: fills={int(total_fill_qty)} broker={int(broker_qty)} - using broker")
-                trade_num += 1
-                reconciled.append({
-                    'trade_id': f"broker_open_{trade_num:04d}_{symbol}",
-                    'symbol': symbol,
-                    'strategy_id': 'broker_reconstructed',
-                    'side': 'buy',
-                    'qty': int(broker_qty),
-                    'entry_price': round(broker_price, 2),
-                    'exit_price': None,
-                    'entry_time': None,  # Unknown from broker position
-                    'exit_time': None,
-                    'pnl': None,
-                    'return_pct': None,
-                    'status': 'open',
-                    'account_id': None,
-                    'strategy_version_id': 'broker_reconstructed',
-                    'broker_order_id': None,
-                    'original_strategy_id': 'broker_reconstructed',
-                    'exit_strategy_id': None,
-                    'exit_reason': None,
-                })
-        else:
-            # No fill history - this is a broker-only position (likely filled after last rebuild)
-            print(f"  + {symbol:6} {int(broker_qty):>4}株 broker-only position @ ${broker_price:.2f}")
-            trade_num += 1
-            reconciled.append({
-                'trade_id': f"broker_open_{trade_num:04d}_{symbol}",
-                'symbol': symbol,
-                'strategy_id': 'broker_reconstructed',
-                'side': 'buy',
-                'qty': int(broker_qty),
-                'entry_price': round(broker_price, 2),
-                'exit_price': None,
-                'entry_time': None,
-                'exit_time': None,
-                'pnl': None,
-                'return_pct': None,
-                'status': 'open',
-                'account_id': None,
-                'strategy_version_id': 'broker_reconstructed',
-                'broker_order_id': None,
-                'original_strategy_id': 'broker_reconstructed',
-                'exit_strategy_id': None,
-                'exit_reason': None,
-            })
-    
-    # Warn about positions in fills but not at broker (already closed)
-    for symbol in fills_by_symbol:
-        if symbol not in broker_positions:
-            fill_qty = sum(f['qty'] for f in fills_by_symbol[symbol])
-            print(f"  ⚠ {symbol:6} {int(fill_qty):>4}株 in fills but NOT at broker (likely closed)")
-    
-    print(f"  Result: {len(reconciled)} open positions after reconciliation")
-    return reconciled
+    expected = defaultdict(int)
+    for lot in open_from_fills:
+        expected[lot["symbol"]] += whole_quantity(lot["qty"], "open lot quantity")
+    actual = {symbol: whole_quantity(pos.get("qty"), "broker position quantity")
+              for symbol, pos in broker_positions.items()}
+    if dict(expected) != actual:
+        raise ValueError("open inventory differs between order history and broker positions")
+    return list(open_from_fills)
 
 
 def calculate_summary(trades: list, open_positions: list) -> dict:
@@ -1023,11 +919,19 @@ def calculate_summary(trades: list, open_positions: list) -> dict:
 def rebuild_pnl_state(
     broker: BrokerClient,
     tracking_metadata: dict[str, Any] | None = None,
+    *,
+    split_activities: list[dict] | None = None,
+    split_date_overrides: dict[str, str] | None = None,
 ) -> dict:
     """Rebuild pnl_state.json from broker order history and current positions."""
+    tracking_metadata = tracking_metadata or {}
+    peak_equity, max_drawdown_pct = validate_rebuild_risk_history(tracking_metadata)
     filled_orders = fetch_all_filled_orders(broker)
     corporate_actions = load_corporate_actions(PROJECT_ROOT)
-    closed_trades, open_from_fills = match_buy_sell_orders(filled_orders, corporate_actions)
+    closed_trades, open_from_fills = match_buy_sell_orders(
+        filled_orders, corporate_actions, split_activities=split_activities,
+        split_date_overrides=split_date_overrides,
+    )
     
     # Fetch current broker positions and reconcile
     broker_positions = fetch_broker_open_positions(broker)
@@ -1059,8 +963,8 @@ def rebuild_pnl_state(
         'total_trades': len(all_trades),
         'winning_trades': summary['winning_trades'],
         'losing_trades': summary['losing_trades'],
-        'peak_equity': baseline_equity + summary['cumulative_realized_pnl'],
-        'max_drawdown_pct': 0.0,
+        'peak_equity': peak_equity,
+        'max_drawdown_pct': max_drawdown_pct,
         'broker_account_id': broker_account_id,
         'baseline_date': tracking_metadata.get('baseline_date') or now[:10],
         'baseline_equity': baseline_equity,
@@ -1074,6 +978,9 @@ def rebuild_pnl_state(
     return pnl_state
 
 
+from stock_swing.tracking.compatibility import legacy_entrypoint, legacy_maintenance, tracking_root
+
+@legacy_entrypoint(lambda *a, **k: globals().get('project_root', globals().get('PROJECT_ROOT', Path(__file__).resolve().parents[1])))
 def main():
     parser = argparse.ArgumentParser(description="Rebuild pnl_state.json from broker order history")
     parser.add_argument("--dry-run", action="store_true", help="Show what would be changed without writing")
@@ -1103,8 +1010,22 @@ def main():
     parser.add_argument("--performance-scope", type=str, default=None, help="Override performance scope")
     parser.add_argument("--archive-path", type=str, default=None, help="Override archive path metadata")
     parser.add_argument("--migration-note-path", type=str, default=None, help="Override migration note path metadata")
+    parser.add_argument("--split-evidence-file", help="Local JSON: activities + optional registry_date_overrides; post-hoc accounting only")
     args = parser.parse_args()
     
+    # Local frozen evidence only; no activity fetch or automatic registry edits.
+    split_evidence = {}
+    if args.split_evidence_file:
+        try:
+            split_evidence = json.loads(Path(args.split_evidence_file).read_text(encoding="utf-8"))
+            if not isinstance(split_evidence, dict) or not isinstance(split_evidence.get("activities"), list):
+                raise ValueError("expected object with activities list and optional registry_date_overrides")
+            from stock_swing.tracking.execution_fifo import _confirmed_splits
+            _confirmed_splits(split_evidence["activities"], split_evidence.get("registry_date_overrides", {}))
+        except (OSError, ValueError, TypeError, AttributeError) as exc:
+            print(f"ERROR: invalid split evidence: {exc}. No broker history fetched or state written.")
+            return 1
+
     # Load environment
     load_env(PROJECT_ROOT / '.env')
     api_key = os.environ.get('BROKER_API_KEY')
@@ -1118,7 +1039,12 @@ def main():
     broker = BrokerClient(api_key=api_key, api_secret=api_secret, paper_mode=True)
     state_file = PROJECT_ROOT / "data" / "tracking" / "pnl_state.json"
     existing_meta = load_existing_tracking_metadata(state_file)
-    resolved_meta = resolve_tracking_metadata(args, existing_meta, datetime.now(timezone.utc).isoformat())
+    try:
+        resolved_meta = resolve_tracking_metadata(args, existing_meta, datetime.now(timezone.utc).isoformat())
+        validate_rebuild_risk_history(resolved_meta)
+    except ValueError as exc:
+        print(f'ERROR: {exc}. No broker history fetched or state written.')
+        return 1
 
     # R0-v2: Guard against --no-preserve-attribution without --force
     if not args.preserve_attribution:
@@ -1159,10 +1085,20 @@ def main():
     print("=" * 70)
     print()
     print("Tracking metadata:")
-    print(json.dumps(resolved_meta, indent=2, ensure_ascii=False))
+    print(json.dumps({key: value for key, value in resolved_meta.items()
+                      if key not in {'daily_snapshots', 'strategy_daily_snapshots'}},
+                     indent=2, ensure_ascii=False))
     print()
 
-    pnl_state = rebuild_pnl_state(broker, tracking_metadata=resolved_meta)
+    try:
+        pnl_state = rebuild_pnl_state(
+            broker, tracking_metadata=resolved_meta,
+            split_activities=split_evidence.get("activities"),
+            split_date_overrides=split_evidence.get("registry_date_overrides"),
+        )
+    except ValueError as exc:
+        print(f"ERROR: accounting evidence unresolved: {exc}. No state written.")
+        return 1
 
     # Merge attribution back (if --preserve-attribution)
     if args.preserve_attribution:
@@ -1182,6 +1118,8 @@ def main():
         print(f"   kept as broker_fill      : {attr_stats['kept_broker_fill']}")
         print(f"   quarantined_trades       : {len(pnl_state.get('quarantined_trades', []))}")
         print(f"   provenance_restored (strategy_id/decision_id/etc.): {attr_stats['provenance_restored']}")
+        print(f"   provenance_unresolved    : {attr_stats['provenance_unresolved']}")
+        print(f"   provenance source checks : {attribution.get('provenance_diagnostics', {})}")
         if _tombstone_hits:
             print(f"   tombstone_filtered       : {_tombstone_hits}")
 

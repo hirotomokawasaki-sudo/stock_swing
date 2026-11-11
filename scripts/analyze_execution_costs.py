@@ -62,6 +62,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PNL_STATE = PROJECT_ROOT / "data" / "tracking" / "pnl_state.json"
 ET = ZoneInfo("America/New_York")
@@ -83,7 +85,7 @@ def parse_dt(value: str | None) -> datetime | None:
 
 
 def load_closed_trades() -> list[dict]:
-    state = json.loads(PNL_STATE.read_text())
+    state = legacy_analytical_state(PNL_STATE)
     return [
         t for t in state.get("trades", [])
         if t.get("status") == "closed"

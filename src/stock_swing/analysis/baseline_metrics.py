@@ -19,7 +19,8 @@ def load_pnl_data(project_root: Path) -> dict[str, Any]:
     pnl_file = project_root / "data" / "tracking" / "pnl_state.json"
     if not pnl_file.exists():
         raise FileNotFoundError(f"PnL file not found: {pnl_file}")
-    return json.loads(pnl_file.read_text())
+    from stock_swing.tracking.compatibility import read_tracking_state
+    return read_tracking_state(pnl_file)
 
 
 def calculate_baseline_metrics(pnl_data: dict[str, Any]) -> dict[str, Any]:
@@ -27,6 +28,9 @@ def calculate_baseline_metrics(pnl_data: dict[str, Any]) -> dict[str, Any]:
     from datetime import datetime
     from collections import defaultdict
     
+    if pnl_data.get("measurement_lineage"):
+        return {"error": "historical_correction_unqualified", "measurement_lineage": pnl_data["measurement_lineage"]}
+
     snapshots = pnl_data.get("daily_snapshots", [])
     trades = pnl_data.get("trades", [])
     

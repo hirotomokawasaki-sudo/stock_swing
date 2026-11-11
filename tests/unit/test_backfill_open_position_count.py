@@ -72,7 +72,8 @@ class TestComputeOpenCounts:
 
 class TestMainBackfill:
     def _write_state(self, tmp_path: Path, snapshots: list[dict], trades: list[dict]) -> Path:
-        path = tmp_path / "pnl_state.json"
+        path = tmp_path / "data/tracking/pnl_state.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps({"daily_snapshots": snapshots, "trades": trades}), encoding="utf-8")
         return path
 
@@ -162,5 +163,5 @@ class TestMainBackfill:
             capture_output=True, text=True,
         )
         assert result.returncode == 0
-        backups = list(tmp_path.glob("pnl_state_backup_open_pos_backfill_*.json"))
+        backups = list(path.parent.glob("pnl_state_backup_open_pos_backfill_*.json"))
         assert len(backups) == 1

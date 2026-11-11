@@ -20,6 +20,8 @@ from stock_swing.tracking.exit_reason_store import delete_exit_reason, purge_old
 from stock_swing.tracking.fill_ledger import FillAlreadyConsumedError, FillLedger, FillQuarantinedError
 from stock_swing.tracking.pnl_tracker import PnLTracker
 from stock_swing.tracking.trade_event_store import TradeEvent
+from stock_swing.tracking.settle_sell import settle_sell
+from stock_swing.tracking.execution_cost import ExecutionCostError, decimal_value, whole_quantity, incremental_sell_fill
 from stock_swing.utils.market_calendar import MarketCalendar
 
 
@@ -307,130 +309,64 @@ def reconcile_stale_entry_prices(
     tracker: PnLTracker,
     deviation_threshold: float = 0.05,
 ) -> int:
-    """Correct open trade entry prices from broker fills or broker position avg."""
+    """Confirm intact open BUY lots by exact order identity, never symbol scaling.
 
-    def _get_order_payload(order_id: str):
-        if hasattr(broker, "get_order"):
-            response = broker.get_order(order_id)
-        else:
-            response = broker.fetch_order(order_id)
-        return response.payload if hasattr(response, "payload") else response
-
-    broker_positions: dict[str, float] = {}
-    try:
-        pos_env = broker.fetch_positions()
-        positions = pos_env.payload if hasattr(pos_env, "payload") else pos_env
-        if isinstance(positions, list):
-            for pos in positions:
-                sym = str(pos.get("symbol", "")).upper()
-                avg = float(pos.get("avg_entry_price", 0) or 0)
-                if sym and avg > 0:
-                    broker_positions[sym] = avg
-    except Exception as exc:
-        print(
-            f"WARN: reconcile_stale_entry_prices: could not fetch broker positions: {exc}",
-            file=sys.stderr,
-        )
-
-    lots_by_symbol: dict[str, list[dict]] = {}
+    The legacy deviation_threshold argument remains API-compatible but cannot
+    suppress genuine confirmed-cost differences. Position averages cannot prove
+    an individual lot's cost. Split/partial/closed lots require explicit repair.
+    """
+    lots_by_order: dict[str, list[dict]] = {}
     for trade in tracker.get_open_positions():
-        sym = str(trade.get("symbol") or "").upper()
-        if sym:
-            lots_by_symbol.setdefault(sym, []).append(trade)
-
+        oid = trade.get("broker_order_id")
+        if oid and not str(oid).startswith("reconcile-"):
+            lots_by_order.setdefault(oid, []).append(trade)
     corrections = 0
-    for symbol, lots in lots_by_symbol.items():
-        total_qty = sum(int(trade.get("qty", 0) or 0) for trade in lots)
-        if total_qty <= 0:
+    for oid, lots in lots_by_order.items():
+        if len(lots) != 1:
             continue
-
-        weighted_entry_notional = sum(
-            int(trade.get("qty", 0) or 0) * float(trade.get("entry_price", 0) or 0)
-            for trade in lots
-        )
-        recorded_entry = weighted_entry_notional / total_qty if weighted_entry_notional > 0 else 0.0
-        if recorded_entry <= 0:
+        trade = lots[0]
+        if any(t.get("broker_order_id") == oid and t.get("status") != "open"
+               for t in list(tracker.state.trades) + list(tracker.state.quarantined_trades)):
             continue
-
-        corrected_price: float | None = None
-        correction_source = ""
-
-        fill_notional = 0.0
-        fill_qty = 0
-        for trade in lots:
-            broker_order_id = trade.get("broker_order_id")
-            if not broker_order_id or str(broker_order_id).startswith("reconcile-"):
+        try:
+            response = broker.get_order(oid) if hasattr(broker, "get_order") else broker.fetch_order(oid)
+            order = response.payload if hasattr(response, "payload") else response
+            if not isinstance(order, dict) or (order.get("id"), order.get("symbol"), order.get("side")) != (oid, trade["symbol"], "buy"):
                 continue
-            try:
-                order = _get_order_payload(str(broker_order_id))
-                if not isinstance(order, dict):
-                    continue
-                status = str(order.get("status", "")).lower()
-                if status not in {"filled", "partially_filled"}:
-                    continue
-                filled_avg_price = float(order.get("filled_avg_price") or 0)
-                qty = int(trade.get("qty", 0) or 0)
-                if filled_avg_price > 0 and qty > 0:
-                    fill_notional += qty * filled_avg_price
-                    fill_qty += qty
-            except Exception:
+            if order.get("status") not in {"filled", "canceled", "expired"}:
                 continue
-
-        weighted_fill = fill_notional / fill_qty if fill_qty > 0 else 0.0
-        if weighted_fill > 0:
-            deviation = abs(weighted_fill - recorded_entry) / recorded_entry
-            if deviation > deviation_threshold:
-                corrected_price = weighted_fill
-                correction_source = "broker_fill"
-
-        pos_avg = broker_positions.get(symbol, 0.0)
-        if corrected_price is None and pos_avg > 0:
-            deviation = abs(pos_avg - recorded_entry) / recorded_entry
-            if deviation > deviation_threshold:
-                corrected_price = pos_avg
-                correction_source = "broker_position_avg"
-
-        if corrected_price is None or corrected_price <= 0:
+            qty = whole_quantity(order.get("filled_qty"), "confirmed buy quantity")
+            if qty != whole_quantity(trade.get("qty"), "open lot quantity"):
+                continue
+            filled_at = datetime.fromisoformat(str(order.get("filled_at")).replace("Z", "+00:00"))
+            if filled_at.utcoffset() is None or filled_at > datetime.now(timezone.utc):
+                continue
+            price = decimal_value(order.get("filled_avg_price"), "confirmed buy price")
+            previous = decimal_value(trade.get("entry_price"), "recorded entry price")
+        except Exception as exc:
+            print(f"WARN: unconfirmed entry cost for {trade['symbol']}: {type(exc).__name__}", file=sys.stderr)
             continue
-
-        scale = corrected_price / recorded_entry if recorded_entry > 0 else 1.0
-        for trade in lots:
-            old_entry = float(trade.get("entry_price", 0) or 0)
-            old_peak = float(trade.get("peak_price") or old_entry or 0)
-            trade["entry_price"] = (
-                round(old_entry * scale, 6) if old_entry > 0 else round(corrected_price, 6)
-            )
-            if old_peak < trade["entry_price"]:
-                trade["peak_price"] = round(trade["entry_price"], 6)
-            elif old_peak > 0 and old_entry > 0:
-                new_peak = round(old_peak * scale, 6)
-                trade["peak_price"] = max(new_peak, trade["entry_price"])
-
-        corrections += 1
-        print(
-            f"INFO: reconcile_stale_entry_prices: corrected {symbol} "
-            f"entry ${recorded_entry:.4f} -> ${corrected_price:.4f} "
-            f"(source={correction_source}, "
-            f"deviation={abs(corrected_price - recorded_entry) / recorded_entry:.1%})",
-            file=sys.stderr,
-        )
-        if hasattr(tracker, "event_store"):
-            tracker.event_store.append(TradeEvent.create(
-                "entry_price_corrected",
-                symbol=symbol,
-                payload={
-                    "old_entry": recorded_entry,
-                    "new_entry": corrected_price,
-                    "source": correction_source,
-                },
-            ))
-
-    if corrections:
+        if price == previous:
+            continue
+        if trade.get("entry_reference_price") is None:
+            trade["entry_reference_price"] = float(previous)
+        trade["entry_price"] = float(price)
+        # A cost correction is not a split: do not rescale observed market peaks.
+        trade["peak_price"] = max(float(trade.get("peak_price") or 0), float(price))
+        evidence = {"source": "broker_order_cumulative", "order_id": oid,
+                    "filled_qty": qty, "filled_avg_price": str(price),
+                    "filled_at": filled_at.isoformat(),
+                    "observed_at": datetime.now(timezone.utc).isoformat()}
+        trade["entry_cost_evidence"] = evidence
         tracker._save_state()
-        print(
-            f"INFO: reconcile_stale_entry_prices: {corrections} correction(s) applied",
-            file=sys.stderr,
-        )
+        tracker.event_store.append(TradeEvent.create(
+            "entry_price_corrected", symbol=trade["symbol"], trade_id=trade["trade_id"],
+            broker_order_id=oid,
+            payload={"old_entry": float(previous), "new_entry": float(price),
+                     "qty": qty, "source": "broker_order_cumulative", "filled_at": evidence["filled_at"]},
+            idempotency_key=f"entry-cost:{oid}:{previous}:{price}:{qty}",
+        ))
+        corrections += 1
     return corrections
 
 
@@ -513,6 +449,24 @@ def reconcile_filled_buys(broker: BrokerClient, tracker: PnLTracker, recently_so
     return newly_recorded
 
 
+def _cancel_checked(broker, root, order, reason):
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+    result = cancel_order_safely(broker, root, order)
+    result.update(symbol=order.get("symbol"), submitted_at=order.get("submitted_at"), reason_code=reason)
+    # Retain attribution for any fill, including partial-fill then cancellation.
+    if result["cancelled"] and result["filled_qty"] == "0":
+        delete_exit_reason(root, order["id"])
+    label = "CANCEL_CONFIRMED" if result["cancelled"] else "CANCEL_" + result["state"].upper()
+    print(f"INFO: {label} {order.get('id')} {order.get('symbol')} broker_status={result['broker_status']}", file=sys.stderr)
+    return result
+
+
+def _cancel_time_issue(order, error):
+    return dict(state="held", cancelled=False, order_id=order.get("id"),
+                reason=str(error) if str(error) in {"order_time_unqualified", "order_time_in_future",
+                    "cancel_calendar_year_unqualified", "cancel_session_unavailable"} else "cancel_time_unavailable")
+
+
 def cancel_stale_buy_orders(broker: BrokerClient) -> list[dict]:
     """Detect and cancel stale open buy orders.
 
@@ -522,15 +476,14 @@ def cancel_stale_buy_orders(broker: BrokerClient) -> list[dict]:
     - side == 'buy'
     - status in {accepted, new, pending_new, held}
     - time_in_force == 'day'
-    - submitted_at is before today's market open (09:30 ET = 13:30 UTC)
+    - submitted_at is before the latest actual session open (09:30 ET, DST-aware)
 
     Case B — after-hours zero-fill orders (new, 2026-06-03 incident):
     - side == 'buy' OR sell
     - status in {accepted, new, pending_new, held}
     - filled_qty == 0
     - extended_hours == False
-    - submitted_at falls inside the after-hours window (16:00–20:00 ET = UTC+3/4h)
-      i.e., 19:00–23:00 UTC (standard time) or 20:00–00:00 UTC (DST)
+    - submitted_at falls after the session close and before 20:00 ET
     - The order is older than 30 minutes (avoids cancelling freshly submitted orders
       that might still be routing)
 
@@ -541,18 +494,20 @@ def cancel_stale_buy_orders(broker: BrokerClient) -> list[dict]:
         orders = orders_env.payload if hasattr(orders_env, "payload") else orders_env
         if not isinstance(orders, list):
             print("WARN: fetch_orders(open) did not return a list", file=sys.stderr)
-            return []
+            return [dict(state="held",cancelled=False,reason="cancel_order_list_unavailable")]
     except Exception as e:
         print(f"WARN: Failed to fetch open orders for stale check: {e}", file=sys.stderr)
-        return []
+        return [dict(state="held",cancelled=False,reason="cancel_order_list_unavailable")]
+
+    if len(orders) >= 200:
+        return [dict(state="held",cancelled=False,reason="cancel_order_list_limit")]
 
     now_utc = datetime.now(timezone.utc)
-    # Market open = 13:30 UTC (09:30 ET). Use today's date; if before open, use yesterday.
-    market_open_today = now_utc.replace(hour=13, minute=30, second=0, microsecond=0)
-    if now_utc < market_open_today:
-        # Before today's open → cutoff is yesterday's open
-        from datetime import timedelta
-        market_open_today -= timedelta(days=1)
+    from stock_swing.execution.cancellation_timing import last_open, submitted_time, after_hours
+    try:
+        market_open_today = last_open(now_utc)
+    except Exception as exc:
+        return [_cancel_time_issue({}, exc)]
 
     stale_statuses = {"accepted", "new", "pending_new", "held"}
     cancelled = []
@@ -571,44 +526,28 @@ def cancel_stale_buy_orders(broker: BrokerClient) -> list[dict]:
             continue
 
         try:
-            submitted_at = datetime.fromisoformat(submitted_at_str.replace("Z", "+00:00"))
-        except ValueError:
+            submitted_at = submitted_time(submitted_at_str, now_utc)
+        except (ValueError, TypeError, OverflowError) as exc:
+            cancelled.append(_cancel_time_issue(order, exc))
             continue
 
         if submitted_at >= market_open_today:
             continue  # submitted today → not stale
 
-        # Case A: stale previous-session order → cancel
-        try:
-            broker.cancel_order(order_id)
-            cancelled.append({"order_id": order_id, "symbol": symbol, "submitted_at": submitted_at_str, "reason": "previous_session"})
-            print(
-                f"INFO: Cancelled stale buy order {order_id} {symbol} "
-                f"submitted {submitted_at_str} (previous session)",
-                file=sys.stderr,
-            )
-        except Exception as e:
-            print(f"WARN: Failed to cancel stale order {order_id} {symbol}: {e}", file=sys.stderr)
+        cancelled.append(_cancel_checked(broker, project_root, order, "previous_session"))
 
-    # --- Case B: after-hours zero-fill orders (extended_hours=False) ---
-    # These were submitted after the regular close (16:00 ET) but before midnight ET.
-    # With extended_hours=False they cannot fill and will carry over to the next
-    # regular session, causing phantom accepted orders in the PnL tracker.
-    #
-    # After-hours window in UTC:
-    #   DST  (Mar–Nov): 20:00–00:00 UTC  (16:00–20:00 ET + 4h)
-    #   Standard (Nov–Mar): 21:00–01:00 UTC  (16:00–20:00 ET + 5h)
-    # We use a conservative range: submitted between 19:00–01:00 UTC is a candidate.
-    #
-    # Guard: only cancel if the order is older than 30 minutes to avoid
-    # cancelling freshly submitted orders still being routed by the broker.
+    # Case B: zero-fill, non-extended DAY orders submitted after the actual
+    # regular close and before 20:00 ET; retain the existing 30-minute threshold.
     try:
         orders_env_all = broker.fetch_orders(status="open", limit=500)
         orders_all = orders_env_all.payload if hasattr(orders_env_all, "payload") else orders_env_all
         if not isinstance(orders_all, list):
-            orders_all = []
+            return cancelled + [dict(state="held",cancelled=False,reason="cancel_order_list_unavailable")]
     except Exception:
-        orders_all = []
+        return cancelled + [dict(state="held",cancelled=False,reason="cancel_order_list_unavailable")]
+
+    if len(orders_all) >= 500:
+        return cancelled + [dict(state="held",cancelled=False,reason="cancel_order_list_limit")]
 
     AFTER_HOURS_STALE_STATUSES = {"accepted", "new", "pending_new", "held"}
     MIN_AGE_MINUTES = 30  # don't cancel orders younger than this
@@ -631,36 +570,28 @@ def cancel_stale_buy_orders(broker: BrokerClient) -> list[dict]:
         if not submitted_at_str or not order_id:
             continue
         # Skip already-cancelled orders from Case A
-        if any(c["order_id"] == order_id for c in cancelled):
+        if any(c.get("order_id") == order_id for c in cancelled):
             continue
 
         try:
-            submitted_at = datetime.fromisoformat(submitted_at_str.replace("Z", "+00:00"))
-        except ValueError:
+            submitted_at = submitted_time(submitted_at_str, now_utc)
+        except (ValueError, TypeError, OverflowError) as exc:
+            cancelled.append(_cancel_time_issue(order, exc))
             continue
 
         age_minutes = (now_utc - submitted_at).total_seconds() / 60
         if age_minutes < MIN_AGE_MINUTES:
             continue  # too fresh — may still be routing
 
-        # Check if submitted during after-hours UTC window (19:00–01:00 UTC next day)
-        # We accept any hour from 19 to 23 or 0 (midnight) as after-hours-candidate.
-        submitted_hour_utc = submitted_at.hour
-        in_after_hours_window = submitted_hour_utc >= 19 or submitted_hour_utc == 0
+        try:
+            in_after_hours_window = after_hours(submitted_at)
+        except ValueError as exc:
+            cancelled.append(_cancel_time_issue(order, exc))
+            continue
         if not in_after_hours_window:
             continue
 
-        # Case B: after-hours zero-fill non-extended order → cancel
-        try:
-            broker.cancel_order(order_id)
-            cancelled.append({"order_id": order_id, "symbol": symbol, "submitted_at": submitted_at_str, "reason": "after_hours_zero_fill"})
-            print(
-                f"INFO: Cancelled after-hours zero-fill order {order_id} {symbol} "
-                f"submitted {submitted_at_str} (age {age_minutes:.0f}m, extended_hours=False)",
-                file=sys.stderr,
-            )
-        except Exception as e:
-            print(f"WARN: Failed to cancel after-hours order {order_id} {symbol}: {e}", file=sys.stderr)
+        cancelled.append(_cancel_checked(broker, project_root, order, "after_hours_zero_fill"))
 
     return cancelled
 
@@ -680,11 +611,15 @@ def cancel_stale_sell_orders(
         orders_env = broker.fetch_orders(status="open", limit=500)
         orders = orders_env.payload if hasattr(orders_env, "payload") else orders_env
         if not isinstance(orders, list):
-            return []
+            return [dict(state="held",cancelled=False,reason="cancel_order_list_unavailable")]
     except Exception as e:
         print(f"WARN: Failed to fetch open orders for sell stale check: {e}", file=sys.stderr)
-        return []
+        return [dict(state="held",cancelled=False,reason="cancel_order_list_unavailable")]
 
+    if len(orders) >= 500:
+        return [dict(state="held",cancelled=False,reason="cancel_order_list_limit")]
+
+    from stock_swing.execution.cancellation_timing import submitted_time, regular_hours
     stale_statuses = {"accepted", "new", "pending_new", "held"}
     now_utc = datetime.now(timezone.utc)
     cancelled: list[dict] = []
@@ -704,11 +639,16 @@ def cancel_stale_sell_orders(
             continue
 
         try:
-            submitted_at = datetime.fromisoformat(submitted_at_str.replace("Z", "+00:00"))
-        except ValueError:
+            submitted_at = submitted_time(submitted_at_str, now_utc)
+        except (ValueError, TypeError, OverflowError) as exc:
+            cancelled.append(_cancel_time_issue(order, exc))
             continue
 
-        is_regular_submission, _ = MarketCalendar.is_regular_market_hours(submitted_at)
+        try:
+            is_regular_submission = regular_hours(submitted_at)
+        except ValueError as exc:
+            cancelled.append(_cancel_time_issue(order, exc))
+            continue
         if is_regular_submission:
             continue
 
@@ -729,24 +669,7 @@ def cancel_stale_sell_orders(
         if return_pct is not None and return_pct <= force_sell_return_pct:
             continue
 
-        try:
-            broker.cancel_order(order_id)
-            delete_exit_reason(project_root, order_id)
-            cancelled.append(
-                {
-                    "order_id": order_id,
-                    "symbol": symbol,
-                    "submitted_at": submitted_at_str,
-                    "reason": "offhours_moderate_sell",
-                }
-            )
-            print(
-                f"INFO: Cancelled queued off-hours sell order {order_id} {symbol} "
-                f"submitted {submitted_at_str} (non-catastrophic carry-over)",
-                file=sys.stderr,
-            )
-        except Exception as e:
-            print(f"WARN: Failed to cancel queued sell order {order_id} {symbol}: {e}", file=sys.stderr)
+        cancelled.append(_cancel_checked(broker, project_root, order, "offhours_moderate_sell"))
 
     return cancelled
 
@@ -766,9 +689,13 @@ def main() -> int:
     fill_ledger = FillLedger(project_root)
 
     # Step 0: Cancel stale open orders from previous sessions.
-    cancelled_stale_buys = cancel_stale_buy_orders(broker)
-    cancelled_stale_sells = cancel_stale_sell_orders(broker, project_root)
+    cancel_buy_results = cancel_stale_buy_orders(broker)
+    cancel_sell_results = cancel_stale_sell_orders(broker, project_root)
+    cancellation_results = cancel_buy_results + cancel_sell_results
+    cancelled_stale_buys = [r for r in cancel_buy_results if r.get("cancelled")]
+    cancelled_stale_sells = [r for r in cancel_sell_results if r.get("cancelled")]
     cancelled_stale = cancelled_stale_buys + cancelled_stale_sells
+    cancellation_unresolved = sum(r.get("state") != "terminal" for r in cancellation_results)
 
     # Step 1a: Fetch orders first to know which symbols were recently sold.
     # This allows reconcile_filled_buys to skip positions that may still show
@@ -966,10 +893,12 @@ def main() -> int:
                 continue
             broker_filled_total = int(float(match.get("filled_qty", 0) or 0))
             ledger_consumed_qty = int(round(float(fill_record.get("consumed_qty") or 0)))
-            already_recorded = (
-                recorded_qty_by_order_id.get(broker_order_id, 0)
-                if broker_order_id else 0
+            tracker.state = tracker._load_state()
+            cost_delta = incremental_sell_fill(
+                match, list(tracker.state.trades) + list(tracker.state.quarantined_trades),
+                consumed_qty=fill_record.get("consumed_qty", 0),
             )
+            already_recorded = cost_delta.prior_qty
             already_consumed = max(already_recorded, ledger_consumed_qty)
             
             # Dedupe / partial-fill completion guard.
@@ -1026,10 +955,10 @@ def main() -> int:
 
             status = str(match.get("status", "")).lower()
             filled_qty = float(match.get("filled_qty", 0) or 0)
-            avg_price = match.get("filled_avg_price")
+            avg_price = float(cost_delta.price) if cost_delta.price is not None else None
             # For partial-fill completion use only the unrecorded remainder;
             # for normal (first-time) processing use the full broker filled qty.
-            effective_fill_qty = remaining_fill_qty if remaining_fill_qty is not None else int(filled_qty)
+            effective_fill_qty = cost_delta.qty
             
             # Sanity check: reject obviously wrong prices
             if avg_price is not None:
@@ -1073,6 +1002,12 @@ def main() -> int:
                 # run (TOCTOU guard: paper_demo may have recorded the exit between when
                 # reconcile loaded state and now).
                 tracker.state = tracker._load_state()
+                fresh_delta = incremental_sell_fill(
+                    match, list(tracker.state.trades) + list(tracker.state.quarantined_trades),
+                    consumed_qty=fill_record.get("consumed_qty", 0),
+                )
+                if fresh_delta != cost_delta:
+                    raise ReconcileProcessingError("recorded sell economics changed during reconcile; retry with fresh evidence")
 
                 # Check if there's an open trade for this symbol before recording exit
                 has_open_trade = any(
@@ -1133,21 +1068,14 @@ def main() -> int:
                     resolved_exit_reason = "broker_fill_unknown"
                     resolved_exit_strategy = "reconciled_from_broker"
 
-                updated = tracker.record_exit(
-                    symbol=sub["symbol"],
-                    exit_price=avg_price_float,
-                    exit_qty=effective_fill_qty,
-                    broker_order_id=broker_order_id,
+                updated = settle_sell(
+                    project_root, match,
                     exit_strategy_id=resolved_exit_strategy,
                     exit_reason=resolved_exit_reason,
-                    fill_id=fill_key,
+                    expected_delta=cost_delta,
                 )
+                tracker.state = tracker._load_state()
                 if updated:
-                    consume_ref = (
-                        f"{sub.get('submission_id') or broker_order_id or fill_key}:"
-                        f"{already_consumed}->{already_consumed + effective_fill_qty}"
-                    )
-                    fill_ledger.consume(fill_key, trade_id=consume_ref, qty=effective_fill_qty)
                     filled_exits += 1
                     # Mark this sell order as used to prevent re-use within same run
                     if broker_order_id:
@@ -1244,6 +1172,8 @@ def main() -> int:
         "cancelled_stale_buy_orders": len(cancelled_stale_buys),
         "cancelled_stale_sell_orders": len(cancelled_stale_sells),
         "cancelled_stale_details": cancelled_stale,
+        "cancellation_results": cancellation_results,
+        "cancellation_unresolved": cancellation_unresolved,
         "newly_recorded_buys": newly_recorded_buys,
         "checked_sell_submissions": checked,
         "filled_exits_recorded": filled_exits,
@@ -1255,12 +1185,13 @@ def main() -> int:
         newly_recorded_buys=newly_recorded_buys,
         filled_exits_recorded=filled_exits,
         checked_sell_submissions=checked,
-        status="ok",
+        status="degraded" if cancellation_unresolved else "ok",
     )
 
     emit_cron_summary({
         "job": "reconcile_orders",
-        "status": "ok",
+        "status": "degraded" if cancellation_unresolved else "ok",
+        "cancellation_unresolved": cancellation_unresolved,
         "cancelled_stale_orders": len(cancelled_stale),
         "newly_recorded_buys": newly_recorded_buys,
         "checked_sell_submissions": checked,
@@ -1269,7 +1200,7 @@ def main() -> int:
         "open_trades": summary_payload["summary"].get("open_trades", 0),
         "closed_trades": summary_payload["summary"].get("closed_trades", 0),
     })
-    return 0
+    return 1 if cancellation_unresolved else 0
 
 
 if __name__ == "__main__":

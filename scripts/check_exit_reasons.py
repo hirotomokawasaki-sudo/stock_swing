@@ -5,11 +5,12 @@ import json
 from pathlib import Path
 from collections import Counter
 
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
 project_root = Path(__file__).resolve().parents[1]
 pnl_path = project_root / 'data' / 'tracking' / 'pnl_state.json'
 
-with open(pnl_path, 'r') as f:
-    data = json.load(f)
+data = legacy_analytical_state(pnl_path)
 
 trades = data.get('trades', [])
 closed_trades = [t for t in trades if t.get('status') == 'closed']

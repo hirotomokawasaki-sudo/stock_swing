@@ -19,10 +19,14 @@ from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from stock_swing.tracking.closed_trade_validator import validate_closed_trade
+from stock_swing.tracking.exit_reason_store import EXIT_LINEAGE_FIELDS, resolve_exit_lineage
 from stock_swing.tracking.trade_event_store import TradeEvent, TradeEventStore
-from stock_swing.utils.mtime_cache import pnl_state_cache
+from stock_swing.tracking.ledger_transaction import (
+    ledger_operation, read_bytes, stage_bytes, json_revision, LedgerConflict,
+)
 from stock_swing.utils.strategy_versioning import normalize_strategy_id
 
 logger = logging.getLogger(__name__)
@@ -60,12 +64,23 @@ class TradeEntry:
     prompt_version: str | None = None
     config_hash: str | None = None
     entry_fill_id: str | None = None
+    entry_reference_price: float | None = None
+    entry_cost_evidence: dict[str, Any] | None = None
+    corporate_action_adjustments: list[dict[str, Any]] | None = None
     exit_fill_id: str | None = None
+    # SELL provenance is separate from the generic entry decision/run/config.
+    exit_decision_id: str | None = None
+    exit_run_id: str | None = None
+    exit_experiment_id: str | None = None
+    exit_config_hash: str | None = None
+    exit_decision_time: str | None = None
+    exit_submission_id: str | None = None
+    exit_submitted_at: str | None = None
     # F1: Holding-period integrity
     holding_days: float | None = None  # computed from entry_time/exit_time; None if open
     quarantine_reason: str | None = None  # set when status="quarantined"
     # R1-v2: partial fill leg identity
-    execution_leg_id: str | None = None  # set on partial-fill closed legs; None for full closes
+    execution_leg_id: str | None = None  # every new closed leg; legacy full closes may be None
     _partial_leg_seq: int | None = None  # internal counter; not for external use
 
 
@@ -98,6 +113,9 @@ class DailySnapshot:
     # analogous to signals_generated/orders_submitted, lets the delta be a
     # real run-over-run comparison instead of a math no-op.)
     decisions_generated: int | None = None
+    # Additive evidence; historical snapshots remain unmodified. A receipt is
+    # not an exchange close or a broker valuation timestamp.
+    valuation_evidence: dict[str, Any] | None = None
 
 
 @dataclass
@@ -143,6 +161,8 @@ class PnLState:
     archived_from_account_id: str | None = None
     archive_path: str | None = None
     migration_note_path: str | None = None
+    history_migrations: list[dict[str, Any]] = field(default_factory=list)
+    measurement_lineage: dict[str, Any] = field(default_factory=dict)
 
 
 def _compute_holding_days(entry_time: str | None, exit_time: str | None) -> float | None:
@@ -205,6 +225,7 @@ class PnLTracker:
 
     # ── Public API ────────────────────────────────────────────────────────────
 
+    @ledger_operation(refresh='state')
     def record_submission(
         self,
         symbol: str,
@@ -241,6 +262,15 @@ class PnLTracker:
         if price <= 0:
             raise ValueError(f"Invalid entry price {price} for {symbol}. Cannot record submission.")
         
+        if broker_order_id:
+            prior = [t for t in self.state.trades + self.state.quarantined_trades
+                     if t.get("broker_order_id") == broker_order_id]
+            if prior:
+                if (any(t.get("symbol") != symbol or t.get("side") != side for t in prior)
+                        or sum(t["qty"] for t in prior) != qty
+                        or any(float(t.get("entry_reference_price") or t["entry_price"]) != float(price) for t in prior)):
+                    raise LedgerConflict("conflicting or historically adjusted BUY identity")
+                return prior[0]["trade_id"]
         trade_id = f"{symbol}-{decision_id[:8]}"
         now = datetime.now(timezone.utc).isoformat()
 
@@ -277,7 +307,9 @@ class PnLTracker:
             config_hash=config_hash,
             entry_fill_id=fill_id,
         )
-        self.state.trades.append(asdict(trade))
+        # Do not introduce exit-only schema into open lots. This also permits
+        # a code-only rollback while an unfilled/partially filled lot remains.
+        self.state.trades.append({k: v for k, v in asdict(trade).items() if k not in EXIT_LINEAGE_FIELDS})
         self.state.total_trades += 1
         self.state.last_updated = now
         self._save_state()
@@ -296,6 +328,7 @@ class PnLTracker:
         ))
         return trade_id
 
+    @ledger_operation(refresh='state')
     def record_exit(
         self,
         symbol: str,
@@ -334,6 +367,8 @@ class PnLTracker:
         
         remaining_to_exit = exit_qty
         closed_trade = None
+        exit_lineage = resolve_exit_lineage(self.project_root, broker_order_id, symbol, self.state.trades)
+        closed_legs: list[TradeEntry] = []
         
         # Close trades in FIFO order
         for trade_dict in open_trades:
@@ -342,11 +377,15 @@ class PnLTracker:
             
             entry_price = trade_dict["entry_price"]
             trade_qty = trade_dict["qty"]
+            leg_seq = (trade_dict.get("_partial_leg_seq") or 0) + 1
+            trade_dict["_partial_leg_seq"] = leg_seq
+            leg_id = f"{trade_dict['trade_id']}-leg-{leg_seq}"
             
             if remaining_to_exit >= trade_qty:
                 # Close this trade completely
                 qty_to_close = trade_qty
                 trade_dict["status"] = "closed"
+                trade_dict["execution_leg_id"] = leg_id
                 remaining_to_exit -= trade_qty
             else:
                 # Partial close: reduce qty, keep trade open
@@ -354,15 +393,12 @@ class PnLTracker:
                 trade_dict["qty"] -= remaining_to_exit
                 # Create a new closed trade for the exited portion
                 closed_portion = dict(trade_dict)
+                closed_portion.update(exit_lineage)
                 closed_portion["qty"] = qty_to_close
                 closed_portion["exit_price"] = exit_price
                 closed_portion["exit_time"] = now
                 # R1-v2: execution_leg_id — partial fill の各 lot を一意に識別する
-                _leg_seq = (trade_dict.get("_partial_leg_seq") or 0) + 1
-                trade_dict["_partial_leg_seq"] = _leg_seq
-                closed_portion["execution_leg_id"] = (
-                    f"{trade_dict.get('trade_id', 'unknown')}-leg-{_leg_seq}"
-                )
+                closed_portion["execution_leg_id"] = leg_id
                 
                 pnl = (exit_price - entry_price) * qty_to_close
                 return_pct = (exit_price - entry_price) / entry_price if entry_price else 0.0
@@ -392,6 +428,7 @@ class PnLTracker:
                         closed_portion.get("symbol"), closed_portion.get("trade_id"), hd,
                     )
                     closed_trade = TradeEntry(**closed_portion)
+                    closed_legs.append(closed_trade)
                     remaining_to_exit = 0
                     continue
                 else:
@@ -406,6 +443,7 @@ class PnLTracker:
                     self.state.losing_trades += 1
                 
                 closed_trade = TradeEntry(**closed_portion)
+                closed_legs.append(closed_trade)
                 remaining_to_exit = 0
                 continue
             
@@ -418,6 +456,7 @@ class PnLTracker:
             if hd is not None and hd < 0:
                 # Quarantine this trade instead of closing it normally
                 quarantine_dict = dict(trade_dict)
+                quarantine_dict.update(exit_lineage)
                 quarantine_dict.update({
                     "exit_price": exit_price,
                     "exit_time": now,
@@ -436,6 +475,8 @@ class PnLTracker:
                     quarantine_dict["exit_strategy_id"] = exit_strategy_id
                 if exit_reason:
                     quarantine_dict["exit_reason"] = exit_reason
+                if fill_id:
+                    quarantine_dict["exit_fill_id"] = fill_id
                 trade_dict["status"] = "quarantined"  # mark in trades list too
                 self.state.quarantined_trades.append(quarantine_dict)
                 logger.warning(
@@ -443,6 +484,7 @@ class PnLTracker:
                     trade_dict.get("symbol"), trade_dict.get("trade_id"), hd,
                 )
                 closed_trade = TradeEntry(**quarantine_dict)
+                closed_legs.append(closed_trade)
                 continue
 
             trade_dict.update({
@@ -461,6 +503,7 @@ class PnLTracker:
                 trade_dict["exit_reason"] = exit_reason
             if fill_id:
                 trade_dict["exit_fill_id"] = fill_id
+            trade_dict.update(exit_lineage)
 
             # R0-v2-B: canonical validator gate — quarantine instead of closing if invalid
             _quar_ids = {t.get("trade_id") for t in self.state.quarantined_trades}
@@ -478,6 +521,7 @@ class PnLTracker:
                     trade_dict.get("symbol"), trade_dict.get("trade_id"), _val.quarantine_reason,
                 )
                 closed_trade = TradeEntry(**quarantine_dict)
+                closed_legs.append(closed_trade)
                 continue
 
             self.state.cumulative_realized_pnl += pnl
@@ -487,26 +531,47 @@ class PnLTracker:
                 self.state.losing_trades += 1
             
             closed_trade = TradeEntry(**trade_dict)
+            closed_legs.append(closed_trade)
 
         self._refresh_cumulative_metrics_from_closed_trades()
         self.state.last_updated = now
         self._save_state()
-        if closed_trade:
+        for leg in closed_legs:
+            # Entry identity + persisted leg sequence prevents retry duplicates,
+            # while retaining each partial close and each FIFO entry lot.
+            identity = json.dumps([symbol, leg.account_id, leg.broker_order_id,
+                                   leg.trade_id, leg.entry_time,
+                                   leg.execution_leg_id, broker_order_id])
             self.event_store.append(TradeEvent.create(
-                "trade_closed",
+                "trade_closed" if leg.status == "closed" else "trade_quarantined",
                 symbol=symbol,
-                trade_id=closed_trade.trade_id,
+                trade_id=leg.trade_id,
                 broker_order_id=broker_order_id,
+                idempotency_key=identity,
+                run_id=leg.run_id,
                 payload={
+                    "schema_version": 2,
+                    "qty_semantics": "incremental_closed_leg",
+                    "identity_scope": "tracker_leg_not_broker_execution",
+                    "execution_leg_id": leg.execution_leg_id,
+                    "entry_broker_order_id": leg.broker_order_id,
+                    "exit_broker_order_id": broker_order_id,
+                    "entry_fill_id": leg.entry_fill_id,
                     "exit_price": exit_price,
-                    "exit_qty": exit_qty,
+                    "exit_qty": leg.qty,
                     "exit_reason": exit_reason,
-                    "pnl": closed_trade.pnl,
+                    "pnl": leg.pnl,
                     "exit_fill_id": fill_id,
+                    **exit_lineage,
+                    "exit_fill_id_kind": ("missing" if not fill_id else
+                                          "order_aggregate" if fill_id == broker_order_id else "unverified"),
+                    "broker_executed_at": None,
+                    "quarantine_reason": leg.quarantine_reason,
                 },
             ))
         return closed_trade
 
+    @ledger_operation(refresh='state')
     def record_daily_snapshot(
         self,
         equity: float,
@@ -514,9 +579,37 @@ class PnLTracker:
         orders_submitted: int = 0,
         decisions_generated: int = 0,
         current_prices: dict[str, float] | None = None,
+        *,
+        equity_observed_at: datetime | None = None,
+        equity_source: str | None = None,
+        run_id: str | None = None,
+        environment_id: str | None = None,
     ) -> DailySnapshot:
         """Record end-of-day snapshot."""
-        today = datetime.now(timezone.utc).date().isoformat()
+        recorded_at = datetime.now(timezone.utc)
+        if equity_observed_at is not None:
+            if (not isinstance(equity_observed_at, datetime)
+                    or equity_observed_at.tzinfo is None
+                    or equity_observed_at.utcoffset() is None
+                    or equity_observed_at > recorded_at):
+                raise ValueError("equity observation must be a timezone-aware nonfuture timestamp")
+        observed = equity_observed_at.astimezone(timezone.utc) if equity_observed_at is not None else None
+        valuation_evidence = {
+            "schema_version": 1,
+            "recorded_at": recorded_at.isoformat(),
+            "observed_at": observed.isoformat() if observed else None,
+            "observed_et_date": observed.astimezone(ZoneInfo("America/New_York")).date().isoformat() if observed else None,
+            "observation_age_seconds": (recorded_at - observed).total_seconds() if observed else None,
+            "source": equity_source,
+            "environment_id": environment_id,
+            "run_id": run_id,
+            "valuation_at": None,
+            "session_date": None,
+            "cashflow_status": "unverified",
+            "canonical_session_equity": False,
+        }
+        # Preserve legacy grouping until session valuation/cashflow is proven.
+        today = recorded_at.date().isoformat()
         current_prices = current_prices or {}
 
         # Today's closed trades
@@ -565,13 +658,19 @@ class PnLTracker:
             cumulative_closed_trades=cum_closed,
             open_position_count=len(open_trades),
             decisions_generated=decisions_generated,
+            valuation_evidence=valuation_evidence,
         )
-        self.state.daily_snapshots.append(asdict(snap))
+        snap_row = asdict(snap)
+        if self.state.measurement_lineage:
+            snap_row["ledger_revision"] = self.state.measurement_lineage["ledger_revision"]
+            snap_row["history_basis"] = "post_correction_observation_not_revalidated_history"
+        self.state.daily_snapshots.append(snap_row)
         self._record_strategy_daily_snapshots(today=today, current_prices=current_prices)
         self.state.last_updated = datetime.now(timezone.utc).isoformat()
         self._save_state()
         return snap
 
+    @ledger_operation(refresh='history_read')
     def get_summary(self) -> dict[str, Any]:
         """Return overall performance summary."""
         closed = [t for t in self.state.trades if t["status"] == "closed"]
@@ -623,9 +722,11 @@ class PnLTracker:
                 "archived_from_account_id": self.state.archived_from_account_id,
                 "archive_path": self.state.archive_path,
                 "migration_note_path": self.state.migration_note_path,
+                "measurement_lineage": dict(self.state.measurement_lineage),
             },
         }
 
+    @ledger_operation(refresh='history_read')
     def get_asset_class_breakdown(self) -> dict[str, dict[str, Any]]:
         """Return ETF vs Stock performance breakdown.
 
@@ -824,6 +925,7 @@ class PnLTracker:
             "unknown_count": unknown_count,
         }
 
+    @ledger_operation(refresh='history_read')
     def get_summary_by_account(self, account_id: str | None = None) -> dict[str, Any]:
         """Return performance summary for a specific account.
         
@@ -891,6 +993,7 @@ class PnLTracker:
                 accounts.add(acc_id)
         return sorted(accounts)
 
+    @ledger_operation(refresh='history_read')
     def get_open_positions(self) -> list[dict[str, Any]]:
         return [t for t in self.state.trades if t["status"] == "open"]
 
@@ -1044,6 +1147,7 @@ class PnLTracker:
         ]
         return list(self.state.quarantined_trades) + legacy
 
+    @ledger_operation(refresh='history_read')
     def get_ledger_quality_report(self) -> dict[str, Any]:
         """F1: Return data-quality summary for the closed-trade ledger."""
         closed = [t for t in self.state.trades if t.get("status") == "closed"]
@@ -1061,6 +1165,7 @@ class PnLTracker:
             if not t.get("decision_id") and not t.get("run_id")
         ]
         return {
+            "measurement_lineage": dict(self.state.measurement_lineage),
             "clean_closed": len(closed) - len(neg_hd),
             "quarantined": len(quarantined),
             "negative_holding_days_in_clean": len(neg_hd),
@@ -1073,6 +1178,7 @@ class PnLTracker:
             ),
         }
 
+    @ledger_operation(refresh='state')
     def update_open_trade_peaks(self, current_prices: dict[str, float]) -> int:
         """Update persisted peak_price for open trades using latest market prices.
 
@@ -1181,6 +1287,7 @@ class PnLTracker:
 
         return grouped
 
+    @ledger_operation(refresh='history_read')
     def get_recent_trades(self, n: int = 10) -> list[dict[str, Any]]:
         closed = [t for t in self.state.trades if t["status"] == "closed"]
         closed.sort(key=lambda t: t.get("exit_time") or t.get("entry_time") or "")
@@ -1232,6 +1339,8 @@ class PnLTracker:
 
         latest_prior_by_strategy: dict[str, dict[str, Any]] = {}
         for row in self.state.strategy_daily_snapshots:
+            if self.state.measurement_lineage and row.get("ledger_revision") != self.state.measurement_lineage["ledger_revision"]:
+                continue
             if str(row.get("date") or "") == today:
                 continue
             strategy_id = str(row.get("strategy_version_id") or "unknown")
@@ -1273,20 +1382,34 @@ class PnLTracker:
                 loss_count=int((closed_by_strategy.get(strategy_id) or {}).get("loss_count") or 0),
                 open_positions=int((open_by_strategy.get(strategy_id) or {}).get("open_positions") or 0),
             )
-            new_rows.append(asdict(row))
+            new_row = asdict(row)
+            if self.state.measurement_lineage:
+                new_row["ledger_revision"] = self.state.measurement_lineage["ledger_revision"]
+                new_row["history_basis"] = "post_correction_strategy_series_new_origin"
+            new_rows.append(new_row)
 
         self.state.strategy_daily_snapshots = [
-            row for row in self.state.strategy_daily_snapshots if str(row.get("date") or "") != today
+            row for row in self.state.strategy_daily_snapshots
+            if str(row.get("date") or "") != today or (self.state.measurement_lineage and
+                row.get("ledger_revision") != self.state.measurement_lineage["ledger_revision"])
         ] + new_rows
 
     # ── Internal ──────────────────────────────────────────────────────────────
 
+    @ledger_operation()
     def _load_state(self) -> PnLState:
-        if self.state_path.exists():
+        raw = read_bytes(self.project_root, self.state_path)
+        if raw is None:
+            from .history_migration import parse_events, validate_history_pair
+            validate_history_pair({}, parse_events(read_bytes(self.project_root, self.event_store.path)))
+        self._loaded_revision = None
+        if raw is not None:
             try:
-                # R6-v2 / H9: use mtime cache so repeated console-server calls
-                # do not re-read the full JSON when the file has not changed.
-                data = pnl_state_cache.get(self.state_path)
+                # Private parsed data: never mutate a shared mtime-cache object.
+                data = json.loads(raw)
+                from .history_migration import parse_events, validate_history_pair
+                validate_history_pair(data, parse_events(read_bytes(self.project_root, self.event_store.path)))
+                self._loaded_revision = json_revision(data)
                 
                 # FIX: Map closed_trades to trades if trades is empty (for restored data)
                 if "closed_trades" in data and not data.get("trades"):
@@ -1341,13 +1464,14 @@ class PnLTracker:
 
                 state = PnLState(**data)
                 self._refresh_cumulative_metrics_from_closed_trades(state)
+                self._loaded_state_revision = json_revision(asdict(state))
                 return state
             except Exception as e:
                 logger.error(f"Failed to load state: {e}")
-                pass
+                raise ValueError("corrupt PnL state; refusing empty-baseline fallback") from e
         now = datetime.now(timezone.utc).isoformat()
         default_account_id = os.environ.get("BROKER_ACCOUNT_ID")
-        return PnLState(
+        state = PnLState(
             created_at=now,
             last_updated=now,
             broker_account_id=default_account_id,
@@ -1355,37 +1479,33 @@ class PnLTracker:
             baseline_equity=100_000.0,
             tracking_label=f"alpaca_account_epoch_{now[:10]}",
         )
+        self._loaded_state_revision = json_revision(asdict(state))
+        return state
 
+    @ledger_operation()
     def _save_state(self) -> None:
-        import tempfile
-
-        content = json.dumps(asdict(self.state), indent=2, ensure_ascii=False)
-        dir_path = self.state_path.parent
-        fd, tmp_path_str = tempfile.mkstemp(
-            dir=str(dir_path), prefix=".pnl_state.", suffix=".tmp"
-        )
-        tmp_path = Path(tmp_path_str)
-        try:
-            with os.fdopen(fd, "w", encoding="utf-8") as fh:
-                fh.write(content)
-                fh.flush()
-                os.fsync(fh.fileno())
-            tmp_path.replace(self.state_path)
-        except Exception:
-            try:
-                tmp_path.unlink(missing_ok=True)
-            except Exception:
-                pass
-            raise
+        current = read_bytes(self.project_root, self.state_path)
+        revision = json_revision(json.loads(current)) if current is not None else None
+        if revision != self._loaded_revision:
+            raise LedgerConflict("stale tracker state; reload before editing")
+        payload = asdict(self.state)
+        from .history_migration import parse_events, validate_history_pair
+        validate_history_pair(payload, parse_events(read_bytes(self.project_root, self.event_store.path)))
+        content = json.dumps(payload, indent=2, ensure_ascii=False, allow_nan=False).encode()
+        stage_bytes(self.project_root, self.state_path, content)
+        self._loaded_revision = json_revision(payload)
+        self._loaded_state_revision = json_revision(payload)
 
     def _refresh_cumulative_metrics_from_closed_trades(self, state: PnLState | None = None) -> None:
         """Keep aggregate counters derived from canonical closed trades."""
         target = state or self.state
         closed = [t for t in target.trades if t.get("status") == "closed"]
-        if closed:
+        if closed or target.history_migrations:
             target.cumulative_realized_pnl = round(
                 sum(float(t.get("pnl", 0) or 0) for t in closed),
                 2,
             )
+        if target.history_migrations:
+            target.total_trades = len(target.trades)
         target.winning_trades = sum(1 for t in closed if float(t.get("pnl", 0) or 0) > 0)
         target.losing_trades = sum(1 for t in closed if float(t.get("pnl", 0) or 0) < 0)

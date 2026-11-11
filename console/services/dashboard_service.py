@@ -14,6 +14,8 @@ from console.adapters.cron_adapter import CronAdapter
 from console.adapters.data_adapter import DataAdapter
 from console.adapters.system_adapter import SystemAdapter
 from console.utils.time_utils import now_iso
+from console.services.evidence_service import get_console_evidence
+from console.services.operational_evidence_service import console_fingerprints, get_control_evidence, get_operational_evidence, _number as display_number, _stamp as evidence_stamp, _read as read_evidence
 from stock_swing.utils.market_calendar import MarketCalendar
 from stock_swing.reporting.restriction_review_alerts import build_restriction_review_alerts
 
@@ -48,14 +50,13 @@ class DashboardService:
 
     @staticmethod
     def _load_json_cached(path: Path) -> dict:
-        """H9 (2026-07-27): mtime ベースキャッシュ経由で JSON を読込む。
-
-        pnl_state.json (~400KB) は paper_demo 実行時にしか変わらないため、
-        ファイル更新がない限り再パースをスキップし p95 <=500ms SLO を達成する。
-        キャッシュ利用不可の場合は通常の直接読込にフォールバックする。
-        """
+        """PnL uses a coherent state/event read; never a single-file cache."""
+        if path.name == "pnl_state.json":
+            from stock_swing.tracking.compatibility import read_tracking_state
+            return read_tracking_state(path)
         if _pnl_state_cache is not None:
-            return _pnl_state_cache.get(path)
+            from copy import deepcopy
+            return deepcopy(_pnl_state_cache.get(path))
         return json.loads(path.read_text(encoding="utf-8"))
 
     @staticmethod
@@ -100,6 +101,7 @@ class DashboardService:
 
     def __init__(self, project_root: Path):
         self.project_root = project_root
+        self._console_loaded_fingerprints = console_fingerprints(project_root)
         self.cron_adapter = CronAdapter(project_root)
         self.data_adapter = DataAdapter(project_root)
         self.system_adapter = SystemAdapter(project_root)
@@ -189,6 +191,7 @@ class DashboardService:
         return broker_price
 
     def get_dashboard(self, period: str = 'month') -> Dict[str, Any]:
+        from console.services.market_clock_service import get_market_clock
         trading = self.get_trading()
         positions = self.get_positions(trading=trading)
         archives = self.get_archive_history(trading=trading)
@@ -211,6 +214,7 @@ class DashboardService:
         
         return {
             "time": now_iso(),
+            "market_clock": get_market_clock(),
             "alerts": self.get_alerts(
                 overview=overview,
                 trading=trading,
@@ -235,10 +239,15 @@ class DashboardService:
             "performance": performance_attribution,
             "logs": self.get_logs(),
             "market_regime": self._get_market_regime_indicator(),
+            "console_evidence": get_console_evidence(self.project_root),
+            "operational_evidence": self.get_operational_evidence(),
         }
     
     def _get_performance_attribution(self, trading: Dict[str, Any], period: str = 'month') -> Dict[str, Any]:
         """Get performance attribution metrics (Alpha, Beta, Sharpe)."""
+        if trading.get("measurement_lineage"):
+            return {"available": False, "error": "historical_correction_unqualified", "period_filter": period,
+                    "measurement_lineage": trading["measurement_lineage"]}
         try:
             from console.services.benchmark_service import BenchmarkService
             benchmark_service = BenchmarkService(self.project_root)
@@ -287,6 +296,8 @@ class DashboardService:
 
     def _get_strategy_performance_attribution(self, trading: Dict[str, Any], period: str = 'month') -> List[Dict[str, Any]]:
         """Get strategy-level attribution, preferring persisted daily snapshots."""
+        if trading.get("measurement_lineage"):
+            return []  # parent attribution exposes the explicit unavailable reason
         try:
             from console.services.benchmark_service import BenchmarkService
             benchmark_service = BenchmarkService(self.project_root)
@@ -463,12 +474,22 @@ class DashboardService:
         jobs = self.cron_adapter.get_jobs()
         now = datetime.now().astimezone()
         enriched_jobs = [self._enrich_cron_job(job, now) for job in jobs]
-        return {
+        evidence = getattr(self.cron_adapter, 'last_evidence', None) or {"status":"unknown", "as_of":None, "source":None, "complete":False}
+        from console.services.operational_evidence_service import _stamp
+        stamp, age = _stamp(evidence.get('as_of'), now)
+        current = evidence.get('status') == 'ok' and evidence.get('complete') is True and stamp is not None and age <= 120
+        if not current:
+            for row in enriched_jobs:
+                row['lag_seconds'] = None
+        result = {
             "time": now_iso(),
+            "evidence": evidence,
             "jobs": enriched_jobs,
-            "total": len(enriched_jobs),
-            "active": len([j for j in enriched_jobs if j.get("enabled")]),
+            "total": len(enriched_jobs) if current else None,
+            "active": sum(j.get('enabled') is True for j in enriched_jobs) if current and all(type(j.get('enabled')) is bool for j in enriched_jobs) else None,
         }
+        self._cron_jobs_snapshot = result
+        return result
 
     def get_data_status(self) -> Dict[str, Any]:
         counts = self.data_adapter.get_counts()
@@ -493,8 +514,16 @@ class DashboardService:
             return {"available": False, "error": "PnLTracker not available"}
 
         try:
-            self._tracker.state = self._tracker._load_state()
-            open_positions = self._tracker.get_open_positions()
+            from copy import deepcopy
+            from dataclasses import asdict
+            from stock_swing.tracking.ledger_transaction import ledger_transaction
+            # One state version; broker I/O follows outside the ledger lock.
+            with ledger_transaction(self.project_root, recover=False):
+                self._tracker.state = self._tracker._load_state()
+                state = asdict(self._tracker.state)
+                open_positions = deepcopy(self._tracker.get_open_positions())
+                summary = self._tracker.get_summary()
+            lineage = state.get("measurement_lineage") or {}
             # Build current_prices from broker API (fresh, cached) instead of
             # stale broker raw files which may be months old.
             broker_pos_list = self._get_broker_positions()
@@ -537,13 +566,12 @@ class DashboardService:
                         p["lastday_price"] = lp
                         if entry > 0:
                             p["unrealized_pnl_lastday"] = round((lp - entry) * qty, 2)
-            summary = self._tracker.get_summary()
             position_snapshot = self.get_positions()
             if position_snapshot.get("available"):
                 summary["open_trades"] = max(int(summary.get("open_trades") or 0), int(position_snapshot.get("count") or 0))
-            recent = self._select_recent_closed_trades(list(self._tracker.state.trades))
-            daily_snapshots = self._enrich_daily_snapshots(list(self._tracker.state.daily_snapshots), list(self._tracker.state.trades), position_snapshot)
-            if daily_snapshots:
+            recent = self._select_recent_closed_trades(list(state["trades"]))
+            daily_snapshots = self._enrich_daily_snapshots(list(state["daily_snapshots"]), list(state["trades"]), position_snapshot)
+            if daily_snapshots and daily_snapshots[-1].get("history_basis") != "pre_correction_as_observed":
                 latest = dict(daily_snapshots[-1])
                 unrealized = 0.0
                 for p in open_positions:
@@ -558,10 +586,10 @@ class DashboardService:
                 daily_snapshots[-1] = latest
 
             # Get closed trades from tracker state
-            closed_trades = [dict(t) for t in self._tracker.state.trades if t.get("status") == "closed"]
+            closed_trades = [dict(t) for t in state["trades"] if t.get("status") == "closed"]
             
             # Calculate daily PnL stats
-            daily_pnl_stats = self._calculate_daily_pnl_stats(daily_snapshots)
+            daily_pnl_stats = self._calculate_daily_pnl_stats(daily_snapshots) if not lineage else {"available": False, "reason": "historical_correction_unqualified"}
             
             return {
                 "available": True,
@@ -580,7 +608,9 @@ class DashboardService:
                 # record-count safety cap to bound response size as history
                 # grows.
                 "daily_snapshots": self._keep_recent_calendar_days(daily_snapshots, days=90, max_records=2000),
-                "strategy_daily_snapshots": list(self._tracker.state.strategy_daily_snapshots)[-200:],
+                "strategy_daily_snapshots": [r for r in state["strategy_daily_snapshots"] if not lineage or r.get("ledger_revision") == lineage.get("ledger_revision")][-200:],
+                "measurement_lineage": lineage,
+                "warnings": ["履歴修正後の成績は未検証です。旧日次観測と修正後の成績は接続していません。"] if lineage else [],
                 "open_positions": open_positions,
                 "current_prices": current_prices,
                 "daily_pnl_stats": daily_pnl_stats,
@@ -617,79 +647,70 @@ class DashboardService:
         return detail
 
     def get_positions(self, trading: Dict[str, Any] | None = None) -> Dict[str, Any]:
-        """Get open positions from broker (fallback to PnL tracker if unavailable)."""
-        # Try broker first (source of truth)
-        if self._broker:
-            try:
-                broker_positions = self._get_broker_positions()
-                broker_data = broker_positions
-                
-                if broker_data:
-                    enriched_positions = [self._enrich_broker_position(p) for p in broker_data]
-                    summary = self._summarize_positions(enriched_positions, trading=trading)
-                    summary["position_count"] = len(enriched_positions)
-                    account = self._get_account_info()
-                    portfolio_value = float(account.get("portfolio_value") or account.get("equity") or 0.0)
-                    cash = float(account.get("cash") or 0.0)
-                    total_cost_basis = sum(float(p.get("entry_price") or 0.0) * float(p.get("qty") or 0.0) for p in enriched_positions)
-                    total_pnl = sum(float(p.get("unrealized_pnl") or 0.0) for p in enriched_positions)
-                    summary.update({
-                        "portfolio_value": portfolio_value,
-                        "cash": cash,
-                        "total_pnl": round(total_pnl, 2),
-                        "total_pnl_pct": round((total_pnl / total_cost_basis), 4) if total_cost_basis > 0 else None,
-                    })
-
-                    # Market-hours status + dual-basis (live vs. last regular
-                    # close) unrealized PnL, so after-hours/pre-market noise
-                    # in current_price doesn't get mistaken for a real move.
-                    market_status_detail = self._get_market_status_detail(enriched_positions)
-
-                    return {
-                        "available": True,
-                        "time": now_iso(),
-                        "positions": enriched_positions,
-                        "count": len(enriched_positions),
-                        "summary": summary,
-                        "source": "broker",
-                        "market_status": market_status_detail,
-                    }
-            except Exception as e:
-                # Fall through to tracker
-                pass
-        
-        # Fallback to PnL tracker
-        if not self._tracker:
-            return {"available": False, "positions": [], "summary": {}, "source": "none"}
-
+        """Read-only display: broker-flat, acquisition failure and saved substitute differ."""
+        raw = self._get_broker_positions()
+        evidence = dict(getattr(self, "_broker_positions_evidence", {"status": "unknown", "as_of": None}))
+        source = "broker"
+        selected = raw
+        if evidence.get("status") != "ok":
+            saved, saved_status = read_evidence(self.project_root, "data/tracking/pnl_state.json")
+            # FIX-06 / 2026-11-09: broker failure must not bypass the coherent
+            # ledger boundary through this descriptive tracker substitute.
+            # Preflight first so absent inputs never create a tracking folder.
+            ledger_evidence = {}
+            if saved_status == "ok":
+                try:
+                    from stock_swing.tracking.compatibility import read_analysis_snapshot
+                    from stock_swing.tracking.ledger_transaction import ledger_transaction
+                    with ledger_transaction(self.project_root, recover=False, blocking=False):
+                        _, saved_status = read_evidence(self.project_root, "data/tracking/pnl_state.json")
+                        if saved_status == "ok":
+                            saved, ledger_evidence = read_analysis_snapshot(self.project_root / "data/tracking/pnl_state.json")
+                except (OSError, ValueError, TypeError, RuntimeError, ImportError):
+                    saved_status = "invalid"
+            if saved_status != "ok" or not isinstance(saved.get("trades"), list) or any(not isinstance(t, dict) for t in saved["trades"]):
+                return {"available": False, "positions": [], "summary": {}, "source": "none", "evidence": evidence,
+                    "broker_evidence": evidence, "next_action": "口座API取得状態と保存台帳の読取結果を確認。台帳修復・停止解除はこの画面では行いません。"}
+            selected = [dict(t) for t in saved["trades"] if t.get("status") == "open"]
+            stamp, age = evidence_stamp(saved.get("last_updated"), datetime.now(timezone.utc))
+            evidence = {"status": "substitute", "as_of": stamp, "age_seconds": age, "source": "data/tracking/pnl_state.json",
+                "ledger_state_sha256": ledger_evidence["state_sha256"],
+                "ledger_events_sha256": ledger_evidence["events_sha256"],
+                "ledger_revision": ledger_evidence["ledger_revision"],
+                "complete": False, "scope": "保存台帳のopen記録・口座との一致未確認",
+                "reason": "台帳の代用値。口座の保有なしを証明しません。価格未取得を建値/損益ゼロで補いません。"}
+            source = "tracker"
         try:
-            self._tracker.state = self._tracker._load_state()
-            positions = self._tracker.get_open_positions()
-            current_prices = (trading or {}).get("current_prices") or self._fetch_current_prices([p.get("symbol") for p in positions])
-            enriched_positions = [self._enrich_position(p, current_prices=current_prices) for p in positions]
-            summary = self._summarize_positions(enriched_positions, trading=trading)
-            summary["position_count"] = len(enriched_positions)
-            account = self._get_account_info()
-            portfolio_value = float(account.get("portfolio_value") or account.get("equity") or 0.0)
-            cash = float(account.get("cash") or 0.0)
-            total_cost_basis = sum(float(p.get("entry_price") or 0.0) * float(p.get("qty") or 0.0) for p in enriched_positions)
-            total_pnl = sum(float(p.get("unrealized_pnl") or 0.0) for p in enriched_positions)
-            summary.update({
-                "portfolio_value": portfolio_value,
-                "cash": cash,
-                "total_pnl": round(total_pnl, 2),
-                "total_pnl_pct": round((total_pnl / total_cost_basis), 4) if total_cost_basis > 0 else None,
-            })
-            return {
-                "available": True,
-                "time": now_iso(),
-                "positions": enriched_positions,
-                "count": len(enriched_positions),
-                "summary": summary,
-                "source": "tracker",
-            }
-        except Exception as e:
-            return {"available": False, "positions": [], "summary": {}, "error": str(e), "source": "error"}
+            if source == "broker":
+                positions = [self._enrich_broker_position(row) for row in selected]
+            else:
+                prices = (trading or {}).get("current_prices") or {}
+                positions = [self._enrich_position(row, current_prices=prices) for row in selected]
+                for row in positions:
+                    if display_number(prices.get(row.get("symbol"))) is None:
+                        for field in ("current_price", "market_value", "unrealized_pnl", "unrealized_pnl_pct", "unrealized_return_pct"):
+                            row[field] = None
+            summary = self._summarize_positions(positions, trading=trading)
+            summary["position_count"] = len(positions)
+            account = self._get_broker_account()
+            acq = getattr(self, "_broker_account_evidence", {})
+            account_ok = acq.get("status") == "ok"
+            summary["portfolio_value"] = display_number(account.get("portfolio_value", account.get("equity"))) if account_ok else None
+            summary["cash"] = display_number(account.get("cash")) if account_ok else None
+            bases = [display_number(row.get("entry_price")) for row in positions]
+            quantities = [display_number(row.get("qty")) for row in positions]
+            cost = sum(abs(a*b) for a,b in zip(bases,quantities)) if all(x is not None for x in bases+quantities) else None
+            summary["total_pnl"] = summary["unrealized_pnl"]
+            summary["total_pnl_pct"] = summary["unrealized_pnl"] / cost if cost and summary["unrealized_pnl"] is not None else None
+            return {"available": True, "time": now_iso(), "positions": positions, "count": len(positions),
+                "summary": summary, "source": source, "evidence": evidence,
+                "broker_evidence": dict(getattr(self, "_broker_positions_evidence", {})),
+                "market_status": self._get_market_status_detail(positions) if source == "broker" else None,
+                "next_action": "取得元・時刻・価格欠測を確認。保存値/参考ストップは売買ジョブの適用値や発注証明ではありません。"}
+        except Exception:
+            return {"available": False, "positions": [], "summary": {}, "source": "error",
+                "evidence": {**evidence, "status": "error", "reason": "保有表示の計算/入力を確認できません。"},
+                "next_action": "入力の数値・価格・取得元を確認。生の例外や金融原本の自動修復は表示しません。"}
 
     def check_broker_tracker_consistency(self) -> Dict[str, Any]:
         """Check consistency between broker positions and tracker state.
@@ -1658,7 +1679,37 @@ class DashboardService:
         if report_success_ts and (not last_success or report_success_ts > last_success):
             last_success = report_success_ts
 
+        # Current open orders have a separate query/cache. Historical all/500
+        # remains unchanged for ID lookup, holding-age and submission history.
+        from console.services.followthrough_service import pending_risk
+        open_orders = self._get_broker_open_orders()
+        order_evidence = dict(getattr(self, "_broker_open_orders_evidence", {}))
+        order_stamp, order_age = evidence_stamp(order_evidence.get("as_of"), datetime.now(timezone.utc))
+        measured = pending_risk(open_orders, order_evidence, datetime.now(timezone.utc))
+        qualified_orders = (order_evidence.get("status") == "ok" and order_evidence.get("complete") is True
+                            and order_age is not None and order_age <= 120
+                            and measured.get("observed_active_orders") is not None)
+        current_orders = {"open": None, "pending_cancel": None, "partial": None, "other": None}
+        if qualified_orders:
+            current_orders = dict.fromkeys(current_orders, 0)
+            for order in open_orders:
+                state = str(order.get("status") or "").lower()
+                if not state or state in {"filled", "canceled", "cancelled", "rejected", "expired", "replaced"}:
+                    continue
+                key = "pending_cancel" if state == "pending_cancel" else "partial" if state == "partially_filled" else "open" if state in {"new", "accepted", "pending_new"} else "other"
+                current_orders[key] += 1
+        history = dict(getattr(self, "_audit_read_evidence", {"status": "unknown", "as_of": None}))
         return {
+            "current_mismatches": None,
+            "current_orders": current_orders,
+            "current_orders_evidence": order_evidence,
+            "current_pending_orders": [{"order_id": o.get("id"), "symbol": o.get("symbol"),
+                "side": o.get("side"), "qty": o.get("qty"), "status": o.get("status"),
+                "broker_status": o.get("status"), "broker_filled_qty": o.get("filled_qty"),
+                "ts": o.get("submitted_at") or o.get("created_at"), "source": "broker_open_order_id"}
+                for o in open_orders],
+            "history_evidence": history,
+            "next_action": "現在の未解決不一致は未認定。口座/台帳の同時点・全保有/全未約定の照合結果を確認。過去ログ件数を現在の不一致へ読み替えません。",
             "recent_reconciliations": len(rec_events),
             "recent_submissions": len(sub_events),
             "pending_or_mismatched": pending_or_mismatched,
@@ -1667,92 +1718,54 @@ class DashboardService:
             "discrepancy_types": [{"reason": k, "count": v} for k, v in sorted(discrepancy_counts.items(), key=lambda item: item[1], reverse=True)[:10]],
             "by_symbol": sorted(by_symbol.values(), key=lambda x: (x.get("mismatches", 0), x.get("submissions", 0)), reverse=True)[:10],
             "pending_orders": pending_orders,
+            "pending_orders_evidence": dict(getattr(self, "_broker_orders_evidence", {"status": "unknown", "as_of": None, "reason": "取得証拠なし"})),
         }
 
     def _fetch_broker_pending_orders(self, sub_events: List[Dict[str, Any]], rec_events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Fetch broker truth for pending orders."""
-        if not self._broker:
-            # Fallback to audit-based status
-            pending_orders = []
-            for evt in sub_events:
-                parsed = self._parse_submission_details(str(evt.get("details") or ""))
-                symbol = parsed.get("symbol") or "unknown"
-                side = parsed.get("side") or "unknown"
-                qty = parsed.get("qty") or 0
-                matching_rec = next((r for r in rec_events if r.get("subject") == evt.get("subject")), None)
-                rec_details = str(matching_rec.get("details") or "") if matching_rec else ""
-                if not matching_rec:
-                    status = "pending_reconcile"
-                elif "0 discrepancies" in rec_details:
-                    status = "reconciled_ok"
-                elif "status_mismatch" in rec_details:
-                    status = "status_mismatch"
-                elif "qty_mismatch" in rec_details:
-                    status = "qty_mismatch"
-                else:
-                    status = "mismatch"
-                pending_orders.append({
-                    "ts": evt.get("ts"),
-                    "symbol": symbol,
-                    "side": side,
-                    "qty": qty,
-                    "status": status,
-                    "broker_status": None,
-                    "broker_filled_qty": None,
-                })
-            return pending_orders
+        """Display observed orders by exact ID; never infer acceptance by symbol.
 
-        try:
-            # Fetch broker orders (cached)
-            broker_orders = self._get_broker_orders()
-            broker_map = {}
-            for order in broker_orders:
-                symbol = str(order.get("symbol") or "").upper()
-                side = str(order.get("side") or "").lower()
-                key = f"{symbol}_{side}"
-                if key not in broker_map:
-                    broker_map[key] = order
-
-            pending_orders = []
-            for evt in sub_events:
-                parsed = self._parse_submission_details(str(evt.get("details") or ""))
-                symbol = parsed.get("symbol") or "unknown"
-                side = parsed.get("side") or "unknown"
-                qty = parsed.get("qty") or 0
-                key = f"{symbol}_{side}"
-                broker_order = broker_map.get(key)
-                
-                if broker_order:
-                    broker_status = str(broker_order.get("status") or "unknown").lower()
-                    filled_qty = float(broker_order.get("filled_qty") or 0)
-                    if broker_status in {"filled", "partially_filled"} and filled_qty == qty:
-                        status = "filled"
-                    elif broker_status == "canceled":
-                        status = "canceled"
-                    elif broker_status == "rejected":
-                        status = "rejected"
-                    elif broker_status == "accepted":
-                        status = "accepted"
-                    else:
-                        status = broker_status
-                else:
-                    status = "pending_reconcile"
-                    broker_status = None
-                    filled_qty = None
-
-                pending_orders.append({
-                    "ts": evt.get("ts"),
-                    "symbol": symbol,
-                    "side": side,
-                    "qty": qty,
-                    "status": status,
-                    "broker_status": broker_status if broker_order else None,
-                    "broker_filled_qty": filled_qty if broker_order else None,
-                })
-            return pending_orders
-        except Exception:
-            # Fallback to audit-based on error
-            return self._fetch_broker_pending_orders(sub_events, rec_events)
+        FIX-CONSOLE-EVIDENCE-20261028 (base 8909e79): failure was an empty
+        success and the exception fallback recursively retried itself.
+        Scope remains the existing status=all/limit=500 query, not a full OMS.
+        """
+        orders = self._get_broker_orders()
+        by_id = {str(o["id"]): o for o in orders if o.get("id")}
+        terminal = {"filled", "canceled", "cancelled", "expired", "rejected", "replaced"}
+        result = []
+        shown = set()
+        for evt in sub_events:
+            order_id = str(evt.get("order_id") or evt.get("subject") or "")
+            order = by_id.get(order_id)
+            parsed = self._parse_submission_details(str(evt.get("details") or ""))
+            # Audit-only display; leave other legacy parser consumers unchanged.
+            detail = str(evt.get("details") or "").split(":", 1)[-1].strip()
+            parts = detail.split()
+            audit_qty = None
+            if len(parts) >= 3 and parts[0].lower() in {"buy", "sell"}:
+                raw_qty = parts[1]
+                if (len(raw_qty) <= 24 and re.fullmatch(r"[0-9]+(?:\.[0-9]+)?", raw_qty)
+                        and any(c in "123456789" for c in raw_qty)):
+                    audit_qty = int(raw_qty) if raw_qty.isdecimal() else raw_qty
+            result.append({
+                "ts": evt.get("ts"), "order_id": order_id or None,
+                "symbol": order.get("symbol") if order else parsed.get("symbol"),
+                "side": order.get("side") if order else parsed.get("side"),
+                "qty": order.get("qty") if order else audit_qty,
+                "status": str(order.get("status") or "unknown") if order else "unconfirmed",
+                "broker_status": order.get("status") if order else None,
+                "broker_filled_qty": order.get("filled_qty") if order else None,
+                "source": "broker_order_id" if order else "audit_only",
+            })
+            if order: shown.add(order_id)
+        for order in orders:
+            if str(order.get("id")) in shown or str(order.get("status", "")).lower() in terminal:
+                continue
+            result.append({"ts": order.get("submitted_at") or order.get("created_at"),
+                "order_id": order.get("id"), "symbol": order.get("symbol"),
+                "side": order.get("side"), "qty": order.get("qty"),
+                "status": order.get("status") or "unknown", "broker_status": order.get("status"),
+                "broker_filled_qty": order.get("filled_qty"), "source": "broker_order_id"})
+        return result
 
     def get_alerts(
         self,
@@ -1764,6 +1777,8 @@ class DashboardService:
         news: Dict[str, Any] | None = None,
     ) -> List[Dict[str, Any]]:
         alerts: List[Dict[str, Any]] = []
+        if trading and trading.get("measurement_lineage"):
+            alerts.append({"severity": "warning", "title": "履歴修正後の成績は未検証", "message": "旧日次観測と修正後の成績は接続していません。実運用昇格の根拠には使えません。", "type": "historical_correction_unqualified"})
         counts = data_status.get("counts", {})
         freshness = data_status.get("freshness", {})
         trading_summary = trading.get("summary", {}) if trading else {}
@@ -1855,7 +1870,7 @@ class DashboardService:
                 "updated_at": now_iso(),
             })
 
-        stale_jobs = [j for j in cron_jobs.get("jobs", []) if j.get("enabled") and j.get("lag_seconds", 0) > 0]
+        stale_jobs = [j for j in cron_jobs.get("jobs", []) if j.get("enabled") and isinstance(j.get("lag_seconds"), (int, float)) and j["lag_seconds"] > 0]
         if stale_jobs:
             alerts.append({
                 "severity": "warning",
@@ -1952,9 +1967,11 @@ class DashboardService:
                 snapshot["decision_funnel"].get("entry_restriction_review")
             )
             for alert in result:
+                failed = alert["code"] == "entry_restriction_observation_failed"
                 alert.update({
-                    "title": "購入停止の再検証候補（要承認）",
-                    "action_hint": "本来のExit検証後に解除案を確認・承認してください。この画面からは解除しません。",
+                    "title": "PF観測失敗（売買結果とは別）" if failed else "購入停止の再検証候補（要承認）",
+                    "action_hint": ("観測設定・台帳整合性・該当実行ログを確認してください。売買ジョブの再実行や購入制限の解除は行いません。"
+                                    if failed else "本来のExit検証後に解除案を確認・承認してください。この画面からは解除しません。"),
                     "updated_at": stamp.isoformat(),
                     "message": alert["message"] + f" 最終観測: {stamp.isoformat()}",
                 })
@@ -1964,58 +1981,47 @@ class DashboardService:
             return []
 
     def _check_circuit_breaker_alert(self) -> Optional[Dict[str, Any]]:
-        """Return a critical/warning alert dict when the circuit breaker is
-        HALTED or RECOVERY_PENDING, else None.
+        """Missing/corrupt control evidence must never look like no alert."""
+        evidence = get_control_evidence(self.project_root)
+        state = evidence["state"]
+        base = {"updated_at": evidence["as_of"], "source": evidence["source"],
+                "details": evidence,
+                "action_hint": "停止理由・最新の評価証拠と既存復旧手順を確認してください。clear_circuit_breaker.pyの実行条件を含め、この画面では解除しません。"}
+        if evidence["status"] != "ok":
+            return {**base, "severity": "critical", "code": "guardrail_evidence_unknown",
+                    "title": "停止情報を確認できません（正常扱い不可）",
+                    "message": "停止情報が欠損・破損・未対応状態です。BUY許可もSELL監視の継続も未確認です。"}
+        if state == "halted":
+            return {**base, "severity": "critical", "code": "guardrail_halted",
+                    "title": "Circuit breaker HALTED — all BUYs blocked",
+                    "message": f"HALTED since {evidence['triggered_at'] or 'unknown time'}"
+                    + (" (rule: " + ', '.join(evidence['rule_names']) + ")" if evidence['rule_names'] else "")
+                    + f" / 最終評価: {evidence['as_of'] or '未確認'}。SELL監視の実行証明とは別です。"}
+        if state == "recovery_pending":
+            return {**base, "severity": "warning", "code": "guardrail_recovery_pending",
+                    "title": "Circuit breaker RECOVERY_PENDING",
+                    "message": "停止解除後の再検証待ち。clean scheduled runの独立した証拠が必要です。"}
+        if state == "degraded":
+            return {**base, "severity": "warning", "code": "guardrail_degraded",
+                    "title": "Guardrail DEGRADED（縮退記録あり）",
+                    "message": "記録上は縮退。全BUY許可・SELL監視の健全性を意味しません。"}
+        return None
 
-        Reads data/guardrails/circuit_breaker.json directly so this alert
-        reflects the live state even between paper_demo runs (it does not
-        depend on latest_console_summary.json being fresh).
-        """
-        cb_path = self.project_root / "data" / "guardrails" / "circuit_breaker.json"
-        if not cb_path.exists():
-            return None
-        try:
-            cb = json.loads(cb_path.read_text(encoding="utf-8"))
-        except Exception:
-            return None
-
-        status = str(cb.get("status") or "").lower()
-        if status not in {"halted", "recovery_pending"}:
-            return None
-
-        triggered_rules = cb.get("triggered_rules") or []
-        rule_names = [str(r.get("name") or r.get("metric") or "unknown") for r in triggered_rules]
-        triggered_at = cb.get("triggered_at")
-
-        if status == "halted":
-            return {
-                "severity": "critical",
-                "code": "guardrail_halted",
-                "title": "Circuit breaker HALTED — all BUYs blocked",
-                "message": (
-                    f"Guardrail circuit breaker is HALTED since {triggered_at or 'unknown time'}"
-                    + (f" (rule: {', '.join(rule_names)})" if rule_names else "")
-                ),
-                "action_hint": (
-                    "Verify broker/tracker parity, then run "
-                    "scripts/clear_circuit_breaker.py --confirmed-mismatch-count 0 "
-                    "to resume BUYs."
-                ),
-                "updated_at": now_iso(),
-            }
-
-        # recovery_pending: manually cleared but not yet re-verified by a clean run.
-        return {
-            "severity": "warning",
-            "code": "guardrail_recovery_pending",
-            "title": "Circuit breaker RECOVERY_PENDING",
-            "message": (
-                "Circuit breaker was manually cleared but a clean scheduled run "
-                "has not yet confirmed broker/tracker parity."
-            ),
-            "action_hint": "Wait for the next scheduled paper_demo run to verify clean state.",
-            "updated_at": now_iso(),
-        }
+    def get_operational_evidence(self, proposal=None) -> Dict[str, Any]:
+        """Read-only view; reuse existing paper-account acquisition/cache."""
+        account = self._get_broker_account()
+        # Dashboard already acquires these rows. Do not add broker calls just
+        # to populate a read-only check; a cold cache remains unknown.
+        positions = getattr(self, "_broker_positions_cache", None)
+        has_open_cache = hasattr(self, "_broker_open_orders_cache")
+        orders = getattr(self, "_broker_open_orders_cache", None) if has_open_cache else getattr(self, "_broker_orders_cache", None)
+        return get_operational_evidence(
+            self.project_root, account=account, proposal=proposal,
+            account_evidence=getattr(self, "_broker_account_evidence", {}),
+            pending_evidence=getattr(self, "_broker_open_orders_evidence", {}) if has_open_cache else getattr(self, "_broker_orders_evidence", {}),
+            positions=positions, positions_evidence=getattr(self, "_broker_positions_evidence", {}), orders=orders,
+            loaded_fingerprints=getattr(self, "_console_loaded_fingerprints", {}),
+            scheduler_snapshot=getattr(self, "_cron_jobs_snapshot", None))
 
     def _build_integrity(self, counts: Dict[str, int], freshness: Dict[str, Any]) -> Dict[str, Any]:
         checks = []
@@ -2030,15 +2036,15 @@ class DashboardService:
         else:
             checks.append({
                 "name": "upstream_presence",
-                "status": "ok",
-                "message": "Upstream stages contain artifacts consistent with decisions",
+                "status": "warn" if upstream_empty else "ok",
+                "message": "上流artifact未取得・整合性未確認" if upstream_empty else "Upstream stages contain artifacts consistent with decisions",
             })
 
         decision_freshness = freshness.get("decisions", {})
         decision_status = decision_freshness.get("status", "unknown")
         checks.append({
             "name": "decision_freshness",
-            "status": "warn" if decision_status in {"aging", "stale"} else "ok",
+            "status": "ok" if decision_status == "fresh" and display_number(decision_freshness.get("age_hours")) is not None and 0 <= float(decision_freshness["age_hours"]) < 6 else "warn",
             "message": (
                 f"Newest decision artifact is {decision_freshness.get('age_hours')}h old"
                 if decision_freshness.get("age_hours") is not None
@@ -2061,15 +2067,13 @@ class DashboardService:
         last_run = self._parse_iso_datetime(enriched.get("last_run"))
         if not last_run and state.get("lastRunAtMs"):
             last_run = datetime.fromtimestamp(state["lastRunAtMs"] / 1000, tz=timezone.utc).astimezone()
-        if not last_run and enriched.get("updatedAtMs"):
-            last_run = datetime.fromtimestamp(enriched.get("updatedAtMs", 0) / 1000, tz=timezone.utc).astimezone()
 
         running = bool(enriched.get("running")) or str(state.get("lastStatus") or "").lower() == "running"
         last_status = str(state.get("lastRunStatus") or enriched.get("last_run_status") or "").lower()
         duration_ms = state.get("lastDurationMs") or enriched.get("last_duration_ms")
         lag_seconds = enriched.get("lag_seconds")
         if lag_seconds is None:
-            lag_seconds = int((now - next_run).total_seconds()) if next_run and next_run < now and enriched.get("enabled") and not running else 0
+            lag_seconds = max(0, int((now - next_run).total_seconds())) if next_run and enriched.get("enabled") and not running else 0 if enriched.get('enabled') is False or running else None
 
         last_success = last_run if last_status == "ok" else None
         last_failure = last_run if last_status == "error" else None
@@ -2080,9 +2084,9 @@ class DashboardService:
             "last_failure": last_failure.isoformat() if last_failure else None,
             "last_duration_ms": duration_ms or None,
             "avg_duration_ms": duration_ms or None,
-            "success_rate_7d": 1.0 if enriched.get("enabled") and last_status != "error" else 0.0 if not enriched.get("enabled") else enriched.get("success_rate_7d", 1.0),
+            "success_rate_7d": None,
             "running": running,
-            "lag_seconds": max(0, int(lag_seconds or 0)),
+            "lag_seconds": max(0, int(lag_seconds)) if lag_seconds is not None else None,
         })
         return enriched
 
@@ -2119,12 +2123,16 @@ class DashboardService:
     def _enrich_broker_position(self, broker_pos: dict) -> dict:
         """Enrich a broker position with calculated fields."""
         symbol = broker_pos.get('symbol', '')
-        qty = int(float(broker_pos.get('qty', 0)))
-        avg_entry = float(broker_pos.get('avg_entry_price', 0))
-        broker_current_price = float(broker_pos.get('current_price', 0))
+        qty = display_number(broker_pos.get('qty'))
+        raw_entry = display_number(broker_pos.get('avg_entry_price'))
+        avg_entry = raw_entry if raw_entry is not None and raw_entry > 0 else 0.0
+        raw_price = display_number(broker_pos.get('current_price'))
+        broker_current_price = raw_price if raw_price is not None and raw_price > 0 else 0.0
         
         # Apply price override if available (fixes stale Alpaca positions API prices)
-        current_price = self._apply_price_override(symbol, broker_current_price)
+        candidate_price = display_number(self._apply_price_override(symbol, broker_current_price))
+        current_price = candidate_price if candidate_price is not None and candidate_price > 0 else 0.0
+        price_valid = broker_current_price > 0 and current_price > 0
         
         # Recalculate market_value and unrealized_pl with fresh price
         market_value = current_price * qty
@@ -2160,7 +2168,7 @@ class DashboardService:
 
         # --- Exit level calculation ---
         # Load peak_price from pnl_state tracker for trailing stop computation.
-        peak_price = self._get_peak_price_for_symbol(symbol, avg_entry)
+        peak_price = display_number(self._get_peak_price_for_symbol(symbol, avg_entry))
         # Exit config constants (mirrors simple_exit_v2.yaml defaults)
         STOP_LOSS_PCT      = -0.07   # hard stop: entry × 0.93
         TRAILING_STOP_PCT  =  0.04   # trailing drawdown from peak
@@ -2190,7 +2198,7 @@ class DashboardService:
         raw_lastday = broker_pos.get('lastday_price')
         if raw_lastday is not None:
             try:
-                lastday_price = float(raw_lastday)
+                lastday_price = display_number(raw_lastday)
             except (TypeError, ValueError):
                 lastday_price = None
             if lastday_price and avg_entry > 0:
@@ -2199,12 +2207,12 @@ class DashboardService:
         return {
             'symbol': symbol,
             'qty': qty,
-            'entry_price': avg_entry,
-            'avg_entry_price': avg_entry,
-            'current_price': current_price,
-            'market_value': market_value,
-            'unrealized_pnl': unrealized_pl,
-            'unrealized_pnl_pct': unrealized_plpc,
+            'entry_price': avg_entry or None,
+            'avg_entry_price': avg_entry or None,
+            'current_price': current_price if price_valid else None,
+            'market_value': market_value if price_valid else None,
+            'unrealized_pnl': unrealized_pl if price_valid and avg_entry > 0 else None,
+            'unrealized_pnl_pct': unrealized_plpc if price_valid and avg_entry > 0 else None,
             'lastday_price': lastday_price,
             'unrealized_pnl_lastday': unrealized_pnl_lastday,
             'holding_days': holding_days,
@@ -2258,65 +2266,30 @@ class DashboardService:
         return enriched
 
     def _summarize_positions(self, positions: List[Dict[str, Any]], trading: Dict[str, Any] | None = None) -> Dict[str, Any]:
-        trading = trading or {}
-        snapshots = trading.get("daily_snapshots", [])
-        latest_equity = snapshots[-1].get("equity") if snapshots else None
-        gross_exposure = sum(float(p.get("market_value") or 0.0) for p in positions)
-        unrealized_pnl = sum(float(p.get("unrealized_pnl") or 0.0) for p in positions)
-        avg_holding_days = round(sum((p.get("holding_days") or 0.0) for p in positions) / len(positions), 1) if positions else None
-
-        if gross_exposure > 0:
-            for p in positions:
-                p["portfolio_weight"] = (float(p.get("market_value") or 0.0) / gross_exposure) if p.get("market_value") else 0.0
-
-        weights = sorted((p.get("portfolio_weight") or 0.0) for p in positions)
-        largest_weight = weights[-1] if weights else 0.0
-        top5 = sum(weights[-5:]) if weights else 0.0
-        # Count long/short positions
-        # Broker positions: qty > 0 = long, qty < 0 = short
-        long_count = len([p for p in positions if float(p.get("qty", 0)) > 0])
-        short_count = len([p for p in positions if float(p.get("qty", 0)) < 0])
-
-        # AUDIT FIX (2026-08-23): "top5_concentration" (top5 weight / gross
-        # exposure -- weights above sum to 100% across ALL positions, so this
-        # is inherently a fraction of gross exposure) was being compared
-        # against promotion_gate.py's DEFAULT_TOP5_CONCENTRATION_MAX_PCT=40%
-        # threshold, whose own code comment ties it to
-        # AllocationConfig.correlated_cluster_cap_pct -- an EQUITY-based cap.
-        # A portfolio can be 100% invested with perfectly even weights
-        # (top5/gross alone always shrinks toward 0 as position count grows,
-        # regardless of leverage or equity utilization) while still being
-        # dangerously concentrated relative to account equity if gross
-        # exposure itself is a large multiple of equity, or vice versa.
-        # Expose all three bases explicitly so a consumer picks the metric
-        # that actually matches its threshold's intended denominator, rather
-        # than silently mixing bases. HHI (sum of squared gross-exposure
-        # weights) is included as a concentration measure that does not
-        # depend on an arbitrary "top N" cutoff.
-        top5_gross_pct = top5
-        top5_equity_pct = (top5 * gross_exposure / latest_equity) if latest_equity else None
-        gross_exposure_pct_of_equity = (gross_exposure / latest_equity) if latest_equity else None
-        hhi = sum((w or 0.0) ** 2 for w in weights) if weights else 0.0
-
-        return {
-            "gross_exposure": gross_exposure,
-            "net_exposure": gross_exposure,
-            "long_count": long_count,
-            "short_count": short_count,
-            "largest_position_weight": largest_weight,
-            # DEPRECATED (kept for backward compat): identical to
-            # top5_concentration_gross_pct below. Existing consumers
-            # (promotion_gate.py) currently compare this against an
-            # equity-based threshold -- see top5_concentration_equity_pct
-            # for the metric that actually matches that threshold's intent.
-            "top5_concentration": top5,
-            "top5_concentration_gross_pct": top5_gross_pct,
-            "top5_concentration_equity_pct": top5_equity_pct,
-            "gross_exposure_pct_of_equity": gross_exposure_pct_of_equity,
-            "hhi": round(hhi, 4),
-            "unrealized_pnl": unrealized_pnl,
-            "avg_holding_days": avg_holding_days,
-        }
+        """Display sums require complete finite components; no unknown-to-zero coercion."""
+        values = [display_number(p.get("market_value")) for p in positions]
+        pnls = [display_number(p.get("unrealized_pnl")) for p in positions]
+        qtys = [display_number(p.get("qty")) for p in positions]
+        days = [display_number(p.get("holding_days")) for p in positions]
+        complete = all(v is not None for v in values)
+        gross = sum(abs(v) for v in values) if complete else None
+        net = sum(values) if complete else None
+        weights = [abs(v)/gross for v in values] if gross else ([0.0]*len(values) if gross == 0 else [])
+        for p in positions:
+            p["portfolio_weight"] = abs(display_number(p.get("market_value")))/gross if gross else (0.0 if gross == 0 else None)
+        top5 = sum(sorted(weights)[-5:]) if complete else None
+        snapshots = (trading or {}).get("daily_snapshots") or []
+        equity = display_number(snapshots[-1].get("equity")) if snapshots else None
+        return {"gross_exposure": gross, "net_exposure": net,
+            "unrealized_pnl": sum(pnls) if all(v is not None for v in pnls) else None,
+            "long_count": sum(v > 0 for v in qtys) if all(v is not None for v in qtys) else None,
+            "short_count": sum(v < 0 for v in qtys) if all(v is not None for v in qtys) else None,
+            "avg_holding_days": round(sum(days)/len(days),1) if days and all(v is not None for v in days) else None,
+            "largest_position_weight": max(weights, default=0.0) if complete else None,
+            "top5_concentration": top5, "top5_concentration_gross_pct": top5,
+            "top5_concentration_equity_pct": top5*gross/equity if equity and equity>0 and complete else None,
+            "gross_exposure_pct_of_equity": gross/equity if equity and equity>0 and complete else None,
+            "hhi": round(sum(w*w for w in weights),4) if complete else None}
 
     def _get_asset_class_for_symbol(self, symbol: str) -> str:
         """Return asset_class (etf|stock) from symbol_registry.yaml, fallback 'stock'."""
@@ -2509,6 +2482,10 @@ class DashboardService:
                 compute_pairwise_correlation,
                 summarize_high_correlation_pairs,
             )
+
+            state = DashboardService._load_json_cached(self.project_root / "data/tracking/pnl_state.json")
+            if state.get("measurement_lineage"):
+                return {"available": False, "all_pass": False, "error": "historical_correction_unqualified"}
 
             cluster_exposures = self._get_cluster_exposure(trading=trading)
 
@@ -2745,59 +2722,112 @@ class DashboardService:
 
         return lots[0][1] if lots else None
 
+    def _get_broker_open_orders(self) -> list[dict[str, Any]]:
+        """Bounded read-only current-order query; never replaces historical data.
+
+        A cap hit is still partial. No pagination or second-page inference is
+        attempted; the existing broker-neutral fetch_orders contract is reused.
+        """
+        import time as _time
+        from console.services.followthrough_service import ACTIVE
+        cached = getattr(self, "_broker_open_orders_cache", None)
+        if cached is not None and _time.time() - getattr(self, "_broker_open_orders_cache_ts", 0) < self._BROKER_CACHE_TTL:
+            return cached
+        evidence = {"status": "unknown", "as_of": None, "source": "broker.fetch_orders",
+                    "query_status": "open", "query_limit": 500, "complete": False,
+                    "scope": "status=open / limit=500。現在の未約定を照会（履歴とは別取得）。",
+                    "reason": "接続未設定"}
+        self._broker_open_orders_cache = []
+        if self._broker:
+            try:
+                envelope = self._broker.fetch_orders(status="open", limit=500)
+                payload = envelope.payload if hasattr(envelope, "payload") else envelope
+                if (not isinstance(payload, list) or any(not isinstance(o, dict)
+                        or not isinstance(o.get("id"), str) or not o["id"].strip()
+                        or o.get("status") not in ACTIVE for o in payload)
+                        or len({o["id"] for o in payload}) != len(payload)):
+                    raise ValueError("invalid open-order response")
+                self._broker_open_orders_cache = payload
+                complete = len(payload) < 500
+                evidence.update(status="ok" if complete else "partial", complete=complete,
+                                as_of=now_iso(), observed_count=len(payload),
+                                reason="現在の未約定照会成功" if complete else "未約定500件上限到達・続き未確認")
+            except Exception as exc:
+                evidence.update(status="error", reason=type(exc).__name__)
+        self._broker_open_orders_evidence = evidence
+        self._broker_open_orders_cache_ts = _time.time()
+        return self._broker_open_orders_cache
+
     def _get_broker_orders(self) -> list[dict[str, Any]]:
         import time as _time
         now = _time.time()
-        if self._broker_orders_cache is not None and (now - self._broker_orders_cache_ts) < self._BROKER_CACHE_TTL:
-            return self._broker_orders_cache
+        cached = getattr(self, "_broker_orders_cache", None)
+        if cached is not None and now - getattr(self, "_broker_orders_cache_ts", 0) < self._BROKER_CACHE_TTL:
+            # The timestamp is the acquisition time, never the cache read time.
+            return cached
+        evidence = {"status": "unknown", "as_of": None, "source": "broker.fetch_orders",
+                    "scope": "status=all / limit=500。取得範囲のみ・全未約定の網羅保証なし", "reason": "接続未設定"}
         self._broker_orders_cache = []
-        if not self._broker:
-            return self._broker_orders_cache
-        try:
-            orders_envelope = self._broker.fetch_orders(status="all", limit=500)
-            payload = orders_envelope.payload if hasattr(orders_envelope, "payload") else orders_envelope
-            if isinstance(payload, list):
-                self._broker_orders_cache = [o for o in payload if isinstance(o, dict)]
-        except Exception:
-            self._broker_orders_cache = []
+        if self._broker:
+            try:
+                envelope = self._broker.fetch_orders(status="all", limit=500)
+                payload = envelope.payload if hasattr(envelope, "payload") else envelope
+                if not isinstance(payload, list) or any(not isinstance(o, dict) or not o.get("id") for o in payload) or len({str(o["id"]) for o in payload}) != len(payload):
+                    raise ValueError("invalid order response")
+                self._broker_orders_cache = payload
+                evidence.update(status="partial" if len(payload) >= 500 else "ok", as_of=now_iso(),
+                                reason="上限到達・続き未確認" if len(payload) >= 500 else "取得成功", observed_count=len(payload))
+            except Exception as exc:
+                # Do not expose exception text, credentials, or a false empty success.
+                evidence.update(status="error", reason=type(exc).__name__)
+        self._broker_orders_evidence = evidence
         self._broker_orders_cache_ts = _time.time()
         return self._broker_orders_cache
 
     def _get_broker_positions(self) -> list[dict[str, Any]]:
-        """Fetch broker positions with TTL cache to avoid repeated API calls."""
+        """Read-only list compatibility, with distinct empty/error acquisition evidence."""
         import time as _time
         now = _time.time()
         if self._broker_positions_cache is not None and (now - self._broker_positions_cache_ts) < self._BROKER_CACHE_TTL:
             return self._broker_positions_cache
         self._broker_positions_cache = []
-        if not self._broker:
-            return self._broker_positions_cache
-        try:
-            pos_envelope = self._broker.fetch_positions()
-            payload = pos_envelope.payload if hasattr(pos_envelope, "payload") else pos_envelope
-            if isinstance(payload, list):
-                self._broker_positions_cache = [p for p in payload if isinstance(p, dict)]
-        except Exception:
-            self._broker_positions_cache = []
+        self._broker_positions_evidence = {"status": "unavailable", "as_of": None,
+            "source": "paper broker positions", "scope": "positions endpoint response", "complete": False,
+            "reason": "口座API未取得。空配列を保有なしの証拠にしません。"}
+        if self._broker:
+            try:
+                envelope = self._broker.fetch_positions()
+                payload = envelope.payload if hasattr(envelope, "payload") else envelope
+                if not isinstance(payload, list) or any(not isinstance(row, dict)
+                        or not isinstance(row.get("symbol"), str) or not row["symbol"]
+                        or display_number(row.get("qty")) is None for row in payload):
+                    raise ValueError("invalid position response")
+                self._broker_positions_cache = payload
+                self._broker_positions_evidence.update(status="ok", as_of=datetime.now(timezone.utc).isoformat(),
+                    complete=True, reason="口座API取得。価格の市場時刻・全設定/SELL監視は別途未照合。")
+            except Exception:
+                self._broker_positions_evidence.update(status="error", reason="口座API取得失敗・不正応答。保有の有無は未確認。")
         self._broker_positions_cache_ts = _time.time()
         return self._broker_positions_cache
 
     def _get_broker_account(self) -> dict[str, Any]:
-        """Fetch broker account with TTL cache."""
+        """Preserve acquisition time/status on cache reads; never return false zero."""
         import time as _time
         now = _time.time()
         if self._broker_account_cache is not None and (now - self._broker_account_cache_ts) < self._BROKER_CACHE_TTL:
             return self._broker_account_cache
         self._broker_account_cache = {}
-        if not self._broker:
-            return self._broker_account_cache
-        try:
-            acc_envelope = self._broker.fetch_account()
-            payload = acc_envelope.payload if hasattr(acc_envelope, "payload") else acc_envelope
-            if isinstance(payload, dict):
+        self._broker_account_evidence = {"status": "unknown", "as_of": None}
+        if self._broker:
+            try:
+                envelope = self._broker.fetch_account()
+                payload = envelope.payload if hasattr(envelope, "payload") else envelope
+                if not isinstance(payload, dict) or not payload:
+                    raise ValueError("invalid account response")
                 self._broker_account_cache = payload
-        except Exception:
-            self._broker_account_cache = {}
+                self._broker_account_evidence = {"status": "ok", "as_of": datetime.now(timezone.utc).isoformat()}
+            except Exception:
+                self._broker_account_evidence = {"status": "error", "as_of": None}
         self._broker_account_cache_ts = _time.time()
         return self._broker_account_cache
 
@@ -3483,16 +3513,27 @@ class DashboardService:
                     "submitted": 0,
                     "symbols": evt.get("details"),
                     "conversion_rate": 0.0,
+                    "result_status": "unconfirmed",
+                    "result_source": "audit",
                 }
                 continue
             if current is None:
                 continue
+            status_text = str(evt.get("status") or evt.get("result_status") or "").lower()
+            severity = str(evt.get("level") or evt.get("severity") or "").lower()
+            action = str(evt.get("action") or "").lower()
+            if status_text in {"error", "failed", "failure"} or severity in {"error", "critical"} or evt.get("category") == "error":
+                current["result_status"] = "error"
+            elif current["result_status"] != "error" and (status_text == "degraded" or "degraded" in action or "DEGRADED" in str(evt.get("details") or "")):
+                current["result_status"] = "degraded"
             if evt.get("category") == "decision":
                 current["decisions"] += 1
             elif evt.get("category") == "submission":
                 current["submitted"] += 1
             elif evt.get("category") == "system" and evt.get("action") == "paper_demo_complete":
                 current["completed_at"] = evt.get("ts")
+                if current["result_status"] == "unconfirmed":
+                    current["result_status"] = "ok" if status_text in {"ok", "success"} else "completed_unverified"
                 current["summary"] = evt.get("details")
                 current["conversion_rate"] = round((current["submitted"] / current["decisions"]) if current["decisions"] else 0.0, 3)
                 runs.append(current)
@@ -3504,8 +3545,6 @@ class DashboardService:
         return runs
 
     def _load_tracking_state_metadata(self) -> Dict[str, Any]:
-        if self._tracking_state_meta_cache is not None:
-            return self._tracking_state_meta_cache
         state_path = self.project_root / "data" / "tracking" / "pnl_state.json"
         if not state_path.exists():
             return {}
@@ -3539,7 +3578,10 @@ class DashboardService:
             }
 
         age_hours = round((datetime.now().astimezone() - newest_dt).total_seconds() / 3600, 1)
-        if age_hours < 6:
+        if age_hours < 0:
+            status = "unknown"
+            age_hours = None
+        elif age_hours < 6:
             status = "fresh"
         elif age_hours < 24:
             status = "aging"
@@ -3549,6 +3591,8 @@ class DashboardService:
             "status": status,
             "age_hours": age_hours,
             "newest_file": newest.get("_source_file"),
+            "as_of": newest_dt.astimezone(timezone.utc).isoformat() if age_hours is not None else None,
+            "time_basis": "decision_recorded_time",
             "scope": "current_account_since_baseline",
             "cutoff": cutoff.isoformat(),
         }
@@ -3591,27 +3635,46 @@ class DashboardService:
                 latest_by_symbol[symbol] = published_at
         return {symbol: dt.isoformat() for symbol, dt in latest_by_symbol.items()}
 
+    def _cutoff_cache_epoch(self) -> tuple | None:
+        """Cache only account metadata, never risk/financial validity results.
+
+        Atomic replacements (including same-mtime writes), either member of the
+        state/event pair, and any prepared journal invalidate this local epoch.
+        """
+        folder = self.project_root / "data" / "tracking"
+        try:
+            try:
+                (folder / ".ledger_transaction.json").lstat()
+            except FileNotFoundError:
+                pass
+            else:
+                return None
+            stamps = [(folder / name).lstat() for name in ("pnl_state.json", "trade_events.jsonl")]
+            return tuple((s.st_dev, s.st_ino, s.st_mode, s.st_size, s.st_mtime_ns, s.st_ctime_ns) for s in stamps)
+        except OSError:
+            return None
+
     def _current_account_cutoff(self) -> datetime:
-        if self._current_account_cutoff_cache is not None:
-            return self._current_account_cutoff_cache
+        epoch = self._cutoff_cache_epoch()
+        cached = getattr(self, "_current_account_cutoff_snapshot", None)
+        if epoch is not None and cached is not None and cached[0] == epoch:
+            return cached[1]
         tracking_meta = self._load_tracking_state_metadata()
         created_at = self._parse_iso_datetime(tracking_meta.get("created_at"))
-        if created_at:
-            self._current_account_cutoff_cache = created_at
-            return created_at
-
-        baseline_date = tracking_meta.get("baseline_date")
+        result = created_at or self.DEFAULT_CURRENT_ACCOUNT_CUTOFF
+        baseline_date = tracking_meta.get("baseline_date") if not created_at else None
         if baseline_date:
             local_tz = datetime.now().astimezone().tzinfo
             try:
                 result = datetime.fromisoformat(f"{baseline_date}T00:00:00").replace(tzinfo=local_tz)
-                self._current_account_cutoff_cache = result
-                return result
             except Exception:
                 pass
-
-        self._current_account_cutoff_cache = self.DEFAULT_CURRENT_ACCOUNT_CUTOFF
-        return self.DEFAULT_CURRENT_ACCOUNT_CUTOFF
+        # A single immutable cache entry prevents cross-thread epoch/value mixups.
+        # Failed reads and a writer advancing during validation are never cached.
+        if tracking_meta and epoch is not None and self._cutoff_cache_epoch() == epoch:
+            self._current_account_cutoff_snapshot = (epoch, result)
+        self._current_account_cutoff_cache = result
+        return result
 
     def _is_current_account_decision(self, decision: Dict[str, Any]) -> bool:
         dt = extract_decision_dt(decision)
@@ -3666,20 +3729,36 @@ class DashboardService:
 
     def _load_recent_audit_lines(self, limit: int = 500) -> List[Dict[str, Any]]:
         audits_dir = self.project_root / "data" / "audits"
+        self._audit_read_evidence = {"status": "missing", "as_of": None, "oldest_at": None,
+            "scope": "最新3監査log・解析最大500行（履歴）", "reason": "監査log未取得・現在の照合結果ではありません。"}
         if not audits_dir.exists():
             return []
-        files = sorted(audits_dir.glob("paper_demo_*.log"), key=lambda p: p.stat().st_mtime, reverse=True)[:3]
-        parsed: List[Dict[str, Any]] = []
-        for path in files:
-            try:
-                for line in reversed(path.read_text(encoding="utf-8").splitlines()):
-                    evt = self._parse_audit_line(line)
-                    if evt:
-                        parsed.append(evt)
-                    if len(parsed) >= limit:
-                        return parsed
-            except Exception:
-                continue
+        parsed = []
+        try:
+            files = sorted(audits_dir.glob("paper_demo_*.log"), key=lambda p: p.stat().st_mtime, reverse=True)[:3]
+            if not files:
+                return []
+            failed = False
+            for path in files:
+                try:
+                    for line in reversed(path.read_text(encoding="utf-8").splitlines()):
+                        evt = self._parse_audit_line(line)
+                        if evt:
+                            parsed.append(evt)
+                        if len(parsed) >= limit:
+                            break
+                except (OSError, UnicodeError):
+                    failed = True
+                if len(parsed) >= limit:
+                    break
+            now = datetime.now(timezone.utc)
+            stamps = [evidence_stamp(row.get("ts"), now)[0] for row in parsed]
+            stamps = [datetime.fromisoformat(v).astimezone(timezone.utc).isoformat() for v in stamps if v is not None]
+            self._audit_read_evidence.update(status="partial" if failed or len(parsed)>=limit else "ok",
+                as_of=max(stamps) if stamps else None, oldest_at=min(stamps) if stamps else None,
+                reason="過去logの解析範囲。イベント欠落/期間外/現在の解消状態は未認定。")
+        except (OSError, ValueError):
+            self._audit_read_evidence.update(status="error")
         return parsed
 
     def _parse_audit_line(self, line: str) -> Dict[str, Any] | None:
@@ -3776,6 +3855,9 @@ class DashboardService:
         enriched: List[Dict[str, Any]] = []
         for snapshot in snapshots:
             row = dict(snapshot)
+            if row.get("history_basis") == "pre_correction_as_observed":
+                enriched.append(row)
+                continue
             date = str(row.get("date") or "")
             equity = row.get("equity")
             if equity is not None:

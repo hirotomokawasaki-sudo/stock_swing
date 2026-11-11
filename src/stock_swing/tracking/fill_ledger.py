@@ -1,4 +1,4 @@
-"""Immutable fill ledger with exactly-once consumption tracking.
+"""Serialized cumulative fill observations and quantity consumption tracking.
 
 FIX-LEDGER-3: Every broker fill is keyed by fill_id (or order_id+symbol+side
 as fallback). Each fill_id can only be consumed (applied to a trade) once.
@@ -26,6 +26,7 @@ File format (data/tracking/fill_ledger.jsonl):
 """
 from __future__ import annotations
 
+from copy import deepcopy
 import hashlib
 import json
 import os
@@ -33,6 +34,8 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from .ledger_transaction import ledger_operation, read_bytes, stage_bytes
 
 LEDGER_RELATIVE = Path("data/tracking/fill_ledger.jsonl")
 CONSUMED_LEDGER_RELATIVE = Path("data/tracking/fill_consumed_ledger.json")
@@ -65,7 +68,7 @@ def _fill_key(fill: Dict[str, Any]) -> Optional[str]:
     """Return a stable, unique key for a broker fill dict.
 
     Preference order:
-      1. fill.id  (Alpaca execution fill id)
+      1. fill.id (may be an order aggregate ID; not proof of an execution ID)
       2. fill.order_id + ":" + fill.symbol + ":" + fill.side (order-level)
       3. None → fill must be quarantined
     """
@@ -81,7 +84,7 @@ def _fill_key(fill: Dict[str, Any]) -> Optional[str]:
 
 
 class FillLedger:
-    """Append-only fill ledger with exactly-once consumption guarantee.
+    """Serialized observation ledger; cross-file settlement uses settle_sell.
 
     Usage:
         ledger = FillLedger(project_root)
@@ -96,6 +99,7 @@ class FillLedger:
     """
 
     def __init__(self, project_root: Path):
+        self.project_root = project_root
         self.ledger_path = project_root / LEDGER_RELATIVE
         self.consumed_path = project_root / CONSUMED_LEDGER_RELATIVE
         self.ledger_path.parent.mkdir(parents=True, exist_ok=True)
@@ -111,14 +115,17 @@ class FillLedger:
         if self._loaded:
             return
         self._cache = {}
-        if self.ledger_path.exists():
-            for line in self.ledger_path.read_text(encoding="utf-8").splitlines():
+        raw = read_bytes(self.project_root, self.ledger_path)
+        if raw is not None:
+            for line in raw.decode("utf-8").splitlines():
                 line = line.strip()
                 if not line:
                     continue
                 try:
                     rec = json.loads(line)
                     key = rec.get("fill_id")
+                    if not isinstance(key, str) or not key:
+                        raise ValueError("fill ledger row has no identity")
                     if key:
                         qty = _normalize_qty(rec.get("qty"))
                         consumed_qty = rec.get("consumed_qty")
@@ -141,12 +148,11 @@ class FillLedger:
                             and not rec.get("quarantine_reason")
                         )
                         self._cache[key] = rec
-                except (json.JSONDecodeError, KeyError):
-                    continue
+                except (json.JSONDecodeError, KeyError, TypeError, AttributeError) as exc:
+                    raise ValueError("corrupt fill ledger; refusing to skip evidence") from exc
         self._loaded = True
-        if self._cache and not self.consumed_path.exists():
-            self._write_consumed_snapshot()
 
+    @ledger_operation(refresh='fills')
     def reload(self) -> None:
         self._loaded = False
         self._ensure_loaded()
@@ -155,6 +161,7 @@ class FillLedger:
     # Ingestion
     # ------------------------------------------------------------------
 
+    @ledger_operation(refresh='fills')
     def ingest(self, fill: Dict[str, Any], *, quarantine_on_missing: bool = False) -> str:
         """Add a fill to the ledger if not already present.
 
@@ -213,6 +220,7 @@ class FillLedger:
             self._append(updated)
         return key
 
+    @ledger_operation(refresh='fills')
     def ingest_many(self, fills: List[Dict[str, Any]]) -> tuple[int, int, int]:
         """Ingest multiple fills. Returns (ingested, skipped_dup, quarantined)."""
         ingested = 0
@@ -244,11 +252,13 @@ class FillLedger:
     # Consumption
     # ------------------------------------------------------------------
 
+    @ledger_operation(refresh='fills')
     def is_consumed(self, fill_id: str) -> bool:
         self._ensure_loaded()
         rec = self._cache.get(fill_id)
         return bool(rec and rec.get("consumed"))
 
+    @ledger_operation(refresh='fills')
     def consume(self, fill_id: str, trade_id: str, qty: float | None = None) -> None:
         """Mark a fill as consumed by a trade.
 
@@ -299,18 +309,22 @@ class FillLedger:
     # Query
     # ------------------------------------------------------------------
 
+    @ledger_operation(refresh='fills')
     def get(self, fill_id: str) -> Optional[Dict[str, Any]]:
         self._ensure_loaded()
-        return self._cache.get(fill_id)
+        return deepcopy(self._cache.get(fill_id))
 
+    @ledger_operation(refresh='fills')
     def all_fills(self) -> List[Dict[str, Any]]:
         self._ensure_loaded()
-        return list(self._cache.values())
+        return deepcopy(list(self._cache.values()))
 
+    @ledger_operation(refresh='fills')
     def unconsumed_fills(self) -> List[Dict[str, Any]]:
         self._ensure_loaded()
-        return [r for r in self._cache.values() if not r.get("consumed") and not r.get("quarantine_reason")]
+        return deepcopy([r for r in self._cache.values() if not r.get("consumed") and not r.get("quarantine_reason")])
 
+    @ledger_operation(refresh='fills')
     def available_qty(self, fill_id: str) -> float:
         self._ensure_loaded()
         rec = self._cache.get(fill_id) or {}
@@ -358,8 +372,10 @@ class FillLedger:
     def _append(self, record: Dict[str, Any]) -> None:
         """Append one record atomically and update cache."""
         line = json.dumps(record, ensure_ascii=False) + "\n"
-        with open(self.ledger_path, "a", encoding="utf-8") as fh:
-            fh.write(line)
+        before = read_bytes(self.project_root, self.ledger_path) or b""
+        if before and not before.endswith(b"\n"):
+            before += b"\n"
+        stage_bytes(self.project_root, self.ledger_path, before + line.encode())
         self._cache[record["fill_id"]] = record
         self._write_consumed_snapshot()
 
@@ -382,20 +398,5 @@ class FillLedger:
                 for rec in sorted(self._cache.values(), key=lambda row: str(row.get("fill_id") or ""))
             ],
         }
-        fd, tmp_path = tempfile.mkstemp(
-            dir=str(self.consumed_path.parent),
-            prefix=".fill_consumed_ledger.",
-            suffix=".tmp",
-        )
-        try:
-            with os.fdopen(fd, "w", encoding="utf-8") as fh:
-                json.dump(snapshot, fh, ensure_ascii=False, indent=2)
-                fh.flush()
-                os.fsync(fh.fileno())
-            os.replace(tmp_path, self.consumed_path)
-        except Exception:
-            try:
-                os.unlink(tmp_path)
-            except OSError:
-                pass
-            raise
+        stage_bytes(self.project_root, self.consumed_path,
+                    json.dumps(snapshot, ensure_ascii=False, indent=2, allow_nan=False).encode())

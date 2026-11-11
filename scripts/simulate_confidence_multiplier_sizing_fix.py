@@ -82,13 +82,15 @@ from collections import Counter
 from math import floor
 from pathlib import Path
 
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
 ROOT = Path(__file__).parent.parent
 DECISIONS_DIR = ROOT / "data" / "decisions"
 STATE_FILE = ROOT / "data" / "tracking" / "pnl_state.json"
 
 
 def load_closed_trades_by_decision_id() -> dict[str, dict]:
-    state = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+    state = legacy_analytical_state(STATE_FILE)
     out = {}
     for t in state.get("trades", []):
         if t.get("status") != "closed":
@@ -197,7 +199,7 @@ def compute_fixed_shares(sizing: dict) -> tuple[int, int, dict]:
 
 
 def load_any_status_trades_by_decision_id() -> dict[str, dict]:
-    state = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+    state = legacy_analytical_state(STATE_FILE)
     out = {}
     for t in state.get("trades", []):
         did = t.get("decision_id")

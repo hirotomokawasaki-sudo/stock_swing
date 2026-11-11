@@ -29,6 +29,9 @@ sys.path.insert(0, str(project_root / "src"))
 UNKNOWN_REASONS = {"broker_fill", "broker_fill_unknown", None, ""}
 
 
+from stock_swing.tracking.compatibility import legacy_entrypoint, legacy_maintenance, tracking_root
+
+@legacy_entrypoint(lambda path, *a, **k: tracking_root(path))
 def _atomic_write(path: Path, data: dict) -> None:
     content = json.dumps(data, indent=2, ensure_ascii=False)
     fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=".recover_exit.", suffix=".tmp")
@@ -134,6 +137,8 @@ def build_decision_map(project_root: Path) -> dict[tuple[str, str], str]:
     return result
 
 
+
+@legacy_entrypoint(lambda *a, **k: globals().get('project_root', globals().get('PROJECT_ROOT', Path(__file__).resolve().parents[1])))
 def main() -> None:
     parser = argparse.ArgumentParser(description="Recover exit_reason for broker_fill trades")
     parser.add_argument("--dry-run", action="store_true")

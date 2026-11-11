@@ -41,7 +41,7 @@ from verify_rebuild_integrity import (  # noqa: E402
 
 def _closed_trade(**overrides) -> dict:
     base = {
-        "trade_id": "broker_match_0001_ADBE",
+        "trade_id": "public-fixture-1573",
         "symbol": "ADBE",
         "status": "closed",
         "broker_order_id": "buy-uuid-aaa",
@@ -56,7 +56,7 @@ def _closed_trade(**overrides) -> dict:
 
 def _quarantined_trade(**overrides) -> dict:
     base = {
-        "trade_id": "broker_match_0001_ADBE",  # deliberately SAME trade_id as above
+        "trade_id": "public-fixture-1573",  # deliberately SAME trade_id as above
         "symbol": "ADBE",
         "status": "quarantined",
         "broker_order_id": "buy-uuid-ZZZ",       # DIFFERENT real broker order
@@ -96,7 +96,7 @@ class TestClosedQuarantineOverlapUsesOrderIdNotTradeId:
                 exit_broker_order_id=shared_exit_oid,
             )],
             "quarantined_trades": [_quarantined_trade(
-                trade_id="broker_match_0001_ADBE",  # different trade_id on purpose
+                trade_id="public-fixture-1573",  # different trade_id on purpose
                 broker_order_id=shared_entry_oid,
                 exit_broker_order_id=shared_exit_oid,
             )],
@@ -167,7 +167,8 @@ class TestMainReportsFailureWhenUnfixableIssuesRemain:
     def test_fix_with_unresolvable_overlap_exits_nonzero(self, tmp_path, monkeypatch):
         import verify_rebuild_integrity as vri
 
-        state_file = tmp_path / "pnl_state.json"
+        state_file = tmp_path / "data/tracking/pnl_state.json"
+        state_file.parent.mkdir(parents=True, exist_ok=True)
         backup_file = tmp_path / "pnl_state_backup_20260824_000000.json"
 
         # A genuine overlap (same order-id pair in both lists) that --fix
@@ -193,7 +194,8 @@ class TestMainReportsFailureWhenUnfixableIssuesRemain:
     def test_fix_with_only_auto_fixable_issues_exits_zero(self, tmp_path, monkeypatch):
         import verify_rebuild_integrity as vri
 
-        state_file = tmp_path / "pnl_state.json"
+        state_file = tmp_path / "data/tracking/pnl_state.json"
+        state_file.parent.mkdir(parents=True, exist_ok=True)
         backup_file = tmp_path / "pnl_state_backup_20260824_000000.json"
 
         # daily_snapshots wiped in the "current" state, present in backup --
@@ -229,7 +231,8 @@ class TestMainReportsFailureWhenUnfixableIssuesRemain:
         """
         import verify_rebuild_integrity as vri
 
-        state_file = tmp_path / "pnl_state.json"
+        state_file = tmp_path / "data/tracking/pnl_state.json"
+        state_file.parent.mkdir(parents=True, exist_ok=True)
         state = {
             "trades": [_closed_trade(holding_days=1.5)],
             "quarantined_trades": [],
@@ -251,7 +254,8 @@ class TestMainReportsFailureWhenUnfixableIssuesRemain:
         """
         import verify_rebuild_integrity as vri
 
-        state_file = tmp_path / "pnl_state.json"
+        state_file = tmp_path / "data/tracking/pnl_state.json"
+        state_file.parent.mkdir(parents=True, exist_ok=True)
         backup_file = tmp_path / "pnl_state_backup_20260824_000000.json"
 
         state = {

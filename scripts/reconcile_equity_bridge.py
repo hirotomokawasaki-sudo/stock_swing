@@ -26,6 +26,8 @@ from stock_swing.reporting.equity_bridge_reconciliation import (  # noqa: E402
     summarize_account_activities,
 )
 from stock_swing.sources.broker_client import BrokerClient  # noqa: E402
+from stock_swing.tracking.compatibility import legacy_analytical_state, legacy_entrypoint
+from stock_swing.tracking.ledger_transaction import LedgerConflict
 
 OUTPUT_PATH = PROJECT_ROOT / "data" / "audits" / "equity_bridge_reconciliation.json"
 
@@ -72,6 +74,15 @@ def _fetch_all_activities(
     raise RuntimeError("account activity pagination hit max_pages")
 
 
+def _adjustment_root(path: Path, data: dict) -> Path:
+    path = Path(path).absolute()
+    if (path.name != 'equity_bridge_reconciliation.json' or path.parent.name != 'audits'
+            or path.parent.parent.name != 'data'):
+        raise LedgerConflict('unsupported adjustment output path')
+    return path.parents[2]
+
+
+@legacy_entrypoint(_adjustment_root)
 def _atomic_write_json(path: Path, data: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
@@ -98,6 +109,15 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    # This unversioned export is consumed by paper_demo. Do not refresh an
+    # economic adjustment from unsupported corrected history or a broken pair.
+    state_path = PROJECT_ROOT / 'data/tracking/pnl_state.json'
+    try:
+        state = legacy_analytical_state(state_path)
+    except (OSError, ValueError, RuntimeError) as exc:
+        print(f'UNAVAILABLE: legacy equity bridge input: {exc}', file=sys.stderr)
+        return 2
+
     _load_env(PROJECT_ROOT / ".env")
     api_key = os.environ.get("BROKER_API_KEY")
     api_secret = os.environ.get("BROKER_API_SECRET")
@@ -105,8 +125,6 @@ def main() -> int:
         print("ERROR: broker credentials are not configured", file=sys.stderr)
         return 2
 
-    state_path = PROJECT_ROOT / "data" / "tracking" / "pnl_state.json"
-    state = json.loads(state_path.read_text(encoding="utf-8"))
     baseline_date = str(state.get("baseline_date") or "")
     baseline_equity = float(state.get("baseline_equity") or 0)
     if not baseline_date or baseline_equity <= 0:

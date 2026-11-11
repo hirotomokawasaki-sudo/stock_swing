@@ -34,7 +34,6 @@ def _load_env(env_path: Path) -> None:
         os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
 
 
-_load_env(project_root / ".env")
 
 from stock_swing.sources.massive_client import MassiveBar, MassiveClient
 from stock_swing.tracking.pnl_tracker import PnLTracker
@@ -268,7 +267,11 @@ def _parse_symbol_filter(raw: str) -> set[str]:
 
 
 
+from stock_swing.tracking.compatibility import legacy_entrypoint, legacy_maintenance, tracking_root
+
+@legacy_entrypoint(lambda *a, **k: globals().get('project_root', globals().get('PROJECT_ROOT', Path(__file__).resolve().parents[1])))
 def main() -> int:
+    _load_env(project_root / ".env")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--backup", action="store_true", help="Create a timestamped pnl_state backup before writing")
     parser.add_argument("--intraday-entry", action=argparse.BooleanOptionalAction, default=True)

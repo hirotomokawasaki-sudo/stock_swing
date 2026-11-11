@@ -34,7 +34,7 @@ echo ""
 echo "Step 2: Authenticate"
 echo "Paste this JSON and press Enter:"
 echo ""
-echo '  {"action":"auth", "params":"jWjKRcHk7x8_egXHGCGrbWnS67dPgWtp"}'
+echo '  {"action":"auth", "params":"<REDACTED_USE_YOUR_API_KEY>"}'
 echo ""
 echo "You should see: {\"status\":\"auth_success\"} or similar"
 echo ""

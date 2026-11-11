@@ -1,0 +1,4775 @@
+{
+  "self_excluded": "docs/publication_20261111/INVENTORY.json",
+  "files": {
+    ".env.example": {
+      "bytes": 223,
+      "sha256": "6c39a3388f12e92693e8963bf1a6b953df7d52bb80e3b6581c1866c436e64d3e",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    ".github/workflows/ci.yml": {
+      "bytes": 1100,
+      "sha256": "a212861346c9e6f6e6f531fcb2f0c9f33aaa9babc47aba61923e8743cdacce1b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    ".gitignore": {
+      "bytes": 3124,
+      "sha256": "dfff6dba8053651b60bd9c14de568387e0efc8f913c203a0b6f584615a742ef1",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "AGENTS.md": {
+      "bytes": 4865,
+      "sha256": "49b761ee46ce8ccdb33a08088d17762afa6488597cd51422fa2c9aa90722e139",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "GOVERNANCE.md": {
+      "bytes": 4437,
+      "sha256": "627cc8716ba89f48f8b860d83db9b06343ff7f9aa64978976feb3988e560524e",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "MUSTREAD_NAVIGATION.md": {
+      "bytes": 7016,
+      "sha256": "f16a07b822ff67d0cbbf2a9f2938472fd8f42e607fdee133f41099be924ecf69",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "Makefile": {
+      "bytes": 294,
+      "sha256": "44b78685b7a3cdefc0093ee8e861f5f6fb71849af5801c2a2de393d511641170",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "README.md": {
+      "bytes": 1071,
+      "sha256": "7ce7467acb6d0502a20e6ffe77c7066d683b9ce7bfada366b5f7c69880a2bbf6",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "RUNTIME_MODES.md": {
+      "bytes": 2624,
+      "sha256": "42e409f75c6bcacac71c128a75e4fa5752404096502ac18b77449e0f50ce79de",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "STATUS.md": {
+      "bytes": 7041,
+      "sha256": "a3b8053ff576566e06787815a4df814d1bc31e0c040fb8a1dfd702ef66596ab2",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "VERSION.md": {
+      "bytes": 4370,
+      "sha256": "703b12a1d5987a212f110d34ff141fe7011eb6acfd873fa83b09e5ce8c5abdcc",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "config/ai/ai_runtime.yaml": {
+      "bytes": 343,
+      "sha256": "ec0791a164a4fd5790f387c0c0489bd4f377ce166ac0fc9e29b2ebfd1fdb0ef5",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "config/environments/local.yaml": {
+      "bytes": 74,
+      "sha256": "812beb1aa5e01a68663c2892f4e402ef81602036b7e4216a1688519ef4607e77",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "config/experiments/ab_buckets.yaml": {
+      "bytes": 237,
+      "sha256": "4464f572de59dcc8866f3327ed4ef310cf2e2a36d5c7693c45d5ba9ef9c3dc29",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "config/experiments/default_experiment.yaml": {
+      "bytes": 164,
+      "sha256": "900758254618590c7d00065a6366df6ed273df6f3fecb76f62b7aa5c8d352bdc",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "config/features/intraday_momentum.yaml": {
+      "bytes": 1348,
+      "sha256": "17f401488b8bc01925abb86590bf1edd60875e6116487cc1c1531498b0780196",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "config/guardrails/autonomous_stop.yaml": {
+      "bytes": 2211,
+      "sha256": "98359c58311de5d110e5b1baf1bc5114dad699fe7e951a20b39bff4b8a550fd3",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "config/reference/symbol_registry.yaml": {
+      "bytes": 16115,
+      "sha256": "aac5bab3a0ee16fd935f9ae541dd9566835fc49de21d98e31bae40c288057e4e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "config/runtime/current_mode.yaml": {
+      "bytes": 5790,
+      "sha256": "d40d1bf835fc846b06f9f9bb527f4f904ee1df10f3c00d5794c7452d70f93374",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "config/sources/broker.yaml": {
+      "bytes": 264,
+      "sha256": "13d6583125ccf695c99d1f8f88a7acbfcbce632f62cde92b908bdd3223f69e75",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "config/sources/finnhub.yaml": {
+      "bytes": 257,
+      "sha256": "64459c0c51ed74a3fa4b50060a819e6adee3f0483fa3b339a0287ffe1b45de17",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "config/sources/fred.yaml": {
+      "bytes": 591,
+      "sha256": "95d12206c0eb16a778128df658e0a9d1a934b327fb16a3061849f172dd979797",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "config/sources/sec.yaml": {
+      "bytes": 258,
+      "sha256": "9e15d23a5306c6dfa899d761be1363ce44d76ec3783073e10b4ac37413014a00",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "config/strategy/breakout_momentum_v1.yaml": {
+      "bytes": 1823,
+      "sha256": "8b9a9c388b7bb07bfd5ab2eb88b191b71a97d2e59bf30bfbd5336e242696f355",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "config/strategy/entry_filters.yaml": {
+      "bytes": 1568,
+      "sha256": "f877a48ee92ec1d60319b347cf42568da9f36a4fb5af055a0029a7f3468249ab",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "config/strategy/event_swing_v1.yaml": {
+      "bytes": 1205,
+      "sha256": "36b5853162e13a845e4218f5ed06763620532e16d1458c3057c7a5ca864f3c5c",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "config/strategy/open_shock_cooldown.yaml": {
+      "bytes": 543,
+      "sha256": "94c648f4127d165d4e4731fd4149abed78c8803eed2152f24c2567991f6de6dc",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "config/strategy/portfolio_allocation.yaml": {
+      "bytes": 2612,
+      "sha256": "d89a0828ff737e400b7b6e8edf6fe8c80c91231e114752a9aeb0daed3a696011",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "config/strategy/simple_exit_v2.yaml": {
+      "bytes": 11054,
+      "sha256": "11e4829b245bc69f6edc0076409e49e6fb6e09735fab949076d0797cdfc5b86a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/README.md": {
+      "bytes": 10520,
+      "sha256": "04a9a71f5c8d93dc31572943d1a62a1799b69350ddb8e868720625be6d1f1d61",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/adapters/__init__.py": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/adapters/cron_adapter.py": {
+      "bytes": 10841,
+      "sha256": "82f93b1ae205376f5578d7f32e833dfba2251d1166bd20cced413efedfe22674",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/adapters/data_adapter.py": {
+      "bytes": 2355,
+      "sha256": "ac613b74aaf71eba484e9705cf25aa18c868efc8383b5c6c1f20549122ded065",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/adapters/system_adapter.py": {
+      "bytes": 32797,
+      "sha256": "40a708d730c451497af3b37ec9ac200bfdb6c3efd707f092ca3acf4a0286a48d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/app.py": {
+      "bytes": 29557,
+      "sha256": "6689df6520747c01d805cb460731e5ba41ef3ce8661824edbee4212794346131",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "console/app_tmp.py": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/manage.sh": {
+      "bytes": 13770,
+      "sha256": "230c702294e5a1dec23010fc264ddf35d3de5cc91ca538e565601489b9707806",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "console/remote_readonly_app.py": {
+      "bytes": 24209,
+      "sha256": "68c6080b688011f59a19f062fd759384303a216cea5c194db3049fd9a56a51bb",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/services/__init__.py": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/services/benchmark_service.py": {
+      "bytes": 15505,
+      "sha256": "07c6d2253e204db51c7368914cae53f7b15237f3152d69e18acedbc509453469",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/services/console_self_check_service.py": {
+      "bytes": 3354,
+      "sha256": "117650c443c27e20597c3e2aa2aab351554f5ff0f4c2fa4e05cfff6e79533623",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/services/dashboard_service.py": {
+      "bytes": 236628,
+      "sha256": "f9c2a50d1b526ab8d5ede90e895493ade385a4f2a3883c0a1442107ad2687034",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/services/dashboard_service_patch.py": {
+      "bytes": 1517,
+      "sha256": "4ca0b543f354ada063bc3c4afaddb92242ae352bbaefb2d175bef0aad1584182",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/services/evidence_service.py": {
+      "bytes": 2973,
+      "sha256": "75b8cadb9670fac2a32fda087cdce313ff6674dffff2b3a23457aa953ef96de5",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/services/followthrough_service.py": {
+      "bytes": 22107,
+      "sha256": "f1ed5f43614239d40127e1bff66326f7b7d9a159d6e23884df0a154484fa927e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/services/guardrail_service.py": {
+      "bytes": 7209,
+      "sha256": "d5648a9a6034e5ad913d797e53c4d1c4876f079c8ef3a26f28244cd1bc6509c3",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/services/market_clock_service.py": {
+      "bytes": 2409,
+      "sha256": "afd3400fc664ff061ba27fefb294dca5080eafcff1e1649fb92e0d5bcd5c14f5",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/services/operational_evidence_service.py": {
+      "bytes": 17006,
+      "sha256": "a1b46074a5d81dae996e748b53f5efbf13b274d00a0f804bac21ed8e13ac33c7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/services/operational_inputs_service.py": {
+      "bytes": 10506,
+      "sha256": "ceaa95c7e02b0ac6cc67e55988b27b5e3d26764901780cbc8e21b6fc1ff410f3",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/services/parameter_service.py": {
+      "bytes": 8506,
+      "sha256": "54a94c479baef32268049b0a247dac5a545561939d303450e3a3e2d21ac40556",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/services/performance_breakdown_service.py": {
+      "bytes": 6947,
+      "sha256": "747f56b38ce203eb3d2ec71b4f350adfbf52dd1543ba0035f58aba2183696354",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/services/position_risk_service.py": {
+      "bytes": 7951,
+      "sha256": "1386660373bf6746713630d245c363959a2864aca682a5166f0c252b2476c90d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/services/summary_service.py": {
+      "bytes": 35619,
+      "sha256": "15c07d05a7186283ddef19a95cf7547a6bb57cf3bfbac461034017139d402796",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/start.sh": {
+      "bytes": 179,
+      "sha256": "1e1c776c0bc353fb1484ab9aac9960dd3817d9cd83cb4f70d771ee91bd1ed6cb",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "console/ui/api-client.js": {
+      "bytes": 8605,
+      "sha256": "bbe65d94607d8720beb00b0a5f1b418a6bae53401e9468162688103ab89fb7f7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/ui/app.js": {
+      "bytes": 193115,
+      "sha256": "3a09b68ccc463458d9e7583c55a5e761e6ebde5e3749ea89229cac14d1307a4b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/ui/error-handler.js": {
+      "bytes": 5738,
+      "sha256": "4fc6eacf1ee919cd75b687392b899d386150f6862d5a5668f950b41d8f750e13",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/ui/error-tracker.js": {
+      "bytes": 8095,
+      "sha256": "b36259de9cc19168becfb7e6f706e735f597735ea8873dc31ed43943b621a304",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/ui/health-monitor.js": {
+      "bytes": 9356,
+      "sha256": "3ce7ef3187cde5d9b5be387f23e8d5f7f68f5508ff525d06fd628f251ebe77ce",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/ui/index.html": {
+      "bytes": 2920,
+      "sha256": "62d4bf8c804126149f68f41c84271f7f602779797e58859080a053ad1d860add",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/ui/mobile_readonly.html": {
+      "bytes": 20223,
+      "sha256": "8b245f6021faddfb638f6e5536ddad182c577e5924b60f742bd4c77bf7635f12",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/ui/performance-monitor.js": {
+      "bytes": 8603,
+      "sha256": "61b561342bad293dcd5ebffa73241c958b61e008636352d96bb43ffc1f591191",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/ui/recovery-manager.js": {
+      "bytes": 10958,
+      "sha256": "a70df4261bc4ff5ccf7f0656574468225d69310e5c8edad48bd0ae882b9034d4",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/ui/report-generator.js": {
+      "bytes": 15366,
+      "sha256": "fd28752b38416c4dd2cb7a557480dc1d446454b09644cbba80a792c4f317d69f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/ui/state-manager.js": {
+      "bytes": 5378,
+      "sha256": "65baa40b4beb3f2ff9aff7e48681e969a4fcebe9fc514718e891046a9c6b3226",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/ui/style.css": {
+      "bytes": 26148,
+      "sha256": "6e125430378bef74dd53dc26a4e77a2b8f7488e6c215838b55fda75b211fe356",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/ui/test-phase3.html": {
+      "bytes": 12173,
+      "sha256": "efa0adf5c62f1463379a7685ad9fa0ae196237d37c6827e9df56e0415267af3f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/ui/test-robustness.html": {
+      "bytes": 11291,
+      "sha256": "461440a7fe2afc46cb4405d4417501df2afbc3b29316fee7087ebeffef081724",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/ui/test.html": {
+      "bytes": 9110,
+      "sha256": "d3c3aa074e4d489605964ce72b4da1cbda908239b2762e92a0cd9dc4d4b4ddf7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/ui/test_analysis.html": {
+      "bytes": 5007,
+      "sha256": "37d33dc893cf61db4c7a0c828e745bb1b1a2ae9aa5ab2a683de217291720c31a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/ui/utils.js": {
+      "bytes": 5661,
+      "sha256": "77285267df9fcef6f6fc7987e1243156f9db098fbac7100b7d18897614c1ba67",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/ui/validators.js": {
+      "bytes": 15362,
+      "sha256": "eb4b520167e6159f5b95ab745ab108124bfa8357353e7c5236bbcbcd756c9739",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/ui/\u8a3a\u65ad.html": {
+      "bytes": 5143,
+      "sha256": "390d12a8a7311c0e98ae9c46b0f2d35534363430a9d4b8fb52f0aae0d0ad2607",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/utils/__init__.py": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/utils/structured_json.py": {
+      "bytes": 2722,
+      "sha256": "4fe8927d39afcd32d19d3263c404cd32a2254edcf43b01fa2bd4b1a866da2844",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/utils/time_utils.py": {
+      "bytes": 395,
+      "sha256": "15e4b360dc067cf8c366d5f799ed2ac402e5349817ace3faed9b3d92f7120efd",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "console/websocket_server.py": {
+      "bytes": 3218,
+      "sha256": "33e99a2d130773bc8dded61b7aa52133fdf2f5e5fc9a5c5b91fd69d79723a36b",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "dashboard/.streamlit/config.toml": {
+      "bytes": 43,
+      "sha256": "d8b2c04fd6d8878732eee5a1eba81668eca95d4caa577580fcc988d8cb343a34",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "dashboard/alpaca.py": {
+      "bytes": 2518,
+      "sha256": "97fcf333c20c379897250e2db973e5a674e3166d18dffe5f75699e596059f022",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "dashboard/app.py": {
+      "bytes": 15982,
+      "sha256": "69b0e1ca6a205f92cab53d0cc547ac75bfc21c0106dec440fd7e54bb91426b7c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "dashboard/charts.py": {
+      "bytes": 5740,
+      "sha256": "7f4b0057153638675e54a6d736d4dc31674fe8892a5ad4aa5a9e691536c71809",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "dashboard/demo.py": {
+      "bytes": 4016,
+      "sha256": "477dff26132a010e842fe98efd5b4f88576585ea9a4bba57dce1b2ba1abe76f7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "dashboard/requirements.txt": {
+      "bytes": 100,
+      "sha256": "bb5ebf4712a5f3e15bce36325ef72b9a4c9efdc8e1aff2c4a9320afe507ad487",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "docs/architecture/SYSTEM_OVERVIEW.md": {
+      "bytes": 4347,
+      "sha256": "a679bf0a48dd9dccdef293d74b61aa1dbf7f1795991da08ef123d0835723bafc",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "docs/codex reviews/stock_swing_codex_fix_instructions_20260721.md": {
+      "bytes": 16208,
+      "sha256": "5795e890361dd1bba59f0c6a3bdc354f4e56875711fdaac7d5232a10a65d9d78",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "docs/publication_20261111/PUBLIC_TEST_SCOPE.json": {
+      "bytes": 789,
+      "sha256": "0818197b5db006ddb4139ece7acb96bb090c78f2e2d7d179563b0bfcc1e80981",
+      "executable": false,
+      "original_source_mode": null
+    },
+    "docs/publication_20261111/README.md": {
+      "bytes": 4072,
+      "sha256": "be30eb52bef3b9d45aec6a3980128c75828d86b2f81145e05bef8a185d29622c",
+      "executable": false,
+      "original_source_mode": null
+    },
+    "docs/publication_20261111/SCOPE.json": {
+      "bytes": 3149,
+      "sha256": "1140459c09f72dd3297c93848849d1d1f2aaad7b03d7654057055f1cb6586bc1",
+      "executable": false,
+      "original_source_mode": null
+    },
+    "docs/publication_20261111/VALIDATION.json": {
+      "bytes": 7515,
+      "sha256": "7522e34bcdd60a76013c9d3877935042f0eaa4300b28da03ad9d7637f47d8dcd",
+      "executable": false,
+      "original_source_mode": null
+    },
+    "docs/r22_apply_readiness_20261021/precision_preview.py": {
+      "bytes": 5411,
+      "sha256": "4fc4d04b57a2d4e8755b174ce432259bb5a082149ed4ff9b438438e0996390a7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "docs/r22_cutover_compatibility_20261021/rehearsal.py": {
+      "bytes": 4549,
+      "sha256": "6ca4ce81e93041d4c6d13ef4a0c101f9860949ca58535f18927697293af2b188",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "docs/r22_residual_orders_20261021/repair_preview.py": {
+      "bytes": 16925,
+      "sha256": "fcc9f09e726ef2357fe860b8562c348e6a5f2aab675f47b16dab2f732aef7945",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "docs/r22_residual_orders_20261021/review.py": {
+      "bytes": 4744,
+      "sha256": "f0f3c1e2630dbb19f99d23e5f4d744363f808be5063757e15490eda1d9351d22",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "docs/testing_standards.md": {
+      "bytes": 6947,
+      "sha256": "fc8540738f31d9f1e2be9953d76049c041c465844f1e0b614bedc4ca63c5cf6f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "openclaw/prompts/README.md": {
+      "bytes": 190,
+      "sha256": "11d821ab82a3f52d33ad9fc2d086011303c68e6fc8e342e5d3c5748691c123b3",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "openclaw/prompts/event_review_system.md": {
+      "bytes": 339,
+      "sha256": "e0754be03e69e24ad2c4515ae8b11562216b799fead60442b7e1c7242b41a1a2",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "openclaw/templates/INPUT_SCHEMA.md": {
+      "bytes": 435,
+      "sha256": "25e7ac4de1b531ee784806cc50d85a468004db037412e4a15b97355da2210c24",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "openclaw/templates/OUTPUT_SCHEMA.md": {
+      "bytes": 256,
+      "sha256": "67328dbb7bbfc6b1dfc2010ffb3aae493ad4a393f4446fc9081ec297298a67b3",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "ops/README.md": {
+      "bytes": 156,
+      "sha256": "47d19d274755a954bb080589a7a8aaa3983c589d4674926ea8b8f19f984ea6fb",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "ops/healthchecks/README.md": {
+      "bytes": 94,
+      "sha256": "c81d09b99a9f5ed8bcefb7a9a84b32daa8d4b1c8d7c3722297928e14256b95f9",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "ops/launchd/README.md": {
+      "bytes": 2564,
+      "sha256": "b6b31aba0a3fce4cc0bd8b718a1ee045023e53a575e9a9357bcf006e43a31679",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "ops/launchd/com.hirotomookawasaki.stock_swing.console.watchdog.plist": {
+      "bytes": 1382,
+      "sha256": "85d502ae3f04bc3e9f9a817ef133f932045bd3cab0d0d05351abde9a9962de62",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "ops/schedules/README.md": {
+      "bytes": 86,
+      "sha256": "ab505c6361b4e91ba4cb1206f80843d8934adb56c7c534aede61571ce6889269",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "ops/watchdog/README.md": {
+      "bytes": 890,
+      "sha256": "6c12212ecd8853b3e62cfaeb28b1c4c3ccfdab33d0cc11fe7c60f448492fdafd",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "prompts/stock_swing/decision_prompt_v1.md": {
+      "bytes": 289,
+      "sha256": "b1c7df2b5624431296799fa788075fce884abdc7a2a97b7100e9870b60379c1f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "prompts/stock_swing/exit_prompt_v1.md": {
+      "bytes": 267,
+      "sha256": "e08f611a629238bcd4ed70ee6d143b4821ac222b8bd135ac3bab696d7cadc7a3",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "pyproject.toml": {
+      "bytes": 456,
+      "sha256": "763e0d8b00880106208857e17de5e89a1ec86b63b8530d956506dbf4a81d17c8",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "requirements.txt": {
+      "bytes": 259,
+      "sha256": "f261aa9eae6a5449e29d7c077464d49646a2261d62544f15604799488a755392",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/README.md": {
+      "bytes": 3303,
+      "sha256": "87a422f7fdc61778bb11ed8e1340adf63d8f74344c9e81092225f3f05507a0d6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/adjust_individual_pnl.py": {
+      "bytes": 4763,
+      "sha256": "a53e12cdd5c52a2ea942abb272db3b24195ed017dd40ea98aca46daf15cdeb1b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/analyze_atr_risk_sizing_counterfactual.py": {
+      "bytes": 13483,
+      "sha256": "822122653cc25eba8724c66213ace097d624a90e8677220707689f56c61c48f4",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/analyze_breakeven_staged_floor.py": {
+      "bytes": 13104,
+      "sha256": "ca6e171dd3cd6bbcbcf2b8984f20a5807a14b074a33c19b1a359aadb45e08d63",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/analyze_earnings_blackout_counterfactual.py": {
+      "bytes": 14715,
+      "sha256": "85accb959b2c4b58b9e102f35b00731f5e5a6b2d5421b0776b4337f9abc6923a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/analyze_entry_exit_pairs.py": {
+      "bytes": 13842,
+      "sha256": "70a154892cad53aee8c4603a919624e8a5e2a7accfdf63ead4383aa281acaee0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/analyze_execution_costs.py": {
+      "bytes": 13299,
+      "sha256": "91775dafdbeab1af99e920e5ad1162dd4636be005f43c6163b99eeb178bc2ff0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/analyze_jp_semiconductor_correlation.py": {
+      "bytes": 11003,
+      "sha256": "631c294a8706f2fbfa5830e3471a09854c3432f08a46127af04c3c5e79c21311",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/analyze_news_impact.py": {
+      "bytes": 17775,
+      "sha256": "648713f3167ce6304bb13536e8838c4757f9adc4796f880bf1548ba7f70bcf06",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/analyze_regime_filter_counterfactual.py": {
+      "bytes": 12325,
+      "sha256": "3a4c697864ca760fed83840fef722301c7a2c482f4bc96dd0f224b2c025a5492",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/analyze_sector_cap_counterfactual.py": {
+      "bytes": 14953,
+      "sha256": "02c345cc63913197df776f82611e54c3d723985ef9655ec0b77bb549749f95e3",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/analyze_signal_strength_decile.py": {
+      "bytes": 10618,
+      "sha256": "3350af29f5fc7869081d2d63609eaf58f937251e53894e750d27605e582d0340",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/analyze_ss_sizing_counterfactual.py": {
+      "bytes": 8395,
+      "sha256": "2af450a4830cb44aff986ced0d000ade71413415f599fb0aa17a03b0bca2308d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/analyze_stop_loss_post_exit.py": {
+      "bytes": 18274,
+      "sha256": "6685373a920ac47342405885742e0fd1cf21d70fdd8699c811d8af804d47b211",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/analyze_tiered_min_hold_v2_historical.py": {
+      "bytes": 10988,
+      "sha256": "ce470876de37b418f91bb0997e7e9cdd6068bba5d4655180051090836f2a61f8",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/audit_operational_readiness.py": {
+      "bytes": 14391,
+      "sha256": "f5f193c0b0c4f1dc88b97035c1c04379305895136b769aeed5644a18c7c02fbd",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/audit_trades_with_market_data.py": {
+      "bytes": 32437,
+      "sha256": "d894937fe5a0b9b2131d0ce15063cea2bdf675e0082fd4e627926bb8920e9369",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/automation_payloads/high_correlation_monitor.js": {
+      "bytes": 1648,
+      "sha256": "22c5c01b852bd92aedc75ea4373dc9b9fb6dcfb8f4061fa695eae1b24583edb0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/automation_payloads/sector_rotation_parallel_shadow.js": {
+      "bytes": 1661,
+      "sha256": "7cff77324c8de9d97c321e233017890ec187282cf3b5eb9e2e1b2c1d8ebddcef",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/backfill_asset_class.py": {
+      "bytes": 3304,
+      "sha256": "2fca329a476c43c60003b8bccfeb4128ca5c8bd73753634e9acf12e8834237a5",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/backfill_daily_snapshots.py": {
+      "bytes": 16017,
+      "sha256": "b3a3cfe3bf43f6bd4c6fb07134b8af33ec0a0a5a48cf85190ff8442f2094f789",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/backfill_entry_signal_strength.py": {
+      "bytes": 7617,
+      "sha256": "fd6ee4c986b4d35299c2afcb2211e32d6e8a32ead43c3a71af0ae3098576666c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/backfill_open_position_count.py": {
+      "bytes": 4851,
+      "sha256": "f20660f09483ba41497713f08437b2283dd3c6305e95d8e743ed23b5cd2a10a4",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/backfill_open_trade_peak_prices.py": {
+      "bytes": 11231,
+      "sha256": "e9ca3de2ba064bbb6f3da91d3a92a44dab2907e80b165930e5e0177a3c6f8ec4",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/backfill_planb_planc_historical.py": {
+      "bytes": 11209,
+      "sha256": "817e5d59b1ad67bb2ea9481c54c9ba823d638683e63f3f4a886b4bf2d9077ca1",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/backfill_trade_metadata.py": {
+      "bytes": 4149,
+      "sha256": "0bcf256223d35e5c7b6ccace2bb17eb872c2127b408086050a287bed5f3497f0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/backtest_grid_search.py": {
+      "bytes": 12772,
+      "sha256": "6aff1693add573123b92bef2261d0bc34b4efd212dfd23f8d662963321c25622",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/backtest_momentum_comparison.py": {
+      "bytes": 16793,
+      "sha256": "080e052f7b563bc0d22f44043b33bb1e9343b2593506948109942fafdf1e0059",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/backtest_relaxed_threshold.py": {
+      "bytes": 12726,
+      "sha256": "39f50419980c0ae48195fe40e3b9fd04aaadb488447a8090662e48295e7a89cd",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/build_broker_tracker_reconciliation.py": {
+      "bytes": 4048,
+      "sha256": "0c280ad1506587201c5fd04ad032e81e5e451793fc2db35fb487768a20905823",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/build_performance_summary.py": {
+      "bytes": 6158,
+      "sha256": "dfff406e00d9ae725380db64eb2f8b15fd8116f50f0b4cb7bdb76731b1b8a9a0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/build_post_signal_outcomes.py": {
+      "bytes": 5826,
+      "sha256": "8a3211561745f74b221c99c13b5060b4ac214c936318b59d5fa1318f0293144d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/build_trade_attribution_dataset.py": {
+      "bytes": 5817,
+      "sha256": "ec583c2c467bdea2df917ece811b6c316c032ad79a8ae7f732c8a9798810df33",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/cancel_broker_orders.py": {
+      "bytes": 5022,
+      "sha256": "66b235e9df88958482d3468a63114463d79a1e7d6dd3aedd1f781fc9cfd499b2",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "scripts/capture_promotion_gate_snapshot.py": {
+      "bytes": 13999,
+      "sha256": "72b2269090ceff2cf7df1add50d5adce07f20cf2e35b23a843c7e2c017d603ad",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/check_broker_order_history.py": {
+      "bytes": 1866,
+      "sha256": "3acad3d36e7e9df0b8dd993ed1994c9bfafb5744d945544e19b0f4ea6f7f2984",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/check_confidence_calibration_readiness.py": {
+      "bytes": 6727,
+      "sha256": "98c0d964e2a6907d4db4763dbea0ecd0fbd70b08833c375ce9523150c4c9fbab",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/check_corporate_actions.py": {
+      "bytes": 10813,
+      "sha256": "5e558f98088999ad733d69559e5e7bc2e7143ece4d060dd1d21acb770217f55e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/check_cron_health.py": {
+      "bytes": 13675,
+      "sha256": "ce5d0cabca986a13ec7823ca8040241342ff407d95433854a1b6157af3f49711",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/check_exit_reasons.py": {
+      "bytes": 2822,
+      "sha256": "c4808f0291439292496bc758ea404eff6a566f28f6b924b22d49128cef162601",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/check_go_no_go.py": {
+      "bytes": 33371,
+      "sha256": "67a013819c4f4904de868b1da52bce9861bc327b4528c0e53ab47b5c0322646b",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/check_high_correlation_snapshot.py": {
+      "bytes": 2196,
+      "sha256": "6bf30a3e2cd1cd255cfcfa7ad7e3d5918b965ac1ab17eb12d6f7a09cc2be9484",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/check_operational_recovery.py": {
+      "bytes": 10360,
+      "sha256": "38d283eda896e049bf910e55a720683ddc37523e445b6e5616a59ee8646d8f60",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/check_paper_demo_status.sh": {
+      "bytes": 287,
+      "sha256": "f89b2a3559b39d8ab5b1756c468e01fb25715934a836e78105a89b3745eec820",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/check_pnl_invariants.py": {
+      "bytes": 4692,
+      "sha256": "98e5b1345f10a55140029d1dceaaff274ec6d64f8240f0e4840757d2a48aae7e",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/check_quarantine_trend.py": {
+      "bytes": 9270,
+      "sha256": "73fb5dc3057fb56b2bdde852534ccc919283ba2d9433cd89a0128546d022f18e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/check_r8v2_ml_readiness.py": {
+      "bytes": 5268,
+      "sha256": "e1cbefca52ad6bd1d7138c074ed23a52e2f6fb5710b72d289ddc48152592111c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/cleanup_alpaca_anomalies_20260511.py": {
+      "bytes": 3765,
+      "sha256": "ac43e03af641bca23106a83174bf30aef9e3e3084ca95ee79a5c03df53b1d5ed",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/cleanup_anomalous_trades.py": {
+      "bytes": 4644,
+      "sha256": "bb47b281de9d97673f3aeca48d1015b3c6d6383d6797d622a531b68fc58ecec2",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/cleanup_dell_anomaly_20260511.py": {
+      "bytes": 4086,
+      "sha256": "a7fac13e839e754f055cba1b458d8302a773862e3ea07a34383978279663606c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/cleanup_high_return_trades_20260511.py": {
+      "bytes": 4150,
+      "sha256": "0de613976c878f78af73960e1f66d19458d5f8a73cf113e0fadf9e4f7085417f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/clear_circuit_breaker.py": {
+      "bytes": 2650,
+      "sha256": "1e3c75f288b55be4983908c1d3e914bfa7c7ba4838b8dcfb8172dc34a257e7f8",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/close_hpe_short.py": {
+      "bytes": 1290,
+      "sha256": "b9ca54069d1f5dacf724b5172034e739a54c68419de668f831346f510011f43d",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/collect_benchmarks.py": {
+      "bytes": 4930,
+      "sha256": "ee08c57e1300fb037fdf6e227332a50dd058883ed7301003172a75196bc919b6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/compare_bars_quality.py": {
+      "bytes": 7525,
+      "sha256": "19f2b66eb20f932953749eee6185a57793dc66e879dc6dc7af0627a678736bbc",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/compare_bars_simple.py": {
+      "bytes": 5427,
+      "sha256": "f4178851220c252094fe65ee5fad706f611d8e327f32dec0c0f869cd8e984323",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/compare_etf_stock_attribution.py": {
+      "bytes": 9823,
+      "sha256": "0a1a5771e231bf4149bea3697ec29d7671a1afdb52ef6523877dd2b2604bf290",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/compare_exit_variants.py": {
+      "bytes": 30390,
+      "sha256": "092e607d97d1ee07ee26deb7878d1d803d29af65069f35d885cad65bfb21df5d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/correct_anomalous_prices_with_market_data.py": {
+      "bytes": 9555,
+      "sha256": "ac703fe6bd7fad12dd80cad4fef231dfedc9805d810fa5d272aa5aa7c34d8671",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/counterfactual_hold_analysis.py": {
+      "bytes": 14981,
+      "sha256": "d83a2a01e87e88146cfc79a2e825424649fe8cb493d143f64456365c92b78610",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/create_daily_improvement_log.py": {
+      "bytes": 1660,
+      "sha256": "44907a03eead6d3d14c39a7d0bfcd5a9af2d22035ce54c70d39f7de7a6b7688b",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/cron/analyze_data.sh": {
+      "bytes": 2945,
+      "sha256": "7f6a3ee22f11222da67313a63d6d84a3ef04601b8a42fd434638691a2096abc7",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/cron/capture_broker_tracker_snapshot.sh": {
+      "bytes": 3435,
+      "sha256": "e167b211f8010038944fb5d8884535b2a0551e024cdd08ca017cf650aaec733b",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/cron/collect_data.sh": {
+      "bytes": 2025,
+      "sha256": "8e0826da2de8e34dc4f6c1df5db2ce5edf353b05abc20111dfabfb3b8f7f1135",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/cron/reconcile_orders.sh": {
+      "bytes": 1741,
+      "sha256": "81b1589b642fa24aabb17fea2e1cd1eb760c9de1a9ee2a14b6309810c06de332",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/cron/run_audit.sh": {
+      "bytes": 577,
+      "sha256": "0c2163b51e4944d375a556bfc60f660198aebd89816aab7082041b2988e1feb5",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/cron/run_gateway_command.py": {
+      "bytes": 7884,
+      "sha256": "182b74508b0806b925ec131f2ab4571a0cb5dea748d3cbb813254dc8283833cf",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/cron/run_paper_demo.sh": {
+      "bytes": 3608,
+      "sha256": "07c4d64677996d4eec13431ce9272fec301bd2189676d522b67d2ec98ca4a62c",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/cron/update_price_overrides.sh": {
+      "bytes": 447,
+      "sha256": "a794e9a32dff4df9628cb5ea2cad6ee16136a2c7797e7f74f83bd6807f3d3412",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/debug_entry.py": {
+      "bytes": 2814,
+      "sha256": "19f9114cdfbc0c8346b4f558ab3444fb636df6491b1d82e629d14bf96c1f3c03",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/emergency_sell.py": {
+      "bytes": 843,
+      "sha256": "baae8a080d26c4339266ec85fdc69e66929cfeab3014750d2669d0c4428545b6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/f8_clean_records_analysis.py": {
+      "bytes": 12748,
+      "sha256": "7a1d9eb7d5f83a11eaa0427c179dd78eb8aa9ce722d80aa961d7a626d5903ab5",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/fetch_and_fix_pnl.py": {
+      "bytes": 12613,
+      "sha256": "1ba4f5e93d01a890cc0f3b32b8ccc912c23bed14e3c25495e2833fc38f3647bd",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/fetch_benchmark.py": {
+      "bytes": 3247,
+      "sha256": "9947acbd06fc1bd61d3d77ce9efc0b16bc2e6041f9bcabf74979563544c99312",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/fix_pnl_state_format.py": {
+      "bytes": 3181,
+      "sha256": "48bbc81daf3dba5bbe5045c3c7c18b1d1601479e7698faa3260604f3920bd618",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/fix_pnl_tracking.py": {
+      "bytes": 13084,
+      "sha256": "d3bbefdde90bf714709c8384d7cef39a5f26f8506f276c9e95089d8fc700b790",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/fix_stale_broker_prices.py": {
+      "bytes": 4355,
+      "sha256": "359828b2667cfeae9bc74a00d79f75081ac351667e0c011f8914b50761688bf7",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/fix_strategy_ids.py": {
+      "bytes": 3740,
+      "sha256": "f17e5c1c94ea03b3ee0ff0bca6d287bd2e23c2840a8a195da79dbe72a4b72a07",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/g1_investigate_mismatch.py": {
+      "bytes": 3792,
+      "sha256": "736005fa8231430dc48baa0e7edb3ff4dba1fa88aff57bd704d70505c76aa474",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/g5_backfill_decision_telemetry.py": {
+      "bytes": 6055,
+      "sha256": "1d36a920014b8c39034b204fd77640318380562dc0c080e3ddb6dca528e6ab1b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/init_peak_prices.py": {
+      "bytes": 4517,
+      "sha256": "e1977df44641d2f0f705bc3bc80c8391defea7e0808f97b0b45eab0be406f95e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/investigate_klac_split_anomaly.py": {
+      "bytes": 3732,
+      "sha256": "ba4586bda61a57dcaec8c5b0a2b81b7414aca764ece5917ddcff2b2bb7cfbdd3",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/log_jp_overnight_spillover_shadow.py": {
+      "bytes": 5659,
+      "sha256": "2a6617c2db32863b956a1d7f71252f09d0656ebec49bf4e5573886d6fde32c0c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/log_sector_rotation_shadow.py": {
+      "bytes": 16011,
+      "sha256": "60452068945fe33e0e3221b85107bdfe984dec5f2ab26ffcb733e3b06a80c212",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/log_us_nonit_universe_shadow.py": {
+      "bytes": 12395,
+      "sha256": "bf647998264b0520745d6db78e9ed393dddf2045c093b7ec2c02f41ad70df95b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/maintenance/broker_health_check.sh": {
+      "bytes": 374,
+      "sha256": "845c313f589604372426c0b62ba1e3da8492b6f405e97c5e1dc872b4f987d0f8",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/maintenance/health_check.sh": {
+      "bytes": 1097,
+      "sha256": "22b813ff6c51ae863344c21ed6bae80cca96e9a55018400e2f9a479bb7c551e8",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/merge_pnl_data.py": {
+      "bytes": 4324,
+      "sha256": "5a7ebeb0cb8846014b98484129daf86ab9708eefd2f90f1b41a5a6541ceb35ff",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/migrate_quarantine_invalid_trades.py": {
+      "bytes": 7873,
+      "sha256": "cbd1161ff7f0df638400f0bf4012ff1a90488ff3730d3a21072458d25e6bdf07",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/quarantine_legacy_synthetic.py": {
+      "bytes": 3803,
+      "sha256": "2dfd05177cdf79e520488d3c116c41129c108e355f70f39b225c332869d32bb9",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r0v2_guardrail_stress_test.py": {
+      "bytes": 10213,
+      "sha256": "cc76874d4861ef53b06cd13507490cd0a67ac32db92cc7f99253c9fbd35fed86",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r0v2_reduce_size_design_alternatives_20260901.py": {
+      "bytes": 20046,
+      "sha256": "6d5629eb7584d2ccf8df06c1681a5652996f7f16b115fcf0befd2edda2f671eb",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r0v2_reduce_size_design_alternatives_v2_20260901.py": {
+      "bytes": 19501,
+      "sha256": "ea7d9fc16b7e8f017a834b8e209c583848bf38235af3c64221c29e23d6b94f0c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r0v2_reduce_size_effect.py": {
+      "bytes": 12572,
+      "sha256": "4eb3d313da85f9b425fc08b53dde2f9ad13432281cf5bc9533bfe701ea21f340",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r0v2_reduce_size_portfolio_level_check.py": {
+      "bytes": 15377,
+      "sha256": "8400b28d1168b811a0ea8ce53ff3f64152ea500c6bd63d5db11d902cf141baff",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r0v2_reduce_size_segment_robustness_20260901.py": {
+      "bytes": 17583,
+      "sha256": "f50edd4a375b1debf3552ffce4b95cd27c17a342c0109b58d60ad5a45262b92a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r11_backtest_engine.py": {
+      "bytes": 18179,
+      "sha256": "da3f934b2e13401a325b3d0d6d3255d9826aad4020f5404c4f90dbc6d6b353f2",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r11_backtest_engine_v2.py": {
+      "bytes": 21008,
+      "sha256": "9c5cafb75070e002b7c07c2f8f06d38daa29901e6a3826024611ee85bcfbf45d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r11_backtest_engine_v3.py": {
+      "bytes": 23454,
+      "sha256": "1a301db6f8d2060e96a563bb675843d420e8fdf3ea5afd689abfb809ef8fb10a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r11_backtest_engine_v4.py": {
+      "bytes": 23946,
+      "sha256": "1efa50636f536529ccd7404e8bd17dc22d9ff9c9fa923cb65b4c805723fdce36",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r11_fetch_historical_data.py": {
+      "bytes": 3209,
+      "sha256": "20557d01c334d1f971a35e489dcc5e54c9e11110ffe5c39e4d0bbe7b03ef12a0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r11_symbol_universe_intro_dates.py": {
+      "bytes": 4364,
+      "sha256": "ead55782617526f6b674c1b95f7a2e430e13f299fe470e993f1ea7e0671456c0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r11b_param_search.py": {
+      "bytes": 8899,
+      "sha256": "fd0d8a5fb3215323cc7714badba19a1678fba19a4f05ddb6504afae680652354",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r11c2_regime_filter_backtest.py": {
+      "bytes": 6990,
+      "sha256": "1cd2bc176cbf9f0fcb52f5cfa2133e663090e6324de1041c6ad9a34c1021a868",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r11c_candidate_backtest.py": {
+      "bytes": 22522,
+      "sha256": "feae83433899cc54f6a7b6287963a846dd74b025a00bd438be5970b99b5462e1",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r11c_rsi_no_symbol_exclusivity.py": {
+      "bytes": 15352,
+      "sha256": "1405765aa14f71dfe29f0f19715b58bd02bd954883b3a60ca00460e44c83c98f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r11c_rsi_threshold_grid_rolling_wf.py": {
+      "bytes": 13448,
+      "sha256": "c95b3e656a25eea0aa5bb4bb51c6a1f9c26524bd65af9e257c655582661b69f6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r11c_v2_rigorous_rerun.py": {
+      "bytes": 21535,
+      "sha256": "111384212f1df8ee364e18bba561b55fda3b7074d8c5dc0d3fbae09fc67b604d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r13c_rolling_walk_forward_validation.py": {
+      "bytes": 8410,
+      "sha256": "4f26582609a4540ba1765c8bdba4a68d78a6495387a228bc362ddc96801fede1",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r13d_etf_sector_rotation_phase1.py": {
+      "bytes": 17028,
+      "sha256": "4d8977492d80767173be6645ca0ea412589208070e16311ce9ec378cd7617b7e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r13d_min_members_check.py": {
+      "bytes": 9382,
+      "sha256": "6c27f70e2f19e455747e81e33eab85c01429f9b96a8c93d50510d798a79f856c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r13d_new_headline_selection.py": {
+      "bytes": 6558,
+      "sha256": "ff757dbc15c85ebefb3442c1075e7a401e9f8a56710ad731651cdc4735f983e5",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r13d_phase3_state_machine_validation.py": {
+      "bytes": 10361,
+      "sha256": "27aa40c354e98ca37f20b2b6397261d6bd3c9064347246a5de3a645c9284e528",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r13d_sector_rotation_feature_strategy_validation.py": {
+      "bytes": 9736,
+      "sha256": "2e1b99e01a42745c624b25f33f24c7ee85f54f56e0202e4d37fbaa35cbd05478",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r14_dip_buy_meanreversion_phase1.py": {
+      "bytes": 20609,
+      "sha256": "1888722af4e44ff0dece38e5031661dd32458c27f22b0d6b9a932e033094a062",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r14_gate3_cross_strategy_interference_check.py": {
+      "bytes": 9930,
+      "sha256": "78ff03614ef376003439e98c8993da9cdf8e4691b07c0679baa14a79367d0e30",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r14_no_symbol_exclusivity_check.py": {
+      "bytes": 14795,
+      "sha256": "f57225fbcc75c87a364aaea6feaa58a655ebc7b5c8d23f17ddc2889918015216",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r15_fetch_intraday_5min_history.py": {
+      "bytes": 11986,
+      "sha256": "4fa114a3cb967c3cdf356298ae5029158a312bd2f22f7e990ecb3dbe931641c0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r15_intraday_backtest_engine.py": {
+      "bytes": 21596,
+      "sha256": "ce74234695a77dacb2717eb1131034cf1d4c6209b5cd2337c1ad8bf583542f92",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/r15_intraday_no_exclusivity_check.py": {
+      "bytes": 13251,
+      "sha256": "d990b5f81f20e4f22d2189446062da03388e96136d8a2d53a2cf9801e02a970b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/rebuild_pnl_from_orders.py": {
+      "bytes": 5228,
+      "sha256": "e3d7f3ae3c6cd7e6daec5cf2ce7cb274236252707a08065035495670b92b9072",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/rebuild_pnl_source_of_truth.py": {
+      "bytes": 3628,
+      "sha256": "cbbe4b097bef62528490359586f23ef93ea8df52af1c46ac754f2fcf9fc40157",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/rebuild_pnl_state_from_broker.py": {
+      "bytes": 54987,
+      "sha256": "cbf035cdc1b771d7871acd62f8d4e73c296e253f3aee876597ed360f4f4d0785",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/reconcile_equity_bridge.py": {
+      "bytes": 8464,
+      "sha256": "7adf3400000369aeecf12b784644210f5e8b50f561e3bef4f5832d9d2bb77b4b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/reconcile_orders.py": {
+      "bytes": 398,
+      "sha256": "cfcccc89618f8dcd975e65aa3bf34ff04184c94ee385f5ce122bb8e3930be69f",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/recover_exit_reasons.py": {
+      "bytes": 8996,
+      "sha256": "ae88c5b24521e770ec90ab48005e38c01559a5be85334e4159f1eedce1cd1e1b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/report_exit_attribution.py": {
+      "bytes": 8782,
+      "sha256": "607e43aba4502f7703d84c2c5fb7493a09a4aa9240f050dcc0f8ea14fe60cd59",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/report_experiment_performance.py": {
+      "bytes": 2502,
+      "sha256": "d5309a8d8f4e4d37b6b0fe4918e947f2778f9fca2147b40e3fccebf8282f275b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/report_guardrails.py": {
+      "bytes": 1468,
+      "sha256": "7a69cd1174678b28d6c63b5d77825676fb66c4ef53c8c37685cc8a3da8a24328",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/reset_circuit_breaker.py": {
+      "bytes": 2842,
+      "sha256": "3e77819f76007e7c0898b8edd67d5bbdabf1a62d3782e9d7ae7752d3384c2bc3",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/rf8b_recover_attribution.py": {
+      "bytes": 12733,
+      "sha256": "abc4abec8279f364510f3ef5a6873100397073ebbf49d4cf1228ea01024321c1",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/run_first_backtest.py": {
+      "bytes": 3587,
+      "sha256": "12bafc1f489f7f0e0ec90325d4c46a095b6b8245ae63d9afe711e71e5dcd6a92",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/run_paper_demo.sh": {
+      "bytes": 1204,
+      "sha256": "65fc1fd72e221a80a2bb7c350b76f2182a05eae1bdd06350311fc25ae69cc8ba",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/secret_scan.py": {
+      "bytes": 2929,
+      "sha256": "3812aa25968853de521c3fd0c5b61cfd93a282afd39b693bee515c1929b4203b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/sector_shock_historical_replay.py": {
+      "bytes": 13310,
+      "sha256": "ee544e378114caef9d8c5a44565085544eadfbfb38c531417ca279feecfc3ecc",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/sim_ae.py": {
+      "bytes": 6818,
+      "sha256": "8d7de8df17c9db4643e8b094a6805f7b626ef07a723d1f4fc6d43b96f98e2cf0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/simulate_confidence_multiplier_sizing_fix.py": {
+      "bytes": 18601,
+      "sha256": "7e87fe2a9e81ef55b9653f2afb36fc91afa1486775699c785daf129e15d6f7cf",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/simulate_daily_path_volatility_stop.py": {
+      "bytes": 20803,
+      "sha256": "d273797626d7d37042dec55397b5a904a17e33564642dac3a7f8053662032e59",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/simulate_early_weakness_cut.py": {
+      "bytes": 24767,
+      "sha256": "97f68a1f737a3fc1028da4dfb717ae0fdf8d99fdf6e91e399ba381485ea7b6f5",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/simulate_signal_strength_exit_decoupling.py": {
+      "bytes": 21544,
+      "sha256": "ab80a40acda046d99eb3358f7d3bd177027a6d4328121899c3396e867fb63dd7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/simulate_stop_loss_deepening.py": {
+      "bytes": 26392,
+      "sha256": "aed0db88d457aa0a4dd8ba2d080c92e9c015a259552f6f244b2d4ca0e0294916",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/simulate_volatility_adjusted_stop.py": {
+      "bytes": 18641,
+      "sha256": "6dc7d917079f432ef5baad16bff9aa095777afcd0de9a43b4759046291efc12f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/start_experiment.py": {
+      "bytes": 1868,
+      "sha256": "761196e9a81284e299aa2de1a538b02422d5fcd953ab58c83ccfca7340c0c6ac",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/sync_broker_positions.py": {
+      "bytes": 2892,
+      "sha256": "0c0e3d67164b61817d423502f431f38c8f738f95e629488134aa56ecbe5713bf",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/sync_broker_to_tracker.py": {
+      "bytes": 3521,
+      "sha256": "ae6d933f6f02d621c316af1d473d26e817fdf83b84efa17d6b029d54efc6f56a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/sync_pnl_with_broker.py": {
+      "bytes": 6985,
+      "sha256": "5e8ff4a63eea4367c9e1492e3cc60bf2487f1ca1a47c80754f0df11452f5e305",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/test_backtest_engine.py": {
+      "bytes": 5540,
+      "sha256": "acbffa486a00d50981c380d2c398339c8c8ccc019b85a1b5b56fa2c60a6c569e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/test_intraday_momentum.py": {
+      "bytes": 5454,
+      "sha256": "1cf32d5936af349b861aebfc5b3007815b948e1c863c700bd0599c782bb8fab3",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/test_massive_integration.py": {
+      "bytes": 4383,
+      "sha256": "22435e73889172179c1203d529201af129cf1908bfba1b4a1b00a57488892478",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/test_massive_ws_connection.sh": {
+      "bytes": 1955,
+      "sha256": "461b3055a3653f9c6b8d98cbef6e80278d91f9f350bb159ef876811d30bd00a1",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/test_simple_backtest.py": {
+      "bytes": 3793,
+      "sha256": "1981d418dbac4f860ce48c59b86e4b697e50a3b07de54a8159b77d7354c49779",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/test_simple_exit.py": {
+      "bytes": 4039,
+      "sha256": "4bbcbcb11ee4f991ad56b94717039920b699c02b3c738071f978b2e33e9ae217",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/test_telegram_latency.sh": {
+      "bytes": 524,
+      "sha256": "700c87222e7459ee5cf9260f8e0f7efe5788c5c3691f6f8d7bc74cf6bcec439a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/test_with_debug.py": {
+      "bytes": 1358,
+      "sha256": "8a5f1d7094922c5b8a50bd34eecd86511d547222b01e6ff90b16997f17f29fe7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/testing/run_isolated_acceptance.py": {
+      "bytes": 5705,
+      "sha256": "87c42fc4f02acaaca719fd4e175181bdc7635d2ef0d9ad344ecf6ccd87f3984b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/ui_display.py": {
+      "bytes": 642,
+      "sha256": "b62308b4be482e3f6d5656c87218b36dde628395d4c1e865f65a8511bd08b520",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/update_benchmark_data.py": {
+      "bytes": 1885,
+      "sha256": "7f18155def6e0f1304990943669ec60a4c5aa6009c1ce890ffb15f455de9b8b4",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/utils/backup_cron_jobs.sh": {
+      "bytes": 2165,
+      "sha256": "cbeb5b47d9e91ddcba33b71bdd222bc78b158df5fbcf2f77799a71b5198cd212",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/utils/setup_optimal_crons.sh": {
+      "bytes": 7393,
+      "sha256": "d50682e1fa6a0b7dddd70a52e96f8f732e484c7f6410f164eb6cc864f6b405bc",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "scripts/verify_rebuild_integrity.py": {
+      "bytes": 18018,
+      "sha256": "0f8fc01876b8b21e5c16be9e9fe8108e09140fd5ce3d0adf3ec4b6f26537800d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "scripts/walkforward_exit_analysis.py": {
+      "bytes": 4837,
+      "sha256": "bcf5d64a871985ccfa95be0fb9caec3ef63330d19fca508ef961c05cb4a6c945",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/__init__.py": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/__init__.py": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/analysis/__init__.py": {
+      "bytes": 260,
+      "sha256": "6023608a5b2f926e97da6ec463b4859da74d7fa80af8d55cdaa4ca17d164a7b9",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/analysis/baseline_metrics.py": {
+      "bytes": 15804,
+      "sha256": "cec40ece80a59beb51818b58b580f64f85bc307ccb16a2bce7d41fa5db25f1e1",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/analysis/risk_calculator.py": {
+      "bytes": 9235,
+      "sha256": "44d68fba7da49730c586a48cf5f6704b6c3876f0f5a99dbcebad6699099ef1a2",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/analysis/strategy_analyzer.py": {
+      "bytes": 9096,
+      "sha256": "c5c5081eec48aafe6759d5556013e814ab3005c44be644d07cd8d4f19b23718c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/backtest/__init__.py": {
+      "bytes": 634,
+      "sha256": "eb89c806c6801aaa34650f9941dc9bf7ab13c80233e2115be2e7a2f7e49c6bf1",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/backtest/data_loader.py": {
+      "bytes": 4437,
+      "sha256": "76f00014f2398fada7443543ab20f3294450f3efea398854b07062cde8b3c8b2",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/backtest/engine.py": {
+      "bytes": 6720,
+      "sha256": "a18e33911cef9f675f8fe7594862f34c22cd80640a4ce389ec789abb71b85f2e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/backtest/engine_v2.py": {
+      "bytes": 10239,
+      "sha256": "89b5f6bd2b0a05b571b2e7f9a5c73daa7cc94abfcbaa2d650183bf6542827048",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/backtest/metrics.py": {
+      "bytes": 6001,
+      "sha256": "131da9d4cb44a9637c5e720d4ece0f890e38ae5463376a62877c066b063be4e8",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/backtest/parameter_grid.py": {
+      "bytes": 5266,
+      "sha256": "8bc42457aaac452a95df8c745fa7b604da53e0b24a23e20a6341becda431978a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/backtest/price_cache.py": {
+      "bytes": 7585,
+      "sha256": "976a128f99640f2a9fe9f0b5d6d0a6d42f3324c883b164ebc5b84ad678b312bb",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/backtest/trade_simulator.py": {
+      "bytes": 8355,
+      "sha256": "4193b9578725ae4d03e21f2ec83500800be61258ebaa6865837ba154d7a09e0a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/cli/__init__.py": {
+      "bytes": 43,
+      "sha256": "9def6c803b2010c1540b715fbca3ebfe37d09e2895fb5e16a04da3583902601d",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/cli/analyze_data.py": {
+      "bytes": 9506,
+      "sha256": "d2d501f26d1d2a2d52d3cc1dcc37abf1ea845551b9d988d5ed99c7a5202ccc49",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "src/stock_swing/cli/backfill_pnl_state.py": {
+      "bytes": 14546,
+      "sha256": "70b6b18b1063ffe14afc66dcee8b35ee9cbd23698703b94a5da6ebc5e084e94c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/cli/broker_healthcheck.py": {
+      "bytes": 2348,
+      "sha256": "f3fc70b9ef9f5395dfa8731093ca89a8b0c9a69ff9369a6b2e1f7f3ec262b475",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/cli/collect_data.py": {
+      "bytes": 40684,
+      "sha256": "39a0d6662252cb910ebb1eb39aeaa66c89681f30602b62cce8a562500812aac2",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "src/stock_swing/cli/cron_summary.py": {
+      "bytes": 449,
+      "sha256": "41d83605902649c91905a335951f7ee25c4011180b5fb0f940655a5a93883b2d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/cli/daily_report.py": {
+      "bytes": 24632,
+      "sha256": "9bdb4eafd50b95abd72210cf7bca956043864acf63c460edefd21e80c0d9e46c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/cli/healthcheck.py": {
+      "bytes": 327,
+      "sha256": "c664fab89232e03c495850fac7e3a167077e083f33b76eaeb292e05beefd29b9",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/cli/market_check.py": {
+      "bytes": 4177,
+      "sha256": "4783ab0eb3dfa71f17d336bf2a0f4b031406322bb4077357280d5c22840058fe",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "src/stock_swing/cli/paper_demo.py": {
+      "bytes": 223383,
+      "sha256": "c31c01d0552bd72f97719646f48c4731e0f204856a987d5479ea5a319ab13425",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/cli/paper_demo_wrapper.py": {
+      "bytes": 6292,
+      "sha256": "f7d23dabf5b88a9ae22c13fd452daaf61025bb235b433263d8c747049ef62bcd",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/cli/reconcile_buy_orders.py": {
+      "bytes": 5736,
+      "sha256": "9e4c6cf3733fa48ae771b7a53ba821d51270898f0de95d035a3dd9d6b4cba34f",
+      "executable": true,
+      "original_source_mode": 448
+    },
+    "src/stock_swing/cli/reconcile_orders.py": {
+      "bytes": 56217,
+      "sha256": "640376fd6dcf27d387909910862db154e0fd9324db6eee7aa6422cc79d81289f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/core/__init__.py": {
+      "bytes": 407,
+      "sha256": "b6761055cfdba9ae5f6738d8d3f7ff0a2077d1c02a58c3122c3a04b29dbc7ded",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/core/config_loader.py": {
+      "bytes": 1610,
+      "sha256": "e2634a0df8a35cfa11c63af0972a898c0b6be5066621719704bd4d92816da110",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/core/path_manager.py": {
+      "bytes": 2728,
+      "sha256": "8c95063986900ff01419d7d67d67fce7f1d8968afaa8267abca78319f0c28f08",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/core/run_context.py": {
+      "bytes": 1414,
+      "sha256": "f438d0d9f4b30f262889ad9a9c5001d27d0479ba17d193a236403c5768aeb599",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/core/runtime.py": {
+      "bytes": 3639,
+      "sha256": "e31a66bb192819f94bb4d6f244193fe74a6ab631b08d43e75a17dc3808a0dc69",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/core/types.py": {
+      "bytes": 2128,
+      "sha256": "1fdff9511dc51c90d92ebc0d8ab29ed9c61a00b7b076a93e5dd79a811f2d5eb1",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/core/types.py.bak": {
+      "bytes": 1113,
+      "sha256": "e4c99cffd5c5c1d76f43c08e488963c96e2e930ba0fbeaa5d3509c220c7c7d62",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/decision_engine/__init__.py": {
+      "bytes": 794,
+      "sha256": "39a8f2b4025917273b4a63dd390dde95222ac4032c1eab6dbed4d7b6ec68c1d0",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/decision_engine/basic_decision_engine.py": {
+      "bytes": 1697,
+      "sha256": "4e43566250c2cc66702b9b054edcac98296d606922543ac40ec866d155b84503",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/decision_engine/decision_engine.py": {
+      "bytes": 11575,
+      "sha256": "da9092ddb41d606e27590b407c09c8ddd1e98a556381a34ca3884d2dc6d9ffb7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/decision_engine/interfaces.py": {
+      "bytes": 290,
+      "sha256": "6d71f3e3baa1eaa5ba224292cd29bf374843e48c9d6d3314fd488723b9d429ec",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/decision_engine/risk_validator.py": {
+      "bytes": 4684,
+      "sha256": "f11f8caac3ef648492470583db1288e98193ec90b851bc261502ed78817d7ede",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/execution/__init__.py": {
+      "bytes": 1029,
+      "sha256": "9dbe6d10d68c03529cc2f731fc6b9ee9d0af7cab232cb115c9ab9423c0aaea00",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/execution/cancellation_guard.py": {
+      "bytes": 10273,
+      "sha256": "c9ebc1821a07f44814f7f3513b1b76c4577c13d4dde291352ea96b8934df2276",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/execution/cancellation_timing.py": {
+      "bytes": 2317,
+      "sha256": "97e309398821960c148564ba99282e6d69510adcd90a23c3e4b73b05ed3cec07",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/execution/interfaces.py": {
+      "bytes": 256,
+      "sha256": "b0d37d94e537b9860be4deaf4c5e93d1bc3bc11edb2f8393593081b6f2d87255",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/execution/live_guarded_executor.py": {
+      "bytes": 11891,
+      "sha256": "57bb9f98ced350afdb6e89e5eb43bf70fd5d46cc281165e1e7fb51ad11403920",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/execution/paper_executor.py": {
+      "bytes": 26129,
+      "sha256": "0b96d4be842f200443635e1c648875205ff58ab0f0745dc7b4e8f9527d6847eb",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/execution/production_executor.py": {
+      "bytes": 8309,
+      "sha256": "137b9048883df3a371d930ce31253222d53b719ade5ea05a2ec91f0af4b6ab19",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/execution/reconciler.py": {
+      "bytes": 10633,
+      "sha256": "91cf9a908e27269a5b75e8eb5d0eed3afd2232373a57f3be251c042b6717ead2",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/execution/reduction_orders.py": {
+      "bytes": 11850,
+      "sha256": "ceef852988a45c98d200b33470fa2a606684c7f13b7434acaace89aa67eda9d6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/execution/submission_guard.py": {
+      "bytes": 22004,
+      "sha256": "76644cf348970e152d7724f40804668fbda6d763eb6dfd8c78a476f4874f9a4b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/experiments/__init__.py": {
+      "bytes": 257,
+      "sha256": "51d8c83dbd6d86e394a59174f8d0ebb860acdc4f8c4dfa7982ebb43585884977",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/experiments/bucket_assigner.py": {
+      "bytes": 1129,
+      "sha256": "7a63ac465195d8d28a03fce3c142e736f9178fdc459e2725d14c3b816876480e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/experiments/candidate_input_capture.py": {
+      "bytes": 12365,
+      "sha256": "1002636326c050adef4e2fd92a9299ccb96db98edc862b7a07b06a61819cab68",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/experiments/decision_input_capture.py": {
+      "bytes": 13361,
+      "sha256": "75f48bd130831a63266f52fa39d15820cde6f02b3c9cdfd53d48d44d1d972559",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/experiments/experiment_context.py": {
+      "bytes": 3013,
+      "sha256": "5f70e6e2d9872fd2864978d2eb82f84870d3a7e84c34f7abbafb3ee9b82b9528",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/experiments/experiment_registry.py": {
+      "bytes": 2443,
+      "sha256": "401ed07e69c4f6e997b8e133867f750ba60884fd0fa03686297314cf99961d19",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/experiments/feature_snapshot_store.py": {
+      "bytes": 4682,
+      "sha256": "2ab9bdc3dd2cbd2c6643798a4afde6be893d84a8998cddceac4a715f0b464523",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/experiments/measurement_capture.py": {
+      "bytes": 16465,
+      "sha256": "ec595328563aadf9fbb88f48c4e3057decdf5d002feb6013851fb49aa6b3463e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/experiments/prompt_registry.py": {
+      "bytes": 765,
+      "sha256": "8c5cc37fb1290e74831b0707a86ae8c2f0bd29f25b513293f2a64fa6217a7c4d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/feature_engine/__init__.py": {
+      "bytes": 635,
+      "sha256": "6b056ae08e18b2f0c36f6c4a68ca58830fdbdc3f397f13fff883de6cf8526060",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/feature_engine/base_feature.py": {
+      "bytes": 1806,
+      "sha256": "d23f56a00101581d2ab46cdb9f839afbda7ce9cfe8181089f314d32bd911cd53",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/feature_engine/basic_features.py": {
+      "bytes": 459,
+      "sha256": "2fc77a535c84612f1d02f310e1aed228e7e5053275079c7ae64f8e060b7bbe81",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/feature_engine/earnings_event_feature.py": {
+      "bytes": 3896,
+      "sha256": "291c61ca6e9fbfcb105c9cb987878e8df90f25e91cb6dbcf14fe5a4d1583bc80",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/feature_engine/interfaces.py": {
+      "bytes": 268,
+      "sha256": "d237476e7c24ef9d9b0fc4478e8242fb529970850362ee2395c25a3299208dca",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/feature_engine/intraday_momentum_feature.py": {
+      "bytes": 9799,
+      "sha256": "4bb695bdb8375da59cf9c5a9099ce18258ecf7921d30a5ae031271ff3d3810ac",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/feature_engine/macro_regime_feature.py": {
+      "bytes": 8468,
+      "sha256": "61679c7ca754a0271de11d242111486215d7d6ecf081e29ccc126a8fe5e67e6c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/feature_engine/price_momentum_feature.py": {
+      "bytes": 6377,
+      "sha256": "05b513327d2e52908565c86266001be56d645fe553ffcc86c44653ba919de569",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/feature_engine/sector_momentum_feature.py": {
+      "bytes": 9476,
+      "sha256": "dfb267e48915cbcbc72fb4ae71be43b1be828b6ddc86c4804c447951bc51832a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/feature_engine/us_overnight_benchmark_feature.py": {
+      "bytes": 6593,
+      "sha256": "2ada82f0666d4e8c7d99eac7dd4921d291e59d605ec5257557e11ba533498f64",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/guardrails/__init__.py": {
+      "bytes": 186,
+      "sha256": "3d86e337be3fb91253cd9b3518e143a455f59110eda30b40a706d6c885ddc8fa",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/guardrails/circuit_breaker.py": {
+      "bytes": 8142,
+      "sha256": "d5c183c3beaa8844022ccfd095d5c9d3c39b10dbade38a08cfa6352a451a0978",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/guardrails/day_start_snapshot.py": {
+      "bytes": 8036,
+      "sha256": "0cc5fbd71028e1e4633c25de4e02e47fed46a0bfe25c7f090e1d5b4413bcbcad",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/guardrails/economic_risk_off.py": {
+      "bytes": 18749,
+      "sha256": "bfba80518c5155d9987a7d757290562fc1dddfcba557045049858c93eaadff03",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/guardrails/flatten_plan.py": {
+      "bytes": 1281,
+      "sha256": "cbaf2879600076c4024c928370ccb6b0e6b07faaad61144121d25478c9770880",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/guardrails/postrun_mismatch.py": {
+      "bytes": 7508,
+      "sha256": "30d359aa66c82b9be500d42f02aa45a7b0efe0aa76f6e9430b62c42887f07f0d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/guardrails/pre_trade_check.py": {
+      "bytes": 3915,
+      "sha256": "7a0af208eeaa0e691f9d34607f4633971ae360e4ee01c7e038a27f95c019e80f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/guardrails/risk_snapshot.py": {
+      "bytes": 8777,
+      "sha256": "be1c8d725df6031777de0838d1fc9f6eeaa956b03dd38bf73c347dd3af895fc6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/guardrails/rule_engine.py": {
+      "bytes": 4134,
+      "sha256": "ada8f6ed2a4abc57bcbf26d0e7a36c312aff7b47f1493540f79ea17bb4097e1d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/ingestion/__init__.py": {
+      "bytes": 133,
+      "sha256": "9bbae6aa5ebace7566e7f4717ccbda9ffdbb5d0ee460e8eee12a4ba24cb3d0a4",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/ingestion/raw_ingestor.py": {
+      "bytes": 9620,
+      "sha256": "2ac221fb1a5aafacbc8fd38c63719bce0a789ce816701151d6b7129d301fc0c9",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/normalization/__init__.py": {
+      "bytes": 439,
+      "sha256": "ac5e3debd7209996e06023463548599c56744fb73e961a3199fb7f731af2a88f",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/normalization/broker_normalizer.py": {
+      "bytes": 8421,
+      "sha256": "50a13236ce85ee1b9df8b0777c02784d0c7ecb43a4ca3b6ac925136552134d4b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/normalization/finnhub_normalizer.py": {
+      "bytes": 8858,
+      "sha256": "67bd2f577ee1e43fd8e7dc4e6cff69f6367cce438824f232ba899b4bad6f6f90",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/normalization/fred_normalizer.py": {
+      "bytes": 4478,
+      "sha256": "b198dec15205a0e2189f5a1baafe04058a8e69c8c8f975b13a162b7b6aae23ce",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/normalization/interfaces.py": {
+      "bytes": 289,
+      "sha256": "b79ce0cf2bfdcf8791298169b506bd34b9042136a7357109d8f6a0c2a813cb48",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/normalization/normalizer.py": {
+      "bytes": 3125,
+      "sha256": "55afa4b23ba98c5d4f89485a312474d4b0ec51b6d30d1b73d55ec45c6b0d94cc",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/normalization/sec_normalizer.py": {
+      "bytes": 4904,
+      "sha256": "11b5451d9834aac7a4538b38c2075dc3154e19516ed4142ff99b32692cb52604",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/openclaw/__init__.py": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/openclaw/basic_adapter.py": {
+      "bytes": 253,
+      "sha256": "b855c0c64e4d5804cdeace0dc317152ac5a8b51df8eb96e5f2a179daa0771bdf",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/openclaw/interfaces.py": {
+      "bytes": 213,
+      "sha256": "8062e23f529cd8e32b8394c0cc796d7c5b8f3d7d5037703ba31d8ad41c0afad4",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/openclaw_adapter/__init__.py": {
+      "bytes": 638,
+      "sha256": "c3e75c1a9d45b00c77f04303a2d5d19ec2686c84e070a7304355f82fb8ac5453",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/openclaw_adapter/decision_summarizer.py": {
+      "bytes": 5850,
+      "sha256": "f3da3262e4ec605701236a219b62d68d15c646a3a611c1912172b9bbfe00f195",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/openclaw_adapter/execution_summarizer.py": {
+      "bytes": 7188,
+      "sha256": "64bcf0842fe0df71de765849b8ec8f54097ca3d3aa41c991f852d361044c499a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/openclaw_adapter/signal_summarizer.py": {
+      "bytes": 3318,
+      "sha256": "1b0abbdabae975f6788b0da15fe82fa80baa0ed66d3ecd126cc952fcbd800f81",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/parameter_engine/__init__.py": {
+      "bytes": 907,
+      "sha256": "eae2b2b788aff08b76bee641024ebc521982f272b1876393c878b08ba58dda86",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/parameter_engine/parameter_recommender.py": {
+      "bytes": 12098,
+      "sha256": "cd486f84f9b9841036c4d084147f9e577d263e97f31240e9288b6c10e66f0586",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/parameter_engine/performance_analyzer.py": {
+      "bytes": 5968,
+      "sha256": "352150a5a6564d48560bff638be96aa1ce9fbced1da3027f1339aca8419c6e70",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/parameter_engine/safe_ranges.py": {
+      "bytes": 5891,
+      "sha256": "9cda38be4a7da964abbeb6e91ca578749722144f0e1eb816c770d55833a53ffc",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/pricing/__init__.py": {
+      "bytes": 160,
+      "sha256": "1c9d50ce7a5672846273becbe1f686f795727727a69539c123b5e4b69ff75618",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/pricing/price_resolver.py": {
+      "bytes": 9219,
+      "sha256": "8dcef4c388bdd763a72439c6a3369a49968057d3554537252d85550821ef1438",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/reporting/__init__.py": {
+      "bytes": 447,
+      "sha256": "8f9dfb92531aeb24936fbc000963f98b7fae08eaf9088a88b23d6726b4121576",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/reporting/console_renderer.py": {
+      "bytes": 35929,
+      "sha256": "2af568a5aa0f38b57c140e4e9da69cd4ef884c42e2a37757ab1c16ec59eaf5d1",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/reporting/console_summary.py": {
+      "bytes": 24382,
+      "sha256": "7f2ff384955dcc4f09592e639418f70b4867f425e79f4dc3d6c8d56c8f968950",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/reporting/daily_summary.py": {
+      "bytes": 188,
+      "sha256": "0648ff046a641a0c4cf27511c3bfde175233c4d2298466e8ba7b1a2ff5be1a73",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/reporting/equity_bridge.py": {
+      "bytes": 6003,
+      "sha256": "b10fe9cfe2ee08fba43b20d12c2e46b09c18d0430086662dba2ea7b22d15acba",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/reporting/equity_bridge_reconciliation.py": {
+      "bytes": 9757,
+      "sha256": "2c970b9ddd9f6372e9c43ee2bf118614557def74edb550046defd3543f33c610",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/reporting/performance_snapshot.py": {
+      "bytes": 8775,
+      "sha256": "79df6559dd503b6b1f642e52f993d1b351070af1ea0d7b9c1d40e7bb578229d4",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/reporting/recommendation_report.py": {
+      "bytes": 10694,
+      "sha256": "f8aed30beaf633ac047e1704237945dedc92f09f3e9fc0c7f66b6099acb4589d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/reporting/restriction_review_alerts.py": {
+      "bytes": 6554,
+      "sha256": "cd02202a70d6ac9348db6ffb7023f5498be8703f5d8529d52c71e7584b4e64d6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/reporting/versioned_bridge.py": {
+      "bytes": 14820,
+      "sha256": "b5b1e130acf97262f063cbbc0c18f21c8a46a1024c1dc452429f26418a4cb088",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/research/__init__.py": {
+      "bytes": 371,
+      "sha256": "3e646c83c9f3d63d4bec6642378cb60f44c20da4926d5f022da3dea307160bd4",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/research/rolling_walk_forward.py": {
+      "bytes": 9236,
+      "sha256": "08eeeab2d1cded796f4f8ea0b6bea699c7488b5d736f7689e318a9b17089b9a6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/research/trial_registry.py": {
+      "bytes": 8231,
+      "sha256": "5dbfdba595519d0d8f35783fafe4772c7b521abeff5d76d355bc8ec087834b72",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/__init__.py": {
+      "bytes": 96,
+      "sha256": "b1c20d05ab8571addd45327656d507ee7d89edb446a77691a4a91ad00862823b",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/risk/allocation_config.py": {
+      "bytes": 5625,
+      "sha256": "dcb2e4f21aaf01163d66859a1cde97c039ff39dffb07aade5486ff6213c2b85f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/basic_risk.py": {
+      "bytes": 475,
+      "sha256": "fa608882f0116e9dc433eb82dd327392ec5a96efbaca63cf13dd65fdfcdd9ca2",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/risk/config_instance_receipts.py": {
+      "bytes": 5531,
+      "sha256": "954ba8c61a7bcba8bb2d68bfc4861c9af54ebcc5c7dc72802e0dd967a2fa6a92",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/config_instance_specs.py": {
+      "bytes": 7470,
+      "sha256": "a294b6a9f1a459e674d459db8a70df8dcc58a4b916d7efaa982c4374a4b3767d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/correlation_cluster.py": {
+      "bytes": 4276,
+      "sha256": "4e5ef7567f3320a0e7ae64f4e16a4e808b783e959c81bafbe7b5a66b876a6cba",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/distance_from_high.py": {
+      "bytes": 9925,
+      "sha256": "7d46dc59a73c857c8462a87d2677653ce3496a4d6420a1361e27778ad0047c15",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/earnings_proximity_shadow.py": {
+      "bytes": 3901,
+      "sha256": "15103891678b8cfed7b701e2267e5602db78a07ca19a14af716f13c2725113e3",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/entry_filter.py": {
+      "bytes": 22717,
+      "sha256": "8bde1e1a8da52186eedfcd982a04b25f5e7d115be835251b93c6dc99e36e91cb",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/entry_restriction_review.py": {
+      "bytes": 30725,
+      "sha256": "a8cbe98c247c8308a6de8949436e558831747d7d9b0aed53c395157d067b3fb7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/finnhub_metric_lookup.py": {
+      "bytes": 2949,
+      "sha256": "2128285e1e9eb91ee3c17d8756d749e7e40b97c12d9610a8e689c628ec76c926",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/interfaces.py": {
+      "bytes": 208,
+      "sha256": "68e8005500388bd2c5ef0f3a45bc674008f8fd3b005c42ad7ea043db1095c25b",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/risk/losing_position_add_guard.py": {
+      "bytes": 4023,
+      "sha256": "6554422b5500bb5d5eaa5787a90b8d1810464823ea0f8c6846ad017d2d3b7524",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/lot_level_exit_diagnostic.py": {
+      "bytes": 16766,
+      "sha256": "221f7b437b47600cc25db376e5af68ae70adb33ac8b2c3226fb59c38be2b31e8",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/market_regime_indicator.py": {
+      "bytes": 7421,
+      "sha256": "05bfb8137e3ca2f63f8487841dc0688b350e3ba2d1fe0ca63011e205d9bc72f4",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/news_sentiment.py": {
+      "bytes": 23508,
+      "sha256": "5e83e9b108cfef471437e3badeb4e1562173a240a6e10c482efb82f0afe1cb96",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/news_shock_hold.py": {
+      "bytes": 10190,
+      "sha256": "37b466fe78306f781b34c6e426f48e3f27f27c9cf53231275b8069d032d5f932",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/open_shock_cooldown.py": {
+      "bytes": 9509,
+      "sha256": "e36833622b159ff99522de59cf9b4bd12359346848e65409dfeffc593545708e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/order_preflight.py": {
+      "bytes": 9627,
+      "sha256": "3bd4c01cf2ab2eeb79bbdb1a33ef9cd28a005e5644ac63b3c00b4547a63ee620",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/pairwise_correlation.py": {
+      "bytes": 14549,
+      "sha256": "c6bb49d12f5e33b8c8592037f64ea86c855a8ccbfb423fdab7b54fccb3f274da",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/per_lot_time_based_exit.py": {
+      "bytes": 7310,
+      "sha256": "1b08a37f53a8ea0a3f2c2bd0f44dd87d21a2c51d31b22cb789a710e7d772a6d5",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/pf_history_receipt.py": {
+      "bytes": 7817,
+      "sha256": "28bc2ce7bff7798cd4a561f01e7e23e139ec8b1df988f87bd0b1105351b95d7b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/portfolio_allocator.py": {
+      "bytes": 18837,
+      "sha256": "0a64d37e57c06c1ec031f6f5bfc7880c4cbdbc30aafa13691317c287416832f6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/position_sizing.py": {
+      "bytes": 21326,
+      "sha256": "6a80f3417aaa191ead985755f0c580390158fcc2d7972b8bf63774c056353717",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/promotion_gate.py": {
+      "bytes": 15713,
+      "sha256": "6e459a0e7b8a4600b3a7e54e48087c95d854fff69b779743733d325ded05fb81",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/risk_budget.py": {
+      "bytes": 5723,
+      "sha256": "06ef44fa0fe63232ebe403019cb3820b9da0051736c0979d0540ab652c26b514",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/risk_monitor.py": {
+      "bytes": 12334,
+      "sha256": "8ba8da82941021ad74b70bd7f207c35cfc4c7dcebcb8bdeacc6f1a6f91d5abdf",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/rsi_diagnostic.py": {
+      "bytes": 8341,
+      "sha256": "8ca1c4ffa9694356e538e19843229af165855baded34210e7c875c0a5b3d2958",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/same_symbol_cooldown.py": {
+      "bytes": 5684,
+      "sha256": "38623bbc00d76cf1048bd8ec086c900e4ecbf8c4cf07b2b83692f3d32cf574b5",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/session_return_snapshot.py": {
+      "bytes": 10100,
+      "sha256": "187f4dbfa5939f9179239b87560f163c92c80cbaa0360f9af74c1da06b64e60e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/shock_aware_staged_exit.py": {
+      "bytes": 9159,
+      "sha256": "b55dad62601c40de88a0290e0676724ac6c1e6039fff75082c68f976d1ed7385",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/volatility_gate.py": {
+      "bytes": 8242,
+      "sha256": "988f3f015bbb173872c72899d9ff9baaa451ec282b4cf8db00a02d022c1092f5",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/risk/weekend_gap_guard.py": {
+      "bytes": 3004,
+      "sha256": "99004b38643e610f6c2d6781a32180194e4177ccdb739d7eaa0d0f6c0417eb2b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/safety/__init__.py": {
+      "bytes": 591,
+      "sha256": "07cbd429dac530f51bac7761e092c536787aba5fab79221ed8cf87e0ac0e4736",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/safety/audit_logger.py": {
+      "bytes": 11728,
+      "sha256": "784bb5b0db8540bdce1ebbab0f6406aefec97b80c498245cf48809206ce07514",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/safety/kill_switch.py": {
+      "bytes": 6353,
+      "sha256": "52e59081ea2f2a3db8f31049d149f4f59a623e44dd5b25feefac82a774d90d99",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/sources/__init__.py": {
+      "bytes": 1070,
+      "sha256": "8f00a339db3691bd04055c3a90f2515bec316136d6599618c573d83ffe956960",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/sources/bar_contract.py": {
+      "bytes": 3230,
+      "sha256": "8329875cb14fa17f18eb000fbcdd518cd5ad0dd628f2f400d7b3c2b2f25698dd",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/sources/base.py": {
+      "bytes": 4740,
+      "sha256": "371e05eb77c2ef2e4dea1214ea9d73c7d1030b08a092d9ed7de0dbafd0becae9",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/sources/broker_client.py": {
+      "bytes": 28477,
+      "sha256": "e407e84eab78658dd601d0a48ef6b7b79533840db60750859616f4715d77c490",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/sources/broker_client_protocol.py": {
+      "bytes": 5164,
+      "sha256": "9cf58a479d013e223b39bf7be44fe9f49061ce7b4a35cbb48565f569e9165a61",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/sources/errors.py": {
+      "bytes": 3188,
+      "sha256": "dd1fbc5a902ca186be5e3f2ae019b5e37171b76b9e4a24bfc7daa32acb5bf096",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/sources/finnhub_client.py": {
+      "bytes": 9986,
+      "sha256": "ea6c91f6a827714f888178fe5d3be8bb731f5abfe0e0ead74dea98ccc6198053",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/sources/fred_client.py": {
+      "bytes": 11044,
+      "sha256": "f1c150f3be9d452df10134074e039c19f2c8e224382c1dd9feea7a7993ade5fd",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/sources/hybrid_data_fetcher.py": {
+      "bytes": 11915,
+      "sha256": "58076ba3aab1bfbb65df14566defdc8d1468b81eb9e6f4d5dd641d12d9e50a7f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/sources/massive_client.py": {
+      "bytes": 13656,
+      "sha256": "fbf7debe0fef30b60aa802ed024cad86980bf724799f55a9d84b0081d6352263",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/sources/retry.py": {
+      "bytes": 4240,
+      "sha256": "4d01772b9e6e656de3b1e7bc46058cf5488fff5d0856904774293f2e92c355a4",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/sources/sec_client.py": {
+      "bytes": 10494,
+      "sha256": "f260d86868ddda7673442c9cc6b84f09dfb0bc9c7cf6bbc8ea0cca0e41a0216f",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/storage/__init__.py": {
+      "bytes": 363,
+      "sha256": "13cd5117f1c58a6dc0d66a47044168d455a69f47fad83368b802001155808de3",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/storage/interfaces.py": {
+      "bytes": 639,
+      "sha256": "0eb57ca91c2113ba567c4de384a197bf9e530c8ba2a17ceb4f66005b8a5d0d56",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/storage/json_store.py": {
+      "bytes": 1655,
+      "sha256": "b914ee8052f5c6a3a467de9f6d066251fd69f071eb3226b0e290dc30f8e6be63",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/storage/outcome_loader.py": {
+      "bytes": 2813,
+      "sha256": "529b72d65221615cc8e7ad2898dafeffebdfc01a15ed960a7b96851993d8aee2",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/storage/stage_store.py": {
+      "bytes": 6662,
+      "sha256": "0c7b18b6d5a0125ca48a6cd1b64efc6d5257ec7022bc4502571900a5be28a06b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/strategy_engine/__init__.py": {
+      "bytes": 786,
+      "sha256": "16fff239e45ff218759a0343aa2a801f9f7582dd50eeca1a8b6002dabba62870",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/strategy_engine/base_strategy.py": {
+      "bytes": 2302,
+      "sha256": "b705c2770522a53ba5cf98226c5c08dbb9081804ebfbf73a257ea97dd2b580d9",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/strategy_engine/breakout_momentum_strategy.py": {
+      "bytes": 8401,
+      "sha256": "9dd95fe153f219309c2f34d382acd5167919b8abe905b063bd328d0b7f67f3f7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/strategy_engine/dip_buy_meanreversion_strategy.py": {
+      "bytes": 10338,
+      "sha256": "5346480496211cb93823ae72ae72016ebdaaccdfe1dc32bc6973fb98e52835a0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/strategy_engine/event_swing.py": {
+      "bytes": 426,
+      "sha256": "c030a879e63c770fa6fbad3e332406f19e262d9de6ec0f52bb82aeaa14f032af",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/strategy_engine/event_swing_strategy.py": {
+      "bytes": 7000,
+      "sha256": "193c3656c7c448f277dfc5097c51356db5270395a626a90ef8957a9ec3614d1d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/strategy_engine/interfaces.py": {
+      "bytes": 219,
+      "sha256": "8265dd7b33726e6bcbaa3fb70704ebe79351dc0f520866617e65f54bc83cd25c",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "src/stock_swing/strategy_engine/overnight_spillover_shadow.py": {
+      "bytes": 9545,
+      "sha256": "e95cc5c6027fb6b19484f4f55be7f35a80da9efa8a8f1bbbe8ae13a670a084e3",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/strategy_engine/sector_rotation_state.py": {
+      "bytes": 11913,
+      "sha256": "899721ed8dc2f6ad5b17fc84c92eb92bfc55e170f43896b177a6a24219ea8bc6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/strategy_engine/sector_rotation_strategy.py": {
+      "bytes": 7043,
+      "sha256": "74119544d9f6ea9cb698c82c14418377ba9e642580fd811f0b7bd51e89a84d8f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/strategy_engine/sector_shock_hold.py": {
+      "bytes": 29028,
+      "sha256": "2a0ca796f84ca3d0a1a8d43b570a57a587f645b966116225cbade7ff00d1f9ee",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/strategy_engine/simple_exit_strategy.py": {
+      "bytes": 6094,
+      "sha256": "29ca8731853064015d22c6a15ebc036181b070c251917aa487dcd3dfb1074b24",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/strategy_engine/simple_exit_v2_strategy.py": {
+      "bytes": 45060,
+      "sha256": "c504bcaa5210b5c09c796c9c180699cbb67790e45f0b3bf84f3ae5f063a8253f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/tracking/__init__.py": {
+      "bytes": 62,
+      "sha256": "c8d64732ab2b1debc222e62c6cdb9490219850dd951954cd6683a26924315eec",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/tracking/closed_trade_validator.py": {
+      "bytes": 4412,
+      "sha256": "8ee27a6089a03905ae322635f5975f7467fb84effc4554a71f037209f77690c0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/tracking/compatibility.py": {
+      "bytes": 6136,
+      "sha256": "81c92a6b3ba8c5ec38ecc1e203ba1eac7a94226da22d1046f959a8dd192b34e8",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/tracking/consumption_bridge.py": {
+      "bytes": 14783,
+      "sha256": "01bf84365996500dc03e860e98b25d094e2b1215c91b6f455ba075c70acfdfda",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/tracking/execution_cost.py": {
+      "bytes": 3928,
+      "sha256": "c7923d23a02b25554a3fffe139c2ff97ba8311ee33bf72dcb466b627d52e214b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/tracking/execution_fifo.py": {
+      "bytes": 9907,
+      "sha256": "d1d43b6fb131df0571e8651874a672293ec7be85a692a39b8bb727e83e459340",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/tracking/exit_reason_store.py": {
+      "bytes": 10878,
+      "sha256": "2a27b69f93377df9139a7f2d3328b6e7827bd25363b2e7b04a28ccfc2b1fa046",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/tracking/fill_ledger.py": {
+      "bytes": 16228,
+      "sha256": "c0ae18193aeb7263a3d5805390bb1a1f34e5728597aaa04a36705544494d514b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/tracking/history_migration.py": {
+      "bytes": 18675,
+      "sha256": "96a15523cc3c2a2d9a002e7657c01fb2a60b634882ed29804eba125068b86fcb",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/tracking/ledger_transaction.py": {
+      "bytes": 8131,
+      "sha256": "697ca936e75a5519a177659d2958342f981c6389220e4546855f297b3ede8b3c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/tracking/pnl_tracker.py": {
+      "bytes": 68396,
+      "sha256": "743eb019bb8b922d41f504601c3aef4aee147b8b5365abbea7947b5d62e00a6f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/tracking/pnl_tracker_fix.py": {
+      "bytes": 13593,
+      "sha256": "d480ab7a38f1fc5b86ec03a8006daa65cb8d7e2cdb74a541a69cdda3d7dec6d4",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/tracking/settle_sell.py": {
+      "bytes": 2406,
+      "sha256": "988b016e6a3bbce2cd6a232d4112960e95cf343dc297d3e61901bcdb7092f98a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/tracking/trade_event_store.py": {
+      "bytes": 5863,
+      "sha256": "3b08f68f9ff9baa8bf2d2a473883f47b23b4c3f414a6a50df99cbc673628760b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/utils/__init__.py": {
+      "bytes": 320,
+      "sha256": "4238c42987781e012403b70cd12659f4e685de8f30fb16c64e9766c42bfa1edd",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/utils/context_budget.py": {
+      "bytes": 12771,
+      "sha256": "f6dd9f791e42f6e78683adf142f0502a863a27e524bc6c8208c86635ce956a88",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/utils/jpx_market_calendar.py": {
+      "bytes": 12945,
+      "sha256": "8530fc39f1d1888729994ac7004e9da0381af0b8d3c7ed0a5416e24d6eadc621",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/utils/latency_tracker.py": {
+      "bytes": 2856,
+      "sha256": "9a8214565fcfc271b450dca7709aa6e11f0aebeea9e417450bbdbdb4f8c344ed",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/utils/market_calendar.py": {
+      "bytes": 14989,
+      "sha256": "e529e78d09ce2438716545b31a2c8cda9374eb9920407df1fc00f94e436849f3",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/utils/market_guard.py": {
+      "bytes": 5643,
+      "sha256": "9e73f6d909a9bceb02f181fdfa806203e22bd10602c8f312dd803e7be4efca8c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/utils/mtime_cache.py": {
+      "bytes": 4843,
+      "sha256": "0badb35b2e27f9f1de414ffb6f28d406382e97eded341aa818f24731beb1fdfc",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/utils/signal_prioritization.py": {
+      "bytes": 9206,
+      "sha256": "7026da8881ca5ea36fdd2b46f5554697a48bcf712433419489a17c7de36f09ec",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/utils/stale_price.py": {
+      "bytes": 5829,
+      "sha256": "97d08aed9c384c9d6824be2764c084cb27893b52dc084a984edec9fbf5464eb6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/utils/strategy_versioning.py": {
+      "bytes": 2638,
+      "sha256": "e10cf91a556e1f680333e591677136919c31ffba7d3380b486247902da75eed2",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "src/stock_swing/utils/telegram_notifier.py": {
+      "bytes": 5319,
+      "sha256": "c02bebfaaafef18d79fdf0f69429f7e45fe0ecba34f0952362306ed65f44519d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/__init__.py": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/contract/__init__.py": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/contract/test_canonical_schema_contract.py": {
+      "bytes": 13399,
+      "sha256": "df59c36ff1856cbf602b3b94b94a9c3f79d8041f7d0fca0d77fa76fe77b856e5",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/contract/test_decision_fixture_shape.py": {
+      "bytes": 385,
+      "sha256": "45c4cc215c4fc573ed50dab3861af65bf829993f38e5e7ce5fa82d23aafd615c",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/contract/test_decision_schema_contract.py": {
+      "bytes": 6932,
+      "sha256": "091db92f2463eb94dc9f86e95635a21b08ee62f0b9b6ab78b0a3e3c1b001a6d4",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/__init__.py": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/fixtures/decisions/__init__.py": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/fixtures/decisions/decision_sample.json": {
+      "bytes": 564,
+      "sha256": "7632937d3c968a6473bb648c3094033dcf2682f92d980e46224143745b404901",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/fixtures/k03_cli_driver.py": {
+      "bytes": 8356,
+      "sha256": "7cfc3d7bee85584dda367f08519fb2bb0e6158d0b2db2a7f6cb90989b12c598c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/k04_cli_driver.py": {
+      "bytes": 8356,
+      "sha256": "7cfc3d7bee85584dda367f08519fb2bb0e6158d0b2db2a7f6cb90989b12c598c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/normalized/__init__.py": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/fixtures/normalized/broker_bar_canonical.json": {
+      "bytes": 617,
+      "sha256": "5285ac0e0e930b38efa32b96d223991ed9b5b195fc7d0913125f8d636bb71b4a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/normalized/finnhub_basic_financials_canonical.json": {
+      "bytes": 616,
+      "sha256": "af5130895835eac950672c516b3632d1c36eb4acdc93005c1bcd1766d8f70fe9",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/normalized/finnhub_normalized_sample.json": {
+      "bytes": 416,
+      "sha256": "0b33f1e6aeef14157d755a1c4e6e4657990111b4abf1e70e53c8ec117c9dc533",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/fixtures/normalized/fred_series_observation_canonical.json": {
+      "bytes": 603,
+      "sha256": "9dcf5cfc2fe378cfc32de337d50025455d99b36ff78164a61f1308a041274c72",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/observation_history/README.md": {
+      "bytes": 174,
+      "sha256": "aa308c10105ffbe0922c4877ac404ab3b3697075b81e22f68e6309e93d349ef7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/observation_history/entry_restriction_review_v1.json": {
+      "bytes": 849,
+      "sha256": "6e8c22031ec1357f2319df7e3ffcad53fb92b71a88ef47a057520d1eabb8088e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/observation_history/entry_restriction_review_v2.json": {
+      "bytes": 849,
+      "sha256": "edd04d841bd07802c91f78c84f3922c25046ef20718e84e265f0cf4cac0ef230",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/provider_contract_cli_driver.py": {
+      "bytes": 3488,
+      "sha256": "e9eb389a5b5b3171d744b1f5dab49d238cea31d33be54544458cc0c4c46ca79f",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/fixtures/raw/__init__.py": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/fixtures/raw/broker_account_sample.json": {
+      "bytes": 822,
+      "sha256": "9188fed2ce88c2fa2a15759a94ab74d99390ce4f25d52d6e6a6e0401efb7e8e7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/raw/broker_bars_sample.json": {
+      "bytes": 490,
+      "sha256": "99f7eae542e97a156a5356faa58100a50fc3eaac04e175e2c1ddaffa67a4c38c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/raw/broker_orders_sample.json": {
+      "bytes": 909,
+      "sha256": "84669134a917cc4cb5ae6bad8faf10a574730f8f443c7d89f77c123b4ef3e8f6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/raw/broker_positions_sample.json": {
+      "bytes": 545,
+      "sha256": "ae8f74880a3e120c2b76302396c15664d0e5fb1730850927f847036daccb76de",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/raw/finnhub_basic_financials_sample.json": {
+      "bytes": 344,
+      "sha256": "1af85c14459915e24e445994acb75e327fb06dbae9e7115e2fecf7c0bf1f6e40",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/fixtures/raw/finnhub_earnings_calendar_sample.json": {
+      "bytes": 330,
+      "sha256": "0871f66ded04fa0d84451a7203f2718493e058b1ad24956947a218d07c00f61a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/raw/finnhub_filing_sentiment_sample.json": {
+      "bytes": 480,
+      "sha256": "930000b18b13d119b9ad821fc85a138de6ec14d6ca76f67db29b95e6e733bdb2",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/raw/finnhub_insider_transactions_sample.json": {
+      "bytes": 562,
+      "sha256": "72c084e06afd94e35ce18527e2cc4e539a51cf5b805e83d97136aca2ccd03c2a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/raw/fred_series_info_sample.json": {
+      "bytes": 936,
+      "sha256": "2aa3252306a497ad475740f3bfac09710bccbda1421f0f931373c5d435b5365a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/raw/fred_series_observations_sample.json": {
+      "bytes": 841,
+      "sha256": "d9d1f54b4404c7684237cbe879d94baa1bda450effdd9fd3faec149fc2356a2a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/raw/sec_company_concept_sample.json": {
+      "bytes": 1330,
+      "sha256": "51bb936b11a58a574bb602efb225a8005a7dbe4d69a40f4ecdefb936332d6989",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/raw/sec_company_submissions_sample.json": {
+      "bytes": 1322,
+      "sha256": "f8b2a770c997f87ff483eb3ee3900d292bd238acefd6b53160289334d4418494",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/fixtures/submission_cli_driver.py": {
+      "bytes": 7685,
+      "sha256": "9d0e0de3c8346179f74285bbfb7d595104eec79b88992490f0b40bb90db5e981",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/integration/__init__.py": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/integration/test_broker_integration.py": {
+      "bytes": 3962,
+      "sha256": "8f15a19db4e05916353ab11af498eb8ef4e6e8988d7c02431a2177f62c9807e9",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/integration/test_finnhub_integration.py": {
+      "bytes": 3930,
+      "sha256": "836f0508e921e4440c5b2a7da1c839151114511ef9474527c44a41a0b0f4189e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/integration/test_fred_integration.py": {
+      "bytes": 3868,
+      "sha256": "bf4f844a8bd389e459fc10c393933f94090889e9238c5bdeb8c2767f8b18fd5e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/integration/test_ingestion_integration.py": {
+      "bytes": 6524,
+      "sha256": "c2f9c0fdbb0c5371e51f421f8df01ae4b3b5277dbf82dea08032952c1caced89",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/integration/test_p6_end_to_end.py": {
+      "bytes": 5676,
+      "sha256": "fc7ed6b36fd7895b009a108f96051722a5b97b867b62fe5e0fe0b9aee50328db",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/integration/test_recommendation_workflow.py": {
+      "bytes": 7213,
+      "sha256": "af1e695be61d2cab29ac884fe788b96ce293cf0af5b826d40ca7385668010e05",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/integration/test_sec_integration.py": {
+      "bytes": 3812,
+      "sha256": "b905d206ea7413bfb3a554e777365a9e718d3ecd5f9c222b71878266e0c523bf",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/integration/test_storage_integration.py": {
+      "bytes": 3642,
+      "sha256": "bee0d8de0c9bb1f7c019e2c592cdbeeb1eb52162a3f24315bd98b251755949db",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/test_console_services.py": {
+      "bytes": 14142,
+      "sha256": "7137c68f49b398d432953e3023e35995e03a41d43eba2f936ba3f3f05ef04a1d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/__init__.py": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/unit/test_allocation_fix002.py": {
+      "bytes": 2775,
+      "sha256": "21875b21c7f5f5d4d77976ea72c26af5ee8590a81fb2c47dc711fe059742e9de",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_analyze_atr_risk_sizing_counterfactual.py": {
+      "bytes": 3271,
+      "sha256": "6841313d25ef02b4ee4386bc8d7cc4928fb8fa6b73e19a68ba7463340d210d6e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_analyze_jp_semiconductor_correlation.py": {
+      "bytes": 4593,
+      "sha256": "c8d49e6a2c88ba991349e66003a673b459f94741212238bcd8dca886feedc854",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_analyze_signal_strength_decile.py": {
+      "bytes": 7223,
+      "sha256": "652031a75dda9a0b8d3b1598c4a411f66bb7212712e2de7d91e41d1c1b1ad8fd",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_asset_class_breakdown.py": {
+      "bytes": 5710,
+      "sha256": "765267f3f08b43945908b58a78f7da73cbe5d957384396a12202dd258af326e6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_asset_class_rebuild_integration.py": {
+      "bytes": 11528,
+      "sha256": "659ae442ecf0108bb6eebc05b83fda2faf27e662121cf6fd429a42581f24489b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_attribution_quality_breakdown.py": {
+      "bytes": 8157,
+      "sha256": "2e1e22deb035a5345ba7e482e9235bfc0c88685b116358edc68505f37f5a6e22",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_audit_logger.py": {
+      "bytes": 4286,
+      "sha256": "3428ba43b030203b7c6916c96ef68b8ce25a4995b443c728ebe04b17059f7258",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_audit_operational_readiness.py": {
+      "bytes": 9632,
+      "sha256": "135ada64af86e4896b2e0c602c31970f4329d9b356c2bbbcb5d68019f5bdfd52",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_audit_trades_with_market_data.py": {
+      "bytes": 4280,
+      "sha256": "119ba2b096ed84ff25167f1b01e97023cc5ed3528c92b0f5bba037a907a27a38",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_backfill_daily_snapshots.py": {
+      "bytes": 1920,
+      "sha256": "8727ba65a037fa395a23ae6ba5e8edc921bb8eec58f2ea6e7c6b5336f6de48d4",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_backfill_open_position_count.py": {
+      "bytes": 7936,
+      "sha256": "a2383111923fbf3734c9a5ad601814659bb6bc257a47055e6bb91bf45728865c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_backfill_open_trade_peak_prices.py": {
+      "bytes": 10929,
+      "sha256": "8b57da7219a439e83f88ac7b7e9b380a5c94e68d4962f3409d79b8883043e8d9",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_batch_a_fixes.py": {
+      "bytes": 19513,
+      "sha256": "901e494f196070fef3e6f3d98d644c4192c649474b50576b1beab5dece9e2f7d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_batch_b_fixes.py": {
+      "bytes": 16623,
+      "sha256": "b040c2b569875347c70387e8472cc13e566a48dcf71293cc9c675131128948b0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_broker_client.py": {
+      "bytes": 13784,
+      "sha256": "951c5a712bb6581f733f46597025e8367a70acb3a375c872cfa9e59275147c6e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_broker_client_fetch_all_orders.py": {
+      "bytes": 8257,
+      "sha256": "eaee5596c05a7383010687df3be8eaeb628eb092b5a12d4b1c60bc25078d993a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_broker_client_protocol.py": {
+      "bytes": 5786,
+      "sha256": "863e7f681c22fc7090ac63b456b38ae4454617b24e5489c918205a7c0e320cfb",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_broker_positions_unrealized.py": {
+      "bytes": 2711,
+      "sha256": "eeb6e407db51b5b58bc139938108e66496a63388dd681dc08b3302ed4c5d77ba",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_bucket_assigner.py": {
+      "bytes": 1101,
+      "sha256": "b9aec9c0fd1344eb226c38225f098f5f8e52ecd2554c24a89e3f4dc1fb4e56a8",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_buy_stop_list.py": {
+      "bytes": 8781,
+      "sha256": "d256fb80322e05ae6a17876ac7324b5dfb77bd1355d30e7b0b38b06d19ab766e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_cancellation_safety.py": {
+      "bytes": 9900,
+      "sha256": "4b998347140d347ada4511c36cf4a1c9dc436a6715bb5f581d869885024250af",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_cancellation_timing.py": {
+      "bytes": 6547,
+      "sha256": "2938e9c16ae59883447206506ce4e56ec35920cede57829865b8d9ef3a6df461",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_candidate_input_capture.py": {
+      "bytes": 6264,
+      "sha256": "81801b0c61ec10b1f4adcb11e3ca06ec7375f6083a6afe7d0b2587092e7b62fe",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_capture_promotion_gate_snapshot.py": {
+      "bytes": 7894,
+      "sha256": "3b852e07df025d420869c4114b771b9dde0c4b7fb8450996930f8f91703dcb06",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_check_corporate_actions.py": {
+      "bytes": 2979,
+      "sha256": "6e34fb3644e6814de7f1137dca38088a5bdb62b5fa86c6f1e5a5c7a2149be8ad",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_check_cron_health.py": {
+      "bytes": 1553,
+      "sha256": "50668781a8fc0e2b582e95117ce13defa05a52dfcd22900635533c8d66424a47",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_check_go_no_go.py": {
+      "bytes": 11000,
+      "sha256": "5304070b17506b2aaad02e9b323bb25503b319954324b89b9080dd8041ee6271",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_check_go_no_go_economic.py": {
+      "bytes": 10888,
+      "sha256": "a6fde4da5d3577b6e6283d35354bd8f0c9942d20e57094546f51afd5377b0e88",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_check_go_no_go_ledger_stamp.py": {
+      "bytes": 4728,
+      "sha256": "7a65d7e2e5a83f769061ae0e60259d21d3c076246e9110c6b1be0dfd8acc3f8c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_check_go_no_go_promotion.py": {
+      "bytes": 7427,
+      "sha256": "9c06590ec391d38166baebf9e50d86874b93f12ad9ff15e1a919d76fc0115e37",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_check_quarantine_trend.py": {
+      "bytes": 6400,
+      "sha256": "7140227e8bd0699db7e6f7e2bba816a99045f59b6537bab8ec5d6f456e0aeca8",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_circuit_breaker.py": {
+      "bytes": 14029,
+      "sha256": "262af81caa66fc58ae7390a9e5854c0297c6d12580004248a6bf840358173116",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_clock_interval_candidate.py": {
+      "bytes": 1995,
+      "sha256": "4f04be60508ca4bbcde3d771b2f1cbff08ca945f90d9c9521aaeb2add5bad1fe",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_collect_data_fix001.py": {
+      "bytes": 8798,
+      "sha256": "978f3ecde2e6319405a6298adc07ec7425fb7a1d6a7b822802a1604e02b2208f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_collect_data_fred.py": {
+      "bytes": 6431,
+      "sha256": "52ad1ee75211e9ea6204f80ff174b7c1c82cbb5f680aa5b4dd833bf93d588e9b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_collect_data_market_session_flag.py": {
+      "bytes": 4403,
+      "sha256": "2c81f09b06cdbd0c2db21f9718b24c15398be9c9b3a99eadb30cc3032fad6ca3",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_collect_earnings_calendar.py": {
+      "bytes": 11508,
+      "sha256": "c7d98dbb78167cbb4f6022e433f84e32ca5d297eca84c77f731eaeada7c87317",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_collect_finnhub_retry_config.py": {
+      "bytes": 2191,
+      "sha256": "6b068c8d27400b556c78545763d847a29f8e42e7308c3ee1b2f0260c9c10065e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_confidence_calibration_readiness.py": {
+      "bytes": 6682,
+      "sha256": "c20c4bc02bd5350940af648a3cfb75529373a7e1595f6d71f0ba860b4ffaf271",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_confidence_multiplier_recording.py": {
+      "bytes": 6524,
+      "sha256": "5fd8b75d2718d9e99a3856611bd4e0582c10d524832d26d43cc0ee2743f7f312",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_config_instance_coverage.py": {
+      "bytes": 2856,
+      "sha256": "80f725b1107ee49b5980a04320f2dff6f581ff361274bd6524891ca884b60dda",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_config_instance_receipts.py": {
+      "bytes": 3156,
+      "sha256": "85ee219e165a54bd92b2e552d37d007f6376f59fb795e86dc0548768f497aa59",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_config_loader.py": {
+      "bytes": 1553,
+      "sha256": "24dbb396ff75866a556fea622db41f495f5ea7c933334c01f83107952edfe8f2",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_console_consistency_20261029.py": {
+      "bytes": 13779,
+      "sha256": "570e4b516cd0b825cd5fb793005ed67613b86035cc97212ed8a0164c5673f385",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_console_data_availability_20261030.py": {
+      "bytes": 9102,
+      "sha256": "0387597f81fee1e4d6f527dbd0dc4bc68b5d3692caac221e0f5feedda4eb4dea",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/unit/test_console_evidence_20261028.py": {
+      "bytes": 10977,
+      "sha256": "46efef9c7fd27c355813a40eb7532e56db92c896144819a2857a85113005ef23",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_console_followthrough_20261029.py": {
+      "bytes": 11160,
+      "sha256": "0cd838479908876736e7d922a75c05cd28317bc94e688db866e52e32450259a0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_console_halt_visibility.py": {
+      "bytes": 11065,
+      "sha256": "3c0f4cf4cac04d1e80cc3f4184ce0a0495856be5c4165691d1515abfa925ddb2",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_console_operations_20261028.py": {
+      "bytes": 17614,
+      "sha256": "d2972e27594804b45d71d3bc33e076451f3f144804a2798b88230b1ba6040344",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_console_reliability_20261029.py": {
+      "bytes": 15618,
+      "sha256": "ec3d7a7b6cb4914306dd64dd5b5b6442679fa6584b750cf99af6cf6785038ee9",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_console_renderer.py": {
+      "bytes": 7842,
+      "sha256": "754a03dd119f6dcc0b3fa979f94d2fdbc806a3490a1e6374fe87c9916b54b599",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_console_security_fix009.py": {
+      "bytes": 600,
+      "sha256": "708a1f1464a5b5f85192d0d279da0ea392e227c38724c2d520ce0ab3ff47e1d8",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_console_self_check_service.py": {
+      "bytes": 2339,
+      "sha256": "3aeee2ee2a1f5946eb29c2ca1653a048ab65a2b958a85ef6ebaab09e45f798e8",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_console_summary.py": {
+      "bytes": 7440,
+      "sha256": "752444e52e685dcb900f86465b80b901433652431a8fb7b8c9be85cc2508d723",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_consumption_bridge.py": {
+      "bytes": 8790,
+      "sha256": "0c932f68a845bacbad3d1f4fd50c674bd46006b367997d40242053b7c37fee64",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_consumption_bridge_integrity.py": {
+      "bytes": 3014,
+      "sha256": "5f84f625eb7156fc59d98bcb008c0797a4ea02e45d2b835d6ca90359dec90ed1",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_context_packs.py": {
+      "bytes": 2498,
+      "sha256": "25f7d355d725ef1f05330d52e35066901c5de272a29b9d43e1f0842a9a910495",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_correction_reader_boundary_20261106.py": {
+      "bytes": 6764,
+      "sha256": "e59b5dfe351abbbd8a678700ec26895b7d9c7c2a5a9c6d89ff5798adc72b483b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_correlation_cluster.py": {
+      "bytes": 2240,
+      "sha256": "6edf9ca267cf5a0634d5bc721a0394742500e1aecb89ffc9f8288de581bf7b7b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_cron_adapter_openclaw_path.py": {
+      "bytes": 3763,
+      "sha256": "ebb57b5a4df8c03ae474dbf447cecae413282c9827523a10ebe0ccfe1bb7cbad",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_cron_observability.py": {
+      "bytes": 6731,
+      "sha256": "f763acc01799e7b2cb16d7dedb89c50b2fb2aa25e7e2ecddf4d7a1fb25a624e7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_cron_summary_outputs.py": {
+      "bytes": 2015,
+      "sha256": "f35b949685b56803b143c21f3ee90365ac705b08832bfe6954ab09dfea7a2221",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_crwd_archived_classification_audit.py": {
+      "bytes": 9404,
+      "sha256": "9f5ae04306fa6c1766c8759b20c8f09155ec63a2f5998dcc65919f9fcbb9cabb",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/unit/test_cumulative_allocation.py": {
+      "bytes": 2891,
+      "sha256": "59d0bbaa09f645eb54ca61df6e27312a47da32605337afc0b0f73d73a99bad98",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_daily_report.py": {
+      "bytes": 7615,
+      "sha256": "18ddbd0796d55de8558a11faed05aec72e258d68108484c607995c0d285a3472",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_daily_snapshot_pf_wr.py": {
+      "bytes": 6309,
+      "sha256": "01c806d262c5bc42d71d76c3977092154a260c16e393f409353add4635be1515",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_dashboard_circuit_breaker_alert.py": {
+      "bytes": 10588,
+      "sha256": "cdadab7347742a298fa44423d57ae1a9fc6531aaa1cd30c2eae0036c7f16d318",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_dashboard_cluster_exposure.py": {
+      "bytes": 6290,
+      "sha256": "ec9b802de49af350cf804de03ba83b3398119cfc3c6ff379bbc19006abc7e186",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_dashboard_cutoff_epoch_20261109.py": {
+      "bytes": 3973,
+      "sha256": "514ba72853ac8373f44a6531c4eaf5ff6dc9a71d3b6aae5c26abad126527958a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_dashboard_load_recent_decisions.py": {
+      "bytes": 7412,
+      "sha256": "c936d83febd9d9092072bb67759cc0858c890d13d2b52acde8ed322770b24ff7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_dashboard_service.py": {
+      "bytes": 30480,
+      "sha256": "0f1df38306a95b730dde14e1cd712abe6440a828b9dbebf515ff9eefb8bffcb1",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_decision_engine.py": {
+      "bytes": 8372,
+      "sha256": "f8532f4152f72d40dd3ed9db174b1eb7e493891aff2a57efc09fee5141e0b6d5",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_decision_exit_lineage.py": {
+      "bytes": 11777,
+      "sha256": "f6be224c107c04250ac2ebcde66b632b7a87ff87eeb383051af2e838508a26df",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_decision_input_capture.py": {
+      "bytes": 4595,
+      "sha256": "6e05264c1bd9083d80bb194a5415a98e3f85f5eb4aacf4ecccb073730561bc6c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_decisions_delta_bugfix.py": {
+      "bytes": 5290,
+      "sha256": "dcf7426b213941fbcf7b27b77c92ad9c956828cd232f48ee87be75d62364e48d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_dip_buy_meanreversion_strategy.py": {
+      "bytes": 7726,
+      "sha256": "9af234bfa5a04ec0ad879c54fbe0d38ac9cf139f9103584e60168adfd4b88297",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_distance_from_high.py": {
+      "bytes": 8702,
+      "sha256": "50e9c29a29e0b91542c19683cc3ffab259163591968ae0160f4afa468fc00fd0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_earnings_calendar_normalize_integration.py": {
+      "bytes": 5632,
+      "sha256": "2df04a12b6cab9e6849bc8d7baeeea805e15855576ca84b0875c68997fe218f1",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_earnings_proximity_shadow.py": {
+      "bytes": 2515,
+      "sha256": "01ac3c2b0d5d80d1482153b7555eff452b67916699d7e0d93fdff814fa3a35de",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_economic_risk_off.py": {
+      "bytes": 12302,
+      "sha256": "dc5a7aea9ca851ad75dad43f0fbfd999ac8bc459d2b94a5f6525354995cb8e65",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_economic_risk_off_console.py": {
+      "bytes": 1719,
+      "sha256": "ca4d049b40486e6c9c66d43477ea4e9254dccbae76a4e9a7a3ff101737def6cf",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_emergency_reduction_regression.py": {
+      "bytes": 2390,
+      "sha256": "e92e495979bd94f65634230e95e349ec2b6a193fb84e9197b5682e812d0a588f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_entry_filter.py": {
+      "bytes": 21957,
+      "sha256": "a98ecbddae278e0cc438416fc45653d38afdee128c126364799442ba5d04389f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_entry_restriction_review.py": {
+      "bytes": 17008,
+      "sha256": "2ff6ae159c027d6dffef75f01f4831daa6be90ec8dd2f684a01c94308a7f86b9",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_entry_restriction_review_cli.py": {
+      "bytes": 8909,
+      "sha256": "9221b36adc4589f860038bebf4d88a93fa8ae9e843679b4f0f11a23184a38434",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_entry_signal_strength.py": {
+      "bytes": 15369,
+      "sha256": "911abf2b5aa9b1bb8b9cbaac1d1a380aeca33ce05fe79f86750642e3e01d0030",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_equity_bridge_reconciliation.py": {
+      "bytes": 6645,
+      "sha256": "34fe8e0af5a70da67d9a5872b41523958ca2b293cf727c8cf41888662671c79a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_exit_reason_store.py": {
+      "bytes": 4825,
+      "sha256": "ddaf3ce9c9283517b517f36de350e3badbfe5c639ed8b5c089e472bc5c67382b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_exit_reason_survives_to_closed_trade.py": {
+      "bytes": 12252,
+      "sha256": "b9f6d29b93f5d372e3684302b09b0d0ca4eebbb7b3c382f5b54ac7bff275d699",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_experiment_context.py": {
+      "bytes": 1575,
+      "sha256": "fae5940e2c9859f6ef942a523df4bf541eec497b1e1881e1aa1f4ec7e49ff41e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_experiment_performance_report.py": {
+      "bytes": 1082,
+      "sha256": "31ebed3545f24444e1da9f5a76a72a5fc823a9ed2c03864be00b37fa1b0d2a09",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_experiment_registry.py": {
+      "bytes": 1323,
+      "sha256": "99b97a13c79495cec296f6b86f4ca4af4ff655d00400e586a59011fa9b246253",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_f1_ledger_integrity.py": {
+      "bytes": 5082,
+      "sha256": "bd36f63ebd7539756461896288201e85822792b19a5aabf74d91533e830d0a9d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_f2_guardrail_mismatch.py": {
+      "bytes": 4990,
+      "sha256": "a22d9ed72e3736c6e1893f2967eb32cac420bea52b766bc3955de1cd3da60472",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_f3_exit_reason_atomic.py": {
+      "bytes": 2559,
+      "sha256": "cf1b4609ba32f463acaa3786b8fb8f519a164b2b3a5c4e0ce928ba55b6e958c9",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_f4_durable_metadata.py": {
+      "bytes": 3619,
+      "sha256": "919973a8dfcb8ea185ef79acbc7ce8b3dc1508fea35d847003abc3ad104ea4d6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_f7_sector_shock_hold.py": {
+      "bytes": 17654,
+      "sha256": "106d58d1bdad9aea07fdc40571d1a50ae56b94ea6789df1dd116ca8c51d8e006",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_feature_snapshot_store.py": {
+      "bytes": 1294,
+      "sha256": "6dc13e8e026b7f12b9076904f7a9bd95c4d53284afc949a5eae51fd95fa3d252",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_features.py": {
+      "bytes": 8054,
+      "sha256": "3eb620dea9a817247a9da5d0e2fa240fec535c8a40173065db303a9be7f810b5",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_fetch_all_filled_orders.py": {
+      "bytes": 7163,
+      "sha256": "30189c27f4ff1dc7e5301929d4394c0352f98dd48e657da2fc8e840e630031bc",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_fill_ledger_exactly_once.py": {
+      "bytes": 20237,
+      "sha256": "5760954377e52cf72e0770ca663185d00827547b282a697abcd5c2a5b40093d6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_finnhub_client.py": {
+      "bytes": 9833,
+      "sha256": "bcab2f34e3a4d3b3810bd2a0792cf2fab44ef97cbe9215725ef8824db9bcceb4",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_finnhub_metric_lookup.py": {
+      "bytes": 3710,
+      "sha256": "c437295f538210717d81a6176001e9d88e51b2d202b7b8d151a7bc1032397033",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_fix007_yaml_disable.py": {
+      "bytes": 3120,
+      "sha256": "eea2e6b8366355f2c99ba89b94b63e6d16fc74b38ecf58a613d695e4f06897e5",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_fix01_observation_v3.py": {
+      "bytes": 6421,
+      "sha256": "a1b22aa5f7ab80d5deadb9d5f71365a708881f01d66dd579db0ac7c99af310ed",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_fix05_observation_v5.py": {
+      "bytes": 7622,
+      "sha256": "26c2f7854df99f44c4cfccfdba02d812779d4ef2cbb29a3b798811827cdf2319",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_fix06_explicit_v7.py": {
+      "bytes": 8441,
+      "sha256": "cf61060639507c45aa8a82cd0989c4e4dfc16d5d584c9bec26c4bb1e08024672",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_fix_stale_broker_prices.py": {
+      "bytes": 4226,
+      "sha256": "73795cd42a2c144b249f8fb05ed3eafee5763c0ecb1f99cf7d96da35a2636d8b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_flat_account_halt_regression.py": {
+      "bytes": 15527,
+      "sha256": "b5512a93688cbf18944c0186248fba55597bf19977ba90fe8c75f482dea94cc2",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_flatten_plan.py": {
+      "bytes": 1460,
+      "sha256": "e891f82b7b0a7450c56884fb7d84b35449c587da28ea57b51f3a0098920cf595",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_fred_client.py": {
+      "bytes": 10885,
+      "sha256": "6e3a89188470a7883d20a64b0f32989a685b43a4b39d47c9ef98d759da5ea0b0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_g1v2_postrun_lag_exclusion.py": {
+      "bytes": 22806,
+      "sha256": "c0b997352661955010840d9925c0f289e9dc1e13c8e4e07ec4ea590e4fdc1ebd",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_gateway_workflow_runner.py": {
+      "bytes": 2849,
+      "sha256": "c238815126f92aa5cd4ba04e921a0661cbc13aa36b132da787dc05953b87cf79",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_guardrail_day_start.py": {
+      "bytes": 19533,
+      "sha256": "a7a9128f81dd47874310c898661cffe6eb0150cc1f05659de247921e140414a6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_guardrail_fix005.py": {
+      "bytes": 1299,
+      "sha256": "e214d50b17636f2e5c2a7646638196edf876b35795b299ea287092371e29002d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_guardrail_rule_engine.py": {
+      "bytes": 1934,
+      "sha256": "44682cc4cd193a71b6ba82624f14708c159711a87ef76ca0dba9131ab61823e4",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_guardrail_service.py": {
+      "bytes": 3650,
+      "sha256": "b2232720841bc45128dcdd6c570c411b7a9ecc1f19d094afcafe3f110522bafc",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_h5_allocation_unification.py": {
+      "bytes": 27709,
+      "sha256": "0790b0ab0a565cca0a2856502cca1fbeca73c24467b8d854521f79d7ff3f6d3e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_health_session_freshness_20261109.py": {
+      "bytes": 5160,
+      "sha256": "aac30162874a709fa9f7b66a26c6b7ec48e94d18b460afa9790d81aba6790109",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_high_correlation_snapshot.py": {
+      "bytes": 2346,
+      "sha256": "da855d876715ed72f8049a230ad26080dc5a939ba0d7663442cfc2cbe60437b6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_incident_replay_klac.py": {
+      "bytes": 3390,
+      "sha256": "27185fdd42af23b1d5bf8b284fe608153c59bb90d82dea8fac71aaa4eacf13cb",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_integration_observation_v4.py": {
+      "bytes": 7038,
+      "sha256": "aa756844acdaa90f7da1c1bb4623910289fc31ea10d77309781180ac5ad90591",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_joint_auxiliary_event_journals.py": {
+      "bytes": 1835,
+      "sha256": "4e7605474bdc00d1900b2d2199312b92dffd38207279cf875aade255478ce07f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_joint_ledger_risk.py": {
+      "bytes": 2318,
+      "sha256": "6181cd32ab0b9c181259cd819bac8d956e85c2199a91fae53b5898d5cfce97bf",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_jpx_market_calendar.py": {
+      "bytes": 10140,
+      "sha256": "bf132b07db72ddb6f006127f369b3da2a889b3eb5d12c011838708e76afaab9a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_k03_cli_status.py": {
+      "bytes": 3359,
+      "sha256": "465ab02351c1f9c4ded9d5233a0a1e16dc791e3493bb002474ec9cd19483fcb1",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_k03_precomputed_inputs.py": {
+      "bytes": 5123,
+      "sha256": "5ac551b70bea0a9b3fec28080c3fd34f2784d0066035aaf85414f102e1f56fd4",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_k04_cli_status.py": {
+      "bytes": 3482,
+      "sha256": "368fd656fe8dd30901e65a2df7e17140523544f486d853b53015e4978ef929cd",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_kill_switch.py": {
+      "bytes": 2941,
+      "sha256": "07174d44b45700638370af96c62f1203ffe0716ded4e88891ad52a434fdc4fae",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_live_guarded_executor.py": {
+      "bytes": 9096,
+      "sha256": "a6dff660299fedf653c2eb17f85f4b3486003275c7cc0123ffad1480baac845d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_log_sector_rotation_shadow.py": {
+      "bytes": 4098,
+      "sha256": "b1f2b7404743f914e00500676ff25e074cbac8dc91f36b8b9e2b45a543687739",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_log_us_nonit_universe_shadow.py": {
+      "bytes": 4643,
+      "sha256": "aa13b26175c154f2ff12c6a3ab9a8b6a230c937edd7dcbc33e1fc588a9c00fae",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_losing_position_add_guard.py": {
+      "bytes": 2367,
+      "sha256": "d8c79ede55c2347f745c20be4cfa83abe96cf33cbedb9046aa201897a2ec02e0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_lot_level_exit_diagnostic.py": {
+      "bytes": 15352,
+      "sha256": "80d12b6c75a784c588ac5eb02ad1e61731e65af4fc13bba92d157b278bd785a1",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_macro_regime_feature.py": {
+      "bytes": 7772,
+      "sha256": "63e737a4cb5c02f4cb2949b9f70739271017d848df20308ecdbbf8651061c9d5",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_market_calendar_good_friday.py": {
+      "bytes": 3892,
+      "sha256": "02e6bbd8195dd2a9586e9068defb21c1eb9199311dc5f3c940138980acdfeb32",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_market_calendar_naive_jst_regression.py": {
+      "bytes": 4011,
+      "sha256": "603694d3f2face535ce086387c0f943b93157fb119bff888510f0b48aed98b20",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_market_calendar_previous_close.py": {
+      "bytes": 3367,
+      "sha256": "a9732a1736e9a5b741d336193aedcc8f6d906ce8bae4a29f95b00bc11435720e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_market_calendar_regular_hours.py": {
+      "bytes": 5574,
+      "sha256": "f7ae1bac1c5b9acd4eb045208298ef5466e0152a4607f378e4c9580946988368",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_market_regime_indicator.py": {
+      "bytes": 4241,
+      "sha256": "1db82f23a8b1a7abd9c8c6d192c897da610acf22c9c625b8d5526807f68da7e4",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_massive_client.py": {
+      "bytes": 2211,
+      "sha256": "c2bd24ec3e73fd12655ee5a47d842a13a5a01c76bf3b366501ad1a8775e1a8c6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_measurement_capture.py": {
+      "bytes": 7402,
+      "sha256": "28fed1030b1bb94f9047b430312c2451e4e2e37b9833d77d90e619b661161080",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/unit/test_minimal_recording_binding.py": {
+      "bytes": 6090,
+      "sha256": "6232a2c852214e73663ba4d5e51d82706e01265889456c27c5f2776898a3e3c0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_news_sentiment.py": {
+      "bytes": 21846,
+      "sha256": "54804e190d9c2ecd9573b99a65ff906328bb48514b42fbf7ae8b3d9e67825fa6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_news_shock_hold.py": {
+      "bytes": 7344,
+      "sha256": "dc8b4e1257c07536af0a813a4f155cafae8c862e8889023dc98c24df57e11a63",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_normalizers.py": {
+      "bytes": 5319,
+      "sha256": "fc4e0fafe47eee649c65b865053c17915b79b38afaa1b7b58ab8d760ab7641c1",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_observation_health.py": {
+      "bytes": 7894,
+      "sha256": "b3cf589cff399cdf60c9621cbd244144ff486888cb12dfd90f8e7424ced832cf",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/unit/test_open_position_count_snapshot.py": {
+      "bytes": 3358,
+      "sha256": "5a1139b0e283a596deca03e8d4fef96f6f13ec588d90a135d4ae7c5461f93fc5",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_open_position_signal_summary.py": {
+      "bytes": 10278,
+      "sha256": "06463a714f334a51a8521f9d9f9d64cff600c829eb5288059f38adea9736d6d0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_open_shock_cooldown.py": {
+      "bytes": 5156,
+      "sha256": "fa9a97936f27f0d9a46270df6ee6721b90df34303cf53ae998805f6ab5be132e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_openclaw_adapter.py": {
+      "bytes": 10642,
+      "sha256": "06e4414329d6fd3640956088294292c6f1a7a0dac30a2635e74780dc7156f3fa",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_operational_recovery.py": {
+      "bytes": 5416,
+      "sha256": "c788d59ced8efda0b1a05580d167954cf3334bae7361c316a67093dc1887571c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_order_preflight.py": {
+      "bytes": 9095,
+      "sha256": "8b821663a48840eb1997c1cdac20e94ca305ab89ef0c3e59cca3924eb2b8c39b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_overnight_spillover_shadow.py": {
+      "bytes": 7475,
+      "sha256": "08e686cbb6679e5c04dc5802a14fc0d58e1433572fcefbcd775223ee6f62ae6a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_p0c_p0d.py": {
+      "bytes": 4927,
+      "sha256": "24b6c966eb253625d92150ad7a83dd9f2094bd4a98957e3cd790f71d738d813c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_p1a_p1b.py": {
+      "bytes": 1170,
+      "sha256": "0a42564f178ae84313d870f7211c5ca453cacccc91adcef648419e2296040224",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_p1c_backfill.py": {
+      "bytes": 1523,
+      "sha256": "e8ccb6f551042bbcbb90d6c8664d27316453a41aecc1d3d9c4183d9a794ae4f9",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_p1d_outcomes.py": {
+      "bytes": 1018,
+      "sha256": "10e2c65f42983098bda9f18d7db845fc7709701e9f99e10cbd0a26e7d53a65ba",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_p2a_p2b.py": {
+      "bytes": 5414,
+      "sha256": "5aec1403ac3a740b851145852edc3202db7e58147603bc2d918088afc2cdd99f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_p6_join_fix006.py": {
+      "bytes": 7839,
+      "sha256": "d1fb60f40b1531d9490731d92d43ead91f067a88e483b07c03fc784f7c9620ea",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_pairwise_correlation.py": {
+      "bytes": 13227,
+      "sha256": "1a025c7dd05822f4cb8e25cf03c80e38f23538b9b99cec9e9b35623c35be254d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_paper_demo_intraday_selection.py": {
+      "bytes": 3992,
+      "sha256": "ab78ed60b262fa583abc420c6dcbc591ef24970686beca689d5eb5bc9d8095eb",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_paper_demo_mutation_regression.py": {
+      "bytes": 40619,
+      "sha256": "0f57a0f67c4eaaa5dd099c8cd061a744a62096f970d9a4ddc9e5f5fe64cc1dad",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_paper_executor.py": {
+      "bytes": 11046,
+      "sha256": "56b0cc907a63ee4d00c4708f30a337692ab5e8243f06c5087e24257c21571559",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_parameter_engine.py": {
+      "bytes": 8603,
+      "sha256": "5b5cad9e618943b0b8b20bb66a9e3a52d80bb0144776650acd58600798be94f4",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_path_manager.py": {
+      "bytes": 258,
+      "sha256": "4d6ea06ce7b8fe0e87068b45fe1a28c4863cbbd867b5fcb7f30398a9517e69f6",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/unit/test_path_manager_extended.py": {
+      "bytes": 1742,
+      "sha256": "01470ae0a21c0d45d23ed9f4a45fbdea27c3d3288d2197bf8e562d54227d47b7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_per_lot_time_based_exit.py": {
+      "bytes": 7033,
+      "sha256": "b199e4c55aa488a83bd92eb030ac1d324203b93176cc9fe0d689ae6035d8045e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_performance_breakdown_service.py": {
+      "bytes": 3762,
+      "sha256": "881956984d6b7947a90f964e6a3bbf4ab22201da17b00b00ca4637e94caf5d54",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_performance_snapshot.py": {
+      "bytes": 6932,
+      "sha256": "13b05c03e54ad45c496490dfa265ae9d971579e07f763bf71f04076c9ad78c0a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_period_filter_calendar_days.py": {
+      "bytes": 7455,
+      "sha256": "24935024f16db2cfe28a1e37a32b57dd5185302c5efd50c35e3d211ca27b8c3f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_pf_history_receipt.py": {
+      "bytes": 6390,
+      "sha256": "46bf19e24ba38004392035cdff37aa97241d7d3816944b109b08d4b3ffdd3771",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_pnl_tracker_atomic.py": {
+      "bytes": 1319,
+      "sha256": "97b315c1fe6e4f1d1fbcda111fdc30f2b0a3b327c64ba1e018b943ed29f0a00d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_pnl_tracker_exit_context.py": {
+      "bytes": 3609,
+      "sha256": "37753a3c055f85ef9fb09b942e5a20d82db42761a433d0654c7a2fe218f1b5eb",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_position_risk_service.py": {
+      "bytes": 3984,
+      "sha256": "70cf9ed8745b2e334d8d08c96d83a6d2f8ab3dd299b20bd6ff2ab6ec1b0f91b9",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_position_sizing_policy.py": {
+      "bytes": 11537,
+      "sha256": "22a8df370008d8d0135ac3b96c21739f7e4bb0d33869f72caacd6a223d6e3ab2",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_pre_trade_check.py": {
+      "bytes": 2862,
+      "sha256": "65f57add899d87e23ea4cd3adb4998224dc145ca50d8c701dc8bb140543a21cb",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_price_resolver.py": {
+      "bytes": 3226,
+      "sha256": "d0fae7c74573535ceb72d2376b0f8d1a3d48ec0d14ddbf433cddadfe7c1de8a7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_production_executor.py": {
+      "bytes": 6921,
+      "sha256": "05438970b81890b1ef30f61ed1dbfdc99a9aad8e5ea4d49f9834c26fbc320327",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_promotion_gate.py": {
+      "bytes": 10960,
+      "sha256": "2d87d77644c9a8ee0d23aa911b1537fd008442b4994b475df74a8253be6ade31",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_prompt_registry.py": {
+      "bytes": 861,
+      "sha256": "6329f77acf3ba800c03531d401a34a7b57df265a0f713a5245f2ef6cb038bb36",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_provider_bar_contracts.py": {
+      "bytes": 12064,
+      "sha256": "cbd968064366b11c5543c05a4611cd5ff76e16b3dd745428e74880ccaeeb62aa",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_provider_cli_copy.py": {
+      "bytes": 4616,
+      "sha256": "41039efac669f9f800467085fabe2574e12bb78b977495f6616815a10ff5bedc",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/unit/test_quality_pair_boundary_20261109.py": {
+      "bytes": 10043,
+      "sha256": "8803bdbaa83f5d9a75cf4eff6ddd6675909b02d33f127926ba658098a7dd4173",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r0_r1_r2.py": {
+      "bytes": 3517,
+      "sha256": "a7a93cc209ed81ca56d7956d8d268fd3adec84a7ac7552030296ca86fff7557e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r0v2b_code.py": {
+      "bytes": 16306,
+      "sha256": "800f7fd0ddce78f36fde41a72d7c09365d54f3540f0ec55f3ea9f4f378fc6d44",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r0v2c_guardrail.py": {
+      "bytes": 12814,
+      "sha256": "68205212a4d11dca3b8996e38443f840cee766579806a948c50a5e081182eb5c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r0v2d_metadata.py": {
+      "bytes": 8007,
+      "sha256": "afd83b20bb3267fd4f562434354321b09b791973550bbd3632bb93f807d1a3af",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r11_backtest_engine_v2.py": {
+      "bytes": 7151,
+      "sha256": "36b43fed13f3b5939114e7d956b5c888094fdb6f1989740801c1a254aa4ac9e3",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r11_backtest_engine_v3.py": {
+      "bytes": 12136,
+      "sha256": "6555287ea48a2536da20cf482c0c3f0247d5ed84544de1960697a732417a6f7a",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r11_backtest_engine_v4.py": {
+      "bytes": 10758,
+      "sha256": "b0fdf8e919d84ca3c1ca05eafb07aa22dd8d12fba061c9765a8f700cdce2883b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r13d_etf_sector_rotation_phase1.py": {
+      "bytes": 4952,
+      "sha256": "a7a65f0f2500e69e4dea237b0005bc0913893f0c397029b6aa9f1791b78eb8f8",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r1v2_rebuild_idempotency.py": {
+      "bytes": 15765,
+      "sha256": "d7c11e40ad93a23f00ac4bf2ff16810d31a421c089cbb079fd6c51ce9721d835",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r22_analysis_snapshot.py": {
+      "bytes": 3746,
+      "sha256": "ef35b252917794184ed544fd7dfa2c85dbcec5724c7b8d536b8b8265b2e3f8a0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r22_apply_readiness.py": {
+      "bytes": 5561,
+      "sha256": "987abefe741eefa29fb760bf7c4de22b2bf8f55b6a36d97f49b2fd399f8b8fbf",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r22_cutover_compatibility.py": {
+      "bytes": 12717,
+      "sha256": "5683ebee66c9a203eee12043ba29285ce4885a68f250eb0bd0d27286a5469017",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r22_entry_provenance.py": {
+      "bytes": 9249,
+      "sha256": "7e57adcd7054dd6cb51cf69027e0ff15b47695d9d9fb6fbee3bdd249ce6b9723",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r22_excluded_reader_guards.py": {
+      "bytes": 4839,
+      "sha256": "88e9f333356a6430dba192c938b0949700125906e052c5629ed44741d079985b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r22_execution_events.py": {
+      "bytes": 5403,
+      "sha256": "73c73d354b68c87be71e9bada7d24842eb4a98a887a52fe4292f89beedd8ee19",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r22_history_migration.py": {
+      "bytes": 18649,
+      "sha256": "f8068974acdeab1662d9c0a12984e11c035209ffefe7bdb736afc1bb382e5482",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r22_ledger_recovery.py": {
+      "bytes": 14641,
+      "sha256": "24d8b80add52b87d083e2d46fc86b20666b2726698667b5a263ab59a58409bb6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r22_manual_reader_lineage.py": {
+      "bytes": 10821,
+      "sha256": "149b2c5c03871e8974b993d31c332417ca047c90870043e1d57430e76e48646b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r22_operational_reader_boundaries.py": {
+      "bytes": 9906,
+      "sha256": "58343e8934987b19fc07f8bc9269316c33fc1ebe40923b508ef48f7d0896080c",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r22_order_cost.py": {
+      "bytes": 7372,
+      "sha256": "c68ee46ad1c5234b1aa6ed03a96e0a9154e89ba8aee0d6de055d2c2f6ee61122",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r22_rebuild_risk_history.py": {
+      "bytes": 5209,
+      "sha256": "0fa8d6d788e54a1fa6f76fe0b0097c615658a9b58ca30d018890fd32ad11035d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r22_residual_orders.py": {
+      "bytes": 14361,
+      "sha256": "4c8cc5567c671d6d8c9f55039648aef8f377d4ad1407e37538945a89e9e69029",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r22_scheduled_reader_lineage.py": {
+      "bytes": 10204,
+      "sha256": "44ffd5e21ce961890e54b44a6fab0fea9a8ccfbe8e4f4f0cfd84d773ceef4af2",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r22_split_fifo.py": {
+      "bytes": 9757,
+      "sha256": "6f558abf048ca330434f8ad7d99c5cebb188d83522d2b4e0f2ad5750f5524d92",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r22_valuation_evidence.py": {
+      "bytes": 3012,
+      "sha256": "5c38a5199786493400dd17932f177edf45a8bf4765443b364dcd69e4f1e248b5",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r6v2_console.py": {
+      "bytes": 9618,
+      "sha256": "b5081ff15a685c448e47eef265f41b86969662816a04e5d4d9eed8c2a50e5b9d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r6v2_mtime_cache.py": {
+      "bytes": 8229,
+      "sha256": "7d83e9382109b77068dc446a555d43e09e9b7f7d435bb717644daf5242846f84",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r7v2_market_guard.py": {
+      "bytes": 15952,
+      "sha256": "aa7cb088be2dc9a74a558ae1d20a11aafda7fe23e74b1d3923bdc86abd4451e9",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_r8v2_ml_readiness.py": {
+      "bytes": 5831,
+      "sha256": "42b8cea85e483dcc3b338d23195987a274c49dd4f6bcf71414d72572548824c7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_raw_ingestor.py": {
+      "bytes": 9420,
+      "sha256": "273b0816108204a11e8276fd7138bf89e24537b63a2eb0631a8072660ee51a41",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_rebuild_and_quarantine_count_consistency.py": {
+      "bytes": 11947,
+      "sha256": "09b7a7dc5d3e8c930cf545b3f223c15c203d3d5c033f9c2a3e24b0ac81c84509",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_rebuild_pnl_state_script.py": {
+      "bytes": 22925,
+      "sha256": "fbd79ed38d8bc048f977f8cfed5fafe58add07a347c56cfad434141bd2bcd4ab",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_recommendation_reporting.py": {
+      "bytes": 4305,
+      "sha256": "5b204260a881a4ec15e403ba9b805a2e6d0bf5b4f9d169e893933897d7f39f12",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_reconcile_fix003.py": {
+      "bytes": 1958,
+      "sha256": "e17e7520fd255b81220ca7c8795309c7e40fbbddc6feef15c1b5233af96c0b8e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_reconcile_orders.py": {
+      "bytes": 41253,
+      "sha256": "cbbae75f702eb6c6ce196ae72a531c2ef487c1c92eaebb8d951049245459c957",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_reconcile_stale_entry.py": {
+      "bytes": 3828,
+      "sha256": "88a99b2a199296b933e9311cba639af4481c4321cd57002c5e18d08c2a9a9bcb",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_reconciler.py": {
+      "bytes": 5110,
+      "sha256": "ca6d8aff6878cec04250c7ce33c8b3c021f30a4f24bed3ad6d49f43cb976dfad",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_recording_closure_20261030.py": {
+      "bytes": 8576,
+      "sha256": "2ad9678b505f9a41cd18d514109d891136882c13bf3aacfa7216cc74d105b0d1",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_reduction_orders.py": {
+      "bytes": 12218,
+      "sha256": "c0e04dfbdcbccb2076f7dbd159f37cb697a8c18bcc440366c10c662cd2418003",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_remediation_20260730.py": {
+      "bytes": 14490,
+      "sha256": "a153006cc0b66dc82a67136a6f13847c20a541513e7ed6cdae08ef9813ad2dcd",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_remote_readonly_app.py": {
+      "bytes": 5936,
+      "sha256": "0913eafcfd4eb5e35c075fde92c592d21c1bdc90be4edb13edec612bc4bd1801",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_restriction_observer_operational_health.py": {
+      "bytes": 8216,
+      "sha256": "49e1ba2be4fa1cd229d80cde5acd7d5003de12b48f7abbbcd42bf237d2efb178",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/unit/test_restriction_review_console_alerts.py": {
+      "bytes": 8478,
+      "sha256": "a9aee99b9ad19f29d64731a527bd66078f10bdd44dafd259c32776b54d12d524",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_retry.py": {
+      "bytes": 5376,
+      "sha256": "293b16b6fd8861803ad945e957d703512b5ea22ac8f5c0df29b8bc2c6fb272d4",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_revision_bound_observation.py": {
+      "bytes": 6648,
+      "sha256": "c114abd65a57c110f75472380321fd47155d31385fb0c7d3290ef3389a2743e5",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_risk_budget.py": {
+      "bytes": 7056,
+      "sha256": "25f83b2e473802b9a62f51d9dc8cd631b413cf6990d14e78bc888b8a8f4472ca",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_risk_fail_closed.py": {
+      "bytes": 7744,
+      "sha256": "8a7ffcb4f5d2331c0ba2ebf02843ff606a89b616a62e0bfcf5c6b5e74822c281",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_rolling_walk_forward.py": {
+      "bytes": 7824,
+      "sha256": "38b59c4c08ee9ba513895db5f411264a7455fbb77e8758e4aab5ffde05d816de",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_rsi_diagnostic.py": {
+      "bytes": 6615,
+      "sha256": "322a8ba02b8f47a808311c011c650cbec87ed23176ef5fee6141c2a4bcfb9d42",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_run_context.py": {
+      "bytes": 1288,
+      "sha256": "7c8814d9600854318fb55d80bf15db38c9313b00d0e4e948b972c8fab32e9210",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_runtime.py": {
+      "bytes": 4559,
+      "sha256": "d193f027cb54a472ae81489fe217dfe4471a5f14c71a491f8f9ea0d133c5b712",
+      "executable": false,
+      "original_source_mode": 420
+    },
+    "tests/unit/test_runtime_mode.py": {
+      "bytes": 2287,
+      "sha256": "4eec40e43c58ee461876dfb5509fc4b24342488f29ac4347fa3e45866d7ff3e7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_safe_ranges.py": {
+      "bytes": 5247,
+      "sha256": "367ae4c2e35c7675c1c59c6d67060a9a3be6a2f000e2fe3e0ad3d781bc0bcb91",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_same_symbol_cooldown.py": {
+      "bytes": 9384,
+      "sha256": "c0a8fc00da5e8012b1a71fc1c46e9af74524ee18fb335fe3a97dcb68f54abc95",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_sec_client.py": {
+      "bytes": 8957,
+      "sha256": "2f657cbd320e1458f08f6ff20348a3d3cbe9cd6a771721cd1d37df2762d6faf2",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_secret_scan.py": {
+      "bytes": 1146,
+      "sha256": "76e3bf9146742cbc03802fafb89e44f835bd3a39cb9d8da45e6e415bbe1bbefe",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_sector_momentum_feature.py": {
+      "bytes": 6806,
+      "sha256": "302dc753786eaaec5c9756d384efe84f42ec236046a779b074c59e30e78c07cf",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_sector_rotation_state.py": {
+      "bytes": 9845,
+      "sha256": "0ddbf31b6d369f38b2ad595e24be4fb63502af8ab36a09cf944b2153638908bf",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_sector_rotation_strategy.py": {
+      "bytes": 5829,
+      "sha256": "44d2c35aae7c83a296e18207201c001c3ac80dbb30a0919ecc3058e3d1d318e9",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_sector_shock_historical_replay_rolling.py": {
+      "bytes": 4136,
+      "sha256": "ecc8cc424a70549b9153f2dd68be09e77937928f192e3205e52997c70f711355",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_sector_shock_per_symbol_benchmark.py": {
+      "bytes": 10853,
+      "sha256": "454852a1d81c469b2d5d3e448a6694e30b24de015ef4b21aa355d2a0bd84ef21",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_sector_shock_rolling_window.py": {
+      "bytes": 9422,
+      "sha256": "592c01b30587c4a9210680c5eba663961961a2c77c729f05f5d7bc320fa78669",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_sell_exit_flow.py": {
+      "bytes": 12794,
+      "sha256": "40a56b1dd794d1367a33bd5439405e64be590165e0b0d47543ef3a64e74aa395",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_session_return_snapshot.py": {
+      "bytes": 7135,
+      "sha256": "f03b56bdef2587ec5d1d4784e33dd06bb54fa50d943d0f1b5d5b454b309d4f8d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_shock_aware_staged_exit.py": {
+      "bytes": 7862,
+      "sha256": "4e98083765ca67032414eb32bd60343e41bbc0607c9e134486f0414098b1be9b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_signal_prioritization_v2.py": {
+      "bytes": 8485,
+      "sha256": "da034b0e758d1aabd7a623f212deb309ef10e19d9258d523f24a713111d213d7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_simple_exit_v2_strategy.py": {
+      "bytes": 41420,
+      "sha256": "890bff9a43b80dd2cfc1fea9b8e685d0e22ee9c88087db35d3024cf0d1a94f59",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_simple_exit_v2_volatility_adjusted_stop.py": {
+      "bytes": 18823,
+      "sha256": "8dcb2bbe0a8849b211f7b99b0e860998cae463fb25308cb31b3c77e455cee35f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_simulate_daily_path_volatility_stop.py": {
+      "bytes": 11967,
+      "sha256": "ad3415077b5df9706dc236db6e1d80ac37048fc86f70be24b0c33a71e93d1f0e",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_source_base.py": {
+      "bytes": 3758,
+      "sha256": "3e25a23f31d08e1fad69a1b22724d32e7c18b92b51bf635c72bea7d4695abcc0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_source_errors.py": {
+      "bytes": 2897,
+      "sha256": "b947047a49bc03e004abfb39402e21fe2e4d68a362d3bd596403a573ca155f10",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_source_lineage.py": {
+      "bytes": 15475,
+      "sha256": "7487f4beb015bae1edcfed4bd0e42f9722999327ea61397a986fed222e6a7668",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_stage_store.py": {
+      "bytes": 5653,
+      "sha256": "ccf7936703d1d6b32c24875b2772c45cc89db941ededf73a703d5f365ff418ce",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_stale_price.py": {
+      "bytes": 1918,
+      "sha256": "6c71d189bced9b2349cc11dd17f1374510b5c65109d0c779ced797a21890eeab",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_stale_price_data.py": {
+      "bytes": 7079,
+      "sha256": "0d72f1f56e7dbea0368e7245d2b2c5d35f27d49ab726a3a88cf5243e7a63e620",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_stale_price_session_guard.py": {
+      "bytes": 4759,
+      "sha256": "bc8ffd16fa46baaf95ee44f3ecd2670fa94f1711667090b5b8fae6db79c73b03",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_stop_loss_counterfactual.py": {
+      "bytes": 7505,
+      "sha256": "a905e05ab6da709300120ca381fced800970275b9cb4ea76044f87e27080c2f6",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_strategies.py": {
+      "bytes": 12898,
+      "sha256": "391fab865af5c39f9afa0c858dd07f1f728bdd338f9b869653a4367c364411d7",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_submission_cli_status.py": {
+      "bytes": 2390,
+      "sha256": "e8d539bedc4b205265815eb02effe99a024c29cd4d4d2d7ec4501eb2bda13407",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_submission_guard.py": {
+      "bytes": 10816,
+      "sha256": "8d7989869f5187c26cda5fd73c690d41457813205fc8e649491ea42c6bb8ef78",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_system_adapter_finnhub_source_sla.py": {
+      "bytes": 2812,
+      "sha256": "ca30e86c107a8c8f24cadb1cc184312a548dfcfa275cdbc55e18c7e123329c9f",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_system_adapter_guardrail_freshness.py": {
+      "bytes": 5402,
+      "sha256": "68bf25dae2f4233c71dd2343e8170d3c7f5cf2443a1a0dff2b827efc74978e3b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_system_adapter_openclaw_path.py": {
+      "bytes": 6604,
+      "sha256": "8f3866ff549a6e8b045ebe43914fe4b72600379021cb1eed4ee55182ae82e9f9",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_system_adapter_session_sla.py": {
+      "bytes": 12531,
+      "sha256": "7cac5c8b0b5b2633bcfbff6c467b2dc887b9465872dd31089485aa75a58b5615",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_token_accounting.py": {
+      "bytes": 4108,
+      "sha256": "133d67d66a209a1673990e7fc07c437bf8a234ae0e552c093feb21e58e9fa8f2",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_trade_attribution.py": {
+      "bytes": 990,
+      "sha256": "2b021fcd4aae96f7487f56d0dbf487d634d1902b62d5e23dbcabf904ec505a7b",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_trade_event_store.py": {
+      "bytes": 2110,
+      "sha256": "2edbf78cf37e925a822f077ac936ad653cbff2ef6893cf6b5739e84544aceb5d",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_trial_registry.py": {
+      "bytes": 8574,
+      "sha256": "33e262c5ace5ac64015fc2351a67e3f62d79daa06d9273a31c9f6b5597648abd",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_us_overnight_benchmark_feature.py": {
+      "bytes": 6532,
+      "sha256": "77fc404eb34f8f76ea2da4098e17a471a67d57d31d7f563581866ccc62e1a8ff",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_verify_rebuild_integrity.py": {
+      "bytes": 11650,
+      "sha256": "188f9e909b16c32ad27e20b87810a543ecc0bb66843218c2f3832c920b422ce1",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_versioned_performance_producer.py": {
+      "bytes": 4651,
+      "sha256": "fa191f48854334a5ec9bf514ebc48a35d4ae34c54a6c33109855404d9cbc2493",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_volatility_gate.py": {
+      "bytes": 5925,
+      "sha256": "765ac90a2010b3153d069cbc91716f93222888f7d7ed424b1f12e342665ceff0",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_walkforward_exit.py": {
+      "bytes": 1554,
+      "sha256": "1ee9a9cf45220b87dde5becf829d208c9672a5dceae128809b0f6f0a672d7ebc",
+      "executable": false,
+      "original_source_mode": 384
+    },
+    "tests/unit/test_weekend_gap_guard.py": {
+      "bytes": 1213,
+      "sha256": "c3719073b702584f01ed7f715ecfe6ad2aac7e6f772e3e7739fb05c7985bf6f4",
+      "executable": false,
+      "original_source_mode": 384
+    }
+  }
+}

@@ -22,6 +22,8 @@ from pathlib import Path
 from typing import Any
 
 # R1-B was deployed on 2026-06-25
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
 DEFAULT_CUTOFF = "2026-06-25"
 
 # Reasons considered "properly attributed"
@@ -123,8 +125,7 @@ def main() -> None:
         print(f"ERROR: pnl_state.json not found at {pnl_path}", file=sys.stderr)
         sys.exit(1)
 
-    with open(pnl_path, encoding="utf-8") as f:
-        state = json.load(f)
+    state = legacy_analytical_state(pnl_path)
 
     all_trades = state.get("trades", [])
     closed = [t for t in all_trades if t.get("exit_price") is not None]

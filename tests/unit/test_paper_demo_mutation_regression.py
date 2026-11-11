@@ -446,7 +446,7 @@ class _BrokerSellFillOnce:
 
     def fetch_account(self):
         return SimpleNamespace(payload={
-            "status": "ACTIVE", "equity": "980000", "buying_power": "1944000",
+            "id": "account-fixture", "status": "ACTIVE", "equity": "980000", "buying_power": "1944000",
         })
 
     def fetch_positions(self):
@@ -460,7 +460,7 @@ class _BrokerSellFillOnce:
         return SimpleNamespace(payload={"ap": 150.05, "bp": 149.95})
 
     def submit_order(self, symbol, side, order_type, qty, time_in_force, **kw):
-        return {"id": "sell-order-fixed-id", "status": "accepted"}
+        return dict(id="sell-order-fixed-id", status="accepted", symbol=symbol, side=side, type=order_type, qty=qty, time_in_force=time_in_force, filled_qty="0", client_order_id=kw.get("client_order_id"))
 
     def get_order(self, order_id):
         # Broker reports the sell as fully filled — same order_id every reconcile call.
@@ -505,6 +505,13 @@ def test_inline_reconcile_registers_fill_in_fill_ledger(monkeypatch, tmp_path, c
     never appears in fill_ledger.jsonl and this test's assertion fails.
     """
     _set_common_patches(monkeypatch, tmp_path, _BrokerSellFillOnce)
+    # R22: an execution can consume only actual recorded inventory.
+    from stock_swing.tracking.pnl_tracker import PnLTracker
+    initial = PnLTracker(tmp_path)
+    initial.record_submission("AAPL", "test", "buy", 100, 140.0,
+                              "buy-before-sell", "seed-position")
+    initial.state.trades[0]["entry_time"] = "2026-07-30T14:00:00+00:00"
+    initial._save_state()
 
     monkeypatch.setattr(
         "stock_swing.sources.hybrid_data_fetcher.HybridDataFetcher",

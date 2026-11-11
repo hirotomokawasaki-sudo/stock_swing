@@ -61,6 +61,8 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
@@ -101,8 +103,7 @@ PROD_CONFIG = dict(
 
 def load_all_closed_trades() -> list[dict]:
     state_path = ROOT / "data" / "tracking" / "pnl_state.json"
-    with open(state_path) as f:
-        state = json.load(f)
+    state = legacy_analytical_state(state_path)
     return [t for t in state.get("trades", []) if t.get("status") == "closed"]
 
 

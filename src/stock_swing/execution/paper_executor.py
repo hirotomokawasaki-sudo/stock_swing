@@ -19,6 +19,7 @@ from stock_swing.pricing import PriceResolver
 from stock_swing.risk.position_sizing import PositionSizingInputs, PositionSizingPolicy
 from stock_swing.risk.allocation_config import AllocationConfig
 from stock_swing.sources.broker_client_protocol import BrokerClientProtocol
+from stock_swing.execution.submission_guard import SubmissionGuard, SubmissionUncertain, SubmissionHeld, SubmissionRejected
 
 
 @dataclass
@@ -168,55 +169,39 @@ class PaperExecutor:
         # Generate submission ID
         submission_id = self._generate_submission_id(decision)
 
-        # Recalculate quantity using hybrid position sizing
-        market_regime = None
-        if isinstance(decision.evidence, dict):
-            market_regime = decision.evidence.get("market_regime")
-        if precomputed_qty is not None and precomputed_sizing is not None:
-            sized_qty = precomputed_qty
-            sizing_details = dict(precomputed_sizing)
-        else:
-            sized_qty, sizing_details = self._calculate_position_size(
-                decision,
-                market_regime=market_regime or "neutral",
-            )
-
-        # For SELL orders, prioritize risk reduction over entry sizing constraints
+        # Reduction sizing never uses entry notional/risk/confidence caps.
+        # A known explicit partial request remains partial. SubmissionGuard is
+        # the sole authority for pending reservations and unreflected fills.
         if proposed.side == "sell":
-            try:
-                sell_qty = current_qty
-                if sell_qty is None:
-                    positions_env = self.broker_client.fetch_positions()
-                    positions = positions_env.payload if hasattr(positions_env, 'payload') else positions_env
-                    sell_qty = 0
-                    if isinstance(positions, list):
-                        for pos in positions:
-                            if pos.get("symbol") == proposed.symbol:
-                                sell_qty = abs(int(float(pos.get("qty", 0))))
-                                break
+            if (precomputed_qty is None) != (precomputed_sizing is None):
+                raise ValueError("incomplete precomputed sell sizing")
+            sized_qty, sizing_details = self._calculate_sell_size(
+                decision, current_qty=current_qty, requested_qty=precomputed_qty,
+                details=precomputed_sizing,
+            )
+        else:
+            # BUY-only hybrid entry sizing
+            market_regime = None
+            if isinstance(decision.evidence, dict):
+                market_regime = decision.evidence.get("market_regime")
+            if precomputed_qty is not None and precomputed_sizing is not None:
+                if proposed.side == "buy":
+                    if isinstance(precomputed_qty, bool) or not isinstance(precomputed_qty, int) or precomputed_qty < 1:
+                        raise ValueError("invalid_precomputed_quantity")
+                    if not isinstance(precomputed_sizing, dict) or precomputed_sizing.get("skip_reason") == "risk_inputs_unavailable":
+                        raise ValueError("risk_inputs_unavailable: invalid precomputed sizing")
+                    try:
+                        self._read_position_risk_inputs(proposed.symbol)
+                    except Exception as exc:
+                        raise ValueError("risk_inputs_unavailable: " + type(exc).__name__) from exc
+                sized_qty = precomputed_qty
+                sizing_details = dict(precomputed_sizing)
+            else:
+                sized_qty, sizing_details = self._calculate_position_size(
+                    decision,
+                    market_regime=market_regime or "neutral",
+                )
 
-                if not sell_qty or sell_qty <= 0:
-                    raise ValueError(f"No position to sell for {proposed.symbol}")
-
-                original_qty = sized_qty
-                if sized_qty < 1:
-                    sized_qty = sell_qty
-                    sizing_details["sell_exit_override"] = True
-                    sizing_details["original_qty"] = original_qty
-                    sizing_details["skip_reason"] = None
-                    sizing_details["final_shares"] = sized_qty
-                    sizing_details["applied_constraint"] = "position_exit_override"
-
-                if sized_qty > sell_qty:
-                    sizing_details["original_qty"] = sized_qty
-                    sizing_details["capped_to_position"] = sell_qty
-                    sized_qty = sell_qty
-                    sizing_details["final_shares"] = sized_qty
-            except Exception as e:
-                if "No position to sell" in str(e):
-                    raise
-                # If position fetch fails, proceed with calculated qty (will fail at broker if invalid)
-        
         if sized_qty < 1:
             reason = sizing_details.get("skip_reason") if sizing_details else "final_shares_below_1"
             raise ValueError(f"Decision {decision.decision_id} sized below 1 share, skipping ({reason})")
@@ -228,18 +213,41 @@ class PaperExecutor:
 
         try:
             # Submit order (paper mode)
-            broker_response = self.broker_client.submit_order(
+            submit = self.broker_client.submit_order
+            extra = {}
+            if isinstance(self.broker_client, SubmissionGuard):
+                submit = self.broker_client.submit_intent
+                extra = {"decision_id": decision.decision_id}
+            broker_response = submit(
                 symbol=proposed.symbol,
                 side=proposed.side,
                 order_type=proposed.order_type,
                 qty=sized_qty,
                 time_in_force=proposed.time_in_force,
                 limit_price=proposed.limit_price,
+                **extra,
             )
+            if isinstance(self.broker_client, SubmissionGuard):
+                actual_qty = int(float(broker_response["qty"]))
+                if actual_qty != sized_qty:
+                    sizing_details.update(requested_shares=sized_qty, final_shares=actual_qty,
+                                          applied_constraint="pending_sell_reservation")
+                    sized_qty = actual_qty
             
             broker_order_id = broker_response.get("id")
             status = "submitted"
+        except SubmissionUncertain as e:
+            if e.submitted_qty is not None and e.submitted_qty != sized_qty:
+                sizing_details.update(requested_shares=sized_qty, final_shares=e.submitted_qty,
+                                      applied_constraint="pending_sell_reservation")
+                sized_qty = e.submitted_qty
+            status = "held" if isinstance(e, SubmissionHeld) else "unknown"
+            reject_reason = str(e)
         except Exception as e:
+            if isinstance(e, SubmissionRejected) and e.submitted_qty is not None and e.submitted_qty != sized_qty:
+                sizing_details.update(requested_shares=sized_qty, final_shares=e.submitted_qty,
+                                      applied_constraint="pending_sell_reservation")
+                sized_qty = e.submitted_qty
             status = "rejected"
             reject_reason = str(e)
         
@@ -320,6 +328,105 @@ class PaperExecutor:
         if decision.proposed_order is None:
             raise ValueError(f"Decision {decision.decision_id} has no proposed_order")
     
+    def _read_position_risk_inputs(self, symbol: str) -> tuple[float, float, float]:
+        """Read measurable equity/exposure; failure is never a flat portfolio.
+
+        Reused at precomputed BUY submission too: a cached quantity is not
+        authorization to ignore current unavailable broker inputs. This does
+        not recompute caps, reserve funds, or change the quantity policy.
+        """
+        account_env = self.broker_client.fetch_account()
+        account = account_env.payload if hasattr(account_env, 'payload') else account_env
+        equity_raw = account.get("equity")
+        if isinstance(equity_raw, bool):
+            raise ValueError("invalid equity")
+        equity = float(equity_raw)
+        if not math.isfinite(equity) or equity <= 0:
+            raise ValueError("invalid equity")
+        positions_env = self.broker_client.fetch_positions()
+        positions_resp = positions_env.payload if hasattr(positions_env, 'payload') else positions_env
+        if not isinstance(positions_resp, list):
+            raise ValueError("invalid positions schema")
+        current_total_exposure = 0.0
+        current_sector_exposure = 0.0
+        from stock_swing.risk.position_sizing import SYMBOL_SECTORS
+        current_sector = SYMBOL_SECTORS.get(symbol.upper())
+        for pos in positions_resp:
+            if not isinstance(pos, dict) or not isinstance(pos.get("symbol"), str) or not pos["symbol"].strip():
+                raise ValueError("invalid position symbol")
+            raw_qty = pos.get("qty")
+            if isinstance(raw_qty, bool):
+                raise ValueError("invalid position quantity")
+            qty = float(raw_qty)
+            if not math.isfinite(qty):
+                raise ValueError("invalid position quantity")
+            if qty == 0:
+                continue
+            raw_price = pos.get("current_price", pos.get("avg_entry_price"))
+            if isinstance(raw_price, bool):
+                raise ValueError("invalid position price")
+            price = float(raw_price)
+            if not math.isfinite(price) or price <= 0:
+                raise ValueError("invalid position price")
+            notional = abs(qty * price)
+            current_total_exposure += notional
+            if not math.isfinite(current_total_exposure):
+                raise ValueError("position exposure overflow")
+            if current_sector and SYMBOL_SECTORS.get(pos["symbol"].upper()) == current_sector:
+                current_sector_exposure += notional
+        return equity, current_total_exposure, current_sector_exposure
+
+    @staticmethod
+    def _positive_sell_quantity(value: Any) -> int:
+        if isinstance(value, bool):
+            raise ValueError("invalid sell quantity")
+        try:
+            number = float(value)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError("invalid sell quantity") from exc
+        if not math.isfinite(number) or number < 1:
+            raise ValueError("invalid sell quantity or no long position")
+        return int(number)  # whole shares only, never exceed fractional holding
+
+    def _calculate_sell_size(
+        self, decision: DecisionRecord, *, current_qty: Any = None,
+        requested_qty: Any = None, details: dict[str, Any] | None = None,
+    ) -> tuple[int, dict[str, Any]]:
+        proposed = decision.proposed_order
+        if not proposed or proposed.side != "sell":
+            raise ValueError("not a sell decision")
+        if current_qty is None:
+            try:
+                env = self.broker_client.fetch_positions()
+                positions = env.payload if hasattr(env, "payload") else env
+                if not isinstance(positions, list):
+                    raise ValueError("unknown holdings")
+                matching = [p for p in positions if isinstance(p, dict)
+                            and p.get("symbol") == proposed.symbol]
+                if len(matching) != 1 or matching[0].get("side") == "short":
+                    raise ValueError("No position to sell")
+                current_qty = matching[0].get("qty")
+            except Exception as exc:
+                raise ValueError("sell_position_unavailable: " + str(exc)) from exc
+        held = self._positive_sell_quantity(current_qty)
+        evidence = decision.evidence if isinstance(decision.evidence, dict) else {}
+        if requested_qty is None:
+            if "partial_exit_qty" in evidence:
+                requested_qty = evidence["partial_exit_qty"]
+            else:
+                requested_qty = held  # proposed.qty is a non-authoritative placeholder
+        requested = self._positive_sell_quantity(requested_qty)
+        if isinstance(requested_qty, bool) or float(requested_qty) != requested:
+            raise ValueError("invalid fractional sell request")
+        quantity = min(requested, held)
+        result = dict(details or {})
+        result.update(final_shares=quantity, requested_shares=requested,
+                      position_shares=held, skip_reason=None,
+                      applied_constraint="long_position_exit")
+        if requested > held:
+            result["capped_to_position"] = held
+        return quantity, result
+
     def _calculate_position_size(
         self,
         decision: DecisionRecord,
@@ -335,27 +442,16 @@ class PaperExecutor:
         if not proposed:
             return 0, {"skip_reason": "missing_proposed_order"}
 
-        account_env = self.broker_client.fetch_account()
-        account = account_env.payload if hasattr(account_env, 'payload') else account_env
-        equity = float(account.get("equity", 0) or 0)
+        if proposed.side == "sell":
+            return self._calculate_sell_size(decision)
 
-        positions_env = self.broker_client.fetch_positions()
-        positions_resp = positions_env.payload if hasattr(positions_env, 'payload') else positions_env
-        current_total_exposure = 0.0
-        current_sector_exposure = 0.0
+        # K03: broker I/O failure or malformed holdings is unknown, not flat.
         try:
-            from stock_swing.risk.position_sizing import SYMBOL_SECTORS
-            current_sector = SYMBOL_SECTORS.get(proposed.symbol.upper())
-            for pos in positions_resp:
-                qty = float(pos.get("qty", 0) or 0)
-                price = float(pos.get("current_price", pos.get("avg_entry_price", 0)) or 0)
-                notional = abs(qty * price)
-                current_total_exposure += notional
-                if current_sector and SYMBOL_SECTORS.get(str(pos.get("symbol", "")).upper()) == current_sector:
-                    current_sector_exposure += notional
-        except Exception:
-            current_total_exposure = 0.0
-            current_sector_exposure = 0.0
+            equity, current_total_exposure, current_sector_exposure = self._read_position_risk_inputs(proposed.symbol)
+        except Exception as exc:
+            return 0, {"skip_reason": "risk_inputs_unavailable", "final_shares": 0,
+                       "risk_inputs_error": type(exc).__name__,
+                       "current_total_exposure": None, "current_sector_exposure": None}
 
         resolver = PriceResolver(
             broker_client=self.broker_client,

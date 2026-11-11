@@ -76,6 +76,9 @@ def correct_price(price: float, market_low: float, market_high: float, threshold
         return (corrected, True, note)
 
 
+from stock_swing.tracking.compatibility import legacy_entrypoint, legacy_maintenance, tracking_root
+
+@legacy_entrypoint(lambda *a, **k: globals().get('project_root', globals().get('PROJECT_ROOT', Path(__file__).resolve().parents[1])))
 def main():
     parser = argparse.ArgumentParser(description="Correct anomalous prices with market data")
     parser.add_argument("--threshold", type=float, default=0.10,

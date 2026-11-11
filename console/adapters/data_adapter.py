@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from typing import Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 class DataAdapter:
@@ -48,7 +48,10 @@ class DataAdapter:
             age = now - mtime
             age_hours = age.total_seconds() / 3600
             
-            if age_hours < 6:
+            if age_hours < 0:
+                status = "unknown"
+                age_hours = None
+            elif age_hours < 6:
                 status = "fresh"
             elif age_hours < 24:
                 status = "aging"
@@ -57,8 +60,10 @@ class DataAdapter:
             
             freshness[stage] = {
                 "status": status,
-                "age_hours": round(age_hours, 1),
+                "age_hours": round(age_hours, 1) if age_hours is not None else None,
                 "newest_file": newest.name,
+                "as_of": datetime.fromtimestamp(newest.stat().st_mtime, timezone.utc).isoformat(),
+                "time_basis": "file_mtime",
             }
         
         return freshness

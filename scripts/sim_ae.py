@@ -3,8 +3,9 @@ from datetime import timedelta
 from dateutil import parser as dparser
 import yfinance as yf
 
-with open('data/tracking/pnl_state.json') as f:
-    state = json.load(f)
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
+state = legacy_analytical_state('data/tracking/pnl_state.json')
 trades = state.get('trades', [])
 sl = [t for t in trades
       if t.get('status') == 'closed'

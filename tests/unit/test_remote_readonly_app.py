@@ -75,7 +75,8 @@ def test_load_go_no_go_reads_markdown(tmp_path: Path, monkeypatch) -> None:
 
 
 def test_load_recent_trades_sorts_closed_by_exit_time(tmp_path: Path, monkeypatch) -> None:
-    state_path = tmp_path / "pnl_state.json"
+    state_path = tmp_path / "data/tracking/pnl_state.json"
+    state_path.parent.mkdir(parents=True, exist_ok=True)
     state_path.write_text(
         json.dumps(
             {

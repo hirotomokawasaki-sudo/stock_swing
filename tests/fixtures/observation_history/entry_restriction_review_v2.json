@@ -1,0 +1,24 @@
+{
+  "state": {
+    "definition": {
+      "protocol": {
+        "version": "pf-review-v2-20261029",
+        "horizon_sessions": 5,
+        "min_completed": 30,
+        "base_round_trip_bps": 20,
+        "stress_round_trip_bps": 30,
+        "min_stress_pf": 1.2,
+        "min_path_return": -0.07,
+        "capture_boundary": "entry_filter_pf_before_downstream_gates",
+        "method": "next_session_open_to_fifth_session_close_price_proxy",
+        "automatic_release": false
+      },
+      "fixture": "synthetic_namespace_preservation_only"
+    },
+    "definition_hash": "8eb4d725c0965453d323a475b3212928b112cd83e9b194a0af93100fc1506ddf",
+    "frozen_at": "2026-10-29T00:00:00+00:00",
+    "last_observed_at": "2026-10-29T00:00:00+00:00",
+    "observations": []
+  },
+  "checksum": "9e91a059bbe5726f5b9328d1b9c50a4a1fb1308130cae2da29af79dc28fda952"
+}

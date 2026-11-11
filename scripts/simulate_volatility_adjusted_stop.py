@@ -47,6 +47,8 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
@@ -65,8 +67,7 @@ BASE_STOP_LOSS_PCT = -0.07  # config/strategy/simple_exit_v2.yaml default
 
 def load_all_stop_loss_trades() -> list[dict]:
     state_path = ROOT / "data" / "tracking" / "pnl_state.json"
-    with open(state_path) as f:
-        state = json.load(f)
+    state = legacy_analytical_state(state_path)
     trades = state.get("trades", [])
     return [
         t for t in trades

@@ -103,6 +103,17 @@ def load_console_summary() -> dict:
             "path": str(SUMMARY_PATH),
             "error": str(exc),
         }
+    from stock_swing.tracking.compatibility import read_tracking_state
+    # A persisted pre-cutover report must not look like current accounting.
+    if PNL_STATE_PATH.exists() or (PNL_STATE_PATH.parent / "trade_events.jsonl").exists():
+        try:
+            state = read_tracking_state(PNL_STATE_PATH)
+            lineage = state.get("measurement_lineage") or {}
+            report_lineage = (payload.get("ledger_quality") or {}).get("measurement_lineage") or {}
+            if lineage and report_lineage != lineage:
+                return {"available": False, "error": "stale console summary ledger revision", "measurement_lineage": lineage}
+        except Exception as exc:
+            return {"available": False, "error": str(exc)}
     payload = dict(payload)  # shallow copy so we don't mutate cache
     payload["_remote_meta"] = _file_meta(SUMMARY_PATH)
     return payload
@@ -158,15 +169,11 @@ def _query_limit(query: dict[str, list[str]], default: int, minimum: int, maximu
 
 
 def _load_pnl_state() -> dict:
-    if not PNL_STATE_PATH.exists():
-        return {"trades": []}
+    from stock_swing.tracking.compatibility import read_tracking_state
     try:
-        # H9: mtime キャッシュ経由で読込
-        if _HAS_MTIME_CACHE:
-            return _pnl_cache.get(PNL_STATE_PATH)
-        return json.loads(PNL_STATE_PATH.read_text(encoding="utf-8"))
-    except Exception:
-        return {"trades": []}
+        return read_tracking_state(PNL_STATE_PATH)
+    except Exception as exc:
+        return {"trades": [], "available": False, "error": str(exc)}
 
 
 def _slim_position(row: dict) -> dict:
@@ -233,6 +240,8 @@ def load_positions(limit: int = 100) -> dict:
         warnings.append(f"DashboardService fallback: {exc}")
 
     state = _load_pnl_state()
+    if state.get("available") is False:
+        return {**state, "warnings": warnings + [state.get("error", "Tracking unavailable")], "positions": [], "count": 0}
     rows = [row for row in state.get("trades", []) if row.get("status") == "open"]
     positions = [_slim_position(row) for row in rows[:limit]]
     return {
@@ -247,6 +256,8 @@ def load_positions(limit: int = 100) -> dict:
 
 def load_recent_trades(limit: int = 25) -> dict:
     state = _load_pnl_state()
+    if state.get("available") is False:
+        return state
     rows = [row for row in state.get("trades", []) if row.get("status") == "closed"]
     rows.sort(key=lambda row: row.get("exit_time") or row.get("entry_time") or "", reverse=True)
 
@@ -271,6 +282,7 @@ def load_recent_trades(limit: int = 25) -> dict:
         )
     return {
         "available": True,
+        "measurement_lineage": state.get("measurement_lineage", {}),
         "source": str(PNL_STATE_PATH),
         "count": len(trades),
         "trades": trades,
@@ -336,6 +348,7 @@ def load_live_summary() -> dict:
         if not trading.get("available"):
             return {"available": False, "error": "trading data unavailable", "warnings": warnings}
 
+        warnings.extend(trading.get("warnings", []))
         positions = dashboard.get_positions(trading=trading)
         account = dashboard._get_account_info()
         t_summary = trading.get("summary") or {}
@@ -363,6 +376,7 @@ def load_live_summary() -> dict:
 
         return {
             "available": True,
+            "measurement_lineage": trading.get("measurement_lineage", {}),
             "time": datetime.now(timezone.utc).isoformat(),
             "account": account,
             "portfolio": {

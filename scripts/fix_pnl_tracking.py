@@ -28,6 +28,8 @@ logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
 
 
+from stock_swing.tracking.compatibility import legacy_entrypoint, legacy_maintenance, tracking_root
+
 class PnLTrackerFix:
     """Fix P&L tracking data quality issues."""
     
@@ -277,6 +279,7 @@ class PnLTrackerFix:
             'total_pnl': total_pnl,
         }
     
+    @legacy_entrypoint(lambda self, *a, **k: tracking_root(self.pnl_file))
     def save_backup(self):
         """Save backup of original data."""
         backup_file = self.pnl_file.parent / f"{self.pnl_file.stem}_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
@@ -287,6 +290,7 @@ class PnLTrackerFix:
         logger.info(f"✓ Backup saved to {backup_file}")
         return backup_file
     
+    @legacy_entrypoint(lambda self, *a, **k: tracking_root(self.pnl_file))
     def save_fixed_data(self):
         """Save fixed data."""
         self.data['last_updated'] = datetime.now(timezone.utc).isoformat()
@@ -310,6 +314,7 @@ class PnLTrackerFix:
         
         logger.info(f"✓ Fixed data saved to {self.pnl_file}")
     
+    @legacy_entrypoint(lambda self, *a, **k: tracking_root(self.pnl_file))
     def run_full_fix(self):
         """Run complete fix process."""
         logger.info("\n🔧 Starting P&L tracker fix...\n")
@@ -346,6 +351,8 @@ class PnLTrackerFix:
         return summary
 
 
+
+@legacy_entrypoint(lambda *a, **k: Path.cwd())
 def main():
     """Main entry point."""
     pnl_file = "data/tracking/pnl_state.json"

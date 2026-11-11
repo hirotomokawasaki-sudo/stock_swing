@@ -41,6 +41,7 @@ from console.services.summary_service import SummaryService
 from console.services.parameter_service import ParameterService
 from console.services.benchmark_service import BenchmarkService
 from console.utils.time_utils import now_iso
+from console.services.evidence_service import get_console_evidence, get_evidence_document
 from console.services.console_self_check_service import run_self_check
 from console.services.guardrail_service import get_guardrail_status
 from console.services.performance_breakdown_service import get_performance_breakdown
@@ -297,6 +298,33 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         if p == "/ui/test-phase3.html":
             return self._file(ROOT / "ui" / "test-phase3.html", "text/html; charset=utf-8")
         
+        # Read-only, explicitly allowlisted documentary evidence (no controls).
+        if p == "/api/operational-evidence":
+            proposal = None
+            fields = ("projection_symbol", "projection_qty", "projection_limit")
+            if any(key in q for key in fields):
+                import math, re
+                try:
+                    if any(len(q.get(key, [])) != 1 for key in fields):
+                        raise ValueError("incomplete projection")
+                    symbol = q[fields[0]][0].upper().strip()
+                    qty = float(q[fields[1]][0]); price = float(q[fields[2]][0])
+                    if (not re.fullmatch(r"[A-Z][A-Z0-9.^-]{0,14}", symbol) or
+                            not all(math.isfinite(v) and 0 < v <= 1e12 for v in (qty,price))):
+                        raise ValueError("invalid projection")
+                    proposal = dict(symbol=symbol, qty=qty, limit_price=price, side="buy", type="limit")
+                except (ValueError, TypeError, OverflowError):
+                    return self._json({"error":"銘柄・正の有限数量・指値を指定してください。注文は送信しません。"},status=400)
+            return self._json(dashboard.get_operational_evidence(proposal=proposal))
+
+        if p == "/api/console-evidence":
+            return self._json(get_console_evidence(PROJECT_ROOT))
+        if p == "/api/console-evidence/document":
+            document = get_evidence_document(PROJECT_ROOT, q.get("name", [""])[0])
+            if document is None:
+                return self._json({"error": "Document not found"}, status=404)
+            return self._file(document, "text/plain; charset=utf-8")
+
         # Health check
         # See _get_self_check_snapshot() docstring: this must stay non-blocking.
         if p == "/health":

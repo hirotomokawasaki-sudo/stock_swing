@@ -21,20 +21,23 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-with open(PROJECT_ROOT / ".env") as f:
-    for line in f:
-        line = line.strip()
-        if line and not line.startswith("#") and "=" in line:
-            k, v = line.split("=", 1)
-            os.environ[k] = v
-
 from stock_swing.sources.broker_client import BrokerClient
 
 
+from stock_swing.tracking.compatibility import legacy_entrypoint, legacy_maintenance, tracking_root
+
+@legacy_entrypoint(lambda *a, **k: globals().get('project_root', globals().get('PROJECT_ROOT', Path(__file__).resolve().parents[1])))
 def main() -> None:
     parser = argparse.ArgumentParser(description="Initialize peak_price for open trades")
     parser.add_argument("--dry-run", action="store_true", help="Show what would change without writing")
     args = parser.parse_args()
+
+    with open(PROJECT_ROOT / ".env") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                os.environ[k] = v
 
     # Load state
     state_path = PROJECT_ROOT / "data" / "tracking" / "pnl_state.json"

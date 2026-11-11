@@ -1,6 +1,0 @@
-
-[stderr]
-/Library/Developer/CommandLineTools/usr/bin/python3: No module named pytest
-
-[exit_code]
-1

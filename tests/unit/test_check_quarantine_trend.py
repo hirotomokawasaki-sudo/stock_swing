@@ -14,6 +14,8 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import pytest
+
 _SCRIPT_PATH = Path(__file__).resolve().parents[2] / "scripts" / "check_quarantine_trend.py"
 _spec = importlib.util.spec_from_file_location("check_quarantine_trend", _SCRIPT_PATH)
 _module = importlib.util.module_from_spec(_spec)
@@ -100,9 +102,19 @@ class TestEvaluateTrendUsesOnlyMostRecentHistoryEntry:
 
 
 class TestLoadQuarantineSnapshotRealData:
-    def test_real_data_returns_valid_shape(self):
-        """Sanity check against the actual project pnl_state.json."""
+    def test_real_reader_uses_synthetic_quarantine(self, tmp_path, monkeypatch):
+        import json
+        folder = tmp_path / 'data/tracking'
+        folder.mkdir(parents=True)
+        path = folder / 'pnl_state.json'
+        path.write_text(json.dumps({'trades': [], 'quarantined_trades': [
+            {'trade_id': 'fixture-a', 'entry_time': '2026-07-01T12:00:00Z'},
+            {'trade_id': 'fixture-b', 'entry_time': '2026-08-01T12:00:00Z'}]}))
+        (folder / 'trade_events.jsonl').write_text('')
+        monkeypatch.setattr(_module, 'STATE_PATH', path)
         snapshot = load_quarantine_snapshot()
+        assert snapshot['quarantine_count'] == 2
+        assert snapshot['newest_quarantined_entry_time'] == '2026-08-01T12:00:00Z'
         assert "quarantine_count" in snapshot
         assert "newest_quarantined_entry_time" in snapshot
         assert isinstance(snapshot["quarantine_count"], int)
@@ -126,15 +138,14 @@ class TestHistoryPersistence:
         assert len(loaded) == 2
         assert loaded[-1] == snap2
 
-    def test_load_history_skips_corrupt_lines(self, tmp_path, monkeypatch):
+    def test_load_history_refuses_corrupt_lines(self, tmp_path, monkeypatch):
         history_path = tmp_path / "quarantine_trend_history.jsonl"
         history_path.parent.mkdir(parents=True, exist_ok=True)
         history_path.write_text("not json\n" + '{"quarantine_count": 101}\n', encoding="utf-8")
         monkeypatch.setattr(_module, "HISTORY_PATH", history_path)
 
-        loaded = load_history()
-        assert len(loaded) == 1
-        assert loaded[0]["quarantine_count"] == 101
+        with pytest.raises(ValueError, match='invalid row 1'):
+            load_history()
 
     def test_load_history_missing_file_returns_empty(self, tmp_path, monkeypatch):
         monkeypatch.setattr(_module, "HISTORY_PATH", tmp_path / "nonexistent.jsonl")

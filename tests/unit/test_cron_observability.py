@@ -95,6 +95,12 @@ def test_cron_adapter_run_history_parse_error_returns_not_ok(monkeypatch, tmp_pa
 
 def test_dashboard_system_status_blocks_when_cron_runs_unparseable(monkeypatch, tmp_path: Path) -> None:
     root = _minimal_project_root(tmp_path)
+    # The test targets invalid cron history, not an invalid/empty financial ledger.
+    state_path = root / "data/tracking/pnl_state.json"
+    data = json.loads(state_path.read_text())
+    data["last_updated"] = datetime.now(timezone.utc).isoformat()
+    state_path.write_text(json.dumps(data))
+
 
     # 2026-08-04: system_adapter now resolves an absolute path for the
     # openclaw binary (see _resolve_openclaw_bin) instead of the bare name

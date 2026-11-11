@@ -88,6 +88,8 @@ class BrokerNormalizer(BaseNormalizer):
                     "trade_count": bar.get("n"),
                 },
             )
+            if raw.payload.get("_bar_contract") is not None:
+                record.payload["bar_contract"] = raw.payload["_bar_contract"]
             records.append(record)
         
         return records if records else []

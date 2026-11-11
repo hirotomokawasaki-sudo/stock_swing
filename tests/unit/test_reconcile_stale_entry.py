@@ -50,15 +50,15 @@ class _Broker:
         )
 
 
-def test_p0b_corrects_when_fill_is_stale_but_position_avg_is_correct(tmp_path: Path) -> None:
+def test_r22_position_average_without_order_identity_does_not_rewrite_lot(tmp_path: Path) -> None:
     tracker = _make_tracker(tmp_path, "KLAC", stale_price=2010.21)
     broker = _Broker("KLAC", stale_price=2010.21, correct_price=245.09)
 
     count = reconcile_stale_entry_prices(broker, tracker)
 
-    assert count == 1
+    assert count == 0, "position average cannot prove a lot's confirmed fill cost"
     trade = tracker.get_open_positions()[0]
-    assert abs(trade["entry_price"] - 245.09) < 0.01
+    assert abs(trade["entry_price"] - 2010.21) < 0.01, "unverified historical anomaly needs separate repair"
 
 
 def test_p0b_peak_not_left_below_corrected_entry(tmp_path: Path) -> None:
@@ -90,6 +90,8 @@ def test_p0b_fill_correction_takes_priority_over_position_avg(tmp_path: Path) ->
                 payload={
                     "id": order_id,
                     "status": "filled",
+                    "symbol": "MSFT", "side": "buy", "filled_qty": "10",
+                    "filled_at": "2026-05-01T14:00:00+00:00",
                     "filled_avg_price": "320.00",
                 }
             )

@@ -102,7 +102,7 @@ def main() -> int:
     print(f"MODE: {'EXECUTE' if args.execute else 'PREVIEW'}")
     print(f"TARGET_COUNT: {len(targets)}")
 
-    cancelable: list[tuple[str, str]] = []
+    cancelable: list[dict] = []
     for expected_symbol, order_id in targets:
         order_env = broker.fetch_order(order_id)
         order = order_env.payload if hasattr(order_env, "payload") else order_env
@@ -120,21 +120,24 @@ def main() -> int:
             f"\tsubmitted_at={submitted_at}\texpires_at={expires_at}\textended_hours={extended_hours}"
         )
         if is_cancelable:
-            cancelable.append((symbol, order_id))
+            cancelable.append(order)
 
     print(f"CANCELABLE_COUNT: {len(cancelable)}")
     if not args.execute:
         print("Preview only. Re-run with --execute to submit DELETE requests.")
         return 0
 
-    canceled = 0
-    for symbol, order_id in cancelable:
-        broker.fetch(endpoint=f"v2/orders/{order_id}", method="DELETE")
-        print(f"CANCEL_REQUESTED: {symbol} {order_id}")
-        canceled += 1
+    from stock_swing.execution.cancellation_guard import cancel_order_safely
+    results = []
+    for order in cancelable:
+        result = cancel_order_safely(broker, PROJECT_ROOT, order)
+        results.append(result)
+        print(f"CANCEL_{result['state'].upper()}: {order['symbol']} {order['id']} broker_status={result['broker_status']}")
+    import json
+    unresolved = sum(r['state'] != 'terminal' for r in results)
+    print('CANCELLATION_SUMMARY_JSON=' + json.dumps(dict(results=results,unresolved=unresolved),sort_keys=True))
+    return 1 if unresolved else 0
 
-    print(f"CANCEL_REQUESTED_COUNT: {canceled}")
-    return 0
 
 
 if __name__ == "__main__":

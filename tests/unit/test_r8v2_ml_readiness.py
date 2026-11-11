@@ -94,14 +94,23 @@ class TestCheckReadiness:
 
 
 class TestCheckReadinessRealData:
-    def test_real_data_matches_known_analysis(self):
-        """Sanity check against the actual project pnl_state.json --
-        confirms the script's output matches the 2026-08-14 roadmap gap
-        analysis's ad-hoc calculation (attributable=25, untracked=203)."""
+    def test_normal_reader_counts_synthetic_attribution(self, tmp_path, monkeypatch):
+        import json
+        folder = tmp_path / 'data/tracking'
+        folder.mkdir(parents=True)
+        rows = [{'trade_id': f'fixture-{i}', 'symbol': 'IBM', 'status': 'closed',
+                 'qty': 1, 'entry_price': 100, 'exit_price': 101, 'pnl': 1,
+                 'strategy_id': strategy, 'entry_time': '2026-08-01T14:00:00Z',
+                 'exit_time': '2026-08-02T14:00:00Z'}
+                for i, strategy in enumerate(['breakout_momentum_v1',
+                    'breakout_momentum_v1', 'broker_reconstructed'])]
+        (folder / 'pnl_state.json').write_text(json.dumps({'last_updated': '2026-08-02T15:00:00+00:00', 'trades': rows}))
+        (folder / 'trade_events.jsonl').write_text('')
+        monkeypatch.setattr(_module, 'ROOT', tmp_path)
         result = check_readiness()
-        # These are the real counts as of 2026-08-14; if the underlying
-        # data changes (more trades close), this assertion should be
-        # updated -- it exists to catch wiring regressions, not to pin the
-        # exact historical numbers forever.
-        assert result["attributable_count"] >= 25  # monotonically non-decreasing over time
-        assert result["total_closed_count"] >= 228
+        assert result['attributable_count'] == 2
+        assert result['untracked_origin_count'] == 1
+        assert result['total_closed_count'] == 3
+        assert result['attributable_ratio_pct'] == 66.7
+        assert result['calibration_ready'] is False
+        assert result['ml_training_ready'] is False

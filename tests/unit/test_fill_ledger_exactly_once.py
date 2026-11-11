@@ -193,7 +193,7 @@ def test_reconcile_orders_uses_fill_ledger_to_block_replay_after_state_reset(mon
             decision_id="decision-buy-new",
         )
 
-        assert reconcile_orders.main() == 0
+        assert reconcile_orders.main() == 1, "consumed watermark cannot certify erased financial history"
         out = capsys.readouterr().out
         summary_line = [line for line in out.splitlines() if line.startswith(CRON_SUMMARY_PREFIX)][-1]
         payload = json.loads(summary_line.split("=", 1)[1])

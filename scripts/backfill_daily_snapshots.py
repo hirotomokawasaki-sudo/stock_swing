@@ -21,6 +21,8 @@ from stock_swing.sources.broker_client import BrokerClient
 from stock_swing.tracking.pnl_tracker import DailySnapshot, PnLTracker, StrategyDailySnapshot
 
 
+from stock_swing.tracking.compatibility import legacy_entrypoint, legacy_maintenance, tracking_root
+
 def parse_dt(value: Any) -> datetime | None:
     if not value:
         return None
@@ -250,6 +252,7 @@ def compute_drawdown(snapshots: list[dict[str, Any]]) -> tuple[float, float]:
     return round(peak_equity, 2), round(max_drawdown, 4)
 
 
+@legacy_entrypoint(lambda path, *a, **k: tracking_root(path))
 def save_state(path: Path, data: dict[str, Any]) -> Path:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_path = path.with_name(f"{path.stem}.snapshot_backfill_backup_{timestamp}{path.suffix}")
@@ -258,6 +261,8 @@ def save_state(path: Path, data: dict[str, Any]) -> Path:
     return backup_path
 
 
+
+@legacy_entrypoint(lambda *a, **k: globals().get('project_root', globals().get('PROJECT_ROOT', Path(__file__).resolve().parents[1])))
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--start-date", help="Override the first YYYY-MM-DD date to backfill")

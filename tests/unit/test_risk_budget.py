@@ -48,10 +48,10 @@ def _make_project_root(trades: list[dict]) -> Path:
 
 
 class TestComputeOpenRiskNoState:
-    def test_missing_file_returns_zero_risk(self, tmp_path):
+    def test_missing_file_returns_unknown_risk(self, tmp_path):
         result = compute_open_risk(tmp_path, equity=1_000_000)
-        assert result["total_open_risk"] == 0.0
-        assert result["is_blocked"] is False
+        assert result["total_open_risk"] is None
+        assert result["is_blocked"] is True
         assert result["is_warn"] is False
         assert "error" in result
 

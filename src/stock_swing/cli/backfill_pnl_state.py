@@ -33,6 +33,8 @@ from stock_swing.utils.strategy_versioning import extract_decision_dt, normalize
 DEFAULT_SINCE = "2026-05-01T00:00:00+00:00"
 
 
+from stock_swing.tracking.compatibility import legacy_entrypoint, tracking_root
+
 def load_decisions(decisions_dir: Path) -> dict[tuple[str, str], list[dict[str, Any]]]:
     index: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for path in sorted(decisions_dir.glob("decision_*.json")):
@@ -297,6 +299,7 @@ def backfill_state(
     return new_state, metrics
 
 
+@legacy_entrypoint(lambda state_path, *a, **k: tracking_root(state_path))
 def save_state(state_path: Path, state: PnLState) -> Path:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_path = state_path.with_name(f"{state_path.stem}.backfill_backup_{timestamp}{state_path.suffix}")
@@ -306,6 +309,7 @@ def save_state(state_path: Path, state: PnLState) -> Path:
     return backup_path
 
 
+@legacy_entrypoint(lambda *a, **k: project_root)
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--since", default=DEFAULT_SINCE, help="ISO timestamp; filled orders before this are ignored")

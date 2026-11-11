@@ -37,6 +37,8 @@ import argparse
 import json
 from pathlib import Path
 
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
 PNL_STATE_PATH = Path(__file__).resolve().parent.parent / "data" / "tracking" / "pnl_state.json"
 
 BANDS = [
@@ -61,7 +63,7 @@ def fmt_pf(pf: float | None) -> str:
 
 
 def load_ss_trades(path: Path) -> list[dict]:
-    state = json.loads(path.read_text())
+    state = legacy_analytical_state(path)
     closed = [t for t in state["trades"] if t.get("status") == "closed"]
     ss_trades = [t for t in closed if t.get("entry_signal_strength") is not None]
     return ss_trades

@@ -18,6 +18,9 @@ STATE_PATH = PROJECT_ROOT / "data/tracking/pnl_state.json"
 PERF_PATH = PROJECT_ROOT / "data/analysis/performance_summary.json"
 
 
+from stock_swing.tracking.compatibility import legacy_entrypoint, legacy_maintenance, tracking_root
+
+@legacy_entrypoint(lambda *a, **k: globals().get('project_root', globals().get('PROJECT_ROOT', Path(__file__).resolve().parents[1])))
 def main() -> int:
     # 1. load state
     with open(STATE_PATH) as f:

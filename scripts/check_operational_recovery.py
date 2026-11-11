@@ -21,6 +21,8 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 from check_go_no_go import ECON_COHORT_START_DEFAULT, check_economic_viability
 from stock_swing.guardrails.economic_risk_off import trading_session_dates_ending
+from stock_swing.tracking.compatibility import read_analysis_snapshot
+from stock_swing.tracking.ledger_transaction import LedgerConflict
 
 ET = ZoneInfo("America/New_York")
 SLOTS = (time(9, 25), time(9, 35), time(12), time(15, 55))
@@ -103,13 +105,40 @@ def _valid_observation(row: dict, now: datetime) -> bool:
     return stamp is not None and stamp <= now + timedelta(minutes=1)
 
 
+def _validate_economic_rows(ledger: dict) -> None:
+    """Reject coercible/nonfinite inputs before the legacy economic evaluator."""
+    rows = ledger.get("trades")
+    if not isinstance(rows, list):
+        raise ValueError("invalid trades collection")
+    values = []
+    for row in rows:
+        if row.get("status") != "closed":
+            continue
+        value = row.get("pnl")
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            raise ValueError("invalid closed PnL; expected finite numeric value")
+        stamp = row.get("exit_time")
+        if not isinstance(stamp, str):
+            raise ValueError("invalid exit timestamp")
+        datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+        values.append(value)
+    for subset in (values, [v for v in values if v > 0], [v for v in values if v < 0]):
+        if not math.isfinite(math.fsum(subset)):
+            raise ValueError("invalid nonfinite economic aggregate")
+
+
 def assess(root: Path, *, now: datetime | None = None) -> dict:
     now = now or datetime.now(timezone.utc)
     expected = expected_run_at(now)
     summary, summary_error = _read(root / "reports/console/latest_console_summary.json")
     breaker, breaker_error = _read(root / "data/guardrails/circuit_breaker.json")
     risk, risk_error = _read(root / "data/guardrails/economic_risk_off.json")
-    ledger, ledger_error = _read(root / "data/tracking/pnl_state.json")
+    try:
+        ledger, measurement_provenance = read_analysis_snapshot(root / "data/tracking/pnl_state.json")
+        ledger_error = None
+    except (OSError, ValueError, TypeError, LedgerConflict) as exc:
+        ledger, measurement_provenance = {}, None
+        ledger_error = f"{type(exc).__name__}: {exc}"
     run = summary.get("run") if isinstance(summary.get("run"), dict) else {}
     history = risk.get("history") if isinstance(risk.get("history"), list) else []
     genuine = run.get("dry_run") is False and run.get("invocation_source") == "paper_demo_scheduled"
@@ -122,13 +151,29 @@ def assess(root: Path, *, now: datetime | None = None) -> dict:
     if ledger_error or not isinstance(ledger.get("trades"), list):
         economics = {"pass": False, "actual": "ledger unavailable or corrupt", "cohort_start": ECON_COHORT_START_DEFAULT}
     else:
-        economics = check_economic_viability(ledger, ECON_COHORT_START_DEFAULT)
-        economics["cohort_start"] = ECON_COHORT_START_DEFAULT
-    recovered = console_fresh and breaker_fresh and observing
+        try:
+            _validate_economic_rows(ledger)
+            economics = check_economic_viability(ledger, ECON_COHORT_START_DEFAULT)
+            economics["cohort_start"] = ECON_COHORT_START_DEFAULT
+        except (ValueError, TypeError, OverflowError) as exc:
+            economics = {"pass": False, "actual": f"invalid economic input: {exc}",
+                         "cohort_start": ECON_COHORT_START_DEFAULT}
+    scheduled_evidence = console_fresh and breaker_fresh and observing
+    lineage = ledger.get('measurement_lineage')
+    summary_quality = summary.get('ledger_quality')
+    summary_lineage = summary_quality.get('measurement_lineage') if isinstance(summary_quality, dict) else None
+    lineage_matches = None if ledger_error else (not lineage or summary_lineage == lineage)
+    # A genuine scheduled run can be observed despite unavailable accounting.
+    # Keep that fact, but do not label an unreadable ledger or a stale console
+    # revision as operationally recovered. Economic qualification stays separate.
+    recovered = scheduled_evidence and not ledger_error and lineage_matches
     return {
         "as_of": now.isoformat(), "expected_run_at": expected.isoformat(),
         "operational_recovered": bool(recovered),
-        "status": "recovered" if recovered else "awaiting_genuine_scheduled_evidence",
+        "scheduled_execution_evidence_complete": bool(scheduled_evidence),
+        "summary_lineage_matches": lineage_matches,
+        "status": ("recovered" if recovered else "awaiting_compatible_ledger_evidence"
+                   if scheduled_evidence else "awaiting_genuine_scheduled_evidence"),
         "console": {"fresh": bool(console_fresh), "genuine": genuine, "timestamp": run.get("timestamp"), "error": summary_error},
         "circuit_breaker": {"fresh": bool(breaker_fresh), "status": breaker.get("status", "unknown"),
                             "last_evaluated_at": breaker.get("last_evaluated_at"), "error": breaker_error},
@@ -137,6 +182,9 @@ def assess(root: Path, *, now: datetime | None = None) -> dict:
                               "status": risk.get("status", "not_started"),
                               "data_status": risk.get("data_status", "no_forward_observations"), "error": risk_error},
         "economic_viability": economics,
+        "measurement_provenance": measurement_provenance,
+        "ledger_error": ledger_error,
+        "performance_qualified": False,
         "promotion_authorized_by_this_check": False,
     }
 

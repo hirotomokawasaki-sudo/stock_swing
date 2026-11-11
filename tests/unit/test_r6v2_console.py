@@ -164,8 +164,8 @@ def test_partial_fill_has_unique_execution_leg_id(tmp_path: Path) -> None:
     assert len(set(all_leg_ids)) == len(all_leg_ids), "execution_leg_id must be unique"
 
 
-def test_full_close_has_no_execution_leg_id(tmp_path: Path) -> None:
-    """Full close (not partial) should NOT have execution_leg_id set."""
+def test_full_close_has_execution_leg_id(tmp_path: Path) -> None:
+    """R22 v2: full closes also need a leg ID; legacy rows are not backfilled."""
     tracker = _make_tracker(tmp_path)
     tracker.record_submission(
         symbol="MSFT", strategy_id="test", side="buy",
@@ -176,8 +176,8 @@ def test_full_close_has_no_execution_leg_id(tmp_path: Path) -> None:
 
     closed = [t for t in tracker.state.trades if t.get("status") == "closed"]
     assert len(closed) == 1
-    assert closed[0].get("execution_leg_id") is None, (
-        "Full close should not have execution_leg_id"
+    assert closed[0].get("execution_leg_id") == f"{closed[0]['trade_id']}-leg-1", (
+        "New full close must have a stable execution leg identity"
     )
 
 

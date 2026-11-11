@@ -8,7 +8,8 @@ from scripts import check_corporate_actions as corporate_actions
 def test_get_tracker_open_uses_quantity_weighted_average_for_multiple_lots(
     tmp_path, monkeypatch
 ):
-    state_path = tmp_path / "pnl_state.json"
+    state_path = tmp_path / 'data/tracking/pnl_state.json'
+    state_path.parent.mkdir(parents=True)
     state_path.write_text(
         json.dumps(
             {

@@ -76,7 +76,8 @@ def test_summarize_reports_pf_tail_and_drawdown():
 
 
 def test_load_state_missing_equity_fails_closed(tmp_path):
-    path = tmp_path / "state.json"
+    path = tmp_path / "data/tracking/pnl_state.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps({"trades": []}), encoding="utf-8")
     with pytest.raises(ValueError, match="baseline_equity"):
         load_state(path)

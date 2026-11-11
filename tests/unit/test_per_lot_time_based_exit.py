@@ -44,8 +44,8 @@ def test_reproduces_now_incident_partial_plan():
     """NOW 2026-09-01: old 15sh lot (day 20) expired, new 385sh lot (day 1)
     not expired -> plan must sell exactly 15 shares and keep 385."""
     lots = [
-        _lot("broker_open_0231_NOW", "NOW", 15, 20.1),
-        _lot("NOW-5144f488", "NOW", 385, 1.0),
+        _lot("public-fixture-3714", "NOW", 15, 20.1),
+        _lot("public-fixture-1209", "NOW", 385, 1.0),
     ]
     plan = plan_time_based_partial_exit(
         symbol="NOW", open_trades=lots, max_hold_days=20, now=NOW_DT,
@@ -53,23 +53,23 @@ def test_reproduces_now_incident_partial_plan():
     assert plan.is_partial is True, "the incident shape must produce a partial plan"
     assert plan.expired_qty == 15
     assert plan.total_open_qty == 400
-    assert plan.expired_lot_ids == ["broker_open_0231_NOW"]
-    assert plan.kept_lot_ids == ["NOW-5144f488"]
+    assert plan.expired_lot_ids == ["public-fixture-3714"]
+    assert plan.kept_lot_ids == ["public-fixture-1209"]
     assert plan.reason == "partial"
 
 
 def test_reproduces_orcl_incident_partial_plan():
     """ORCL 2026-09-01: 13sh (day 20) expired, 340sh (day 15) not."""
     lots = [
-        _lot("broker_open_0238_ORCL", "ORCL", 13, 20.2),
-        _lot("broker_open_0239_ORCL", "ORCL", 340, 15.2),
+        _lot("public-fixture-3719", "ORCL", 13, 20.2),
+        _lot("public-fixture-3720", "ORCL", 340, 15.2),
     ]
     plan = plan_time_based_partial_exit(
         symbol="ORCL", open_trades=lots, max_hold_days=20, now=NOW_DT,
     )
     assert plan.is_partial is True
     assert plan.expired_qty == 13
-    assert plan.kept_lot_ids == ["broker_open_0239_ORCL"]
+    assert plan.kept_lot_ids == ["public-fixture-3720"]
 
 
 # ── Non-partial outcomes (must fall back to full-position behavior) ─────

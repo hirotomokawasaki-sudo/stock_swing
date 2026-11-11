@@ -27,6 +27,9 @@ STATE_PATH  = PROJECT_ROOT / "data" / "tracking" / "pnl_state.json"
 REGISTRY    = PROJECT_ROOT / "config" / "reference" / "symbol_registry.yaml"
 
 
+from stock_swing.tracking.compatibility import legacy_entrypoint, legacy_maintenance, tracking_root
+
+@legacy_entrypoint(lambda *a, **k: globals().get('project_root', globals().get('PROJECT_ROOT', Path(__file__).resolve().parents[1])))
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true", help="Show changes without applying")

@@ -43,6 +43,9 @@ def _atomic_write(path: Path, data: dict) -> None:
         raise
 
 
+from stock_swing.tracking.compatibility import legacy_entrypoint, legacy_maintenance, tracking_root
+
+@legacy_entrypoint(lambda *a, **k: globals().get('project_root', globals().get('PROJECT_ROOT', Path(__file__).resolve().parents[1])))
 def main() -> None:
     parser = argparse.ArgumentParser(description="Quarantine invalid closed trades")
     parser.add_argument("--dry-run", action="store_true", help="Preview only, no writes")

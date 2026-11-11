@@ -33,6 +33,8 @@ from typing import Any
 
 import sys
 
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
@@ -173,7 +175,7 @@ def build_variants() -> list[ExitVariantSpec]:
 
 
 def load_pnl_state(path: Path) -> dict[str, Any]:
-    return json.loads(path.read_text(encoding="utf-8"))
+    return legacy_analytical_state(path)
 
 
 def filter_closed_trades(

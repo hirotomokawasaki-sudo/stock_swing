@@ -15,6 +15,7 @@ from typing import Optional
 import logging
 
 from stock_swing.core.types import CanonicalRecord
+from stock_swing.sources.bar_contract import normalize_interval
 from stock_swing.sources.broker_client_protocol import BrokerClientProtocol
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,8 @@ class HybridDataFetcher:
         self,
         broker_client: BrokerClientProtocol,
         etf_symbols: set[str],
-        massive_api_key: Optional[str] = None
+        massive_api_key: Optional[str] = None,
+        measurement_recorder=None,
     ):
         """
         Initialize hybrid fetcher.
@@ -49,6 +51,7 @@ class HybridDataFetcher:
             etf_symbols: Set of ETF ticker symbols
             massive_api_key: Massive API key (optional, defaults to env var)
         """
+        self.measurement_recorder = measurement_recorder
         self.broker = broker_client
         self.etf_symbols = etf_symbols
         
@@ -60,6 +63,7 @@ class HybridDataFetcher:
             try:
                 from stock_swing.sources.massive_client import MassiveClient
                 self.massive_client = MassiveClient(api_key=api_key)
+                self.massive_client.measurement_recorder = measurement_recorder
                 logger.info("Massive client initialized for ETF data")
             except Exception as exc:
                 logger.warning(f"Failed to initialize Massive client: {exc}")
@@ -88,11 +92,13 @@ class HybridDataFetcher:
             Tuple of (records, source_name)
             source_name is "massive", "broker", or "failed"
         """
-        # Try Massive first for ALL symbols (if available)
-        if self.massive_client:
+        timeframe = normalize_interval(timeframe)
+        # Never substitute daily bars for a requested intraday interval.
+        if self.massive_client and (timeframe == "1Day" or timeframe.endswith(("Min", "Hour"))):
             try:
-                records = self._fetch_from_massive(symbol, limit)
+                records = self._fetch_from_massive(symbol, limit, timeframe)
                 if records:
+                    self._observe_returned(records)
                     return (records, "massive")
             except Exception as exc:
                 logger.warning(f"Massive fetch failed for {symbol}: {exc}, falling back to broker")
@@ -104,6 +110,7 @@ class HybridDataFetcher:
                 records = self._fetch_from_yahoo(symbol, limit)
                 if records:
                     logger.warning(f"Using Yahoo fallback for {symbol} after Massive failure")
+                    self._observe_returned(records)
                     return (records, "yahoo")
             except Exception as exc:
                 logger.warning(f"Yahoo fallback failed for {symbol}: {exc}, falling back to broker")
@@ -112,24 +119,43 @@ class HybridDataFetcher:
         try:
             records = self._fetch_from_broker(symbol, timeframe, limit)
             logger.warning(f"Using broker data for {symbol} - may be stale (Alpaca stopped 2026-04-22)")
+            expected = {"bar_" + timeframe.lower()}
+            if timeframe == "1Day":
+                expected.add("bar_daily")
+            if any(record.event_type not in expected for record in records):
+                raise ValueError("broker returned an incompatible bar interval")
+            self._observe_returned(records)
             return (records, "broker")
         except Exception as exc:
             logger.error(f"Broker fetch failed for {symbol}: {exc}")
             return ([], "failed")
     
-    def _fetch_from_massive(self, symbol: str, limit: int) -> list[CanonicalRecord]:
+    def _observe_returned(self, records):
+        recorder = self.measurement_recorder
+        if recorder is not None and recorder.enabled:
+            try:
+                from stock_swing.sources.bar_contract import observe_canonical_bars
+                observe_canonical_bars(recorder, records)
+            except Exception:
+                recorder.note_failure()
+
+    def _fetch_from_massive(self, symbol: str, limit: int, timeframe: str = "1Day") -> list[CanonicalRecord]:
         """Fetch bars from Massive API and convert to CanonicalRecord."""
         end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=limit)
         from_str = start_date.strftime("%Y-%m-%d")
         to_str = end_date.strftime("%Y-%m-%d")
         
-        bars = self.massive_client.fetch_daily_bars(
-            symbol,
-            from_date=from_str,
-            to_date=to_str,
-            limit=limit
-        )
+        if timeframe == "1Day":
+            bars = self.massive_client.fetch_daily_bars(
+                symbol, from_date=from_str, to_date=to_str, limit=limit
+            )
+        else:
+            multiplier = (int(timeframe.removesuffix("Min")) if timeframe.endswith("Min")
+                          else int(timeframe.removesuffix("Hour")) * 60)
+            bars = self.massive_client.fetch_minute_bars(
+                symbol, from_date=from_str, to_date=to_str, multiplier=multiplier, limit=limit
+            )
         
         if not bars:
             return []
@@ -144,12 +170,13 @@ class HybridDataFetcher:
                 bar_timestamp = bar.timestamp
             
             record = CanonicalRecord(
-                record_id=f"massive_{symbol}_{bar_timestamp.isoformat()}",
+                record_id=(f"massive_{symbol}_{bar_timestamp.isoformat()}" if timeframe == "1Day"
+                           else f"massive_{symbol}_{timeframe}_{bar_timestamp.isoformat()}"),
                 schema_version="v1",
                 source="massive",
                 source_type="price",
                 symbol=symbol,
-                event_type="bar_daily",
+                event_type="bar_daily" if timeframe == "1Day" else f"bar_{timeframe.lower()}",
                 event_time=bar_timestamp,
                 as_of=bar_timestamp.isoformat(),
                 ingested_at=datetime.now(timezone.utc),
@@ -166,6 +193,8 @@ class HybridDataFetcher:
                 },
                 quality_flags=[]
             )
+            if getattr(bar, "bar_contract", None) is not None:
+                record.payload["bar_contract"] = bar.bar_contract
             records.append(record)
         
         logger.info(f"Fetched {len(records)} bars for {symbol} from Massive")
@@ -176,7 +205,17 @@ class HybridDataFetcher:
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=1mo"
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read())
+            body = resp.read()
+            data = json.loads(body)
+        contract = None
+        if self.measurement_recorder is not None and self.measurement_recorder.enabled:
+            try:
+                from stock_swing.sources.bar_contract import record_bar_response
+                contract = record_bar_response(self.measurement_recorder, provider="yahoo",
+                    request=dict(symbol=symbol, interval="1Day", provider_interval="1d", range="1mo"),
+                    response=data, received_at=datetime.now(timezone.utc), raw_bytes=body)
+            except Exception:
+                self.measurement_recorder.note_failure()
 
         result = data.get("chart", {}).get("result", [{}])[0]
         timestamps = result.get("timestamp", [])
@@ -220,6 +259,9 @@ class HybridDataFetcher:
                 )
             )
 
+        if contract is not None:
+            for record in records:
+                record.payload["bar_contract"] = contract
         if limit > 0:
             records = records[-limit:]
         logger.info(f"Fetched {len(records)} bars for {symbol} from Yahoo")

@@ -3,34 +3,83 @@
 console.log('📊 Stock Swing Console v2026-05-12-0938 loaded');
 
 // Format helpers (safe + compatible with original implementation)
+const finiteValue = (v) => {
+    if (v == null || typeof v === 'boolean' || (typeof v !== 'number' && typeof v !== 'string') || String(v).trim() === '') return null;
+    const n = Number(v); return Number.isFinite(n) ? n : null;
+};
 const fmt = {
     usd: (v) => {
-        if (v == null || v === undefined) return '—';
-        const num = safeNumber(v, 0);
+        const num = finiteValue(v);
+        if (num === null) return '未取得';
         return `$${num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     },
     pct: (v) => {
-        if (v == null || v === undefined) return '—';
-        const num = safeNumber(v, 0);
+        const num = finiteValue(v);
+        if (num === null) return '未取得';
         return `${(num * 100).toFixed(2)}%`;
     },
     pctSigned: (v) => {
-        if (v == null || v === undefined) return '—';
-        const num = safeNumber(v, 0);
+        const num = finiteValue(v);
+        if (num === null) return '未取得';
         return `${num >= 0 ? '+' : ''}${(num * 100).toFixed(2)}%`;
     },
     usdSigned: (v) => {
-        if (v == null || v === undefined) return '—';
-        const num = safeNumber(v, 0);
+        const num = finiteValue(v);
+        if (num === null) return '未取得';
         return `${num >= 0 ? '+$' : '-$'}${Math.abs(num).toLocaleString('en-US', {minimumFractionDigits: 2})}`;
     },
     dt: (iso) => iso ? new Date(iso).toLocaleString('ja-JP') : '—',
     badge: (label, cls) => `<span class="badge badge-${cls}">${label}</span>`,
 };
 
+let consoleMarketClock = null;
 class Console {
+    static pollingDelay(clock, now = Date.now()) {
+        const stamp = Date.parse(clock?.as_of || '');
+        const boundary = Date.parse(clock?.next_transition_at || '');
+        if (clock?.timezone !== 'America/New_York' || !['regular','extended','closed'].includes(clock?.session)
+            || ![300000,1800000,3600000].includes(clock?.refresh_interval_ms)
+            || !/(Z|[+-]\d{2}:\d{2})$/.test(clock?.as_of || '') || !/(Z|[+-]\d{2}:\d{2})$/.test(clock?.next_transition_at || '')
+            || !Number.isFinite(stamp) || stamp > now || now-stamp > 7200000
+            || !Number.isFinite(boundary) || boundary <= now) return 300000;
+        return Math.max(10000, Math.min(clock.refresh_interval_ms, boundary-now));
+    }
+
+    captureReadingState(content) {
+        if (!this._renderedTab || !content) return;
+        this._readingState ||= {};
+        this._readingState[this._renderedTab] = {
+            details: [...content.querySelectorAll('details')].map((e,i)=>({key:e.id || 'detail-'+i,open:e.open})),
+            selects: [...content.querySelectorAll('select[id]')].map(e=>({id:e.id,value:e.value})),
+            tables: [...content.querySelectorAll('.table-wrap')].map(e=>e.scrollLeft),
+            scroll: window.scrollY
+        };
+        try { sessionStorage.setItem('consoleReadingStateV1',JSON.stringify(this._readingState)); } catch {}
+    }
+
+    restoreReadingState(content, revision) {
+        const saved=this._readingState?.[this.currentTab];
+        if (!saved || typeof saved !== 'object') return;
+        [...content.querySelectorAll('details')].forEach((e,i)=>{
+            const prior=Array.isArray(saved.details) && saved.details.find(d=>d.key===(e.id || 'detail-'+i));
+            if (prior && typeof prior.open === 'boolean') e.open=prior.open;
+        });
+        if (Array.isArray(saved.selects)) for (const item of saved.selects) {
+            const element=document.getElementById(item.id);
+            if (element?.tagName==='SELECT' && [...element.options].some(o=>o.value===item.value)) element.value=item.value;
+        }
+        [...content.querySelectorAll('.table-wrap')].forEach((e,i)=>{
+            if (Number.isFinite(saved.tables?.[i]) && saved.tables[i]>=0) e.scrollLeft=saved.tables[i];
+        });
+        requestAnimationFrame(()=>{
+            if(this._renderRevision===revision && Number.isFinite(saved.scroll) && saved.scroll>=0) window.scrollTo(0,saved.scroll);
+        });
+    }
+
     constructor() {
         this.currentTab = 'overview';
+        window.addEventListener('pagehide', () => this.captureReadingState(document.getElementById('content')));
+        try { const saved=JSON.parse(sessionStorage.getItem('consoleReadingStateV1') || '{}'); this._readingState=saved && !Array.isArray(saved) && typeof saved==='object' ? saved : {}; } catch { this._readingState={}; }
         this.currentPeriod = localStorage.getItem('dashboardPeriod') || 'month';
         this._equityChartPeriod = localStorage.getItem('equityChartPeriod') || 'month';
         this._weeklyChartPeriod = localStorage.getItem('weeklyChartPeriod') || 'month';
@@ -72,6 +121,7 @@ class Console {
             // Normalize first (before validation)
             this.normalizeData(jsonData);
             this.data = jsonData;
+            consoleMarketClock = jsonData.market_clock || null;
         } else if (!this.data) {
             // First load, no cache — show error state
             this.data = { error: error || 'Failed to load data' };
@@ -154,10 +204,14 @@ class Console {
     render() {
         const startTime = Date.now();
         const content = document.getElementById('content');
+        this.captureReadingState(content);
+        const revision=this._renderRevision=(this._renderRevision || 0)+1;
         if (!this.data) { content.innerHTML = '<p class="muted">読み込み中...</p>'; return; }
         if (this.data.error) { content.innerHTML = `<div class="card"><p class="danger">エラー: ${this.data.error}</p></div>`; return; }
         
         try {
+            // Release charts before replacing canvases; delayed redraws also guard below.
+            if (typeof Chart !== 'undefined') content.querySelectorAll('canvas').forEach(canvas => Chart.getChart(canvas)?.destroy());
             switch (this.currentTab) {
                 case 'overview':   content.innerHTML = this.renderOverview(); this.initOverviewCharts(); break;
                 case 'weekly':     content.innerHTML = this.renderWeekly(); this.initWeeklyCharts(); break;
@@ -173,6 +227,9 @@ class Console {
                 case 'metrics':    content.innerHTML = this.renderMetrics(); break;
             }
             this.setupPeriodSelectors();
+            this.setupProjectionPreview();
+            this._renderedTab=this.currentTab;
+            this.restoreReadingState(content,revision);
             
             // Phase 3: パフォーマンス測定
             const endTime = Date.now();
@@ -224,6 +281,8 @@ class Console {
     renderOverview() {
         return `
         ${this.renderAlerts()}
+        ${this.renderEvidenceStatus()}
+        ${this.renderOperationalEvidence()}
         ${this.renderOverviewKpis()}
         ${this.renderOverviewCharts()}
         ${this.renderOverviewDiagnostics()}`;
@@ -254,8 +313,8 @@ class Console {
         </div>
         <div class="grid" style="margin-top:16px">
             <div class="card">
-                <h3>Pending / Mismatched Orders</h3>
-                ${this.renderPendingOrdersTable((this.data.reconciliation || {}).pending_orders || [])}
+                <h3>現在の未約定注文（過去の照合履歴とは別）</h3>
+                ${this.renderPendingOrdersTable((this.data.reconciliation || {}).current_pending_orders ?? (this.data.reconciliation || {}).pending_orders ?? [], (this.data.reconciliation || {}).current_orders_evidence || (this.data.reconciliation || {}).pending_orders_evidence)}
             </div>
             <div class="card">
                 <h3>Reconciliation by Symbol</h3>
@@ -278,9 +337,237 @@ class Console {
         return `<div class="mini-chart"><div class="dual-bars">${bars}</div></div>`;
     }
 
-    renderPendingOrdersTable(data) {
-        if (!data || data.length === 0) return '<p class="muted">保留注文なし</p>';
-        return `<div class="table-wrap"><table><thead><tr><th>時刻</th><th>シンボル</th><th>Side</th><th>Qty</th><th>Status</th></tr></thead><tbody>${data.map(o=>`<tr><td>${fmt.dt(o.ts)}</td><td>${this.escapeHtml(o.symbol)}</td><td>${this.escapeHtml(o.side)}</td><td>${o.qty}</td><td>${this.escapeHtml(o.status)}</td></tr>`).join('')}</tbody></table></div>`;
+    renderPendingOrdersTable(data, evidence) {
+        const e = evidence || {};
+        const age = e.as_of ? (Date.now() - Date.parse(e.as_of)) / 1000 : NaN;
+        const fresh = Number.isFinite(age) && age >= 0 && age <= 120;
+        const verified = e.status === 'ok' && fresh;
+        const note = `${verified ? '取得確認済み（範囲限定）' : '取得未確認・不完全または古い情報'} / ${e.reason || '取得証拠なし'} / 取得時刻: ${e.as_of ? fmt.dt(e.as_of) : '未取得'} / ${e.scope || '取得範囲不明'}`;
+        const heading = `<p class="${verified ? 'muted' : 'warn'} small">${this.escapeHtml(note)}</p>`;
+        if (!Array.isArray(data) || data.length === 0) {
+            const completeOpen = verified && e.query_status === 'open' && e.complete === true;
+            return heading + `<p class="${verified ? 'muted' : 'warn'}">${completeOpen ? '取得時点・照会口座の未約定注文なし（予約資金・全口座の認定とは別）' : verified ? '取得範囲内に対象注文なし（全未約定の網羅確認ではありません）' : '保留注文の有無は未確認'}</p>`;
+        }
+        const labels = {accepted:'受付済（未約定）', new:'受付済（未約定）', pending_new:'受付処理中',
+            filled:'約定済', partially_filled:'一部約定', pending_cancel:'取消依頼中（未確定）',
+            canceled:'取消確認済', cancelled:'取消確認済', rejected:'拒否確認済', expired:'期限切れ',
+            unknown:'応答不明', unconfirmed:'注文ID対応未確認', pending_reconcile:'照合待ち', reconciled_ok:'旧照合記録のみ'};
+        return heading + `<div class="table-wrap"><table><thead><tr><th>時刻</th><th>銘柄</th><th>Side</th><th>数量</th><th>状態</th><th>注文ID</th></tr></thead><tbody>${data.map(o => `<tr>
+            <td>${this.escapeHtml(fmt.dt(o.ts))}</td><td>${this.escapeHtml(o.symbol || '未取得')}</td>
+            <td>${this.escapeHtml(o.side || '未取得')}</td><td>${this.escapeHtml(String(finiteValue(o.qty) ?? '未取得'))}</td>
+            <td>${this.escapeHtml(labels[o.status] || o.status || '未確認')}</td><td>${this.escapeHtml(String(o.order_id || '未取得'))}</td></tr>`).join('')}</tbody></table></div>`;
+    }
+
+    renderEvidenceStatus() {
+        const e = this.data?.console_evidence || {};
+        const current = e.status === 'current';
+        const rows = Array.isArray(e.items) ? e.items : [];
+        return `<details class="card" style="margin-bottom:16px" id="console-evidence">
+            <summary><strong>改善・判断の確認状況</strong> <span class="${current ? 'muted' : 'warn'}">${current ? '資料時点／稼働確認とは別' : '未取得・要再確認'}</span></summary>
+            <p class="small muted">文書確認: ${this.escapeHtml(fmt.dt(e.reviewed_at))} ／ ${this.escapeHtml(e.reason || '確認資料なし')}。表示更新時刻は各データの取得時刻ではありません。</p>
+            <div class="table-wrap"><table><thead><tr><th>論点</th><th>資料時点の状態</th><th>確認範囲・不足</th></tr></thead><tbody>
+            ${rows.map(row => `<tr><td>${this.escapeHtml(row.title || '')}</td><td class="warn">${this.escapeHtml(row.state || '未確認')}${row.source_current === false ? '（根拠変更・再確認）' : ''}</td>
+                <td>${this.escapeHtml(row.detail || '')} ${/^\/api\/console-evidence\/document\?name=[a-z]+$/.test(row.url || '') ? `<a href="${row.url}" target="_blank" rel="noopener">根拠</a>` : ''}</td></tr>`).join('')}
+            </tbody></table></div>
+        </details>`;
+    }
+
+    renderOperationalEvidence() {
+        const e = this.data?.operational_evidence || {};
+        const c = e.control || {}, v = e.versions || {}, f = e.funds || {};
+        const esc = value => this.escapeHtml(String(value ?? '未確認'));
+        const state = {ok:'正常の記録（全BUY許可とは別）',halted:'BUY停止の記録あり',recovery_pending:'再検証待ち・BUY停止の記録あり',degraded:'縮退の記録あり'}[c.state] || '停止情報未確認';
+        const age = finiteValue(c.age_seconds);
+        const money = value => finiteValue(value) === null ? '未確認' : fmt.usd(value);
+        return `<section class="card ops-evidence" id="operational-evidence">
+            <h3>停止・監視の確認</h3>
+            <p class="${c.state === 'halted' || c.status === 'missing' || c.status === 'invalid' ? 'danger' : 'warn'}"><strong>${esc(state)}</strong></p>
+            <p>停止発生: ${esc(fmt.dt(c.triggered_at))} ／ 最終評価: ${esc(fmt.dt(c.as_of))} ／ 経過: ${age === null ? '未確認' : esc(Math.floor(age / 60)) + '分'}</p>
+            <p class="warn">SELL監視の実行証拠：未確認（BUY停止とは別に確認）</p>
+            <p class="small muted">${esc(c.source)} ／ ${esc(c.reason)}</p>
+            <details><summary>適用版・資金・成績の確認範囲</summary>
+                <h4>反映・実行の証拠</h4>
+                <div class="table-wrap"><table><thead><tr><th>対象</th><th>現在確認できること</th><th>不足している証拠</th></tr></thead><tbody>
+                    <tr><td>Console</td><td>${v.console_startup_match === true ? '起動時のファイル指紋と一致' : '起動時との一致は未確認・再反映確認が必要'}</td><td>応答・実画面検証は別途</td></tr>
+                    <tr><td>売買・取消・安全是正</td><td>候補の検証状況は上の根拠資料を参照</td><td>売買ジョブの読込版・実効設定・候補配備は未照合</td></tr>
+                    <tr><td>定期実行</td><td>取引タブに保存サマリーの状態を表示</td><td>scheduler実行ID・完了receiptとの独立照合</td></tr>
+                </tbody></table></div>
+                <p class="small muted">${esc(v.reason)}</p>
+                <details><summary>Consoleファイル指紋</summary>${(v.fingerprints || []).map(row => `<p class="small">${esc(row.path)}: ${esc(row.sha256)}</p>`).join('')}</details>
+                <h4>資金・注文後リスク（broker報告値と利用可能額は別）</h4>
+                <p>取得: ${esc(fmt.dt(f.as_of))} ／ 状態: ${esc(f.status)}</p>
+                <div class="metric"><span>cash（broker報告）</span><span>${money(f.cash)}</span></div>
+                <div class="metric"><span>buying_power（broker報告）</span><span>${money(f.buying_power)}</span></div>
+                ${this.renderOperationalInputs()}
+                <p class="small muted">未約定の取得状態: ${esc(f.pending_status)} ／ ${esc(f.reason)}</p>
+                ${this.renderMetricQualification()}
+            </details>
+            ${this.renderDataAvailability()}
+            ${this.renderFollowthroughEvidence()}
+        </section>`;
+    }
+
+    renderOperationalInputs() {
+        const e=this.data?.operational_evidence || {}, f=e.capacities || {}, p=e.portfolio_inputs || {}, q=e.quality_context || {};
+        const esc=v=>this.escapeHtml(String(v ?? '未確認'));
+        const money=v=>finiteValue(v)===null?'未確認':f.currency==='USD'?fmt.usd(v):String(v)+' '+(f.currency || '通貨未確認');
+        const pct=v=>finiteValue(v)===null?'未確認':fmt.pct(v);
+        const yes=v=>v===true?'対応あり':v===false?'対応なし':'未確認';
+        if(!this.projectionDraft) {
+            try { this.projectionDraft=JSON.parse(sessionStorage.getItem('consoleProjectionDraftV1') || '{}'); }
+            catch { this.projectionDraft={}; }
+        }
+        const draft=this.projectionDraft || {};
+        return `<p>非信用買付余力（broker報告）: ${money(f.non_marginable_buying_power)} ／ 通貨: ${esc(f.currency)}</p>
+            <p class="small muted">${esc(f.reason)}</p>
+            <p>保有評価額÷equity: ${pct(p.current_gross_exposure_pct)} ／ 最大1銘柄÷equity: ${pct(p.current_largest_position_pct)}</p>
+            <p>分類確認: ${esc(p.classified_positions)} / ${esc(p.total_positions)}銘柄 ／ 分類coverage：${pct(p.classification_coverage)}${p.classification_state==='empty_population'?'（保有なし・coverage率は算出しません）':''} ／ 取得: ${esc(fmt.dt(p.as_of))}</p>
+            <p class="warn">予約資金・受渡済み現金・出金可能額は未確認。現在の保有比率は注文後リスクではありません。</p>
+            <details id="projection-preview"><summary>指値BUYの配分試算（注文送信なし）</summary>
+                <p class="small muted">価格・equity固定の概算。手数料・約定・売買許可の判定ではありません。未約定注文あり／分類不足では試算を保留します。</p>
+                <form id="projection-form" style="display:flex;flex-wrap:wrap;gap:8px;align-items:end">
+                    <label>銘柄<input name="symbol" required maxlength="15" value="${esc(draft.symbol || '')}" style="width:90px"></label>
+                    <label>数量<input name="qty" type="number" min="0.000001" step="any" required value="${esc(draft.qty || '')}" style="width:95px"></label>
+                    <label>指値<input name="price" type="number" min="0.000001" step="any" required value="${esc(draft.price || '')}" style="width:95px"></label>
+                    <button type="submit">配分を試算</button>
+                </form><p id="projection-result" aria-live="polite">${esc(this.projectionText || '注文案未指定のため、注文後の集中度は未確認です。')}</p>
+            </details>
+            <details id="quality-context"><summary>台帳・鮮度警告の根拠（判定は維持）</summary>
+                <p>最終完了予定slot: ${esc(fmt.dt(q.expected_completed_slot))}</p>
+                <p>保存サマリー: ${yes(q.summary_at_or_after_due)} ／ guardrail評価: ${yes(q.breaker_at_or_after_due)} ／ day-start日付: ${yes(q.day_start_matches_due_session)}</p>
+                <p>台帳内隔離: ${esc(q.inline_quarantined)}行 ／ 別隔離配列: ${esc(q.separate_quarantined)}行（重複し得るため合計しません）</p>
+                <p class="small muted">${esc(q.ledger_next_action)} ${esc(q.reason)}</p>
+            </details>`;
+    }
+
+    setupProjectionPreview() {
+        const form=document.getElementById('projection-form');
+        if(!form) return;
+        form.addEventListener('input',()=>{
+            this.projectionDraft=Object.fromEntries(new FormData(form));
+            this._projectionRevision=(this._projectionRevision || 0)+1;
+            this.projectionText='注文案を変更しました。再試算するまで結果は未確認です。';
+            document.getElementById('projection-result').textContent=this.projectionText;
+            try { sessionStorage.setItem('consoleProjectionDraftV1',JSON.stringify(this.projectionDraft)); } catch {}
+        });
+        form.addEventListener('submit',async event=>{
+            event.preventDefault();
+            const draft=Object.fromEntries(new FormData(form));this.projectionDraft=draft;
+            const revision=this._projectionRevision || 0;
+            const target=document.getElementById('projection-result'), button=form.querySelector('button');
+            const params=new URLSearchParams({projection_symbol:draft.symbol,projection_qty:draft.qty,projection_limit:draft.price});
+            button.disabled=true;target.textContent='取得済み入力で試算中（注文送信なし）';
+            try {
+                const response=await fetch('/api/operational-evidence?'+params,{cache:'no-store'});
+                if(!response.ok) throw new Error('unavailable');
+                const body=await response.json(), p=body.portfolio_inputs || {};
+                if(revision!==(this._projectionRevision || 0)) return;
+                const value=finiteValue(p.projected_concentration);
+                const message=p.projected_status==='limit_buy_scenario' && value!==null
+                    ? `${draft.symbol} / ${draft.qty}株 / 指値${draft.price}：注文後の最大1銘柄÷equity ${fmt.pct(value)}（保有取得: ${fmt.dt(p.as_of)}・口座取得: ${fmt.dt(p.account_as_of)}）。固定価格の配分試算のみ・注文送信なし。`
+                    : '未約定・分類・取得鮮度などの入力条件が不足し試算保留。注文は送信していません。';
+                this.projectionText=message;
+                if(target.isConnected) target.textContent=message;
+            } catch(error) {
+                if(revision!==(this._projectionRevision || 0)) return;
+                this.projectionText='試算入力の取得・検証に失敗。結果は未確認、注文送信なし。';
+                if(target.isConnected) target.textContent=this.projectionText;
+            } finally { if(button.isConnected) button.disabled=false; }
+        });
+    }
+
+    renderDataAvailability() {
+        const rows = this.data?.operational_evidence?.data_availability;
+        const labels = {available:'取得済み（表示範囲内）',failed:'取得失敗',partial:'部分取得',stale:'期限切れ・時刻要確認',
+            invalid:'入力不正・要確認',not_acquired:'未取得',not_connected:'未接続',not_recorded:'未記録',
+            recorded_unqualified:'記録あり・独立照合前',not_qualified:'評価条件未充足',decision_required:'基準未決'};
+        const esc = value => this.escapeHtml(String(value ?? '未確認'));
+        if (!Array.isArray(rows)) return '<details id="data-availability"><summary>取得状況と不足理由</summary><p class="warn">取得状態の情報は未取得です。</p></details>';
+        return `<details id="data-availability"><summary>取得状況と不足理由（未取得・未接続・未記録を区別）</summary>
+            <p class="small muted">再読み込みで埋まる値と、データ接続・記録・評価条件の整備が必要な値を区別しています。</p>
+            <div class="table-wrap"><table><thead><tr><th>項目</th><th>状態</th><th>理由 / 次の確認</th><th>元取得時刻</th></tr></thead>
+            <tbody>${rows.map(row=>`<tr><td>${esc(row.label)}</td><td class="${row.state==='available'?'muted':'warn'}">${esc(labels[row.state] || '未確認')}</td><td>${esc(row.reason)}${row.next_action?`<br>${esc(row.next_action)}`:''}</td><td>${row.as_of?esc(fmt.dt(row.as_of)):'—'}</td></tr>`).join('')}</tbody></table></div>
+        </details>`;
+    }
+
+    renderFollowthroughEvidence() {
+        const e = this.data?.operational_evidence?.followthrough || {};
+        const p = e.position_comparison || {}, o = e.pending_risk || {}, r = e.scheduler || {};
+        const i = e.research_inputs || {}, a = e.acceptance || {};
+        const quantityLabel = {matched_quantity_only:'保存open数量のみ一致', mismatch:'数量差あり', quarantine_present:'隔離行あり・整合認定は保留', unknown:'未確認'};
+        const esc = v => this.escapeHtml(String(v ?? '未確認'));
+        const n = v => finiteValue(v) === null ? '未確認' : esc(v);
+        return `<details id="followthrough-evidence"><summary>実行・照合・改善サイクルの次の確認</summary>
+            <h4>定期実行の独立metadata</h4>
+            ${r.source ? `<p class="small muted">取得元: ${esc(r.source)} ／ metadata取得: ${esc(fmt.dt(r.as_of))} ／ 保存確認記録: ${esc(r.saved_review_status)}</p>` : ''}
+            <p>${r.registered_job_observed === true ? '登録ジョブのmetadata取得済み' : '登録ジョブのmetadata未確認'} ／ 最終状態: ${esc(r.last_scheduler_status)} ／ 時刻: ${esc(fmt.dt(r.last_scheduler_at))}</p>
+            <p>保持ログと保存サマリーrun: ${r.application_run_linked === true ? '対応確認（当該1回のみ）' : '未確認'}</p>
+            <p class="warn">${esc(r.reason || '実行ID・実効設定・SELL実行は未確認')}</p>
+            ${Array.isArray(r.rows) && r.rows.length ? `<div class="table-wrap"><table><thead><tr><th>売買ジョブ</th><th>有効</th><th>最終実行（scheduler申告）</th><th>最終結果（約定とは別）</th></tr></thead><tbody>${r.rows.map(row=>`<tr><td>${esc(row.name)}</td><td>${row.enabled===true?'有効':row.enabled===false?'無効':'未確認'}</td><td>${esc(fmt.dt(row.last_run))}</td><td>${esc(row.last_status)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+            <h4>保存open数量との限定比較</h4>
+            <p class="warn">${esc(quantityLabel[p.status] || '未確認')} ／ 数量差の銘柄数: ${n(p.mismatch_count)} ／ 口座取得: ${esc(fmt.dt(p.broker_as_of))}</p>
+            <p class="small">${esc(p.scope)} ${esc(p.reason)}</p>
+            <h4>取得範囲内の注文残</h4>
+            <p>未完了: ${n(o.observed_active_orders)} ／ 取消待ち: ${n(o.pending_cancel)} ／ 価格未確定のBUY: ${n(o.unpriced_buy_orders)}</p>
+            <p>観測したlimit買い残の概算: ${finiteValue(o.observed_limit_buy_notional) === null ? '未確認' : fmt.usd(o.observed_limit_buy_notional)}</p>
+            <p class="small warn">${esc(o.scope)} ${esc(o.reason)}</p>
+            <p class="small">理由コード: ${esc(o.reason_code)} ／ 読取行: ${n(o.observed_rows)} / 上限${n(o.query_limit)} ／ 次の確認: ${esc(o.next_action)}</p>
+            <h4>凍結した研究入力の充足</h4>
+            <p>見送り: ${n(i.deny_exact_snapshots)} / ${n(i.deny_decisions)} ／ SELL: ${n(i.sell_exact_snapshots)} / ${n(i.sell_decisions)}（判断と同actionのsnapshot）</p>
+            <p class="warn">出口の直接対応: ${i.exit_direct_link === true ? '資料の直接対応あり・実効性は別' : '未確認'} ／ 正式比較: 未開始・資格未認定</p>
+            <p>採用値の未決数: ${Array.isArray(a.missing_fields) ? esc(a.missing_fields.length) : '未確認'}。${esc(a.reason)}（主要16項目の点検で、記入表全体の未決総数ではありません。）</p>
+            <details id="acceptance-missing-fields"><summary>未決項目・単位・担当（入力/採用操作なし）</summary>
+            <p><a href="/api/console-evidence/document?name=worksheet" target="_blank" rel="noopener">正本の採用値記入表</a></p>
+            ${Array.isArray(a.missing_details) ? `<div class="table-wrap"><table><thead><tr><th>項目 / key</th><th>単位</th><th>担当</th></tr></thead><tbody>${a.missing_details.map(row=>`<tr><td>${esc(row.label)}<br><span class="small">${esc(row.key)}</span></td><td>${esc(row.unit)}</td><td>${esc(row.owner)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="warn">記入表の入力未取得・未確認</p>'}
+            </details>
+            <ol>${(e.next_actions || []).map(x=>`<li>${esc(x)}</li>`).join('')}</ol>
+        </details>`;
+    }
+
+    renderRunEvidence() {
+        const r = this.data?.operational_evidence?.run || {};
+        const cfg = this.data?.operational_evidence?.config_instances || {};
+        const cfgLabels = {observed:'観測済みの申告',not_reached:'未到達',unavailable:'観測不可',construction_failed:'設定生成失敗',changed_since_capture:'取得後の変更あり'};
+        return `<div class="card ops-evidence" id="run-evidence"><h3>実行・実効設定の証拠</h3>
+            <p>保存サマリー: ${this.escapeHtml(r.status || '未確認')} ／ 結果申告: ${this.escapeHtml(r.result || '未確認')} ／ 時刻: ${this.escapeHtml(fmt.dt(r.as_of))}</p>
+            <p class="warn">定期実行との独立照合：未確認 ／ 売買ジョブの実効設定・読込版：未照合</p>
+            <p class="small muted">${this.escapeHtml(r.reason || '実行証拠未取得')}（24時間は表示用の参照窓で、売買の停止条件ではありません。）</p>
+            <details id="config-instance-evidence"><summary>設定インスタンスの観測記録（全設定の証明ではありません）</summary>
+                <p class="small muted">${this.escapeHtml(cfg.reason || '設定観測receipt未取得。未記録・OFFを成功扱いしません。')}</p>
+                ${(cfg.rows || []).length ? `<div class="table-wrap"><table><thead><tr><th>設定family</th><th>観測状態</th><th>記録の申告 / field数</th><th>source指紋</th></tr></thead><tbody>${cfg.rows.map(row=>`<tr><td>${this.escapeHtml(row.family)}</td><td class="warn">${this.escapeHtml(cfgLabels[row.status] || '未確認')}</td><td>${row.recorded === true ? '記録済みの申告' : '未記録'} / ${this.escapeHtml(String(row.field_count ?? '未確認'))}</td><td class="small">${this.escapeHtml(row.source_sha256 || '未確認')}</td></tr>`).join('')}</tbody></table></div>` : '<p class="warn">設定観測receipt未取得・要確認</p>'}
+            </details>
+        </div>`;
+    }
+
+    renderResearchEvidence() {
+        const e = this.data?.operational_evidence?.research || {};
+        const labels = {observing:'観測結果の保存記録あり',disabled:'観測無効の記録',error:'観測エラーの記録',stale:'古いサマリー・現在の観測は未確認',invalid:'観測契約を確認できません'};
+        const count = e.status === 'observing' ? finiteValue(e.observations) : null;
+        const esc = value => this.escapeHtml(String(value ?? '未確認'));
+        return `<div class="card ops-evidence" id="research-evidence"><h3>購入停止銘柄の観測・再検証</h3>
+            <p class="warn">${esc(labels[e.status] || '観測結果未取得')} ／ 最終サマリー: ${esc(fmt.dt(e.as_of))}</p>
+            <p>捕捉件数: ${count === null ? '未確認' : esc(count)} ／ 定期実行照合: 未確認</p>
+            <p class="small muted">観測版: ${esc(e.protocol || '未確認')}${e.legacy ? ` ／ 旧版は履歴のみ ${esc(e.legacy.observations)}件（新版へ合算・転記しません）` : ''}</p>
+            <p class="small">${esc(e.reason || '有効化・実行・捕捉・成熟評価は別。日数経過では解除しません。')}</p>
+            ${(e.rows || []).length ? `<div class="table-wrap"><table><thead><tr><th>銘柄 / 戦略</th><th>cohort（合算しない）</th><th>成熟 / 待機 / 必要</th><th>判定記録</th></tr></thead><tbody>${e.rows.map(row => `<tr><td>${esc(row.symbol)} / ${esc(row.strategy_id)}</td><td>${esc(row.cohort)}</td><td>${esc(row.completed)} / ${esc(row.pending)} / ${esc(row.required)}</td><td>${esc({collecting:'蓄積中',deferred:'保留',review_candidate:'再検証候補・解除不可'}[row.status])}</td></tr>`).join('')}</tbody></table></div>` : ''}
+            <p class="warn">次の判断：同一版・同一cohortの必要件数/既定条件と、本来のExit・費用・損失制御の検証を確認。自動解除なし。</p>
+        </div>`;
+    }
+
+    renderMetricQualification() {
+        const q = this.data?.operational_evidence?.qualification || {};
+        return `<div class="ops-qualification"><h4>成績・費用の評価資格</h4>
+            <p class="warn">成績は参考集計。正式な日次時価DD・費用控除後の収益・実請求額：未確認</p>
+            <p>保存サマリー: ${this.escapeHtml(q.summary_status || '未確認')} ／ 台帳品質の申告: ${this.escapeHtml(q.reported_ledger_status || '未確認')} ／ 時刻: ${this.escapeHtml(fmt.dt(q.as_of))}</p>
+            <p class="small muted">${this.escapeHtml(q.reason || '評価資格未確認。記録cost=0を無料扱いしません。')}</p>
+        </div>`;
+    }
+
+    renderRunResult(run) {
+        const labels = {ok: '処理成功記録あり（約定・利益の証明ではない）', error: '失敗記録あり',
+            degraded: '縮退・要確認', completed_unverified: '終了記録のみ・正常性未確認', unconfirmed: '結果未確認'};
+        const state = run.result_status || 'unconfirmed';
+        return `<span class="${state === 'error' ? 'danger' : 'warn'}">${this.escapeHtml(labels[state] || '結果未確認')}</span>`;
     }
 
     renderReconciliationBySymbolTable(data) {
@@ -358,25 +645,26 @@ class Console {
         const deltas = ov.deltas || {};
         const ps = this.data?.positions?.summary || {};
         const account = ov.account || {};
-        const latestEquity = account.equity || 0;
-        const cash = account.cash || 0;
-        const cashPct = latestEquity > 0 ? (cash / latestEquity) : 0;
-        const positionPct = latestEquity > 0 ? ((latestEquity - cash) / latestEquity) : 0;
-        const totalPnL = (ps.unrealized_pnl || 0) + (ts.cumulative_realized_pnl || 0);
-        const winRate = ts.win_rate || 0;
-        const maxDD = ts.max_drawdown_pct || 0;
+        const latestEquity = finiteValue(account.equity);
+        const cash = finiteValue(account.cash);
+        const cashPct = latestEquity > 0 && cash !== null ? cash / latestEquity : null;
+        const positionPct = latestEquity > 0 && cash !== null ? (latestEquity - cash) / latestEquity : null;
+        const unrealized = finiteValue(ps.unrealized_pnl), realized = finiteValue(ts.cumulative_realized_pnl);
+        const totalPnL = unrealized !== null && realized !== null ? unrealized + realized : null;
+        const winRate = finiteValue(ts.win_rate);
+        const maxDD = finiteValue(ts.max_drawdown_pct);
 
         // 元本比較
         const tracking = this.data?.trading?.summary?.tracking_context || {};
-        const baseline = tracking.baseline_equity || 1000000;
-        const vsBaseline = latestEquity - baseline;
-        const vsBaselinePct = baseline > 0 ? vsBaseline / baseline : 0;
-        const vsBaselineClass = vsBaseline >= 0 ? 'success' : 'danger';
-        const vsBaselineSign = vsBaseline >= 0 ? '+' : '';
+        const baseline = finiteValue(tracking.baseline_equity);
+        const vsBaseline = latestEquity !== null && baseline !== null ? latestEquity - baseline : null;
+        const vsBaselinePct = baseline > 0 && vsBaseline !== null ? vsBaseline / baseline : null;
+        const vsBaselineClass = vsBaseline === null ? 'muted' : vsBaseline >= 0 ? 'success' : 'danger';
+        const vsBaselineSign = vsBaseline !== null && vsBaseline >= 0 ? '+' : '';
 
         return `
         <div class="grid">
-            <div class="card performance-card ${vsBaseline >= 0 ? 'success-border' : 'danger-border'}">
+            <div class="card performance-card ${vsBaseline === null ? '' : vsBaseline >= 0 ? 'success-border' : 'danger-border'}">
                 <h3>💰 資産総額</h3>
                 <div class="metric big-metric">
                     <span class="value huge ${vsBaselineClass}">${fmt.usd(latestEquity)}</span>
@@ -384,7 +672,7 @@ class Console {
                 <div class="metric" style="margin-top:4px">
                     <span class="label">元本（${fmt.usd(baseline)}）比</span>
                     <span class="value ${vsBaselineClass}" style="font-size:1.15em;font-weight:700">
-                        ${vsBaselineSign}${fmt.usd(vsBaseline)}&nbsp;(${vsBaselineSign}${(vsBaselinePct*100).toFixed(2)}%)
+                        ${vsBaselineSign}${fmt.usd(vsBaseline)}&nbsp;(${vsBaselineSign}${vsBaselinePct === null ? '未取得' : (vsBaselinePct*100).toFixed(2) + '%'})
                     </span>
                 </div>
                 <div class="metric"><span class="label">現金</span><span class="value">${fmt.usd(cash)}</span></div>
@@ -399,26 +687,26 @@ class Console {
                 ${this.renderDelta(deltas.equity_vs_prev_snapshot, 'usd')}
             </div>
             
-            <div class="card performance-card ${totalPnL >= 0 ? 'success-border' : 'danger-border'}">
+            <div class="card performance-card ${totalPnL === null ? '' : totalPnL >= 0 ? 'success-border' : 'danger-border'}">
                 <h3>📊 損益</h3>
                 <div class="metric big-metric">
-                    <span class="value huge ${totalPnL >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(totalPnL)}</span>
+                    <span class="value huge ${totalPnL === null ? 'muted' : totalPnL >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(totalPnL)}</span>
                 </div>
-                <div class="metric"><span class="label">含み損益</span><span class="value ${ps.unrealized_pnl >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(ps.unrealized_pnl)}</span></div>
-                <div class="metric"><span class="label">確定損益</span><span class="value ${ts.cumulative_realized_pnl >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(ts.cumulative_realized_pnl)}</span></div>
+                <div class="metric"><span class="label">含み損益</span><span class="value ${unrealized === null ? 'muted' : unrealized >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(ps.unrealized_pnl)}</span></div>
+                <div class="metric"><span class="label">確定損益</span><span class="value ${realized === null ? 'muted' : realized >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(ts.cumulative_realized_pnl)}</span></div>
                 <div class="progress-bar-container">
                     <div class="progress-label">PnL比率 (vs Equity)</div>
                     <div class="progress-bar">
-                        <div class="progress-fill ${totalPnL >= 0 ? 'success' : 'danger'}" style="width: ${Math.min(Math.abs(totalPnL / latestEquity) * 100, 100)}%"></div>
+                        <div class="progress-fill ${totalPnL === null ? 'muted' : totalPnL >= 0 ? 'success' : 'danger'}" style="width: ${totalPnL !== null && latestEquity > 0 ? Math.min(Math.abs(totalPnL / latestEquity) * 100, 100) : 0}%"></div>
                     </div>
-                    <div class="progress-value">${fmt.pct(totalPnL / latestEquity)}</div>
+                    <div class="progress-value">${fmt.pct(totalPnL !== null && latestEquity > 0 ? totalPnL / latestEquity : null)}</div>
                 </div>
             </div>
             
             <div class="card performance-card ${winRate >= 0.6 ? 'success-border' : 'warn-border'}">
                 <h3>🎯 取引成績</h3>
-                <div class="metric"><span class="label">総取引数</span><span class="value">${ts.total_trades ?? 0}</span></div>
-                <div class="metric"><span class="label">オープン</span><span class="value">${ts.open_trades ?? 0}</span></div>
+                <div class="metric"><span class="label">総取引数</span><span class="value">${ts.total_trades ?? '未取得'}</span></div>
+                <div class="metric"><span class="label">オープン</span><span class="value">${ts.open_trades ?? '未取得'}</span></div>
                 <div class="metric"><span class="label">勝率</span><span class="value ${winRate >= 0.6 ? 'success' : 'warn'}">${fmt.pct(winRate)}</span></div>
                 <div class="progress-bar-container">
                     <div class="progress-label">勝率</div>
@@ -433,22 +721,23 @@ class Console {
             <div class="card performance-card warn-border">
                 <h3>⚠️ リスク</h3>
                 <div class="metric"><span class="label">Gross Exposure</span><span class="value">${fmt.usd(ps.gross_exposure)}</span></div>
-                <div class="metric"><span class="label">最大DD</span><span class="value ${maxDD > 0.05 ? 'danger' : 'success'}">${fmt.pct(maxDD)}</span></div>
+                <div class="metric"><span class="label">最大DD（参考値）</span><span class="value ${maxDD === null ? 'muted' : 'warn'}">${maxDD === null ? '未計測' : fmt.pct(maxDD)}</span></div>
+                <p class="small muted">正式DD：評価資格未確認</p>
                 <div class="metric"><span class="label">Exposure比率</span><span class="value">${fmt.pct(positionPct)}</span></div>
                 <div class="progress-bar-container">
                     <div class="progress-label">Drawdownレベル</div>
                     <div class="progress-bar">
-                        <div class="progress-fill ${maxDD > 0.05 ? 'danger' : 'success'}" style="width: ${maxDD * 100}%"></div>
+                        <div class="progress-fill ${maxDD === null ? 'muted' : 'warn'}" style="width: ${maxDD === null ? 0 : Math.max(0, Math.min(100, maxDD * 100))}%"></div>
                     </div>
-                    <div class="progress-value">${fmt.pct(maxDD)}</div>
+                    <div class="progress-value">${maxDD === null ? '未計測' : fmt.pct(maxDD)}</div>
                 </div>
             </div>
             
             <div class="card">
                 <h3>📡 意思決定</h3>
-                <div class="metric"><span class="label">Decisions</span><span class="value">${this.data?.data_status?.counts?.decisions ?? 0}</span></div>
-                <div class="metric"><span class="label">Signals</span><span class="value">${this.data?.data_status?.counts?.signals ?? 0}</span></div>
-                <div class="metric"><span class="label">Orders</span><span class="value">${this.data?.data_status?.counts?.orders ?? 0}</span></div>
+                <div class="metric"><span class="label">Decisions</span><span class="value">${this.data?.data_status?.counts?.decisions ?? '未取得'}</span></div>
+                <div class="metric"><span class="label">Signals</span><span class="value">${this.data?.data_status?.counts?.signals ?? '未取得'}</span></div>
+                <div class="metric"><span class="label">Orders</span><span class="value">${this.data?.data_status?.counts?.orders ?? '未取得'}</span></div>
                 ${this.renderDelta(deltas.decisions_vs_prev_snapshot, 'count')}
             </div>
             
@@ -483,9 +772,7 @@ class Console {
             </div>
             <div class="card">
                 <h3>定期実行</h3>
-                <div class="metric"><span class="label">有効</span><span class="value success">${ov.cron_jobs_active||0}</span></div>
-                <div class="metric"><span class="label">合計</span><span class="value">${ov.cron_jobs_total||0}</span></div>
-                <div class="metric"><span class="label">遅延ジョブ</span><span class="value ${(cron.jobs || []).some(j => (j.lag_seconds||0) > 0) ? 'danger' : 'success'}">${(cron.jobs || []).filter(j => (j.lag_seconds||0) > 0).length}</span></div>
+${this.renderCronSummary()}
             </div>
             <div class="card">
                 <h3>Reconciliation</h3>
@@ -541,41 +828,25 @@ class Console {
     }
 
     renderReconciliationSummary(rec = {}) {
-        const mismatch = rec.pending_or_mismatched || 0;
-        const mismatchClass = mismatch > 0 ? 'danger' : 'success';
-
-        // シンボル別 mismatch 詳細
-        const bySymbol = (rec.by_symbol || []).filter(r => (r.mismatches || 0) > 0);
-        const mismatchSymbolHtml = bySymbol.length > 0
-            ? `<div style="margin-top:8px">
-                <div class="muted small" style="margin-bottom:4px">— mismatch 詳細 —</div>
-                ${bySymbol.map(r => `<div class="metric small">
-                    <span class="label">${this.escapeHtml(r.symbol)}</span>
-                    <span class="danger">❌ ${r.mismatches}件</span>
-                </div>`).join('')}
-              </div>`
-            : '';
-
-        // last_run と last_success の乖離
-        const lastRun = rec.last_run ? new Date(rec.last_run) : null;
-        const lastSuccess = rec.last_success ? new Date(rec.last_success) : null;
-        const staleSince = lastRun && lastSuccess && lastRun > lastSuccess
-            ? `<span class="warn small">― 最終成功から${Math.round((lastRun - lastSuccess)/3600000)}h経過</span>`
-            : '';
-
-        return `
-            <div class="metric">
-                <span class="label">Pending/Mismatch</span>
-                <span class="value ${mismatchClass}">${mismatch}</span>
-            </div>
-            <div class="metric"><span class="label">Reconciliations</span><span class="value">${rec.recent_reconciliations ?? 0}</span></div>
-            <div class="metric"><span class="label">Last Run</span><span class="small muted">${lastRun ? fmt.dt(rec.last_run) : '—'} ${staleSince}</span></div>
-            <div class="metric"><span class="label">Last Success</span><span class="small ${mismatch > 0 ? 'warn' : 'muted'}">${lastSuccess ? fmt.dt(rec.last_success) : '—'}</span></div>
-            ${mismatchSymbolHtml}
-            ${(rec.discrepancy_types || []).filter(r => r.reason !== 'ok').map(r =>
-                `<div class="metric small"><span class="label muted">${this.escapeHtml(r.reason)}</span><span class="warn">${r.count}</span></div>`
-            ).join('')}
-        `;
+        const order = rec.current_orders_evidence || rec.pending_orders_evidence || {}, history = rec.history_evidence || {};
+        const states = rec.current_orders || {};
+        const age = order.as_of ? (Date.now()-Date.parse(order.as_of))/1000 : NaN;
+        const qualified = order.status==='ok' && Number.isFinite(age) && age>=0 && age<=120;
+        const count = value => finiteValue(value) ?? '未確認';
+        const esc = value => this.escapeHtml(String(value ?? '未確認'));
+        return `<div id="reconciliation-evidence">
+            <div class="metric"><span>現在の未解決不一致</span><span class="value warn">未確認・要確認</span></div>
+            <p class="small warn">現在の全保有/全未約定を同時点で照合した結果は未認定です。</p>
+            <div class="metric"><span>未約定 / 取消待ち / 一部約定</span><span>${qualified?count(states.open):'未確認'} / ${qualified?count(states.pending_cancel):'未確認'} / ${qualified?count(states.partial):'未確認'}</span></div>
+            <div class="metric"><span>その他の未完了状態</span><span>${qualified?count(states.other):'未確認'}</span></div>
+            <p class="small ${qualified?'muted':'warn'}">注文取得（範囲限定）: ${esc(order.status)} ／ ${esc(fmt.dt(order.as_of))} ／ ${esc(order.scope)}</p>
+            <details><summary>過去ログの照合イベント（現在の未解決件数ではありません）</summary>
+                <div class="metric"><span>照合記録 / 不一致等のイベント</span><span>${history.status==='ok'||history.status==='partial'?count(rec.recent_reconciliations):'未確認'} / ${history.status==='ok'||history.status==='partial'?count(rec.pending_or_mismatched):'未確認'}</span></div>
+                <p class="small muted">${esc(history.status)} ／ ${esc(history.scope)} ／ ${esc(fmt.dt(history.oldest_at))} → ${esc(fmt.dt(history.as_of))}</p>
+                <p class="small muted">履歴の最終成功申告: ${esc(fmt.dt(rec.last_success))} ／ ${esc(history.reason)}</p>
+            </details>
+            <p class="small">次の確認：${esc(rec.next_action || '口座/台帳の同時点・対象範囲・未解決状態を確認。履歴件数を現在の状態に読み替えません。')}</p>
+        </div>`;
     }
 
     renderDataIntegrityCard(integrity) {
@@ -597,7 +868,7 @@ class Console {
         const pipeline = this.data.pipeline || {};
         
         if (!td.available) {
-            return `<div class="card"><p class="muted">取引データが利用できません。${td.error||''}</p></div>`;
+            return `${this.renderRunEvidence()}${this.renderResearchEvidence()}${this.renderMetricQualification()}<div class="card"><p class="muted">取引データが利用できません。${this.escapeHtml(td.error||'')}</p></div>`;
         }
         
         const s = td.summary || {};
@@ -614,6 +885,9 @@ class Console {
         const strategyPerf = this.calculateStrategyPerformance(pipeline.by_strategy || [], allClosedTrades);
 
         return `
+        ${this.renderRunEvidence()}
+        ${this.renderResearchEvidence()}
+        ${this.renderMetricQualification()}
         ${this.renderPipelineFunnel()}
         <div class="grid" style="margin-bottom:16px">
             <div class="card" style="grid-column: 1 / -1;">
@@ -850,23 +1124,26 @@ class Console {
         const normAge = freshness.normalized?.age_hours;
         const decAge = freshness.decisions?.age_hours;
         const normRateClass = normRate < 1 ? 'danger' : normRate < 20 ? 'warn' : 'success';
-        const normStaleClass = normStatus === 'stale' ? 'danger' : normStatus === 'aging' ? 'warn' : 'success';
-        const decAgeClass = decAge != null && decAge > 24 ? 'danger' : decAge != null && decAge > 12 ? 'warn' : 'success';
+        const normValid = finiteValue(normAge) !== null && normAge >= 0;
+        const normStaleClass = normValid && normStatus === 'fresh' ? 'success' : normStatus === 'stale' ? 'danger' : 'warn';
+        const decValid = finiteValue(decAge) !== null && decAge >= 0;
+        const decAgeClass = decValid && freshness.decisions?.status === 'fresh' ? 'success' : decValid && decAge > 24 ? 'danger' : 'warn';
 
         const pipelineStageHtml = `
         <div class="card" style="margin-top:8px">
             <h4 style="margin:0 0 8px">🔄 データパイプライン詳細</h4>
+            <p class="small muted">ファイル更新/記録時刻と市場価格の時刻・画面更新は別。鮮度不明を正常にせず、取得元と時刻を確認してください。</p>
             <div class="funnel-reason-row">
                 <span class="funnel-reason-label">📥 raw → normalized 変換率</span>
                 <span class="funnel-reason-count ${normRateClass}">${norm.toLocaleString()} / ${raw.toLocaleString()} (${normRate.toFixed(1)}%)</span>
             </div>
             <div class="funnel-reason-row">
-                <span class="funnel-reason-label">🕒 normalized遠新度</span>
-                <span class="funnel-reason-count ${normStaleClass}">${normAge != null ? normAge.toFixed(0) + 'h 前' : '—'} (${normStatus})</span>
+                <span class="funnel-reason-label">🕒 normalized鮮度（ファイル更新）</span>
+                <span class="funnel-reason-count ${normStaleClass}">${normValid ? Number(normAge).toFixed(0) + 'h 前' : '—'} (${this.escapeHtml(normStatus)})</span>
             </div>
             <div class="funnel-reason-row">
-                <span class="funnel-reason-label">🧠 Decision遠新度</span>
-                <span class="funnel-reason-count ${decAgeClass}">${decAge != null ? decAge.toFixed(1) + 'h 前' : '—'}</span>
+                <span class="funnel-reason-label">🧠 Decision鮮度（記録時刻）</span>
+                <span class="funnel-reason-count ${decAgeClass}">${decValid ? Number(decAge).toFixed(1) + 'h 前' : '—'}</span>
             </div>
             <div class="funnel-reason-row">
                 <span class="funnel-reason-label">📁 features / signals / decisions</span>
@@ -968,19 +1245,19 @@ class Console {
             <h4 style="margin:0 0 8px">📝 paper_demo 実行ログ（直近10件）</h4>
             <div class="table-wrap"><table><thead><tr>
                 <th>開始時刻</th>
-                <th>完了</th>
+                <th>処理終了</th><th>結果</th>
                 <th style="text-align:right">Decisions</th>
                 <th style="text-align:right">提出</th>
                 <th style="text-align:right">変換率</th>
             </tr></thead><tbody>
             ${runs.map(r => {
                 const started = (r.started_at || '').slice(0, 16).replace('T', ' ');
-                const completed = r.completed_at ? '\u2705' : '<span class="warn">未完了</span>';
+                const completed = r.completed_at ? '終了記録あり' : '<span class="warn">終了記録なし</span>';
                 const rate = r.conversion_rate || 0;
                 const rateClass = rate > 0.1 ? 'success' : rate > 0 ? 'warn' : 'muted';
                 return `<tr>
                     <td class="small">${this.escapeHtml(started)} UTC</td>
-                    <td class="small">${completed}</td>
+                    <td class="small">${completed}</td><td class="small">${this.renderRunResult(r)}</td>
                     <td style="text-align:right">${r.decisions || 0}</td>
                     <td style="text-align:right ${r.submitted > 0 ? '" class="success' : ''}">${r.submitted || 0}</td>
                     <td style="text-align:right" class="${rateClass}">${(rate * 100).toFixed(0)}%</td>
@@ -1207,107 +1484,57 @@ class Console {
     }
 
     renderPositions() {
-        const positions = this.data.positions || {};
-        const posArr = positions.positions || positions.by_symbol || [];
-        const summary = positions.summary || {};
-
-        // ETF / Stock 別集計
-        const etfPos   = posArr.filter(p => p.asset_class === 'etf');
-        const stkPos   = posArr.filter(p => p.asset_class === 'stock');
-        const etfPnl   = etfPos.reduce((s, p) => s + (p.unrealized_pnl || 0), 0);
-        const stkPnl   = stkPos.reduce((s, p) => s + (p.unrealized_pnl || 0), 0);
-        const etfMv    = etfPos.reduce((s, p) => s + (p.market_value || 0), 0);
-        const stkMv    = stkPos.reduce((s, p) => s + (p.market_value || 0), 0);
-        const etfRetPct = etfMv > 0 ? (etfPnl / (etfMv - etfPnl)) * 100 : 0;
-        const stkRetPct = stkMv > 0 ? (stkPnl / (stkMv - stkPnl)) * 100 : 0;
-
-        // ポジションを評価額でソート
-        const sortedPositions = [...posArr].sort((a, b) => (b.market_value || 0) - (a.market_value || 0));
-
-        const marketStatusHtml = this.renderMarketStatusCard(positions.market_status);
-
-        const breakdownHtml = (etfPos.length > 0 || stkPos.length > 0) ? `
-        <div class="card" style="margin-bottom:16px">
-            <h3>🏷️ ETF / Stock 別含み損益内訳</h3>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                <div>
-                    <div class="metric"><span class="label">ETF（${etfPos.length}件）</span>
-                        <span class="value ${etfPnl >= 0 ? 'success' : 'danger'}" style="font-weight:700">${fmt.usdSigned(etfPnl)}</span></div>
-                    <div class="metric small muted"><span class="label">MV</span><span>${fmt.usd(etfMv)}</span></div>
-                    <div class="metric small"><span class="label">比率</span><span class="${etfRetPct >= 0 ? 'success' : 'danger'}">${etfRetPct >= 0 ? '+' : ''}${etfRetPct.toFixed(2)}%</span></div>
-                    ${etfPos.map(p => `<div class="metric small"><span class="label muted">${this.escapeHtml(p.symbol)}</span><span class="${(p.unrealized_pnl||0)>=0?'success':'danger'}">${fmt.usdSigned(p.unrealized_pnl||0)}</span></div>`).join('')}
-                </div>
-                <div>
-                    <div class="metric"><span class="label">Stock（${stkPos.length}件）</span>
-                        <span class="value ${stkPnl >= 0 ? 'success' : 'danger'}" style="font-weight:700">${fmt.usdSigned(stkPnl)}</span></div>
-                    <div class="metric small muted"><span class="label">MV</span><span>${fmt.usd(stkMv)}</span></div>
-                    <div class="metric small"><span class="label">比率</span><span class="${stkRetPct >= 0 ? 'success' : 'danger'}">${stkRetPct >= 0 ? '+' : ''}${stkRetPct.toFixed(2)}%</span></div>
-                    ${stkPos.slice(0,5).map(p => `<div class="metric small"><span class="label muted">${this.escapeHtml(p.symbol)}</span><span class="${(p.unrealized_pnl||0)>=0?'success':'danger'}">${fmt.usdSigned(p.unrealized_pnl||0)}</span></div>`).join('')}
-                    ${stkPos.length > 5 ? `<div class="metric small muted"><span class="label">... 他${stkPos.length - 5}件</span></div>` : ''}
-                </div>
-            </div>
-        </div>` : '';
-
-        return `
-        ${marketStatusHtml}
-        ${breakdownHtml}
+        const p = this.data?.positions || {}, e = p.evidence || {};
+        const rows = Array.isArray(p.positions) ? p.positions : [];
+        const age = e.as_of ? (Date.now() - Date.parse(e.as_of))/1000 : NaN;
+        const qualified = p.available === true && e.status === 'ok' && Number.isFinite(age) && age >= 0 && age <= 120;
+        const summary = qualified ? (p.summary || {}) : {};
+        const esc = value => this.escapeHtml(String(value ?? '未確認'));
+        const number = value => finiteValue(value) ?? '未取得';
+        const mood = value => finiteValue(value) === null ? 'muted' : value < 0 ? 'danger' : 'success';
+        const concentration = finiteValue(summary.top5_concentration);
+        const exposure = finiteValue(summary.gross_exposure), equity = finiteValue(summary.portfolio_value);
+        const ratio = exposure !== null && equity > 0 ? exposure/equity : null;
+        const sorted = [...rows].sort((a,b)=>(finiteValue(b.market_value) ?? -Infinity)-(finiteValue(a.market_value) ?? -Infinity));
+        const groupRows = ['etf','stock'].map(kind=>{
+            const group = rows.filter(row=>row.asset_class===kind);
+            const mv = group.map(row=>finiteValue(row.market_value)), pnl = group.map(row=>finiteValue(row.unrealized_pnl));
+            return `<div class="metric"><span>${kind.toUpperCase()}（${group.length}記録）</span><span>${qualified && mv.every(v=>v!==null) ? fmt.usd(mv.reduce((a,b)=>a+b,0)) : '未取得'} / ${qualified && pnl.every(v=>v!==null) ? fmt.usdSigned(pnl.reduce((a,b)=>a+b,0)) : '未取得'}</span></div>`;
+        }).join('');
+        return `${this.renderMarketStatusCard(p.market_status)}
+        <section class="card ops-evidence" id="positions-evidence"><h3>保有の取得・評価範囲</h3>
+            <p class="${qualified?'muted':'warn'}">${qualified ? '口座API取得（範囲限定）' : p.source==='tracker' ? '台帳の代用値・現在の口座保有は未確認' : 'ポジションの有無は未確認'}</p>
+            <p>元時刻: ${esc(fmt.dt(e.as_of))} ／ 状態: ${esc(e.status)} ／ 取得元: ${esc(e.source || p.source)}</p>
+            <p class="small muted">${esc(e.reason)} ／ ${esc(e.scope)}</p>
+            <p class="warn small">口座API取得時刻と価格の市場時刻は別。分類coverage・実効ストップ・SELL監視の真正実行は未確認。</p>
+            <p class="small">次の確認：${esc(p.next_action || '取得元・元時刻・価格欠測を確認。未取得を保有ゼロとみなしません。')}</p>
+        </section>
         <div class="grid">
-            <div class="card performance-card ${summary.unrealized_pnl >= 0 ? 'success-border' : 'danger-border'}">
-                <h3>📊 ポートフォリオサマリー</h3>
-                <div class="metric big-metric">
-                    <span class="label">評価損益</span>
-                    <span class="value huge ${summary.unrealized_pnl >= 0 ? 'success' : 'danger'}">${fmt.usdSigned(summary.unrealized_pnl || 0)}</span>
-                </div>
-                <div class="metric"><span class="label">評価損益率</span><span class="value ${summary.total_pnl_pct >= 0 ? 'success' : 'danger'}">${fmt.pctSigned(summary.total_pnl_pct || 0)}</span></div>
-                <div class="progress-bar-container">
-                    <div class="progress-label">PnL率</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill ${summary.total_pnl_pct >= 0 ? 'success' : 'danger'}" style="width: ${Math.min(Math.abs(summary.total_pnl_pct || 0) * 100, 100)}%"></div>
-                    </div>
-                    <div class="progress-value">${fmt.pctSigned(summary.total_pnl_pct || 0)}</div>
-                </div>
+            <div class="card"><h3>📊 ポートフォリオサマリー</h3>
+                <div class="metric"><span>評価損益</span><span class="value ${mood(summary.unrealized_pnl)}">${fmt.usdSigned(summary.unrealized_pnl)}</span></div>
+                <div class="metric"><span>評価損益率</span><span class="value ${mood(summary.total_pnl_pct)}">${fmt.pctSigned(summary.total_pnl_pct)}</span></div>
+                ${groupRows}<p class="small muted">ETF/Stock内訳は表示記録内。未分類やETF内部の重複まで網羅した配分認定ではありません。</p>
             </div>
-            
-            <div class="card">
-                <h3>💼 エクスポージャー</h3>
-                <div class="metric"><span class="label">Gross Exposure</span><span class="value">${fmt.usd(summary.gross_exposure || 0)}</span></div>
-                <div class="metric"><span class="label">Net Exposure</span><span class="value">${fmt.usd(summary.net_exposure || 0)}</span></div>
-                <div class="metric"><span class="label">現金</span><span class="value">${fmt.usd(summary.cash || 0)}</span></div>
-                <div class="progress-bar-container">
-                    <div class="progress-label">Exposure比率</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill warn" style="width: ${Math.min((summary.gross_exposure || 0) / (summary.portfolio_value || 1) * 100, 100)}%"></div>
-                    </div>
-                    <div class="progress-value">${fmt.pct((summary.gross_exposure || 0) / (summary.portfolio_value || 1))}</div>
-                </div>
+            <div class="card"><h3>💼 エクスポージャー</h3>
+                <div class="metric"><span>Gross Exposure</span><span class="value">${fmt.usd(summary.gross_exposure)}</span></div>
+                <div class="metric"><span>Net Exposure</span><span class="value">${fmt.usd(summary.net_exposure)}</span></div>
+                <div class="metric"><span>現金</span><span class="value">${fmt.usd(summary.cash)}</span></div>
+                <div class="metric"><span>Exposure比率（対口座価値）</span><span>${fmt.pct(ratio)}</span></div>
+                <p class="small muted">Grossは評価額の絶対値合計、Netは符号付き合計。未取得の構成要素はゼロ補完しません。</p>
             </div>
-            
-            <div class="card">
-                <h3>📈 ポジション統計</h3>
-                <div class="metric"><span class="label">総ポジション数</span><span class="value">${summary.position_count || 0}</span></div>
-                <div class="metric"><span class="label">ロング / ショート</span><span class="value">${summary.long_count || 0} / ${summary.short_count || 0}</span></div>
-                <div class="metric"><span class="label">平均保有日数</span><span class="value">${(summary.avg_holding_days || 0).toFixed(1)}日</span></div>
-                <div class="metric"><span class="label">最大ポジション比率</span><span class="value">${fmt.pct(summary.largest_position_weight || 0)}</span></div>
+            <div class="card"><h3>📈 ポジション統計</h3>
+                <div class="metric"><span>総ポジション数</span><span>${number(summary.position_count)}</span></div>
+                <div class="metric"><span>ロング / ショート</span><span>${number(summary.long_count)} / ${number(summary.short_count)}</span></div>
+                <div class="metric"><span>平均保有日数</span><span>${finiteValue(summary.avg_holding_days)===null?'未取得':Number(summary.avg_holding_days).toFixed(1)+'日'}</span></div>
+                <div class="metric"><span>最大ポジション比率</span><span>${fmt.pct(summary.largest_position_weight)}</span></div>
             </div>
-            
-            <div class="card">
-                <h3>⚠️ 集中リスク</h3>
-                <div class="metric"><span class="label">Top 5集中度</span><span class="value ${(summary.top5_concentration || 0) > 0.7 ? 'danger' : 'success'}">${fmt.pct(summary.top5_concentration || 0)}</span></div>
-                <div class="progress-bar-container">
-                    <div class="progress-label">集中度</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill ${(summary.top5_concentration || 0) > 0.7 ? 'danger' : 'success'}" style="width: ${(summary.top5_concentration || 0) * 100}%"></div>
-                    </div>
-                    <div class="progress-value">${fmt.pct(summary.top5_concentration || 0)}</div>
-                </div>
+            <div class="card"><h3>⚠️ 集中リスク</h3>
+                <div class="metric"><span>Top 5集中度</span><span class="value ${concentration===null?'muted':concentration>0.7?'danger':'success'}">${fmt.pct(concentration)}</span></div>
+                <p class="small muted">分母は表示範囲のGross Exposure。対口座資産の上限や注文後集中度とは別。</p>
             </div>
         </div>
-        
-        <div class="grid" style="margin-top: 16px;">
-            <div class="card" style="grid-column: 1 / -1;">
-                <h3>📋 現在のポジション (${sortedPositions.length}件)</h3>
-                ${this.renderPositionsTable(sortedPositions)}
-            </div>
+        <div class="card" style="margin-top:16px"><h3>📋 現在のポジション（${qualified?rows.length+'件':rows.length+'参照記録・口座件数未確認'}）</h3>
+            ${rows.length ? this.renderPositionsTable(sorted) : `<p class="${qualified?'muted':'warn'}">${qualified?'取得範囲内に保有なし':'ポジションの有無は未確認'}</p>`}
         </div>`;
     }
 
@@ -1325,14 +1552,14 @@ class Console {
     }
 
     renderPositionsTable(data) {
-        if (!data || data.length === 0) return '<p class="muted">ポジションなし</p>';
+        if (!data || data.length === 0) return '<p class="warn">ポジションの有無は未確認</p>';
         return `<div class="table-wrap"><table><thead><tr>
-            <th>シンボル</th><th>数量</th><th>保有日数</th><th>取得価格</th><th>現在価格</th><th>評価損益</th><th>損益率</th><th>ESS</th><th>Peak</th><th>ストップ水準</th><th>ストップまで</th><th>比率</th>
+            <th>シンボル</th><th>数量</th><th>保有日数</th><th>取得価格</th><th>現在価格</th><th>評価損益</th><th>損益率</th><th>ESS</th><th>Peak</th><th>参考ストップ（適用未照合）</th><th>ストップまで</th><th>比率</th>
         </tr></thead><tbody>
         ${data.map(pos => {
-            const pnlPct = pos.unrealized_pnl_pct ?? pos.unrealized_return_pct ?? pos.return_pct ?? 0;
-            const pnlClass = (pos.unrealized_pnl || 0) >= 0 ? 'success' : 'danger';
-            const pnlPctClass = pnlPct >= 0 ? 'success' : 'danger';
+            const pnlPct = pos.unrealized_pnl_pct ?? pos.unrealized_return_pct ?? pos.return_pct ?? null;
+            const pnlClass = finiteValue(pos.unrealized_pnl) === null ? 'muted' : pos.unrealized_pnl >= 0 ? 'success' : 'danger';
+            const pnlPctClass = finiteValue(pnlPct) === null ? 'muted' : pnlPct >= 0 ? 'success' : 'danger';
             // Stop level display
             const stopPrice = pos.effective_stop_price;
             const distPct = pos.dist_to_stop_pct;
@@ -1354,52 +1581,56 @@ class Console {
             return `
             <tr style="${rowStyle}">
                 <td><strong>${this.escapeHtml(pos.symbol)}</strong>${assetBadge}${trailBadge}</td>
-                <td>${pos.qty || pos.quantity || 0}</td>
+                <td>${finiteValue(pos.qty ?? pos.quantity) ?? '未取得'}</td>
                 <td>${pos.holding_days != null ? pos.holding_days + '日' : '—'}</td>
-                <td>${fmt.usd(pos.entry_price ?? pos.avg_entry_price ?? pos.avg_price ?? 0)}</td>
-                <td>${fmt.usd(pos.current_price || 0)}</td>
-                <td class="${pnlClass}">${fmt.usdSigned(pos.unrealized_pnl || 0)}</td>
+                <td>${fmt.usd(pos.entry_price ?? pos.avg_entry_price ?? pos.avg_price ?? null)}</td>
+                <td>${fmt.usd(pos.current_price)}</td>
+                <td class="${pnlClass}">${fmt.usdSigned(pos.unrealized_pnl)}</td>
                 <td class="${pnlPctClass}">${fmt.pctSigned(pnlPct)}</td>
                 ${this.essCell(ess)}
                 <td class="small">${pos.peak_price ? fmt.usd(pos.peak_price) : '—'}</td>
                 <td class="small">${stopPrice ? `<span title="${stopMode}">${stopLabel}</span>` : '—'}</td>
                 <td class="${distClass} small">${distLabel}</td>
-                <td>${fmt.pct(pos.portfolio_weight || 0)}</td>
+                <td>${fmt.pct(pos.portfolio_weight)}</td>
             </tr>`;
         }).join('')}
         </tbody></table></div>`;
     }
 
-    renderCronJobs() {
-        const cron = this.data.cron_jobs || {};
-        const jobsArr = cron.jobs || [];
-        
-        // 状態の統計
-        const totalJobs = jobsArr.length;
-        const enabledJobs = jobsArr.filter(j => j.enabled).length;
-        const laggedJobs = jobsArr.filter(j => (j.lag_seconds || 0) > 3600).length; // 1時間以上遅延
-        const criticalLag = jobsArr.filter(j => (j.lag_seconds || 0) > 86400).length; // 1日以上遅延
-        
-        return `<div class="grid">
-            <div class="card">
-                <h3>🔄 定期実行統計</h3>
-                <div class="metric"><span class="label">総ジョブ数</span><span class="value">${totalJobs}</span></div>
-                <div class="metric"><span class="label">有効</span><span class="value success">${enabledJobs}</span></div>
-                <div class="metric"><span class="label">遅延中 (>1h)</span><span class="value ${laggedJobs > 0 ? 'warn' : 'success'}">${laggedJobs}</span></div>
-                <div class="metric"><span class="label">重大遅延 (>1d)</span><span class="value ${criticalLag > 0 ? 'danger' : 'success'}">${criticalLag}</span></div>
-            </div>
-        </div>
-        
-        <div class="grid" style="margin-top: 16px;">
-            <div class="card" style="grid-column: 1 / -1;">
-                <h3>📊 ジョブ一覧 (${totalJobs}件)</h3>
-                ${this.renderCronJobsTable(jobsArr)}
-            </div>
-        </div>`;
+    cronQualification() {
+        const cron=this.data?.cron_jobs || {}, evidence=cron.evidence || {};
+        const stamp=Date.parse(evidence.as_of || ''), age=Date.now()-stamp;
+        const current=evidence.status==='ok' && evidence.complete===true && Number.isFinite(age) && age>=0 && age<=120000;
+        const rows=Array.isArray(cron.jobs) ? cron.jobs : [];
+        const known=current && Array.isArray(cron.jobs);
+        const activeKnown=known && rows.every(j=>typeof j.enabled==='boolean');
+        const lagKnown=activeKnown && rows.every(j=>j.enabled===false || finiteValue(j.lag_seconds)!==null);
+        return {cron,evidence,rows,known,total:known?rows.length:null,
+            active:activeKnown?rows.filter(j=>j.enabled).length:null,
+            lagged:lagKnown?rows.filter(j=>j.enabled && j.lag_seconds>3600).length:null,
+            critical:lagKnown?rows.filter(j=>j.enabled && j.lag_seconds>86400).length:null};
     }
 
-    renderCronJobsTable(data) {
-        if (!data || data.length === 0) return '<p class="muted">ジョブなし</p>';
+    renderCronSummary() {
+        const q=this.cronQualification(), n=v=>v===null?'未確認':String(v);
+        const metric=(label,value)=>`<div class="metric"><span class="label">${label}</span><span class="value ${value===null?'warn':value>0 && label.includes('遅延')?'danger':'muted'}">${n(value)}</span></div>`;
+        const clock=this.data?.market_clock || {}, labels={regular:'通常立会',extended:'時間外予定区分',closed:'休場/時間外',unknown:'未確認'};
+        return `<div id="cron-acquisition-evidence"><p class="${q.known?'muted':'warn'}">取得状態: ${this.escapeHtml(q.evidence.status || 'unknown')} ／ 取得元: ${this.escapeHtml(q.evidence.source || '未確認')} ／ 元時刻: ${this.escapeHtml(fmt.dt(q.evidence.as_of))}</p>
+            <p class="small">${this.escapeHtml(q.evidence.scope || '取得成否・対象範囲が未確認。空一覧を現在のジョブなしとは認定しません。')}</p>
+            ${metric('取得範囲のジョブ数',q.total)}${metric('有効',q.active)}${metric('遅延中 (>1h)',q.lagged)}${metric('重大遅延 (>1d)',q.critical)}
+            <p class="small">米国予定区分: ${this.escapeHtml(labels[clock.session] || '未確認')} ／ 基準: America/New_York ／ 画面更新の目安: ${Math.round(Console.pollingDelay(clock)/60000)}分（区分境界で短縮）</p>
+            <p class="small muted">画面ポーリングのみ。売買scheduler/停止条件は変更しません。最終状態の申告は履歴固有ID・SELL実行・実効設定の認定ではありません。</p></div>`;
+    }
+
+    renderCronJobs() {
+        const q=this.cronQualification();
+        return `<div class="card"><h3>🔄 定期実行統計</h3>${this.renderCronSummary()}</div>
+            <div class="card" style="margin-top:16px"><h3>📊 ジョブ一覧（${q.known?q.total+'件':'参考 '+q.rows.length+'行・現状未確認'}）</h3>
+            ${this.renderCronJobsTable(q.rows,q.known)}</div>`;
+    }
+
+    renderCronJobsTable(data, qualified = false) {
+        if (!data || data.length === 0) return qualified ? '<p class="muted">取得範囲内にジョブなし</p>' : '<p class="warn">現在のジョブの有無は未確認</p>';
         const nowMs = Date.now();
         const fmtNextRun = (nextRunAtMs) => {
             if (!nextRunAtMs) return '—';
@@ -1417,19 +1648,19 @@ class Console {
             <th>名前</th><th>スケジュール</th><th>状態</th><th>最終実行</th><th>次回実行</th><th>遅延</th>
         </tr></thead><tbody>
         ${data.map(job => {
-            const lagSeconds = job.lag_seconds || 0;
-            const lagClass = lagSeconds > 86400 ? 'danger' : lagSeconds > 3600 ? 'warn' : 'success';
-            const lagDisplay = this.formatDuration(lagSeconds);
+            const lagSeconds = qualified ? finiteValue(job.lag_seconds) : null;
+            const lagClass = lagSeconds===null ? 'warn' : lagSeconds > 86400 ? 'danger' : lagSeconds > 3600 ? 'warn' : 'muted';
+            const lagDisplay = lagSeconds===null ? '未確認' : this.formatDuration(lagSeconds);
             const nextRunAtMs = job.nextRunAtMs || job.next_run_at_ms;
             const lastStatus = job.lastRunStatus || job.last_run_status || 'unknown';
-            const statusClass = lastStatus === 'ok' ? 'success' : lastStatus === 'error' ? 'danger' : 'unknown';
+            const statusClass = !qualified ? 'unknown' : lastStatus === 'ok' ? 'muted' : lastStatus === 'error' ? 'danger' : 'unknown';
             return `
             <tr>
                 <td><strong>${this.escapeHtml((job.name || '').replace('stock_swing_', ''))}</strong></td>
                 <td class="small muted">${this.escapeHtml(job.schedule?.expr || '-')}</td>
                 <td><span class="badge badge-${statusClass}">${this.escapeHtml(lastStatus)}</span></td>
                 <td class="small muted">${fmt.dt(job.last_run || job.lastRunAt)}</td>
-                <td class="small">${fmtNextRun(nextRunAtMs)}</td>
+                <td class="small">${qualified ? fmtNextRun(nextRunAtMs) : '保存値・現状未確認'}</td>
                 <td class="${lagClass} small">${lagDisplay}</td>
             </tr>`;
         }).join('')}
@@ -1701,7 +1932,7 @@ class Console {
             
             html += `
                 <div class="card">
-                    <h3>🏥 ヘルスサマリー</h3>
+                    <h3>🏥 補助API取得ヘルス</h3><p class="small muted">通信・取得の点検。口座整合/売買正常性・SELL実行の認定とは別です。</p>
                     <div class="metric">
                         <span class="label">全体ステータス</span>
                         <span class="value ${healthStatusClass}">${healthIcon} ${healthSummary.overall}</span>
@@ -1889,7 +2120,7 @@ class Console {
             </div>
             <div class="card">
                 <h3>⚠️ リスク指標</h3>
-                <div class="metric"><span class="label">最大Drawdown</span><span class="value danger">${fmt.pct(summary.max_drawdown_pct || 0)}</span></div>
+                <div class="metric"><span class="label">最大Drawdown</span><span class="value danger">${summary.max_drawdown_pct == null ? '未計測' : fmt.pct(summary.max_drawdown_pct)}</span></div>
                 <div class="metric"><span class="label">Peak Equity</span><span class="value">${fmt.usd(summary.peak_equity || 0)}</span></div>
                 <div class="metric"><span class="label">取引日数</span><span class="value">${summary.trading_days || 0}</span></div>
                 <div class="progress-bar-container">
@@ -1928,41 +2159,41 @@ class Console {
         const beta = perf.beta || {};
         const sharpe = perf.sharpe || {};
 
-        const alphaAvailable = alpha.available !== false;
-        const betaAvailable = beta.available !== false;
-        const sharpeAvailable = sharpe.available !== false;
+        const alphaAvailable = perf.available !== false && alpha.available === true && finiteValue(alpha.alpha) !== null;
+        const betaAvailable = perf.available !== false && beta.available === true && finiteValue(beta.beta) !== null;
+        const sharpeAvailable = perf.available !== false && sharpe.available === true && finiteValue(sharpe.sharpe_ratio) !== null;
 
         // Alphaの色分け
-        const alphaValue = alpha.alpha || 0;
+        const alphaValue = finiteValue(alpha.alpha);
         const alphaClass = !alphaAvailable ? 'unknown' : alphaValue > 2 ? 'success' : alphaValue > 0 ? 'warn' : 'danger';
         const alphaIcon = !alphaAvailable ? '⏸️' : alphaValue > 0 ? '🚀' : '🐢';
 
         // Betaの色分け
-        const betaValue = beta.beta || 0;
+        const betaValue = finiteValue(beta.beta);
         const betaClass = !betaAvailable ? 'unknown' : betaValue < 0.5 ? 'success' : betaValue < 1 ? 'warn' : 'danger';
         const betaIcon = !betaAvailable ? '⏸️' : betaValue < 0.5 ? '🛡️' : betaValue < 1 ? '⚠️' : '🔥';
 
         // Sharpeの色分け
-        const sharpeValue = sharpe.sharpe_ratio || 0;
+        const sharpeValue = finiteValue(sharpe.sharpe_ratio);
         const sharpeClass = !sharpeAvailable ? 'unknown' : sharpeValue > 2 ? 'success' : sharpeValue > 1 ? 'warn' : 'danger';
         const sharpeIcon = !sharpeAvailable ? '⏸️' : sharpeValue > 2 ? '⭐' : sharpeValue > 1 ? '🟡' : '🔴';
         const periodInfo = alpha.period?.start && alpha.period?.end
             ? `${alpha.period.start} → ${alpha.period.end} (${alpha.period.days || 0}点)`
-            : `${this.getPeriodLabel(perf.period_filter || this.currentPeriod)} / snapshots=${perf.snapshot_count || 0}`;
+            : `${this.getPeriodLabel(perf.period_filter || this.currentPeriod)} / snapshots=${finiteValue(perf.snapshot_count) ?? '未確認'}`;
         const strategyAttribution = perf.by_strategy || [];
 
         // 全期間サマリー
         const fp = perf.full_period;
         const fpHtml = fp ? (() => {
-            const fpAlpha = fp.alpha ?? null;
-            const fpPf = fp.portfolio_return_pct ?? null;
-            const fpBm = fp.benchmark_return_pct ?? null;
-            const fpSharpe = fp.sharpe ?? null;
+            const fpAlpha = finiteValue(fp.alpha);
+            const fpPf = finiteValue(fp.portfolio_return_pct);
+            const fpBm = finiteValue(fp.benchmark_return_pct);
+            const fpSharpe = finiteValue(fp.sharpe);
             const fpClass = fpAlpha == null ? 'unknown' : fpAlpha > 0 ? 'success' : 'danger';
             return `<div class="card" style="margin-bottom:16px;border-left:4px solid #6366f1">
-                <h4 style="margin:0 0 8px">📅 全期間サマリー（${fp.start || '?'} → ${fp.end || '?'} / ${fp.days || '?'}日）</h4>
+                <h4 style="margin:0 0 8px">📅 全期間サマリー（${this.escapeHtml(String(fp.start || '?'))} → ${this.escapeHtml(String(fp.end || '?'))} / ${finiteValue(fp.days) ?? '?'}点）</h4>
                 <div style="display:flex;gap:24px;flex-wrap:wrap">
-                    <div class="metric" style="margin:0"><span class="label">Portfolio</span><span class="value ${fpPf >= 0 ? 'success' : 'danger'}">${fpPf != null ? (fpPf >= 0 ? '+' : '') + fpPf.toFixed(2) + '%' : '—'}</span></div>
+                    <div class="metric" style="margin:0"><span class="label">Portfolio</span><span class="value ${fpPf === null ? 'muted' : fpPf >= 0 ? 'success' : 'danger'}">${fpPf != null ? (fpPf >= 0 ? '+' : '') + fpPf.toFixed(2) + '%' : '—'}</span></div>
                     <div class="metric" style="margin:0"><span class="label">SPY</span><span class="value">${fpBm != null ? (fpBm >= 0 ? '+' : '') + fpBm.toFixed(2) + '%' : '—'}</span></div>
                     <div class="metric" style="margin:0"><span class="label">Alpha</span><span class="value ${fpClass}">${fpAlpha != null ? (fpAlpha >= 0 ? '+' : '') + fpAlpha.toFixed(2) + '%' : '—'}</span></div>
                     <div class="metric" style="margin:0"><span class="label">Sharpe</span><span class="value">${fpSharpe != null ? fpSharpe.toFixed(2) : '—'}</span></div>
@@ -1972,6 +2203,11 @@ class Console {
 
         return `
         ${this.renderPeriodSelector()}
+        <section class="card ops-evidence" id="analysis-qualification">${this.renderMetricQualification()}
+            <p class="small">標本: snapshot ${finiteValue(perf.snapshot_count) ?? '未確認'} ／ β ${finiteValue(beta.data_points) ?? '未確認'} ／ Sharpe ${finiteValue(sharpe.data_points) ?? '未確認'}</p>
+            <p class="small warn">参考集計。期間・評価時点・費用・同条件比較の資格は未認定。年率換算は将来収益の予測ではありません。</p>
+            <p class="small">次の確認：欠測/標本数と対象期間、価格・台帳の評価資格を確認。未評価をゼロで埋めません。</p>
+        </section>
         ${fpHtml}
         <div class="card" style="margin-bottom: 16px;">
             <div class="metric"><span class="label">分析対象期間</span><span class="value">${this.escapeHtml(periodInfo)}</span></div>
@@ -1982,8 +2218,8 @@ class Console {
                 <div class="metric big-metric">
                     <span class="value huge ${alphaClass}">${alphaAvailable ? fmt.pctSigned(alphaValue / 100) : 'N/A'}</span>
                 </div>
-                <div class="metric"><span class="label">ポートフォリオ</span><span class="value success">${alphaAvailable ? fmt.pct((alpha.portfolio?.return_pct || 0) / 100) : '—'}</span></div>
-                <div class="metric"><span class="label">ベンチマーク (${alpha.benchmark?.symbol || 'SPY'})</span><span class="value">${alphaAvailable ? fmt.pct((alpha.benchmark?.return_pct || 0) / 100) : '—'}</span></div>
+                <div class="metric"><span class="label">ポートフォリオ</span><span class="value ${alphaAvailable && finiteValue(alpha.portfolio?.return_pct) !== null ? (Number(alpha.portfolio.return_pct)>=0?'success':'danger') : 'muted'}">${alphaAvailable ? fmt.pct((finiteValue(alpha.portfolio?.return_pct) === null ? null : Number(alpha.portfolio?.return_pct) / 100)) : '—'}</span></div>
+                <div class="metric"><span class="label">ベンチマーク (${alpha.benchmark?.symbol || 'SPY'})</span><span class="value">${alphaAvailable ? fmt.pct((finiteValue(alpha.benchmark?.return_pct) === null ? null : Number(alpha.benchmark?.return_pct) / 100)) : '—'}</span></div>
                 <div class="interpretation-box ${alphaClass}">
                     <strong>${alphaAvailable ? '評価' : '状態'}:</strong> ${this.escapeHtml(alphaAvailable ? (alpha.interpretation || '') : (alpha.error || 'データ不足'))}
                 </div>
@@ -2000,8 +2236,8 @@ class Console {
                 <div class="metric big-metric">
                     <span class="value huge ${betaClass}">${betaAvailable ? betaValue.toFixed(2) : 'N/A'}</span>
                 </div>
-                <div class="metric"><span class="label">R² (決定係数)</span><span class="value">${betaAvailable ? (beta.r_squared || 0).toFixed(3) : '—'}</span></div>
-                <div class="metric"><span class="label">相関係数</span><span class="value">${betaAvailable ? (beta.correlation || 0).toFixed(3) : '—'}</span></div>
+                <div class="metric"><span class="label">R² (決定係数)</span><span class="value">${betaAvailable ? (finiteValue(beta.r_squared) === null ? '未取得' : Number(beta.r_squared).toFixed(3)) : '—'}</span></div>
+                <div class="metric"><span class="label">相関係数</span><span class="value">${betaAvailable ? (finiteValue(beta.correlation) === null ? '未取得' : Number(beta.correlation).toFixed(3)) : '—'}</span></div>
                 <div class="interpretation-box ${betaClass}">
                     <strong>${betaAvailable ? '評価' : '状態'}:</strong> ${this.escapeHtml(betaAvailable ? (beta.interpretation || '') : (beta.error || 'データ不足'))}
                 </div>
@@ -2018,8 +2254,8 @@ class Console {
                 <div class="metric big-metric">
                     <span class="value huge ${sharpeClass}">${sharpeAvailable ? sharpeValue.toFixed(2) : 'N/A'}</span>
                 </div>
-                <div class="metric"><span class="label">年間リターン</span><span class="value success">${sharpeAvailable ? fmt.pct((sharpe.annual_return_pct || 0) / 100) : '—'}</span></div>
-                <div class="metric"><span class="label">年間ボラティリティ</span><span class="value danger">${sharpeAvailable ? fmt.pct((sharpe.annual_volatility_pct || 0) / 100) : '—'}</span></div>
+                <div class="metric"><span class="label">年率換算リターン（参考）</span><span class="value ${sharpeAvailable && finiteValue(sharpe.annual_return_pct) !== null ? (Number(sharpe.annual_return_pct)>=0?'success':'danger') : 'muted'}">${sharpeAvailable ? fmt.pct((finiteValue(sharpe.annual_return_pct) === null ? null : Number(sharpe.annual_return_pct) / 100)) : '—'}</span></div>
+                <div class="metric"><span class="label">年率換算ボラティリティ（参考）</span><span class="value ${sharpeAvailable && finiteValue(sharpe.annual_volatility_pct) !== null ? 'warn' : 'muted'}">${sharpeAvailable ? fmt.pct((finiteValue(sharpe.annual_volatility_pct) === null ? null : Number(sharpe.annual_volatility_pct) / 100)) : '—'}</span></div>
                 <div class="interpretation-box ${sharpeClass}">
                     <strong>${sharpeAvailable ? '評価' : '状態'}:</strong> ${this.escapeHtml(sharpeAvailable ? (sharpe.interpretation || '') : (sharpe.error || 'データ不足'))}
                 </div>
@@ -2061,18 +2297,18 @@ class Console {
             <th>strategy_version_id</th><th>決済取引</th><th>稼働日</th><th>勝/負</th><th>実現PnL</th><th>α</th><th>β</th><th>Sharpe</th><th>メモ</th>
         </tr></thead><tbody>
         ${data.map(row => {
-            const alphaTxt = row.alpha?.available !== false ? fmt.pctSigned((row.alpha?.alpha || 0) / 100) : 'N/A';
-            const betaTxt = row.beta?.available !== false ? (row.beta?.beta || 0).toFixed(2) : 'N/A';
-            const sharpeTxt = row.sharpe?.available !== false ? (row.sharpe?.sharpe_ratio || 0).toFixed(2) : 'N/A';
-            const alphaCls = row.alpha?.available !== false ? ((row.alpha?.alpha || 0) >= 0 ? 'success' : 'danger') : 'muted';
-            const pnlCls = (row.realized_pnl || 0) >= 0 ? 'success' : 'danger';
+            const alphaTxt = (row.alpha?.available === true && finiteValue(row.alpha?.alpha) !== null) ? fmt.pctSigned((row.alpha?.alpha || 0) / 100) : 'N/A';
+            const betaTxt = (row.beta?.available === true && finiteValue(row.beta?.beta) !== null) ? Number(row.beta.beta).toFixed(2) : 'N/A';
+            const sharpeTxt = (row.sharpe?.available === true && finiteValue(row.sharpe?.sharpe_ratio) !== null) ? Number(row.sharpe.sharpe_ratio).toFixed(2) : 'N/A';
+            const alphaCls = (row.alpha?.available === true && finiteValue(row.alpha?.alpha) !== null) ? ((row.alpha?.alpha || 0) >= 0 ? 'success' : 'danger') : 'muted';
+            const pnlCls = finiteValue(row.realized_pnl) === null ? 'muted' : Number(row.realized_pnl) >= 0 ? 'success' : 'danger';
             const memo = row.summary || row.alpha?.error || row.beta?.error || row.sharpe?.error || row.approximation || '';
             return `<tr>
                 <td class="small">${this.formatStrategyLabel(row.strategy_version_id || '')}</td>
                 <td>${row.closed_trades || 0}</td>
                 <td>${row.active_days || 0}</td>
                 <td>${row.winning_trades || 0} / ${row.losing_trades || 0}</td>
-                <td class="${pnlCls}">${fmt.usdSigned(row.realized_pnl || 0)}</td>
+                <td class="${pnlCls}">${fmt.usdSigned(finiteValue(row.realized_pnl))}</td>
                 <td class="${alphaCls}">${alphaTxt}</td>
                 <td>${betaTxt}</td>
                 <td>${sharpeTxt}</td>
@@ -2356,6 +2592,7 @@ class Console {
             const signalsOrders = charts.signals_orders || [];
             const ctx = document.getElementById('overviewSignalsChart');
             if (ctx && signalsOrders.length > 0) {
+                Chart.getChart(ctx)?.destroy();
                 new Chart(ctx, {
                     type: 'bar',
                     data: {
@@ -2413,6 +2650,8 @@ class Console {
         const suggestedMin = Math.max(minValue - padding, isNegative ? minValue - padding : 0);
         const suggestedMax = maxValue + padding;
         
+        Chart.getChart(ctx)?.destroy();
+
         new Chart(ctx, {
             type: 'line',
             data: {
@@ -2516,6 +2755,8 @@ class Console {
                 });
             }
 
+            Chart.getChart(ctx)?.destroy();
+
             new Chart(ctx, {
                 type: 'line',
                 data: { labels, datasets },
@@ -2556,10 +2797,10 @@ class Console {
             // Portfolio point: use actual data_points for annualization
             // annual_return_pct from Sharpe calc may be distorted if data is short.
             // Show raw period return + annualized vol instead.
-            const periodDays = alpha.period?.days || sharpe.data_points || 1;
-            const portfolioReturnPct = alpha.portfolio?.return_pct ?? (sharpe.annual_return_pct / 252 * periodDays);
-            // Annualized vol is reliable; use it
-            const portfolioVolPct = sharpe.annual_volatility_pct || 0;
+            const periodDays = finiteValue(alpha.period?.days) ?? finiteValue(sharpe.data_points) ?? '未確認';
+            const portfolioReturnPct = perf.available !== false && alpha.available === true ? finiteValue(alpha.portfolio?.return_pct) : null;
+            // Reference conversion only; missing volatility must not become zero risk.
+            const portfolioVolPct = perf.available !== false && sharpe.available === true ? finiteValue(sharpe.annual_volatility_pct) : null;
 
             // Benchmark: calculate annualized vol + period return for SPY and QQQ
             const bmPoints = {};
@@ -2591,12 +2832,14 @@ class Console {
                 pointHoverRadius: 12
             }));
 
+            Chart.getChart(ctx)?.destroy();
+
             new Chart(ctx, {
                 type: 'scatter',
                 data: {
                     datasets: [{
-                        label: 'ポートフォリオ',
-                        data: [{ x: portfolioVolPct, y: portfolioReturnPct }],
+                        label: 'ポートフォリオ（参考）',
+                        data: portfolioVolPct !== null && portfolioVolPct >= 0 && portfolioReturnPct !== null ? [{ x: portfolioVolPct, y: portfolioReturnPct }] : [],
                         backgroundColor: '#10b981',
                         pointRadius: 12,
                         pointHoverRadius: 14
@@ -2682,6 +2925,8 @@ class Console {
                     });
                 }
 
+                Chart.getChart(equityCtx)?.destroy();
+
                 new Chart(equityCtx, {
                     type: 'line',
                     data: { labels, datasets },
@@ -2725,6 +2970,7 @@ class Console {
             const signalsOrders = charts.signals_orders || [];
             const ctx4 = document.getElementById('signalsOrdersChart');
             if (ctx4) {
+                Chart.getChart(ctx4)?.destroy();
                 new Chart(ctx4, {
                     type: 'bar',
                     data: {
@@ -2779,6 +3025,7 @@ class Console {
                     const pfLabels = pfSnaps.map(s => new Date(s.date + 'T00:00:00').toLocaleDateString('ja-JP', {month:'short', day:'numeric'}));
                     const pfValues = pfSnaps.map(s => +s.cumulative_profit_factor);
                     const goalLine = pfSnaps.map(() => 1.0);
+                    Chart.getChart(pfCtx)?.destroy();
                     new Chart(pfCtx, {
                         type: 'line',
                         data: {
@@ -2833,6 +3080,8 @@ class Console {
         const ctx = document.getElementById(canvasId);
         if (!ctx || data.length === 0) return;
         
+        Chart.getChart(ctx)?.destroy();
+
         new Chart(ctx, {
             type: 'line',
             data: {
@@ -2870,30 +3119,8 @@ class Console {
     }
 
     startAutoRefresh() {
-        // 市場時間を判定して更新頻度を調整 (CF-3)
-        const getRefreshInterval = () => {
-            const now = new Date();
-            const hour = now.getHours();
-            const day = now.getDay(); // 0=日曜, 6=土曜
-
-            // 週末
-            if (day === 0 || day === 6) {
-                return 3600000; // 1時間
-            }
-
-            // 平日の市場時間外 (23:30-9:30 JST ≈ US市場外)
-            if (hour >= 23 || hour < 9) {
-                return 3600000; // 1時間
-            }
-
-            // 平日の市場時間中 (9:30-16:00 JST)
-            if (hour >= 9 && hour < 16) {
-                return 300000; // 5分
-            }
-
-            // その他の時間 (16:00-23:30 JST)
-            return 1800000; // 30分
-        };
+        // Server's existing ET calendar drives display polling, never local hours.
+        const getRefreshInterval = () => Console.pollingDelay(this.data?.market_clock);
 
         // CF-3: タブ非表示時はポーリングを停止、再表示時に即度再開
         let pendingRefresh = null;
@@ -2955,10 +3182,13 @@ function initializeMonitoring() {
             const result = await apiClient.getDashboard();
             const duration = Date.now() - start;
             
+            if (result.data?.market_clock) consoleMarketClock=result.data.market_clock;
+            const captured=Date.parse(result.data?.time || '');
             return {
                 success: result.success,
+                source: result.source || 'api',
                 responseTime: duration,
-                dataAge: result.timestamp ? Date.now() - result.timestamp.getTime() : 0,
+                dataAge: Number.isFinite(captured) ? Date.now()-captured : null,
                 errorRate: typeof errorTracker !== 'undefined' 
                   ? errorTracker.calculateErrorRate(3600000) 
                   : 0
@@ -2972,19 +3202,8 @@ function initializeMonitoring() {
             }
         });
         
-        // ヘルスモニタリング開始（市場時間外は30分、市場時間中は5分）
-        const hour = new Date().getHours();
-        const day = new Date().getDay();
-        let monitoringInterval = 1800000; // デフォルト: 30分
-        
-        if (day === 0 || day === 6) {
-            monitoringInterval = 3600000; // 週末: 1時間
-        } else if (hour >= 9 && hour < 16) {
-            monitoringInterval = 300000; // 市場時間中: 5分
-        }
-        
-        healthMonitor.startMonitoring(monitoringInterval);
-        console.log(`✅ Health monitoring started (interval: ${monitoringInterval/1000}s)`);
+        healthMonitor.startMonitoring(() => Console.pollingDelay(consoleMarketClock));
+        console.log('✅ Supplemental API monitoring follows server ET calendar');
     }
     
     // グローバルコマンドの登録（デバッグ用）

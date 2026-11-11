@@ -75,6 +75,14 @@ class RobustAPIClient {
     if (result.success) {
       // データを検証・正規化
       const validatedData = dataValidator.validate(result.data);
+      // Keep acquisition evidence outside the legacy metric normalizer. Never
+      // replace an original acquisition clock with this request's receipt time.
+      const rawClock = result.data?.market_clock;
+      validatedData.time = typeof result.data?.time === 'string' ? result.data.time : null;
+      validatedData.market_clock = rawClock && typeof rawClock === 'object' && !Array.isArray(rawClock)
+        ? Object.fromEntries(['as_of','timezone','session','refresh_interval_ms','next_transition_at','source','scope']
+            .filter(key => Object.hasOwn(rawClock, key)).map(key => [key, rawClock[key]]))
+        : null;
       
       // キャッシュに保存（recoveryManager利用可能な場合）
       if (typeof recoveryManager !== 'undefined') {

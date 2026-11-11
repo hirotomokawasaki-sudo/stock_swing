@@ -1,0 +1,164 @@
+{
+  "purpose": "preserve current code, not certify a release or repair existing test disagreements",
+  "python_environment": "existing stock_swing venv, Python 3.13.10; no dependency installation",
+  "private_fixture_suite": {
+    "groups": {
+      "full": {
+        "exit_code": 1,
+        "observed_counts": {
+          "passed": 4298,
+          "skipped": 2,
+          "failed": 4
+        }
+      },
+      "cli": {
+        "exit_code": 0,
+        "observed_counts": {
+          "passed": 11
+        }
+      },
+      "localhost": {
+        "exit_code": 0,
+        "observed_counts": {
+          "passed": 1
+        }
+      }
+    },
+    "unique_passed": 4310,
+    "unique_skipped": 2,
+    "failed_nodeids": [
+      "tests/unit/test_reduction_orders.py::test_ac_normal_pending_remainder_and_report_propagation",
+      "tests/unit/test_reduction_orders.py::test_ac_short_cover_does_not_become_new_long",
+      "tests/unit/test_simple_exit_v2_strategy.py::test_stop_loss_trigger",
+      "tests/unit/test_submission_guard.py::test_ac_not_found_never_authorizes_retry_and_other_sell_remains"
+    ],
+    "all_tests_passed": false,
+    "private_input_scope": {
+      "private_inputs_supplied": true,
+      "excluded_private_fixture_modules": []
+    }
+  },
+  "public_input_suite": {
+    "groups": {
+      "full": {
+        "exit_code": 1,
+        "observed_counts": {
+          "passed": 3899,
+          "failed": 19,
+          "skipped": 2
+        }
+      },
+      "cli": {
+        "exit_code": 0,
+        "observed_counts": {
+          "passed": 11
+        }
+      },
+      "localhost": {
+        "exit_code": 0,
+        "observed_counts": {
+          "passed": 1
+        }
+      }
+    },
+    "unique_passed": 3911,
+    "unique_skipped": 2,
+    "failed_nodeids": [
+      "tests/unit/test_consumption_bridge_integrity.py::test_ac_initial_conflicting_consumption_refused_without_writes[sum]",
+      "tests/unit/test_consumption_bridge_integrity.py::test_ac_initial_conflicting_consumption_refused_without_writes[missing_history]",
+      "tests/unit/test_consumption_bridge_integrity.py::test_ac_initial_conflicting_consumption_refused_without_writes[negative]",
+      "tests/unit/test_consumption_bridge_integrity.py::test_ac_initial_conflicting_consumption_refused_without_writes[fractional]",
+      "tests/unit/test_consumption_bridge_integrity.py::test_ac_initial_conflicting_consumption_refused_without_writes[nan]",
+      "tests/unit/test_consumption_bridge_integrity.py::test_ac_initial_conflicting_consumption_refused_without_writes[event_time]",
+      "tests/unit/test_consumption_bridge_integrity.py::test_ac_initial_conflicting_consumption_refused_without_writes[latest_consumer]",
+      "tests/unit/test_consumption_bridge_integrity.py::test_ac_initial_conflicting_consumption_refused_without_writes[flag]",
+      "tests/unit/test_consumption_bridge_integrity.py::test_ac_retry_conflicting_consumption_refused_without_writes[over]",
+      "tests/unit/test_consumption_bridge_integrity.py::test_ac_retry_conflicting_consumption_refused_without_writes[watermark]",
+      "tests/unit/test_consumption_bridge_integrity.py::test_ac_retry_conflicting_consumption_refused_without_writes[sum]",
+      "tests/unit/test_consumption_bridge_integrity.py::test_ac_retry_conflicting_consumption_refused_without_writes[latest_time]",
+      "tests/unit/test_consumption_bridge_integrity.py::test_ac_retry_conflicting_consumption_refused_without_writes[latest_consumer]",
+      "tests/unit/test_consumption_bridge_integrity.py::test_ac_retry_conflicting_consumption_refused_without_writes[flag]",
+      "tests/unit/test_consumption_bridge_integrity.py::test_ac_retry_conflicting_consumption_refused_without_writes[prior_identity]",
+      "tests/unit/test_reduction_orders.py::test_ac_normal_pending_remainder_and_report_propagation",
+      "tests/unit/test_reduction_orders.py::test_ac_short_cover_does_not_become_new_long",
+      "tests/unit/test_simple_exit_v2_strategy.py::test_stop_loss_trigger",
+      "tests/unit/test_submission_guard.py::test_ac_not_found_never_authorizes_retry_and_other_sell_remains"
+    ],
+    "all_tests_passed": false,
+    "private_input_scope": {
+      "private_inputs_supplied": false,
+      "excluded_private_fixture_modules": [
+        "tests/unit/test_consumption_bridge.py",
+        "tests/unit/test_fix06_explicit_v7.py",
+        "tests/unit/test_incident_replay_klac.py",
+        "tests/unit/test_r22_analysis_snapshot.py",
+        "tests/unit/test_r22_apply_readiness.py",
+        "tests/unit/test_r22_cutover_compatibility.py",
+        "tests/unit/test_r22_excluded_reader_guards.py",
+        "tests/unit/test_r22_history_migration.py",
+        "tests/unit/test_r22_manual_reader_lineage.py",
+        "tests/unit/test_r22_operational_reader_boundaries.py",
+        "tests/unit/test_r22_residual_orders.py",
+        "tests/unit/test_r22_scheduled_reader_lineage.py",
+        "tests/unit/test_revision_bound_observation.py",
+        "tests/unit/test_versioned_performance_producer.py"
+      ]
+    }
+  },
+  "public_dependency_limit": "14 directly private-fixture-dependent modules were omitted; 15 failures in test_consumption_bridge_integrity.py are an additional indirect dependency on omitted residual_cases.json, not 15 additional observed runtime failures.",
+  "existing_functional_disagreements": [
+    "two reduction_orders expectations versus partial_reduction_requires_reconciliation hold behavior",
+    "simple_exit_v2 stop-loss wording versus emergency independent loss-cap path",
+    "submission_guard expected unrelated SELL POST versus current guard behavior"
+  ],
+  "public_and_private_counts_overlap": "Do not add the two suites together.",
+  "isolation": {
+    "full": "OS-denied external network and writes outside task-local test packet",
+    "localhost": "separate loopback-only HTTP test under OS write denial",
+    "cli": "11 boundary tests with their existing child-isolation harness; no real credentials in the test environment",
+    "ledger_import_origin": "asserted to the task-local candidate copy"
+  },
+  "static_parse": {
+    "parsed": {
+      "python": 682,
+      "json": 20
+    },
+    "errors": []
+  },
+  "other_syntax_checks": {
+    "counts": {
+      "shell": 17,
+      "javascript": 13,
+      "yaml": 19
+    },
+    "errors": [],
+    "whitespace_exit": 0,
+    "whitespace_lines": 0,
+    "module_payload_syntax_checked": [],
+    "async_automation_payload_syntax_checked": [
+      "scripts/automation_payloads/high_correlation_monitor.js",
+      "scripts/automation_payloads/sector_rotation_parallel_shadow.js"
+    ],
+    "formatting_note": "One preexisting trailing space removed in public test copy; git diff --check rerun clean."
+  },
+  "repository_secret_scanner": {
+    "exit_code": 1,
+    "heuristic_findings": 5,
+    "review": "All five exact BROKER_API_SECRET keyword literals were AST-inspected and equal the short dummy string fixture. Scanner was not altered."
+  },
+  "supplemental_privacy": {
+    "actual_secret_values_compared": 12,
+    "actual_financial_identity_values_compared": 4096,
+    "remaining_matches": 0,
+    "private_keys_credential_urls_known_token_shapes": "no remaining findings"
+  },
+  "initial_global_python_attempt": "Retained privately; missing Massive SDK/python-dotenv produced environment failures. Not counted as the supported-environment result.",
+  "not_performed": [
+    "CI completion",
+    "main integration",
+    "deployment",
+    "live/paper broker call",
+    "research/economic replay",
+    "application canary"
+  ]
+}

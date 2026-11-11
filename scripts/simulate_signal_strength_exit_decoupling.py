@@ -49,6 +49,8 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
@@ -120,8 +122,7 @@ _UNTRACKED_ORIGIN_IDS = {"broker_reconstructed", "reconciled_from_broker"}
 
 def load_trades_with_signal_strength(since: str | None = None, attributable_only: bool = False) -> list[dict]:
     state_path = ROOT / "data" / "tracking" / "pnl_state.json"
-    with open(state_path) as f:
-        state = json.load(f)
+    state = legacy_analytical_state(state_path)
     trades = [
         t for t in state.get("trades", [])
         if t.get("status") == "closed" and t.get("entry_signal_strength") is not None

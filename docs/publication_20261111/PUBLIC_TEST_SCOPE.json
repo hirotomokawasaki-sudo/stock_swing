@@ -1,0 +1,19 @@
+{
+  "private_inputs_supplied": false,
+  "excluded_private_fixture_modules": [
+    "tests/unit/test_consumption_bridge.py",
+    "tests/unit/test_fix06_explicit_v7.py",
+    "tests/unit/test_incident_replay_klac.py",
+    "tests/unit/test_r22_analysis_snapshot.py",
+    "tests/unit/test_r22_apply_readiness.py",
+    "tests/unit/test_r22_cutover_compatibility.py",
+    "tests/unit/test_r22_excluded_reader_guards.py",
+    "tests/unit/test_r22_history_migration.py",
+    "tests/unit/test_r22_manual_reader_lineage.py",
+    "tests/unit/test_r22_operational_reader_boundaries.py",
+    "tests/unit/test_r22_residual_orders.py",
+    "tests/unit/test_r22_scheduled_reader_lineage.py",
+    "tests/unit/test_revision_bound_observation.py",
+    "tests/unit/test_versioned_performance_producer.py"
+  ]
+}

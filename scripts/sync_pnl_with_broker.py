@@ -53,6 +53,9 @@ def fetch_alpaca_account(api_key: str, api_secret: str):
         return None
 
 
+from stock_swing.tracking.compatibility import legacy_entrypoint, legacy_maintenance, tracking_root
+
+@legacy_entrypoint(lambda *a, **k: globals().get('project_root', globals().get('PROJECT_ROOT', Path(__file__).resolve().parents[1])))
 def main():
     parser = argparse.ArgumentParser(description="Sync pnl_state.json with Broker")
     parser.add_argument("--dry-run", action="store_true",

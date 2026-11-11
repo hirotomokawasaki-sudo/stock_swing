@@ -141,3 +141,18 @@ def test_missing_last_evaluated_at_and_cleared_at_falls_back_to_triggered_at(tmp
     result = adapter._check_guardrail_freshness()
 
     assert result["cb_as_of"] == now.isoformat()
+
+
+# External clock fixture: an ordinary completed Friday session. These tests
+# exercise timestamp preference, not weekend calendar exceptions.
+import pytest
+@pytest.fixture(autouse=True)
+def ordinary_session_clock(monkeypatch):
+    import console.adapters.system_adapter as adapter
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            value = datetime(2026, 11, 6, 21, 6, tzinfo=timezone.utc)
+            return value.astimezone(tz) if tz else value.replace(tzinfo=None)
+    monkeypatch.setattr(adapter, 'datetime', Clock)
+    monkeypatch.setitem(globals(), 'datetime', Clock)

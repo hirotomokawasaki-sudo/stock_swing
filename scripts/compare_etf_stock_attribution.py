@@ -19,6 +19,8 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 STATE_FILE = PROJECT_ROOT / "data" / "tracking" / "pnl_state.json"
 
@@ -205,7 +207,7 @@ def main() -> None:
     parser.add_argument("--out", help="Write JSON output to file")
     args = parser.parse_args()
 
-    state = json.loads(Path(args.state).read_text(encoding="utf-8"))
+    state = legacy_analytical_state(Path(args.state))
     report = build_report(state)
 
     if args.json or args.out:

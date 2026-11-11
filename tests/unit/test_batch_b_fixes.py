@@ -312,41 +312,21 @@ class TestP6JoinCoverage:
         # No usable ID
         assert _fill_key({"symbol": "AAPL"}) is None
 
-    def test_klac_split_investigation_report_exists(self):
-        """KLAC split investigation report must have been generated."""
-        report_path = pathlib.Path(
-            pathlib.Path(__file__).resolve().parents[2] /
-            "data/audits/klac_split_investigation.json"
-        )
-        assert report_path.exists(), "KLAC split investigation report must exist"
-        data = json.loads(report_path.read_text())
-        assert "analysis" in data
-        assert data["symbol"] == "KLAC"
-
-    def test_klac_anomaly_quarantined(self):
-        """broker_match_0117_KLAC must be in quarantined_trades (split anomaly)."""
-        ps_path = pathlib.Path(
-            pathlib.Path(__file__).resolve().parents[2] /
-            "data/tracking/pnl_state.json"
-        )
-        ps = json.loads(ps_path.read_text())
-        closed_ids = {t["trade_id"] for t in ps.get("trades", [])}
-        quar_ids = {t["trade_id"] for t in ps.get("quarantined_trades", [])}
-        assert "broker_match_0117_KLAC" not in closed_ids, \
-            "KLAC split anomaly trade must NOT be in closed"
-        assert "broker_match_0117_KLAC" in quar_ids, \
-            "KLAC split anomaly trade must be in quarantined"
-
-    def test_cumulative_pnl_excludes_split_anomaly(self):
-        """After quarantine, sum(closed.pnl) should not include KLAC split loss of -39341."""
-        ps_path = pathlib.Path(
-            pathlib.Path(__file__).resolve().parents[2] /
-            "data/tracking/pnl_state.json"
-        )
-        ps = json.loads(ps_path.read_text())
-        closed = ps.get("trades", [])
-        klac_anomaly = [t for t in closed if t.get("trade_id") == "broker_match_0117_KLAC"]
-        assert len(klac_anomaly) == 0, "KLAC split anomaly must be absent from closed"
+    def test_quarantined_split_anomaly_excluded_from_normal_performance(self, tmp_path):
+        from stock_swing.tracking.pnl_tracker import PnLTracker
+        folder = tmp_path / 'data/tracking'
+        folder.mkdir(parents=True)
+        good = dict(trade_id='fixture-closed', symbol='IBM', status='closed', qty=1,
+                    entry_price=100, exit_price=105, pnl=5, strategy_id='fixture')
+        anomaly = dict(good, trade_id='fixture-klac-split', symbol='KLAC', pnl=-39341)
+        path = folder / 'pnl_state.json'
+        path.write_text(json.dumps({'last_updated': '2026-08-02T15:00:00+00:00', 'trades': [good], 'quarantined_trades': [anomaly]}))
+        (folder / 'trade_events.jsonl').write_text('')
+        before = path.read_bytes()
+        tracker = PnLTracker(tmp_path)
+        result = tracker.get_attribution_quality_breakdown()['all']
+        assert result['count'] == 1 and result['net_pnl'] == 5
+        assert path.read_bytes() == before, 'analysis must not restore quarantined loss'
 
     def test_fill_ledger_idempotency_across_rebuilds(self, tmp_path):
         """Fill ledger must be idempotent: same fills → same state SHA256."""

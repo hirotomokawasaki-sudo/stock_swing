@@ -111,7 +111,7 @@ def _load_ess_from_decisions(events_file: Path, decisions_dir: Path) -> dict[str
             trade_id = ev.get("trade_id", "")
             if not trade_id:
                 continue
-            # trade_id = SYMBOL-decisionprefix (e.g. "KLAC-4bb67819")
+            # trade_id = SYMBOL-decisionprefix (e.g. "public-fixture-1066")
             parts = trade_id.split("-", 1)
             if len(parts) < 2:
                 continue
@@ -137,6 +137,9 @@ def _load_ess_from_decisions(events_file: Path, decisions_dir: Path) -> dict[str
 # Main
 # ---------------------------------------------------------------------------
 
+from stock_swing.tracking.compatibility import legacy_entrypoint, legacy_maintenance, tracking_root
+
+@legacy_entrypoint(lambda *a, **k: globals().get('project_root', globals().get('PROJECT_ROOT', Path(__file__).resolve().parents[1])))
 def main() -> None:
     parser = argparse.ArgumentParser(description="Backfill entry_signal_strength in pnl_state.json")
     parser.add_argument("--dry-run", action="store_true", help="Show changes without writing")

@@ -52,6 +52,8 @@ from pathlib import Path
 
 import yaml
 
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
 ROOT = Path(__file__).resolve().parent.parent
 PNL_STATE_PATH = ROOT / "data" / "tracking" / "pnl_state.json"
 REGISTRY_PATH = ROOT / "config" / "reference" / "symbol_registry.yaml"
@@ -86,7 +88,7 @@ def fmt_pf(pf: float | None) -> str:
 
 
 def load_data(pnl_path: Path, reg_path: Path):
-    state = json.loads(pnl_path.read_text())
+    state = legacy_analytical_state(pnl_path)
     reg = yaml.safe_load(reg_path.read_text())["symbols"]
     trades = [t for t in state["trades"] if t.get("status") in ("closed", "open")]
     trades.sort(key=lambda t: t["entry_time"])

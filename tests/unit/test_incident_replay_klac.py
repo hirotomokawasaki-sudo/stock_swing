@@ -48,7 +48,7 @@ class _BrokerStub:
         return SimpleNamespace(payload={"quote": {"bp": p - 0.01, "ap": p + 0.01}})
 
 
-def test_klac_stale_entry_and_peak_repaired(tmp_path: Path) -> None:
+def test_klac_unproven_order_cost_is_not_repaired_from_position_average(tmp_path: Path) -> None:
     fixture = load_fixture()
     tracker = PnLTracker(tmp_path)
     tracker.record_submission(
@@ -65,10 +65,10 @@ def test_klac_stale_entry_and_peak_repaired(tmp_path: Path) -> None:
     broker = _BrokerStub(fixture)
     count = reconcile_stale_entry_prices(broker, tracker)
 
-    assert count == 1
+    assert count == 0, "R22: incomplete order identity/qty cannot justify historical cost repair"
     trade = tracker.get_open_positions()[0]
-    assert abs(trade["entry_price"] - fixture["expected"]["entry_price_after_reconcile"]) < 0.01
-    assert abs(trade["peak_price"] - fixture["expected"]["peak_price_after_reconcile"]) < 0.01
+    assert trade["entry_price"] == fixture["stale_entry_price"], "keep unresolved source evidence"
+    assert trade["peak_price"] == fixture["stale_peak_price"], "do not silently rescale market observations"
 
 
 def test_klac_price_resolver_rejects_stale_bar() -> None:

@@ -21,6 +21,19 @@ from stock_swing.tracking.pnl_tracker import PnLTracker
 
 
 def _exercise_main(tmp_path, monkeypatch, capsys, observer_state):
+    # 2026-11-09: force-market-day bypasses only the calendar launch gate,
+    # not the prospective observer's session validation. Pin the external
+    # SDK/producer clocks to a regular session instead of running on Sunday.
+    class SessionClock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            fixed = datetime(2026, 11, 6, 15, tzinfo=timezone.utc)
+            return fixed.astimezone(tz) if tz else fixed.replace(tzinfo=None)
+    import importlib
+    for module_name in [__name__, "stock_swing.cli.paper_demo",
+                        "stock_swing.strategy_engine.breakout_momentum_strategy",
+                        "stock_swing.decision_engine.decision_engine"]:
+        monkeypatch.setattr(importlib.import_module(module_name), "datetime", SessionClock)
     root = tmp_path
     runtime = root / "config/runtime/current_mode.yaml"
     runtime.parent.mkdir(parents=True)
@@ -111,6 +124,8 @@ def _exercise_main(tmp_path, monkeypatch, capsys, observer_state):
         assert captured["outcome"] is None, "Historical bars must never become prospective evidence on capture"
     elif observer_state == "corrupt":
         assert review["status"] == "error" and (root / STORE).read_text() == "{"
+        assert any(a["code"] == "entry_restriction_observation_failed" for a in console["alerts"])
+        assert "PF観測失敗" in output.out
     else:
         assert review["status"] == ("disabled" if observer_state == "disabled" else "dry_run")
         assert not (root / STORE).exists()
@@ -129,3 +144,13 @@ def test_enabled_disabled_and_failure_have_identical_external_requests(tmp_path,
         with monkeypatch.context() as boundary_patches:
             traces.append(_exercise_main(root, boundary_patches, capsys, observer_state))
     assert traces[0] == traces[1] == traces[2], "Observer must neither add market-data calls nor change the business HTTP path"
+
+
+@pytest.mark.parametrize("revision", [None, "wrong-revision"])
+def test_v7_configuration_error_is_visible_without_changing_real_cli_business_path(tmp_path, monkeypatch, capsys, revision):
+    monkeypatch.setenv("ENTRY_RESTRICTION_REVIEW_VERSION", "v7")
+    if revision is None:
+        monkeypatch.delenv("ENTRY_RESTRICTION_REVIEW_LEDGER_REVISION", raising=False)
+    else:
+        monkeypatch.setenv("ENTRY_RESTRICTION_REVIEW_LEDGER_REVISION", revision)
+    _exercise_main(tmp_path, monkeypatch, capsys, "corrupt")

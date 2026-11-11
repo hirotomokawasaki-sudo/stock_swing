@@ -1,4 +1,0 @@
-{
-  "status": "PASS",
-  "evidence": "tests/unit/test_guardrail_day_start.py"
-}

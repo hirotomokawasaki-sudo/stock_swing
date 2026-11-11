@@ -1,47 +1,21 @@
-# stock_swing
+# stock_swing — current code snapshot (2026-11-11)
 
-Structured trading support and execution-control system for U.S. stocks and ETFs.
+Source code for the trading support, deterministic risk/execution controls,
+research/paper CLI, local Console and dashboard.
 
-## Current scope
-- U.S. stocks / ETFs
-- Event-driven swing trading
-- Short-term momentum / breakout
-- Research and paper modes first
-- OpenClaw-assisted orchestration
-- Deterministic risk and execution gates
+**Start with [the snapshot scope and validation](docs/publication_20261111/README.md).**
+This is a source-only publication. Private account data, raw trading evidence,
+credentials, runtime state and most research packets are deliberately absent.
+It is not a production deployment or a self-contained financial replay package.
 
-## Not in scope for initial build
-- Options as a core strategy
-- Futures
-- Margin-dependent strategies
-- HFT / tick-level competition
-- LLM-only autonomous execution
+- Application: `src/stock_swing/`
+- Console: `console/`; dashboard: `dashboard/`
+- CLI/maintenance tools: `scripts/`
+- Tests and synthetic fixtures: `tests/`
+- Policy configuration: `config/` (`mode: paper`, no live activation)
+- Dependencies: `pyproject.toml`, `requirements.txt`
+- Controls: `GOVERNANCE.md`, `RUNTIME_MODES.md`
 
-## Read first
-1. `MUSTREAD_NAVIGATION.md`
-2. `GOVERNANCE.md`
-3. `RUNTIME_MODES.md`
-4. `docs/architecture/SYSTEM_OVERVIEW.md`
-
-## Quick start
-1. Copy `.env.example` to `.env`
-2. Fill API keys
-3. Set `config/runtime/current_mode.yaml` to `research` or `paper` depending on intended mode
-4. Create virtual environment: `python3 -m venv venv`
-5. Activate: `source venv/bin/activate`
-6. Install dependencies: `pip install -e .`
-7. Run tests: `pytest tests/`
-8. For demo trading readiness, run: `./scripts/maintenance/broker_health_check.sh`
-
-## Development workflow
-**🚨 CRITICAL: Always commit & push after changes!**
-
-```bash
-# After any feature addition or change
-git add .
-git commit -m "feat: description of changes"
-git push origin main
-```
-
-## Repository
-https://github.com/hirotomokawasaki-sudo/stock_swing.git
+See the validation receipt for public-input test results and explicitly
+unavailable private-fixture tests. No credentials or operational data are needed
+to read the code. Publication does not authorize running broker/repair commands.

@@ -183,6 +183,11 @@ def build_snapshot(
 
     # Generate alerts
     alerts: list[dict[str, Any]] = []
+    lineage = summary.get("tracking_context", {}).get("measurement_lineage", {})
+    if lineage:
+        alerts.append({"level": "warning", "type": "historical_correction_unqualified",
+            "message": "履歴訂正後の台帳です。過去スナップショット・DD・戦略帰属の再検証は未完了です。",
+            "ledger_revision": lineage.get("ledger_revision")})
     
     if unrealized_pnl < alert_unrealized_threshold:
         alerts.append({

@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import sys
 from datetime import datetime, timezone
@@ -25,6 +26,9 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / 'src'))
+
+from stock_swing.tracking.compatibility import read_analysis_snapshot, legacy_entrypoint
 
 CORPORATE_ACTIONS_PATH = PROJECT_ROOT / "data" / "corporate_actions.json"
 PNL_STATE_PATH = PROJECT_ROOT / "data" / "tracking" / "pnl_state.json"
@@ -50,27 +54,40 @@ def _load_known_actions() -> set[tuple[str, str]]:
     """Return set of (symbol, ex_date) for already-recorded actions."""
     if not CORPORATE_ACTIONS_PATH.exists():
         return set()
-    try:
-        data = json.loads(CORPORATE_ACTIONS_PATH.read_text(encoding="utf-8"))
-        return {
-            (a["symbol"].upper(), a.get("ex_date", ""))
-            for a in data.get("actions", [])
-        }
-    except Exception:
-        return set()
+    data = json.loads(CORPORATE_ACTIONS_PATH.read_text(encoding="utf-8"))
+    actions = data.get('actions') if isinstance(data, dict) else None
+    if not isinstance(actions, list) or any(
+        not isinstance(a, dict) or not isinstance(a.get('symbol'), str)
+        or not a['symbol'].strip() for a in actions
+    ):
+        raise ValueError('invalid recorded corporate actions')
+    return {(a['symbol'].upper(), a.get('ex_date', '')) for a in actions}
 
 
 def _get_broker_positions() -> list[dict]:
-    try:
-        from console.services.dashboard_service import DashboardService
-        dashboard = DashboardService(PROJECT_ROOT)
-        return dashboard._get_broker_positions()
-    except Exception as exc:
-        print(f"[WARN] Could not fetch broker positions: {exc}", file=sys.stderr)
-        return []
+    # DashboardService constructs PnLTracker and can recover a prepared write.
+    # A broker-only GET must never instantiate that local ledger writer.
+    from stock_swing.sources.broker_client import BrokerClient
+    key, secret = os.environ.get('BROKER_API_KEY'), os.environ.get('BROKER_API_SECRET')
+    if not key or not secret:
+        raise RuntimeError('broker credentials unavailable')
+    result = BrokerClient(api_key=key, api_secret=secret, paper_mode=True).fetch_positions()
+    rows = result.payload if hasattr(result, 'payload') else result
+    if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+        raise ValueError('invalid broker positions response')
+    return rows
 
 
-def _get_tracker_open() -> dict[str, dict]:
+def _finite_number(value, label: str, *, positive: bool = False) -> float:
+    if isinstance(value, bool):
+        raise ValueError(f'invalid {label}')
+    result = float(value)
+    if not math.isfinite(result) or (positive and result <= 0):
+        raise ValueError(f'invalid {label}')
+    return result
+
+
+def _get_tracker_open(state: dict | None = None) -> dict[str, dict]:
     """Return aggregate open tracker positions keyed by symbol.
 
     The tracker stores each entry lot as a separate trade while the broker
@@ -78,38 +95,30 @@ def _get_tracker_open() -> dict[str, dict]:
     with a single tracker lot creates false corporate-action alerts, so combine
     every valid open lot using a quantity-weighted entry price.
     """
-    if not PNL_STATE_PATH.exists():
-        return {}
-    try:
-        state = json.loads(PNL_STATE_PATH.read_text(encoding="utf-8"))
-        totals: dict[str, dict[str, float]] = {}
-        for t in state.get("trades", []):
-            if t.get("status") == "open":
-                sym = str(t.get("symbol") or "").upper()
-                try:
-                    qty = float(t.get("qty") or 0)
-                    entry_price = float(t.get("entry_price") or 0)
-                except (TypeError, ValueError):
-                    continue
-                if not sym or qty <= 0 or entry_price <= 0:
-                    continue
-                aggregate = totals.setdefault(sym, {"qty": 0.0, "cost": 0.0})
-                aggregate["qty"] += qty
-                aggregate["cost"] += qty * entry_price
-
-        return {
-            sym: {
-                "symbol": sym,
-                "status": "open",
-                "qty": aggregate["qty"],
-                "entry_price": aggregate["cost"] / aggregate["qty"],
-            }
-            for sym, aggregate in totals.items()
-            if aggregate["qty"] > 0
+    if state is None:
+        state, _ = read_analysis_snapshot(PNL_STATE_PATH)
+    totals: dict[str, dict[str, float]] = {}
+    for t in state.get('trades', []):
+        if t.get('status') != 'open':
+            continue
+        symbol = t.get('symbol')
+        if not isinstance(symbol, str) or not symbol.strip():
+            raise ValueError('invalid tracker symbol')
+        symbol = symbol.upper()
+        qty = _finite_number(t.get('qty'), 'tracker qty', positive=True)
+        entry = _finite_number(t.get('entry_price'), 'tracker entry', positive=True)
+        aggregate = totals.setdefault(symbol, {'qty': 0.0, 'cost': 0.0})
+        aggregate['qty'] = _finite_number(aggregate['qty'] + qty, 'aggregate qty', positive=True)
+        aggregate['cost'] = _finite_number(aggregate['cost'] + qty * entry, 'aggregate cost', positive=True)
+    return {
+        symbol: {
+            'symbol': symbol,
+            'status': 'open',
+            'qty': aggregate['qty'],
+            'entry_price': aggregate['cost'] / aggregate['qty'],
         }
-    except Exception as exc:
-        print(f"[WARN] Could not read pnl_state.json: {exc}", file=sys.stderr)
-        return {}
+        for symbol, aggregate in totals.items()
+    }
 
 
 def _closest_ratio(observed: float) -> tuple[float, float] | None:
@@ -123,28 +132,34 @@ def _closest_ratio(observed: float) -> tuple[float, float] | None:
     return best
 
 
-def detect_anomalies(threshold: float = 0.05) -> list[dict]:
+def detect_anomalies(threshold: float = 0.05, *, tracker_open: dict | None = None) -> list[dict]:
     """Compare broker vs tracker entry prices; return list of anomaly dicts."""
+    if isinstance(threshold, bool) or not math.isfinite(threshold) or threshold < 0:
+        raise ValueError('invalid anomaly threshold')
+    # Validate local inputs before any broker access or possible side effects.
+    tracker_open = _get_tracker_open() if tracker_open is None else tracker_open
     known = _load_known_actions()
     broker_pos = _get_broker_positions()
-    tracker_open = _get_tracker_open()
     anomalies: list[dict] = []
 
     for bp in broker_pos:
-        sym = str(bp.get("symbol") or "").upper()
-        broker_entry = float(bp.get("avg_entry_price") or 0.0)
-        broker_current = float(bp.get("current_price") or 0.0)
+        sym = bp.get('symbol')
+        if not isinstance(sym, str) or not sym.strip():
+            raise ValueError('invalid broker symbol')
+        sym = sym.upper()
+        broker_entry = _finite_number(bp.get('avg_entry_price'), 'broker entry', positive=True)
+        broker_current = _finite_number(bp.get('current_price', 0.0), 'broker current')
+        broker_qty = _finite_number(bp.get('qty'), 'broker qty')
         tracker = tracker_open.get(sym)
 
         if not tracker or not broker_entry:
             continue
 
-        tracker_entry = float(tracker.get("entry_price") or 0.0)
-        if not tracker_entry:
-            continue
+        tracker_entry = _finite_number(tracker.get('entry_price'), 'tracker entry', positive=True)
+        tracker_qty = _finite_number(tracker.get('qty'), 'tracker qty', positive=True)
 
         # Price ratio: broker_entry / tracker_entry
-        ratio = broker_entry / tracker_entry
+        ratio = _finite_number(broker_entry / tracker_entry, 'entry ratio', positive=True)
 
         # Already close to 1.0 → no issue
         if abs(ratio - 1.0) <= threshold:
@@ -158,8 +173,8 @@ def detect_anomalies(threshold: float = 0.05) -> list[dict]:
             "tracker_entry": tracker_entry,
             "ratio": round(ratio, 4),
             "broker_current": broker_current,
-            "broker_qty": int(float(bp.get("qty") or 0)),
-            "tracker_qty": int(float(tracker.get("qty") or 0)),
+            "broker_qty": broker_qty,
+            "tracker_qty": tracker_qty,
             "already_recorded": any(k[0] == sym for k in known),
         }
         if match:
@@ -178,6 +193,7 @@ def detect_anomalies(threshold: float = 0.05) -> list[dict]:
     return anomalies
 
 
+@legacy_entrypoint(lambda *a, **kw: CORPORATE_ACTIONS_PATH.parent.parent)
 def register_action(action: dict) -> None:
     """Append a new action to corporate_actions.json."""
     if CORPORATE_ACTIONS_PATH.exists():
@@ -198,16 +214,25 @@ def main() -> int:
     args = parser.parse_args()
 
     _load_env()
-    anomalies = detect_anomalies(threshold=args.threshold)
+    try:
+        state, provenance = read_analysis_snapshot(PNL_STATE_PATH)
+        anomalies = detect_anomalies(threshold=args.threshold, tracker_open=_get_tracker_open(state))
+    except Exception as exc:
+        print(f'UNAVAILABLE: corporate action input: {exc}', file=sys.stderr)
+        return 2
 
     if args.json:
         print(json.dumps({
             "checked_at": datetime.now(timezone.utc).isoformat(),
             "anomaly_count": len(anomalies),
             "anomalies": anomalies,
+            "measurement_provenance": provenance,
+            "scope": "open_position_comparison_only_not_historical_CA_clearance",
         }, ensure_ascii=False, indent=2))
         return 1 if anomalies else 0
 
+    print('MEASUREMENT_PROVENANCE_JSON=' + json.dumps(provenance, sort_keys=True))
+    print('Scope: current open positions only; no historical corporate-action clearance or promotion.')
     if not anomalies:
         print("✅  No corporate action anomalies detected.")
         return 0

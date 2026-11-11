@@ -12,6 +12,9 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
+from stock_swing.tracking.compatibility import legacy_entrypoint, legacy_maintenance, tracking_root
+
+@legacy_entrypoint(lambda *a, **k: globals().get('project_root', globals().get('PROJECT_ROOT', Path(__file__).resolve().parents[1])))
 def main():
     project_root = Path(__file__).resolve().parents[1]
     state_file = project_root / "data" / "tracking" / "pnl_state.json"

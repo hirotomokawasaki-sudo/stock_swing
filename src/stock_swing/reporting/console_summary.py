@@ -60,7 +60,8 @@ class ConsoleSummary:
     orders_submitted: int
     orders_rejected: int
     cluster_blocks: list[str] = field(default_factory=list)
-    risk_budget_pct: float = 0.0
+    risk_budget_pct: float | None = 0.0
+    risk_budget_status: str = "unknown"
     stale_symbols: list[str] = field(default_factory=list)
     price_sources: dict[str, int] = field(default_factory=dict)
     market_regime: str = "unknown"
@@ -118,6 +119,7 @@ class ConsoleSummary:
     open_position_details: list[dict[str, Any]] = field(default_factory=list)  # entry signal per position
     circuit_breaker_detail: dict = field(default_factory=dict)           # triggered_at / triggered_rules / reason
     economic_risk_off: dict = field(default_factory=dict)                # staged drawdown policy (shadow/enforce)
+    effective_config: list[dict[str, Any]] = field(default_factory=list)  # opt-in consumed-instance observations
 
     # --- Plan A: Stop Loss Health (2026-07-27) ---
     stop_loss_health: dict[str, Any] = field(default_factory=dict)
@@ -224,7 +226,8 @@ class ConsoleSummary:
             "broker_tracker_diff": self.broker_tracker_diff,
             "risk": {
                 "cluster_blocks": self.cluster_blocks,
-                "risk_budget_pct": round(self.risk_budget_pct, 3),
+                "risk_budget_pct": round(self.risk_budget_pct, 3) if self.risk_budget_pct is not None else None,
+                "risk_budget_status": self.risk_budget_status,
                 "market_regime": self.market_regime,
             },
             "price_integrity": self.price_integrity
@@ -246,6 +249,8 @@ class ConsoleSummary:
             # R7-v2-A: Source SLA
             "source_sla": self.source_sla,
         }
+        if self.effective_config:
+            base["effective_config"] = self.effective_config
         return base
 
     def save_json(self, path: Path) -> None:
@@ -293,7 +298,8 @@ class ConsoleSummary:
         decisions: list | None = None,
         submissions: list | None = None,
         cluster_blocks: list[str] | None = None,
-        risk_budget_pct: float = 0.0,
+        risk_budget_pct: float | None = 0.0,
+        risk_budget_status: str = "unknown",
         stale_symbols: list[str] | None = None,
         price_sources: dict[str, int] | None = None,
         market_regime: str = "unknown",
@@ -364,6 +370,12 @@ class ConsoleSummary:
                 (entry_filter_stats or {}).get("entry_restriction_review")
             ))
         missing: list[str] = []
+        if risk_budget_status == "unavailable":
+            missing.append("risk_budget_pct")
+            alerts.append(ConsoleAlert(
+                severity="warning", code="risk_budget_unavailable",
+                message="Open risk unavailable; new BUYs held",
+            ))
         if unrealized_pnl is None:
             missing.append("unrealized_pnl")
             alerts.append(ConsoleAlert(
@@ -478,6 +490,7 @@ class ConsoleSummary:
             orders_rejected=rejected,
             cluster_blocks=cluster_blocks or [],
             risk_budget_pct=risk_budget_pct,
+            risk_budget_status=risk_budget_status,
             stale_symbols=stale_symbols,
             price_sources=price_sources or {},
             market_regime=market_regime,

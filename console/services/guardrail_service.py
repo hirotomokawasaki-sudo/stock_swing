@@ -49,8 +49,20 @@ def _open_position_audit(project_root: Path) -> tuple[dict[str, Any], list[str]]
     warnings: list[str] = []
 
     # Try exports/open_positions.csv first
+    from stock_swing.tracking.compatibility import read_tracking_state
+    state_path = project_root / "data/tracking/pnl_state.json"
+    state = None
+    if state_path.exists() or (state_path.parent / "trade_events.jsonl").exists():
+        try:
+            state = read_tracking_state(state_path)
+        except Exception as exc:
+            warnings.append(f"Tracking unavailable: {exc}")
+            return {}, warnings
+        if state.get("measurement_lineage"):
+            warnings.append("historical_correction_unqualified: canonical ledger; unversioned CSV ignored")
+
     csv_path = project_root / "exports/open_positions.csv"
-    if csv_path.exists():
+    if state is None and csv_path.exists():
         try:
             rows = list(csv.DictReader(csv_path.open(encoding="utf-8")))
             total = len(rows)
@@ -69,9 +81,8 @@ def _open_position_audit(project_root: Path) -> tuple[dict[str, Any], list[str]]
 
     # Fallback: pnl_state.json
     state_path = project_root / "data/tracking/pnl_state.json"
-    if state_path.exists():
+    if state is not None:
         try:
-            state = json.loads(state_path.read_text(encoding="utf-8"))
             open_trades = [t for t in state.get("trades", []) if t.get("status") == "open"]
             total = len(open_trades)
             missing = sum(1 for t in open_trades if t.get("entry_signal_strength") is None)

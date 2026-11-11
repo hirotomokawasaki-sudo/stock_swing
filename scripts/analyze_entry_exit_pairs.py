@@ -22,6 +22,8 @@ from typing import Any
 
 import sys
 
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
 project_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(project_root / "src"))
 
@@ -289,7 +291,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    data = json.loads(args.pnl_path.read_text(encoding="utf-8"))
+    data = legacy_analytical_state(args.pnl_path)
     all_closed_trades = [t for t in data.get("trades", []) if t.get("status") == "closed"]
     closed_trades = all_closed_trades if args.include_sell_entries else [
         t for t in all_closed_trades if str(t.get("side") or "").lower() == "buy"

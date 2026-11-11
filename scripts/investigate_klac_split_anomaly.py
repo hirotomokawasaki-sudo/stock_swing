@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """FIX-LEDGER-3: Investigate KLAC split anomaly in pnl_state.json.
 
-broker_match_0117_KLAC:
+public-fixture-2503:
   entry_price=2126.92  exit_price=253.5  qty=21  pnl=-39341.89
 
 This is consistent with an unadjusted split:
@@ -21,6 +21,8 @@ import pathlib
 import sys
 from datetime import datetime, timezone
 
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
 project_root = pathlib.Path(__file__).resolve().parents[1]
 
 
@@ -28,7 +30,7 @@ def main() -> int:
     ps_path = project_root / "data/tracking/pnl_state.json"
     ca_path = project_root / "data/corporate_actions.json"
 
-    ps = json.loads(ps_path.read_text())
+    ps = legacy_analytical_state(ps_path)
     closed = ps.get("trades", [])
     klac_trades = [t for t in closed if t.get("symbol") == "KLAC"]
 
@@ -68,7 +70,7 @@ def main() -> int:
         "corporate_actions_found": klac_actions,
         "analysis": {
             "hypothesis": (
-                "broker_match_0117_KLAC entry_price=2126.92 is pre-split (×8 split ratio: "
+                "public-fixture-2503 entry_price=2126.92 is pre-split (×8 split ratio: "
                 "2126.92/8=265.87 matches post-split trading range of $240-270 in Jun 2026). "
                 "Exit at $253.50 is in the post-split range. The trade tracker recorded "
                 "the entry at pre-split price but exit at post-split price, causing a "

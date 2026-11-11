@@ -28,6 +28,14 @@ CURRENT_MODE_PATH = PROJECT_ROOT / "config" / "runtime" / "current_mode.yaml"
 
 
 def _load(path: Path) -> dict:
+    if path.name == "pnl_state.json":
+        from stock_swing.tracking.compatibility import read_tracking_state
+        try:
+            return read_tracking_state(path)
+        except FileNotFoundError:
+            return {}  # existing insufficient-sample NO-GO; no contradictory events
+        except Exception as exc:
+            return {"tracking_error": str(exc)}
     if not path.exists():
         return {}
     try:
@@ -81,6 +89,10 @@ def check_economic_viability(pnl_state: dict, cohort_start: str) -> dict:
     exit_time >= cohort_start. Fail-closed: missing pnl_state, missing
     trades, or n < ECON_MIN_SAMPLE all fail (insufficient_sample).
     """
+    if pnl_state.get("measurement_lineage") or pnl_state.get("tracking_error"):
+        return {"label": "economic_viability", "pass": False,
+                "actual": "historical_correction_unqualified" if pnl_state.get("measurement_lineage") else pnl_state["tracking_error"],
+                "required": "validated consistent measurement before economic evaluation"}
     trades = [
         t for t in (pnl_state.get("trades") or [])
         if t.get("status") == "closed"
@@ -459,6 +471,9 @@ def check_promotion_readiness() -> dict[str, dict] | None:
 
         pnl_state_path = PROJECT_ROOT / "data" / "tracking" / "pnl_state.json"
         pnl_state = _load(pnl_state_path)
+        if pnl_state.get("measurement_lineage") or pnl_state.get("tracking_error"):
+            return {"measurement": {"label": "measurement_qualified", "pass": False,
+                    "actual": "historical_correction_unqualified_or_unavailable", "required": "validated measurement", "detail": ""}}
         _all_closed_trades = [t for t in pnl_state.get("trades", []) if t.get("status") == "closed"]
         # AUDIT FIX (2026-08-23): clean_cohort_pf previously fed ALL closed
         # trades (including original_strategy_id in {"broker_reconstructed",

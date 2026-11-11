@@ -12,6 +12,7 @@ CRITICAL: This layer has NO execution authority.
 from __future__ import annotations
 
 import hashlib
+import math
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -226,6 +227,19 @@ class DecisionEngine:
         }
         sizing = PositionSizingSnapshot()
         if isinstance(candidate.metadata, dict):
+            # Preserve the numeric exit return through to execution-time guards.
+            # Trailing notes need not contain a parseable "return ...%" string.
+            # Unknown/non-finite evidence must remain unknown, never become 0.
+            if candidate.action == "sell":
+                raw_return = candidate.metadata.get("return_pct")
+                if raw_return is not None and not isinstance(raw_return, bool):
+                    try:
+                        exit_return = float(raw_return)
+                    except (TypeError, ValueError, OverflowError):
+                        pass
+                    else:
+                        if math.isfinite(exit_return):
+                            evidence["return_pct"] = exit_return
             if candidate.metadata.get("risk_per_share") is not None:
                 evidence["risk_per_share"] = candidate.metadata.get("risk_per_share")
                 sizing.risk_per_share = candidate.metadata.get("risk_per_share")

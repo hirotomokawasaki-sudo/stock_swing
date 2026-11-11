@@ -13,6 +13,7 @@ import json
 import math
 import os
 import tempfile
+from contextlib import nullcontext
 from dataclasses import asdict
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
@@ -23,6 +24,20 @@ from stock_swing.utils.market_calendar import MarketCalendar
 
 ET = ZoneInfo("America/New_York")
 STORE = Path("data/analysis/entry_restriction_review_v1.json")
+STORE_V2 = Path("data/analysis/entry_restriction_review_v2.json")
+STORE_V3 = Path("data/analysis/entry_restriction_review_v3.json")
+STORE_V4 = Path("data/analysis/entry_restriction_review_v4.json")
+STORE_V5 = Path("data/analysis/entry_restriction_review_v5.json")
+STORE_V6 = Path("data/analysis/entry_restriction_review_v6.json")
+STORE_V7 = Path("data/analysis/entry_restriction_review_v7.json")
+# Financial-only successor; research v8/v9 and all old stores are never migrated.
+STORE_V10 = Path("data/analysis/entry_restriction_review_v10.json")
+STORE_V11 = Path("data/analysis/entry_restriction_review_v11.json")
+STORE_V12 = Path("data/analysis/entry_restriction_review_v12.json")
+STORE_V13 = Path("data/analysis/entry_restriction_review_v13.json")
+STORE_V14 = Path("data/analysis/entry_restriction_review_v14.json")
+STORE_V15 = Path("data/analysis/entry_restriction_review_v15.json")
+STORE_V16 = Path("data/analysis/entry_restriction_review_v16.json")
 PROTOCOL = {
     "version": "pf-review-v1-20261028",
     "horizon_sessions": 5, "min_completed": 30,
@@ -75,21 +90,107 @@ def _completed_day(now: datetime) -> date:
     return day
 
 
-def _definition() -> dict:
+def _definition(protocol: dict | None = None) -> dict:
     # Hash actual relevant source, not the Git HEAD (unrelated commits should
     # not reset a study). Never read .env or persist secrets.
     package = Path(__file__).resolve().parents[1]
     files = [Path(__file__), package / "risk/entry_filter.py",
              package / "utils/market_calendar.py", package / "cli/paper_demo.py",
              package / "sources/hybrid_data_fetcher.py"]
+    if protocol is not None and protocol.get("version") in {"pf-review-v3-20261103", "pf-review-v4-20261104", "pf-review-v5-20261105", "pf-review-v6-20261105", "pf-review-v7-20261106", "pf-review-v10-20261110", "pf-review-v11-20261110", "pf-review-v12-20261110", "pf-review-v13-20261110", "pf-review-v14-20261110", "pf-review-v15-20261110", "pf-review-v16-20261110"}:
+        files.append(package / "sources/massive_client.py")
+    if protocol is not None and protocol.get("version") in {"pf-review-v4-20261104", "pf-review-v5-20261105", "pf-review-v6-20261105", "pf-review-v7-20261106", "pf-review-v10-20261110", "pf-review-v11-20261110", "pf-review-v12-20261110", "pf-review-v13-20261110", "pf-review-v14-20261110", "pf-review-v15-20261110", "pf-review-v16-20261110"}:
+        files += sorted((package / "execution").glob("*.py"))
+        files += [package / "sources/broker_client.py", package / "sources/broker_client_protocol.py"]
+    if protocol is not None and protocol.get("version") in {"pf-review-v5-20261105", "pf-review-v6-20261105", "pf-review-v7-20261106", "pf-review-v10-20261110", "pf-review-v11-20261110", "pf-review-v12-20261110", "pf-review-v13-20261110", "pf-review-v14-20261110", "pf-review-v15-20261110", "pf-review-v16-20261110"}:
+        files += [package / "experiments/feature_snapshot_store.py",
+                  package / "tracking/exit_reason_store.py", package / "tracking/pnl_tracker.py"]
+    if protocol is not None and protocol.get("version") in {"pf-review-v6-20261105", "pf-review-v7-20261106", "pf-review-v10-20261110", "pf-review-v11-20261110", "pf-review-v12-20261110", "pf-review-v13-20261110", "pf-review-v14-20261110", "pf-review-v15-20261110", "pf-review-v16-20261110"}:
+        files += sorted((package / "tracking").glob("*.py"))
+    if protocol is not None and protocol.get("version") in {"pf-review-v11-20261110", "pf-review-v12-20261110", "pf-review-v13-20261110", "pf-review-v14-20261110", "pf-review-v15-20261110", "pf-review-v16-20261110"}:
+        files += [package / "reporting/versioned_bridge.py", package / "reporting/equity_bridge_reconciliation.py",
+                  package / "reporting/equity_bridge.py", package / "core/runtime.py",
+                  package / "guardrails/economic_risk_off.py"]
+        files += sorted((package / "execution").glob("*.py"))
+        files += sorted((package / "sources").glob("broker*.py"))
+        files += sorted((package / "normalization").glob("*broker*.py"))
+    if protocol is not None and protocol.get("version") in {"pf-review-v14-20261110", "pf-review-v15-20261110", "pf-review-v16-20261110"}:
+        files += sorted((package / "decision_engine").glob("*.py"))
+    if protocol is not None and protocol.get("version") in {"pf-review-v15-20261110", "pf-review-v16-20261110"}:
+        files.append(package / "reporting/restriction_review_alerts.py")
     files += sorted((package / "strategy_engine").glob("*.py"))
     files += sorted((package / "feature_engine").glob("*.py"))
     files += sorted((package / "risk").glob("*.py"))
     return {
-        "protocol": dict(PROTOCOL),
+        "protocol": dict(PROTOCOL if protocol is None else protocol),
         "source_hashes": {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in files},
     }
+
+
+def _study() -> tuple[dict, Path]:
+    """Only an explicit fixed version selects a new namespace; never auto-reset."""
+    version = os.environ.get("ENTRY_RESTRICTION_REVIEW_VERSION", "v1")
+    if version == "v1":
+        return dict(PROTOCOL), STORE
+    if version == "v2":
+        return dict(PROTOCOL, version="pf-review-v2-20261029"), STORE_V2
+    if version == "v3":
+        return dict(PROTOCOL, version="pf-review-v3-20261103"), STORE_V3
+    if version == "v4":
+        return dict(PROTOCOL, version="pf-review-v4-20261104"), STORE_V4
+    if version == "v5":
+        return dict(PROTOCOL, version="pf-review-v5-20261105"), STORE_V5
+    if version == "v6":
+        return dict(PROTOCOL, version="pf-review-v6-20261105"), STORE_V6
+    if version == "v7":
+        return dict(PROTOCOL, version="pf-review-v7-20261106"), STORE_V7
+    if version == "v10":
+        return dict(PROTOCOL, version="pf-review-v10-20261110", history_transition_count=2), STORE_V10
+    if version == "v11":
+        return dict(PROTOCOL, version="pf-review-v11-20261110", history_transition_count=2), STORE_V11
+    if version == "v12":
+        return dict(PROTOCOL, version="pf-review-v12-20261110", history_transition_count=2), STORE_V12
+    if version == "v13":
+        return dict(PROTOCOL, version="pf-review-v13-20261110", history_transition_count=2), STORE_V13
+    if version == "v14":
+        return dict(PROTOCOL, version="pf-review-v14-20261110", history_transition_count=2), STORE_V14
+    if version == "v15":
+        return dict(PROTOCOL, version="pf-review-v15-20261110", history_transition_count=2), STORE_V15
+    if version == "v16":
+        return dict(PROTOCOL, version="pf-review-v16-20261110", history_transition_count=2), STORE_V16
+    raise ValueError("unsupported explicit observation version")
+
+
+def _no_links(path: Path) -> None:
+    if any(p.is_symlink() for p in (path, *path.parents)):
+        raise ValueError("symlinked observation storage")
+
+
+def _legacy_summary(root: Path, now: datetime) -> dict:
+    """Read-only historical counts, never prior rows/candidates or zero fallback."""
+    result = {"protocol": PROTOCOL["version"], "role": "historical_only",
+              "observations": None, "completed": None, "pending": None,
+              "eligible_to_trade": False, "automatic_release": False}
+    try:
+        path = Path(root) / STORE
+        _no_links(path)
+        if not path.exists():
+            return dict(result, status="missing")
+        envelope = json.loads(path.read_text())
+        definition = envelope["state"]["definition"]
+        if definition["protocol"] != PROTOCOL:
+            raise ValueError("legacy protocol mismatch")
+        state = _load(path, definition, now)
+        items = state["observations"]
+        if not all(isinstance(row, dict) and isinstance(row.get("cohort"), str)
+                   and "outcome" in row for row in items):
+            raise ValueError("legacy observations malformed")
+        done = sum(row["outcome"] is not None for row in items)
+        return dict(result, status="retained", observations=len(items), completed=done,
+                    pending=len(items)-done, definition_hash=state["definition_hash"])
+    except Exception:
+        return dict(result, status="error")
 
 
 def _bars(records, symbol: str, now: datetime) -> dict[str, dict | None]:
@@ -208,11 +309,55 @@ def _assess(observations: list[dict], bars: dict, stopped: set, config_hash: str
     return rows
 
 
+
+def _ledger_binding(root, receipt, run_id, config_hash, config, now, decisions, blocked, *, required_history_transitions=None):
+    """Verify consumed PF projection against the same locked four-file epoch.
+
+    Stable migration revision partitions studies; changing daily input hashes do
+    not reset a cohort. Never recover a journal or infer an absent ledger is zero.
+    """
+    from stock_swing.tracking.compatibility import read_analysis_snapshot
+    from stock_swing.tracking.ledger_transaction import FILES, ledger_transaction, digest
+    from stock_swing.risk.pf_history_receipt import load_pf_history, project_pf_history
+    expected = os.environ.get('ENTRY_RESTRICTION_REVIEW_LEDGER_REVISION')
+    if not expected or expected == 'legacy':
+        raise ValueError('explicit corrected ledger revision required')
+    state, provenance = read_analysis_snapshot(Path(root)/'data/tracking/pnl_state.json')
+    if provenance['ledger_revision'] != expected:
+        raise ValueError('unexpected financial revision')
+    if required_history_transitions is not None:
+        history = state.get('history_migrations', [])
+        if (len(history) != required_history_transitions
+                or history[-1].get('intent', {}).get('schema_version') != 2):
+            raise ValueError('second immutable financial transition required')
+    doc = load_pf_history(root, receipt)
+    from stock_swing.risk.config_instance_receipts import instance_receipt
+    source = instance_receipt(config, 'paper_demo:EntryFilterConfig')
+    expected_decisions = [(d.decision_id, d.symbol, d.action, _aware(d.generated_at)) for d in decisions]
+    recorded_decisions = [(d['decision_id'], d['symbol'], d['action'], _aware(d['generated_at'])) for d in doc['decisions']]
+    if (source['status'] != 'observed' or doc['entry_filter_source_sha256'] != source['source_sha256']
+            or recorded_decisions != expected_decisions
+            or doc['outputs']['blocked'] != [list(row) for row in blocked]):
+        raise ValueError('actual PF boundary receipt mismatch')
+    if (doc['run_id'] != run_id or doc['experiment_config_hash'] != config_hash
+            or doc['entry_config'] != asdict(config) or _aware(doc['observed_at']) > now
+            or doc['history'] != project_pf_history(state['trades'])):
+        raise ValueError('PF consumed input does not match locked ledger')
+    with ledger_transaction(root, recover=False, blocking=False) as tx:
+        hashes = {name: digest(tx.read(Path(root)/'data/tracking'/name)) for name in sorted(FILES)}
+    if any(value is None for value in hashes.values()):
+        raise ValueError('missing financial input')
+    return {**provenance, 'financial_file_sha256': hashes, 'pf_history_receipt': dict(receipt),
+            'observed_at': now.isoformat(), 'run_id': run_id,
+            'qualification': 'exact_PF_consumed_projection_not_full_execution_or_profit_qualification'}
+
+
 def observe_restricted_entries(*, root: Path, decisions: list, blocked: list,
                                stop_list: list, records_by_symbol: dict,
                                entry_config, run_id: str, config_hash: str,
                                observed_at: datetime, dry_run: bool = False,
-                               mode: str = "paper", signal_config: dict | None = None) -> dict:
+                               mode: str = "paper", signal_config: dict | None = None,
+                               pf_history_receipt: dict | None = None) -> dict:
     """Capture actual PF exclusions; mature and review shadow diagnostics only.
 
     Failure is visible and yields zero candidates. It never changes caller-owned
@@ -220,6 +365,11 @@ def observe_restricted_entries(*, root: Path, decisions: list, blocked: list,
     """
     base = {"protocol": PROTOCOL["version"], "eligible_to_trade": False,
             "automatic_release": False, "rows": [], "candidates": []}
+    try:
+        protocol, namespace = _study()
+        base.update(protocol=protocol["version"], study_role="active", store=namespace.as_posix())
+    except ValueError:
+        return dict(base, status="error", reason="unsupported_version")
     if os.environ.get("ENTRY_RESTRICTION_REVIEW_ENABLED", "true").lower() in {"0", "false", "no"}:
         return {**base, "status": "disabled"}
     if dry_run or mode != "paper":
@@ -233,76 +383,117 @@ def observe_restricted_entries(*, root: Path, decisions: list, blocked: list,
         # never treat an ordinary job switch as corrupt global study state.
         effective_config = {"experiment_config_hash": config_hash, "signal_config": signal_config or {},
                             "entry_config": asdict(entry_config)}
+        raw_config_hash = config_hash
         config_hash = _hash(effective_config)
-        definition = _definition()
-        path = Path(root) / STORE
-        path.parent.mkdir(parents=True, exist_ok=True)
-        # A separate lock survives atomic replacement and serializes concurrent
-        # regular runs; one-file commits keep capture and completion consistent.
-        with path.with_suffix(".lock").open("a+") as lock:
-            # A stalled observer must never hold up SELL/risk processing in the
-            # regular workflow. Contention defers this observation immediately.
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            state = _load(path, definition, now)
-            observations = state["observations"]
-            bars = {symbol: _bars(records, symbol, now) for symbol, records in records_by_symbol.items()}
-            latest = _completed_day(now)
-            for item in observations:
-                if item.get("outcome") is not None:
-                    continue
-                dates = [date.fromisoformat(day) for day in item["sessions"]]
-                if dates[-1] > latest:
-                    continue
-                inputs = [bars.get(item["symbol"], {}).get(day.isoformat()) for day in dates]
-                if any(bar is None for bar in inputs):
-                    item["waiting_reason"] = "required_completed_daily_bars_missing_or_invalid"
-                    continue
-                opening = inputs[0]["open"]
-                gross = inputs[-1]["close"] / opening - 1
-                item["outcome"] = {
-                    "gross_return": gross,
-                    "base_return": gross - PROTOCOL["base_round_trip_bps"] / 10000,
-                    "stress_return": gross - PROTOCOL["stress_round_trip_bps"] / 10000,
-                    "path_return": min(bar["low"] for bar in inputs) / opening - 1 - PROTOCOL["stress_round_trip_bps"] / 10000,
-                    "completed_at": now.isoformat(), "run_id": run_id, "inputs": inputs,
-                }
-                item.pop("waiting_reason", None)
-            pf_blocked = {symbol: reason for symbol, reason in blocked
-                          if reason.startswith(("rolling_pf_gate:", "stock_reduced_mode:"))}
-            for decision in decisions:
-                symbol = decision.symbol
-                if decision.action != "buy" or symbol not in pf_blocked:
-                    continue
-                if symbol in entry_config.purchase_restricted_symbols:
-                    continue
-                session = now.astimezone(ET).date()
-                if not _trading_day(session):
-                    continue
-                prior = [item for item in observations if item["symbol"] == symbol]
-                if any(item.get("outcome") is None or item["capture_session"] >= session.isoformat() for item in prior):
-                    continue
-                generated = _aware(decision.generated_at)
-                if generated > now or generated.astimezone(ET).date() != session:
-                    raise ValueError("future/stale candidate timestamp")
-                if not decision.decision_id or not decision.strategy_id or not decision.strategy_version_id:
-                    raise ValueError("missing decision provenance")
-                identity = {"symbol": symbol, "strategy_id": decision.strategy_id,
-                            "strategy_version_id": decision.strategy_version_id, "config_hash": config_hash}
-                observations.append({
-                    **identity, "cohort": _hash(identity), "run_id": run_id,
-                    "effective_config": effective_config,
-                    "decision_id": decision.decision_id, "generated_at": generated.isoformat(),
-                    "observed_at": now.isoformat(), "capture_session": session.isoformat(),
-                    "block_reason": pf_blocked[symbol],
-                    "sessions": [day.isoformat() for day in _sessions_after(session, PROTOCOL["horizon_sessions"])],
-                    "outcome": None,
-                })
-            stopped = {row["symbol"] for row in stop_list
-                       if row["symbol"] not in entry_config.purchase_restricted_symbols}
-            rows = _assess(observations, bars, stopped, config_hash, now)
-            state["last_observed_at"] = now.isoformat()
-            state["last_run_id"] = run_id
-            _save(path, state)
+        from stock_swing.tracking.ledger_transaction import ledger_transaction
+        with (ledger_transaction(root, recover=False, blocking=False) if namespace in {STORE_V6, STORE_V7, STORE_V10, STORE_V11, STORE_V12, STORE_V13, STORE_V14, STORE_V15, STORE_V16} else nullcontext()):
+            definition = _definition() if namespace == STORE else _definition(protocol)
+            if namespace in {STORE_V2, STORE_V3, STORE_V4, STORE_V5, STORE_V6, STORE_V7, STORE_V10, STORE_V11, STORE_V12, STORE_V13, STORE_V14, STORE_V15, STORE_V16}:
+                base["legacy"] = _legacy_summary(root, now)
+            binding = None
+            if namespace in {STORE_V6, STORE_V7, STORE_V10, STORE_V11, STORE_V12, STORE_V13, STORE_V14, STORE_V15, STORE_V16}:
+                binding = _ledger_binding(root, pf_history_receipt, run_id, raw_config_hash, entry_config, now, decisions, blocked,
+                    required_history_transitions=protocol.get('history_transition_count'))
+                definition['ledger_contract'] = {key: binding[key] for key in ('ledger_revision', 'measurement_status')}
+            if namespace in {STORE_V11, STORE_V12, STORE_V13, STORE_V14, STORE_V15, STORE_V16}:
+                from stock_swing.reporting.versioned_bridge import load_selected_reconciliation
+                from stock_swing.tracking.compatibility import read_analysis_snapshot
+                current, _ = read_analysis_snapshot(Path(root)/'data/tracking/pnl_state.json')
+                accounting = load_selected_reconciliation(root, expected_account_id=current.get('broker_account_id'),
+                    currency='USD', current_trades=current['trades'])
+                if accounting is None or accounting['ledger_revision'] != binding['ledger_revision']:
+                    raise ValueError('explicit matching accounting selector required')
+                definition['accounting_contract'] = dict(version='immutable-adjustment-selector-v1',
+                    ledger_revision=accounting['ledger_revision'],
+                    artifact_sha256=accounting['reconciliation_artifact_sha256'])
+                binding['accounting_contract'] = dict(definition['accounting_contract'])
+
+            path = Path(root) / namespace
+            _no_links(path)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            # A separate lock survives atomic replacement and serializes concurrent
+            # regular runs; one-file commits keep capture and completion consistent.
+            with path.with_suffix(".lock").open("a+") as lock:
+                # A stalled observer must never hold up SELL/risk processing in the
+                # regular workflow. Contention defers this observation immediately.
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                state = _load(path, definition, now)
+                observations = state["observations"]
+                if binding is not None:
+                    state["last_ledger_input"] = binding
+                bars = {symbol: _bars(records, symbol, now) for symbol, records in records_by_symbol.items()}
+                latest = _completed_day(now)
+                for item in observations:
+                    if item.get("outcome") is not None:
+                        continue
+                    dates = [date.fromisoformat(day) for day in item["sessions"]]
+                    if dates[-1] > latest:
+                        continue
+                    inputs = [bars.get(item["symbol"], {}).get(day.isoformat()) for day in dates]
+                    if any(bar is None for bar in inputs):
+                        item["waiting_reason"] = "required_completed_daily_bars_missing_or_invalid"
+                        continue
+                    opening = inputs[0]["open"]
+                    gross = inputs[-1]["close"] / opening - 1
+                    item["outcome"] = {
+                        "gross_return": gross,
+                        "base_return": gross - PROTOCOL["base_round_trip_bps"] / 10000,
+                        "stress_return": gross - PROTOCOL["stress_round_trip_bps"] / 10000,
+                        "path_return": min(bar["low"] for bar in inputs) / opening - 1 - PROTOCOL["stress_round_trip_bps"] / 10000,
+                        "completed_at": now.isoformat(), "run_id": run_id, "inputs": inputs,
+                    }
+                    if binding is not None:
+                        item["outcome"]["ledger_input"] = binding
+                    item.pop("waiting_reason", None)
+                pf_blocked = {symbol: reason for symbol, reason in blocked
+                              if reason.startswith(("rolling_pf_gate:", "stock_reduced_mode:"))}
+                for decision in decisions:
+                    symbol = decision.symbol
+                    if decision.action != "buy" or symbol not in pf_blocked:
+                        continue
+                    if symbol in entry_config.purchase_restricted_symbols:
+                        continue
+                    session = now.astimezone(ET).date()
+                    if not _trading_day(session):
+                        continue
+                    prior = [item for item in observations if item["symbol"] == symbol]
+                    if any(item.get("outcome") is None or item["capture_session"] >= session.isoformat() for item in prior):
+                        continue
+                    generated = _aware(decision.generated_at)
+                    if generated > now or generated.astimezone(ET).date() != session:
+                        raise ValueError("future/stale candidate timestamp")
+                    if not decision.decision_id or not decision.strategy_id or not decision.strategy_version_id:
+                        raise ValueError("missing decision provenance")
+                    identity = {"symbol": symbol, "strategy_id": decision.strategy_id,
+                                "strategy_version_id": decision.strategy_version_id, "config_hash": config_hash}
+                    if namespace in {STORE_V2, STORE_V3, STORE_V4, STORE_V5, STORE_V6, STORE_V7, STORE_V10, STORE_V11, STORE_V12, STORE_V13, STORE_V14, STORE_V15, STORE_V16}:
+                        identity["study_definition_hash"] = _hash(definition)
+                        identity["protocol"] = protocol["version"]
+                    if binding is not None:
+                        from stock_swing.risk.pf_history_receipt import load_pf_history
+                        doc = load_pf_history(root, pf_history_receipt, decision_id=decision.decision_id)
+                        if [symbol, pf_blocked[symbol]] not in doc["outputs"]["blocked"]:
+                            raise ValueError("PF exclusion receipt mismatch")
+                    observations.append({
+                        **({"ledger_input": binding} if binding is not None else {}),
+                        **identity, "cohort": _hash(identity), "run_id": run_id,
+                        "effective_config": effective_config,
+                        "decision_id": decision.decision_id, "generated_at": generated.isoformat(),
+                        "observed_at": now.isoformat(), "capture_session": session.isoformat(),
+                        "block_reason": pf_blocked[symbol],
+                        "sessions": [day.isoformat() for day in _sessions_after(session, PROTOCOL["horizon_sessions"])],
+                        "outcome": None,
+                        **({"pf_history_receipt": dict(getattr(decision, "evidence", {}).get("pf_history_receipt", {}))}
+                           if namespace in {STORE_V2, STORE_V3, STORE_V4, STORE_V5, STORE_V6, STORE_V7, STORE_V10, STORE_V11, STORE_V12, STORE_V13, STORE_V14, STORE_V15, STORE_V16} else {}),
+                    })
+                stopped = {row["symbol"] for row in stop_list
+                           if row["symbol"] not in entry_config.purchase_restricted_symbols}
+                rows = _assess(observations, bars, stopped, config_hash, now)
+                for row in rows:
+                    row["protocol"] = protocol["version"]
+                state["last_observed_at"] = now.isoformat()
+                state["last_run_id"] = run_id
+                _save(path, state)
         return {**base, "status": "observing", "definition_hash": _hash(definition),
                 "frozen_at": state["frozen_at"], "observations": len(observations), "rows": rows,
                 "candidates": [row["symbol"] for row in rows if row["status"] == "review_candidate"]}

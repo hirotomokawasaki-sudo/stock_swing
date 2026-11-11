@@ -130,28 +130,29 @@ class TestCircuitBreakerAlertOk:
         svc = _StubService(tmp_path)
         assert svc._check_circuit_breaker_alert() is None
 
-    def test_unknown_status_returns_none(self, tmp_path):
-        """Any status other than halted/recovery_pending must not alert."""
+    def test_degraded_status_returns_warning(self, tmp_path):
+        """AC 2026-10-28: degraded is explicitly visible, not no-alert."""
         _write_cb(tmp_path, {"status": "degraded"})
         svc = _StubService(tmp_path)
-        assert svc._check_circuit_breaker_alert() is None
+        alert = svc._check_circuit_breaker_alert()
+        assert alert["code"] == "guardrail_degraded" and alert["severity"] == "warning", "Degraded evidence must remain visible"
 
 
 # ── file missing / corrupt (testing_standards.md 1-A) ────────────────────────
 
 class TestCircuitBreakerAlertFileHandling:
-    def test_missing_file_returns_none_not_crash(self, tmp_path):
-        """境界値: circuit_breaker.json が存在しない場合はクラッシュせず None。"""
+    def test_missing_file_returns_unknown_alert_not_crash(self, tmp_path):
+        """境界値: circuit_breaker.json が存在しない場合はクラッシュせず unknown 警告（2026-10-28是正）。"""
         svc = _StubService(tmp_path)
-        assert svc._check_circuit_breaker_alert() is None
+        assert svc._check_circuit_breaker_alert()["code"] == "guardrail_evidence_unknown", "Missing control evidence is not healthy"
 
-    def test_corrupt_json_returns_none_not_crash(self, tmp_path):
-        """破損入力: 不正な JSON はクラッシュせず None を返す。"""
+    def test_corrupt_json_returns_unknown_alert_not_crash(self, tmp_path):
+        """破損入力: 不正な JSON はクラッシュせず unknown 警告（2026-10-28是正）。"""
         cb_path = tmp_path / "data" / "guardrails" / "circuit_breaker.json"
         cb_path.parent.mkdir(parents=True, exist_ok=True)
         cb_path.write_text("{not valid json", encoding="utf-8")
         svc = _StubService(tmp_path)
-        assert svc._check_circuit_breaker_alert() is None
+        assert svc._check_circuit_breaker_alert()["code"] == "guardrail_evidence_unknown", "Corrupt control evidence is not healthy"
 
     def test_empty_triggered_rules_does_not_crash(self, tmp_path):
         """境界値: triggered_rules が空リストでもクラッシュしない。"""

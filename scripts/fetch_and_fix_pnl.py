@@ -32,6 +32,8 @@ logger = logging.getLogger(__name__)
 from stock_swing.sources.broker_client import BrokerClient
 
 
+from stock_swing.tracking.compatibility import legacy_entrypoint, legacy_maintenance, tracking_root
+
 class PnLFixer:
     """Fix P&L by fetching actual prices from broker."""
     
@@ -296,6 +298,7 @@ class PnLFixer:
             'total_pnl': total_pnl + unrealized_pnl,
         }
     
+    @legacy_entrypoint(lambda self, *a, **k: tracking_root(self.pnl_file))
     def save_data(self):
         """Save fixed data."""
         self.data['last_updated'] = datetime.now(timezone.utc).isoformat()
@@ -315,6 +318,7 @@ class PnLFixer:
         
         logger.info(f"\n✅ Saved fixed data to {self.pnl_file}")
     
+    @legacy_entrypoint(lambda self, *a, **k: tracking_root(self.pnl_file))
     def run(self):
         """Run full fix process."""
         logger.info("\n" + "=" * 60)
@@ -347,6 +351,8 @@ class PnLFixer:
         return summary
 
 
+
+@legacy_entrypoint(lambda *a, **k: Path.cwd())
 def main():
     fixer = PnLFixer("data/tracking/pnl_state.json")
     summary = fixer.run()

@@ -59,6 +59,8 @@ class CronAdapter:
     
     def __init__(self, project_root: Path):
         self.project_root = project_root
+        self.last_evidence = {"status": "unknown", "source": None, "as_of": None,
+                              "complete": False, "reason_code": "not_acquired"}
     
     def get_jobs(self) -> List[Dict[str, Any]]:
         """Get all cron jobs from OpenClaw Gateway."""
@@ -75,7 +77,8 @@ class CronAdapter:
 
             with urllib.request.urlopen(req, timeout=5) as response:
                 data = json.loads(response.read().decode())
-                jobs = data.get("jobs", [])
+                jobs = self._qualified_rows(data)
+                source = "gateway_http"
         except Exception:
             # Fallback: try CLI
             try:
@@ -94,11 +97,39 @@ class CronAdapter:
                 if not parsed.ok or not isinstance(parsed.data, dict):
                     return self._get_from_backup()
                 data = parsed.data
-                jobs = data.get("jobs", [])
+                jobs = self._qualified_rows(data)
+                source = "gateway_cli"
             except Exception:
                 return self._get_from_backup()
 
+        self.last_evidence = {"status": "ok", "source": source,
+                              "as_of": datetime.now(timezone.utc).isoformat(), "complete": True,
+                              "scope": "一覧APIの取得範囲（全登録・全履歴の認定ではない）",
+                              "reason_code": "acquired", "observed_rows": len(jobs)}
         return self._enrich_jobs(jobs)
+
+    @staticmethod
+    def _qualified_rows(data):
+        if (not isinstance(data, dict) or not isinstance(data.get('jobs'), list)
+                or any(not isinstance(j, dict) for j in data['jobs'])
+                or data.get('hasMore') is True or data.get('has_more') is True
+                or data.get('nextCursor') or data.get('next_cursor')):
+            raise ValueError('invalid_or_partial_list')
+        if 'total' in data and (type(data['total']) is not int or data['total'] != len(data['jobs'])):
+            raise ValueError('partial_list')
+        for job in data['jobs']:
+            schedule = job.get('schedule')
+            if schedule is not None and (not isinstance(schedule, dict)
+                    or (schedule.get('kind') == 'every' and
+                        (type(schedule.get('everyMs')) not in (int, float)
+                         or not 0 < schedule['everyMs'] < 32503680000000))):
+                raise ValueError('invalid_schedule')
+            if 'schedule' in job and schedule is None:
+                raise ValueError('invalid_schedule')
+        ids = [j['id'] for j in data['jobs'] if isinstance(j.get('id'), str)]
+        if len(ids) != len(set(ids)):
+            raise ValueError('duplicate_identity')
+        return data['jobs']
 
     def get_run_history(self, job_id: str, *, limit: int = 3) -> Dict[str, Any]:
         """Return sanitized recent run history for a cron job.
@@ -153,12 +184,21 @@ class CronAdapter:
     def _get_from_backup(self) -> List[Dict[str, Any]]:
         """Fallback: get jobs from backup file."""
         backup_file = self.project_root / "cron_backup" / "jobs.json"
+        self.last_evidence = {"status":"unknown", "source":None, "as_of":None,
+                              "complete":False, "reason_code":"acquisition_failed",
+                              "scope":"一覧の現時点の取得は未確認"}
         if not backup_file.exists():
             return []
 
         try:
+            if backup_file.is_symlink() or backup_file.stat().st_size > 8*1024*1024:
+                return []
             data = json.loads(backup_file.read_text())
-            jobs = data.get("jobs", [])
+            jobs = self._qualified_rows(data)
+            stamp = datetime.fromtimestamp(backup_file.stat().st_mtime, timezone.utc)
+            self.last_evidence = {"status":"substitute", "source":"saved_backup", "as_of":stamp.isoformat(),
+                                  "complete":False, "observed_rows":len(jobs), "reason_code":"historical_backup",
+                                  "scope":"保存ファイル更新時刻。現在の登録/実行状態ではない"}
             return self._enrich_jobs(jobs)
         except Exception:
             return []
@@ -172,15 +212,15 @@ class CronAdapter:
             if "schedule" in job:
                 job["schedule_display"] = self._format_schedule(job["schedule"])
 
-            state = job.get("state") or {}
+            state = job.get("state") if isinstance(job.get("state"), dict) else {}
             last_run_ms = state.get("lastRunAtMs")
             next_run_ms = state.get("nextRunAtMs")
 
-            if last_run_ms:
+            if type(last_run_ms) in (int, float) and 0 < last_run_ms < 32503680000000:
                 last_run = datetime.fromtimestamp(last_run_ms / 1000, tz=timezone.utc).astimezone()
                 job["last_run"] = last_run.isoformat()
 
-            if next_run_ms:
+            if type(next_run_ms) in (int, float) and 0 < next_run_ms < 32503680000000:
                 next_run = datetime.fromtimestamp(next_run_ms / 1000, tz=timezone.utc).astimezone()
                 job["next_run"] = next_run.isoformat()
                 running = str(state.get("lastStatus") or "").lower() == "running"

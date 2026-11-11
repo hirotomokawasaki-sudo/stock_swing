@@ -183,6 +183,8 @@ def load_cumulative_external_cash_flow(
     path: Path,
     *,
     expected_account_id: str | None = None,
+    project_root: Path | None = None,
+    currency: str | None = None,
 ) -> float:
     """Read the audited cumulative external cash-flow adjustment.
 
@@ -190,6 +192,17 @@ def load_cumulative_external_cash_flow(
     zero.  Shadow mode reports the error; future enforced mode can fail closed.
     """
     try:
+        if project_root is not None:
+            from stock_swing.tracking.compatibility import read_analysis_snapshot
+            from stock_swing.reporting.versioned_bridge import load_selected_reconciliation
+            import os
+            state, provenance = read_analysis_snapshot(Path(project_root)/'data/tracking/pnl_state.json')
+            if provenance['ledger_revision'] != 'legacy' or os.environ.get('EQUITY_BRIDGE_LEDGER_REVISION') or os.environ.get('EQUITY_BRIDGE_ARTIFACT_SHA256'):
+                got = load_selected_reconciliation(project_root,
+                    expected_account_id=expected_account_id, currency=currency)
+                if got is None:
+                    raise ValueError('selected capital-flow evidence unavailable')
+                return got['external_capital_cash']  # DIV is investment income.
         payload = json.loads(Path(path).read_text(encoding="utf-8"))
         account_id = str(payload.get("broker_account_id") or "")
         if expected_account_id and account_id != expected_account_id:

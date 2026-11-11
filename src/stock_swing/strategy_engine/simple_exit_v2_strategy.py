@@ -11,6 +11,7 @@ Current implementation: simple_exit_v2
 from __future__ import annotations
 
 import logging
+import math
 from datetime import datetime, timezone
 from typing import Any
 
@@ -26,6 +27,7 @@ class SimpleExitV2Strategy(BaseStrategy):
     """Simple exit strategy V2 with trailing stop and breakeven protection.
     
     Exit rules (evaluated in priority order):
+    0. Qualified emergency loss cap, independent of ATR/min-hold/peak.
     1. Trailing stop  – once peak_return >= trailing_activation_pct,
        exit if price drops trailing_stop_pct from peak.
     2. Breakeven stop – once return_pct >= breakeven_activation_pct (but
@@ -54,7 +56,7 @@ class SimpleExitV2Strategy(BaseStrategy):
         # G9: min_hold guard — prevent stop_loss from firing on early noise
         min_hold_days: int = 1,
         min_hold_days_enabled: bool = True,
-        emergency_stop_bypass_pct: float = -0.12,  # bypass min_hold if loss >= -12%
+        emergency_stop_bypass_pct: float = -0.12,  # independent qualified loss cap
         # Plan A: Tiered min_hold (2026-07-27)
         # Post-exit drift analysis showed avg_ret=-2.9% recovers within 15d (noise),
         # avg_ret=-8.2% never recovers (true stop). Tiered approach reduces false stops.
@@ -130,7 +132,12 @@ class SimpleExitV2Strategy(BaseStrategy):
         # G9: min_hold guard
         self.min_hold_days = min_hold_days
         self.min_hold_days_enabled = min_hold_days_enabled
-        self.emergency_stop_bypass_pct = emergency_stop_bypass_pct
+        if (isinstance(emergency_stop_bypass_pct, bool)
+                or not isinstance(emergency_stop_bypass_pct, (int, float))
+                or not math.isfinite(emergency_stop_bypass_pct)
+                or not -1 < emergency_stop_bypass_pct < 0):
+            raise ValueError("invalid emergency loss cap")
+        self.emergency_stop_bypass_pct = float(emergency_stop_bypass_pct)
         # Plan A / v2 (2026-08-05 redesign): tiered min_hold
         # v1 (disabled by FIX-007, 2026-07-29) used *absolute* return_pct thresholds
         # (e.g. "return > -5%"). That is unreachable whenever the effective stop
@@ -546,15 +553,22 @@ class SimpleExitV2Strategy(BaseStrategy):
                     continue
                 
                 latest_close = feature.values.get("latest_close")
-                if latest_close:
-                    price_map[feature.symbol] = float(latest_close)
-                    atr = feature.values.get("atr")
-                    if atr is not None and float(latest_close) > 0:
-                        try:
-                            atr_pct_map[feature.symbol] = float(atr) / float(latest_close)
-                        except (TypeError, ValueError, ZeroDivisionError):
-                            pass
-        
+                try:
+                    close = float(latest_close)
+                    if isinstance(latest_close, bool) or not math.isfinite(close) or close <= 0:
+                        continue
+                except (TypeError, ValueError, OverflowError):
+                    continue
+                price_map[feature.symbol] = close
+                atr = feature.values.get("atr")
+                if atr is not None and not isinstance(atr, bool):
+                    try:
+                        atr_value = float(atr)
+                        if math.isfinite(atr_value) and atr_value > 0:
+                            atr_pct_map[feature.symbol] = atr_value / close
+                    except (TypeError, ValueError, OverflowError):
+                        pass
+
         logger.info(f"SimpleExitV2: price_map has {len(price_map)} symbols")
 
         # Cross-sectional universe average ATR% for this run (volatility-adjusted
@@ -570,13 +584,19 @@ class SimpleExitV2Strategy(BaseStrategy):
         
         # Check each position for exit criteria
         for symbol, position_data in current_positions.items():
-            qty = float(position_data.get("qty", 0))
-            if qty <= 0:
-                continue  # Skip short positions or zero qty
-            
-            avg_entry_price = float(position_data.get("avg_entry_price", 0))
-            
-            position_current_price = float(position_data.get("current_price", 0))
+            # Qualify position inputs before any forced exit. Unknown is not
+            # a valid long or a valid loss; never turn bool/non-finite into price.
+            try:
+                raw = [position_data.get(k, 0) for k in
+                       ("qty", "avg_entry_price", "current_price")]
+                if any(isinstance(v, bool) for v in raw):
+                    continue
+                qty, avg_entry_price, position_current_price = map(float, raw)
+                if not all(math.isfinite(v) for v in
+                           (qty, avg_entry_price, position_current_price)) or qty <= 0:
+                    continue
+            except (TypeError, ValueError, OverflowError):
+                continue
             feature_price = price_map.get(symbol)
             exit_resolution = resolver.resolve_exit_price(
                 symbol,
@@ -589,7 +609,8 @@ class SimpleExitV2Strategy(BaseStrategy):
                 for w in exit_resolution.warnings:
                     logger.warning(f"SimpleExitV2: {symbol}: {w}")
             
-            if avg_entry_price <= 0 or current_price <= 0:
+            if (not math.isfinite(current_price)
+                    or avg_entry_price <= 0 or current_price <= 0):
                 continue  # Skip if missing price data
 
             # --- Entry-price split guard --------------------------------
@@ -614,7 +635,13 @@ class SimpleExitV2Strategy(BaseStrategy):
             return_pct = (current_price - avg_entry_price) / avg_entry_price
 
             # Get or estimate peak price
-            peak_price = float(position_data.get("peak_price", current_price))
+            try:
+                raw_peak = position_data.get("peak_price", current_price)
+                peak_price = float(raw_peak)
+                if isinstance(raw_peak, bool) or not math.isfinite(peak_price) or peak_price <= 0:
+                    peak_price = max(avg_entry_price, current_price)
+            except (TypeError, ValueError, OverflowError):
+                peak_price = max(avg_entry_price, current_price)
 
             # --- Anomaly guard for peak_price ---
             # If peak_price is >2.5x the entry price AND >2.5x the current price, it is almost
@@ -700,8 +727,19 @@ class SimpleExitV2Strategy(BaseStrategy):
                 self._resolve_trailing_rule(peak_return_pct, eff_trailing_activation_pct)
             )
 
-            # 1. Trailing stop (highest priority once activated)
-            if trailing_active:
+            # H6: this one configured cap is an independent trigger, not merely
+            # a min-hold exception inside the ATR-adjusted initial-stop branch.
+            # Price/corporate-action qualification above remains authoritative.
+            emergency_loss = return_pct <= self.emergency_stop_bypass_pct
+            if emergency_loss:
+                exit_reason = (
+                    f"Emergency stop triggered (independent loss cap, min_hold bypass): "
+                    f"{return_pct:.2%} <= {self.emergency_stop_bypass_pct:.2%}"
+                )
+                signal_strength = 1.0
+
+            # 1. Trailing stop (after emergency cap)
+            elif trailing_active:
                 trailing_stop_price = peak_price * (1 - active_trailing_stop_pct)
                 pullback_from_peak_pct = (peak_price - current_price) / peak_price
                 if current_price <= trailing_stop_price:
@@ -760,7 +798,6 @@ class SimpleExitV2Strategy(BaseStrategy):
                     self.min_hold_days_enabled
                     and hold_days is not None
                     and hold_days < eff_min_hold
-                    and return_pct > self.emergency_stop_bypass_pct
                 ):
                     # Within min-hold window AND not an emergency loss → suppress
                     logger.info(
@@ -776,19 +813,6 @@ class SimpleExitV2Strategy(BaseStrategy):
                         self._suppression_counts.get(tier_key, 0) + 1
                     )
                     _suppress = True
-                elif (
-                    self.min_hold_days_enabled
-                    and hold_days is not None
-                    and hold_days < eff_min_hold
-                    and return_pct <= self.emergency_stop_bypass_pct
-                ):
-                    # Emergency bypass: loss breaches hard cap → exit immediately
-                    exit_reason = (
-                        f"Emergency stop triggered (min_hold bypass): "
-                        f"{return_pct:.2%} <= {self.emergency_stop_bypass_pct:.2%} "
-                        f"(hold {hold_days:.1f}d < min {eff_min_hold}d)"
-                    )
-                    signal_strength = 1.0
 
                 if not _suppress and exit_reason is None:
                     exit_reason = (
@@ -832,6 +856,8 @@ class SimpleExitV2Strategy(BaseStrategy):
                     feature_refs=["position_tracking"],
                     metadata={
                         "return_pct": return_pct,
+                        "emergency_loss_cap_pct": self.emergency_stop_bypass_pct,
+                        "emergency_loss_cap_breached": emergency_loss,
                         "peak_return_pct": peak_return_pct,
                         "hold_days": hold_days,
                         "avg_entry_price": avg_entry_price,

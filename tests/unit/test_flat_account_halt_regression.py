@@ -63,6 +63,11 @@ def _write_config(root: Path) -> None:
 def run_flat_account_main(monkeypatch, tmp_path, capsys):
     """Run real main without signals, writes outside tmp_path, or real network."""
     _write_config(tmp_path)
+    # K03: confirmed broker-flat is distinct from a missing tracker risk file.
+    # This fixture exercises a healthy empty ledger; missing risk has separate tests.
+    risk_state = tmp_path / "data/tracking/pnl_state.json"
+    risk_state.parent.mkdir(parents=True, exist_ok=True)
+    risk_state.write_text(json.dumps({"last_updated": "2026-11-05T00:00:00+00:00", "trades": []}), encoding="utf-8")
     monkeypatch.setattr(paper_demo, "project_root", tmp_path)
     monkeypatch.setattr(paper_demo, "_REGISTRY_PATH", tmp_path / "config/reference/symbol_registry.yaml")
     monkeypatch.setattr(paper_demo, "_ALLOC_CONFIG_PATH", tmp_path / "config/strategy/portfolio_allocation.yaml")
@@ -132,14 +137,14 @@ def run_flat_account_main(monkeypatch, tmp_path, capsys):
                 assert order["symbol"] == "NVDA" and order["side"] == "sell", "Only the synthetic risk exit is permitted"
                 assert submitted_order is None, "The fixture permits exactly one synthetic SELL"
                 submitted_order = {
-                    "id": "fixture-sell-order", "symbol": "NVDA", "side": "sell",
+                    **order, "id": "fixture-sell-order", "symbol": "NVDA", "side": "sell",
                     "status": "accepted", "qty": str(order["qty"]), "filled_qty": "0",
                 }
                 return httpx.Response(200, json=submitted_order)
             assert request.method == "GET", "No unsupported external mutation is permitted"
             if request.url.path == "/v2/account":
                 return httpx.Response(200, json={
-                    "status": "ACTIVE", "equity": "100000", "cash": "100000",
+                    "id": "account-fixture", "status": "ACTIVE", "equity": "100000", "cash": "100000",
                     "buying_power": "100000",
                 })
             if request.url.path == "/v2/positions":

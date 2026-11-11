@@ -65,7 +65,7 @@ def test_ac_summary_json_and_cli_alert_does_not_grant_permission(tmp_path):
 
 
 @pytest.mark.parametrize("value", [None, [], "bad", {},
-    {**review(), "status": "error"}, {**review(), "status": "disabled"},
+    {**review(), "status": "disabled"},
     {**review(), "candidates": []}, {**review(), "candidates": [{}]},
     {**review(), "eligible_to_trade": True}, {**review(), "automatic_release": True},
     {**review(), "rows": [None]}, {**review(), "rows": {}},
@@ -142,17 +142,26 @@ def test_ac_dry_run_summary_never_emits_review_alert(tmp_path):
     assert not any(a.code == CODE for a in summary.alerts)
 
 
-def test_ac_real_dashboard_alert_list_reaches_actual_js_renderer(service, tmp_path):
+@pytest.mark.parametrize("failed", [False, True])
+def test_ac_real_dashboard_alert_list_reaches_actual_js_renderer(service, tmp_path, failed):
     """2026-10-28: funnel text alone did not reach the Web's separate alert list."""
     symbol = '<img src=x onerror="bad()">'
-    write_summary(tmp_path, review(symbol), stamp=datetime.now(timezone.utc))
+    value = review(symbol)
+    if failed:
+        value["status"] = "error"
+    write_summary(tmp_path, value, stamp=datetime.now(timezone.utc))
     alerts = service.get_alerts(
         overview={}, trading={"summary": {}}, positions={"summary": {}, "positions": []},
         cron_jobs={"jobs": []}, data_status={}, news={"diagnostics": {"tracked_symbols": ["IBM"]}},
     )
-    notice = next(a for a in alerts if a["code"] == CODE)
-    assert notice["details"]["symbols"] == [symbol]
-    assert "解除しません" in notice["action_hint"]
+    code = "entry_restriction_observation_failed" if failed else CODE
+    notice = next(a for a in alerts if a["code"] == code)
+    if failed:
+        assert notice["details"]["observation_status"] == "error"
+        assert "再実行" in notice["action_hint"]
+    else:
+        assert notice["details"]["symbols"] == [symbol]
+        assert "解除しません" in notice["action_hint"]
     node = shutil.which("node")
     if not node:
         pytest.skip("Node required to run the actual existing browser renderer")
@@ -170,7 +179,10 @@ process.stdout.write(vm.runInContext(`(() => {
 """
     result = subprocess.run([node, "-e", script, str(app)], input=json.dumps({"alerts": alerts}),
                             capture_output=True, text=True, check=True, timeout=10)
-    assert "要対応アラート" in result.stdout and "購入停止の再検証候補（要承認）" in result.stdout
-    assert "購入制限は継続中" in result.stdout and "手動承認" in result.stdout
-    assert "&lt;img" in result.stdout and "<img" not in result.stdout
+    assert "要対応アラート" in result.stdout
+    assert ("PF観測失敗（売買結果とは別）" if failed else "購入停止の再検証候補（要承認）") in result.stdout
+    assert "購入制限は継続中" in result.stdout
+    if not failed:
+        assert "手動承認" in result.stdout and "&lt;img" in result.stdout
+    assert "<img" not in result.stdout
     assert "<button" not in result.stdout, "The notice must never offer an unlock control"

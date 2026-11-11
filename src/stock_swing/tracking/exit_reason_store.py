@@ -25,6 +25,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -33,6 +34,91 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 _FILENAME = "data/tracking/pending_exit_reasons.json"
+
+EXIT_LINEAGE_FIELDS = (
+    "exit_decision_id", "exit_run_id", "exit_experiment_id", "exit_config_hash",
+    "exit_decision_time", "exit_submission_id", "exit_submitted_at",
+)
+
+
+def validate_exit_lineage(context: Any, broker_order_id: str, symbol: str) -> dict[str, str]:
+    """Return only complete exact-order provenance; never infer it from entry IDs."""
+    if not isinstance(context, dict) or set(context) != {*EXIT_LINEAGE_FIELDS, "symbol", "broker_order_id"}:
+        return {}
+    if context["symbol"] != symbol or context["broker_order_id"] != broker_order_id or not broker_order_id:
+        return {}
+    if any(not isinstance(v, str) or not v.strip() or len(v) > 256 or any(ord(c) < 32 for c in v) for v in context.values()):
+        return {}
+    # ExperimentContext currently emits a 16-hex configuration-version token;
+    # full SHA-256 tokens are also accepted. Do not relabel the short token as
+    # a full-byte configuration capture or cryptographic integrity receipt.
+    if re.fullmatch(r"(?:[0-9a-fA-F]{16}|[0-9a-fA-F]{64})", context["exit_config_hash"]) is None:
+        return {}
+    try:
+        decision = datetime.fromisoformat(context["exit_decision_time"].replace("Z", "+00:00"))
+        submitted = datetime.fromisoformat(context["exit_submitted_at"].replace("Z", "+00:00"))
+        if decision.utcoffset() is None or submitted.utcoffset() is None or decision > submitted:
+            return {}
+    except (ValueError, TypeError, OverflowError):
+        return {}
+    return {name: context[name] for name in EXIT_LINEAGE_FIELDS}
+
+
+def build_exit_lineage(decision: Any, submission: Any) -> dict[str, str]:
+    """Bind an accepted SELL only; no fill identity is manufactured here."""
+    if (getattr(decision, "action", None) != "sell" or submission.side != "sell"
+            or submission.status != "submitted" or decision.decision_id != submission.decision_id
+            or decision.symbol != submission.symbol):
+        return {}
+    if not isinstance(submission.submitted_at, datetime):
+        return {}
+    context = dict(symbol=submission.symbol, broker_order_id=submission.broker_order_id,
+        exit_decision_id=decision.decision_id, exit_run_id=decision.run_id,
+        exit_experiment_id=decision.experiment_id, exit_config_hash=decision.config_hash,
+        exit_decision_time=decision.decision_time, exit_submission_id=submission.submission_id,
+        exit_submitted_at=submission.submitted_at.isoformat())
+    return context if validate_exit_lineage(context, submission.broker_order_id, submission.symbol) else {}
+
+
+def resolve_exit_lineage(project_root: Path, broker_order_id: str | None, symbol: str,
+                         trades: list[dict[str, Any]]) -> dict[str, str]:
+    """Pending context or unanimous complete closed legs for this exact order.
+
+    This labels the existing reconciliation result. It does not certify or change
+    the reconciler's economic lot-matching policy. Missing/conflicting legs withhold.
+    """
+    if not broker_order_id:
+        return {}
+    # One coherent read: an unreadable store is not an absent order, and a
+    # second read could mix two concurrent pending-store revisions.
+    try:
+        raw_store = json.loads((project_root / _FILENAME).read_text(encoding="utf-8"))
+        if not isinstance(raw_store, dict):
+            return {}
+    except FileNotFoundError:
+        raw_store = {}
+    except (OSError, ValueError, TypeError):
+        return {}
+    pending = raw_store.get(broker_order_id)
+    if broker_order_id in raw_store and pending is None:
+        return {}
+    contexts = []
+    if pending is not None:
+        if not isinstance(pending, dict) or pending.get("symbol") != symbol:
+            return {}
+        validated = validate_exit_lineage(pending.get("exit_lineage"), broker_order_id, symbol)
+        if not validated:
+            return {}
+        contexts.append(validated)
+    for trade in trades:
+        if trade.get("status") == "closed" and trade.get("symbol") == symbol and trade.get("exit_broker_order_id") == broker_order_id:
+            context = {name: trade.get(name) for name in EXIT_LINEAGE_FIELDS}
+            context.update(symbol=symbol, broker_order_id=broker_order_id)
+            validated = validate_exit_lineage(context, broker_order_id, symbol)
+            if not validated:
+                return {}
+            contexts.append(validated)
+    return contexts[0] if contexts and all(c == contexts[0] for c in contexts) else {}
 
 
 def _store_path(project_root: Path) -> Path:

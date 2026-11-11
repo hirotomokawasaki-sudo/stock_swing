@@ -67,6 +67,8 @@ def compute_open_counts(trades: list[dict[str, Any]], dates: list[str]) -> dict[
     return counts
 
 
+from stock_swing.tracking.compatibility import legacy_entrypoint, legacy_maintenance, tracking_root
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true", help="Print planned changes without writing")
@@ -75,50 +77,51 @@ def main() -> int:
     args = parser.parse_args()
 
     state_path = Path(args.state_path)
-    state = json.loads(state_path.read_text(encoding="utf-8"))
+    with legacy_maintenance(tracking_root(state_path)):
+        state = json.loads(state_path.read_text(encoding="utf-8"))
 
-    snapshots = state.get("daily_snapshots", [])
-    trades = state.get("trades", [])
-    if not snapshots:
-        print("No daily_snapshots found; nothing to backfill.")
+        snapshots = state.get("daily_snapshots", [])
+        trades = state.get("trades", [])
+        if not snapshots:
+            print("No daily_snapshots found; nothing to backfill.")
+            return 0
+
+        dates = sorted({str(s.get("date") or "") for s in snapshots if s.get("date")})
+        counts = compute_open_counts(trades, dates)
+
+        updated = 0
+        already_set = 0
+        for snap in snapshots:
+            date_str = str(snap.get("date") or "")
+            if snap.get("open_position_count") is not None:
+                already_set += 1
+                continue
+            snap["open_position_count"] = counts.get(date_str, 0)
+            updated += 1
+
+        print(f"Snapshots total: {len(snapshots)}")
+        print(f"Already had open_position_count: {already_set}")
+        print(f"Backfilled: {updated}")
+        if dates:
+            print(f"Date range: {dates[0]} .. {dates[-1]}")
+
+        if args.dry_run:
+            print("--dry-run: no changes written.")
+            return 0
+
+        if updated == 0:
+            print("Nothing to write.")
+            return 0
+
+        if args.backup:
+            ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+            backup_path = state_path.with_name(f"{state_path.stem}_backup_open_pos_backfill_{ts}{state_path.suffix}")
+            shutil.copy2(state_path, backup_path)
+            print(f"Backup written: {backup_path}")
+
+        state_path.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"Wrote updated state to {state_path}")
         return 0
-
-    dates = sorted({str(s.get("date") or "") for s in snapshots if s.get("date")})
-    counts = compute_open_counts(trades, dates)
-
-    updated = 0
-    already_set = 0
-    for snap in snapshots:
-        date_str = str(snap.get("date") or "")
-        if snap.get("open_position_count") is not None:
-            already_set += 1
-            continue
-        snap["open_position_count"] = counts.get(date_str, 0)
-        updated += 1
-
-    print(f"Snapshots total: {len(snapshots)}")
-    print(f"Already had open_position_count: {already_set}")
-    print(f"Backfilled: {updated}")
-    if dates:
-        print(f"Date range: {dates[0]} .. {dates[-1]}")
-
-    if args.dry_run:
-        print("--dry-run: no changes written.")
-        return 0
-
-    if updated == 0:
-        print("Nothing to write.")
-        return 0
-
-    if args.backup:
-        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-        backup_path = state_path.with_name(f"{state_path.stem}_backup_open_pos_backfill_{ts}{state_path.suffix}")
-        shutil.copy2(state_path, backup_path)
-        print(f"Backup written: {backup_path}")
-
-    state_path.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"Wrote updated state to {state_path}")
-    return 0
 
 
 if __name__ == "__main__":

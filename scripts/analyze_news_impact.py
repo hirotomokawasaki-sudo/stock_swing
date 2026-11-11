@@ -22,6 +22,8 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
@@ -112,7 +114,7 @@ def find_news_around(articles: list[dict], target_dt: datetime,
 # ---------------------------------------------------------------------------
 def load_closed_trades(project_root: Path) -> list[dict]:
     state_file = project_root / "data" / "tracking" / "pnl_state.json"
-    data = json.loads(state_file.read_text())
+    data = legacy_analytical_state(state_file)
     trades = data.get("trades", [])
     closed = [t for t in trades if t.get("status") == "closed"]
     for t in closed:

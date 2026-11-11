@@ -136,7 +136,7 @@ class BrokerClient(SourceClient):
             raise SourceValidationError(self.name, "endpoint parameter is required")
         
         endpoint = kwargs["endpoint"]
-        method = kwargs.get("method", "GET")
+        method = str(kwargs.get("method", "GET")).upper()
         
         # Build request params (excluding 'endpoint' and 'method')
         request_params = {k: v for k, v in kwargs.items() if k not in ("endpoint", "method")}
@@ -145,7 +145,9 @@ class BrokerClient(SourceClient):
         def fetch_func() -> dict[str, Any]:
             return self._fetch_endpoint(endpoint, method, request_params)
         
-        payload = self._fetch_with_retry(fetch_func)
+        # CMP-C01: mutating requests may have succeeded before response loss.
+        # Never replay them through the generic read retry path.
+        payload = self._fetch_with_retry(fetch_func) if method == "GET" else fetch_func()
         
         return self._build_envelope(endpoint, request_params, payload)
 
@@ -283,9 +285,28 @@ class BrokerClient(SourceClient):
             if response.status_code == 204:
                 return {}
             try:
-                return response.json()
+                payload = response.json()
             except Exception as e:
                 raise SourceResponseError(self.name, f"failed to parse JSON response: {e}", original_error=e)
+            recorder = getattr(self, 'measurement_recorder', None)
+            if recorder is not None and recorder.enabled:
+                try:
+                    from datetime import datetime, timezone
+                    if path.endswith('/bars'):
+                        from stock_swing.sources.bar_contract import record_bar_response
+                        contract = record_bar_response(recorder, provider=self.name,
+                            request=dict(params, symbol=path.split('/')[2], interval=params['timeframe']),
+                            response=payload, received_at=datetime.now(timezone.utc),
+                            raw_bytes=response.content, response_request_id=response.headers.get('x-request-id'))
+                        if contract is not None:
+                            payload = dict(payload, _bar_contract=contract)
+                    if path.endswith('/quotes/latest'):
+                        from stock_swing.experiments.candidate_input_capture import observe_quote_response
+                        observe_quote_response(recorder, symbol=path.split('/')[2], provider=self.name,
+                            payload=payload, raw_bytes=response.content, received_at=datetime.now(timezone.utc))
+                except Exception:
+                    recorder.note_failure()
+            return payload
 
         return self._fetch_with_retry(fetch_func)
 
@@ -496,6 +517,7 @@ class BrokerClient(SourceClient):
         qty: int,
         time_in_force: str,
         limit_price: float | None = None,
+        client_order_id: str | None = None,
     ) -> dict[str, Any]:
         """Submit order to broker (paper mode only).
         
@@ -528,10 +550,18 @@ class BrokerClient(SourceClient):
         
         if order_type.lower() == "limit" and limit_price is not None:
             order_payload["limit_price"] = limit_price
+        if client_order_id is not None:
+            if not isinstance(client_order_id, str) or not client_order_id or len(client_order_id) > 128:
+                raise SourceValidationError(self.name, "invalid client_order_id")
+            order_payload["client_order_id"] = client_order_id
         
         # Submit via POST
         envelope = self.fetch(endpoint="v2/orders", method="POST", **order_payload)
         return envelope.payload
+
+    def fetch_order_by_client_id(self, client_order_id: str) -> RawEnvelope:
+        """Read-only resolution of an uncertain submission; never resubmit."""
+        return self.fetch(endpoint="v2/orders:by_client_order_id", client_order_id=client_order_id)
 
     def _fetch_endpoint(
         self,
@@ -640,6 +670,12 @@ class BrokerClient(SourceClient):
             
             return data
         
+        except (SourceAuthenticationError, SourceNotFoundError, SourceValidationError,
+                SourceRateLimitError, SourceServerError, SourceResponseError) as exc:
+            # Preserve exception classes/messages; attach observed HTTP status only.
+            if method == "POST" and endpoint_path == "v2/orders" and "response" in locals():
+                exc.http_status = response.status_code
+            raise
         except httpx.TimeoutException as e:
             raise SourceTimeoutError(
                 self.name,

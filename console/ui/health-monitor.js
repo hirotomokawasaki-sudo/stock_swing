@@ -66,19 +66,32 @@ class HealthMonitor {
       // しきい値チェック
       let status = 'healthy';
       const warnings = [];
+      if (!result || typeof result !== 'object' || result.success !== true) {
+        status = result?.success === false ? 'error' : 'unknown';
+        warnings.push(result?.success === false ? 'API acquisition failed' : 'Acquisition result unconfirmed');
+      } else if (result.source === 'cache') {
+        status = 'warning';
+        warnings.push('Saved cache fallback, not a fresh acquisition');
+      }
+      const validAge = typeof result?.dataAge === 'number' && Number.isFinite(result.dataAge) && result.dataAge >= 0;
+      const validRate = typeof result?.errorRate === 'number' && Number.isFinite(result.errorRate) && result.errorRate >= 0 && result.errorRate <= 1;
+      if ((!validAge || !validRate) && status !== 'error') {
+        status = 'unknown';
+        warnings.push('Data age/error-rate measurement unconfirmed');
+      }
       
       if (duration > check.thresholds.responseTime) {
-        status = 'warning';
+        if (status === 'healthy') status = 'warning';
         warnings.push(`Response time ${duration}ms exceeds threshold ${check.thresholds.responseTime}ms`);
       }
       
-      if (result.errorRate && result.errorRate > check.thresholds.errorRate) {
-        status = 'warning';
+      if (validRate && result.errorRate > check.thresholds.errorRate) {
+        if (status === 'healthy') status = 'warning';
         warnings.push(`Error rate ${(result.errorRate * 100).toFixed(2)}% exceeds threshold ${(check.thresholds.errorRate * 100).toFixed(2)}%`);
       }
       
-      if (result.dataAge && result.dataAge > check.thresholds.dataAge) {
-        status = 'warning';
+      if (validAge && result.dataAge > check.thresholds.dataAge) {
+        if (status === 'healthy') status = 'warning';
         warnings.push(`Data age ${Math.round(result.dataAge / 1000)}s exceeds threshold ${Math.round(check.thresholds.dataAge / 1000)}s`);
       }
       
@@ -143,10 +156,12 @@ class HealthMonitor {
    */
   calculateOverallStatus(results) {
     const statuses = Object.values(results).map(r => r.status);
+    if (!statuses.length) return 'unknown';
     
     if (statuses.some(s => s === 'error')) {
       return 'error';
     }
+    if (statuses.some(s => !['healthy', 'warning', 'error'].includes(s))) return 'unknown';
     if (statuses.some(s => s === 'warning')) {
       return 'warning';
     }
@@ -186,7 +201,8 @@ class HealthMonitor {
     });
     
     // 定期実行
-    this.monitoringInterval = setInterval(async () => {
+    const nextDelay = () => typeof interval === 'function' ? interval() : interval;
+    const tick = async () => {
       if (!this.enabled) return;
       
       const results = await this.runAllChecks();
@@ -200,7 +216,9 @@ class HealthMonitor {
           recoveryManager.handleHealthIssue(results);
         }
       }
-    }, interval);
+      if (this.enabled) this.monitoringInterval = setTimeout(tick, nextDelay());
+    };
+    this.monitoringInterval = setTimeout(tick, nextDelay());
     
     console.log(`🏥 Health monitoring started (interval: ${interval}ms)`);
   }
@@ -210,7 +228,7 @@ class HealthMonitor {
    */
   stopMonitoring() {
     if (this.monitoringInterval) {
-      clearInterval(this.monitoringInterval);
+      clearTimeout(this.monitoringInterval);
       this.monitoringInterval = null;
       this.enabled = false;
       console.log('🏥 Health monitoring stopped');

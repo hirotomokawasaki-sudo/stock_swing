@@ -17,21 +17,28 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
+import math
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from stock_swing.tracking.compatibility import read_analysis_snapshot
+from stock_swing.tracking.ledger_transaction import LedgerConflict
 
 
-def _load(path: Path) -> dict:
-    if not path.exists():
-        return {}
+def _finite_number(value, label: str) -> float:
+    if isinstance(value, bool):
+        raise ValueError(f"{label} must be a finite number, not bool")
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
+        number = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{label} must be a finite number") from exc
+    if not math.isfinite(number):
+        raise ValueError(f"{label} must be a finite number")
+    return number
 
 
 def compute_decile_stats(
@@ -40,6 +47,8 @@ def compute_decile_stats(
     n_buckets: int = 10,
 ) -> list[dict]:
     """Return per-decile stats sorted by signal_strength ascending."""
+    if isinstance(n_buckets, bool) or not isinstance(n_buckets, int) or n_buckets < 1:
+        raise ValueError("n_buckets must be a positive integer")
     # Filter: closed, has entry_signal_strength
     filtered = [
         t for t in trades
@@ -54,6 +63,10 @@ def compute_decile_stats(
         ]
     if not filtered:
         return []
+
+    # Validate report-driving fields without mutating the frozen snapshot.
+    filtered = [dict(t, entry_signal_strength=_finite_number(t["entry_signal_strength"], "entry_signal_strength"),
+                     pnl=_finite_number(t["pnl"], "pnl")) for t in filtered]
 
     # Sort by signal_strength
     filtered.sort(key=lambda t: float(t["entry_signal_strength"]))
@@ -77,6 +90,10 @@ def compute_decile_stats(
         gross_loss = abs(sum(float(t["pnl"]) for t in losses))
         net_pnl = sum(float(t.get("pnl", 0)) for t in chunk)
         pf = (gross_win / gross_loss) if gross_loss > 0 else float("inf")
+        for name, value in (("gross_win", gross_win), ("gross_loss", gross_loss), ("net_pnl", net_pnl)):
+            _finite_number(value, name)
+        if gross_loss > 0:
+            _finite_number(pf, "profit_factor")
         wr = len(wins) / len(chunk) if chunk else 0.0
         # R4-v2 residual (2026-08-17): expectancy = average PnL per trade in
         # this decile. Distinct from net_pnl (the bucket total) -- expectancy
@@ -123,7 +140,7 @@ def compute_calibration_curve(rows: list[dict]) -> list[dict]:
     """
     curve: list[dict] = []
     for r in rows:
-        predicted = (r["ss_min"] + r["ss_max"]) / 2.0
+        predicted = _finite_number((r["ss_min"] + r["ss_max"]) / 2.0, "calibration midpoint")
         actual = r["win_rate"]
         curve.append({
             "decile": r["decile"],
@@ -181,11 +198,7 @@ def print_table(rows: list[dict], total_trades: int, filtered_trades: int) -> No
         bot3 = sorted(rows, key=lambda r: r["profit_factor"] or 0)[:3]
         print(f"\n Top deciles (PF): {', '.join(str(r['decile']) for r in top3)}")
         print(f" Bot deciles (PF): {', '.join(str(r['decile']) for r in bot3)}")
-        best_pf = max(rows, key=lambda r: r["profit_factor"] or 0)
-        if best_pf["ss_min"] >= 0.7:
-            rec_threshold = best_pf["ss_min"]
-            print(f"\n💡 Recommendation: min_signal_strength ≥ {rec_threshold:.3f} "
-                  f"based on decile {best_pf['decile']} (PF={best_pf['profit_factor']})")
+        print("\n Descriptive, in-sample buckets only; no causal threshold recommendation or promotion decision.")
         print()
 
 
@@ -196,17 +209,31 @@ def main() -> int:
     parser.add_argument("--buckets", type=int, default=10, help="Number of buckets (default 10)")
     args = parser.parse_args()
 
-    state_path = PROJECT_ROOT / "data" / "tracking" / "pnl_state.json"
-    state = _load(state_path)
-    trades = state.get("trades", [])
+    try:
+        state_path = PROJECT_ROOT / "data" / "tracking" / "pnl_state.json"
+        state, context = read_analysis_snapshot(state_path)
+        trades = state.get("trades", [])
+        closed = [t for t in trades if t.get("status") == "closed"]
+        rows = compute_decile_stats(trades, since=args.since, n_buckets=args.buckets)
+        calibration_curve = compute_calibration_curve(rows)
+        filtered_count = sum(r["count"] for r in rows)
+        payload = {
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "since": args.since,
+            "total_closed": len(closed),
+            "filtered_count": filtered_count,
+            "decile_stats": rows,
+            "calibration_curve": calibration_curve,
+            "measurement_provenance": context,
+        }
+        serialized = json.dumps(payload, indent=2, ensure_ascii=False, allow_nan=False)
+    except (OSError, ValueError, TypeError, OverflowError, LedgerConflict) as exc:
+        print(f"UNAVAILABLE: {exc}; prior report not refreshed", file=sys.stderr)
+        return 2
 
-    closed = [t for t in trades if t.get("status") == "closed"]
-    rows = compute_decile_stats(trades, since=args.since, n_buckets=args.buckets)
-
-    filtered_count = sum(r["count"] for r in rows)
+    print(f"Measurement revision: {context['ledger_revision']} ({context['measurement_status']}); descriptive only; promotion_ready=False")
     print_table(rows, total_trades=len(closed), filtered_trades=filtered_count)
 
-    calibration_curve = compute_calibration_curve(rows)
     print_calibration_curve(calibration_curve)
 
     if filtered_count < 20:
@@ -218,15 +245,7 @@ def main() -> int:
     if args.save:
         out_path = PROJECT_ROOT / "reports" / "signal_strength_decile.json"
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        payload = {
-            "generated_at": datetime.now(timezone.utc).isoformat(),
-            "since": args.since,
-            "total_closed": len(closed),
-            "filtered_count": filtered_count,
-            "decile_stats": rows,
-            "calibration_curve": calibration_curve,
-        }
-        out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False))
+        out_path.write_text(serialized, encoding="utf-8")
         print(f"[saved] {out_path}")
 
     return 0

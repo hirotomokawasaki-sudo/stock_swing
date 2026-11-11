@@ -11,20 +11,26 @@ Usage:
 Exit codes:
     0: Success, no anomalies detected
     1: Error or anomalies detected
+    2: Input unavailable or incomplete audit coverage
 """
 
 import argparse
+import base64
+from copy import deepcopy
 import json
+import math
 import os
 import sys
 import urllib.request
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from stock_swing.sources.broker_client import BrokerClient
+from stock_swing.tracking.compatibility import read_analysis_snapshot
+from stock_swing.tracking.ledger_transaction import LedgerConflict, digest, json_revision
 
 # Relative price-delta threshold for tracker/broker avg-cost mismatch detection.
 # Matches scripts/build_broker_tracker_reconciliation.py's WARN threshold so the
@@ -115,17 +121,34 @@ def normalize_position_price(
     return round(price, 4)
 
 
+def _positive_number(value):
+    if isinstance(value, bool):
+        raise ValueError('invalid position number')
+    number = float(value)
+    if not math.isfinite(number) or number <= 0:
+        raise ValueError('invalid position number')
+    return number
+
+
+def _whole_qty(value):
+    number = _positive_number(value)
+    if not number.is_integer():
+        raise ValueError('unsupported fractional position')
+    return int(number)
+
+
 def build_tracker_open_positions(trades: list[dict]) -> dict[str, dict]:
     """Aggregate tracker open positions by symbol."""
     positions: dict[str, dict] = {}
     for trade in trades:
         if trade.get("status") != "open":
             continue
-        symbol = str(trade.get("symbol") or "").upper()
-        if not symbol:
-            continue
-        qty = int(float(trade.get("qty") or 0))
-        entry_price = float(trade.get("entry_price") or 0)
+        symbol = trade.get('symbol')
+        if not isinstance(symbol, str) or not symbol.strip():
+            raise ValueError('missing tracker symbol')
+        symbol = symbol.upper()
+        qty = _whole_qty(trade.get('qty'))
+        entry_price = _positive_number(trade.get('entry_price'))
         row = positions.setdefault(symbol, {
             "symbol": symbol,
             "qty": 0,
@@ -133,7 +156,7 @@ def build_tracker_open_positions(trades: list[dict]) -> dict[str, dict]:
             "trade_count": 0,
         })
         row["qty"] += qty
-        row["entry_notional"] += entry_price * qty
+        row['entry_notional'] = _positive_number(row['entry_notional'] + entry_price * qty)
         row["trade_count"] += 1
 
     for row in positions.values():
@@ -144,17 +167,22 @@ def build_tracker_open_positions(trades: list[dict]) -> dict[str, dict]:
 
 def analyze_tracker_integrity(trades: list[dict], broker_positions: list[dict]) -> dict:
     """Compare tracker open positions with broker positions."""
+    if not isinstance(broker_positions, list) or any(not isinstance(row, dict) for row in broker_positions):
+        raise ValueError('invalid broker positions')
     tracker_positions = build_tracker_open_positions(trades)
     broker_map = {}
     market_cache: dict[str, dict[str, tuple[float, float, float]]] = {}
     for pos in broker_positions:
-        symbol = str(pos.get("symbol") or "").upper()
-        if not symbol:
-            continue
-        raw_avg_entry = float(pos.get("avg_entry_price") or 0)
+        symbol = pos.get('symbol')
+        if not isinstance(symbol, str) or not symbol.strip():
+            raise ValueError('missing broker symbol')
+        symbol = symbol.upper()
+        if symbol in broker_map:
+            raise ValueError('duplicate broker position')
+        raw_avg_entry = _positive_number(pos.get('avg_entry_price'))
         broker_map[symbol] = {
             "symbol": symbol,
-            "qty": int(float(pos.get("qty") or 0)),
+            "qty": _whole_qty(pos.get('qty')),
             "avg_entry_price": normalize_position_price(symbol, raw_avg_entry, market_cache),
             "raw_avg_entry_price": raw_avg_entry,
         }
@@ -272,22 +300,28 @@ def check_ledger_invariants(state: dict) -> dict:
     for t in closed:
         et, xt = t.get("entry_time", ""), t.get("exit_time", "")
         if not et or not xt:
-            continue
+            raise ValueError('closed trade timestamp unavailable')
         try:
             e = _dt.fromisoformat(str(et).replace("Z", "+00:00"))
             x = _dt.fromisoformat(str(xt).replace("Z", "+00:00"))
             if e > x:
                 reversed_trades.append(t)
-        except Exception:
-            pass
+        except (ValueError, TypeError) as exc:
+            raise ValueError('invalid closed trade timestamp') from exc
 
     # Invariant 3: holding_days not None
     hd_missing = [t for t in closed if t.get("holding_days") is None]
 
     # Invariant 4: PnL consistency
-    closed_sum = sum(t.get("pnl", 0) or 0 for t in closed)
-    cum = state.get("cumulative_realized_pnl", 0) or 0
+    values = [t.get('pnl') for t in closed]
+    cum = state.get('cumulative_realized_pnl', 0 if not closed else None)
+    if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v)
+           for v in [*values, cum]):
+        raise ValueError('invalid closed/cumulative PnL')
+    closed_sum = math.fsum(values)
     pnl_diff = abs(closed_sum - cum)
+    if not math.isfinite(closed_sum) or not math.isfinite(pnl_diff):
+        raise ValueError('nonfinite PnL aggregate')
 
     # Invariant 5: asset_class must be set (not None / 'unknown' / missing)
     # Root cause: rebuild_pnl_state_from_broker.py used to wipe asset_class on every
@@ -319,13 +353,127 @@ def check_ledger_invariants(state: dict) -> dict:
     }
 
 
+def recover_archived_asset_classes(state: dict) -> tuple[dict, dict]:
+    """Recover recorded classification in an audit view, never rewrite history.
+
+    Input must come from read_analysis_snapshot (validated state/event pair).
+    Only exact replacement rows and their exact retired BUY identities qualify.
+    This is archived metadata, not proof of trade-time classification or a new
+    strategy attribution. Current registry/symbol defaults are never consulted.
+    """
+    view = deepcopy(state)
+    missing = [r for r in view['trades'] if r.get('status') == 'closed'
+               and (r.get('asset_class') or '').lower() not in {'stock', 'etf'}]
+    receipt = dict(schema_version=1, scope='audit_view_recorded_metadata_not_trade_time_qualification',
+                   raw_missing=len(missing), recovered=0, unresolved=len(missing), rows=[],
+                   raw_ledger_modified=False, economic_fields_changed=False, promotion_ready=False)
+    if not missing or not state.get('history_migrations'):
+        return view, receipt
+    try:
+        history = state['history_migrations']
+        if not isinstance(history, list) or len(history) != 1:
+            raise ValueError('unsupported history archive')
+        h = history[0]
+        intent = h['intent']
+        raw = base64.b64decode(h['original_state_b64'], validate=True)
+        if (h['migration_id'] != json_revision(intent)
+                or h['before_sha256'] != intent['before_sha256']
+                or digest(raw) != h['before_sha256']['pnl_state.json']
+                or state['measurement_lineage']['ledger_revision'] != h['migration_id']):
+            raise ValueError('unbound history archive')
+        archive = json.loads(raw)
+        retired = []
+        for ref in intent['retire_records']:
+            c, i = ref['collection'], ref['row_index']
+            if c not in {'trades', 'quarantined_trades'} or type(i) is not int or i < 0:
+                raise ValueError('invalid retired row reference')
+            original = archive[c][i]
+            if original != ref['before']:
+                raise ValueError('retired metadata differs from archive')
+            retired.append((c, i, original))
+
+        def identity(row):
+            stamp = datetime.fromisoformat(row['entry_time'].replace('Z', '+00:00'))
+            if stamp.tzinfo is None or stamp.utcoffset() is None:
+                raise ValueError('ambiguous BUY timestamp')
+            if (not row.get('broker_order_id') or not row.get('symbol')
+                    or row.get('side') != 'buy'):
+                raise ValueError('incomplete BUY identity')
+            return row['broker_order_id'], row['symbol'], stamp.astimezone(timezone.utc)
+
+        receipt.update(ledger_revision=h['migration_id'], archive_sha256=digest(raw))
+        for row in missing:
+            # Invalid explicit values must not be laundered into a valid class.
+            if row.get('asset_class') not in (None, '', 'unknown'):
+                continue
+            if sum(row == r for r in intent['replacement_rows']) != 1:
+                continue
+            if sum(row == r for r in state['trades']) != 1:
+                raise ValueError('duplicate replacement identity')
+            key = identity(row)
+            matches = [(c, i, old) for c, i, old in retired if identity(old) == key]
+            classes = {old.get('asset_class') for _, _, old in matches}
+            if not matches or len(classes) != 1 or not classes <= {'stock', 'etf'}:
+                continue  # Missing or conflicting recorded evidence stays unknown.
+            ac = classes.pop()
+            receipt['rows'].append(dict(trade_id=row['trade_id'],
+                execution_leg_id=row.get('execution_leg_id'), before_row_sha256=json_revision(row),
+                broker_order_id=row['broker_order_id'], symbol=row['symbol'],
+                entry_time=row['entry_time'], asset_class=ac,
+                archived_sources=[dict(collection=c, row_index=i, row_sha256=json_revision(old))
+                                  for c, i, old in matches]))
+            row['asset_class'] = ac
+        receipt['recovered'] = len(receipt['rows'])
+        receipt['unresolved'] -= receipt['recovered']
+    except (ValueError, KeyError, TypeError, IndexError, AttributeError) as exc:
+        raise ValueError('classification archive unavailable: ' + str(exc)) from exc
+    return view, receipt
+
+
+def audit_ledger_invariants(state: dict) -> dict:
+    """Report immutable raw gaps separately from evidenced audit-view recovery."""
+    raw = check_ledger_invariants(state)
+    view, evidence = recover_archived_asset_classes(state)
+    inv = check_ledger_invariants(view)
+    print('RAW_LEDGER_INVARIANTS_JSON=' + json.dumps(raw, sort_keys=True))
+    print('CLASSIFICATION_RECOVERY_JSON=' + json.dumps(evidence, sort_keys=True))
+    print('AUDIT_VIEW_INVARIANTS_JSON=' + json.dumps(inv, sort_keys=True))
+    print(f"Closed trades:    {inv['closed_count']}")
+    print(f"Quarantined:      {inv['quarantined_count']}")
+    print(f"Raw asset-class gaps: {evidence['raw_missing']}; archived recovery: "
+          f"{evidence['recovered']}; unresolved: {evidence['unresolved']}")
+    if evidence['recovered']:
+        print('WARNING: raw historical rows remain immutable; only the audit view recovers recorded asset_class.')
+    issues = []
+    for field, label in [('overlap_count', 'closed/quarantine overlap'),
+                         ('reversed_count', 'entry_time > exit_time'),
+                         ('ac_unknown_count', 'unknown asset class')]:
+        if inv[field]:
+            issues.append(f"INVARIANT FAIL: {label} = {inv[field]} trades")
+    if inv['pnl_diff'] > 1.0:
+        issues.append(f"INVARIANT FAIL: PnL inconsistency = ${inv['pnl_diff']:,.2f}")
+    if inv['hd_missing_count']:
+        issues.append(f"WARNING: holding_days = None in {inv['hd_missing_count']} closed trades")
+    for issue in issues:
+        print(issue)
+    if inv['passed']:
+        print('Ledger audit view: no unresolved invariant violations (not performance qualification).')
+    else:
+        print('See docs/runbooks/r0v2b_ledger_repair_runbook.md; do not use legacy backfill on corrected history.')
+    return inv
+
+
 def main():
     parser = argparse.ArgumentParser(description="Audit trades against market prices")
     parser.add_argument("--anomaly-threshold", type=float, default=0.30,
                        help="Price deviation threshold for anomaly detection (default: 0.30 = 30%%)")
     parser.add_argument("--symbols", nargs="*", help="Only audit specific symbols (default: all)")
     parser.add_argument("--recent-days", type=int, help="Only audit trades from recent N days")
+    parser.add_argument('--ledger-only', action='store_true',
+                        help='Read-only ledger metadata audit; no broker or market calls; not a full daily audit')
     args = parser.parse_args()
+    if not math.isfinite(args.anomaly_threshold) or args.anomaly_threshold < 0:
+        parser.error('anomaly threshold must be finite and nonnegative')
 
     project_root = PROJECT_ROOT
     state_file = project_root / "data" / "tracking" / "pnl_state.json"
@@ -334,7 +482,21 @@ def main():
         print(f"ERROR: {state_file} not found", file=sys.stderr)
         return 1
 
-    state = json.loads(state_file.read_text(encoding="utf-8"))
+    try:
+        state, provenance = read_analysis_snapshot(state_file)
+    except (OSError, ValueError, LedgerConflict) as exc:
+        print(f"UNAVAILABLE: coherent ledger input: {exc}", file=sys.stderr)
+        return 2
+    print('MEASUREMENT_PROVENANCE_JSON=' + json.dumps(provenance, sort_keys=True))
+    print('INFO: descriptive integrity/price audit, not qualified strategy performance', file=sys.stderr)
+    if args.ledger_only:
+        print('AUDIT_SCOPE_JSON=' + json.dumps(dict(scope='ledger_metadata_only',
+              broker_check='not_checked', price_checks='not_checked', promotion_ready=False)))
+        try:
+            return 0 if audit_ledger_invariants(state)['passed'] else 1
+        except (ValueError, TypeError, OverflowError) as exc:
+            print(f'UNAVAILABLE: ledger invariants: {exc}', file=sys.stderr)
+            return 2
     all_trades = state.get("trades", [])
 
     if args.symbols:
@@ -363,6 +525,8 @@ def main():
     entry_anomalies = 0
     exit_anomalies = 0
     both_anomalies = 0
+    audited_count = 0
+    unavailable_count = len([t for t in closed_trades if not t.get('symbol')])
 
     for symbol, symbol_trades in sorted(trades_by_symbol.items()):
         print(f"\n{'='*100}")
@@ -379,12 +543,14 @@ def main():
                 all_dates.add(exit_date)
 
         if not all_dates:
+            unavailable_count += len(symbol_trades)
             continue
 
         market_bars = fetch_yahoo_finance_bars(symbol, min(all_dates), max(all_dates))
 
         if not market_bars:
             print(f"WARN: No market data available for {symbol}, skipping", file=sys.stderr)
+            unavailable_count += len(symbol_trades)
             continue
 
         for t in sorted(
@@ -407,6 +573,7 @@ def main():
 
             if not entry_date or not exit_date:
                 print(f"SKIP: {trade_id} (missing entry_time or exit_time)")
+                unavailable_count += 1
                 continue
 
             entry_market = market_bars.get(entry_date)
@@ -414,7 +581,22 @@ def main():
 
             if not entry_market or not exit_market:
                 print(f"SKIP: {trade_id} (missing market data for {entry_date} or {exit_date})")
+                unavailable_count += 1
                 continue
+
+            try:
+                values = [entry_price, exit_price, *entry_market, *exit_market]
+                if (len(entry_market) != 3 or len(exit_market) != 3
+                        or any(isinstance(v, bool) or not isinstance(v, (int, float))
+                               or not math.isfinite(v) or v <= 0 for v in values)
+                        or entry_market[0] > entry_market[1]
+                        or exit_market[0] > exit_market[1]):
+                    raise ValueError('invalid prices')
+            except (ValueError, TypeError):
+                print(f'UNAVAILABLE: invalid trade/market prices for {trade_id}', file=sys.stderr)
+                unavailable_count += 1
+                continue
+            audited_count += 1
 
             entry_low, entry_high, entry_close = entry_market
             exit_low, exit_high, exit_close = exit_market
@@ -462,7 +644,9 @@ def main():
     print("\n" + "="*100)
     print("\nAUDIT SUMMARY")
     print("="*100)
-    print(f"Total closed trades audited: {len(closed_trades)}")
+    print(f"Total closed trades selected: {len(closed_trades)}")
+    print(f"Total closed trades audited: {audited_count}")
+    print(f"Unavailable price checks:    {unavailable_count}")
     print(f"Total anomalies detected:    {total_anomalies}")
     print(f"  Entry price anomalies:     {entry_anomalies}")
     print(f"  Exit price anomalies:      {exit_anomalies}")
@@ -521,44 +705,18 @@ def main():
     print("=" * 100)
     print("LEDGER INVARIANT CHECK")
     print("=" * 100)
-    inv = check_ledger_invariants(state)
-    print(f"Closed trades:    {inv['closed_count']}")
-    print(f"Quarantined:      {inv['quarantined_count']}")
-    print()
-
-    inv_issues = []
-    if inv["overlap_count"] > 0:
-        inv_issues.append(
-            f"INVARIANT FAIL: closed/quarantine overlap = {inv['overlap_count']} trades"
-            " — run R0-v2-B ledger repair"
-        )
-    if inv["reversed_count"] > 0:
-        inv_issues.append(
-            f"INVARIANT FAIL: entry_time > exit_time = {inv['reversed_count']} trades"
-            " — FIFO lot assignment error, run R0-v2-B"
-        )
-    if inv["pnl_diff"] > 1.0:
-        inv_issues.append(
-            f"INVARIANT FAIL: PnL inconsistency = ${inv['pnl_diff']:,.2f}"
-            " — sum(closed.pnl) ≠ cumulative_realized_pnl"
-        )
-    if inv["hd_missing_count"] > 0:
-        inv_issues.append(
-            f"WARNING: holding_days = None in {inv['hd_missing_count']} closed trades"
-            " — run R0-v2-B fix3"
-        )
-
-    if not inv_issues:
-        print("✅ Ledger invariants: ALL PASSED")
-    else:
-        for msg in inv_issues:
-            print(f"⚠️  {msg}")
-        print()
-        print("  See docs/runbooks/r0v2b_ledger_repair_runbook.md")
+    try:
+        inv = audit_ledger_invariants(state)
+    except (ValueError, TypeError, OverflowError) as exc:
+        print(f'UNAVAILABLE: ledger invariants: {exc}', file=sys.stderr)
+        return 2
 
     inv_failed = not inv["passed"]
 
     # ── Final summary ─────────────────────────────────────────────────
+    if unavailable_count:
+        print('UNAVAILABLE: incomplete price coverage; this audit is not a clean pass', file=sys.stderr)
+        return 2
     any_failure = has_prior_issues or inv_failed
     if has_prior_issues:
         print("\n⚠️  ACTION REQUIRED (price/tracker issues):")
@@ -573,15 +731,14 @@ def main():
         if total_anomalies > 0:
             print("  2. Investigate price anomalies against market data")
         elif integrity_issue_count > 0:
-            print("  2. Rebuild pnl_state from broker fills to repair tracker state")
-            print("  3. Run: python scripts/rebuild_pnl_state_from_broker.py --backup")
+            print("  2. Review a versioned repair proposal; do not run an unreviewed rebuild")
             print("  4. Restart console to clear cache")
         else:
             print("  2. Fix the broker check environment (virtualenv/dependencies/credentials)")
             print("  3. Rerun: python scripts/audit_trades_with_market_data.py")
 
     if not any_failure:
-        print("\n✅ No price anomalies, tracker issues, or ledger invariant violations detected.")
+        print("\n✅ No price anomalies, tracker issues, or unresolved audit-view invariant violations detected.")
     return 1 if any_failure else 0
 
 

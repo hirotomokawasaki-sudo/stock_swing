@@ -12,8 +12,8 @@ Total open risk = sum of max_loss across all open trades.
 
 Thresholds
 ----------
-WARN_PCT  = 0.05 (5% of equity)  → warn but allow buys
-BLOCK_PCT = 0.08 (8% of equity)  → deny all new buy decisions
+WARN_PCT  = 0.04 (4% of equity)  → warn but allow buys
+BLOCK_PCT = 0.06 (6% of equity)  → deny all new buy decisions
 
 Sell decisions are NEVER blocked.
 """
@@ -21,6 +21,9 @@ Sell decisions are NEVER blocked.
 from __future__ import annotations
 
 import json
+import math
+from stock_swing.tracking.compatibility import read_tracking_state
+from stock_swing.tracking.ledger_transaction import LedgerConflict
 from pathlib import Path
 from typing import Any
 
@@ -43,88 +46,86 @@ def _stop_loss_pct(signal_strength: float | None) -> float:
     return 0.05       # low conviction / conservative
 
 
+def _unavailable_risk(reason: str) -> dict[str, Any]:
+    """Unknown risk is not a measured zero and must deny new BUYs."""
+    return {
+        "status": "unavailable", "error": reason,
+        "open_trades_count": None, "total_open_risk": None,
+        "pct_of_equity": None, "warn_threshold": None, "block_threshold": None,
+        "is_warn": False, "is_blocked": True, "per_symbol": [],
+    }
+
+
+def _finite_number(value: Any) -> float:
+    if isinstance(value, bool):
+        raise ValueError("boolean is not a risk number")
+    number = float(value)
+    if not math.isfinite(number):
+        raise ValueError("non-finite risk number")
+    return number
+
+
 def compute_open_risk(project_root: Path, equity: float) -> dict[str, Any]:
-    """Compute current open risk from pnl_state.json.
+    """Compute the existing stop-based estimate, or return explicit unknown.
 
-    Returns
-    -------
-    dict with keys:
-        open_trades_count   int
-        total_open_risk     float  — sum of (qty × entry_price × stop_loss_pct)
-        pct_of_equity       float  — total_open_risk / equity
-        warn_threshold      float  — WARN_PCT × equity
-        block_threshold     float  — BLOCK_PCT × equity
-        is_warn             bool
-        is_blocked          bool
-        per_symbol          list[dict]  — per-symbol breakdown
+    Confirmed empty ``trades`` is flat. Missing/malformed state, invalid open
+    lots, and invalid equity are unknown; never expose a partial sum as total.
+    This estimate is not a broker reconciliation or a guaranteed loss bound.
     """
-    state_path = project_root / "data" / "tracking" / "pnl_state.json"
+    try:
+        equity = _finite_number(equity)
+        if equity <= 0:
+            raise ValueError("non-positive equity")
+    except (TypeError, ValueError, OverflowError):
+        return _unavailable_risk("invalid_equity")
 
-    if not state_path.exists():
-        # No state → no risk
-        return {
-            "open_trades_count": 0,
-            "total_open_risk": 0.0,
-            "pct_of_equity": 0.0,
-            "warn_threshold": equity * WARN_PCT,
-            "block_threshold": equity * BLOCK_PCT,
-            "is_warn": False,
-            "is_blocked": False,
-            "per_symbol": [],
-            "error": "pnl_state.json not found",
-        }
+    state_path = project_root / "data" / "tracking" / "pnl_state.json"
+    try:
+        state = read_tracking_state(state_path)
+    except (OSError, ValueError, LedgerConflict) as exc:
+        return _unavailable_risk("state_read_failed:" + type(exc).__name__)
+    if not isinstance(state, dict) or not isinstance(state.get("trades"), list):
+        return _unavailable_risk("invalid_state_schema")
+
+    by_symbol: dict[str, dict] = {}
+    open_count = 0
+    for t in state["trades"]:
+        if not isinstance(t, dict) or not isinstance(t.get("status"), str) or t["status"] not in {"open", "closed", "quarantined"}:
+            return _unavailable_risk("invalid_trade_status")
+        if t["status"] != "open":
+            continue
+        try:
+            sym = t.get("symbol")
+            if not isinstance(sym, str) or not sym.strip():
+                raise ValueError("missing symbol")
+            qty = _finite_number(t.get("qty"))
+            entry = _finite_number(t.get("entry_price"))
+            if qty <= 0 or entry <= 0:
+                raise ValueError("non-positive open lot")
+            sig = t.get("entry_signal_strength", t.get("signal_strength"))
+            if sig is not None:
+                sig = _finite_number(sig)
+                if not 0 <= sig <= 1:
+                    raise ValueError("invalid signal strength")
+            notional = _finite_number(qty * entry)
+            max_loss = _finite_number(notional * _stop_loss_pct(sig))
+            row = by_symbol.setdefault(sym, {"symbol": sym, "lots": 0, "max_loss": 0.0, "market_value": 0.0})
+            row["lots"] += 1
+            row["max_loss"] = _finite_number(row["max_loss"] + max_loss)
+            row["market_value"] = _finite_number(row["market_value"] + notional)
+            open_count += 1
+        except (TypeError, ValueError, OverflowError):
+            return _unavailable_risk("invalid_open_lot")
 
     try:
-        state = json.loads(state_path.read_text())
-    except Exception as exc:
-        return {
-            "open_trades_count": 0,
-            "total_open_risk": 0.0,
-            "pct_of_equity": 0.0,
-            "warn_threshold": equity * WARN_PCT,
-            "block_threshold": equity * BLOCK_PCT,
-            "is_warn": False,
-            "is_blocked": False,
-            "per_symbol": [],
-            "error": str(exc),
-        }
-
-    trades: list[dict] = state.get("trades", [])
-    open_trades = [t for t in trades if t.get("status") == "open"]
-
-    # Aggregate per symbol
-    by_symbol: dict[str, dict] = {}
-    for t in open_trades:
-        sym = t.get("symbol", "?")
-        qty = float(t.get("qty", 0))
-        entry = float(t.get("entry_price", 0))
-        sig = t.get("entry_signal_strength", t.get("signal_strength", None))  # entry_signal_strength preferred; signal_strength kept for backward compat
-        if sig is not None:
-            try:
-                sig = float(sig)
-            except (TypeError, ValueError):
-                sig = None
-
-        stop_pct = _stop_loss_pct(sig)
-        max_loss = qty * entry * stop_pct
-
-        if sym not in by_symbol:
-            by_symbol[sym] = {"symbol": sym, "lots": 0, "max_loss": 0.0, "market_value": 0.0}
-        by_symbol[sym]["lots"] += 1
-        by_symbol[sym]["max_loss"] += max_loss
-        by_symbol[sym]["market_value"] += qty * entry
-
-    total_open_risk = sum(v["max_loss"] for v in by_symbol.values())
-    pct = total_open_risk / equity if equity > 0 else 0.0
-    per_symbol = sorted(by_symbol.values(), key=lambda x: -x["max_loss"])
-
+        total = _finite_number(sum(v["max_loss"] for v in by_symbol.values()))
+        pct = _finite_number(total / equity)
+    except (ValueError, OverflowError):
+        return _unavailable_risk("risk_aggregation_overflow")
     return {
-        "open_trades_count": len(open_trades),
-        "total_open_risk": total_open_risk,
-        "pct_of_equity": pct,
-        "warn_threshold": equity * WARN_PCT,
-        "block_threshold": equity * BLOCK_PCT,
-        "is_warn": pct >= WARN_PCT,
-        "is_blocked": pct >= BLOCK_PCT,
-        "per_symbol": per_symbol,
+        "status": "ok", "open_trades_count": open_count,
+        "total_open_risk": total, "pct_of_equity": pct,
+        "warn_threshold": equity * WARN_PCT, "block_threshold": equity * BLOCK_PCT,
+        "is_warn": pct >= WARN_PCT, "is_blocked": pct >= BLOCK_PCT,
+        "per_symbol": sorted(by_symbol.values(), key=lambda x: -x["max_loss"]),
     }

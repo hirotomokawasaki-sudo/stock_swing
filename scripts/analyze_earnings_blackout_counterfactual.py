@@ -60,6 +60,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PNL_STATE_PATH = PROJECT_ROOT / "data" / "tracking" / "pnl_state.json"
 EARNINGS_CACHE_DIR = PROJECT_ROOT / "data" / "r11_earnings_cache"
@@ -76,7 +78,7 @@ def parse_ts(ts: str) -> datetime:
 
 
 def load_closed_trades() -> list[dict]:
-    state = json.loads(PNL_STATE_PATH.read_text())
+    state = legacy_analytical_state(PNL_STATE_PATH)
     closed = [t for t in state["trades"] if t.get("status") == "closed"]
     for t in closed:
         t["_entry_date"] = parse_ts(t["entry_time"]).astimezone(ET).date()

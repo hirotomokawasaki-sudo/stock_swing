@@ -152,6 +152,13 @@ def test_partial_fill_completion_records_remaining_qty(monkeypatch, capsys):
             exit_reason="breakeven_stop",
         )
 
+        from stock_swing.tracking.fill_ledger import FillLedger
+        prior_fills = FillLedger(project_root)
+        prior_fills.ingest(dict(id="sell-order-254", symbol="CRDO", side="sell",
+                                filled_qty=51, qty=51, filled_avg_price=271.56,
+                                filled_at="2026-06-24T16:00:20+00:00"))
+        prior_fills.consume("sell-order-254", "initial-inline", 51)
+
         # After partial close: 35 + 84 + 84 = 203 shares remain open
         open_before = sum(
             t["qty"] for t in tracker.state.trades
@@ -304,7 +311,7 @@ def test_partial_fill_already_complete_is_not_replayed(monkeypatch, capsys):
         assert closed[0]["qty"] == 100
 
 
-def test_cancel_stale_sell_orders_cancels_non_catastrophic_offhours_exit():
+def test_cancel_stale_sell_orders_holds_unqualified_legacy_stub():
     with tempfile.TemporaryDirectory() as tmpdir:
         project_root = Path(tmpdir)
         store_path = project_root / "data" / "tracking" / "pending_exit_reasons.json"
@@ -347,16 +354,12 @@ def test_cancel_stale_sell_orders_cancels_non_catastrophic_offhours_exit():
         broker = StubBroker()
         cancelled = reconcile_orders.cancel_stale_sell_orders(broker, project_root)
 
-        assert cancelled == [
-            {
-                "order_id": "sell-order-1",
-                "symbol": "AMD",
-                "submitted_at": "2026-06-07T01:34:06+00:00",
-                "reason": "offhours_moderate_sell",
-            }
-        ]
-        assert broker.cancelled == ["sell-order-1"]
-        assert json.loads(store_path.read_text(encoding="utf-8")) == {}
+        # 2026-10-28: ACK without runtime/account/order readback is not terminal.
+        assert len(cancelled) == 1
+        assert cancelled[0]['state'] == 'held'
+        assert cancelled[0]['cancelled'] is False
+        assert broker.cancelled == []
+        assert json.loads(store_path.read_text(encoding="utf-8"))["sell-order-1"]["exit_reason"] == "breakeven_stop"
 
 
 def test_cancel_stale_sell_orders_keeps_catastrophic_offhours_exit():
@@ -633,7 +636,7 @@ def test_reconcile_skips_fill_absent_from_state_but_in_trade_events(monkeypatch,
 def test_quarantined_trade_fill_not_replayed():
     """Quarantined trade with exit_broker_order_id must not trigger WARN loop.
 
-    Regression: 2026-07-30 ANET broker_open_0247_ANET was quarantined with
+    Regression: 2026-07-30 ANET public-fixture-3721 was quarantined with
     exit_broker_order_id='95a52b5f-...' (qty=117).  recorded_qty_by_order_id only
     counted closed trades, so remaining=117>0 and the partial-fill path ran every
     reconcile cycle printing 'Skipping exit: no open trade found'.
@@ -643,11 +646,11 @@ def test_quarantined_trade_fill_not_replayed():
 
     trades = [
         {
-            "trade_id": "broker_open_0247_ANET",
+            "trade_id": "public-fixture-3721",
             "symbol": "ANET",
             "status": "quarantined",
             "qty": 117,
-            "exit_broker_order_id": "95a52b5f-79d0-4b3c-b342-d3ac9acd83dc",
+            "exit_broker_order_id": "public-fixture-0612",
         },
         {
             "trade_id": "other_closed",
@@ -659,7 +662,7 @@ def test_quarantined_trade_fill_not_replayed():
     ]
     result = _build_recorded_qty_by_order_id(trades)
     # Quarantined ANET must be counted
-    assert result.get("95a52b5f-79d0-4b3c-b342-d3ac9acd83dc") == 117, (
+    assert result.get("public-fixture-0612") == 117, (
         "quarantined trade qty must be included so partial-fill guard skips the replay"
     )
     # Closed NVDA must still be counted
@@ -755,10 +758,11 @@ def test_reconcile_orders_uses_fill_ledger_to_block_replay_after_state_reset(mon
             decision_id="decision-buy-new",
         )
 
-        assert reconcile_orders.main() == 0
+        assert reconcile_orders.main() == 1, "lost financial history must not be reported healthy merely because fill was consumed"
         out = capsys.readouterr().out
         summary_line = [line for line in out.splitlines() if line.startswith(CRON_SUMMARY_PREFIX)][-1]
         payload = json.loads(summary_line.split("=", 1)[1])
+        assert payload["status"] == "error", "watermark ahead of PnL is an evidence gap"
         assert payload["filled_exits_recorded"] == 0
 
         open_positions = tracker.get_open_positions()

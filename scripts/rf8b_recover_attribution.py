@@ -33,6 +33,9 @@ UNKNOWN_REASONS = {"broker_fill", "broker_fill_unknown", None, ""}
 LOOKBACK_DAYS = 10  # decision が執行日より最大何日前か（週跨ぎ・初期期間の長期未執行を考慮）
 
 
+from stock_swing.tracking.compatibility import legacy_entrypoint, legacy_maintenance, tracking_root
+
+@legacy_entrypoint(lambda path, *a, **k: tracking_root(path))
 def _atomic_write(path: Path, data: dict) -> None:
     content = json.dumps(data, indent=2, ensure_ascii=False)
     fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=".rf8b.", suffix=".tmp")
@@ -178,15 +181,17 @@ def build_pending_map(project_root: Path) -> dict[str, str]:
 #   CRWD 07-06:       client_order_id=crwd-split-fix-20260703 → 4:1 split 修正時の手動売り
 MANUAL_ANNOTATIONS: dict[str, str] = {
     # key = exit_broker_order_id, value = reason
-    "1275c0c0-6df9-4e99-88a9-d881d592e4bf": "stop_loss",        # AVGO 05-13
-    "26096c0d-3a5f-460d-a382-751acd213479": "stop_loss",        # AVGO 05-14
-    "127b1b86-3d01-4f89-929c-e02cdf3bd42b": "stop_loss",        # AVGO 05-15
-    "6ef7fbde-a858-45c6-86df-a3bac7ccc954": "stop_loss",        # SMH  05-14
-    "918ee048-d1d9-4979-a452-a0d3534446cc": "stop_loss",        # SMHX 05-14
-    "25464ec8-3145-4301-aa24-ef79b86a67f5": "corporate_action", # CRWD 07-06 (split-fix)
+    "public-fixture-0010": "stop_loss",        # AVGO 05-13
+    "public-fixture-0092": "stop_loss",        # AVGO 05-14
+    "public-fixture-0011": "stop_loss",        # AVGO 05-15
+    "public-fixture-0442": "stop_loss",        # SMH  05-14
+    "public-fixture-0595": "stop_loss",        # SMHX 05-14
+    "public-fixture-0088": "corporate_action", # CRWD 07-06 (split-fix)
 }
 
 
+
+@legacy_entrypoint(lambda *a, **k: globals().get('project_root', globals().get('PROJECT_ROOT', Path(__file__).resolve().parents[1])))
 def main() -> None:
     parser = argparse.ArgumentParser(description="RF-8b: recover exit_reason attribution")
     parser.add_argument("--dry-run", action="store_true")

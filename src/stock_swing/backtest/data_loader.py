@@ -7,6 +7,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any
 
+from stock_swing.tracking.compatibility import legacy_analytical_state
+
 
 class DataLoader:
     """Load historical trading data for backtesting."""
@@ -68,17 +70,14 @@ class DataLoader:
         Returns:
             List of trade records
         """
-        if not self.tracking_file.exists():
-            return []
-        
-        try:
-            with open(self.tracking_file, 'r') as f:
-                data = json.load(f)
-            
-            return data.get('trades', [])
-        
-        except Exception:
-            return []
+        # This legacy API cannot propagate correction lineage. Refuse a
+        # migrated history, a missing input or a broken pair instead of
+        # laundering it as an empty (apparently successful) backtest.
+        data = legacy_analytical_state(self.tracking_file)
+        trades = data.get('trades')
+        if not isinstance(trades, list) or any(not isinstance(row, dict) for row in trades):
+            raise ValueError('invalid trade collection')
+        return trades
     
     def load_price_data(self, symbol: str, start_date: datetime, end_date: datetime) -> List[Dict[str, Any]]:
         """Load historical price data for a symbol.
