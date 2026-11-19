@@ -1,16 +1,6 @@
-"""Tests for scripts/check_go_no_go.py's ledger_quality_gate.last_checked stamping.
-
-Regression (2026-08-07): console self-check
-(console/adapters/system_adapter.py::_check_ledger_validity) treats
-ledger_quality_gate as stale — and therefore reports it as a critical
-'ledger_validity' evidence failure, forcing health_status=blocked — once
-last_checked is more than 24h old. This field was previously only bumped
-by manual edits during ledger repair work, so it silently went stale
-between repairs (2026-08-01 -> 2026-08-07, 6 days) even though the gate
-was genuinely VALID and re-verified daily by this script. Fix:
---save now stamps last_checked (and re-affirms current_status: VALID)
-whenever the ledger_quality check passes, without touching the extensive
-human-authored comments elsewhere in the file.
+"""Nov17 regression: cached VALID cannot refresh its own evidence date.
+The legacy hook preserves config even when passed True; report saving is
+not raw ledger validation. Comments and unrelated controls stay byte-exact.
 """
 from __future__ import annotations
 
@@ -58,7 +48,7 @@ def _write_current_mode(project_root: Path, text: str = _SAMPLE_YAML) -> Path:
     return path
 
 
-def test_stamps_last_checked_to_today_when_ledger_passes(monkeypatch, tmp_path):
+def test_cached_ledger_boolean_does_not_stamp_today(monkeypatch, tmp_path):
     module = _load_module(monkeypatch, tmp_path)
     path = _write_current_mode(tmp_path)
 
@@ -66,7 +56,7 @@ def test_stamps_last_checked_to_today_when_ledger_passes(monkeypatch, tmp_path):
     module._update_ledger_gate_last_checked(True, now_jst)
 
     text = path.read_text(encoding="utf-8")
-    assert f'last_checked: "{now_jst.strftime("%Y-%m-%d")}"' in text
+    assert 'last_checked: "2026-08-01"' in text
     assert "current_status: VALID" in text
 
 

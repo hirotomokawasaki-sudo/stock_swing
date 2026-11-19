@@ -1,21 +1,17 @@
-# stock_swing — current code snapshot (2026-11-11)
+# stock_swing — reviewed source snapshot (2026-11-19)
 
-Source code for the trading support, deterministic risk/execution controls,
-research/paper CLI, local Console and dashboard.
+Application, research/paper CLI, deterministic controls, local Console and tests.
 
-**Start with [the snapshot scope and validation](docs/publication_20261111/README.md).**
-This is a source-only publication. Private account data, raw trading evidence,
-credentials, runtime state and most research packets are deliberately absent.
-It is not a production deployment or a self-contained financial replay package.
+Start with [publication scope and observed validation](docs/publication_20261119/README.md).
+This code-only branch excludes credentials, actual account/operational configuration,
+mutable ledgers, raw broker evidence and private individual transaction rows.
+It is not a deployment or self-contained financial replay.
 
-- Application: `src/stock_swing/`
-- Console: `console/`; dashboard: `dashboard/`
-- CLI/maintenance tools: `scripts/`
-- Tests and synthetic fixtures: `tests/`
-- Policy configuration: `config/` (`mode: paper`, no live activation)
-- Dependencies: `pyproject.toml`, `requirements.txt`
-- Controls: `GOVERNANCE.md`, `RUNTIME_MODES.md`
-
-See the validation receipt for public-input test results and explicitly
-unavailable private-fixture tests. No credentials or operational data are needed
-to read the code. Publication does not authorize running broker/repair commands.
+- src/stock_swing/: application source
+- console/, dashboard/: operator interfaces
+- scripts/: administrative and analysis tools; publication does not authorize use
+- tests/: code and synthetic fixtures, with private-input dependencies disclosed
+- config/: non-account policy templates; uninstalled runtime example only
+- research_candidates/: isolated, unapplied preview
+- pyproject.toml, requirements.txt: declared dependencies (Python >=3.11)
+- docs/publication_20261119/: exact scope, inventory, tests and limitations

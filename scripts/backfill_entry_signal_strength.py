@@ -111,7 +111,7 @@ def _load_ess_from_decisions(events_file: Path, decisions_dir: Path) -> dict[str
             trade_id = ev.get("trade_id", "")
             if not trade_id:
                 continue
-            # trade_id = SYMBOL-decisionprefix (e.g. "public-fixture-1066")
+            # trade_id = SYMBOL-decisionprefix (e.g. "public-fixture-1073")
             parts = trade_id.split("-", 1)
             if len(parts) < 2:
                 continue

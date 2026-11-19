@@ -23,11 +23,11 @@ def preflight_restriction_review(root: Path, environment: Mapping[str, str]) -> 
     version = environment.get("ENTRY_RESTRICTION_REVIEW_VERSION", "")
     if not version:
         return result("error", "missing_version")
-    if version not in {"v1", "v2", "v3", "v4", "v5", "v6", "v7", "v10", "v11", "v12", "v13", "v14", "v15", "v16"}:
+    if version not in {"v1", "v2", "v3", "v4", "v5", "v6", "v7", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v19", "v20", "v21", "v22"}:
         return result("error", "unsupported_version")
     if environment.get("ENTRY_RESTRICTION_REVIEW_ENABLED", "true").lower() in {"0", "false", "no"}:
         return result("disabled", "explicitly_disabled")
-    if version not in {"v6", "v7", "v10", "v11", "v12", "v13", "v14", "v15", "v16"}:
+    if version not in {"v6", "v7", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v19", "v20", "v21", "v22"}:
         return result("ok", "legacy_version_no_ledger_binding")
     expected = environment.get("ENTRY_RESTRICTION_REVIEW_LEDGER_REVISION", "")
     if not expected or expected == "legacy":
@@ -40,13 +40,13 @@ def preflight_restriction_review(root: Path, environment: Mapping[str, str]) -> 
             return result("error", "ledger_unavailable")
         with ledger_transaction(root, recover=False, blocking=False):
             state, provenance = read_analysis_snapshot(folder / "pnl_state.json")
-            if version in {"v10", "v11", "v12", "v13", "v14", "v15", "v16"}:
+            if version in {"v10", "v11", "v12", "v13", "v14", "v15", "v16", "v19", "v20", "v21", "v22"}:
                 history = state.get("history_migrations", [])
                 if len(history) != 2 or history[-1].get("intent", {}).get("schema_version") != 2:
                     return result("error", "second_financial_transition_required")
         if provenance["ledger_revision"] != expected:
             return result("error", "ledger_revision_mismatch")
-        if version in {'v11', 'v12', 'v13', 'v14', 'v15', 'v16'}:
+        if version in {'v11', 'v12', 'v13', 'v14', 'v15', 'v16', "v19", "v20", "v21", "v22"}:
             from stock_swing.reporting.versioned_bridge import load_selected_reconciliation
             got = load_selected_reconciliation(root, expected_account_id=state.get('broker_account_id'),
                 currency='USD', environment=environment)

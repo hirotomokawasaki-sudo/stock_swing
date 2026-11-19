@@ -253,5 +253,10 @@ def test_all_pass_when_real_mismatch_zero_despite_raw_nonzero(monkeypatch, tmp_p
         _json.dumps({"daily_snapshots": snapshots, "trades": trades}), encoding="utf-8"
     )
 
+    # Saved config must independently be current; a summary flag is not enough.
+    config = tmp_path / "config/runtime/current_mode.yaml"
+    config.parent.mkdir(parents=True)
+    config.write_text("mode: paper\nledger_quality_gate:\n  current_status: VALID\n"
+                      + '  last_checked: "' + datetime.now(timezone.utc).date().isoformat() + '"\n')
     results = module.check()
     assert all(r["pass"] for r in results.values()), results

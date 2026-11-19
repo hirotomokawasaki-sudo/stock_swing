@@ -25,6 +25,9 @@ def setup_guard(monkeypatch,tmp_path,mode="normal",changes=None):
             accepted[body["client_order_id"]]=response
             if mode!="normal":raise httpx.ReadTimeout("fixture acceptance followed by response loss",request=request)
             return httpx.Response(200,json=response)
+        if request.url.path.endswith('/account'):return httpx.Response(200,json=dict(id='account-fixture',status='ACTIVE'))
+        if request.url.path.endswith('/positions'):return httpx.Response(200,json=[dict(symbol='CRM',qty='10',side='long')])
+        if request.url.path.endswith('/orders'):return httpx.Response(200,json=list(accepted.values()))
         key=request.url.params.get("client_order_id")
         if mode=="not_found":return httpx.Response(404,json={})
         row=accepted.get(key)

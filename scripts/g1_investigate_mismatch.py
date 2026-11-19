@@ -61,8 +61,8 @@ def main():
 
     print("\n--- Resolution Path ---")
     print("  1. Verify broker order status via Alpaca API:")
-    print("     GET /v2/orders/public-fixture-1497  (SKYY)")
-    print("     GET /v2/orders/public-fixture-4026  (META Lot2)")
+    print("     GET /v2/orders/public-fixture-1504  (SKYY)")
+    print("     GET /v2/orders/public-fixture-4034  (META Lot2)")
     print("  2. If status=canceled/rejected/expired: quarantine phantom trades")
     print("  3. Run scripts/clear_circuit_breaker.py with mismatch_count=0 confirmed")
     print(

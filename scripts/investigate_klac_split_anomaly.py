@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """FIX-LEDGER-3: Investigate KLAC split anomaly in pnl_state.json.
 
-public-fixture-2503:
+public-fixture-2511:
   entry_price=2126.92  exit_price=253.5  qty=21  pnl=-39341.89
 
 This is consistent with an unadjusted split:
@@ -70,7 +70,7 @@ def main() -> int:
         "corporate_actions_found": klac_actions,
         "analysis": {
             "hypothesis": (
-                "public-fixture-2503 entry_price=2126.92 is pre-split (×8 split ratio: "
+                "public-fixture-2511 entry_price=2126.92 is pre-split (×8 split ratio: "
                 "2126.92/8=265.87 matches post-split trading range of $240-270 in Jun 2026). "
                 "Exit at $253.50 is in the post-split range. The trade tracker recorded "
                 "the entry at pre-split price but exit at post-split price, causing a "

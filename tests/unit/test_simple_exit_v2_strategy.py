@@ -533,7 +533,7 @@ def test_stop_loss_trigger(strategy, price_features):
     assert signals[0].symbol == "AAPL"
     assert signals[0].action == "sell"
     assert signals[0].signal_strength == 1.0
-    assert "Stop loss triggered" in signals[0].reasoning
+    assert "Emergency stop triggered" in signals[0].reasoning
 
 
 def test_trailing_stop_activation(strategy, price_features):

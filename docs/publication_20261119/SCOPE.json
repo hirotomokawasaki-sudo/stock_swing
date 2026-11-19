@@ -1,0 +1,89 @@
+{
+  "kind": "reviewed current on-disk code snapshot with aggregate research status and one isolated candidate",
+  "source_head": "8909e79c1a83e04d508715b132575625454b7856",
+  "public_parent": "8637b8aebcc063f1399a9540c94280754a4ef64d",
+  "branch": "publish/20261119-safe-updates",
+  "selected_source_files": 793,
+  "included_roots": [
+    "src",
+    "console",
+    "scripts",
+    "tests",
+    "config",
+    "dashboard",
+    "openclaw",
+    "ops",
+    "prompts",
+    ".github"
+  ],
+  "excluded_files": {
+    "config/accounts.json": "actual account configuration",
+    "config/runtime/current_mode.yaml": "operational control state; public example supplied instead",
+    "config/environments/local.yaml": "host-specific environment configuration",
+    "config/strategy/portfolio_allocation.yaml.bak_20260721": "configuration backup",
+    "tests/fixtures/incidents/klac_20260624_stale_price.json": "private historical incident data",
+    "dashboard/.env": "nested operational environment file; omitted entirely"
+  },
+  "omitted": [
+    "credentials/env backups",
+    "data/reports/logs/runtime control state/account configuration",
+    "individual financial transactions including pseudonymized rows",
+    "raw broker evidence/private research inputs/sealed private packets",
+    "most mutable private planning documents"
+  ],
+  "source_history": "seven unpublished local-main commits deliberately not ancestors",
+  "runtime_example": "operational current_mode.yaml omitted; example path is uninstalled with UNKNOWN readiness and null validation date",
+  "candidate": "research_candidates/canceled_partial_precision_preview.py is isolated, not integrated or deployed",
+  "production_changed": false,
+  "main_merged": false,
+  "git_modes": "Git preserves executable bits, not arbitrary 0600/0700 modes. No private mode-sensitive packet is claimed reproducible.",
+  "privacy_projections": {
+    "scripts/backfill_entry_signal_strength.py": {
+      "credential_literals": 0,
+      "financial_identity_literals": 1
+    },
+    "scripts/g1_investigate_mismatch.py": {
+      "credential_literals": 0,
+      "financial_identity_literals": 2
+    },
+    "scripts/investigate_klac_split_anomaly.py": {
+      "credential_literals": 0,
+      "financial_identity_literals": 2
+    },
+    "scripts/rf8b_recover_attribution.py": {
+      "credential_literals": 0,
+      "financial_identity_literals": 6
+    },
+    "scripts/test_massive_ws_connection.sh": {
+      "credential_literals": 1,
+      "financial_identity_literals": 0
+    },
+    "scripts/verify_rebuild_integrity.py": {
+      "credential_literals": 0,
+      "financial_identity_literals": 1
+    },
+    "tests/unit/test_per_lot_time_based_exit.py": {
+      "credential_literals": 0,
+      "financial_identity_literals": 7
+    },
+    "tests/unit/test_reconcile_orders.py": {
+      "credential_literals": 0,
+      "financial_identity_literals": 4
+    },
+    "tests/unit/test_verify_rebuild_integrity.py": {
+      "credential_literals": 0,
+      "financial_identity_literals": 3
+    }
+  },
+  "privacy_projection_meaning": "Only public copies replace a hard-coded manual-auth example and historical financial IDs with explicit placeholders; source originals unchanged.",
+  "excluded_generated_metadata": [
+    "openclaw/.DS_Store",
+    "src/.DS_Store",
+    "src/stock_swing.egg-info/PKG-INFO",
+    "src/stock_swing.egg-info/SOURCES.txt",
+    "src/stock_swing.egg-info/requires.txt",
+    "src/stock_swing.egg-info/top_level.txt",
+    "src/stock_swing.egg-info/dependency_links.txt",
+    "src/stock_swing/.DS_Store"
+  ]
+}

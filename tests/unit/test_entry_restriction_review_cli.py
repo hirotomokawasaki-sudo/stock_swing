@@ -31,6 +31,7 @@ def _exercise_main(tmp_path, monkeypatch, capsys, observer_state):
             return fixed.astimezone(tz) if tz else fixed.replace(tzinfo=None)
     import importlib
     for module_name in [__name__, "stock_swing.cli.paper_demo",
+                        "stock_swing.feature_engine.price_momentum_feature",
                         "stock_swing.strategy_engine.breakout_momentum_strategy",
                         "stock_swing.decision_engine.decision_engine"]:
         monkeypatch.setattr(importlib.import_module(module_name), "datetime", SessionClock)

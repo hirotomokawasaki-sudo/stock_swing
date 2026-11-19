@@ -22,6 +22,7 @@ import math
 import os
 import sys
 import urllib.request
+from urllib.parse import quote, urlencode
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -40,26 +41,71 @@ PRICE_DIFF_THRESHOLD_PCT = 0.05
 
 
 def fetch_yahoo_finance_bars(symbol: str, start_date: str, end_date: str) -> dict:
-    """Fetch historical bars from Yahoo Finance."""
-    url = f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=1mo'
-    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+    """Fetch as-traded US-equity audit bars, or recent bars for positions.
 
+    Yahoo OHLC is split-adjusted even without adjusted-close consumption. For
+    dated audits, fetch split events through today and reverse only subsequent
+    splits on the market bars, never on tracker prices/quantities or PnL.
+    Both empty dates retain the existing recent position-price check.
+    """
     try:
+        params = {'interval': '1d'}
+        if start_date or end_date:
+            start = datetime.fromisoformat(start_date).replace(tzinfo=timezone.utc)
+            end = datetime.fromisoformat(end_date).replace(tzinfo=timezone.utc)
+            if (start.strftime('%Y-%m-%d') != start_date
+                    or end.strftime('%Y-%m-%d') != end_date or end < start):
+                raise ValueError('invalid inclusive audit date range')
+            # A split AFTER the requested trade window still adjusts Yahoo's
+            # earlier OHLC. Include those events; period2 is exclusive.
+            horizon = max(end + timedelta(days=1),
+                          datetime.now(timezone.utc).replace(hour=0, minute=0,
+                              second=0, microsecond=0) + timedelta(days=1))
+            params.update(period1=int(start.timestamp()),
+                          period2=int(horizon.timestamp()), events='splits')
+        else:
+            params['range'] = '1mo'
+        url = ('https://query1.finance.yahoo.com/v8/finance/chart/'
+               + quote(symbol, safe='') + '?' + urlencode(params))
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read())
             result = data.get('chart', {}).get('result', [{}])[0]
             timestamps = result.get('timestamp', [])
             quotes = result.get('indicators', {}).get('quote', [{}])[0]
 
+            splits = []
+            if start_date:
+                events = result.get('events', {})
+                if not isinstance(events, dict) or not isinstance(events.get('splits', {}), dict):
+                    raise ValueError('invalid split events')
+                for event in events.get('splits', {}).values():
+                    numerator, denominator = event['numerator'], event['denominator']
+                    if (isinstance(numerator, bool) or isinstance(denominator, bool)
+                            or not isinstance(numerator, (int, float))
+                            or not isinstance(denominator, (int, float))
+                            or not math.isfinite(numerator) or not math.isfinite(denominator)
+                            or numerator <= 0 or denominator <= 0):
+                        raise ValueError('invalid split ratio')
+                    split_date = datetime.fromtimestamp(event['date'], timezone.utc).strftime('%Y-%m-%d')
+                    if split_date >= horizon.strftime('%Y-%m-%d'):
+                        raise ValueError('future split event')
+                    splits.append((split_date, numerator / denominator))
+
             bars = {}
             for i, ts in enumerate(timestamps):
-                date = datetime.fromtimestamp(ts).strftime('%Y-%m-%d')
+                date = datetime.fromtimestamp(ts, timezone.utc).strftime('%Y-%m-%d')
+                if start_date and not start_date <= date <= end_date:
+                    continue
                 close = quotes.get('close', [])[i]
                 high = quotes.get('high', [])[i]
                 low = quotes.get('low', [])[i]
 
                 if close and high and low:
-                    bars[date] = (float(low), float(high), float(close))
+                    factor = math.prod(ratio for split_date, ratio in splits if date < split_date)
+                    if not math.isfinite(factor) or factor <= 0:
+                        raise ValueError('invalid cumulative split factor')
+                    bars[date] = tuple(float(value) * factor for value in (low, high, close))
 
             return bars
     except Exception as e:
@@ -371,16 +417,35 @@ def recover_archived_asset_classes(state: dict) -> tuple[dict, dict]:
         return view, receipt
     try:
         history = state['history_migrations']
-        if not isinstance(history, list) or len(history) != 1:
+        if not isinstance(history, list) or len(history) not in (1, 2):
             raise ValueError('unsupported history archive')
+        # The normal pair reader validates events and disjoint row targets first.
+        # Bind every retained envelope here too; classification still comes only
+        # from the first transition's exact retired/replacement BUY records.
+        for index, transition in enumerate(history):
+            definition = transition['intent']
+            encoded = base64.b64decode(transition['original_state_b64'], validate=True)
+            archived = json.loads(encoded)
+            if (transition['migration_id'] != json_revision(definition)
+                    or transition['before_sha256'] != definition['before_sha256']
+                    or digest(encoded) != transition['before_sha256']['pnl_state.json']
+                    or archived.get('history_migrations', []) != history[:index]):
+                raise ValueError('unbound history archive')
+            if index == 0:
+                if definition['schema_version'] != 1:
+                    raise ValueError('unsupported initial transition')
+            elif (definition['schema_version'] != 2
+                    or definition.get('parent_migration_id') != history[index-1]['migration_id']
+                    or archived.get('measurement_lineage', {}).get('ledger_revision')
+                        != definition['parent_migration_id']
+                    or definition.get('corporate_provenance')
+                    or definition.get('retire_records') or definition.get('replacement_rows')):
+                raise ValueError('unsupported successor transition')
+        if state['measurement_lineage']['ledger_revision'] != history[-1]['migration_id']:
+            raise ValueError('unbound current lineage')
         h = history[0]
         intent = h['intent']
         raw = base64.b64decode(h['original_state_b64'], validate=True)
-        if (h['migration_id'] != json_revision(intent)
-                or h['before_sha256'] != intent['before_sha256']
-                or digest(raw) != h['before_sha256']['pnl_state.json']
-                or state['measurement_lineage']['ledger_revision'] != h['migration_id']):
-            raise ValueError('unbound history archive')
         archive = json.loads(raw)
         retired = []
         for ref in intent['retire_records']:
@@ -401,7 +466,9 @@ def recover_archived_asset_classes(state: dict) -> tuple[dict, dict]:
                 raise ValueError('incomplete BUY identity')
             return row['broker_order_id'], row['symbol'], stamp.astimezone(timezone.utc)
 
-        receipt.update(ledger_revision=h['migration_id'], archive_sha256=digest(raw))
+        receipt.update(ledger_revision=history[-1]['migration_id'], archive_sha256=digest(raw),
+                       classification_source_revision=h['migration_id'],
+                       history_transitions=len(history))
         for row in missing:
             # Invalid explicit values must not be laundered into a valid class.
             if row.get('asset_class') not in (None, '', 'unknown'):
@@ -585,6 +652,43 @@ def main():
                 continue
 
             try:
+                adjustments = t.get('corporate_action_adjustments', [])
+                if adjustments is None:
+                    adjustments = []  # Normal optional field on unadjusted lots.
+                if not isinstance(adjustments, list):
+                    raise ValueError('invalid corporate price basis collection')
+                if adjustments:
+                    # Corrected cross-split lots explicitly store entry cost on
+                    # the later share basis. Trust only the exact native-reader-
+                    # validated historical replacement, never a guessed ratio.
+                    bound = any(t == row for history in state.get('history_migrations', [])
+                                for row in history['intent']['replacement_rows'])
+                    if not bound or not isinstance(adjustments, list):
+                        raise ValueError('unbound corporate price basis')
+                    factor = 1.0
+                    groups = set()
+                    for adjustment in adjustments:
+                        group = adjustment['group_id']
+                        ratio = adjustment['ratio']
+                        effective = adjustment['effective_date']
+                        if (not isinstance(group, str) or not group or group in groups
+                                or isinstance(ratio, bool)
+                                or adjustment['symbol'] != symbol
+                                or adjustment['effective_ordering'] != 'before_orders_on_UTC_effective_date'
+                                or datetime.fromisoformat(effective).strftime('%Y-%m-%d') != effective
+                                or not entry_date < effective <= exit_date):
+                            raise ValueError('invalid corporate price basis')
+                        ratio = float(ratio)
+                        if not math.isfinite(ratio) or ratio <= 0:
+                            raise ValueError('invalid corporate price ratio')
+                        groups.add(group)
+                        factor *= ratio
+                    if not math.isfinite(factor) or factor <= 0:
+                        raise ValueError('invalid cumulative corporate price ratio')
+                    entry_market = tuple(price / factor for price in entry_market)
+                    print('PRICE_BASIS_JSON=' + json.dumps(dict(
+                        trade_id=trade_id, entry_market_divisor=factor,
+                        basis='validated_historical_replacement', raw_ledger_modified=False)))
                 values = [entry_price, exit_price, *entry_market, *exit_market]
                 if (len(entry_market) != 3 or len(exit_market) != 3
                         or any(isinstance(v, bool) or not isinstance(v, (int, float))
@@ -592,7 +696,7 @@ def main():
                         or entry_market[0] > entry_market[1]
                         or exit_market[0] > exit_market[1]):
                     raise ValueError('invalid prices')
-            except (ValueError, TypeError):
+            except (ValueError, TypeError, KeyError, OverflowError):
                 print(f'UNAVAILABLE: invalid trade/market prices for {trade_id}', file=sys.stderr)
                 unavailable_count += 1
                 continue

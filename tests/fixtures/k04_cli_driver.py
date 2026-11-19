@@ -3,6 +3,14 @@ from pathlib import Path
 import contextlib,io,json,sys,os,re
 from datetime import datetime,timedelta,timezone
 import httpx,urllib3
+import datetime as _datetime_module
+class _FrozenNativeDateTime(datetime):
+    @classmethod
+    def now(cls, tz=None):
+        fixed=datetime(2026,10,28,15,tzinfo=timezone.utc)
+        return cls.fromtimestamp(fixed.timestamp(),tz)
+_datetime_module.datetime=_FrozenNativeDateTime
+datetime=_FrozenNativeDateTime
 calls=[]
 request_trace=[]
 posts=[]
@@ -90,6 +98,7 @@ output=dict(main_exit=result,http_calls=calls,store_exists=(root/'data/audits/me
 if indices:
     from stock_swing.experiments.decision_input_capture import load_input_run
     run=load_input_run(root,str(indices[0].relative_to(root)))
+    output['capture_failures']=run['manifest']['capture_failures']
     output['capture_complete']=run['capture_complete'];output['declared_exit_success']=run['declared_exit_success']
     output['stage_counts']={stage:sum(o['manifest']['stage']==stage for o in run['observations']) for stage in {o['manifest']['stage'] for o in run['observations']}}
     output['full_replay_ready']=run['full_replay_ready']

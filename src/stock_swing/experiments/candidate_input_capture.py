@@ -108,12 +108,14 @@ class CandidateInputCapture:
             full_replay_ready=False))
 
 
-def observe_quote_response(recorder, *, symbol, provider, payload, raw_bytes, received_at):
+def observe_quote_response(recorder, *, symbol, provider, payload, raw_bytes, received_at, request=None):
     """Only the response already consumed by fetch_latest_quote; no new HTTP."""
     quote = payload.get('quote') if isinstance(payload, dict) else None
     quote = quote if isinstance(quote, dict) else {}
     return recorder.observe('consumed_quote', dict(symbol=symbol, provider=provider,
-        feed='iex', price_basis='raw_quote_no_adjustment',
+        feed=request.get('feed') if request is not None else 'iex', price_basis='raw_quote_no_adjustment',
+        consumed_request=request,
+        feed_provenance='actual_request' if request is not None else 'legacy_callsite_assumption',
         bid=quote.get('bp'), ask=quote.get('ap'), provider_event_at=quote.get('t'),
         local_received_at=received_at.isoformat(),
         raw_body_sha256=hashlib.sha256(raw_bytes).hexdigest(),

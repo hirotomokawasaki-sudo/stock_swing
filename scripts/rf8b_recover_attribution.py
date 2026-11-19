@@ -182,11 +182,11 @@ def build_pending_map(project_root: Path) -> dict[str, str]:
 MANUAL_ANNOTATIONS: dict[str, str] = {
     # key = exit_broker_order_id, value = reason
     "public-fixture-0010": "stop_loss",        # AVGO 05-13
-    "public-fixture-0092": "stop_loss",        # AVGO 05-14
+    "public-fixture-0093": "stop_loss",        # AVGO 05-14
     "public-fixture-0011": "stop_loss",        # AVGO 05-15
-    "public-fixture-0442": "stop_loss",        # SMH  05-14
-    "public-fixture-0595": "stop_loss",        # SMHX 05-14
-    "public-fixture-0088": "corporate_action", # CRWD 07-06 (split-fix)
+    "public-fixture-0445": "stop_loss",        # SMH  05-14
+    "public-fixture-0598": "stop_loss",        # SMHX 05-14
+    "public-fixture-0089": "corporate_action", # CRWD 07-06 (split-fix)
 }
 
 

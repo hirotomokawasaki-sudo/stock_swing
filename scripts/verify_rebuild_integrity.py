@@ -195,7 +195,7 @@ def check_closed_quarantine_overlap(state: dict) -> list[str]:
     BUG FIX (2026-08-24, found while investigating a 2026-08-24 rebuild that
     this function flagged as having 3 overlapping trades -- ADBE/AMAT -- which
     turned out to be a FALSE POSITIVE): this function used to key overlap
-    detection on `trade_id` (e.g. "public-fixture-1592"), a sequential
+    detection on `trade_id` (e.g. "public-fixture-1600"), a sequential
     index string that rebuild_pnl_state_from_broker.py RE-ASSIGNS on every
     run based on iteration order over that run's fetched broker fills. After
     a rebuild whose fetched order set differs even slightly from a prior run

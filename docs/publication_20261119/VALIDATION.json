@@ -1,0 +1,146 @@
+{
+  "purpose": "scoped publication verification, not deployment or financial replay certification",
+  "private_fixture_full_suite": {
+    "groups": {
+      "full": {
+        "exit_code": 1,
+        "counts": {
+          "passed": 4392,
+          "failed": 5,
+          "skipped": 2
+        }
+      },
+      "cli": {
+        "exit_code": 0,
+        "counts": {
+          "passed": 11
+        }
+      },
+      "localhost": {
+        "exit_code": 0,
+        "counts": {
+          "passed": 1
+        }
+      },
+      "own": {
+        "exit_code": 0,
+        "counts": {
+          "passed": 5
+        }
+      }
+    },
+    "unique_passed": 4409,
+    "unique_skipped": 2,
+    "initial_infrastructure_failures_resolved_in_own_child_group": [
+      "tests/unit/test_entry_strength_shadow_20261118.py::test_own_child_cli_shadow_is_confined_and_replayable",
+      "tests/unit/test_entry_strength_shadow_20261118.py::test_own_cli_actual_primary_and_guard_paths[0.5-scenario0-1]",
+      "tests/unit/test_entry_strength_shadow_20261118.py::test_own_cli_actual_primary_and_guard_paths[0.5-scenario2-0]",
+      "tests/unit/test_entry_strength_shadow_20261118.py::test_own_cli_actual_primary_and_guard_paths[0.5-scenario3-1]",
+      "tests/unit/test_entry_strength_shadow_20261118.py::test_own_cli_actual_primary_and_guard_paths[0.6-scenario1-0]"
+    ],
+    "unresolved_failures": {}
+  },
+  "public_input_focused_regressions": {
+    "groups": {
+      "full": {
+        "exit_code": 1,
+        "counts": {
+          "passed": 197,
+          "failed": 5
+        }
+      },
+      "own": {
+        "exit_code": 0,
+        "counts": {
+          "passed": 5
+        }
+      },
+      "projections": {
+        "exit_code": 0,
+        "counts": {
+          "passed": 40
+        }
+      }
+    },
+    "unique_passed": 242,
+    "unique_skipped": 0,
+    "initial_infrastructure_failures_resolved_in_own_child_group": [
+      "tests/unit/test_entry_strength_shadow_20261118.py::test_own_child_cli_shadow_is_confined_and_replayable",
+      "tests/unit/test_entry_strength_shadow_20261118.py::test_own_cli_actual_primary_and_guard_paths[0.5-scenario0-1]",
+      "tests/unit/test_entry_strength_shadow_20261118.py::test_own_cli_actual_primary_and_guard_paths[0.5-scenario2-0]",
+      "tests/unit/test_entry_strength_shadow_20261118.py::test_own_cli_actual_primary_and_guard_paths[0.5-scenario3-1]",
+      "tests/unit/test_entry_strength_shadow_20261118.py::test_own_cli_actual_primary_and_guard_paths[0.6-scenario1-0]"
+    ],
+    "unresolved_failures": {}
+  },
+  "count_relationship": "public focused tests overlap private full suite; never add them. Repeated setup attempts and five rejected nested-sandbox runs are not added to accepted unique test counts.",
+  "public_full_suite_claimed": false,
+  "private_config_or_fixture_replayable_from_public_tree": false,
+  "exact_runtime_source_files": 202,
+  "repository_heuristic_scanner": {
+    "exit_code": 1,
+    "findings": 6,
+    "exact_AST_literal": "all BROKER_API_SECRET keyword values equal the short literal fixture",
+    "scanner_not_modified": true
+  },
+  "supplemental_privacy": {
+    "known_credential_values_compared": 13,
+    "financial_identity_values_compared": 4106,
+    "remaining_matches": 0,
+    "private_key_credential_url_known_token_shape_findings": 0
+  },
+  "syntax": {
+    "counts": {
+      "python": 690,
+      "json": 20,
+      "yaml": 18,
+      "shell": 17,
+      "javascript": 11,
+      "async_payload": 2
+    },
+    "errors": [],
+    "initial_wrong_CJS_context_errors": [
+      {
+        "path": "scripts/automation_payloads/high_correlation_monitor.js",
+        "reason": "parsed as CJS initially, but this file is an OpenClaw async-function payload; actual-context syntax check passed"
+      },
+      {
+        "path": "scripts/automation_payloads/sector_rotation_parallel_shadow.js",
+        "reason": "parsed as CJS initially, but this file is an OpenClaw async-function payload; actual-context syntax check passed"
+      }
+    ],
+    "payload_checks": [
+      {
+        "path": "scripts/automation_payloads/high_correlation_monitor.js",
+        "actual_context": "async function payload",
+        "exit_code": 0
+      },
+      {
+        "path": "scripts/automation_payloads/sector_rotation_parallel_shadow.js",
+        "actual_context": "async function payload",
+        "exit_code": 0
+      }
+    ]
+  },
+  "whitespace_check_exit": 0,
+  "preparation_attempts": [
+    "initial test collection failed because the isolated importlib harness lacked candidate tests/unit for a repository sibling test import; recipe corrected without changing tests",
+    "five child-owned sandbox tests were rejected under an outer sandbox; rerun only those five with their own existing child confinement",
+    "two automation payloads parsed as async-function bodies after a nonapplicable CJS parse attempt",
+    "optional post-audit heuristic printing used an old private log basename; primary scan result files were complete and independently checked"
+  ],
+  "isolation": {
+    "ordinary_groups": "existing native OS network/original-read/write confinement",
+    "child_owned_groups": "existing real-CLI/HTTP-fixture child confinement; parent is not claimed OS-sandboxed",
+    "no_real_broker_or_market_requests": true,
+    "operational_tree_writes": 0
+  },
+  "not_performed": [
+    "main integration",
+    "CI completion",
+    "deployment",
+    "financial correction",
+    "economic strategy trial",
+    "public replay of omitted private inputs"
+  ]
+}

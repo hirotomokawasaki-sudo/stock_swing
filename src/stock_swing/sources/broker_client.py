@@ -11,7 +11,10 @@ See EXECUTION_POLICY.md for execution constraints and requirements.
 
 from __future__ import annotations
 
+import json
+import logging
 import os
+import re
 from typing import Any
 
 try:
@@ -303,7 +306,8 @@ class BrokerClient(SourceClient):
                     if path.endswith('/quotes/latest'):
                         from stock_swing.experiments.candidate_input_capture import observe_quote_response
                         observe_quote_response(recorder, symbol=path.split('/')[2], provider=self.name,
-                            payload=payload, raw_bytes=response.content, received_at=datetime.now(timezone.utc))
+                            payload=payload, raw_bytes=response.content, received_at=datetime.now(timezone.utc),
+                            request=dict(params))
                 except Exception:
                     recorder.note_failure()
             return payload
@@ -563,6 +567,43 @@ class BrokerClient(SourceClient):
         """Read-only resolution of an uncertain submission; never resubmit."""
         return self.fetch(endpoint="v2/orders:by_client_order_id", client_order_id=client_order_id)
 
+    def _log_order_failure(
+        self, endpoint: str, method: str, params: dict[str, Any],
+        error_type: str, response: Any = None,
+    ) -> None:
+        """Best-effort, allowlisted diagnostics; never evidence of order outcome.
+
+        Do not log exception text, bodies, URLs, credentials or arbitrary headers.
+        Logging must not change the original exception or trigger another request.
+        """
+        try:
+            phase = {
+                ("POST", "v2/orders"): "submission",
+                ("GET", "v2/orders:by_client_order_id"): "lookup",
+            }.get((method, endpoint.lstrip("/")))
+            if phase is None:
+                return
+            status = getattr(response, "status_code", None)
+            if type(status) is not int or not 100 <= status <= 599:
+                status = None
+            request_id = response.headers.get("x-request-id") if response is not None else None
+            if not isinstance(request_id, str) or not re.fullmatch(
+                r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}", request_id
+            ):
+                request_id = None
+            client_id = params.get("client_order_id")
+            if not isinstance(client_id, str) or not re.fullmatch(r"ss-[0-9a-f]{40}", client_id):
+                client_id = None
+            logging.getLogger(__name__).warning(
+                "BROKER_ORDER_DIAGNOSTIC_JSON=%s",
+                json.dumps(dict(schema_version=1, phase=phase, error_type=error_type,
+                                http_status=status, request_id=request_id,
+                                client_order_id=client_id), sort_keys=True),
+            )
+        except Exception:
+            # A missing/broken diagnostic sink must not replace the broker error.
+            pass
+
     def _fetch_endpoint(
         self,
         endpoint: str,
@@ -668,6 +709,13 @@ class BrokerClient(SourceClient):
                     original_error=e,
                 )
             
+            recorder = getattr(self, 'measurement_recorder', None)
+            if recorder is not None and recorder.enabled and method == 'GET':
+                from datetime import datetime, timezone
+                from stock_swing.experiments.broker_state_capture import observe_broker_state
+                observe_broker_state(recorder, endpoint=endpoint.lstrip('/'), method=method,
+                    request=params, payload=data, raw_bytes=response.content,
+                    received_at=datetime.now(timezone.utc))
             return data
         
         except (SourceAuthenticationError, SourceNotFoundError, SourceValidationError,
@@ -675,22 +723,29 @@ class BrokerClient(SourceClient):
             # Preserve exception classes/messages; attach observed HTTP status only.
             if method == "POST" and endpoint_path == "v2/orders" and "response" in locals():
                 exc.http_status = response.status_code
+            self._log_order_failure(endpoint, method, params, type(exc).__name__, locals().get("response"))
             raise
         except httpx.TimeoutException as e:
+            self._log_order_failure(endpoint, method, params, "SourceTimeoutError")
             raise SourceTimeoutError(
                 self.name,
                 f"request timeout after {self.retry_config.timeout}s",
                 original_error=e,
             )
         except httpx.ConnectError as e:
+            self._log_order_failure(endpoint, method, params, "SourceConnectionError")
             raise SourceConnectionError(
                 self.name,
                 f"connection failed: {e}",
                 original_error=e,
             )
         except httpx.HTTPError as e:
+            self._log_order_failure(endpoint, method, params, "SourceConnectionError")
             raise SourceConnectionError(
                 self.name,
                 f"HTTP error: {e}",
                 original_error=e,
             )
+        except Exception:
+            self._log_order_failure(endpoint, method, params, "UnexpectedError", locals().get("response"))
+            raise

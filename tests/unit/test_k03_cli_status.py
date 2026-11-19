@@ -30,7 +30,10 @@ def test_ac_actual_cli_unknown_risk_is_not_clean(tmp_path, scenario, expected_ex
     run=subprocess.run(["/usr/bin/sandbox-exec","-f",str(profile),sys.executable,"-B",str(tmp_path/"driver.py")],cwd=tmp_path,env=env,capture_output=True,text=True,timeout=35)
     assert run.returncode==0, run.stderr
     data=json.loads(run.stdout)
-    assert data["origin_is_copy"] and data["capture_complete"], "real module/reader must run on private copy"
+    assert data["origin_is_copy"], "real module/reader must run on private copy"
+    invalid_capture=bool(scenario.get("positions_bad_after"))
+    assert data["capture_complete"] is (not invalid_capture)
+    if invalid_capture: assert data["capture_failures"]>0 and not data["declared_exit_success"], "malformed state remains an explicit failed recording attempt"
     assert data["main_exit"]==expected_exit, data.get("diagnostic_tail")
     assert data["declared_exit_success"]==(expected_exit==0), "capture completion is not business success"
     if scenario.get("recovery_pending"):

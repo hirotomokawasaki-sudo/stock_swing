@@ -29,7 +29,10 @@ def test_ac_actual_cli_preflight_outcome_not_false_clean(tmp_path,scenario,expec
  p=subprocess.run(["/usr/bin/sandbox-exec","-f",str(profile),sys.executable,"-B",str(tmp_path/"driver.py")],cwd=tmp_path,env=env,capture_output=True,text=True,timeout=35)
  assert p.returncode==0,p.stderr
  d=json.loads(p.stdout)
- assert d["origin_is_copy"] and d["capture_complete"],"real private CLI and saved reader"
+ assert d["origin_is_copy"],"real private CLI and saved reader"
+ invalid_capture=bool(scenario.get("orders",{}).get("incomplete"))
+ assert d["capture_complete"] is (not invalid_capture)
+ if invalid_capture: assert d["capture_failures"]>0 and not d["declared_exit_success"],"malformed orders are not an empty successful capture"
  assert d["main_exit"]==expected_exit,d.get("diagnostic_tail")
  assert d["declared_exit_success"] is (expected_exit==0),"capture completion != business success"
  if expected_exit:

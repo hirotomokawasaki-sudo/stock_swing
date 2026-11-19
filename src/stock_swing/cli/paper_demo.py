@@ -2601,6 +2601,10 @@ def main() -> int:  # noqa: C901
                 _prebuy_snapshot.missing_metrics.append(_missing_metric)
         _guard_metrics_now = _prebuy_snapshot.to_metrics()
         _guard_decision_now = _guard_engine.evaluate(_guard_metrics_now)
+        if _provider_recorder is not None:
+            from stock_swing.experiments.broker_state_capture import observe_prebuy_guard
+            observe_prebuy_guard(_provider_recorder, snapshot=_prebuy_snapshot,
+                engine=_guard_engine, decision=_guard_decision_now)
 
         # R0-v2-C: reduce_size → exposure_cap_override に反映
         from stock_swing.guardrails.rule_engine import GuardAction as _GA
@@ -2802,6 +2806,18 @@ def main() -> int:  # noqa: C901
     # R2-v2 / H5: pass AllocationConfig so PositionSizingPolicy uses same YAML multipliers
     from stock_swing.execution.submission_guard import SubmissionGuard
     _guarded_broker = SubmissionGuard(broker, project_root, acct.get("id"))
+    # An explicitly quarantined symbol is an entry exclusion, not an attempted
+    # uncertain submission. Otherwise its held result would invalidate the
+    # run-local funding preflight and incorrectly suppress unrelated BUYs.
+    _operator_quarantine = _guarded_broker.quarantine_status()
+    _operator_quarantine_blocked = []
+    if _operator_quarantine['status'] == 'active':
+        _operator_quarantine_blocked = [d for d in actionable if d.symbol in _operator_quarantine['symbols']]
+        actionable = [d for d in actionable if d.symbol not in _operator_quarantine['symbols']]
+        print('OPERATOR_QUARANTINE_JSON=' + json.dumps(dict(_operator_quarantine,
+            blocked_decisions=len(_operator_quarantine_blocked), original_outcome='unknown')))
+        if _operator_quarantine_blocked and not actionable:
+            _final_reason = _final_reason or 'operator_quarantine_symbol_held'
     executor = PaperExecutor(runtime_mode=runtime_mode, broker_client=_guarded_broker, alloc_config=_ALLOC_CONFIG)
     reconciler = Reconciler(broker_client=broker)
     # R0-v2-C: apply reduce_size multiplier to exposure cap if guardrail fired
@@ -3528,6 +3544,7 @@ def main() -> int:  # noqa: C901
         warnings=(
             (["risk_inputs_unavailable: " + ", ".join(sorted(set(_risk_input_unavailable_symbols)))] if _risk_input_unavailable_symbols else [])
             + (["order_preflight_unavailable: " + _order_preflight.reason] if _order_preflight_failed else [])
+            + (["operator_quarantine_symbol_held: " + ", ".join(_operator_quarantine['symbols'])] if _operator_quarantine_blocked else [])
         ),
         extra_alerts=(
             ([ConsoleAlert(severity="warning", code="risk_inputs_unavailable",
@@ -3580,7 +3597,9 @@ def main() -> int:  # noqa: C901
             "guardrail_blocked": (
                 (len(_guardrail_blocked) if "_guardrail_blocked" in dir() else 0)
                 + (len(_economic_risk_blocked) if "_economic_risk_blocked" in dir() else 0)
+                + len(_operator_quarantine_blocked)
             ),
+            "operator_quarantine_blocked": len(_operator_quarantine_blocked),
             "qty_zero": sum(skipped_buy_reasons.values()) if "skipped_buy_reasons" in dir() else 0,
             "submitted": len([s for s in submissions if s.status not in {"rejected"}]),
             "accepted": len([s for s in submissions if s.status in {"accepted", "new", "pending_new", "filled", "partially_filled"}]),

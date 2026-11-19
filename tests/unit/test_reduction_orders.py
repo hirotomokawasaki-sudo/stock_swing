@@ -51,7 +51,7 @@ def fixture(monkeypatch,tmp_path,**changes):
 def run(broker,root,kind='reduce_long',symbol='NOW',confirm=None):return reduce_position(broker,root,symbol,kind,confirm)
 
 def test_ac_normal_pending_remainder_and_report_propagation(monkeypatch,tmp_path,capsys):
- b,s=fixture(monkeypatch,tmp_path,orders=[pending()])
+ b,s=fixture(monkeypatch,tmp_path,orders=[dict(pending('2','0'),status='new')])
  r=run(b,tmp_path);assert r.qty==3 and r.reserved_qty=='2' and r.state=='accepted'
  assert s['posts'][0]['qty']==3 and s['posts'][0]['side']=='sell'
  assert report_results([r])==0
@@ -60,10 +60,19 @@ def test_ac_normal_pending_remainder_and_report_propagation(monkeypatch,tmp_path
  assert data['status']=='requests_processed_not_fill_confirmation'
 
 def test_ac_short_cover_does_not_become_new_long(monkeypatch,tmp_path):
- b,s=fixture(monkeypatch,tmp_path,positions=[pos('HPE','-13')],orders=[dict(pending('6','2'),symbol='HPE',side='buy')])
+ b,s=fixture(monkeypatch,tmp_path,positions=[pos('HPE','-13')],orders=[dict(pending('4','0'),status='new',symbol='HPE',side='buy')])
  r=run(b,tmp_path,'cover_short','HPE',lambda q:q==9)
  assert r.qty==9 and r.state=='accepted' and s['posts'][0]['qty']==9
  assert int(s['posts'][0]['qty'])+4==13,'open remainder plus new cover cannot exceed absolute short'
+
+@pytest.mark.parametrize('kind,symbol,position,side',[('reduce_long','NOW','5','sell'),('cover_short','HPE','-13','buy')])
+def test_ac_partial_external_reduction_reports_hold_not_freed_capacity(monkeypatch,tmp_path,capsys,kind,symbol,position,side):
+ b,s=fixture(monkeypatch,tmp_path,positions=[pos(symbol,position)],orders=[dict(pending('3','1'),symbol=symbol,side=side)])
+ r=run(b,tmp_path,kind,symbol)
+ assert r.state=='held' and r.reason=='partial_reduction_requires_reconciliation' and not s['posts']
+ assert report_results([r])==1
+ line=[l for l in capsys.readouterr().out.splitlines() if l.startswith('REDUCTION_SUMMARY_JSON=')][0]
+ data=json.loads(line.split('=',1)[1]);assert data['results'][0]['state']=='held' and data['results'][0]['qty'] is None
 
 @pytest.mark.parametrize('kind,qty,state',[('reduce_long','0','flat'),('reduce_long','-2','not_applicable'),('cover_short','2','not_applicable')])
 def test_ac_no_action_requires_valid_position(monkeypatch,tmp_path,kind,qty,state):

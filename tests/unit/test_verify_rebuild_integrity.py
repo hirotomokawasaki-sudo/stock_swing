@@ -41,7 +41,7 @@ from verify_rebuild_integrity import (  # noqa: E402
 
 def _closed_trade(**overrides) -> dict:
     base = {
-        "trade_id": "public-fixture-1573",
+        "trade_id": "public-fixture-1581",
         "symbol": "ADBE",
         "status": "closed",
         "broker_order_id": "buy-uuid-aaa",
@@ -56,7 +56,7 @@ def _closed_trade(**overrides) -> dict:
 
 def _quarantined_trade(**overrides) -> dict:
     base = {
-        "trade_id": "public-fixture-1573",  # deliberately SAME trade_id as above
+        "trade_id": "public-fixture-1581",  # deliberately SAME trade_id as above
         "symbol": "ADBE",
         "status": "quarantined",
         "broker_order_id": "buy-uuid-ZZZ",       # DIFFERENT real broker order
@@ -96,7 +96,7 @@ class TestClosedQuarantineOverlapUsesOrderIdNotTradeId:
                 exit_broker_order_id=shared_exit_oid,
             )],
             "quarantined_trades": [_quarantined_trade(
-                trade_id="public-fixture-1573",  # different trade_id on purpose
+                trade_id="public-fixture-1581",  # different trade_id on purpose
                 broker_order_id=shared_entry_oid,
                 exit_broker_order_id=shared_exit_oid,
             )],

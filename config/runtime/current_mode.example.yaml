@@ -1,3 +1,4 @@
+# PUBLIC EXAMPLE ONLY; not an operational readiness receipt.
 # config/runtime/current_mode.yaml
 # R0-v2-A: Safety Containment — source of truth for runtime mode
 # Updated: 2026-07-21
@@ -39,8 +40,8 @@ ledger_quality_gate:
   # 2026-08-01: python scripts/audit_trades_with_market_data.py で ALL PASSED 再確認。
   # 数値自体の変更なし（status/last_checkedのみ更新）。
   # Update this field after each ledger repair run:
-  current_status: VALID
-  last_checked: "2026-09-14"
+  current_status: UNKNOWN
+  last_checked: null
 
 # ── Circuit breaker recovery ─────────────────────────────────────────
 circuit_breaker:

@@ -12,6 +12,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
@@ -22,7 +23,8 @@ CONSOLE_PREFIX = "CONSOLE_SUMMARY_JSON "
 OBSERVATION_JOBS = frozenset("stock_swing_paper_demo_" + slot
                              for slot in ("premarket", "market_open", "midday", "market_close"))
 OBSERVATION_KEYS = frozenset("ENTRY_RESTRICTION_REVIEW_" + suffix
-                            for suffix in ("ENABLED", "VERSION", "LEDGER_REVISION"))
+                            for suffix in ("ENABLED", "VERSION", "LEDGER_REVISION")) | frozenset({
+                                "EQUITY_BRIDGE_LEDGER_REVISION", "EQUITY_BRIDGE_ARTIFACT_SHA256"})
 
 
 def observation_environment(command: list[str], inherited: dict) -> dict[str, str]:
@@ -38,8 +40,8 @@ def observation_environment(command: list[str], inherited: dict) -> dict[str, st
     for line in command[2].splitlines():
         if not any(key in line for key in OBSERVATION_KEYS):
             continue
-        match = re.fullmatch(r"export (ENTRY_RESTRICTION_REVIEW_(?:ENABLED|VERSION|LEDGER_REVISION))=([A-Za-z0-9_.-]*)", line.strip())
-        if not match or match[1] in seen:
+        match = re.fullmatch(r"export ([A-Z][A-Z0-9_]*)=([A-Za-z0-9_.-]*)", line.strip())
+        if not match or match[1] not in OBSERVATION_KEYS or match[1] in seen:
             raise ValueError("nonliteral_or_duplicate_observation_configuration")
         seen.add(match[1]); values[match[1]] = match[2]
     return values
@@ -93,10 +95,57 @@ def observation_diagnostic(text: str, workflow: dict | None, preflight: dict) ->
     return result
 
 
+def strength_shadow_diagnostic(text: str, workflow: dict | None, root: Path) -> dict:
+    """Run only the offline reader under no-network/isolated-write confinement.
+
+    The real workflow has already ended. A shadow error never retries it and
+    cannot block or alter the protective SELLs it processed.
+    """
+    base = dict(eligible_to_trade=False, orders_submitted=0, retry_workflow=False)
+    if workflow and (workflow.get('dry_run') is True or workflow.get('status') == 'skipped'):
+        return dict(base, status='not_run', reason='workflow_dry_or_skipped')
+    try:
+        markers = [json.loads(line[len(CONSOLE_PREFIX):]) for line in text.splitlines()
+                   if line.startswith(CONSOLE_PREFIX)]
+        if len(markers) != 1:
+            raise ValueError('single_actual_console_summary_required')
+        run = markers[0]['run']
+        if run.get('dry_run') is not False or not isinstance(run.get('run_id'), str):
+            raise ValueError('actual_non_dry_run_required')
+        root = Path(root).absolute()
+        store = root / 'data/analysis/entry_strength_shadow_v1'
+        profile = ('(version 1)\n(allow default)\n(deny network*)\n'
+                   '(deny file-write*)\n'
+                   f'(allow file-write* (subpath {json.dumps(str(store))}))\n'
+                   '(allow file-write* (literal "/dev/null"))\n'
+                   f'(deny file-read* (literal {json.dumps(str(root / ".env"))}))\n')
+        # tempfile is in the already-existing owner-only retained log directory.
+        fd, name = tempfile.mkstemp(prefix='strength-shadow-', suffix='.sb',
+                                    dir=root / 'logs/gateway_workflows')
+        with os.fdopen(fd, 'w') as stream:
+            stream.write(profile)
+        child = subprocess.run(['/usr/bin/sandbox-exec', '-f', name,
+            sys.executable, '-B', str(PROJECT_ROOT / 'scripts/entry_strength_shadow.py'),
+            '--root', str(root), '--run-id', run['run_id']],
+            cwd=root, capture_output=True, text=True, timeout=45,
+            env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1', PYTHONNOUSERSITE='1'))
+        result = json.loads(child.stdout)
+        if (child.returncode != 0 or result.get('status') != 'recorded'
+                or result.get('run_id') != run['run_id']
+                or result.get('eligible_to_trade') is not False
+                or result.get('orders_submitted') != 0):
+            raise ValueError('shadow_reader_failed')
+        return dict(result, retry_workflow=False)
+    except Exception as exc:
+        return dict(base, status='error', reason=type(exc).__name__)
+
+
 def run_logged(command: list[str], *, root: Path, name: str,
-               require_summary: bool = False) -> tuple[int, dict]:
+               require_summary: bool = False, entry_strength_shadow: bool = False) -> tuple[int, dict]:
     if not command or not re.fullmatch(r"[A-Za-z0-9_-]+", name):
         raise ValueError("non-empty command and a safe workflow name are required")
+    if entry_strength_shadow and name not in OBSERVATION_JOBS:
+        raise ValueError('strength shadow is scoped to existing Paper workflows')
     log_dir = root / "logs" / "gateway_workflows"
     log_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
@@ -143,6 +192,13 @@ def run_logged(command: list[str], *, root: Path, name: str,
         report["workflow"] = summary
     if preflight is not None:
         report["observation"] = observation_diagnostic(text, summary, preflight)
+    if entry_strength_shadow:
+        shadow = strength_shadow_diagnostic(text, summary, root)
+        report['entry_strength_shadow'] = shadow
+        if shadow['status'] == 'error':
+            code = code or 1
+            report.update(status='error', exit_code=code)
+            reason = reason or 'shadow_comparison_failed_no_workflow_retry'
     if reason:
         report["reason"] = reason
     if code or summary is None:
@@ -154,11 +210,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--name", required=True)
     parser.add_argument("--require-summary", action="store_true")
+    parser.add_argument("--entry-strength-shadow", action="store_true")
     parser.add_argument("command", nargs=argparse.REMAINDER)
     args = parser.parse_args(argv)
     command = args.command[1:] if args.command[:1] == ["--"] else args.command
     code, report = run_logged(command, root=PROJECT_ROOT, name=args.name,
-                              require_summary=args.require_summary)
+                              require_summary=args.require_summary,
+                              entry_strength_shadow=args.entry_strength_shadow)
     print(json.dumps(report, ensure_ascii=False))
     return code
 

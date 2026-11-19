@@ -38,6 +38,13 @@ STORE_V13 = Path("data/analysis/entry_restriction_review_v13.json")
 STORE_V14 = Path("data/analysis/entry_restriction_review_v14.json")
 STORE_V15 = Path("data/analysis/entry_restriction_review_v15.json")
 STORE_V16 = Path("data/analysis/entry_restriction_review_v16.json")
+# Recording-only successor of deployed v16; no period or PF release policy change.
+STORE_V19 = Path("data/analysis/entry_restriction_review_v19.json")
+# Diagnostics-only successor; no new strategy, threshold, release or migration.
+STORE_V20 = Path("data/analysis/entry_restriction_review_v20.json")
+STORE_V21 = Path("data/analysis/entry_restriction_review_v21.json")
+# Owner-authorized Paper0.50 successor; old0.60 observation stays immutable.
+STORE_V22 = Path("data/analysis/entry_restriction_review_v22.json")
 PROTOCOL = {
     "version": "pf-review-v1-20261028",
     "horizon_sessions": 5, "min_completed": 30,
@@ -97,27 +104,29 @@ def _definition(protocol: dict | None = None) -> dict:
     files = [Path(__file__), package / "risk/entry_filter.py",
              package / "utils/market_calendar.py", package / "cli/paper_demo.py",
              package / "sources/hybrid_data_fetcher.py"]
-    if protocol is not None and protocol.get("version") in {"pf-review-v3-20261103", "pf-review-v4-20261104", "pf-review-v5-20261105", "pf-review-v6-20261105", "pf-review-v7-20261106", "pf-review-v10-20261110", "pf-review-v11-20261110", "pf-review-v12-20261110", "pf-review-v13-20261110", "pf-review-v14-20261110", "pf-review-v15-20261110", "pf-review-v16-20261110"}:
+    if protocol is not None and protocol.get("version") in {"pf-review-v3-20261103", "pf-review-v4-20261104", "pf-review-v5-20261105", "pf-review-v6-20261105", "pf-review-v7-20261106", "pf-review-v10-20261110", "pf-review-v11-20261110", "pf-review-v12-20261110", "pf-review-v13-20261110", "pf-review-v14-20261110", "pf-review-v15-20261110", "pf-review-v16-20261110", "pf-review-v19-20261111", "pf-review-v20-20261116", "pf-review-v21-20261117", "pf-review-v22-20261118"}:
         files.append(package / "sources/massive_client.py")
-    if protocol is not None and protocol.get("version") in {"pf-review-v4-20261104", "pf-review-v5-20261105", "pf-review-v6-20261105", "pf-review-v7-20261106", "pf-review-v10-20261110", "pf-review-v11-20261110", "pf-review-v12-20261110", "pf-review-v13-20261110", "pf-review-v14-20261110", "pf-review-v15-20261110", "pf-review-v16-20261110"}:
+    if protocol is not None and protocol.get("version") in {"pf-review-v4-20261104", "pf-review-v5-20261105", "pf-review-v6-20261105", "pf-review-v7-20261106", "pf-review-v10-20261110", "pf-review-v11-20261110", "pf-review-v12-20261110", "pf-review-v13-20261110", "pf-review-v14-20261110", "pf-review-v15-20261110", "pf-review-v16-20261110", "pf-review-v19-20261111", "pf-review-v20-20261116", "pf-review-v21-20261117", "pf-review-v22-20261118"}:
         files += sorted((package / "execution").glob("*.py"))
         files += [package / "sources/broker_client.py", package / "sources/broker_client_protocol.py"]
-    if protocol is not None and protocol.get("version") in {"pf-review-v5-20261105", "pf-review-v6-20261105", "pf-review-v7-20261106", "pf-review-v10-20261110", "pf-review-v11-20261110", "pf-review-v12-20261110", "pf-review-v13-20261110", "pf-review-v14-20261110", "pf-review-v15-20261110", "pf-review-v16-20261110"}:
+    if protocol is not None and protocol.get("version") in {"pf-review-v5-20261105", "pf-review-v6-20261105", "pf-review-v7-20261106", "pf-review-v10-20261110", "pf-review-v11-20261110", "pf-review-v12-20261110", "pf-review-v13-20261110", "pf-review-v14-20261110", "pf-review-v15-20261110", "pf-review-v16-20261110", "pf-review-v19-20261111", "pf-review-v20-20261116", "pf-review-v21-20261117", "pf-review-v22-20261118"}:
         files += [package / "experiments/feature_snapshot_store.py",
                   package / "tracking/exit_reason_store.py", package / "tracking/pnl_tracker.py"]
-    if protocol is not None and protocol.get("version") in {"pf-review-v6-20261105", "pf-review-v7-20261106", "pf-review-v10-20261110", "pf-review-v11-20261110", "pf-review-v12-20261110", "pf-review-v13-20261110", "pf-review-v14-20261110", "pf-review-v15-20261110", "pf-review-v16-20261110"}:
+    if protocol is not None and protocol.get("version") in {"pf-review-v6-20261105", "pf-review-v7-20261106", "pf-review-v10-20261110", "pf-review-v11-20261110", "pf-review-v12-20261110", "pf-review-v13-20261110", "pf-review-v14-20261110", "pf-review-v15-20261110", "pf-review-v16-20261110", "pf-review-v19-20261111", "pf-review-v20-20261116", "pf-review-v21-20261117", "pf-review-v22-20261118"}:
         files += sorted((package / "tracking").glob("*.py"))
-    if protocol is not None and protocol.get("version") in {"pf-review-v11-20261110", "pf-review-v12-20261110", "pf-review-v13-20261110", "pf-review-v14-20261110", "pf-review-v15-20261110", "pf-review-v16-20261110"}:
+    if protocol is not None and protocol.get("version") in {"pf-review-v11-20261110", "pf-review-v12-20261110", "pf-review-v13-20261110", "pf-review-v14-20261110", "pf-review-v15-20261110", "pf-review-v16-20261110", "pf-review-v19-20261111", "pf-review-v20-20261116", "pf-review-v21-20261117", "pf-review-v22-20261118"}:
         files += [package / "reporting/versioned_bridge.py", package / "reporting/equity_bridge_reconciliation.py",
                   package / "reporting/equity_bridge.py", package / "core/runtime.py",
                   package / "guardrails/economic_risk_off.py"]
         files += sorted((package / "execution").glob("*.py"))
         files += sorted((package / "sources").glob("broker*.py"))
         files += sorted((package / "normalization").glob("*broker*.py"))
-    if protocol is not None and protocol.get("version") in {"pf-review-v14-20261110", "pf-review-v15-20261110", "pf-review-v16-20261110"}:
+    if protocol is not None and protocol.get("version") in {"pf-review-v14-20261110", "pf-review-v15-20261110", "pf-review-v16-20261110", "pf-review-v19-20261111", "pf-review-v20-20261116", "pf-review-v21-20261117", "pf-review-v22-20261118"}:
         files += sorted((package / "decision_engine").glob("*.py"))
-    if protocol is not None and protocol.get("version") in {"pf-review-v15-20261110", "pf-review-v16-20261110"}:
+    if protocol is not None and protocol.get("version") in {"pf-review-v15-20261110", "pf-review-v16-20261110", "pf-review-v19-20261111", "pf-review-v20-20261116", "pf-review-v21-20261117", "pf-review-v22-20261118"}:
         files.append(package / "reporting/restriction_review_alerts.py")
+    if protocol is not None and protocol.get("version") in {"pf-review-v19-20261111", "pf-review-v20-20261116", "pf-review-v21-20261117", "pf-review-v22-20261118"}:
+        files += sorted(package.rglob("*.py"))
     files += sorted((package / "strategy_engine").glob("*.py"))
     files += sorted((package / "feature_engine").glob("*.py"))
     files += sorted((package / "risk").glob("*.py"))
@@ -159,6 +168,14 @@ def _study() -> tuple[dict, Path]:
         return dict(PROTOCOL, version="pf-review-v15-20261110", history_transition_count=2), STORE_V15
     if version == "v16":
         return dict(PROTOCOL, version="pf-review-v16-20261110", history_transition_count=2), STORE_V16
+    if version == "v19":
+        return dict(PROTOCOL, version="pf-review-v19-20261111", history_transition_count=2), STORE_V19
+    if version == "v22":
+        return dict(PROTOCOL, version="pf-review-v22-20261118", history_transition_count=2, primary_min_signal_strength=0.50), STORE_V22
+    if version == "v21":
+        return dict(PROTOCOL, version="pf-review-v21-20261117", history_transition_count=2), STORE_V21
+    if version == "v20":
+        return dict(PROTOCOL, version="pf-review-v20-20261116", history_transition_count=2), STORE_V20
     raise ValueError("unsupported explicit observation version")
 
 
@@ -386,16 +403,16 @@ def observe_restricted_entries(*, root: Path, decisions: list, blocked: list,
         raw_config_hash = config_hash
         config_hash = _hash(effective_config)
         from stock_swing.tracking.ledger_transaction import ledger_transaction
-        with (ledger_transaction(root, recover=False, blocking=False) if namespace in {STORE_V6, STORE_V7, STORE_V10, STORE_V11, STORE_V12, STORE_V13, STORE_V14, STORE_V15, STORE_V16} else nullcontext()):
+        with (ledger_transaction(root, recover=False, blocking=False) if namespace in {STORE_V6, STORE_V7, STORE_V10, STORE_V11, STORE_V12, STORE_V13, STORE_V14, STORE_V15, STORE_V16, STORE_V19, STORE_V20, STORE_V21, STORE_V22} else nullcontext()):
             definition = _definition() if namespace == STORE else _definition(protocol)
-            if namespace in {STORE_V2, STORE_V3, STORE_V4, STORE_V5, STORE_V6, STORE_V7, STORE_V10, STORE_V11, STORE_V12, STORE_V13, STORE_V14, STORE_V15, STORE_V16}:
+            if namespace in {STORE_V2, STORE_V3, STORE_V4, STORE_V5, STORE_V6, STORE_V7, STORE_V10, STORE_V11, STORE_V12, STORE_V13, STORE_V14, STORE_V15, STORE_V16, STORE_V19, STORE_V20, STORE_V21, STORE_V22}:
                 base["legacy"] = _legacy_summary(root, now)
             binding = None
-            if namespace in {STORE_V6, STORE_V7, STORE_V10, STORE_V11, STORE_V12, STORE_V13, STORE_V14, STORE_V15, STORE_V16}:
+            if namespace in {STORE_V6, STORE_V7, STORE_V10, STORE_V11, STORE_V12, STORE_V13, STORE_V14, STORE_V15, STORE_V16, STORE_V19, STORE_V20, STORE_V21, STORE_V22}:
                 binding = _ledger_binding(root, pf_history_receipt, run_id, raw_config_hash, entry_config, now, decisions, blocked,
                     required_history_transitions=protocol.get('history_transition_count'))
                 definition['ledger_contract'] = {key: binding[key] for key in ('ledger_revision', 'measurement_status')}
-            if namespace in {STORE_V11, STORE_V12, STORE_V13, STORE_V14, STORE_V15, STORE_V16}:
+            if namespace in {STORE_V11, STORE_V12, STORE_V13, STORE_V14, STORE_V15, STORE_V16, STORE_V19, STORE_V20, STORE_V21, STORE_V22}:
                 from stock_swing.reporting.versioned_bridge import load_selected_reconciliation
                 from stock_swing.tracking.compatibility import read_analysis_snapshot
                 current, _ = read_analysis_snapshot(Path(root)/'data/tracking/pnl_state.json')
@@ -466,7 +483,7 @@ def observe_restricted_entries(*, root: Path, decisions: list, blocked: list,
                         raise ValueError("missing decision provenance")
                     identity = {"symbol": symbol, "strategy_id": decision.strategy_id,
                                 "strategy_version_id": decision.strategy_version_id, "config_hash": config_hash}
-                    if namespace in {STORE_V2, STORE_V3, STORE_V4, STORE_V5, STORE_V6, STORE_V7, STORE_V10, STORE_V11, STORE_V12, STORE_V13, STORE_V14, STORE_V15, STORE_V16}:
+                    if namespace in {STORE_V2, STORE_V3, STORE_V4, STORE_V5, STORE_V6, STORE_V7, STORE_V10, STORE_V11, STORE_V12, STORE_V13, STORE_V14, STORE_V15, STORE_V16, STORE_V19, STORE_V20, STORE_V21, STORE_V22}:
                         identity["study_definition_hash"] = _hash(definition)
                         identity["protocol"] = protocol["version"]
                     if binding is not None:
@@ -484,7 +501,7 @@ def observe_restricted_entries(*, root: Path, decisions: list, blocked: list,
                         "sessions": [day.isoformat() for day in _sessions_after(session, PROTOCOL["horizon_sessions"])],
                         "outcome": None,
                         **({"pf_history_receipt": dict(getattr(decision, "evidence", {}).get("pf_history_receipt", {}))}
-                           if namespace in {STORE_V2, STORE_V3, STORE_V4, STORE_V5, STORE_V6, STORE_V7, STORE_V10, STORE_V11, STORE_V12, STORE_V13, STORE_V14, STORE_V15, STORE_V16} else {}),
+                           if namespace in {STORE_V2, STORE_V3, STORE_V4, STORE_V5, STORE_V6, STORE_V7, STORE_V10, STORE_V11, STORE_V12, STORE_V13, STORE_V14, STORE_V15, STORE_V16, STORE_V19, STORE_V20, STORE_V21, STORE_V22} else {}),
                     })
                 stopped = {row["symbol"] for row in stop_list
                            if row["symbol"] not in entry_config.purchase_restricted_symbols}

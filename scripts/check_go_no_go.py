@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import re
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import zoneinfo
@@ -237,13 +237,35 @@ def check(econ_cohort_start: str = ECON_COHORT_START_DEFAULT) -> dict[str, dict]
         "required": "dry_run=False (real scheduled/manual paper run)",
     }
 
-    # 1. ledger_quality VALID
+    # A cached scheduled summary cannot renew the evidence it copied.
+    # Reuse the console's existing saved-config freshness reader only;
+    # this is NOT a new raw-ledger/equity/performance qualification.
     lg = health.get("ledger_gate_status", "UNKNOWN")
+    try:
+        from console.adapters.system_adapter import SystemAdapter
+        ledger_evidence = SystemAdapter(PROJECT_ROOT)._check_ledger_validity()
+    except Exception as exc:
+        ledger_evidence = {"ok": False, "error_type": type(exc).__name__}
+    evidence_age = ledger_evidence.get("age_seconds")
+    # The shared adapter clamps future ages to zero, so age >= 0 alone
+    # cannot establish non-future evidence. Check the saved UTC date itself.
+    try:
+        saved_date = date.fromisoformat(str(ledger_evidence.get("last_checked")))
+        saved_date_not_future = saved_date <= datetime.now(timezone.utc).date()
+    except (TypeError, ValueError):
+        saved_date_not_future = False
+    evidence_current = (ledger_evidence.get("ok") is True
+                        and saved_date_not_future
+                        and type(evidence_age) in (int, float) and evidence_age >= 0)
     results["ledger_quality"] = {
         "label": "ledger_quality_gate",
-        "pass": lg == "VALID",
-        "actual": lg,
-        "required": "VALID",
+        "pass": lg == "VALID" and evidence_current,
+        "actual": f"summary={lg}; saved_status={ledger_evidence.get('status', 'UNKNOWN')}; "
+                  f"last_checked={ledger_evidence.get('last_checked')}; "
+                  f"stale={ledger_evidence.get('stale', True)}",
+        "required": "VALID summary AND current non-future saved ledger evidence",
+        "evidence": ledger_evidence,
+        "scope": "saved_config_freshness_not_new_raw_ledger_or_economic_validation",
     }
 
     # 2. circuit_breaker ok
@@ -546,42 +568,16 @@ def check_promotion_readiness() -> dict[str, dict] | None:
 
 
 def _update_ledger_gate_last_checked(ledger_pass: bool, now_jst: datetime) -> None:
-    """Stamp ledger_quality_gate.last_checked in current_mode.yaml.
+    """Compatibility hook: a boolean is never independent validation evidence.
 
-    console self-check (console/adapters/system_adapter.py::_check_ledger_validity)
-    treats ledger_quality_gate as stale (and therefore reports it as a
-    'critical_missing' evidence failure) if last_checked is more than 24h
-    old, even when the gate is genuinely VALID and re-confirmed daily by
-    this script. Previously last_checked was only ever bumped by manual
-    edits during ledger repair work, so it silently went stale between
-    repairs (observed 2026-08-01 -> 2026-08-07, 6 days unedited) and caused
-    a false-positive 'blocked' /health status even though everything was
-    actually fine. Bump it here on every --save run so daily re-verification
-    is reflected without a manual edit each time.
-
-    Only touches the `current_status:` and `last_checked:` lines via
-    targeted regex substitution (not a full YAML round-trip) to avoid
-    stripping the extensive human-authored comments in this file.
+    Nov17 regression: report saving could copy cached VALID back into its
+    own evidence date, including while native raw ledger checks failed.
+    Preserve the existing config exactly; an independently qualified ledger
+    validation/repair must own any later evidence update.
     """
-    if not ledger_pass or not CURRENT_MODE_PATH.exists():
-        return
-    text = CURRENT_MODE_PATH.read_text(encoding="utf-8")
-    today = now_jst.strftime("%Y-%m-%d")
-    new_text, n1 = re.subn(
-        r'(?m)^(  current_status:\s*)\S+(.*)$',
-        lambda m: f"{m.group(1)}VALID{m.group(2)}",
-        text,
-        count=1,
-    )
-    new_text, n2 = re.subn(
-        r'(?m)^(  last_checked:\s*)"?[0-9-]+"?(.*)$',
-        lambda m: f'{m.group(1)}"{today}"{m.group(2)}',
-        new_text,
-        count=1,
-    )
-    if n1 and n2 and new_text != text:
-        CURRENT_MODE_PATH.write_text(new_text, encoding="utf-8")
-        print(f"[updated] {CURRENT_MODE_PATH} ledger_quality_gate.last_checked -> {today}", file=sys.stderr)
+    if ledger_pass:
+        print("[unchanged] ledger evidence date: cached summary/report is not "
+              "an independent ledger validation", file=sys.stderr)
 
 
 def format_report(results: dict[str, dict], save: bool = False, promotion: dict[str, dict] | None = None) -> str:
