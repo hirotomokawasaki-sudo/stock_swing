@@ -140,3 +140,6 @@ IDENTITY.md
 SOUL.md
 USER.md
 BOOTSTRAP.md
+# Keep local environment files and backups out of version control.
+.env*
+!.env.example
