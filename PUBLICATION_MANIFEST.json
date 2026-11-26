@@ -1,0 +1,59 @@
+{
+  "schema": "reviewed-source-publication-manifest-v1",
+  "public_base": "ee2acac4f7579188938d1265671d3146c91c0295",
+  "entries": {
+    "PUBLICATION_VALIDATION.json": {
+      "sha256": "133c0b725e90d3582b5f87ba629c8aa7eb1ae1b04b7d97334a6871bf900b7d7f",
+      "bytes": 2218
+    },
+    "README.md": {
+      "sha256": "974d738846e9d540e5ea36ac008edac99c8e5ef12e2824a6384c1e90dbb34a5c",
+      "bytes": 4754
+    },
+    "docs/c11_calibration_connection_20261124/SOURCE_PINS.json": {
+      "sha256": "e3ccac51fa3722d754940c6c59cdf2491d52070d1595309ac45def77c73abd8d",
+      "bytes": 807
+    },
+    "docs/c11_calibration_connection_20261124/bridge.py": {
+      "sha256": "5210c2b816e5dba12002012f0d5133483d28ac5ebf658b90f6f206ad58b3c2d3",
+      "bytes": 8642
+    },
+    "docs/c11_calibration_connection_20261124/closing_port.py": {
+      "sha256": "3b070f66ba2264e120948c7075b928851f44f7ca6faba4c437dc0e0a5632ad9d",
+      "bytes": 12839
+    },
+    "docs/c11_calibration_connection_20261124/native_entries.py": {
+      "sha256": "130020c5a805bab3090783ea00795a17bfef8be6531a7adf3167ec91f7d7e76c",
+      "bytes": 12470
+    },
+    "docs/c11_calibration_connection_20261124/native_paths.py": {
+      "sha256": "b6c5c0fb25b10d649041d925ad088fae6a01789527e2d6381b3609c1d483f191",
+      "bytes": 12257
+    },
+    "docs/c11_calibration_connection_20261124/path_driver.py": {
+      "sha256": "d64f7050f29a020fa4975193b3a0695d2dea541f85df817df15b9f65a233a349",
+      "bytes": 14986
+    },
+    "docs/c11_calibration_connection_20261124/run_research_paths.py": {
+      "sha256": "bd2b4450eae30c04cf0ce4337ffb660466c5c84b853c83958f92c8c1fddcb158",
+      "bytes": 3801
+    },
+    "docs/c11_calibration_connection_20261124/test_closing_port.py": {
+      "sha256": "3b747c45cadd69ff44f703c48ca74851512c13713ace5f9cf30f373940e74c9e",
+      "bytes": 11485
+    },
+    "docs/c11_calibration_connection_20261124/test_native_paths.py": {
+      "sha256": "c12cbc84aba901d74bdaee59fafd2d06792898b28ab4ccc856732549c0912e5b",
+      "bytes": 18694
+    },
+    "docs/c11_minimum_inputs_20261030/code/comparison_book.py": {
+      "sha256": "101cd5ced6f3ed2738c8acdd0b45da9bba7a5e614bf049c677532ee1856ea6bf",
+      "bytes": 20668
+    },
+    "scripts/secret_scan.py": {
+      "sha256": "3812aa25968853de521c3fd0c5b61cfd93a282afd39b693bee515c1929b4203b",
+      "bytes": 2929
+    }
+  },
+  "self_excluded": "PUBLICATION_MANIFEST.json"
+}

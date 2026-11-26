@@ -1,0 +1,22 @@
+{
+  "docs/c11_calibration_connection_20261124/bridge.py": {
+    "sha256": "5210c2b816e5dba12002012f0d5133483d28ac5ebf658b90f6f206ad58b3c2d3",
+    "mode": 384
+  },
+  "docs/c11_calibration_connection_20261124/test_bridge.py": {
+    "sha256": "6fdc975a9c2bd8a683182b645a720d6fd63b837fdebc189d911e5519eac7d28f",
+    "mode": 384
+  },
+  "docs/c11_minimum_inputs_20261030/prepare.py": {
+    "sha256": "6de471771e1b69fa30f74ddb6a190145123919c25efbf567182d216e9f219a0b",
+    "mode": 384
+  },
+  "docs/c11_minimum_inputs_20261030/code/comparison_book.py": {
+    "sha256": "101cd5ced6f3ed2738c8acdd0b45da9bba7a5e614bf049c677532ee1856ea6bf",
+    "mode": 384
+  },
+  "docs/c11_minimum_inputs_20261030/CONTRACT.json": {
+    "sha256": "1a0bf3489442eb5ce0d368a239e37926bcdc66626d35d02a1cb90f2c86a0c5f3",
+    "mode": 384
+  }
+}

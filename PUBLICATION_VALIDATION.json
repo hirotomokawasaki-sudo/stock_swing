@@ -1,0 +1,66 @@
+{
+  "schema": "research-source-publication-validation-v1",
+  "public_base": "ee2acac4f7579188938d1265671d3146c91c0295",
+  "scope": "source-only snapshot; not deployable or a self-contained market replay",
+  "retained_workspace_scopes": [
+    {
+      "scope": "native paths",
+      "passed": 46,
+      "skipped": 0,
+      "reproduced_from_public_checkout": false
+    },
+    {
+      "scope": "closing port",
+      "passed": 33,
+      "skipped": 0,
+      "reproduced_from_public_checkout": false
+    }
+  ],
+  "public_checkout": {
+    "passed": 27,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "deselected": 6,
+    "excluded_functions": [
+      "real_closing_exposures_only_reach_unchanged_selector",
+      "availability_not_only_session_date_is_before_evaluation",
+      "empty_books_are_inactive_not_a_treatment_result",
+      "malformed_receipt_cannot_claim_qualified_daily_data",
+      "next_session_keeps_independent_append_only_journals_and_rejects_reset",
+      "new_event_cannot_be_backfilled_before_an_exported_close"
+    ],
+    "private_dependency_directories_read_denied": true,
+    "network_denied": true,
+    "production_and_published_sources_write_denied": true
+  },
+  "static_review": {
+    "python_files_parsed": 10,
+    "json_parsed": true,
+    "existing_secret_scanner_exit_code": 0,
+    "supplemental_findings": 0,
+    "symlinks": 0
+  },
+  "omitted_dependencies": [
+    "private captured input fixtures",
+    "frozen native source/pins and accepted guard adapter",
+    "parent prepare/contract/sealed-source closure required by calibration bridge"
+  ],
+  "diagnostic": {
+    "independent_books": 101,
+    "conditional_daily_sessions": 1,
+    "qualified_daily_sessions": 0,
+    "formal_U": null,
+    "market_PnL": null,
+    "economic_qualified": false,
+    "source_journals_unchanged": true
+  },
+  "production": {
+    "deployed": false,
+    "orders_sent": 0,
+    "market_GET": 0,
+    "scheduler_changes": 0
+  },
+  "ancestry": "one publication commit on verified already-public main; seven unrelated local commits excluded; existing remote history is not rewritten",
+  "hooks": "Only executable non-sample hook was operational post-commit Console auto-restart; disabled for this commit only"
+}
